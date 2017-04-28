@@ -1,11 +1,5 @@
 project('ish', 'c')
 add_global_arguments('-std=gnu99', language: 'c')
-if meson.get_compiler('c').get_id() == 'clang'
-    lto = '-flto=thin'
-else
-    lto = '-flto'
-endif
-add_global_link_arguments(lto, language: 'c')
 
 includes = [include_directories('.')]
 
@@ -17,6 +11,7 @@ emu_src = [
     'emu/process.c',
     'emu/cpu.c',
     'emu/modrm.c',
+    'emu/debug.c',
 ]
 
 lib = library('ish', sys_src + emu_src)

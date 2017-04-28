@@ -1,7 +1,7 @@
 #ifndef ELF_H
 #define ELF_H
 
-#include "emu/types.h"
+#include "misc.h"
 
 #define ELF_MAGIC "\177ELF"
 #define ELF_32BIT 1

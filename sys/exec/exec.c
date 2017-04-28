@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "emu/types.h"
+#include "misc.h"
 #include "emu/memory.h"
 #include "emu/process.h"
 #include "sys/errno.h"
@@ -81,7 +81,7 @@ int sys_execve(const char *file, char *const argv[], char *const envp[]) {
 
     // allocate stack
     // TODO P_GROWSDOWN flag
-    if ((err = pt_map_nothing(current->cpu.pt, 0xffffe, 1, 0)) < 0) {
+    if ((err = pt_map_nothing(current->cpu.pt, 0xffffe, 1, P_WRITABLE)) < 0) {
         goto beyond_hope;
     }
     // give one page to grow down. I need motivation to implement page fault handling

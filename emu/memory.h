@@ -1,7 +1,7 @@
 #ifndef MEMORY_H
 #define MEMORY_H
 
-#include "emu/types.h"
+#include "misc.h"
 #include <unistd.h>
 
 #define PAGE_BITS 12

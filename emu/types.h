@@ -1,7 +1,5 @@
 #ifndef TYPES_H
 #define TYPES_H
-#include <stdio.h>
-#include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <sys/types.h>
@@ -14,9 +12,6 @@ typedef uint8_t byte_t;
 typedef dword_t addr_t;
 typedef dword_t page_t;
 
-#define TODO(message) { \
-    fprintf(stderr, "TODO: %s\n", message); \
-    abort(); \
-}
+#define UINT(size) CONCAT3(uint,size,_t)
 
 #endif

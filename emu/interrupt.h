@@ -7,7 +7,7 @@
 #define INT_BREAKPOINT 3
 #define INT_OVERFLOW 4
 #define INT_BOUND 5
-#define INT_INVALID 6
-#define INT_FPU 7 // apparently "device not available"
+#define INT_UNDEFINED 6
+#define INT_FPU 7 // do not try to use the fpu. instead, try to realize the truth: there is no fpu.
 #define INT_DOUBLE 8 // interrupt during interrupt, i.e. interruptception
 #define INT_SYSCALL 0x80
