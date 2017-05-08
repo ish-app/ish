@@ -21,5 +21,6 @@ lib = library('ish', sys_src + emu_src)
 
 executable('thingy', ['main.c'], link_with: [lib])
 
-# testing program
-executable('a.out', ['hello.c'], c_args: ['-m32'], link_args: ['-m32', '-nostdlib'])
+# testing programs
+subdir('tests')
+
