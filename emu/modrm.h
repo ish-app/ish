@@ -7,7 +7,7 @@ struct regptr {
     reg_id_t reg16_id;
     reg_id_t reg32_id;
 };
-inline const char *regptr_name(struct regptr regptr) {
+static const char *regptr_name(struct regptr regptr) {
     static char buf[15];
     sprintf(buf, "%s/%s/%s", 
             reg8_name(regptr.reg8_id),
@@ -39,7 +39,7 @@ struct modrm_info {
 struct modrm_info modrm_compute_info(byte_t byte);
 #else
 struct modrm_info modrm_table[0x100];
-inline struct modrm_info modrm_get_info(byte_t byte) {
+static inline struct modrm_info modrm_get_info(byte_t byte) {
     struct modrm_info info = modrm_table[byte];
     TRACE_("modrm ");
     TRACE_("reg %s opcode %d ", regptr_name(info.reg), info.opcode);
@@ -69,7 +69,7 @@ inline struct modrm_info modrm_get_info(byte_t byte) {
 // Decodes ModR/M and SIB byte pointed to by cpu->eip, increments cpu->eip past
 // them, and returns everything in out parameters.
 // TODO currently only does 32-bit
-inline void modrm_decode32(struct cpu_state *cpu, addr_t *addr_out, struct modrm_info *info_out) {
+static inline void modrm_decode32(struct cpu_state *cpu, addr_t *addr_out, struct modrm_info *info_out) {
     struct modrm_info info = modrm_get_info(MEM_GET(cpu, cpu->eip, 8));
     cpu->eip++;
     *info_out = info;
@@ -94,7 +94,7 @@ inline void modrm_decode32(struct cpu_state *cpu, addr_t *addr_out, struct modrm
             break;
         }
         case mod_disp32: {
-            disp = (int8_t) MEM_GET(cpu, cpu->eip, 32);
+            disp = (int32_t) MEM_GET(cpu, cpu->eip, 32);
             TRACE("disp %s0x%x", (disp < 0 ? "-" : ""), (disp < 0 ? -disp : disp));
             *addr_out += disp;
             cpu->eip += 4;

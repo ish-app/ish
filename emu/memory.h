@@ -6,8 +6,8 @@
 
 #define PAGE_BITS 12
 typedef uint8_t page[1 << PAGE_BITS];
-#define PAGE_ADDR(addr) (addr >> PAGE_BITS)
-#define OFFSET_ADDR(addr) (addr & ~(UINT32_MAX << PAGE_BITS))
+#define PAGE_ADDR(addr) ((addr) >> PAGE_BITS)
+#define OFFSET_ADDR(addr) ((addr) & ~(UINT32_MAX << PAGE_BITS))
 
 // flags
 #define P_WRITABLE (1 << 1)

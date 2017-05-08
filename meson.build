@@ -4,7 +4,10 @@ add_global_arguments('-std=gnu99', language: 'c')
 includes = [include_directories('.')]
 
 sys_src = [
+    'sys/calls.c',
     'sys/exec/exec.c',
+    'sys/exit.c',
+    'sys/write.c',
 ]
 emu_src = [
     'emu/memory.c',

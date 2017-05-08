@@ -8,6 +8,7 @@
 #include "misc.h"
 #include "emu/memory.h"
 #include "emu/process.h"
+#include "sys/calls.h"
 #include "sys/errno.h"
 #include "sys/exec/elf.h"
 
@@ -100,4 +101,11 @@ out:
 beyond_hope:
     // TODO call sys_exit
     goto out_free_ph;
+}
+
+int _sys_execve(addr_t filename, addr_t argv, addr_t envp) {
+    // TODO translate rest of arguments
+    char buf[255];
+    user_get_string(filename, buf, sizeof(buf));
+    return sys_execve(buf, NULL, NULL);
 }

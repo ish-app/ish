@@ -91,7 +91,7 @@ inline const char *reg32_name(uint8_t reg_id) {
     return "???";
 }
 
-#define MEM_GET(cpu, addr, size) (*((UINT(size) *) &((char *) cpu->pt[PAGE_ADDR(addr)]->data)[OFFSET_ADDR(addr)]))
+#define MEM_GET(cpu, addr, size) (*((UINT(size) *) &((char *) (cpu)->pt[PAGE_ADDR(addr)]->data)[OFFSET_ADDR(addr)]))
 
 
 #endif

@@ -35,9 +35,9 @@ struct modrm_info modrm_compute_info(byte_t byte) {
             // [reg], disp32, [sib]
             info.type = mod_disp0;
             switch (RM(byte)) {
-                case 0b011:
-                    info.sib = true; break;
                 case 0b100:
+                    info.sib = true; break;
+                case 0b101:
                     info.type = mod_disp32;
                     info.modrm_reg = (struct regptr) {0,0,0};
                     break;

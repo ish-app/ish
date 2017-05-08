@@ -3,6 +3,7 @@
 #include "emu/cpu.h"
 #include "emu/modrm.h"
 #include "emu/interrupt.h"
+#include "sys/calls.h"
 
 static void trace_cpu(struct cpu_state *cpu) {
     TRACE("eax=%x ebx=%x ecx=%x edx=%x esi=%x edi=%x ebp=%x esp=%x",
@@ -24,35 +25,41 @@ static void trace_cpu(struct cpu_state *cpu) {
 // this will be the next PyEval_EvalFrameEx.
 int cpu_step(struct cpu_state *cpu) {
     // watch out: these macros can evaluate the arguments any number of times
-#define MEM(addr) MEM_GET(cpu, addr, OP_SIZE)
-#define MEM8(addr) MEM_GET(cpu, addr, 8)
-#define REG(reg_id) REG_VAL(cpu, reg_id, OP_SIZE)
-#define REGPTR(regptr) REG(CONCAT3(regptr.reg,OP_SIZE,_id))
+#define MEM_(addr,size) MEM_GET(cpu, addr, size)
+#define MEM(addr) MEM_(addr,OP_SIZE)
+#define MEM8(addr) MEM_(addr,8)
+#define REG_(reg_id,size) REG_VAL(cpu, reg_id, size)
+#define REG(reg_id) REG_(reg_id, OP_SIZE)
+#define REGPTR_(regptr,size) REG_(CONCAT3(regptr.reg,size,_id),size)
+#define REGPTR(regptr) REGPTR_(regptr, OP_SIZE)
+#define REGPTR8(regptr) REGPTR_(regptr, 8)
 
     // used by MODRM_MEM, don't use for anything else
     struct modrm_info modrm;
-    dword_t modrm_addr;
+    dword_t addr;
 #define DECODE_MODRM(size) \
-    modrm_decode##size(cpu, &modrm_addr, &modrm)
-#define MODRM_VAL \
-    *(modrm.type == mod_reg ? &REGPTR(modrm.modrm_reg) : &MEM(modrm_addr))
+    modrm_decode##size(cpu, &addr, &modrm)
+#define MODRM_VAL_(size) \
+    *(modrm.type == mod_reg ? &REGPTR_(modrm.modrm_reg, size) : &MEM_(addr, size))
+#define MODRM_VAL MODRM_VAL_(OP_SIZE)
+#define MODRM_VAL8 MODRM_VAL_(8)
 
 #define PUSH(thing) \
     cpu->esp -= OP_SIZE/8; \
     MEM(cpu->esp) = thing
 
 #undef imm
-#define imm CONCAT(imm, OP_SIZE)
     byte_t imm8;
-    oprnd_t imm;
-#define READIMM \
-    imm = MEM(cpu->eip); \
-    cpu->eip += OP_SIZE/8; \
-    TRACE("immediate: %x", imm)
-#define READIMM8 \
-    imm8 = MEM8(cpu->eip); \
-    cpu->eip++; \
-    TRACE("immediate: %x", imm8)
+    word_t imm16;
+    dword_t imm32;
+#define READIMM_(name,size) \
+    name = MEM_(cpu->eip,size); \
+    cpu->eip += size/8; \
+    TRACE("immediate: %x", name)
+#define imm CONCAT(imm, OP_SIZE)
+#define READIMM READIMM_(imm, OP_SIZE)
+#define READIMM8 READIMM_(imm8, 8)
+#define READADDR READIMM_(addr, 32)
 
     // TODO use different registers in 16-bit mode
 
@@ -106,10 +113,16 @@ int cpu_step(struct cpu_state *cpu) {
         // subtract dword immediate byte from modrm
         case 0x83:
             TRACE("sub imm, modrm");
-            DECODE_MODRM(32);
-            READIMM8;
+            DECODE_MODRM(32); READIMM8;
             // must cast to a signed value so sign extension occurs
             MODRM_VAL -= (int8_t) imm8;
+            break;
+
+        // move byte register to byte modrm
+        case 0x88:
+            TRACE("movb reg, modrm");
+            DECODE_MODRM(32);
+            MODRM_VAL8 = REGPTR8(modrm.reg);
             break;
 
         // move dword register to dword modrm
@@ -119,6 +132,20 @@ int cpu_step(struct cpu_state *cpu) {
             MODRM_VAL = REGPTR(modrm.reg);
             break;
 
+        // move byte modrm to byte register
+        case 0x8a:
+            TRACE("mov modrm, reg");
+            DECODE_MODRM(32);
+            REGPTR8(modrm.reg) = MODRM_VAL8;
+            break;
+
+        // move dword modrm to dword register
+        case 0x8b:
+            TRACE("mov modrm, reg");
+            DECODE_MODRM(32);
+            REGPTR(modrm.reg) = MODRM_VAL;
+            break;
+
         // lea dword modrm to register
         case 0x8d:
             TRACE("lea modrm, reg");
@@ -126,7 +153,14 @@ int cpu_step(struct cpu_state *cpu) {
             if (modrm.type == mod_reg) {
                 return INT_UNDEFINED;
             }
-            REGPTR(modrm.reg) = modrm_addr;
+            REGPTR(modrm.reg) = addr;
+            break;
+
+        // move *immediate to eax
+        case 0xa1:
+            TRACE("mov (immediate), eax");
+            READADDR;
+            cpu->eax = MEM(addr);
             break;
 
         // move dword immediate to register
@@ -162,14 +196,14 @@ int cpu_step(struct cpu_state *cpu) {
         // move byte immediate to modrm
         case 0xc6:
             TRACE("mov imm8, modrm8");
-            DECODE_MODRM(32);
-            READIMM8; MODRM_VAL = imm8;
+            DECODE_MODRM(32); READIMM8;
+            MODRM_VAL = imm8;
             break;
         // move dword immediate to modrm
         case 0xc7:
             TRACE("mov imm, modrm");
-            DECODE_MODRM(32);
-            READIMM; MODRM_VAL = imm;
+            DECODE_MODRM(32); READIMM;
+            MODRM_VAL = imm;
             break;
 
         default:
@@ -193,8 +227,7 @@ void cpu_run(struct cpu_state *cpu) {
         int interrupt = cpu_step32(cpu);
         if (interrupt != INT_NONE) {
             TRACE("interrupt %d", interrupt);
-            /* handle_interrupt(interrupt); */
-            return;
+            handle_interrupt(cpu, interrupt);
         }
     }
 }
