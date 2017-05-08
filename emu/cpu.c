@@ -64,7 +64,7 @@ int cpu_step(struct cpu_state *cpu) {
     // TODO use different registers in 16-bit mode
 
     byte_t insn = MEM8(cpu->eip);
-    printf("0x%x: ", insn);
+    TRACE_("0x%x: ", insn);
     cpu->eip++;
     switch (insn) {
         // if any instruction handlers declare variables, they should create a

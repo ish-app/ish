@@ -8,8 +8,12 @@
 #include <sys/types.h>
 
 // debug output utilities
-#define TRACE(msg, ...) TRACE_(msg "\n", ##__VA_ARGS__)
+#if 0
 #define TRACE_(msg, ...) printf(msg, ##__VA_ARGS__)
+#else
+#define TRACE_(msg, ...) (void)NULL
+#endif
+#define TRACE(msg, ...) TRACE_(msg "\n", ##__VA_ARGS__)
 
 #define TODO(msg, ...) TRACE("TODO: " msg, ##__VA_ARGS__); abort();
 

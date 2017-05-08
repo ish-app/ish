@@ -61,10 +61,10 @@ int pt_map_file(pagetable pt, page_t start, pages_t pages, int fd, off_t off, un
 void pt_dump(pagetable pt) {
     for (unsigned i = 0; i < PT_SIZE; i++) {
         if (pt[i] != NULL) {
-            printf("page     %u\n", i);
-            printf("data at  %p\n", pt[i]->data);
-            printf("refcount %u\n", pt[i]->refcount);
-            printf("flags    %x\n", pt[i]->flags);
+            TRACE("page     %u", i);
+            TRACE("data at  %p", pt[i]->data);
+            TRACE("refcount %u", pt[i]->refcount);
+            TRACE("flags    %x", pt[i]->flags);
         }
     }
 }

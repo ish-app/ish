@@ -58,7 +58,7 @@ int sys_execve(const char *file, char *const argv[], char *const envp[]) {
         struct prg_header phent = ph[i];
         switch (phent.type) {
             case PT_LOAD:
-                printf(
+                TRACE_(
                         "offset:       %x\n"
                         "virt addr:    %x\n"
                         "phys addr:    %x\n"
