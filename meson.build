@@ -24,3 +24,4 @@ executable('thingy', ['main.c'], link_with: [lib])
 # testing programs
 subdir('tests')
 
+executable('ptraceomatic', ['ptraceomatic.c'], link_with: [lib])

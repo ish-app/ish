@@ -68,9 +68,13 @@ int sys_execve(const char *file, char *const argv[], char *const envp[]) {
                         "alignment:    %x\n",
                         phent.offset, phent.vaddr, phent.paddr, phent.filesize,
                         phent.memsize, phent.flags, phent.alignment);
-                pages_t pages = PAGES_FROM_BYTES(phent.filesize);
+                addr_t size = phent.filesize + OFFSET_ADDR(phent.vaddr);
+                pages_t pages = PAGES_FROM_BYTES(size);
+                addr_t off = phent.offset - OFFSET_ADDR(phent.vaddr);
+                printf("new size:     %x\n", size);
+                printf("new offset:   %x\n", off);
                 if ((err = pt_map_file(current->cpu.pt, PAGE_ADDR(phent.vaddr),
-                                pages, f, phent.offset, 0)) < 0) {
+                                pages, f, off, 0)) < 0) {
                     goto beyond_hope;
                 }
                 break;
@@ -82,14 +86,14 @@ int sys_execve(const char *file, char *const argv[], char *const envp[]) {
 
     // allocate stack
     // TODO P_GROWSDOWN flag
-    if ((err = pt_map_nothing(current->cpu.pt, 0xffffe, 1, P_WRITABLE)) < 0) {
+    if ((err = pt_map_nothing(current->cpu.pt, 0xffffd, 1, P_WRITABLE)) < 0) {
         goto beyond_hope;
     }
-    // give one page to grow down. I need motivation to implement page fault handling
-    current->cpu.esp = 0xfffff000;
+    // give 0x20ef bytes to grow down. I need motivation to implement page fault handling
+    current->cpu.esp = 0xffffdf10;
     current->cpu.eip = header.entry_point;
 
-    pt_dump(current->cpu.pt);
+    /* pt_dump(current->cpu.pt); */
 
     err = 0;
 out_free_ph:

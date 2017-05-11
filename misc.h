@@ -8,7 +8,7 @@
 #include <sys/types.h>
 
 // debug output utilities
-#if 0
+#if 1
 #define TRACE_(msg, ...) printf(msg, ##__VA_ARGS__)
 #else
 #define TRACE_(msg, ...) (void)NULL

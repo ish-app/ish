@@ -93,5 +93,6 @@ inline const char *reg32_name(uint8_t reg_id) {
 
 #define MEM_GET(cpu, addr, size) (*((UINT(size) *) &((char *) (cpu)->pt[PAGE_ADDR(addr)]->data)[OFFSET_ADDR(addr)]))
 
+void trace_cpu(struct cpu_state *cpu);
 
 #endif

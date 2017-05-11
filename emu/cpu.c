@@ -5,7 +5,7 @@
 #include "emu/interrupt.h"
 #include "sys/calls.h"
 
-static void trace_cpu(struct cpu_state *cpu) {
+void trace_cpu(struct cpu_state *cpu) {
     TRACE("eax=%x ebx=%x ecx=%x edx=%x esi=%x edi=%x ebp=%x esp=%x",
             cpu->eax, cpu->ebx, cpu->ecx, cpu->edx, cpu->esi, cpu->edi, cpu->ebp, cpu->esp);
 }
@@ -47,6 +47,9 @@ int cpu_step(struct cpu_state *cpu) {
 #define PUSH(thing) \
     cpu->esp -= OP_SIZE/8; \
     MEM(cpu->esp) = thing
+#define POP(thing) \
+    thing = MEM(cpu->esp); \
+    cpu->esp += OP_SIZE/8
 
 #undef imm
     byte_t imm8;
@@ -61,16 +64,21 @@ int cpu_step(struct cpu_state *cpu) {
 #define READIMM8 READIMM_(imm8, 8)
 #define READADDR READIMM_(addr, 32)
 
-    // TODO use different registers in 16-bit mode
-
     byte_t insn = MEM8(cpu->eip);
-    printf("0x%x: ", insn);
+    TRACE_("0x%x: ", insn);
     cpu->eip++;
     switch (insn) {
         // if any instruction handlers declare variables, they should create a
-        // new block for those variables
+        // new block for those variables.
+        // any subtraction that occurs probably needs to have a cast to a
+        // signed type, so sign extension happens.
 
-        // push dword register
+        case 0x31:
+            TRACE("xor reg, modrm");
+            DECODE_MODRM(32);
+            MODRM_VAL ^= REGPTR(modrm.reg);
+            break;
+
         case 0x50:
             TRACE("push eax");
             PUSH(cpu->eax); break;
@@ -100,7 +108,35 @@ int cpu_step(struct cpu_state *cpu) {
             TRACE("push edi");
             PUSH(cpu->edi); break;
 
-        // operand size prefix
+        case 0x58:
+            TRACE("pop eax");
+            POP(cpu->eax); break;
+        case 0x59:
+            TRACE("pop ecx");
+            POP(cpu->ecx); break;
+        case 0x5a:
+            TRACE("pop edx");
+            POP(cpu->edx); break;
+        case 0x5b:
+            TRACE("pop ebx");
+            POP(cpu->ebx); break;
+        case 0x5c: {
+            TRACE("pop esp");
+            // need to make sure to pop the old value
+            dword_t old_esp = cpu->esp;
+            POP(old_esp);
+            break;
+        }
+        case 0x5d:
+            TRACE("pop ebp");
+            POP(cpu->ebp); break;
+        case 0x5e:
+            TRACE("pop esi");
+            POP(cpu->esi); break;
+        case 0x5f:
+            TRACE("pop edi");
+            POP(cpu->edi); break;
+
         case 0x66:
 #if OP_SIZE == 32
             TRACE("entering 16 bit mode");
@@ -110,43 +146,54 @@ int cpu_step(struct cpu_state *cpu) {
             return cpu_step32(cpu);
 #endif
 
-        // subtract dword immediate byte from modrm
-        case 0x83:
-            TRACE("sub imm, modrm");
-            DECODE_MODRM(32); READIMM8;
-            // must cast to a signed value so sign extension occurs
-            MODRM_VAL -= (int8_t) imm8;
+        case 0x68:
+            TRACE("push imm");
+            READIMM;
+            PUSH(imm);
             break;
 
-        // move byte register to byte modrm
+        case 0x83:
+            TRACE("grp1 imm8, reg");
+            DECODE_MODRM(32); READIMM8;
+            switch (modrm.opcode) {
+                case 0b100:
+                    TRACE("and");
+                    MODRM_VAL &= (int8_t) imm8;
+                    break;
+                case 0b101:
+                    TRACE("sub");
+                    MODRM_VAL -= (int8_t) imm8;
+                    break;
+                default:
+                    TRACE("undefined");
+                    return INT_UNDEFINED;
+            }
+            break;
+
         case 0x88:
             TRACE("movb reg, modrm");
             DECODE_MODRM(32);
             MODRM_VAL8 = REGPTR8(modrm.reg);
             break;
 
-        // move dword register to dword modrm
         case 0x89:
             TRACE("mov reg, modrm");
             DECODE_MODRM(32);
             MODRM_VAL = REGPTR(modrm.reg);
             break;
 
-        // move byte modrm to byte register
         case 0x8a:
             TRACE("mov modrm, reg");
             DECODE_MODRM(32);
             REGPTR8(modrm.reg) = MODRM_VAL8;
             break;
 
-        // move dword modrm to dword register
         case 0x8b:
             TRACE("mov modrm, reg");
             DECODE_MODRM(32);
             REGPTR(modrm.reg) = MODRM_VAL;
             break;
 
-        // lea dword modrm to register
         case 0x8d:
             TRACE("lea modrm, reg");
             DECODE_MODRM(32);
@@ -156,14 +203,12 @@ int cpu_step(struct cpu_state *cpu) {
             REGPTR(modrm.reg) = addr;
             break;
 
-        // move *immediate to eax
         case 0xa1:
             TRACE("mov (immediate), eax");
             READADDR;
             cpu->eax = MEM(addr);
             break;
 
-        // move dword immediate to register
         case 0xb8:
             TRACE("mov immediate, eax");
             READIMM; cpu->eax = imm; break;
@@ -190,16 +235,14 @@ int cpu_step(struct cpu_state *cpu) {
             READIMM; cpu->ebx = imm; break;
 
         case 0xcd:
-            TRACE("interrupt");
+            TRACE("int");
             READIMM8; return imm8;
 
-        // move byte immediate to modrm
         case 0xc6:
             TRACE("mov imm8, modrm8");
             DECODE_MODRM(32); READIMM8;
             MODRM_VAL = imm8;
             break;
-        // move dword immediate to modrm
         case 0xc7:
             TRACE("mov imm, modrm");
             DECODE_MODRM(32); READIMM;
@@ -211,7 +254,6 @@ int cpu_step(struct cpu_state *cpu) {
             debugger;
             return INT_UNDEFINED;
     }
-    trace_cpu(cpu);
     return -1; // everything is ok.
 }
 
