@@ -21,6 +21,6 @@ int sys_exit(dword_t status);
 ssize_t sys_write(int fd, const char *buf, size_t count);
 dword_t _sys_write(dword_t fd, addr_t data, dword_t count);
 
-typedef int (*syscall_t)(dword_t,dword_t,dword_t,dword_t,dword_t,dword_t);
+addr_t sys_brk(addr_t new_brk);
 
-#define NUM_SYSCALLS (sizeof(syscall_table)/sizeof(syscall_table[0]))
+typedef int (*syscall_t)(dword_t,dword_t,dword_t,dword_t,dword_t,dword_t);

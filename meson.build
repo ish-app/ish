@@ -17,6 +17,7 @@ sys_src = [
     'sys/exec/exec.c',
     'sys/exit.c',
     'sys/write.c',
+    'sys/brk.c',
 ]
 emu_src = [
     'emu/memory.c',

@@ -101,6 +101,8 @@ int cpu_step(struct cpu_state *cpu) {
 
         case 0x01: TRACEI("add reg, modrm");
                    READMODRM_W; ADD(modrm_reg, modrm_val); break;
+        case 0x03: TRACEI("add modrm, reg");
+                   READMODRM_W; ADD(modrm_val, modrm_reg); break;
 
         case 0x0d: TRACEI("or imm, eax\t");
                    READIMM; OR(imm, ax); break;
@@ -115,6 +117,8 @@ int cpu_step(struct cpu_state *cpu) {
                     break;
 
                 // TODO more sets
+                case 0x92: TRACEI("setb\t");
+                           READMODRM_W; SET(B, modrm_val8); break;
                 case 0x94: TRACEI("sete\t");
                            READMODRM_W; SET(E, modrm_val8); break;
 
@@ -124,13 +128,16 @@ int cpu_step(struct cpu_state *cpu) {
                 case 0x85: TRACEI("jne rel\t");
                            READIMM; J_REL(!E, imm); break;
 
+                case 0xaf: TRACEI("imul modrm, reg");
+                           READMODRM; IMUL(modrm_reg, modrm_val); break;
+
                 case 0xb6: TRACEI("movz modrm8, reg");
                            READMODRM; MOV(modrm_val8, modrm_reg); break;
                 case 0xb7: TRACEI("movz modrm16, reg");
                            READMODRM; MOV(modrm_val16, modrm_reg); break;
 
                 case 0xd6:
-                    // someone tell intel to get sane
+                    // someone tell intel to get a life
                     if (OP_SIZE == 16) {
                         TRACEI("movq xmm, modrm");
                         READMODRM_W; MOV(modrm_reg64, modrm_reg64);
@@ -142,6 +149,12 @@ int cpu_step(struct cpu_state *cpu) {
                     return INT_UNDEFINED;
             }
             break;
+
+        case 0x21: TRACEI("and reg, modrm");
+                   READMODRM_W; AND(modrm_reg, modrm_val); break;
+
+        case 0x29: TRACEI("sub reg, modrm");
+                   READMODRM_W; SUB(modrm_reg, modrm_val); break;
 
         case 0x31: TRACEI("xor reg, modrm");
                    READMODRM_W; XOR(modrm_reg, modrm_val); break;
@@ -220,6 +233,10 @@ int cpu_step(struct cpu_state *cpu) {
                    READIMM8; J_REL(BE, (int8_t) imm8); break;
         case 0x77: TRACEI("ja rel8\t");
                    READIMM8; J_REL(!BE, (int8_t) imm8); break;
+        case 0x78: TRACEI("js rel8\t");
+                   READIMM8; J_REL(S, (int8_t) imm8); break;
+        case 0x79: TRACEI("jns rel8\t");
+                   READIMM8; J_REL(!S, (int8_t) imm8); break;
         case 0x7e: TRACEI("jle rel8\t");
                    READIMM8; J_REL(LE, (int8_t) imm8); break;
 
@@ -311,6 +328,9 @@ int cpu_step(struct cpu_state *cpu) {
                                    READMODRM; MOV(modrm_val64, modrm_reg64);
                     }
                     break;
+
+                case 0xa5: TRACEI("rep movs (di), (si)"); REP(MOVS); break;
+
                 // repz ret is equivalent to ret but on some amd chips there's
                 // a branch prediction penalty if the target of a branch is a
                 // ret. gcc used to use nop ret but repz ret is only one
@@ -324,6 +344,9 @@ int cpu_step(struct cpu_state *cpu) {
                    READMODRM; GRP38(modrm_val8); break;
         case 0xf7: TRACEI("grp3 modrm\t");
                    READMODRM; GRP3(modrm_val); break;
+
+        case 0xfc: TRACEI("cld"); cpu->df = 1; break;
+        case 0xfd: TRACEI("std"); cpu->df = 0; break;
 
         case 0xff: TRACEI("grp5 modrm\t");
                    READMODRM; GRP5(modrm_val); break;

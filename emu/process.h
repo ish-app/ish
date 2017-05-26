@@ -5,6 +5,9 @@
 
 struct process {
     struct cpu_state cpu;
+
+    addr_t start_brk;
+    addr_t brk;
 };
 
 // current will always give the process that is currently executing

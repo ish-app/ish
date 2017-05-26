@@ -65,9 +65,13 @@ int sys_execve(const char *file, char *const argv[], char *const envp[]) {
     // killed before it even starts. yeah, yeah, wasted potential. c'mon, it's
     // just a process.
 
-    // map dat shit!
-    addr_t load_addr;
+    addr_t load_addr; // used for AX_PHDR
     bool load_addr_set = false;
+    addr_t bss = 0; // end of data/start of bss
+    addr_t brk = 0; // end of bss/start of heap
+    int bss_flags;
+
+    // map dat shit!
     for (uint16_t i = 0; i < ph_count; i++) {
         struct prg_header phent = ph[i];
         switch (phent.type) {
@@ -93,19 +97,18 @@ int sys_execve(const char *file, char *const argv[], char *const envp[]) {
                                 PAGE(addr), PAGE_ROUND_UP(size), f, off, flags)) < 0) {
                     goto beyond_hope;
                 }
-                // map the tail as zeroes
-                if (phent.memsize > phent.filesize) {
-                    addr = phent.vaddr + phent.filesize;
-                    size = phent.memsize - phent.filesize;
-                    if ((err = pt_map_nothing(current->cpu.pt,
-                                    PAGE_ROUND_UP(addr), PAGE_ROUND_UP(size), flags)) < 0) {
-                        goto beyond_hope;
-                    }
-                }
                 // load_addr is used to get a value for AX_PHDR et al
                 if (!load_addr_set) {
                     load_addr = phent.vaddr - phent.offset;
                     load_addr_set = true;
+                }
+
+                if (phent.vaddr + phent.filesize > bss) {
+                    bss = phent.vaddr + phent.filesize;
+                }
+                if (phent.vaddr + phent.memsize > brk) {
+                    bss_flags = flags;
+                    brk = phent.vaddr + phent.memsize;
                 }
                 break;
 
@@ -113,6 +116,16 @@ int sys_execve(const char *file, char *const argv[], char *const envp[]) {
             // did you know that most binary files have a shebang-equivalent that points to /lib/ld.so?
         }
     }
+
+    // map the bss (which ends at brk)
+    brk = PAGE_ROUND_UP(brk);
+    bss = PAGE_ROUND_UP(bss);
+    if (brk > bss) {
+        if ((err = pt_map_nothing(current->cpu.pt, bss, brk - bss, bss_flags)) < 0) {
+            goto beyond_hope;
+        }
+    }
+    current->start_brk = current->brk = brk << PAGE_BITS;
 
     // map vdso
     addr_t vdso_addr = 0xf7ffc000;

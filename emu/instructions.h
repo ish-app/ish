@@ -50,6 +50,14 @@
 #define INC(val) ADD(1, val)
 #define DEC(val) SUB(1, val)
 
+#define IMUL(reg, val) \
+    reg *= val;
+    // TODO flags
+
+#define DIV(reg, val, rem) \
+    if (val == 0) return INT_DIV; \
+    rem = reg % val; reg = reg / val;
+
 #define CALL(loc) PUSH(cpu->eip); JMP(loc)
 #define CALL_REL(offset) PUSH(cpu->eip); JMP_REL(offset)
 
@@ -79,8 +87,8 @@
         case 3: TRACE("neg"); return INT_UNDEFINED; \
         case 4: TRACE("mul"); return INT_UNDEFINED; \
         case 5: TRACE("imul"); return INT_UNDEFINED; \
-        case 6: TRACE("div"); return INT_UNDEFINED; \
-        case 7: TRACE("idiv"); return INT_UNDEFINED; \
+        case 6: TRACE("div"); \
+                DIV(cpu->al, modrm_val8, cpu->ah); break; \
         default: TRACE("undefined"); return INT_UNDEFINED; \
     }
 
@@ -93,7 +101,8 @@
         case 3: TRACE("neg"); return INT_UNDEFINED; \
         case 4: TRACE("mul"); return INT_UNDEFINED; \
         case 5: TRACE("imul"); return INT_UNDEFINED; \
-        case 6: TRACE("div"); return INT_UNDEFINED; \
+        case 6: TRACE("div"); \
+                DIV(ax, modrm_val, dx); break; \
         case 7: TRACE("idiv"); return INT_UNDEFINED; \
         default: TRACE("undefined"); return INT_UNDEFINED; \
     }
@@ -113,6 +122,23 @@
         case 6: TRACE("push"); \
                 PUSH(val); break; \
         case 7: default: TRACE("undefined"); return INT_UNDEFINED; \
+    }
+
+#define BUMP_SI_DI \
+    if (!cpu->df) { \
+        di++; si++; \
+    } else { \
+        di--; si--; \
+    }
+
+#define MOVS \
+    CHECK_W(di); \
+    MEM(di) = MEM(si); \
+    BUMP_SI_DI;
+
+#define REP(OP) \
+    for (unsigned i = 0; i < cx; i++) { \
+        OP; \
     }
 
 // condition codes
