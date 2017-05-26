@@ -9,13 +9,13 @@
 
 // debug output utilities
 #if 1
-#define TRACE_(msg, ...) printf(msg, ##__VA_ARGS__)
+#define TRACE(msg, ...) printf(msg, ##__VA_ARGS__)
 #else
-#define TRACE_(msg, ...) (void)NULL
+#define TRACE(msg, ...) (void)NULL
 #endif
-#define TRACE(msg, ...) TRACE_(msg "\n", ##__VA_ARGS__)
+#define TRACEI(msg, ...) TRACE(msg "\t", ##__VA_ARGS__)
 
-#define TODO(msg, ...) TRACE("TODO: " msg, ##__VA_ARGS__); abort();
+#define TODO(msg, ...) TRACE("TODO: " msg "\n", ##__VA_ARGS__); abort();
 
 #if defined(__i386__) || defined(__x86_64__)
 #define debugger __asm__("int3")

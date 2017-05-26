@@ -29,7 +29,7 @@ struct modrm_info modrm_compute_info(byte_t byte) {
     info.opcode = REG(byte);
     info.sib = false;
     info.reg = decode_reg(REG(byte));
-    info.modrm_reg = decode_reg(RM(byte));
+    info.modrm_regid = decode_reg(RM(byte));
     switch (MOD(byte)) {
         case 0b00:
             // [reg], disp32, [sib]
@@ -39,21 +39,21 @@ struct modrm_info modrm_compute_info(byte_t byte) {
                     info.sib = true; break;
                 case 0b101:
                     info.type = mod_disp32;
-                    info.modrm_reg = (struct regptr) {0,0,0};
+                    info.modrm_regid = (struct regptr) {0,0,0};
                     break;
             }
             break;
         case 0b01:
             // disp8[reg], disp8[sib]
             info.type = mod_disp8;
-            if (RM(byte) == 0b011) {
+            if (RM(byte) == 0b100) {
                 info.sib = true;
             }
             break;
         case 0b10:
             // disp32[reg], disp32[sib]
             info.type = mod_disp32;
-            if (RM(byte) == 0b011) {
+            if (RM(byte) == 0b100) {
                 info.sib = true;
             }
             break;
@@ -68,7 +68,7 @@ struct modrm_info modrm_compute_info(byte_t byte) {
 #ifndef DISABLE_MODRM_TABLE
 
 static void __attribute__((constructor)) modrm_table_build(void) {
-    for (byte_t byte = 0; byte < UINT8_MAX; byte++) {
+    for (int byte = 0; byte <= UINT8_MAX; byte++) {
         modrm_table[byte] = modrm_compute_info(byte);
     }
 }

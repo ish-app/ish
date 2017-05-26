@@ -13,7 +13,7 @@ int cpu_step16(struct cpu_state *cpu);
 struct cpu_state {
     pagetable pt;
 
-    // assumes little endian
+    // assumes little endian (as does literally everything)
 #define _REG(n) \
     union { \
         dword_t e##n; \
@@ -43,6 +43,32 @@ struct cpu_state {
     _REG(sp);
 
     dword_t eip;
+
+    // flags
+    union {
+        dword_t eflags;
+#define pad(size) unsigned CONCAT(pad,__COUNTER__):size
+        struct {
+            unsigned cf:1;
+            pad(1);
+            unsigned pf:1;
+            pad(1);
+            unsigned af:1;
+            pad(1);
+            unsigned zf:1;
+            unsigned sf:1;
+            unsigned tf:1;
+            pad(1);
+            unsigned df:1;
+            unsigned of:1;
+        };
+    };
+    // whether the true flag values are in the above struct, or computed from
+    // the stored operands and result
+    unsigned pf_res:1;
+    unsigned zf_res:1;
+    unsigned sf_res:1;
+    dword_t res;
 
 #undef REGX
 #undef REG
@@ -91,8 +117,10 @@ inline const char *reg32_name(uint8_t reg_id) {
     return "???";
 }
 
-#define MEM_GET(cpu, addr, size) (*((UINT(size) *) &((char *) (cpu)->pt[PAGE_ADDR(addr)]->data)[OFFSET_ADDR(addr)]))
-
-void trace_cpu(struct cpu_state *cpu);
+#define MEM_GET(cpu, addr, size) (*((UINT(size) *) &((char *) (cpu)->pt[PAGE(addr)]->data)[OFFSET(addr)]))
+#define CHECK_WRITE(cpu, addr) \
+    if (!((cpu)->pt[PAGE(addr)]->flags & P_WRITABLE)) \
+        return INT_GPF; \
+    (cpu)->pt[PAGE(addr)]->dirty = 1
 
 #endif

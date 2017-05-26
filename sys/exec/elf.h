@@ -56,8 +56,34 @@ struct prg_header {
     dword_t alignment; // must be power of 2
 };
 
-#define PT_R (1 << 2)
-#define PT_W (1 << 1)
-#define PT_X (1 << 0)
+#define PH_R (1 << 2)
+#define PH_W (1 << 1)
+#define PH_X (1 << 0)
+
+struct aux_ent {
+    uint32_t type;
+    uint32_t value;
+};
+
+#define AX_PHDR 3
+#define AX_PHENT 4
+#define AX_PHNUM 5
+#define AX_PAGESZ 6
+#define AX_BASE 7
+#define AX_FLAGS 8
+#define AX_ENTRY 9
+#define AX_UID 11
+#define AX_EUID 12
+#define AX_GID 13
+#define AX_EGID 14
+#define AX_PLATFORM 15
+#define AX_HWCAP 16
+#define AX_CLKTCK 17
+#define AX_SECURE 23
+#define AX_RANDOM 25
+#define AX_HWCAP2 26
+#define AX_EXECFN 31
+#define AX_SYSINFO 32
+#define AX_SYSINFO_EHDR 33
 
 #endif

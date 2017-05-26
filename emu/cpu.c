@@ -5,51 +5,69 @@
 #include "emu/interrupt.h"
 #include "sys/calls.h"
 
-void trace_cpu(struct cpu_state *cpu) {
-    TRACE("eax=%x ebx=%x ecx=%x edx=%x esi=%x edi=%x ebp=%x esp=%x",
-            cpu->eax, cpu->ebx, cpu->ecx, cpu->edx, cpu->esi, cpu->edi, cpu->ebp, cpu->esp);
-}
+// instructions defined as static inline functions
+#include "emu/instructions.h"
 
-// fuck preprocessor
 #define OP_SIZE 32
 #define cpu_step CONCAT(cpu_step, OP_SIZE)
 #endif
 
-#undef oprnd_t
-#if OP_SIZE == 32
-#define oprnd_t dword_t
-#else
-#define oprnd_t word_t
-#endif
-
 // this will be the next PyEval_EvalFrameEx.
 int cpu_step(struct cpu_state *cpu) {
+
+#undef ax
+#undef bx
+#undef cx
+#undef dx
+#undef si
+#undef di
+#undef bp
+#undef sp
+#if OP_SIZE == 32
+#define ax cpu->eax
+#define bx cpu->ebx
+#define cx cpu->ecx
+#define dx cpu->edx
+#define si cpu->esi
+#define di cpu->edi
+#define bp cpu->ebp
+#define sp cpu->esp
+#else
+#define ax cpu->ax
+#define bx cpu->bx
+#define cx cpu->cx
+#define dx cpu->dx
+#define si cpu->si
+#define di cpu->di
+#define bp cpu->bp
+#define sp cpu->sp
+#endif
+
     // watch out: these macros can evaluate the arguments any number of times
 #define MEM_(addr,size) MEM_GET(cpu, addr, size)
 #define MEM(addr) MEM_(addr,OP_SIZE)
 #define MEM8(addr) MEM_(addr,8)
 #define REG_(reg_id,size) REG_VAL(cpu, reg_id, size)
+#undef REG // was last defined in modrm.h
 #define REG(reg_id) REG_(reg_id, OP_SIZE)
 #define REGPTR_(regptr,size) REG_(CONCAT3(regptr.reg,size,_id),size)
 #define REGPTR(regptr) REGPTR_(regptr, OP_SIZE)
 #define REGPTR8(regptr) REGPTR_(regptr, 8)
 
-    // used by MODRM_MEM, don't use for anything else
+#define CHECK_W(addr) CHECK_WRITE(cpu, addr)
+
     struct modrm_info modrm;
     dword_t addr;
-#define DECODE_MODRM(size) \
-    modrm_decode##size(cpu, &addr, &modrm)
-#define MODRM_VAL_(size) \
-    *(modrm.type == mod_reg ? &REGPTR_(modrm.modrm_reg, size) : &MEM_(addr, size))
-#define MODRM_VAL MODRM_VAL_(OP_SIZE)
-#define MODRM_VAL8 MODRM_VAL_(8)
-
-#define PUSH(thing) \
-    cpu->esp -= OP_SIZE/8; \
-    MEM(cpu->esp) = thing
-#define POP(thing) \
-    thing = MEM(cpu->esp); \
-    cpu->esp += OP_SIZE/8
+#define READMODRM modrm_decode32(cpu, &addr, &modrm)
+#define MODRM_CHECK_W if (modrm.type != mod_reg) { CHECK_W(addr); }
+#define READMODRM_W READMODRM; MODRM_CHECK_W
+#define modrm_val_(size) \
+    *(modrm.type == mod_reg ? &REGPTR_(modrm.modrm_regid, size) : &MEM_(addr, size))
+#define modrm_val modrm_val_(OP_SIZE)
+#define modrm_val8 modrm_val_(8)
+#define modrm_val16 modrm_val_(16)
+#define modrm_reg REGPTR(modrm.reg)
+#define modrm_reg8 REGPTR8(modrm.reg)
 
 #undef imm
     byte_t imm8;
@@ -58,202 +76,225 @@ int cpu_step(struct cpu_state *cpu) {
 #define READIMM_(name,size) \
     name = MEM_(cpu->eip,size); \
     cpu->eip += size/8; \
-    TRACE("immediate: %x", name)
+    TRACE("imm %x ", name)
 #define imm CONCAT(imm, OP_SIZE)
 #define READIMM READIMM_(imm, OP_SIZE)
 #define READIMM8 READIMM_(imm8, 8)
 #define READADDR READIMM_(addr, 32)
+#define READADDR_W READADDR; CHECK_W(addr)
 
+    TRACE("%08x\t", cpu->eip);
     byte_t insn = MEM8(cpu->eip);
-    TRACE_("0x%x: ", insn);
     cpu->eip++;
+    TRACE("%02x ", insn);
     switch (insn) {
         // if any instruction handlers declare variables, they should create a
         // new block for those variables.
         // any subtraction that occurs probably needs to have a cast to a
         // signed type, so sign extension happens.
 
-        case 0x31:
-            TRACE("xor reg, modrm");
-            DECODE_MODRM(32);
-            MODRM_VAL ^= REGPTR(modrm.reg);
-            break;
+        case 0x0d: TRACEI("or imm, eax\t");
+                   READIMM; OR(imm, ax); break;
 
-        case 0x50:
-            TRACE("push eax");
-            PUSH(cpu->eax); break;
-        case 0x51:
-            TRACE("push ecx");
-            PUSH(cpu->ecx); break;
-        case 0x52:
-            TRACE("push edx");
-            PUSH(cpu->edx); break;
-        case 0x53:
-            TRACE("push ebx");
-            PUSH(cpu->ebx); break;
-        case 0x54: {
-            TRACE("push esp");
-            // need to make sure to push the old value
-            dword_t old_esp = cpu->esp;
-            PUSH(old_esp);
-            break;
-        }
-        case 0x55:
-            TRACE("push ebp");
-            PUSH(cpu->ebp); break;
-        case 0x56:
-            TRACE("push esi");
-            PUSH(cpu->esi); break;
-        case 0x57:
-            TRACE("push edi");
-            PUSH(cpu->edi); break;
-
-        case 0x58:
-            TRACE("pop eax");
-            POP(cpu->eax); break;
-        case 0x59:
-            TRACE("pop ecx");
-            POP(cpu->ecx); break;
-        case 0x5a:
-            TRACE("pop edx");
-            POP(cpu->edx); break;
-        case 0x5b:
-            TRACE("pop ebx");
-            POP(cpu->ebx); break;
-        case 0x5c: {
-            TRACE("pop esp");
-            // need to make sure to pop the old value
-            dword_t old_esp = cpu->esp;
-            POP(old_esp);
-            break;
-        }
-        case 0x5d:
-            TRACE("pop ebp");
-            POP(cpu->ebp); break;
-        case 0x5e:
-            TRACE("pop esi");
-            POP(cpu->esi); break;
-        case 0x5f:
-            TRACE("pop edi");
-            POP(cpu->edi); break;
-
-        case 0x66:
-#if OP_SIZE == 32
-            TRACE("entering 16 bit mode");
-            return cpu_step16(cpu);
-#else
-            TRACE("entering 32 bit mode");
-            return cpu_step32(cpu);
-#endif
-
-        case 0x68:
-            TRACE("push imm");
-            READIMM;
-            PUSH(imm);
-            break;
-
-        case 0x83:
-            TRACE("grp1 imm8, reg");
-            DECODE_MODRM(32); READIMM8;
-            switch (modrm.opcode) {
-                case 0b100:
-                    TRACE("and");
-                    MODRM_VAL &= (int8_t) imm8;
+        case 0x0f:
+            // 2-byte opcode prefix
+            insn = MEM8(cpu->eip);
+            cpu->eip++;
+            TRACE("%02x ", insn);
+            switch (insn) {
+                case 0xa2:
+                    TRACEI("cpuid");
+                    do_cpuid(&cpu->eax, &cpu->ebx, &cpu->ecx, &cpu->edx);
                     break;
-                case 0b101:
-                    TRACE("sub");
-                    MODRM_VAL -= (int8_t) imm8;
-                    break;
+
+                // TODO more sets
+                case 0x94: TRACEI("sete\t");
+                           READMODRM_W; SET(E, modrm_val8); break;
+
+                // TODO more jumps
+                case 0x84: TRACEI("je rel\t");
+                           READIMM; J_REL(E, imm); break;
+                case 0x85: TRACEI("jne rel\t");
+                           READIMM; J_REL(!E, imm); break;
+
+                case 0xb6: TRACEI("movz modrm8, reg");
+                           READMODRM; MOV(modrm_val8, modrm_reg); break;
+                case 0xb7: TRACEI("movz modrm16, reg");
+                           READMODRM; MOV(modrm_val16, modrm_reg); break;
+
                 default:
-                    TRACE("undefined");
+                    TRACEI("undefined");
                     return INT_UNDEFINED;
             }
             break;
 
-        case 0x88:
-            TRACE("movb reg, modrm");
-            DECODE_MODRM(32);
-            MODRM_VAL8 = REGPTR8(modrm.reg);
-            break;
+        case 0x31:
+            TRACEI("xor reg, modrm");
+            READMODRM_W; XOR(modrm_reg, modrm_val); break;
+        case 0x33:
+            TRACEI("xor modrm, reg");
+            READMODRM; XOR(modrm_val, modrm_reg); break;
 
-        case 0x89:
-            TRACE("mov reg, modrm");
-            DECODE_MODRM(32);
-            MODRM_VAL = REGPTR(modrm.reg);
-            break;
+        case 0x50: TRACEI("push eax");
+                   PUSH(ax); break;
+        case 0x51: TRACEI("push ecx");
+                   PUSH(cx); break;
+        case 0x52: TRACEI("push edx");
+                   PUSH(dx); break;
+        case 0x53: TRACEI("push ebx");
+                   PUSH(bx); break;
+        case 0x54: {
+            TRACEI("push esp");
+            // need to make sure to push the old value
+            dword_t old_sp = sp;
+            PUSH(old_sp); break;
+        }
+        case 0x55: TRACEI("push ebp");
+                   PUSH(bp); break;
+        case 0x56: TRACEI("push esi");
+                   PUSH(si); break;
+        case 0x57: TRACEI("push edi");
+                   PUSH(di); break;
 
-        case 0x8a:
-            TRACE("mov modrm, reg");
-            DECODE_MODRM(32);
-            REGPTR8(modrm.reg) = MODRM_VAL8;
+        case 0x58: TRACEI("pop eax");
+                   POP(ax); break;
+        case 0x59: TRACEI("pop ecx");
+                   POP(cx); break;
+        case 0x5a: TRACEI("pop edx");
+                   POP(dx); break;
+        case 0x5b: TRACEI("pop ebx");
+                   POP(bx); break;
+        case 0x5c: {
+            TRACEI("pop esp");
+            dword_t new_sp;
+            POP(new_sp);
+            sp = new_sp;
             break;
+        }
+        case 0x5d: TRACEI("pop ebp");
+                   POP(bp); break;
+        case 0x5e: TRACEI("pop esi");
+                   POP(si); break;
+        case 0x5f: TRACEI("pop edi");
+                   POP(di); break;
 
-        case 0x8b:
-            TRACE("mov modrm, reg");
-            DECODE_MODRM(32);
-            REGPTR(modrm.reg) = MODRM_VAL;
-            break;
+        case 0x66:
+#if OP_SIZE == 32
+            TRACE("entering 16 bit mode\n");
+            return cpu_step16(cpu);
+#else
+            TRACE("entering 32 bit mode\n");
+            return cpu_step32(cpu);
+#endif
+
+        case 0x68: TRACEI("push imm\t");
+                   READIMM; PUSH(imm); break;
+
+        case 0x74: TRACEI("je rel8\t");
+                   READIMM8; J_REL(E, (int8_t) imm8); break;
+        case 0x75: TRACEI("jne rel8\t");
+                   READIMM8; J_REL(!E, (int8_t) imm8); break;
+        case 0x77: TRACEI("ja rel8\t");
+                   READIMM8; J_REL(!BE, (int8_t) imm8); break;
+        case 0x7e: TRACEI("jle rel8\t");
+                   READIMM8; J_REL(LE, (int8_t) imm8); break;
+
+        case 0x80: TRACEI("grp1 imm8, modrm8");
+                   READMODRM_W; READIMM8; GRP1(imm8, modrm_val8); break;
+        case 0x81: TRACEI("grp1 imm, modrm");
+                   READMODRM_W; READIMM; GRP1(imm, modrm_val); break;
+        case 0x83: TRACEI("grp1 imm8, modrm");
+                   READMODRM_W; READIMM8; GRP1((uint32_t) (int8_t) imm8, modrm_val); break;
+
+        case 0x84: TRACEI("test reg8, modrm8");
+                   READMODRM; TEST(modrm_reg8, modrm_val8); break;
+        case 0x85: TRACEI("test reg, modrm");
+                   READMODRM; TEST(modrm_reg, modrm_val); break;
+
+        case 0x88: TRACEI("mov reg8, modrm8");
+                   READMODRM_W; MOV(modrm_reg8, modrm_val8); break;
+        case 0x89: TRACEI("mov reg, modrm");
+                   READMODRM_W; MOV(modrm_reg, modrm_val); break;
+        case 0x8a: TRACEI("mov modrm8, reg8");
+                   READMODRM; MOV(modrm_val8, modrm_reg8); break;
+        case 0x8b: TRACEI("mov modrm, reg");
+                   READMODRM; MOV(modrm_val, modrm_reg); break;
 
         case 0x8d:
-            TRACE("lea modrm, reg");
-            DECODE_MODRM(32);
+            TRACEI("lea\t\t");
+            READMODRM;
             if (modrm.type == mod_reg) {
                 return INT_UNDEFINED;
             }
-            REGPTR(modrm.reg) = addr;
+            modrm_reg = addr; break;
+
+        case 0xa1: TRACEI("mov mem, eax\t");
+                   READADDR_W; MOV(MEM(addr), ax); break;
+        case 0xa3: TRACEI("mov eax, mem\t");
+                   READADDR_W; MOV(ax, MEM(addr)); break;
+
+        case 0xb8: TRACEI("mov imm, eax\t");
+                   READIMM; MOV(imm, ax); break;
+        case 0xb9: TRACEI("mov imm, ecx\t");
+                   READIMM; MOV(imm, cx); break;
+        case 0xba: TRACEI("mov imm, edx\t");
+                   READIMM; MOV(imm, dx); break;
+        case 0xbb: TRACEI("mov imm, ebx\t");
+                   READIMM; MOV(imm, bx); break;
+        case 0xbc: TRACEI("mov imm, esp\t");
+                   READIMM; MOV(imm, sp); break;
+
+        case 0xc1:
+            TRACEI("shift imm8, modrm");
+            READMODRM_W; READIMM8;
+            modrm_val = do_shift(modrm_val, imm8, modrm.opcode);
             break;
 
-        case 0xa1:
-            TRACE("mov (immediate), eax");
-            READADDR;
-            cpu->eax = MEM(addr);
+        case 0xc3: TRACEI("ret near");
+                   RET_NEAR(); break;
+
+        case 0xcd: TRACEI("int imm8");
+                   READIMM8; INT(imm8); break;
+
+        case 0xc6: TRACEI("mov imm8, modrm8");
+                   READMODRM_W; READIMM8; MOV(imm8, modrm_val8); break;
+        case 0xc7: TRACEI("mov imm, modrm");
+                   READMODRM_W; READIMM; MOV(imm, modrm_val); break;
+
+        case 0xe8:
+            TRACEI("call near\t");
+            READIMM;
+            PUSH(cpu->eip);
+            JMP_REL(imm);
             break;
 
-        case 0xb8:
-            TRACE("mov immediate, eax");
-            READIMM; cpu->eax = imm; break;
-        case 0xb9:
-            TRACE("mov immediate, ecx");
-            READIMM; cpu->ecx = imm; break;
-        case 0xba:
-            TRACE("mov immediate, edx");
-            READIMM; cpu->edx = imm; break;
-        case 0xbb:
-            TRACE("mov immediate, ebx");
-            READIMM; cpu->ebx = imm; break;
-        case 0xbc:
-            TRACE("mov immediate, esp");
-            READIMM; cpu->esp = imm; break;
-        case 0xbd:
-            TRACE("mov immediate, ebx");
-            READIMM; cpu->ebx = imm; break;
-        case 0xbe:
-            TRACE("mov immediate, ebx");
-            READIMM; cpu->ebx = imm; break;
-        case 0xbf:
-            TRACE("mov immediate, ebx");
-            READIMM; cpu->ebx = imm; break;
+        case 0xe9: TRACEI("jmp rel\t");
+                   READIMM; JMP_REL(imm); break;
 
-        case 0xcd:
-            TRACE("int");
-            READIMM8; return imm8;
+        case 0xf3:
+            insn = MEM8(cpu->eip);
+            cpu->eip++;
+            TRACE("%02x ", insn);
+            switch (insn) {
+                case 0xc3: TRACEI("repz ret\t"); RET_NEAR(); break;
+                default: TRACE("undefined\n"); return INT_UNDEFINED;
+            }
+            break;
 
-        case 0xc6:
-            TRACE("mov imm8, modrm8");
-            DECODE_MODRM(32); READIMM8;
-            MODRM_VAL = imm8;
-            break;
-        case 0xc7:
-            TRACE("mov imm, modrm");
-            DECODE_MODRM(32); READIMM;
-            MODRM_VAL = imm;
-            break;
+        case 0xf6: TRACEI("grp3 modrm8\t");
+                   READMODRM; GRP38(modrm_val8); break;
+        case 0xf7: TRACEI("grp3 modrm\t");
+                   READMODRM; GRP3(modrm_val); break;
+
+        case 0xff: TRACEI("grp5 modrm\t");
+                   READMODRM; GRP5(modrm_val); break;
 
         default:
-            TRACE("undefined");
+            TRACE("undefined\n");
             debugger;
             return INT_UNDEFINED;
     }
+    TRACE("\n");
     return -1; // everything is ok.
 }
 

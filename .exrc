@@ -1,7 +1,7 @@
 let g:neomake_c_enabled_makers = ['clangcheck']
 let g:neomake_c_clangcheck_maker = {
     \ 'exe': 'clang-check',
-    \ 'args': ['-p', 'build', '%:p'],
+    \ 'args': ['-p', 'build', '-extra-arg=-Xclang', '-extra-arg=-fno-color-diagnostics', '%:p'],
     \ 'errorformat':
         \ '%-G../%f:%s:,' .
         \ '../%f:%l:%c: %trror: %m,' .
