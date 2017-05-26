@@ -4,22 +4,24 @@
 #define REG(byte) ((byte & 0b00111000) >> 3)
 #define RM(byte)  ((byte & 0b00000111) >> 0)
 
-#define MAKE_REGPTR(r32, r16, r8) ((struct regptr) { \
+#define MAKE_REGPTR(r32, r16, r8, xmm) ((struct regptr) { \
         .reg32_id = REG_ID(r32), \
         .reg16_id = REG_ID(r16), \
-        .reg8_id = REG_ID(r8) \
+        .reg8_id = REG_ID(r8), \
+        .reg64_id = REG_ID(xmm.qlow), \
+        .reg64_high_id = REG_ID(xmm.qhigh) \
         })
 
 static inline struct regptr decode_reg(byte_t reg) {
     switch (reg) {
-        case 0b000: return MAKE_REGPTR(eax,ax,al);
-        case 0b001: return MAKE_REGPTR(ecx,cx,cl);
-        case 0b010: return MAKE_REGPTR(edx,dx,dl);
-        case 0b011: return MAKE_REGPTR(ebx,bx,bl);
-        case 0b100: return MAKE_REGPTR(esp,sp,ah);
-        case 0b101: return MAKE_REGPTR(ebp,bp,ch);
-        case 0b110: return MAKE_REGPTR(esi,si,dh);
-        case 0b111: return MAKE_REGPTR(edi,di,bh);
+        case 0b000: return MAKE_REGPTR(eax,ax,al,xmm[0]);
+        case 0b001: return MAKE_REGPTR(ecx,cx,cl,xmm[1]);
+        case 0b010: return MAKE_REGPTR(edx,dx,dl,xmm[2]);
+        case 0b011: return MAKE_REGPTR(ebx,bx,bl,xmm[3]);
+        case 0b100: return MAKE_REGPTR(esp,sp,ah,xmm[4]);
+        case 0b101: return MAKE_REGPTR(ebp,bp,ch,xmm[5]);
+        case 0b110: return MAKE_REGPTR(esi,si,dh,xmm[6]);
+        case 0b111: return MAKE_REGPTR(edi,di,bh,xmm[7]);
     }
     fprintf(stderr, "fuck\n"); abort();
 }

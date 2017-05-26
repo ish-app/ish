@@ -6,10 +6,12 @@ struct regptr {
     reg_id_t reg8_id;
     reg_id_t reg16_id;
     reg_id_t reg32_id;
+    reg_id_t reg64_id;
+    reg_id_t reg64_high_id;
 };
 static const char *regptr_name(struct regptr regptr) {
     static char buf[15];
-    sprintf(buf, "%s/%s/%s", 
+    sprintf(buf, "%s/%s/%s",
             reg8_name(regptr.reg8_id),
             reg16_name(regptr.reg16_id),
             reg32_name(regptr.reg32_id));

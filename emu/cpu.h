@@ -10,6 +10,13 @@ void cpu_run(struct cpu_state *cpu);
 int cpu_step32(struct cpu_state *cpu);
 int cpu_step16(struct cpu_state *cpu);
 
+union xmm_reg {
+    struct {
+        qword_t qhigh, qlow;
+    };
+    // TODO more forms
+};
+
 struct cpu_state {
     pagetable pt;
 
@@ -41,6 +48,8 @@ struct cpu_state {
     _REG(di);
     _REG(bp);
     _REG(sp);
+
+    union xmm_reg xmm[8];
 
     dword_t eip;
 

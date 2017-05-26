@@ -53,6 +53,7 @@ int cpu_step(struct cpu_state *cpu) {
 #define REGPTR_(regptr,size) REG_(CONCAT3(regptr.reg,size,_id),size)
 #define REGPTR(regptr) REGPTR_(regptr, OP_SIZE)
 #define REGPTR8(regptr) REGPTR_(regptr, 8)
+#define REGPTR64(regptr) REGPTR_(regptr, 64)
 
 #define CHECK_W(addr) CHECK_WRITE(cpu, addr)
 
@@ -66,8 +67,10 @@ int cpu_step(struct cpu_state *cpu) {
 #define modrm_val modrm_val_(OP_SIZE)
 #define modrm_val8 modrm_val_(8)
 #define modrm_val16 modrm_val_(16)
+#define modrm_val64 modrm_val_(64)
 #define modrm_reg REGPTR(modrm.reg)
 #define modrm_reg8 REGPTR8(modrm.reg)
+#define modrm_reg64 REGPTR64(modrm.reg)
 
 #undef imm
     byte_t imm8;
@@ -82,25 +85,29 @@ int cpu_step(struct cpu_state *cpu) {
 #define READIMM8 READIMM_(imm8, 8)
 #define READADDR READIMM_(addr, 32)
 #define READADDR_W READADDR; CHECK_W(addr)
+    byte_t insn;
+#define READINSN \
+    insn = MEM8(cpu->eip); \
+    cpu->eip++; \
+    TRACE("%02x ", insn);
 
     TRACE("%08x\t", cpu->eip);
-    byte_t insn = MEM8(cpu->eip);
-    cpu->eip++;
-    TRACE("%02x ", insn);
+    READINSN;
     switch (insn) {
         // if any instruction handlers declare variables, they should create a
         // new block for those variables.
         // any subtraction that occurs probably needs to have a cast to a
         // signed type, so sign extension happens.
 
+        case 0x01: TRACEI("add reg, modrm");
+                   READMODRM_W; ADD(modrm_reg, modrm_val); break;
+
         case 0x0d: TRACEI("or imm, eax\t");
                    READIMM; OR(imm, ax); break;
 
         case 0x0f:
             // 2-byte opcode prefix
-            insn = MEM8(cpu->eip);
-            cpu->eip++;
-            TRACE("%02x ", insn);
+            READINSN;
             switch (insn) {
                 case 0xa2:
                     TRACEI("cpuid");
@@ -122,18 +129,29 @@ int cpu_step(struct cpu_state *cpu) {
                 case 0xb7: TRACEI("movz modrm16, reg");
                            READMODRM; MOV(modrm_val16, modrm_reg); break;
 
+                case 0xd6:
+                    // someone tell intel to get sane
+                    if (OP_SIZE == 16) {
+                        TRACEI("movq xmm, modrm");
+                        READMODRM_W; MOV(modrm_reg64, modrm_reg64);
+                    }
+                    break;
+
                 default:
                     TRACEI("undefined");
                     return INT_UNDEFINED;
             }
             break;
 
-        case 0x31:
-            TRACEI("xor reg, modrm");
-            READMODRM_W; XOR(modrm_reg, modrm_val); break;
-        case 0x33:
-            TRACEI("xor modrm, reg");
-            READMODRM; XOR(modrm_val, modrm_reg); break;
+        case 0x31: TRACEI("xor reg, modrm");
+                   READMODRM_W; XOR(modrm_reg, modrm_val); break;
+        case 0x33: TRACEI("xor modrm, reg");
+                   READMODRM; XOR(modrm_val, modrm_reg); break;
+
+        case 0x39: TRACEI("cmp reg, modrm");
+                   READMODRM; CMP(modrm_reg, modrm_val); break;
+        case 0x3d: TRACEI("cmp imm, eax");
+                   READIMM; CMP(imm, ax); break;
 
         case 0x50: TRACEI("push eax");
                    PUSH(ax); break;
@@ -189,22 +207,28 @@ int cpu_step(struct cpu_state *cpu) {
 
         case 0x68: TRACEI("push imm\t");
                    READIMM; PUSH(imm); break;
+        case 0x6a: TRACEI("push imm8\t");
+                   READIMM8; PUSH(imm8); break;
 
+        case 0x73: TRACEI("jnb rel8\t");
+                   READIMM8; J_REL(!B, (int8_t) imm8); break;
         case 0x74: TRACEI("je rel8\t");
                    READIMM8; J_REL(E, (int8_t) imm8); break;
         case 0x75: TRACEI("jne rel8\t");
                    READIMM8; J_REL(!E, (int8_t) imm8); break;
+        case 0x76: TRACEI("jbe rel8\t");
+                   READIMM8; J_REL(BE, (int8_t) imm8); break;
         case 0x77: TRACEI("ja rel8\t");
                    READIMM8; J_REL(!BE, (int8_t) imm8); break;
         case 0x7e: TRACEI("jle rel8\t");
                    READIMM8; J_REL(LE, (int8_t) imm8); break;
 
         case 0x80: TRACEI("grp1 imm8, modrm8");
-                   READMODRM_W; READIMM8; GRP1(imm8, modrm_val8); break;
+                   READMODRM; READIMM8; GRP1(imm8, modrm_val8); break;
         case 0x81: TRACEI("grp1 imm, modrm");
-                   READMODRM_W; READIMM; GRP1(imm, modrm_val); break;
+                   READMODRM; READIMM; GRP1(imm, modrm_val); break;
         case 0x83: TRACEI("grp1 imm8, modrm");
-                   READMODRM_W; READIMM8; GRP1((uint32_t) (int8_t) imm8, modrm_val); break;
+                   READMODRM; READIMM8; GRP1((uint32_t) (int8_t) imm8, modrm_val); break;
 
         case 0x84: TRACEI("test reg8, modrm8");
                    READMODRM; TEST(modrm_reg8, modrm_val8); break;
@@ -243,6 +267,12 @@ int cpu_step(struct cpu_state *cpu) {
                    READIMM; MOV(imm, bx); break;
         case 0xbc: TRACEI("mov imm, esp\t");
                    READIMM; MOV(imm, sp); break;
+        case 0xbd: TRACEI("mov imm, ebp\t");
+                   READIMM; MOV(imm, bp); break;
+        case 0xbe: TRACEI("mov imm, esi\t");
+                   READIMM; MOV(imm, si); break;
+        case 0xbf: TRACEI("mov imm, edi\t");
+                   READIMM; MOV(imm, di); break;
 
         case 0xc1:
             TRACEI("shift imm8, modrm");
@@ -253,7 +283,7 @@ int cpu_step(struct cpu_state *cpu) {
         case 0xc3: TRACEI("ret near");
                    RET_NEAR(); break;
 
-        case 0xcd: TRACEI("int imm8");
+        case 0xcd: TRACEI("int imm8\t");
                    READIMM8; INT(imm8); break;
 
         case 0xc6: TRACEI("mov imm8, modrm8");
@@ -263,19 +293,28 @@ int cpu_step(struct cpu_state *cpu) {
 
         case 0xe8:
             TRACEI("call near\t");
-            READIMM;
-            PUSH(cpu->eip);
-            JMP_REL(imm);
+            READIMM; CALL_REL(imm);
             break;
 
         case 0xe9: TRACEI("jmp rel\t");
                    READIMM; JMP_REL(imm); break;
 
         case 0xf3:
-            insn = MEM8(cpu->eip);
-            cpu->eip++;
-            TRACE("%02x ", insn);
+            READINSN;
             switch (insn) {
+                case 0x0f:
+                    // 2-byte opcode prefix
+                    // after a rep prefix, means we have sse/mmx insanity
+                    READINSN;
+                    switch (insn) {
+                        case 0x7e: TRACEI("movq modrm, xmm");
+                                   READMODRM; MOV(modrm_val64, modrm_reg64);
+                    }
+                    break;
+                // repz ret is equivalent to ret but on some amd chips there's
+                // a branch prediction penalty if the target of a branch is a
+                // ret. gcc used to use nop ret but repz ret is only one
+                // instruction
                 case 0xc3: TRACEI("repz ret\t"); RET_NEAR(); break;
                 default: TRACE("undefined\n"); return INT_UNDEFINED;
             }
@@ -291,7 +330,6 @@ int cpu_step(struct cpu_state *cpu) {
 
         default:
             TRACE("undefined\n");
-            debugger;
             return INT_UNDEFINED;
     }
     TRACE("\n");

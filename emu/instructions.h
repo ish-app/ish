@@ -50,16 +50,19 @@
 #define INC(val) ADD(1, val)
 #define DEC(val) SUB(1, val)
 
+#define CALL(loc) PUSH(cpu->eip); JMP(loc)
+#define CALL_REL(offset) PUSH(cpu->eip); JMP_REL(offset)
+
 #define GRP1(src, dst) \
     switch (modrm.opcode) { \
         case 0b000: TRACE("add"); \
-                    ADD(src, dst); break; \
+                    MODRM_CHECK_W; ADD(src, dst); break; \
         case 0b001: TRACE("or"); \
-                    OR(src, dst); break; \
+                    MODRM_CHECK_W; OR(src, dst); break; \
         case 0b100: TRACE("and"); \
-                    AND(src, dst); break; \
+                    MODRM_CHECK_W; AND(src, dst); break; \
         case 0b101: TRACE("sub"); \
-                    SUB(src, dst); break; \
+                    MODRM_CHECK_W; SUB(src, dst); break; \
         case 0b111: TRACE("cmp"); \
                     CMP(src, dst); break; \
         default: \
@@ -101,8 +104,9 @@
                 MODRM_CHECK_W; INC(val); break; \
         case 1: TRACE("dec"); \
                 MODRM_CHECK_W; DEC(val); break; \
-        case 2: TRACE("call modrm near"); return INT_UNDEFINED; \
-        case 3: TRACE("call modrm far"); return INT_UNDEFINED; \
+        case 2: TRACE("call indirect near"); \
+                CALL(modrm_val); break; \
+        case 3: TRACE("call indirect far"); return INT_UNDEFINED; \
         case 4: TRACE("jmp indirect near"); \
                 JMP(modrm_val); break; \
         case 5: TRACE("jmp indirect far"); return INT_UNDEFINED; \
