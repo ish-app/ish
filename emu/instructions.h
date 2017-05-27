@@ -14,44 +14,52 @@
     return code
 
 #define SETRES(result) \
-    cpu->res = (result); cpu->zf_res = cpu->sf_res = cpu->pf_res = 1;
+    cpu->res = (result); cpu->zf_res = cpu->sf_res = cpu->pf_res = 1
 
 #define TEST(src, dst) \
     cpu->res = (dst) & (src); \
-    cpu->cf = cpu->of = 0;
+    cpu->cf = cpu->of = 0
 
 #define ADD(src, dst) \
     cpu->cf = __builtin_add_overflow((uint32_t) (dst), (uint32_t) (src), (uint32_t *) &cpu->res); \
     cpu->of = __builtin_add_overflow((int32_t) (dst), (int32_t) (src), (int32_t *) &cpu->res); \
-    (dst) = cpu->res;
+    (dst) = cpu->res
 
 #define OR(src, dst) \
     (dst) |= (src); \
     cpu->cf = cpu->of = 0; \
-    SETRES(dst);
+    SETRES(dst)
 
 #define AND(src, dst) \
     (dst) &= (src); \
     cpu->cf = cpu->of = 0; \
-    SETRES(dst);
+    SETRES(dst)
 
 #define SUB(src, dst) \
     cpu->cf = __builtin_sub_overflow((uint32_t) (dst), (uint32_t) (src), (uint32_t *) &cpu->res); \
     cpu->of = __builtin_sub_overflow((int32_t) (dst), (int32_t) (src), (int32_t *) &cpu->res); \
-    (dst) = cpu->res;
+    (dst) = cpu->res
 
 // TODO flags
 #define XOR(src, dst) dst ^= src;
 
 #define CMP(src, dst) \
     cpu->cf = __builtin_sub_overflow((uint32_t) (dst), (uint32_t) (src), (uint32_t *) &cpu->res); \
-    cpu->of = __builtin_sub_overflow((int32_t) (dst), (int32_t) (src), (int32_t *) &cpu->res);
+    cpu->of = __builtin_sub_overflow((int32_t) (dst), (int32_t) (src), (int32_t *) &cpu->res)
 
-#define INC(val) ADD(1, val)
-#define DEC(val) SUB(1, val)
+#define INC(val) do { \
+    int tmp = cpu->cf; \
+    ADD(1, val); \
+    cpu->cf = tmp; \
+} while (0)
+#define DEC(val) do { \
+    int tmp = cpu->cf; \
+    SUB(1, val); \
+    cpu->cf = tmp; \
+} while (0)
 
 #define IMUL(reg, val) \
-    reg *= val;
+    reg *= val
     // TODO flags
 
 #define DIV(reg, val, rem) \

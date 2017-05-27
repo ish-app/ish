@@ -12,7 +12,7 @@ syscall_t syscall_table[] = {
     [4] =  (syscall_t) _sys_write, // 4
     [11] = (syscall_t) _sys_execve, // 11
     [45] = (syscall_t) sys_brk, // 45
-
+    [122] = (syscall_t) _sys_uname,
     [243] = (syscall_t) sys_set_thread_area,
 };
 

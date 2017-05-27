@@ -15,9 +15,11 @@ sys_src = [
     'sys/calls.c',
     'sys/user.c',
     'sys/exec/exec.c',
+
     'sys/exit.c',
     'sys/write.c',
     'sys/brk.c',
+    'sys/uname.c',
     'sys/tls.c',
 ]
 emu_src = [

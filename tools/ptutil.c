@@ -50,6 +50,20 @@ void pt_write(int pid, addr_t addr, dword_t val) {
     trycall(ptrace(PTRACE_POKEDATA, pid, addr, out), "memory write");
 }
 
+static void pt_write8(int pid, addr_t addr, byte_t val) {
+    // when a 64-bit process traces a 32-bit process, all writes are 64-bit. gah
+    uint64_t thingy = trycall(ptrace(PTRACE_PEEKDATA, pid, addr + 1), "memory write read");
+    uint64_t out = thingy << 8 | val;
+    trycall(ptrace(PTRACE_POKEDATA, pid, addr, out), "memory write");
+}
+
+void pt_copy(int pid, addr_t addr, const void *vdata, size_t len) {
+    const byte_t *data = (byte_t *) vdata;
+    for (int i = 0; i < len; i++) {
+        pt_write8(pid, addr + i, data[i]);
+    }
+}
+
 static addr_t aux_addr(int pid, int type) {
     struct user_regs_struct regs;
     trycall(ptrace(PTRACE_GETREGS, pid, NULL, &regs), "ptrace get sp for aux");

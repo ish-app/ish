@@ -111,6 +111,8 @@ restart:
         case 0x05: TRACEI("add imm, eax");
                    READIMM; ADD(imm, ax); break;
 
+        case 0x09: TRACEI("or reg, modrm");
+                   READMODRM_W; OR(modrm_reg, modrm_val); break;
         case 0x0d: TRACEI("or imm, eax\t");
                    READIMM; OR(imm, ax); break;
 
@@ -123,17 +125,44 @@ restart:
                     do_cpuid(&cpu->eax, &cpu->ebx, &cpu->ecx, &cpu->edx);
                     break;
 
+                case 0x80: TRACEI("jo rel\t");
+                           READIMM; J_REL(O, imm); break;
+                case 0x81: TRACEI("jno rel\t");
+                           READIMM; J_REL(!O, imm); break;
+                case 0x82: TRACEI("jb rel\t");
+                           READIMM; J_REL(B, imm); break;
+                case 0x83: TRACEI("jnb rel\t");
+                           READIMM; J_REL(!B, imm); break;
+                case 0x84: TRACEI("je rel\t");
+                           READIMM; J_REL(E, imm); break;
+                case 0x85: TRACEI("jne rel\t");
+                           READIMM; J_REL(!E, imm); break;
+                case 0x86: TRACEI("jbe rel\t");
+                           READIMM; J_REL(BE, imm); break;
+                case 0x87: TRACEI("ja rel\t");
+                           READIMM; J_REL(!BE, imm); break;
+                case 0x88: TRACEI("js rel\t");
+                           READIMM; J_REL(S, imm); break;
+                case 0x89: TRACEI("jns rel\t");
+                           READIMM; J_REL(!S, imm); break;
+                case 0x8a: TRACEI("jp rel\t");
+                           READIMM; J_REL(P, imm); break;
+                case 0x8b: TRACEI("jnp rel\t");
+                           READIMM; J_REL(!P, imm); break;
+                case 0x8c: TRACEI("jl rel\t");
+                           READIMM; J_REL(L, imm); break;
+                case 0x8d: TRACEI("jnl rel\t");
+                           READIMM; J_REL(!L, imm); break;
+                case 0x8e: TRACEI("jle rel\t");
+                           READIMM; J_REL(LE, imm); break;
+                case 0x8f: TRACEI("jnle rel\t");
+                           READIMM; J_REL(!LE, imm); break;
+
                 // TODO more sets
                 case 0x92: TRACEI("setb\t");
                            READMODRM_W; SET(B, modrm_val8); break;
                 case 0x94: TRACEI("sete\t");
                            READMODRM_W; SET(E, modrm_val8); break;
-
-                // TODO more jumps
-                case 0x84: TRACEI("je rel\t");
-                           READIMM; J_REL(E, imm); break;
-                case 0x85: TRACEI("jne rel\t");
-                           READIMM; J_REL(!E, imm); break;
 
                 case 0xaf: TRACEI("imul modrm, reg");
                            READMODRM; IMUL(modrm_reg, modrm_val); break;
@@ -142,6 +171,10 @@ restart:
                            READMODRM; MOV(modrm_val8, modrm_reg); break;
                 case 0xb7: TRACEI("movz modrm16, reg");
                            READMODRM; MOV(modrm_val16, modrm_reg); break;
+                case 0xbe: TRACEI("movs modrm8, reg");
+                           READMODRM; MOV((int8_t) modrm_val8, modrm_reg); break;
+                case 0xbf: TRACEI("movs modrm16, reg");
+                           READMODRM; MOV((int16_t) modrm_val16, modrm_reg); break;
 
                 case 0xd6:
                     // someone tell intel to get a life
@@ -162,6 +195,8 @@ restart:
 
         case 0x29: TRACEI("sub reg, modrm");
                    READMODRM_W; SUB(modrm_reg, modrm_val); break;
+        case 0x2b: TRACEI("sub modrm, reg");
+                   READMODRM; SUB(modrm_val, modrm_reg); break;
 
         case 0x30: TRACEI("xor reg8, modrm8");
                    READMODRM_W; XOR(modrm_reg8, modrm_val8); break;
@@ -172,8 +207,13 @@ restart:
 
         case 0x39: TRACEI("cmp reg, modrm");
                    READMODRM; CMP(modrm_reg, modrm_val); break;
+        case 0x3b: TRACEI("cmp modrm, reg");
+                   READMODRM; CMP(modrm_val, modrm_reg); break;
         case 0x3d: TRACEI("cmp imm, eax");
                    READIMM; CMP(imm, ax); break;
+
+        case 0x40: TRACEI("inc eax"); INC(ax); break;
+        case 0x4a: TRACEI("dec edx"); DEC(dx); break;
 
         case 0x50: TRACEI("push eax");
                    PUSH(ax); break;
@@ -235,6 +275,12 @@ restart:
         case 0x6a: TRACEI("push imm8\t");
                    READIMM8; PUSH(imm8); break;
 
+        case 0x70: TRACEI("jo rel8\t");
+                   READIMM8; J_REL(O, (int8_t) imm8); break;
+        case 0x71: TRACEI("jno rel8\t");
+                   READIMM8; J_REL(!O, (int8_t) imm8); break;
+        case 0x72: TRACEI("jb rel8\t");
+                   READIMM8; J_REL(B, (int8_t) imm8); break;
         case 0x73: TRACEI("jnb rel8\t");
                    READIMM8; J_REL(!B, (int8_t) imm8); break;
         case 0x74: TRACEI("je rel8\t");
@@ -249,8 +295,18 @@ restart:
                    READIMM8; J_REL(S, (int8_t) imm8); break;
         case 0x79: TRACEI("jns rel8\t");
                    READIMM8; J_REL(!S, (int8_t) imm8); break;
+        case 0x7a: TRACEI("jp rel8\t");
+                   READIMM8; J_REL(P, (int8_t) imm8); break;
+        case 0x7b: TRACEI("jnp rel8\t");
+                   READIMM8; J_REL(!P, (int8_t) imm8); break;
+        case 0x7c: TRACEI("jl rel8\t");
+                   READIMM8; J_REL(L, (int8_t) imm8); break;
+        case 0x7d: TRACEI("jnl rel8\t");
+                   READIMM8; J_REL(!L, (int8_t) imm8); break;
         case 0x7e: TRACEI("jle rel8\t");
                    READIMM8; J_REL(LE, (int8_t) imm8); break;
+        case 0x7f: TRACEI("jnle rel8\t");
+                   READIMM8; J_REL(!LE, (int8_t) imm8); break;
 
         case 0x80: TRACEI("grp1 imm8, modrm8");
                    READMODRM; READIMM8; GRP1(imm8, modrm_val8); break;
@@ -268,6 +324,7 @@ restart:
                    READMODRM_W; MOV(modrm_reg8, modrm_val8); break;
         case 0x89: TRACEI("mov reg, modrm");
                    READMODRM_W; MOV(modrm_reg, modrm_val); break;
+        case 0x90: TRACEI("nop"); break;
         case 0x8a: TRACEI("mov modrm8, reg8");
                    READMODRM; MOV(modrm_val8, modrm_reg8); break;
         case 0x8b: TRACEI("mov modrm, reg");
@@ -290,7 +347,7 @@ restart:
                    break;
 
         case 0xa1: TRACEI("mov mem, eax\t");
-                   READADDR_W; MOV(MEM(addr), ax); break;
+                   READADDR; MOV(MEM(addr), ax); break;
         case 0xa3: TRACEI("mov eax, mem\t");
                    READADDR_W; MOV(ax, MEM(addr)); break;
 
@@ -333,6 +390,8 @@ restart:
 
         case 0xe9: TRACEI("jmp rel\t");
                    READIMM; JMP_REL(imm); break;
+        case 0xeb: TRACEI("jmp rel8\t");
+                   READIMM8; JMP_REL((int8_t) imm8); break;
 
         case 0xf3:
             READINSN;
