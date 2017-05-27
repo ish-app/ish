@@ -79,6 +79,9 @@ struct cpu_state {
     unsigned sf_res:1;
     dword_t res;
 
+    // See comment in sys/tls.c
+    addr_t tls_ptr;
+
 #undef REGX
 #undef REG
 };

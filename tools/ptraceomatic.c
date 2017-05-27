@@ -85,8 +85,14 @@ void step_tracing(struct cpu_state *cpu, int pid) {
         regs.rip += 2;
         trycall(ptrace(PTRACE_SETREGS, pid, NULL, &regs), "ptrace setregs step");
     } else {
-        trycall(ptrace(PTRACE_SINGLESTEP, pid, NULL, NULL), "ptrace step");
-        trycall(wait(NULL), "wait step");
+        // single step on a repeated string instruction only does one
+        // iteration, so loop until ip changes
+        long ip = regs.rip;
+        while (regs.rip == ip) {
+            trycall(ptrace(PTRACE_SINGLESTEP, pid, NULL, NULL), "ptrace step");
+            trycall(wait(NULL), "wait step");
+            trycall(ptrace(PTRACE_GETREGS, pid, NULL, &regs), "ptrace getregs step");
+        }
     }
 }
 

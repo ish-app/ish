@@ -80,7 +80,6 @@ static inline void modrm_decode32(struct cpu_state *cpu, addr_t *addr_out, struc
     cpu->eip++;
     *info_out = info;
     if (info.type == mod_reg) return;
-    *addr_out = 0;
 
     if (!info.sib) {
         if (info.modrm_regid.reg32_id != 0) {

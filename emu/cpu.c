@@ -58,7 +58,7 @@ int cpu_step(struct cpu_state *cpu) {
 #define CHECK_W(addr) CHECK_WRITE(cpu, addr)
 
     struct modrm_info modrm;
-    dword_t addr;
+    dword_t addr = 0;
 #define READMODRM modrm_decode32(cpu, &addr, &modrm)
 #define MODRM_CHECK_W if (modrm.type != mod_reg) { CHECK_W(addr); }
 #define READMODRM_W READMODRM; MODRM_CHECK_W
@@ -74,8 +74,11 @@ int cpu_step(struct cpu_state *cpu) {
 
 #undef imm
     byte_t imm8;
+#if OP_SIZE == 16
     word_t imm16;
+#else
     dword_t imm32;
+#endif
 #define READIMM_(name,size) \
     name = MEM_(cpu->eip,size); \
     cpu->eip += size/8; \
@@ -83,7 +86,8 @@ int cpu_step(struct cpu_state *cpu) {
 #define imm CONCAT(imm, OP_SIZE)
 #define READIMM READIMM_(imm, OP_SIZE)
 #define READIMM8 READIMM_(imm8, 8)
-#define READADDR READIMM_(addr, 32)
+    dword_t addr_offset = 0;
+#define READADDR READIMM_(addr_offset, 32); addr += addr_offset
 #define READADDR_W READADDR; CHECK_W(addr)
     byte_t insn;
 #define READINSN \
@@ -91,6 +95,7 @@ int cpu_step(struct cpu_state *cpu) {
     cpu->eip++; \
     TRACE("%02x ", insn);
 
+restart:
     TRACE("%08x\t", cpu->eip);
     READINSN;
     switch (insn) {
@@ -103,6 +108,8 @@ int cpu_step(struct cpu_state *cpu) {
                    READMODRM_W; ADD(modrm_reg, modrm_val); break;
         case 0x03: TRACEI("add modrm, reg");
                    READMODRM_W; ADD(modrm_val, modrm_reg); break;
+        case 0x05: TRACEI("add imm, eax");
+                   READIMM; ADD(imm, ax); break;
 
         case 0x0d: TRACEI("or imm, eax\t");
                    READIMM; OR(imm, ax); break;
@@ -156,6 +163,8 @@ int cpu_step(struct cpu_state *cpu) {
         case 0x29: TRACEI("sub reg, modrm");
                    READMODRM_W; SUB(modrm_reg, modrm_val); break;
 
+        case 0x30: TRACEI("xor reg8, modrm8");
+                   READMODRM_W; XOR(modrm_reg8, modrm_val8); break;
         case 0x31: TRACEI("xor reg, modrm");
                    READMODRM_W; XOR(modrm_reg, modrm_val); break;
         case 0x33: TRACEI("xor modrm, reg");
@@ -208,6 +217,9 @@ int cpu_step(struct cpu_state *cpu) {
                    POP(si); break;
         case 0x5f: TRACEI("pop edi");
                    POP(di); break;
+
+        case 0x65: TRACE("segment gs\n");
+                   addr += cpu->tls_ptr; goto restart;
 
         case 0x66:
 #if OP_SIZE == 32
@@ -268,6 +280,14 @@ int cpu_step(struct cpu_state *cpu) {
                 return INT_UNDEFINED;
             }
             modrm_reg = addr; break;
+        case 0x8e: TRACEI("mov modrm, seg\t");
+                   // only gs is supported, and it does nothing
+                   // see comment in sys/tls.c
+                   READMODRM;
+                   if (modrm.reg.reg32_id != REG_ID(ebp)) {
+                       return INT_UNDEFINED;
+                   }
+                   break;
 
         case 0xa1: TRACEI("mov mem, eax\t");
                    READADDR_W; MOV(MEM(addr), ax); break;
@@ -308,10 +328,8 @@ int cpu_step(struct cpu_state *cpu) {
         case 0xc7: TRACEI("mov imm, modrm");
                    READMODRM_W; READIMM; MOV(imm, modrm_val); break;
 
-        case 0xe8:
-            TRACEI("call near\t");
-            READIMM; CALL_REL(imm);
-            break;
+        case 0xe8: TRACEI("call near\t");
+                   READIMM; CALL_REL(imm); break;
 
         case 0xe9: TRACEI("jmp rel\t");
                    READIMM; JMP_REL(imm); break;
@@ -329,6 +347,7 @@ int cpu_step(struct cpu_state *cpu) {
                     }
                     break;
 
+                case 0xa4: TRACEI("rep movsb (di), (si)"); REP(MOVSB); break;
                 case 0xa5: TRACEI("rep movs (di), (si)"); REP(MOVS); break;
 
                 // repz ret is equivalent to ret but on some amd chips there's
@@ -345,8 +364,8 @@ int cpu_step(struct cpu_state *cpu) {
         case 0xf7: TRACEI("grp3 modrm\t");
                    READMODRM; GRP3(modrm_val); break;
 
-        case 0xfc: TRACEI("cld"); cpu->df = 1; break;
-        case 0xfd: TRACEI("std"); cpu->df = 0; break;
+        case 0xfc: TRACEI("cld"); cpu->df = 0; break;
+        case 0xfd: TRACEI("std"); cpu->df = 1; break;
 
         case 0xff: TRACEI("grp5 modrm\t");
                    READMODRM; GRP5(modrm_val); break;

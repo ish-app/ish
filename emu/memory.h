@@ -23,7 +23,7 @@ struct pt_entry {
 typedef struct pt_entry **pagetable;
 pagetable pt_alloc();
 
-typedef word_t pages_t;
+typedef dword_t pages_t;
 #define PAGE_ROUND_UP(bytes) (((bytes - 1) / sizeof(page)) + 1)
 
 // Map real memory into fake memory (unmaps existing mappings)

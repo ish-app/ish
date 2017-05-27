@@ -124,21 +124,27 @@
         case 7: default: TRACE("undefined"); return INT_UNDEFINED; \
     }
 
-#define BUMP_SI_DI \
+#define BUMP_SI_DI(size) \
     if (!cpu->df) { \
-        di++; si++; \
+        di += size; si += size; \
     } else { \
-        di--; si--; \
+        di -= size; si -= size; \
     }
 
 #define MOVS \
     CHECK_W(di); \
     MEM(di) = MEM(si); \
-    BUMP_SI_DI;
+    BUMP_SI_DI(OP_SIZE/8);
+
+#define MOVSB \
+    CHECK_W(di); \
+    MEM8(di) = MEM8(si); \
+    BUMP_SI_DI(1);
 
 #define REP(OP) \
-    for (unsigned i = 0; i < cx; i++) { \
+    while (cx != 0) { \
         OP; \
+        cx--; \
     }
 
 // condition codes

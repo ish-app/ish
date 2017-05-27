@@ -23,4 +23,6 @@ dword_t _sys_write(dword_t fd, addr_t data, dword_t count);
 
 addr_t sys_brk(addr_t new_brk);
 
+int sys_set_thread_area(addr_t u_info);
+
 typedef int (*syscall_t)(dword_t,dword_t,dword_t,dword_t,dword_t,dword_t);
