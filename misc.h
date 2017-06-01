@@ -31,7 +31,9 @@
 #define STR(x) _STR(x)
 #define _STR(x) #x
 
+// keywords
 #define bits unsigned int
+#define forceinline inline __attribute__((always_inline))
 
 // types
 // word_t will be 64-bit to read 64-bit elves

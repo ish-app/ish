@@ -44,8 +44,8 @@ int cpu_step(struct cpu_state *cpu) {
 #endif
 
     // watch out: these macros can evaluate the arguments any number of times
-#define MEM_(addr,size) MEM_READ(&cpu->mem, addr, size)
-#define MEM_W_(addr,size) MEM_WRITE(&cpu->mem, addr, size)
+#define MEM_(addr,size) (*(UINT(size) *) mem_read_ptr(&cpu->mem, addr))
+#define MEM_W_(addr,size) (*(UINT(size) *) mem_write_ptr(&cpu->mem, addr))
 #define MEM(addr) MEM_(addr,OP_SIZE)
 #define MEM_W(addr) MEM_W_(addr,OP_SIZE)
 #define MEM8(addr) MEM_(addr,8)
@@ -311,6 +311,7 @@ restart:
                    READIMM8; J_REL(!LE, (int8_t) imm8); break;
 
         case 0x80: TRACEI("grp1 imm8, modrm8");
+                   // FIXME this casts uint8 to int32 which is wrong
                    READMODRM; READIMM8; GRP1(imm8, modrm_val8_w); break;
         case 0x81: TRACEI("grp1 imm, modrm");
                    READMODRM; READIMM; GRP1(imm, modrm_val_w); break;

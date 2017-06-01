@@ -11,6 +11,10 @@
 
 void mem_init(struct mem *mem) {
     mem->pt = calloc(PT_SIZE, sizeof(struct pt_entry *));
+    mem->tlb = calloc(TLB_SIZE, sizeof(struct tlb_entry));
+    for (unsigned i = 0; i < TLB_SIZE; i++) {
+        mem->tlb[i].page = mem->tlb[i].page_if_writable = TLB_PAGE_EMPTY;
+    }
 }
 
 int pt_map(struct mem *mem, page_t start, pages_t pages, void *memory, unsigned flags) {
@@ -67,6 +71,27 @@ void pt_dump(struct mem *mem) {
             TRACE("flags    %x", mem->pt[i]->flags);
         }
     }
+}
+
+void *tlb_handle_miss(struct mem *mem, addr_t addr, int type) {
+    struct pt_entry *pt = mem->pt[PAGE(addr)];
+    if (pt == NULL)
+        return NULL; // page does not exist
+    if (type == TLB_WRITE && !(pt->flags & P_WRITABLE))
+        return NULL; // unwritable
+
+    // TODO if page is unwritable maybe we shouldn't bail and still add an
+    // entry to the TLB
+
+    struct tlb_entry *tlb = &mem->tlb[TLB_INDEX(addr)];
+    tlb->page = TLB_PAGE(addr);
+    if (pt->flags & P_WRITABLE)
+        tlb->page_if_writable = tlb->page;
+    else
+        // 1 is not a valid page so this won't look like a hit
+        tlb->page_if_writable = TLB_PAGE_EMPTY;
+    tlb->data = pt->data;
+    return (char *) tlb->data + OFFSET(addr);
 }
 
 __attribute__((constructor))

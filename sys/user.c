@@ -2,19 +2,19 @@
 #include "emu/process.h"
 
 dword_t user_get(addr_t addr) {
-    return MEM_READ(curmem, addr, 32);
+    return *(dword_t *) mem_read_ptr(curmem, addr);
 }
 
 byte_t user_get8(addr_t addr) {
-    return MEM_READ(curmem, addr, 8);
+    return *(byte_t *) mem_read_ptr(curmem, addr);
 }
 
 void user_put(addr_t addr, dword_t value) {
-    MEM_WRITE(curmem, addr, 32) = value;
+    *(dword_t *) mem_write_ptr(curmem, addr) = value;
 }
 
 void user_put8(addr_t addr, byte_t value) {
-    MEM_WRITE(curmem, addr, 8) = value;
+    *(byte_t *) mem_write_ptr(curmem, addr) = value;
 }
 
 int user_get_string(addr_t addr, char *buf, size_t max) {
