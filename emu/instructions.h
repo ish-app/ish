@@ -5,7 +5,7 @@
 
 #define PUSH(thing) \
     sp -= OP_SIZE/8; \
-    CHECK_W(sp); MEM(sp) = thing
+    MEM_W(sp) = thing
 #define POP(thing) \
     thing = MEM(sp); \
     sp += OP_SIZE/8
@@ -72,13 +72,13 @@
 #define GRP1(src, dst) \
     switch (modrm.opcode) { \
         case 0b000: TRACE("add"); \
-                    MODRM_CHECK_W; ADD(src, dst); break; \
+                    ADD(src, dst); break; \
         case 0b001: TRACE("or"); \
-                    MODRM_CHECK_W; OR(src, dst); break; \
+                    OR(src, dst); break; \
         case 0b100: TRACE("and"); \
-                    MODRM_CHECK_W; AND(src, dst); break; \
+                    AND(src, dst); break; \
         case 0b101: TRACE("sub"); \
-                    MODRM_CHECK_W; SUB(src, dst); break; \
+                    SUB(src, dst); break; \
         case 0b111: TRACE("cmp"); \
                     CMP(src, dst); break; \
         default: \
@@ -118,9 +118,9 @@
 #define GRP5(val) \
     switch (modrm.opcode) { \
         case 0: TRACE("inc"); \
-                MODRM_CHECK_W; INC(val); break; \
+                INC(val); break; \
         case 1: TRACE("dec"); \
-                MODRM_CHECK_W; DEC(val); break; \
+                DEC(val); break; \
         case 2: TRACE("call indirect near"); \
                 CALL(modrm_val); break; \
         case 3: TRACE("call indirect far"); return INT_UNDEFINED; \
@@ -129,7 +129,7 @@
         case 5: TRACE("jmp indirect far"); return INT_UNDEFINED; \
         case 6: TRACE("push"); \
                 PUSH(val); break; \
-        case 7: default: TRACE("undefined"); return INT_UNDEFINED; \
+        case 7: TRACE("undefined"); return INT_UNDEFINED; \
     }
 
 #define BUMP_SI_DI(size) \
@@ -140,13 +140,11 @@
     }
 
 #define MOVS \
-    CHECK_W(di); \
-    MEM(di) = MEM(si); \
+    MEM_W(di) = MEM(si); \
     BUMP_SI_DI(OP_SIZE/8);
 
 #define MOVSB \
-    CHECK_W(di); \
-    MEM8(di) = MEM8(si); \
+    MEM8_W(di) = MEM8(si); \
     BUMP_SI_DI(1);
 
 #define REP(OP) \

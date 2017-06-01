@@ -75,7 +75,7 @@ static inline struct modrm_info modrm_get_info(byte_t byte) {
 // them, and returns everything in out parameters.
 // TODO currently only does 32-bit
 static inline void modrm_decode32(struct cpu_state *cpu, addr_t *addr_out, struct modrm_info *info_out) {
-    byte_t modrm = MEM_GET(cpu, cpu->eip, 8);
+    byte_t modrm = MEM_READ(&cpu->mem, cpu->eip, 8);
     struct modrm_info info = modrm_get_info(modrm);
     cpu->eip++;
     *info_out = info;
@@ -87,7 +87,7 @@ static inline void modrm_decode32(struct cpu_state *cpu, addr_t *addr_out, struc
         }
     } else {
         // sib is simple enough to not use a table for
-        byte_t sib = MEM_GET(cpu, cpu->eip, 8);
+        byte_t sib = MEM_READ(&cpu->mem, cpu->eip, 8);
         TRACE("sib %x ", sib);
         cpu->eip++;
         dword_t reg = 0;
@@ -128,14 +128,14 @@ static inline void modrm_decode32(struct cpu_state *cpu, addr_t *addr_out, struc
     int disp;
     switch (info.type) {
         case mod_disp8: {
-            disp = (int8_t) MEM_GET(cpu, cpu->eip, 8);
+            disp = (int8_t) MEM_READ(&cpu->mem, cpu->eip, 8);
             TRACE("disp %s0x%x ", (disp < 0 ? "-" : ""), (disp < 0 ? -disp : disp));
             *addr_out += disp;
             cpu->eip++;
             break;
         }
         case mod_disp32: {
-            disp = (int32_t) MEM_GET(cpu, cpu->eip, 32);
+            disp = (int32_t) MEM_READ(&cpu->mem, cpu->eip, 32);
             TRACE("disp %s0x%x ", (disp < 0 ? "-" : ""), (disp < 0 ? -disp : disp));
             *addr_out += disp;
             cpu->eip += 4;

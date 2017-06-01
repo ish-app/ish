@@ -31,6 +31,8 @@
 #define STR(x) _STR(x)
 #define _STR(x) #x
 
+#define bits unsigned int
+
 // types
 // word_t will be 64-bit to read 64-bit elves
 typedef uint64_t qword_t;

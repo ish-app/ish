@@ -13,7 +13,7 @@ addr_t sys_brk(addr_t new_brk) {
         addr_t old_brk = current->brk;
         if (new_brk > old_brk) {
             // expand heap: map region from old_brk to new_brk
-            err = pt_map_nothing(current->cpu.pt, PAGE_ROUND_UP(old_brk),
+            err = pt_map_nothing(curmem, PAGE_ROUND_UP(old_brk),
                     PAGE_ROUND_UP(new_brk) - PAGE_ROUND_UP(old_brk), P_WRITABLE);
             if (err < 0) return err;
         } else if (new_brk < old_brk) {

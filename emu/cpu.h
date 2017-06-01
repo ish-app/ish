@@ -18,7 +18,7 @@ union xmm_reg {
 };
 
 struct cpu_state {
-    pagetable pt;
+    struct mem mem;
 
     // assumes little endian (as does literally everything)
 #define _REG(n) \
@@ -128,11 +128,5 @@ inline const char *reg32_name(uint8_t reg_id) {
     }
     return "???";
 }
-
-#define MEM_GET(cpu, addr, size) (*((UINT(size) *) &((char *) (cpu)->pt[PAGE(addr)]->data)[OFFSET(addr)]))
-#define CHECK_WRITE(cpu, addr) \
-    if (!((cpu)->pt[PAGE(addr)]->flags & P_WRITABLE)) \
-        return INT_GPF; \
-    (cpu)->pt[PAGE(addr)]->dirty = 1
 
 #endif

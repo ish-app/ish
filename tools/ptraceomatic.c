@@ -8,6 +8,7 @@
 #include <sys/wait.h>
 #include <sys/ptrace.h>
 #include <sys/user.h>
+#undef PAGE_SIZE // defined in sys/user.h, but we want the version from emu/memory.h
 #include <sys/personality.h>
 
 #include "sys/calls.h"
@@ -39,23 +40,23 @@ int compare_cpus(struct cpu_state *cpu, int pid) {
 
     return 0;
     // compare pages marked dirty
-    for (unsigned i = 0; i < PT_SIZE; i++) {
-        if (cpu->pt[i] && cpu->pt[i]->dirty) {
-            cpu->pt[i]->dirty = 0;
-            for (unsigned long addr = i << PAGE_BITS;
-                    addr < (i + 1) << PAGE_BITS;
-                    addr += 4) {
-                errno = 0; // better safe than sorry
-                dword_t real_mem = pt_read(pid, addr);
-                dword_t fake_mem = MEM_GET(cpu, addr, 32);
-                if (real_mem != fake_mem) {
-                    printf("real 0x%08lx = 0x%x, fake 0x%08lx = 0x%x\n", addr, real_mem, addr, fake_mem);
-                    return -1;
-                }
-            }
-            printf("dirty %x\n", i);
-        }
-    }
+    /* for (unsigned i = 0; i < PT_SIZE; i++) { */
+    /*     if (cpu->pt[i] && cpu->pt[i]->dirty) { */
+    /*         cpu->pt[i]->dirty = 0; */
+    /*         for (unsigned long addr = i << PAGE_BITS; */
+    /*                 addr < (i + 1) << PAGE_BITS; */
+    /*                 addr += 4) { */
+    /*             errno = 0; // better safe than sorry */
+    /*             dword_t real_mem = pt_read(pid, addr); */
+    /*             dword_t fake_mem = MEM_GET(cpu, addr, 32); */
+    /*             if (real_mem != fake_mem) { */
+    /*                 printf("real 0x%08lx = 0x%x, fake 0x%08lx = 0x%x\n", addr, real_mem, addr, fake_mem); */
+    /*                 return -1; */
+    /*             } */
+    /*         } */
+    /*         printf("dirty %x\n", i); */
+    /*     } */
+    /* } */
     return 0;
 }
 
