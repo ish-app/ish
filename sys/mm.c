@@ -13,7 +13,7 @@ addr_t sys_brk(addr_t new_brk) {
         addr_t old_brk = current->brk;
         if (new_brk > old_brk) {
             // expand heap: map region from old_brk to new_brk
-            err = pt_map_nothing(curmem, PAGE_ROUND_UP(old_brk),
+            err = pt_map_nothing(&curmem, PAGE_ROUND_UP(old_brk),
                     PAGE_ROUND_UP(new_brk) - PAGE_ROUND_UP(old_brk), P_WRITABLE);
             if (err < 0) return err;
         } else if (new_brk < old_brk) {
@@ -23,4 +23,18 @@ addr_t sys_brk(addr_t new_brk) {
         current->brk = new_brk;
     }
     return current->brk;
+}
+
+int handle_pagefault(addr_t addr) {
+    // TODO error handling
+    struct pt_entry *pt = curmem.pt[PAGE(addr)];
+    if (pt == NULL)
+        return 0;
+    if (pt->flags & P_GUARD) {
+        pt_map_nothing(&curmem, PAGE(addr), 1, P_WRITABLE | P_GROWSDOWN);
+        return 1;
+    } else {
+        sys_exit(1);
+    }
+    return 0;
 }

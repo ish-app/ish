@@ -62,7 +62,9 @@ int compare_cpus(struct cpu_state *cpu, int pid) {
 
 void step_tracing(struct cpu_state *cpu, int pid) {
     // step fake cpu
-    int interrupt = cpu_step32(cpu);
+    int interrupt;
+restart:
+    interrupt = cpu_step32(cpu);
     if (interrupt != INT_NONE) {
         // hack to clean up before the exit syscall
         if (interrupt == INT_SYSCALL && cpu->eax == 1) {
@@ -71,7 +73,9 @@ void step_tracing(struct cpu_state *cpu, int pid) {
                 exit(1);
             }
         }
-        handle_interrupt(cpu, interrupt);
+        if (handle_interrupt(cpu, interrupt)) {
+            goto restart;
+        }
     }
 
     // step real cpu

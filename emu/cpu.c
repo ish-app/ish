@@ -5,7 +5,7 @@
 #include "emu/interrupt.h"
 #include "sys/calls.h"
 
-// instructions defined as static inline functions
+// instructions defined as macros
 #include "emu/instructions.h"
 
 #define OP_SIZE 32
@@ -44,8 +44,18 @@ int cpu_step(struct cpu_state *cpu) {
 #endif
 
     // watch out: these macros can evaluate the arguments any number of times
-#define MEM_(addr,size) (*(UINT(size) *) mem_read_ptr(&cpu->mem, addr))
-#define MEM_W_(addr,size) (*(UINT(size) *) mem_write_ptr(&cpu->mem, addr))
+#define MEM_ACCESS(addr, size, type) ({ \
+        UINT(size) *ptr = mem_##type##_ptr(&cpu->mem, addr); \
+        if (ptr == NULL) { \
+            cpu->eip = saved_ip; \
+            cpu->segfault_addr = addr; \
+            return INT_GPF; \
+        } \
+        ptr; \
+    })
+    dword_t saved_ip = cpu->eip;
+#define MEM_(addr,size) (*MEM_ACCESS(addr, size, read))
+#define MEM_W_(addr,size) (*MEM_ACCESS(addr, size, write))
 #define MEM(addr) MEM_(addr,OP_SIZE)
 #define MEM_W(addr) MEM_W_(addr,OP_SIZE)
 #define MEM8(addr) MEM_(addr,8)
@@ -211,7 +221,7 @@ restart:
                    READMODRM; CMP(modrm_reg, modrm_val); break;
         case 0x3b: TRACEI("cmp modrm, reg");
                    READMODRM; CMP(modrm_val, modrm_reg); break;
-        case 0x3d: TRACEI("cmp imm, eax");
+        case 0x3d: TRACEI("cmp imm, eax\t");
                    READIMM; CMP(imm, ax); break;
 
         case 0x40: TRACEI("inc eax"); INC(ax); break;
@@ -312,11 +322,11 @@ restart:
 
         case 0x80: TRACEI("grp1 imm8, modrm8");
                    // FIXME this casts uint8 to int32 which is wrong
-                   READMODRM; READIMM8; GRP1(imm8, modrm_val8_w); break;
+                   READMODRM; READIMM8; GRP1(imm8, modrm_val8); break;
         case 0x81: TRACEI("grp1 imm, modrm");
-                   READMODRM; READIMM; GRP1(imm, modrm_val_w); break;
+                   READMODRM; READIMM; GRP1(imm, modrm_val); break;
         case 0x83: TRACEI("grp1 imm8, modrm");
-                   READMODRM; READIMM8; GRP1((uint32_t) (int8_t) imm8, modrm_val_w); break;
+                   READMODRM; READIMM8; GRP1((uint32_t) (int8_t) imm8, modrm_val); break;
 
         case 0x84: TRACEI("test reg8, modrm8");
                    READMODRM; TEST(modrm_reg8, modrm_val8); break;
@@ -430,7 +440,7 @@ restart:
         case 0xfd: TRACEI("std"); cpu->df = 1; break;
 
         case 0xff: TRACEI("grp5 modrm\t");
-                   READMODRM; GRP5(modrm_val_w); break;
+                   READMODRM; GRP5(modrm_val); break;
 
         default:
             TRACE("undefined\n");
@@ -451,7 +461,6 @@ void cpu_run(struct cpu_state *cpu) {
     while (true) {
         int interrupt = cpu_step32(cpu);
         if (interrupt != INT_NONE) {
-            TRACE("interrupt %d", interrupt);
             handle_interrupt(cpu, interrupt);
         }
     }

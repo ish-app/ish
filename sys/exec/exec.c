@@ -93,7 +93,7 @@ int sys_execve(const char *file, char *const argv[], char *const envp[]) {
                 addr_t off = phent.offset - OFFSET(phent.vaddr);
                 printf("new size:     %x\n", size);
                 printf("new offset:   %x\n", off);
-                if ((err = pt_map_file(curmem,
+                if ((err = pt_map_file(&curmem,
                                 PAGE(addr), PAGE_ROUND_UP(size), f, off, flags)) < 0) {
                     goto beyond_hope;
                 }
@@ -121,7 +121,7 @@ int sys_execve(const char *file, char *const argv[], char *const envp[]) {
     brk = PAGE_ROUND_UP(brk);
     bss = PAGE_ROUND_UP(bss);
     if (brk > bss) {
-        if ((err = pt_map_nothing(curmem, bss, brk - bss, bss_flags)) < 0) {
+        if ((err = pt_map_nothing(&curmem, bss, brk - bss, bss_flags)) < 0) {
             goto beyond_hope;
         }
     }
@@ -129,14 +129,13 @@ int sys_execve(const char *file, char *const argv[], char *const envp[]) {
 
     // map vdso
     addr_t vdso_addr = 0xf7ffc000;
-    if ((err = pt_map(curmem, PAGE(vdso_addr), 1, (void *) vdso_data, 0)) < 0) {
+    if ((err = pt_map(&curmem, PAGE(vdso_addr), 1, (void *) vdso_data, 0)) < 0) {
         goto beyond_hope;
     }
     addr_t vdso_entry = vdso_addr + ((struct elf_header *) vdso_data)->entry_point;
 
     // allocate stack
-    // TODO P_GROWSDOWN flag
-    if ((err = pt_map_nothing(curmem, 0xffffd, 1, P_WRITABLE)) < 0) {
+    if ((err = pt_map_nothing(&curmem, 0xffffd, 1, P_WRITABLE | P_GROWSDOWN)) < 0) {
         goto beyond_hope;
     }
     // give about a page to grow down. I need motivation to implement page fault handling

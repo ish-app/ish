@@ -82,6 +82,8 @@ struct cpu_state {
     // See comment in sys/tls.c
     addr_t tls_ptr;
 
+    // for the page fault handler
+    addr_t segfault_addr;
 #undef REGX
 #undef REG
 };

@@ -2,7 +2,7 @@
 #include "emu/interrupt.h"
 #include "misc.h"
 
-void handle_interrupt(struct cpu_state *cpu, int interrupt);
+int handle_interrupt(struct cpu_state *cpu, int interrupt);
 
 dword_t user_get(addr_t addr);
 byte_t user_get8(addr_t addr);
@@ -22,6 +22,7 @@ ssize_t sys_write(int fd, const char *buf, size_t count);
 dword_t _sys_write(dword_t fd, addr_t data, dword_t count);
 
 addr_t sys_brk(addr_t new_brk);
+int handle_pagefault(addr_t addr);
 
 #define UNAME_LENGTH 65
 struct uname {

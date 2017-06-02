@@ -1,11 +1,14 @@
 #include "emu/cpuid.h"
 
+// if an instruction accesses memory, it should do that before it modifies
+// registers, so segfault recovery only needs to save IP.
+
 #define MOV(src, dst) \
     dst = src
 
 #define PUSH(thing) \
-    sp -= OP_SIZE/8; \
-    MEM_W(sp) = thing
+    MEM_W(sp - OP_SIZE/8) = thing; \
+    sp -= OP_SIZE/8
 #define POP(thing) \
     thing = MEM(sp); \
     sp += OP_SIZE/8
@@ -72,13 +75,13 @@
 #define GRP1(src, dst) \
     switch (modrm.opcode) { \
         case 0b000: TRACE("add"); \
-                    ADD(src, dst); break; \
+                    ADD(src, dst##_w); break; \
         case 0b001: TRACE("or"); \
-                    OR(src, dst); break; \
+                    OR(src, dst##_w); break; \
         case 0b100: TRACE("and"); \
-                    AND(src, dst); break; \
+                    AND(src, dst##_w); break; \
         case 0b101: TRACE("sub"); \
-                    SUB(src, dst); break; \
+                    SUB(src, dst##_w); break; \
         case 0b111: TRACE("cmp"); \
                     CMP(src, dst); break; \
         default: \
@@ -118,9 +121,9 @@
 #define GRP5(val) \
     switch (modrm.opcode) { \
         case 0: TRACE("inc"); \
-                INC(val); break; \
+                INC(val##_w); break; \
         case 1: TRACE("dec"); \
-                DEC(val); break; \
+                DEC(val##_w); break; \
         case 2: TRACE("call indirect near"); \
                 CALL(modrm_val); break; \
         case 3: TRACE("call indirect far"); return INT_UNDEFINED; \

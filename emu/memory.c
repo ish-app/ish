@@ -23,6 +23,7 @@ int pt_map(struct mem *mem, page_t start, pages_t pages, void *memory, unsigned 
     }
     for (page_t page = start; page < start + pages; page++) {
         if (mem->pt[page] != NULL) {
+            // FIXME this is probably wrong
             pt_unmap(mem, page, 1);
         }
         struct pt_entry *entry = malloc(sizeof(struct pt_entry));
@@ -31,7 +32,10 @@ int pt_map(struct mem *mem, page_t start, pages_t pages, void *memory, unsigned 
         entry->refcount = 1;
         entry->flags = flags;
         mem->pt[page] = entry;
-        memory += PAGE_SIZE;
+        memory = (char *) memory + PAGE_SIZE;
+    }
+    if (flags & P_GROWSDOWN) {
+        pt_map(mem, start - 1, 1, NULL, P_GUARD);
     }
     return 0;
 }
@@ -42,6 +46,7 @@ void pt_unmap(struct mem *mem, page_t start, pages_t pages) {
         mem->pt[page] = NULL;
         entry->refcount--;
         if (entry->refcount == 0) {
+            // TODO actually free the memory
             free(entry);
         }
     }
@@ -49,16 +54,14 @@ void pt_unmap(struct mem *mem, page_t start, pages_t pages) {
 
 int pt_map_nothing(struct mem *mem, page_t start, pages_t pages, unsigned flags) {
     void *memory = mmap(NULL, pages * PAGE_SIZE,
-            (flags & P_WRITABLE ? PROT_WRITE : 0) | PROT_READ,
-            MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
+            PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
     return pt_map(mem, start, pages, memory, flags);
 }
 
 
 int pt_map_file(struct mem *mem, page_t start, pages_t pages, int fd, off_t off, unsigned flags) {
     void *memory = mmap(NULL, pages * PAGE_SIZE,
-            (flags & P_WRITABLE ? PROT_WRITE : 0) | PROT_READ,
-            MAP_PRIVATE, fd, off);
+            PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, off);
     return pt_map(mem, start, pages, memory, flags);
 }
 

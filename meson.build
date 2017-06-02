@@ -18,7 +18,7 @@ sys_src = [
 
     'sys/exit.c',
     'sys/write.c',
-    'sys/brk.c',
+    'sys/mm.c',
     'sys/uname.c',
     'sys/tls.c',
 ]

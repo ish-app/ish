@@ -28,6 +28,8 @@ struct pt_entry {
 #define PT_SIZE (1 << 20) // at least on 32-bit
 // page flags
 #define P_WRITABLE (1 << 0)
+#define P_GROWSDOWN (1 << 1)
+#define P_GUARD (1 << 2)
 
 // Map real memory into fake memory (unmaps existing mappings)
 int pt_map(struct mem *mem, page_t start, pages_t pages, void *memory, unsigned flags);
