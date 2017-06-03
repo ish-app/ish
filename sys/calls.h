@@ -14,9 +14,14 @@ int user_get_count(addr_t addr, void *buf, size_t count);
 void user_put_count(addr_t addr, const void *buf, size_t count);
 
 int sys_execve(const char *file, char *const argv[], char *const envp[]);
-int _sys_execve(addr_t file, addr_t argv, addr_t envp);
+dword_t _sys_execve(addr_t file, addr_t argv, addr_t envp);
 
-int sys_exit(dword_t status);
+dword_t sys_exit(dword_t status);
+
+#define MAX_PATH 4096
+int sys_open(const char *pathname, int flags);
+int sys_close(int fd);
+dword_t sys_readlink(addr_t pathname, addr_t buf, dword_t bufsize);
 
 ssize_t sys_write(int fd, const char *buf, size_t count);
 dword_t _sys_write(dword_t fd, addr_t data, dword_t count);

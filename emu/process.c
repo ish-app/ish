@@ -15,8 +15,11 @@ struct process *process_create() {
     }
     struct process *proc = malloc(sizeof(struct process));
     if (proc == NULL) return NULL;
+
+    proc->pid = cur_pid;
     mem_init(&proc->cpu.mem);
     procs[cur_pid] = proc;
+
     return proc;
 }
 

@@ -1,4 +1,4 @@
-project('ish', 'c')
+project('ish', 'c', default_options: ['default_library=static'])
 add_global_arguments('-std=gnu99', language: 'c')
 
 includes = [include_directories('.')]
@@ -21,6 +21,11 @@ sys_src = [
     'sys/mm.c',
     'sys/uname.c',
     'sys/tls.c',
+    'sys/fs.c',
+
+    'fs/fs.c',
+    'fs/path.c',
+    'fs/real.c',
 ]
 emu_src = [
     'emu/memory.c',

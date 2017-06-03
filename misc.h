@@ -1,6 +1,7 @@
 #ifndef MISC_H
 #define MISC_H
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>

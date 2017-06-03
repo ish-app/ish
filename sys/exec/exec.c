@@ -265,7 +265,7 @@ static inline size_t strlen_user(dword_t p) {
     return len;
 }
 
-int _sys_execve(addr_t filename, addr_t argv, addr_t envp) {
+dword_t _sys_execve(addr_t filename, addr_t argv, addr_t envp) {
     // TODO translate rest of arguments
     char buf[255];
     user_get_string(filename, buf, sizeof(buf));

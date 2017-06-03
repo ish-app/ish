@@ -2,12 +2,18 @@
 #define PROCESS_H
 
 #include "emu/cpu.h"
+#include "fs/fs.h"
 
 struct process {
     struct cpu_state cpu;
 
+    dword_t pid;
+
     addr_t start_brk;
     addr_t brk;
+
+    struct node *pwd;
+    struct node *root;
 };
 
 // current will always give the process that is currently executing
