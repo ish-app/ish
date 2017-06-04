@@ -1,4 +1,5 @@
 #include <unistd.h>
+#include <fcntl.h>
 #include <errno.h>
 #include <sys/personality.h>
 #include <sys/wait.h>
@@ -35,26 +36,33 @@ int start_tracee(const char *program, char *const argv[], char *const envp[]) {
     return pid;
 }
 
+int open_mem(int pid) {
+    char filename[1024];
+    sprintf(filename, "/proc/%d/mem", pid);
+    return trycall(open(filename, O_RDWR), "open mem");
+}
+
 dword_t pt_read(int pid, addr_t addr) {
-    long res = ptrace(PTRACE_PEEKDATA, pid, addr, NULL);
-    if (res < 0 && errno == EIO) {
-        // this means the address is out of bounds. try backing it up 4 bytes and using the second half
-        return trycall(ptrace(PTRACE_PEEKDATA, pid, addr - 4, NULL), "memory read") >> 32;
-    }
-    return trycall(res, "memory read");
+    int fd = open_mem(pid);
+    trycall(lseek(fd, addr, SEEK_SET), "read seek");
+    dword_t res;
+    trycall(read(fd, &res, sizeof(res)), "read read");
+    close(fd);
+    return res;
 }
 
 void pt_write(int pid, addr_t addr, dword_t val) {
-    // when a 64-bit process traces a 32-bit process, all writes are 64-bit. gah
-    uint64_t out = ((uint64_t) pt_read(pid, addr + 4)) << 32 | val;
-    trycall(ptrace(PTRACE_POKEDATA, pid, addr, out), "memory write");
+    int fd = open_mem(pid);
+    trycall(lseek(fd, addr, SEEK_SET), "write seek");
+    trycall(write(fd, &val, sizeof(val)), "write write");
+    close(fd);
 }
 
 static void pt_write8(int pid, addr_t addr, byte_t val) {
-    // when a 64-bit process traces a 32-bit process, all writes are 64-bit. gah
-    uint64_t thingy = trycall(ptrace(PTRACE_PEEKDATA, pid, addr + 1), "memory write read");
-    uint64_t out = thingy << 8 | val;
-    trycall(ptrace(PTRACE_POKEDATA, pid, addr, out), "memory write");
+    int fd = open_mem(pid);
+    trycall(lseek(fd, addr, SEEK_SET), "write seek");
+    trycall(write(fd, &val, sizeof(val)), "write write");
+    close(fd);
 }
 
 void pt_copy(int pid, addr_t addr, const void *vdata, size_t len) {

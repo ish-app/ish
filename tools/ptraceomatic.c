@@ -79,16 +79,25 @@ restart:
     }
 
     // step real cpu
-    // intercept cpuid and int $0x80, though
+    // intercept cpuid, rdtsc, and int $0x80, though
     struct user_regs_struct regs;
     errno = 0;
     trycall(ptrace(PTRACE_GETREGS, pid, NULL, &regs), "ptrace getregs step");
     long inst = trycall(ptrace(PTRACE_PEEKTEXT, pid, regs.rip, NULL), "ptrace get inst step");
 
-    if ((inst & 0xff) == 0x0f && ((inst & 0xff00) >> 8) == 0xa2) {
-        // cpuid, handle ourselves and bump ip
-        do_cpuid((dword_t *) &regs.rax, (dword_t *) &regs.rbx, (dword_t *) &regs.rcx, (dword_t *) &regs.rdx);
-        regs.rip += 2;
+    if ((inst & 0xff) == 0x0f) {
+        if (((inst & 0xff00) >> 8) == 0xa2) {
+            // cpuid
+            do_cpuid((dword_t *) &regs.rax, (dword_t *) &regs.rbx, (dword_t *) &regs.rcx, (dword_t *) &regs.rdx);
+            regs.rip += 2;
+        } else if (((inst & 0xff00) >> 8) == 0x31) {
+            // rdtsc, no good way to get the same result here except copy from fake cpu
+            regs.rax = cpu->eax;
+            regs.rdx = cpu->edx;
+            regs.rip += 2;
+        } else {
+            goto do_step;
+        }
     } else if ((inst & 0xff) == 0xcd && ((inst & 0xff00) >> 8) == 0x80) {
         // int $0x80, consider intercepting the syscall
         dword_t syscall_num = (dword_t) regs.rax;
@@ -98,10 +107,13 @@ restart:
             struct uname un;
             regs.rax = sys_uname(&un);
             pt_copy(pid, uname_ptr, &un, sizeof(struct uname));
-            regs.rip += 2;
+        } else if (syscall_num == 85) {
+            // readlink
+            regs.rax = sys_readlink(0,0,0);
         } else {
             goto do_step;
         }
+        regs.rip += 2;
     } else {
 do_step: (void)0;
         // single step on a repeated string instruction only does one

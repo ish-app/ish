@@ -2,6 +2,7 @@
 #include "sys/calls.h"
 
 int sys_uname(struct uname *uts) {
+    bzero(uts, sizeof(struct uname));
     strcpy(uts->system, "Linux");
     strcpy(uts->hostname, "compotar");
     strcpy(uts->release, "2.6.32-ish");

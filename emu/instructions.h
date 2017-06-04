@@ -171,7 +171,7 @@
 #define SF (cpu->sf_res ? (int32_t) cpu->res < 0 : cpu->sf)
 #define CF (cpu->cf)
 #define OF (cpu->of)
-#define PF (cpu->pf_res ? __builtin_parity(cpu->res) : cpu->pf)
+#define PF (cpu->pf_res ? !__builtin_parity(cpu->res) : cpu->pf)
 
 #define FIX_EIP \
     if (OP_SIZE == 16) { \
@@ -185,10 +185,13 @@
         cpu->eip += offset; FIX_EIP; \
     }
 
+#define RET_NEAR() POP(cpu->eip); FIX_EIP;
+
 #define SET(cond, val) \
     val = (cond ? 1 : 0);
 
-#define RET_NEAR() POP(cpu->eip); FIX_EIP;
+#define CMOV(cond, dst, src) \
+    if (cond) MOV(dst, src)
 
 static inline dword_t do_shift(dword_t val, dword_t amount, int op) {
     switch (op) {
