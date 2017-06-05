@@ -44,6 +44,8 @@
 #define	_ENOLCK       -37 /* No record locks available */
 #define	_ENOSYS       -38 /* Invalid system call number */
 
+#define _ELIBBAD      -80 /* Accessing a corrupted shared library */
+
 static inline int err_map(int err) {
 #define ERRCASE(err) \
         case err: return _##err;
@@ -86,6 +88,7 @@ static inline int err_map(int err) {
         ERRCASE(ENAMETOOLONG)
         ERRCASE(ENOLCK)
         ERRCASE(ENOSYS)
+        ERRCASE(ELIBBAD)
     }
 #undef ERRCASE
     return 1337; // TODO FIXME XXX

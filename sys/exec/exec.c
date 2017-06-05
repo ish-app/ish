@@ -1,9 +1,6 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/random.h>
-#if __APPLE__
-#define getrandom(buf, buflen, flags) getentropy(buf, buflen)
-#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -28,43 +25,104 @@ static inline void user_memset(addr_t start, dword_t len, byte_t val);
 static inline dword_t copy_data(dword_t sp, const char *data, size_t count);
 static inline dword_t copy_string(dword_t sp, const char *string);
 static inline dword_t copy_strings(dword_t sp, char *const strings[]);
-unsigned count_args(char *const args[]);
+static unsigned count_args(char *const args[]);
+
+static int read_header(int f, struct elf_header *header) {
+    if (read(f, header, sizeof(*header)) != sizeof(*header)) {
+        if (errno != 0)
+            return _EIO;
+        return _ENOEXEC;
+    }
+    if (memcmp(&header->magic, ELF_MAGIC, sizeof(header->magic)) != 0
+            || header->bitness != ELF_32BIT
+            || header->endian != ELF_LITTLEENDIAN
+            || header->elfversion1 != 1
+            || header->type != ELF_EXECUTABLE
+            || header->machine != ELF_X86)
+        return _ENOEXEC;
+    return 0;
+}
+
+static int read_prg_headers(int f, struct elf_header header, struct prg_header **ph_out) {
+    size_t ph_size = sizeof(struct prg_header) * header.phent_count;
+    struct prg_header *ph = malloc(ph_size);
+    if (ph == NULL)
+        return _ENOMEM;
+
+    if (lseek(f, header.prghead_off, SEEK_SET) < 0) {
+        free(ph);
+        return _EIO;
+    }
+    if (read(f, ph, ph_size) != ph_size) {
+        free(ph);
+        if (errno != 0)
+            return _EIO;
+        return _ENOEXEC;
+    }
+
+    *ph_out = ph;
+    return 0;
+}
 
 int sys_execve(const char *file, char *const argv[], char *const envp[]) {
     int err = 0;
-    // argv and envp are ignored for the time being
-    int f = open(file, O_RDONLY);
-    if (f < 0) {
-        perror("ohfuck");
+
+    // open the file and read the headers
+    int f;
+    if ((f = open(file, O_RDONLY)) < 0)
         return err_map(errno);
+    struct elf_header header;
+    if ((err = read_header(f, &header)) < 0)
+        goto out_free_f;
+    struct prg_header *ph;
+    if ((err = read_prg_headers(f, header, &ph)) < 0)
+        goto out_free_f;
+
+    // look for an interpreter
+    char *interp_name = NULL;
+    int interp_f = -1;
+    struct elf_header interp_header;
+    struct prg_header *interp_ph;
+    for (unsigned i = 0; i < header.phent_count; i++) {
+        if (ph[i].type != PT_INTERP)
+            continue;
+        if (interp_name) {
+            // can't have two interpreters
+            err = _EINVAL;
+            goto out_free_interp;
+        }
+
+        interp_name = malloc(ph[i].filesize);
+        err = _ENOMEM;
+        if (interp_name == NULL)
+            goto out_free_ph;
+
+        // read the interpreter name out of the file
+        err = _EIO;
+        if (lseek(f, ph[i].offset, SEEK_SET) < 0)
+            goto out_free_interp;
+        if (read(f, interp_name, ph[i].filesize) != ph[i].filesize)
+            goto out_free_interp;
+
+        // open interpreter and read headers
+        if ((interp_f = open(interp_name, O_RDONLY)) < 0) {
+            err = err_map(errno);
+            goto out_free_interp;
+        }
+        if ((err = read_header(interp_f, &interp_header)) < 0) {
+            if (err == _ENOEXEC) err = _ELIBBAD;
+            goto out_free_interp;
+        }
+        if ((err = read_prg_headers(interp_f, interp_header, &interp_ph)) < 0) {
+            if (err == _ENOEXEC) err = _ELIBBAD;
+            goto out_free_interp;
+        }
     }
 
-    struct elf_header header;
-    // must be a valid x86_32 elf file
-    int res = read(f, &header, sizeof(header));
-    if (res < 0) ERRNO_FAIL(out);
-    err = _ENOEXEC;
-    if (res != sizeof(header)
-            || memcmp(&header.magic, ELF_MAGIC, sizeof(header.magic)) != 0
-            || header.bitness != ELF_32BIT
-            || header.endian != ELF_LITTLEENDIAN
-            || header.elfversion1 != 1
-            || header.machine != ELF_X86)
-        goto out;
-
-    // read the program header
-    uint16_t ph_count = header.phent_count;
-    if (lseek(f, header.prghead_off, SEEK_SET) < 0) ERRNO_FAIL(out);
-    size_t ph_size = sizeof(struct prg_header) * ph_count;
-    struct prg_header *ph = malloc(ph_size);
-    res = read(f, ph, ph_size);
-    if (res < 0) ERRNO_FAIL(out_free_ph);
-    if (res != ph_size) goto out_free_ph;
-
-    // TODO allocate new PT and abort task if further failure
-    // TODO from this point on, if any error occurs the process will have to be
-    // killed before it even starts. yeah, yeah, wasted potential. c'mon, it's
+    // from this point on, if any error occurs the process will have to be
+    // killed before it even starts. please don't be too sad about it, it's
     // just a process.
+    // TODO make that actually happen
 
     addr_t load_addr; // used for AX_PHDR
     bool load_addr_set = false;
@@ -73,7 +131,7 @@ int sys_execve(const char *file, char *const argv[], char *const envp[]) {
     int bss_flags;
 
     // map dat shit!
-    for (uint16_t i = 0; i < ph_count; i++) {
+    for (uint16_t i = 0; i < header.phent_count; i++) {
         struct prg_header phent = ph[i];
         switch (phent.type) {
             case PT_LOAD:
@@ -92,8 +150,8 @@ int sys_execve(const char *file, char *const argv[], char *const envp[]) {
                 addr_t addr = phent.vaddr;
                 addr_t size = phent.filesize + OFFSET(phent.vaddr);
                 addr_t off = phent.offset - OFFSET(phent.vaddr);
-                printf("new size:     %x\n", size);
-                printf("new offset:   %x\n", off);
+                TRACE("new size:     %x\n", size);
+                TRACE("new offset:   %x\n", off);
                 if ((err = pt_map_file(&curmem,
                                 PAGE(addr), PAGE_ROUND_UP(size), f, off, flags)) < 0) {
                     goto beyond_hope;
@@ -112,9 +170,6 @@ int sys_execve(const char *file, char *const argv[], char *const envp[]) {
                     brk = phent.vaddr + phent.memsize;
                 }
                 break;
-
-            // TODO case PT_INTERP
-            // did you know that most binary files have a shebang-equivalent that points to /lib/ld.so?
         }
     }
 
@@ -137,14 +192,13 @@ int sys_execve(const char *file, char *const argv[], char *const envp[]) {
     }
     addr_t vdso_entry = vdso_addr + ((struct elf_header *) vdso_data)->entry_point;
 
-    // allocate stack
+    // allocate 1 page of stack at 0xffffd, and let it grow down
     if ((err = pt_map_nothing(&curmem, 0xffffd, 1, P_WRITABLE | P_GROWSDOWN)) < 0) {
         goto beyond_hope;
     }
-    // give about a page to grow down. I need motivation to implement page fault handling
     dword_t sp = 0xffffe000;
     // on 32-bit linux, there's 4 empty bytes at the very bottom of the stack.
-    // on 64-bit linux, there's 8. make ptraceomatic happy.
+    // on 64-bit linux, there's 8. make ptraceomatic happy. (a major theme in this file)
     sp -= sizeof(void *);
 
     // filename, argc, argv
@@ -157,11 +211,8 @@ int sys_execve(const char *file, char *const argv[], char *const envp[]) {
     addr_t platform_addr = sp = copy_string(sp, "i686");
     // 16 random bytes so no system call is needed to seed a userspace RNG
     char random[16] = {};
-    while (getrandom(random, sizeof(random), 0) < 0) {
-        if (errno != EAGAIN) {
-            ERRNO_FAIL(beyond_hope);
-        }
-    }
+    if (getentropy(random, sizeof(random)) < 0)
+        abort(); // if this fails, something is badly wrong
     addr_t random_addr = sp = copy_data(sp, random, sizeof(random));
     sp &=~ 0x7;
 
@@ -221,18 +272,23 @@ int sys_execve(const char *file, char *const argv[], char *const envp[]) {
     /* pt_dump(current->cpu.pt); */
 
     err = 0;
+out_free_interp:
+    if (interp_name != NULL)
+        free(interp_name);
+    if (interp_f != -1)
+        close(interp_f);
 out_free_ph:
     free(ph);
-out:
+out_free_f:
     close(f);
     return err;
 
 beyond_hope:
     // TODO call sys_exit
-    goto out_free_ph;
+    goto out_free_interp;
 }
 
-unsigned count_args(char *const args[]) {
+static unsigned count_args(char *const args[]) {
     unsigned i;
     for (i = 0; args[i] != NULL; i++)
         ;
