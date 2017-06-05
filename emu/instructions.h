@@ -263,7 +263,7 @@
 #define RET_NEAR_IMM(imm) RET_NEAR(); sp += imm
 
 #define SET(cond, val) \
-    val = (cond ? 1 : 0);
+    val = (cond ? 1 : 0)
 
 #define CMOV(cond, dst, src) \
     if (cond) MOV(dst, src)

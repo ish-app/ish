@@ -9,7 +9,7 @@
 #include <sys/types.h>
 
 // debug output utilities
-#if 0
+#if 1
 #define TRACE(msg, ...) printf(msg, ##__VA_ARGS__)
 #else
 #define TRACE(msg, ...) (void)NULL
@@ -44,7 +44,6 @@ typedef uint16_t word_t;
 typedef uint8_t byte_t;
 
 typedef dword_t addr_t;
-typedef dword_t page_t;
 
 #define uint(size) CONCAT3(uint,size,_t)
 #define sint(size) CONCAT3(int,size,_t)

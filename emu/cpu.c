@@ -262,6 +262,8 @@ restart:
         case 0x2d: TRACEI("sub imm, ax\t");
                    READIMM; SUB(imm, ax); break;
 
+        case 0x2e: TRACEI("segment cs (ignoring)"); goto restart;
+
         case 0x30: TRACEI("xor reg8, modrm8");
                    READMODRM; XOR(modrm_reg8, modrm_val8_w); break;
         case 0x31: TRACEI("xor reg, modrm");

@@ -36,7 +36,6 @@ static int read_header(int f, struct elf_header *header) {
             || header->bitness != ELF_32BIT
             || header->endian != ELF_LITTLEENDIAN
             || header->elfversion1 != 1
-            || header->type != ELF_EXECUTABLE
             || header->machine != ELF_X86)
         return _ENOEXEC;
     return 0;
@@ -63,6 +62,47 @@ static int read_prg_headers(int f, struct elf_header header, struct prg_header *
     return 0;
 }
 
+static int load_entry(struct prg_header ph, addr_t bias, int f) {
+    int err;
+
+    addr_t addr = ph.vaddr + bias;
+    addr_t offset = ph.offset;
+    addr_t memsize = ph.memsize;
+    addr_t filesize = ph.filesize;
+
+    int flags = 0;
+    if (ph.flags & PH_W) flags |= P_WRITABLE;
+
+    if ((err = pt_map_file(&curmem, PAGE(addr),
+                    PAGE_ROUND_UP(filesize + OFFSET(addr)), f,
+                    offset - OFFSET(addr), flags)) < 0)
+        return err;
+
+    if (memsize > filesize) {
+        // put zeroes between addr + filesize and addr + memsize, call that bss
+        dword_t bss_size = memsize - filesize;
+
+        // first zero the tail from the end of the file mapping to the end
+        // of the load entry or the end of the page, whichever comes first
+        addr_t file_end = addr + filesize;
+        dword_t tail_size = PAGE_SIZE - OFFSET(file_end);
+        if (tail_size == PAGE_SIZE)
+            // if you can calculate tail_size better and not have to do this please let me know
+            tail_size = 0;
+
+        if (tail_size != 0)
+            user_memset(file_end, tail_size, 0);
+        if (tail_size > bss_size)
+            tail_size = bss_size;
+
+        // then map the pages from after the file mapping up to and including the end of bss
+        if (bss_size - tail_size != 0)
+            if ((err = pt_map_nothing(&curmem, PAGE_ROUND_UP(addr + filesize),
+                    PAGE_ROUND_UP(bss_size - tail_size), flags)) < 0)
+                return err;
+    }
+    return 0;
+}
 int sys_execve(const char *file, char *const argv[], char *const envp[]) {
     int err = 0;
 
@@ -125,71 +165,75 @@ int sys_execve(const char *file, char *const argv[], char *const envp[]) {
 
     addr_t load_addr; // used for AX_PHDR
     bool load_addr_set = false;
-    addr_t bss = 0; // end of data/start of bss
-    addr_t brk = 0; // end of bss/start of heap
-    int bss_flags;
 
     // map dat shit!
-    for (uint16_t i = 0; i < header.phent_count; i++) {
-        struct prg_header phent = ph[i];
-        switch (phent.type) {
-            case PT_LOAD:
-                TRACE(
-                        "offset:       %x\n"
-                        "virt addr:    %x\n"
-                        "phys addr:    %x\n"
-                        "size in file: %x\n"
-                        "size in mem:  %x\n"
-                        "flags:        %x\n"
-                        "alignment:    %x\n",
-                        phent.offset, phent.vaddr, phent.paddr, phent.filesize,
-                        phent.memsize, phent.flags, phent.alignment);
-                int flags = 0;
-                if (phent.flags & PH_W) flags |= P_WRITABLE;
-                addr_t addr = phent.vaddr;
-                addr_t size = phent.filesize + OFFSET(phent.vaddr);
-                addr_t off = phent.offset - OFFSET(phent.vaddr);
-                TRACE("new size:     %x\n", size);
-                TRACE("new offset:   %x\n", off);
-                if ((err = pt_map_file(&curmem,
-                                PAGE(addr), PAGE_ROUND_UP(size), f, off, flags)) < 0) {
-                    goto beyond_hope;
-                }
-                // load_addr is used to get a value for AX_PHDR et al
-                if (!load_addr_set) {
-                    load_addr = phent.vaddr - phent.offset;
-                    load_addr_set = true;
-                }
+    for (unsigned i = 0; i < header.phent_count; i++) {
+        if (ph[i].type != PT_LOAD)
+            continue;
 
-                if (phent.vaddr + phent.filesize > bss) {
-                    bss = phent.vaddr + phent.filesize;
-                }
-                if (phent.vaddr + phent.memsize > brk) {
-                    bss_flags = flags;
-                    brk = phent.vaddr + phent.memsize;
-                }
-                break;
-        }
-    }
-
-    // zero the part of the bss that overlaps with the code mapping
-    user_memset(bss, ((bss - 1) & 0xfffff000) + 0x1000 - bss, 0);
-    // map the bss (which ends at brk)
-    brk = PAGE_ROUND_UP(brk);
-    bss = PAGE_ROUND_UP(bss);
-    if (brk > bss) {
-        if ((err = pt_map_nothing(&curmem, bss, brk - bss, bss_flags)) < 0) {
+        if ((err = load_entry(ph[i], 0, f)) < 0)
             goto beyond_hope;
+
+        // load_addr is used to get a value for AX_PHDR et al
+        if (!load_addr_set) {
+            load_addr = ph[i].vaddr - ph[i].offset;
+            load_addr_set = true;
         }
+
+        // we have to know where the brk starts
+        if (ph[i].vaddr + ph[i].memsize > current->start_brk)
+            current->start_brk = current->brk = BYTES_ROUND_UP(ph[i].vaddr + ph[i].memsize);
     }
-    current->start_brk = current->brk = brk << PAGE_BITS;
+
+    addr_t entry = header.entry_point;
+    addr_t interp_addr = 0;
+
+    if (interp_name) {
+        // map dat shit! interpreter edition
+        // but first, a brief intermission to find out just how big the interpreter is
+        struct prg_header *interp_first = NULL, *interp_last = NULL;
+        for (int i = 0; i < interp_header.phent_count; i++) {
+            if (interp_ph[i].type == PT_LOAD) {
+                if (interp_first == NULL)
+                    interp_first = &interp_ph[i];
+                interp_last = &interp_ph[i];
+            }
+        }
+        pages_t interp_size = 0;
+        if (interp_first != NULL) {
+            pages_t a = PAGE_ROUND_UP(interp_last->vaddr + interp_last->memsize);
+            pages_t b = PAGE(interp_first->vaddr);
+            interp_size = a - b;
+        }
+        interp_addr = pt_find_hole(&curmem, interp_size) << PAGE_BITS;
+        // now back to map dat shit! interpreter edition
+        for (int i = interp_header.phent_count; i >= 0; i--) {
+            if (interp_ph[i].type != PT_LOAD)
+                continue;
+            if ((err = load_entry(interp_ph[i], interp_addr, interp_f)) < 0)
+                goto beyond_hope;
+        }
+        entry = interp_addr + interp_header.entry_point;
+    }
 
     // map vdso
-    addr_t vdso_addr = 0xf7ffc000;
-    if ((err = pt_map(&curmem, PAGE(vdso_addr), 1, (void *) vdso_data, 0)) < 0) {
+    err = _ENOMEM;
+    page_t vdso_page = pt_find_hole(&curmem, sizeof(vdso_data) >> PAGE_BITS);
+    if (vdso_page == BAD_PAGE)
         goto beyond_hope;
-    }
+    if ((err = pt_map(&curmem, vdso_page, 1, (void *) vdso_data, 0)) < 0)
+        goto beyond_hope;
+    addr_t vdso_addr = vdso_page << PAGE_BITS;
     addr_t vdso_entry = vdso_addr + ((struct elf_header *) vdso_data)->entry_point;
+
+    // map 2 empty "vvar" pages to satisfy ptraceomatic
+    page_t vvar_page = pt_find_hole(&curmem, 2);
+    if (vvar_page == BAD_PAGE)
+        goto beyond_hope;
+    if ((err = pt_map_nothing(&curmem, vvar_page, 2, 0)) < 0)
+        goto beyond_hope;
+
+    // STACK TIME!
 
     // allocate 1 page of stack at 0xffffd, and let it grow down
     if ((err = pt_map_nothing(&curmem, 0xffffd, 1, P_WRITABLE | P_GROWSDOWN)) < 0) {
@@ -200,20 +244,13 @@ int sys_execve(const char *file, char *const argv[], char *const envp[]) {
     // on 64-bit linux, there's 8. make ptraceomatic happy. (a major theme in this file)
     sp -= sizeof(void *);
 
-    // now the really complicated part: initializing the stack. plan of attack is
-    // 1. start at the bottom, copy the filename, arguments, and environment
-    // 2. copy the stuff elf aux points to
-    // 3. figure out how much space is needed for aux, argv, and envp, reserve
-    // it, and then align the stack
-    // 4. go up to the top and copy argc, argv, envp, and auxv
-
+    // first, copy stuff pointed to by argv/envp/auxv
     // filename, argc, argv
     addr_t file_addr = sp = copy_string(sp, file);
     addr_t envp_addr = sp = copy_strings(sp, envp);
     addr_t argv_addr = sp = copy_strings(sp, argv);
     sp = align_stack(sp);
 
-    // stuff pointed to by elf aux
     addr_t platform_addr = sp = copy_string(sp, "i686");
     // 16 random bytes so no system call is needed to seed a userspace RNG
     char random[16] = {};
@@ -222,7 +259,11 @@ int sys_execve(const char *file, char *const argv[], char *const envp[]) {
     addr_t random_addr = sp -= sizeof(random);
     user_put_count(sp, random, sizeof(random));
 
-    // declare elf aux so we can know how big it is
+    // the way linux aligns the stack at this point is kinda funky
+    // calculate how much space is needed for argv, envp, and auxv, subtract
+    // that from sp, then align, then copy argv/envp/auxv from that down
+
+    // declare elf aux now so we can know how big it is
     struct aux_ent aux[] = {
         {AX_SYSINFO, vdso_entry},
         {AX_SYSINFO_EHDR, vdso_addr},
@@ -232,7 +273,7 @@ int sys_execve(const char *file, char *const argv[], char *const envp[]) {
         {AX_PHDR, load_addr + header.prghead_off},
         {AX_PHENT, sizeof(struct prg_header)},
         {AX_PHNUM, header.phent_count},
-        {AX_BASE, 0},
+        {AX_BASE, interp_addr},
         {AX_FLAGS, 0},
         {AX_ENTRY, header.entry_point},
         {AX_UID, 0},
@@ -246,10 +287,6 @@ int sys_execve(const char *file, char *const argv[], char *const envp[]) {
         {AX_PLATFORM, platform_addr},
         {0, 0}
     };
-
-    // the way linux aligns the stack at this point is kinda funky
-    // calculate how much space is needed for argv, envp, and auxv, subtract
-    // that from sp, then align, then copy argv/envp/auxv from that down
     size_t argc = count_args(argv);
     size_t envc = count_args(envp);
     sp -= ((argc + 1) + (envc + 1) + 1) * sizeof(dword_t);
@@ -283,8 +320,7 @@ int sys_execve(const char *file, char *const argv[], char *const envp[]) {
     p += sizeof(aux);
 
     current->cpu.esp = sp;
-    current->cpu.eip = header.entry_point;
-    curmem.dirty_page = 0xffffd;
+    current->cpu.eip = entry;
 
     err = 0;
 out_free_interp:

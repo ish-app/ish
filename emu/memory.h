@@ -4,6 +4,10 @@
 #include "misc.h"
 #include <unistd.h>
 
+// top 20 bits of an address, i.e. address >> 12
+typedef dword_t page_t;
+#define BAD_PAGE 0x10000
+
 struct mem {
     struct pt_entry **pt;
     struct tlb_entry *tlb;
@@ -16,9 +20,12 @@ void mem_init(struct mem *mem);
 #define PAGE_BITS 12
 #define PAGE_SIZE (1 << PAGE_BITS)
 #define PAGE(addr) ((addr) >> PAGE_BITS)
-#define OFFSET(addr) ((addr) & ~(UINT32_MAX << PAGE_BITS))
+#define OFFSET(addr) ((addr) & (PAGE_SIZE - 1))
 typedef dword_t pages_t;
 #define PAGE_ROUND_UP(bytes) (((bytes - 1) / PAGE_SIZE) + 1)
+
+#define BYTES_ROUND_DOWN(bytes) (PAGE(bytes) << PAGE_BITS)
+#define BYTES_ROUND_UP(bytes) (PAGE_ROUND_UP(bytes) << PAGE_BITS)
 
 struct pt_entry {
     void *data;
@@ -31,6 +38,8 @@ struct pt_entry {
 #define P_WRITABLE (1 << 0)
 #define P_GROWSDOWN (1 << 1)
 #define P_GUARD (1 << 2)
+
+page_t pt_find_hole(struct mem *mem, pages_t size);
 
 // Map real memory into fake memory (unmaps existing mappings)
 int pt_map(struct mem *mem, page_t start, pages_t pages, void *memory, unsigned flags);

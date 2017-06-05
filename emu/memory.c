@@ -17,6 +17,23 @@ void mem_init(struct mem *mem) {
     }
 }
 
+page_t pt_find_hole(struct mem *mem, pages_t size) {
+    page_t hole_end;
+    bool in_hole = false;
+    for (page_t page = 0xf7ffd; page > 0x40000; page--) {
+        // I don't know how this works but it does
+        if (!in_hole && mem->pt[page] == NULL) {
+            in_hole = true;
+            hole_end = page + 1;
+        }
+        if (mem->pt[page] != NULL)
+            in_hole = false;
+        else if (hole_end - page == size)
+            return page;
+    }
+    return BAD_PAGE;
+}
+
 int pt_map(struct mem *mem, page_t start, pages_t pages, void *memory, unsigned flags) {
     if (memory == MAP_FAILED) {
         return err_map(errno);
