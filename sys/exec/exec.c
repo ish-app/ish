@@ -23,7 +23,8 @@
 }
 
 static inline dword_t align_stack(dword_t sp);
-static inline size_t strlen_user(dword_t p);
+static inline size_t user_strlen(dword_t p);
+static inline void user_memset(addr_t start, dword_t len, byte_t val);
 static inline dword_t copy_data(dword_t sp, const char *data, size_t count);
 static inline dword_t copy_string(dword_t sp, const char *string);
 static inline dword_t copy_strings(dword_t sp, char *const strings[]);
@@ -117,6 +118,8 @@ int sys_execve(const char *file, char *const argv[], char *const envp[]) {
         }
     }
 
+    // zero the part of the bss that overlaps with the code mapping
+    user_memset(bss, ((bss - 1) & 0xfffff000) + 0x1000 - bss, 0);
     // map the bss (which ends at brk)
     brk = PAGE_ROUND_UP(brk);
     bss = PAGE_ROUND_UP(bss);
@@ -195,7 +198,7 @@ int sys_execve(const char *file, char *const argv[], char *const envp[]) {
     dword_t p = sp;
     while (envc-- > 0) {
         user_put(p, envp_addr);
-        envp_addr += strlen_user(envp_addr) + 1;
+        envp_addr += user_strlen(envp_addr) + 1;
         p += sizeof(dword_t);
     }
 
@@ -206,7 +209,7 @@ int sys_execve(const char *file, char *const argv[], char *const envp[]) {
     p = sp;
     while (argc-- > 0) {
         user_put(p, argv_addr);
-        argv_addr += strlen_user(argv_addr) + 1;
+        argv_addr += user_strlen(argv_addr) + 1;
         p += sizeof(dword_t);
     }
 
@@ -236,33 +239,39 @@ unsigned count_args(char *const args[]) {
     return i;
 }
 
-static inline dword_t align_stack(dword_t sp) {
+static inline dword_t align_stack(addr_t sp) {
     return sp &~ 0xf;
 }
 
-static inline dword_t copy_string(dword_t sp, const char *string) {
+static inline dword_t copy_string(addr_t sp, const char *string) {
     sp -= strlen(string) + 1;
     user_put_string(sp, string);
     return sp;
 }
 
-static inline dword_t copy_strings(dword_t sp, char *const strings[]) {
+static inline dword_t copy_strings(addr_t sp, char *const strings[]) {
     for (unsigned i = 0; strings[i] != NULL; i++) {
         sp = copy_string(sp, strings[i]);
     }
     return sp;
 }
 
-static inline dword_t copy_data(dword_t sp, const char *data, size_t count) {
+static inline dword_t copy_data(addr_t sp, const char *data, size_t count) {
     sp -= count;
     user_put_count(sp, data, count);
     return sp;
 }
 
-static inline size_t strlen_user(dword_t p) {
+static inline size_t user_strlen(addr_t p) {
     size_t len = 0;
     while (user_get8(p++) != 0) len++;
     return len;
+}
+
+static inline void user_memset(addr_t start, dword_t len, byte_t val) {
+    while (len--) {
+        user_put8(start++, val);
+    }
 }
 
 dword_t _sys_execve(addr_t filename, addr_t argv, addr_t envp) {

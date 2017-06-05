@@ -12,6 +12,7 @@
 #include <sys/personality.h>
 
 #include "sys/calls.h"
+#include "sys/errno.h"
 #include "emu/process.h"
 #include "emu/cpuid.h"
 
@@ -110,6 +111,9 @@ restart:
         } else if (syscall_num == 85) {
             // readlink
             regs.rax = sys_readlink(0,0,0);
+        } else if (syscall_num == 197) {
+            // fstat64
+            regs.rax = (uint32_t) _ENOSYS;
         } else {
             goto do_step;
         }

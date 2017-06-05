@@ -15,6 +15,7 @@ syscall_t syscall_table[] = {
     [85] = (syscall_t) sys_readlink,
     [122] = (syscall_t) _sys_uname,
     [243] = (syscall_t) sys_set_thread_area,
+    [252] = (syscall_t) sys_exit_group,
 };
 
 // returns true if a step is necessary (subject to change)

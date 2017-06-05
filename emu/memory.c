@@ -53,6 +53,7 @@ void pt_unmap(struct mem *mem, page_t start, pages_t pages) {
 }
 
 int pt_map_nothing(struct mem *mem, page_t start, pages_t pages, unsigned flags) {
+    if (pages == 0) return 0;
     void *memory = mmap(NULL, pages * PAGE_SIZE,
             PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
     return pt_map(mem, start, pages, memory, flags);
@@ -60,6 +61,7 @@ int pt_map_nothing(struct mem *mem, page_t start, pages_t pages, unsigned flags)
 
 
 int pt_map_file(struct mem *mem, page_t start, pages_t pages, int fd, off_t off, unsigned flags) {
+    if (pages == 0) return 0;
     void *memory = mmap(NULL, pages * PAGE_SIZE,
             PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, off);
     return pt_map(mem, start, pages, memory, flags);

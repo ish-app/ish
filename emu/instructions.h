@@ -4,7 +4,13 @@
 // registers, so segfault recovery only needs to save IP.
 
 #define MOV(src, dst) \
-    dst = src
+    (dst) = (src)
+
+#define XCHG(src, dst) do { \
+    dword_t tmp = (src); \
+    (src) = (dst); \
+    (dst) = tmp; \
+} while (0)
 
 #define PUSH(thing) \
     MEM_W(sp - OP_SIZE/8) = thing; \
@@ -16,8 +22,9 @@
 #define INT(code) \
     return code
 
+#define SETRESFLAGS cpu->zf_res = cpu->sf_res = cpu->pf_res = 1
 #define SETRES(result) \
-    cpu->res = (result); cpu->zf_res = cpu->sf_res = cpu->pf_res = 1
+    cpu->res = (result); SETRESFLAGS
 
 #define TEST(src, dst) \
     cpu->res = (dst) & (src); \
@@ -26,29 +33,32 @@
 #define ADD(src, dst) \
     cpu->cf = __builtin_add_overflow((uint32_t) (dst), (uint32_t) (src), (uint32_t *) &cpu->res); \
     cpu->of = __builtin_add_overflow((int32_t) (dst), (int32_t) (src), (int32_t *) &cpu->res); \
-    (dst) = cpu->res
+    (dst) = cpu->res; SETRESFLAGS
+
+#define ADC(src, dst) ADD(src + cpu->cf, dst)
 
 #define OR(src, dst) \
     (dst) |= (src); \
-    cpu->cf = cpu->of = 0; \
-    SETRES(dst)
+    cpu->cf = cpu->of = 0; SETRES(dst)
 
 #define AND(src, dst) \
     (dst) &= (src); \
-    cpu->cf = cpu->of = 0; \
-    SETRES(dst)
+    cpu->cf = cpu->of = 0; SETRES(dst)
 
 #define SUB(src, dst) \
     cpu->cf = __builtin_sub_overflow((uint32_t) (dst), (uint32_t) (src), (uint32_t *) &cpu->res); \
     cpu->of = __builtin_sub_overflow((int32_t) (dst), (int32_t) (src), (int32_t *) &cpu->res); \
-    (dst) = cpu->res
+    (dst) = cpu->res; SETRESFLAGS
 
 // TODO flags
-#define XOR(src, dst) dst ^= src;
+#define XOR(src, dst) \
+    (dst) ^= (src); \
+    cpu->cf = cpu->of = 0; SETRES(dst)
 
 #define CMP(src, dst) \
     cpu->cf = __builtin_sub_overflow((uint32_t) (dst), (uint32_t) (src), (uint32_t *) &cpu->res); \
-    cpu->of = __builtin_sub_overflow((int32_t) (dst), (int32_t) (src), (int32_t *) &cpu->res)
+    cpu->of = __builtin_sub_overflow((int32_t) (dst), (int32_t) (src), (int32_t *) &cpu->res); \
+    SETRESFLAGS
 
 #define INC(val) do { \
     int tmp = cpu->cf; \
@@ -61,9 +71,23 @@
     cpu->cf = tmp; \
 } while (0)
 
-#define IMUL(reg, val) \
-    reg *= val
-    // TODO flags
+// TODO flags
+#define MUL18(val) cpu->ax_ = cpu->al * val
+#define MUL1(val) do { \
+    uint64_t tmp = ax * (uint64_t) val; \
+    ax = tmp; dx = tmp >> OP_SIZE; \
+} while (0)
+#define IMUL1(val) do { \
+    int64_t tmp = ax * (int64_t) val; \
+    ax = tmp; dx = tmp >> OP_SIZE; \
+} while (0)
+#define MUL2(val, reg) reg *= val
+#define MUL3(imm, src, dst) dst = src * imm
+#define _MUL_MODRM(val) \
+    if (modrm.reg.reg32_id == modrm.modrm_regid.reg32_id) \
+        modrm_reg *= val; \
+    else \
+        modrm_reg = val * modrm_val
 
 #define DIV(reg, val, rem) \
     if (val == 0) return INT_DIV; \
@@ -74,19 +98,59 @@
 
 #define GRP1(src, dst) \
     switch (modrm.opcode) { \
-        case 0b000: TRACE("add"); \
-                    ADD(src, dst##_w); break; \
-        case 0b001: TRACE("or"); \
-                    OR(src, dst##_w); break; \
-        case 0b100: TRACE("and"); \
-                    AND(src, dst##_w); break; \
-        case 0b101: TRACE("sub"); \
-                    SUB(src, dst##_w); break; \
-        case 0b111: TRACE("cmp"); \
-                    CMP(src, dst); break; \
-        default: \
-            TRACE("undefined"); \
-            return INT_UNDEFINED; \
+        case 0: TRACE("add"); \
+                ADD(src, dst##_w); break; \
+        case 1: TRACE("or"); \
+                OR(src, dst##_w); break; \
+        case 2: TRACE("adc"); \
+                ADC(src, dst##_w); break; \
+        case 4: TRACE("and"); \
+                AND(src, dst##_w); break; \
+        case 5: TRACE("sub"); \
+                SUB(src, dst##_w); break; \
+        case 6: TRACE("xor"); \
+                XOR(src, dst##_w); break; \
+        case 7: TRACE("cmp"); \
+                CMP(src, dst); break; \
+        default: TRACE("undefined"); \
+                 return INT_UNDEFINED; \
+    }
+
+#define GRP2(count, val) \
+    switch (modrm.opcode) { \
+        case 0: TRACE("rol"); \
+                /* the compiler miraculously turns this into a rol instruction at -O3 */\
+                val = val << count | val >> (OP_SIZE - count); break; \
+        case 1: TRACE("ror"); \
+                val = val >> count | val << (OP_SIZE - count); break; \
+        case 2: TRACE("rcl"); \
+                return INT_UNDEFINED; \
+        case 3: TRACE("rcr"); \
+                return INT_UNDEFINED; \
+        case 4: \
+        case 6: TRACE("shl"); \
+                val <<= count; break; \
+        case 5: TRACE("shr"); \
+                cpu->cf = val & 1; val >>= count; SETRES(val); break; \
+        case 7: TRACE("sar"); \
+                val = ((int32_t) val) >> count; break; \
+    }
+
+#define GRP3(val) \
+    switch (modrm.opcode) { \
+        case 0: \
+        case 1: TRACE("test imm"); \
+                READIMM; TEST(imm, val); break; \
+        case 2: TRACE("not"); return INT_UNDEFINED; \
+        case 3: TRACE("neg"); \
+                val = -val; break; TODO("flags"); \
+        case 4: TRACE("mul"); \
+                MUL1(modrm_val); break; \
+        case 5: TRACE("imul"); return INT_UNDEFINED; \
+        case 6: TRACE("div"); \
+                DIV(ax, modrm_val, dx); break; \
+        case 7: TRACE("idiv"); return INT_UNDEFINED; \
+        default: TRACE("undefined"); return INT_UNDEFINED; \
     }
 
 #define GRP38(val) \
@@ -100,21 +164,6 @@
         case 5: TRACE("imul"); return INT_UNDEFINED; \
         case 6: TRACE("div"); \
                 DIV(cpu->al, modrm_val8, cpu->ah); break; \
-        default: TRACE("undefined"); return INT_UNDEFINED; \
-    }
-
-#define GRP3(val) \
-    switch (modrm.opcode) { \
-        case 0: \
-        case 1: TRACE("test imm"); \
-                READIMM; TEST(imm, val); break; \
-        case 2: TRACE("not"); return INT_UNDEFINED; \
-        case 3: TRACE("neg"); return INT_UNDEFINED; \
-        case 4: TRACE("mul"); return INT_UNDEFINED; \
-        case 5: TRACE("imul"); return INT_UNDEFINED; \
-        case 6: TRACE("div"); \
-                DIV(ax, modrm_val, dx); break; \
-        case 7: TRACE("idiv"); return INT_UNDEFINED; \
         default: TRACE("undefined"); return INT_UNDEFINED; \
     }
 
@@ -135,26 +184,47 @@
         case 7: TRACE("undefined"); return INT_UNDEFINED; \
     }
 
+#define BUMP_SI(size) \
+    if (!cpu->df) \
+        cpu->esi += size; \
+    else \
+        cpu->esi -= size
+#define BUMP_DI(size) \
+    if (!cpu->df) \
+        cpu->edi += size; \
+    else \
+        cpu->edi -= size
 #define BUMP_SI_DI(size) \
-    if (!cpu->df) { \
-        di += size; si += size; \
-    } else { \
-        di -= size; si -= size; \
-    }
+    BUMP_SI(size); BUMP_DI(size)
 
 #define MOVS \
-    MEM_W(di) = MEM(si); \
-    BUMP_SI_DI(OP_SIZE/8);
+    MEM_W(cpu->edi) = MEM(cpu->esi); \
+    BUMP_SI_DI(OP_SIZE/8)
 
 #define MOVSB \
-    MEM8_W(di) = MEM8(si); \
-    BUMP_SI_DI(1);
+    MEM8_W(cpu->edi) = MEM8(cpu->esi); \
+    BUMP_SI_DI(1)
+
+#define STOS \
+    MEM_W(cpu->edi) = ax; \
+    BUMP_DI(OP_SIZE/8)
+
+#define STOSB \
+    MEM8_W(di) = cpu->al; \
+    BUMP_DI(1)
 
 #define REP(OP) \
     while (cx != 0) { \
         OP; \
         cx--; \
     }
+
+#define CMPXCHG(src, dst) \
+    CMP(ax, dst); \
+    if (E) \
+        MOV(src, dst##_w); \
+    else \
+        MOV(dst, ax)
 
 // condition codes
 #define E ZF
@@ -174,9 +244,8 @@
 #define PF (cpu->pf_res ? !__builtin_parity(cpu->res) : cpu->pf)
 
 #define FIX_EIP \
-    if (OP_SIZE == 16) { \
-        cpu->eip &= 0xffff; \
-    }
+    if (OP_SIZE == 16) \
+        cpu->eip &= 0xffff
 
 #define JMP(loc) cpu->eip = loc; FIX_EIP;
 #define JMP_REL(offset) cpu->eip += offset; FIX_EIP;
@@ -185,38 +254,11 @@
         cpu->eip += offset; FIX_EIP; \
     }
 
-#define RET_NEAR() POP(cpu->eip); FIX_EIP;
+#define RET_NEAR() POP(cpu->eip); FIX_EIP
+#define RET_NEAR_IMM(imm) RET_NEAR(); sp += imm
 
 #define SET(cond, val) \
     val = (cond ? 1 : 0);
 
 #define CMOV(cond, dst, src) \
     if (cond) MOV(dst, src)
-
-static inline dword_t do_shift(dword_t val, dword_t amount, int op) {
-    switch (op) {
-        case 0:
-            TRACE("rol");
-            break;
-        case 1:
-            TRACE("ror");
-            break;
-        case 2:
-            TRACE("rcl");
-            break;
-        case 3:
-            TRACE("rcr");
-            break;
-        case 4:
-        case 6:
-            TRACE("shl");
-            return val << amount;
-        case 5:
-            TRACE("shr");
-            return val >> amount;
-        case 7:
-            TRACE("sar");
-            return ((int32_t) val) >> amount;
-    }
-    return 0;
-}

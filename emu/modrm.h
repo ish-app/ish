@@ -55,7 +55,7 @@ static inline struct modrm_info modrm_get_info(byte_t byte) {
             TRACE("mod_disp8 ");
             break;
         case mod_disp32:
-            TRACE("mod_disp32");
+            TRACE("mod_disp32 ");
             break;
     }
     if (info.sib) {

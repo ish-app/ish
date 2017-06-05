@@ -17,6 +17,7 @@ int sys_execve(const char *file, char *const argv[], char *const envp[]);
 dword_t _sys_execve(addr_t file, addr_t argv, addr_t envp);
 
 dword_t sys_exit(dword_t status);
+dword_t sys_exit_group(dword_t status);
 
 #define MAX_PATH 4096
 int sys_open(const char *pathname, int flags);

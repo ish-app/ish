@@ -87,11 +87,8 @@ int cpu_step(struct cpu_state *cpu) {
 
 #undef imm
     byte_t imm8;
-#if OP_SIZE == 16
     word_t imm16;
-#else
     dword_t imm32;
-#endif
 #define READIMM_(name,size) \
     name = MEM_(cpu->eip,size); \
     cpu->eip += size/8; \
@@ -99,6 +96,7 @@ int cpu_step(struct cpu_state *cpu) {
 #define imm CONCAT(imm, OP_SIZE)
 #define READIMM READIMM_(imm, OP_SIZE)
 #define READIMM8 READIMM_(imm8, 8)
+#define READIMM16 READIMM_(imm16, 16)
     dword_t addr_offset = 0;
 #define READADDR READIMM_(addr_offset, 32); addr += addr_offset
     byte_t insn;
@@ -119,7 +117,7 @@ restart:
         case 0x01: TRACEI("add reg, modrm");
                    READMODRM; ADD(modrm_reg, modrm_val_w); break;
         case 0x03: TRACEI("add modrm, reg");
-                   READMODRM; ADD(modrm_val_w, modrm_reg); break;
+                   READMODRM; ADD(modrm_val, modrm_reg); break;
         case 0x05: TRACEI("add imm, eax");
                    READIMM; ADD(imm, ax); break;
 
@@ -215,7 +213,10 @@ restart:
                            READMODRM; SET(!E, modrm_val8_w); break;
 
                 case 0xaf: TRACEI("imul modrm, reg");
-                           READMODRM; IMUL(modrm_reg, modrm_val); break;
+                           READMODRM; MUL2((int32_t) modrm_val, modrm_reg); break;
+
+                case 0xb1: TRACEI("cmpxchg reg, modrm");
+                           READMODRM; CMPXCHG(modrm_reg, modrm_val); break;
 
                 case 0xb6: TRACEI("movz modrm8, reg");
                            READMODRM; MOV(modrm_val8, modrm_reg); break;
@@ -242,11 +243,17 @@ restart:
 
         case 0x21: TRACEI("and reg, modrm");
                    READMODRM; AND(modrm_reg, modrm_val_w); break;
+        case 0x23: TRACEI("and modrm, reg");
+                   READMODRM; AND(modrm_val, modrm_reg); break;
+        case 0x25: TRACEI("and imm, ax\t");
+                   READIMM; AND(imm, ax); break;
 
         case 0x29: TRACEI("sub reg, modrm");
                    READMODRM; SUB(modrm_reg, modrm_val_w); break;
         case 0x2b: TRACEI("sub modrm, reg");
                    READMODRM; SUB(modrm_val, modrm_reg); break;
+        case 0x2d: TRACEI("sub imm, ax\t");
+                   READIMM; SUB(imm, ax); break;
 
         case 0x30: TRACEI("xor reg8, modrm8");
                    READMODRM; XOR(modrm_reg8, modrm_val8_w); break;
@@ -264,8 +271,9 @@ restart:
         case 0x3d: TRACEI("cmp imm, eax\t");
                    READIMM; CMP(imm, ax); break;
 
-        case 0x40: TRACEI("inc eax"); INC(ax); break;
-        case 0x4a: TRACEI("dec edx"); DEC(dx); break;
+        case 0x40: TRACEI("inc ax"); INC(ax); break;
+        case 0x47: TRACEI("inc di"); INC(di); break;
+        case 0x4a: TRACEI("dec dx"); DEC(dx); break;
 
         case 0x50: TRACEI("push eax");
                    PUSH(ax); break;
@@ -324,8 +332,12 @@ restart:
 
         case 0x68: TRACEI("push imm\t");
                    READIMM; PUSH(imm); break;
+        case 0x69: TRACEI("imul imm\t");
+                   READMODRM; READIMM; MUL3((int32_t) imm, (int32_t) modrm_val, modrm_reg); break;
         case 0x6a: TRACEI("push imm8\t");
-                   READIMM8; PUSH(imm8); break;
+                   READIMM8; PUSH((int8_t) imm8); break;
+        case 0x6b: TRACEI("imul imm8\t");
+                   READMODRM; READIMM8; MUL3((int8_t) imm8, (int8_t) modrm_val, modrm_reg); break;
 
         case 0x70: TRACEI("jo rel8\t");
                    READIMM8; J_REL(O, (int8_t) imm8); break;
@@ -377,7 +389,6 @@ restart:
                    READMODRM; MOV(modrm_reg8, modrm_val8_w); break;
         case 0x89: TRACEI("mov reg, modrm");
                    READMODRM; MOV(modrm_reg, modrm_val_w); break;
-        case 0x90: TRACEI("nop"); break;
         case 0x8a: TRACEI("mov modrm8, reg8");
                    READMODRM; MOV(modrm_val8, modrm_reg8); break;
         case 0x8b: TRACEI("mov modrm, reg");
@@ -390,19 +401,31 @@ restart:
                 return INT_UNDEFINED;
             }
             modrm_reg = addr; break;
-        case 0x8e: TRACEI("mov modrm, seg\t");
-                   // only gs is supported, and it does nothing
-                   // see comment in sys/tls.c
-                   READMODRM;
-                   if (modrm.reg.reg32_id != REG_ID(ebp)) {
-                       return INT_UNDEFINED;
-                   }
-                   break;
+        case 0x8e:
+            TRACEI("mov modrm, seg\t");
+            // only gs is supported, and it does nothing
+            // see comment in sys/tls.c
+            READMODRM;
+            if (modrm.reg.reg32_id != REG_ID(ebp)) {
+                return INT_UNDEFINED;
+            }
+            break;
+
+        case 0x90: TRACEI("nop"); break;
+        case 0x97: TRACEI("xchg di, ax");
+                   XCHG(di, ax); break;
 
         case 0xa1: TRACEI("mov mem, eax\t");
                    READADDR; MOV(MEM(addr), ax); break;
         case 0xa3: TRACEI("mov eax, mem\t");
                    READADDR; MOV(ax, MEM_W(addr)); break;
+        case 0xa4: TRACEI("movsb"); MOVSB; break;
+        case 0xa5: TRACEI("movs"); MOVS; break;
+
+        case 0xa8: TRACEI("test imm8, al");
+                   READIMM8; TEST(imm8, cpu->al); break;
+        case 0xa9: TRACEI("test imm, ax");
+                   READIMM; TEST(imm, ax); break;
 
         case 0xb8: TRACEI("mov imm, eax\t");
                    READIMM; MOV(imm, ax); break;
@@ -421,14 +444,16 @@ restart:
         case 0xbf: TRACEI("mov imm, edi\t");
                    READIMM; MOV(imm, di); break;
 
-        case 0xc1:
-            TRACEI("shift imm8, modrm");
-            READMODRM; READIMM8;
-            modrm_val_w = do_shift(modrm_val, imm8, modrm.opcode);
-            break;
+        case 0xc1: TRACEI("grp2 imm8, modrm");
+                   READMODRM; READIMM8; GRP2(imm8, modrm_val_w); break;
 
+        case 0xc2: TRACEI("ret near imm\t");
+                   READIMM16; RET_NEAR_IMM(imm16); break;
         case 0xc3: TRACEI("ret near");
                    RET_NEAR(); break;
+
+        case 0xc9: TRACEI("leave");
+                   MOV(cpu->ebp, cpu->esp); POP(bp); break;
 
         case 0xcd: TRACEI("int imm8\t");
                    READIMM8; INT(imm8); break;
@@ -437,6 +462,14 @@ restart:
                    READMODRM; READIMM8; MOV(imm8, modrm_val8_w); break;
         case 0xc7: TRACEI("mov imm, modrm");
                    READMODRM; READIMM; MOV(imm, modrm_val_w); break;
+
+        case 0xd1: TRACEI("grp2 1, modrm");
+                   READMODRM; GRP2(1, modrm_val_w); break;
+        case 0xd3: TRACEI("grp2 cl, modrm");
+                   READMODRM; GRP2(cpu->cl, modrm_val_w); break;
+
+        case 0xe3: TRACEI("jcxz rel8\t");
+                  READIMM8; if (cx == 0) JMP_REL((int8_t) imm8); break;
 
         case 0xe8: TRACEI("call near\t");
                    READIMM; CALL_REL(imm); break;
@@ -459,8 +492,11 @@ restart:
                     }
                     break;
 
-                case 0xa4: TRACEI("rep movsb (di), (si)"); REP(MOVSB); break;
-                case 0xa5: TRACEI("rep movs (di), (si)"); REP(MOVS); break;
+                case 0xa4: TRACEI("rep movsb"); REP(MOVSB); break;
+                case 0xa5: TRACEI("rep movs"); REP(MOVS); break;
+
+                case 0xaa: TRACEI("rep stosb"); REP(STOSB); break;
+                case 0xab: TRACEI("rep stos"); REP(STOS); break;
 
                 // repz ret is equivalent to ret but on some amd chips there's
                 // a branch prediction penalty if the target of a branch is a
