@@ -46,6 +46,7 @@ typedef uint8_t byte_t;
 typedef dword_t addr_t;
 typedef dword_t page_t;
 
-#define UINT(size) CONCAT3(uint,size,_t)
+#define uint(size) CONCAT3(uint,size,_t)
+#define sint(size) CONCAT3(int,size,_t)
 
 #endif

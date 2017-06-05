@@ -67,6 +67,7 @@ forceinline void *mem_read_ptr(struct mem *mem, addr_t addr) {
 forceinline void *mem_write_ptr(struct mem *mem, addr_t addr) {
     struct tlb_entry entry = mem->tlb[TLB_INDEX(addr)];
     if (entry.page_if_writable == TLB_PAGE(addr)) {
+        mem->pt[PAGE(addr)]->dirty = 1;
         return (char *) entry.data + OFFSET(addr);
     }
     return tlb_handle_miss(mem, addr, TLB_WRITE);

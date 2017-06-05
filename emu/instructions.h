@@ -35,7 +35,12 @@
     cpu->of = __builtin_add_overflow((int32_t) (dst), (int32_t) (src), (int32_t *) &cpu->res); \
     (dst) = cpu->res; SETRESFLAGS
 
-#define ADC(src, dst) ADD(src + cpu->cf, dst)
+// had a nasty bug because ADD overwrites cpu->cf
+#define ADC(src, dst) do { \
+    int tmp = cpu->cf; \
+    ADD(src + tmp, dst); \
+    cpu->cf = tmp; \
+} while (0)
 
 #define OR(src, dst) \
     (dst) |= (src); \

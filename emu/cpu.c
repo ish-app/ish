@@ -42,10 +42,12 @@ int cpu_step(struct cpu_state *cpu) {
 #define bp cpu->bp
 #define sp cpu->sp
 #endif
+#define uintop_t uint(OP_SIZE)
+#define intop_t sint(OP_SIZE)
 
     // watch out: these macros can evaluate the arguments any number of times
 #define MEM_ACCESS(addr, size, type) ({ \
-        UINT(size) *ptr = mem_##type##_ptr(&cpu->mem, addr); \
+        uint(size) *ptr = mem_##type##_ptr(&cpu->mem, addr); \
         if (ptr == NULL) { \
             cpu->eip = saved_ip; \
             cpu->segfault_addr = addr; \
@@ -123,6 +125,8 @@ restart:
 
         case 0x09: TRACEI("or reg, modrm");
                    READMODRM; OR(modrm_reg, modrm_val_w); break;
+        case 0x0b: TRACEI("or modrm, reg");
+                   READMODRM; OR(modrm_val, modrm_reg); break;
         case 0x0d: TRACEI("or imm, eax\t");
                    READIMM; OR(imm, ax); break;
 
@@ -130,6 +134,7 @@ restart:
             // 2-byte opcode prefix
             READINSN;
             switch (insn) {
+                case 0x1f: TRACEI("nop modrm\t"); READMODRM; break;
                 case 0x31: TRACEI("rdtsc");
                            __asm__("rdtsc" : "=a" (cpu->eax), "=d" (cpu->edx)); break;
 
@@ -268,12 +273,27 @@ restart:
                    READMODRM; CMP(modrm_reg, modrm_val); break;
         case 0x3b: TRACEI("cmp modrm, reg");
                    READMODRM; CMP(modrm_val, modrm_reg); break;
+        case 0x3c: TRACEI("cmp al, imm8");
+                   READIMM8; CMP(cpu->al, imm8); break;
         case 0x3d: TRACEI("cmp imm, eax\t");
                    READIMM; CMP(imm, ax); break;
 
         case 0x40: TRACEI("inc ax"); INC(ax); break;
+        case 0x41: TRACEI("inc cx"); INC(cx); break;
+        case 0x42: TRACEI("inc dx"); INC(dx); break;
+        case 0x43: TRACEI("inc bx"); INC(bx); break;
+        case 0x44: TRACEI("inc sp"); INC(sp); break;
+        case 0x45: TRACEI("inc bp"); INC(bp); break;
+        case 0x46: TRACEI("inc si"); INC(si); break;
         case 0x47: TRACEI("inc di"); INC(di); break;
+        case 0x48: TRACEI("dec ax"); DEC(ax); break;
+        case 0x49: TRACEI("dec cx"); DEC(cx); break;
         case 0x4a: TRACEI("dec dx"); DEC(dx); break;
+        case 0x4b: TRACEI("dec bx"); DEC(bx); break;
+        case 0x4c: TRACEI("dec sp"); DEC(sp); break;
+        case 0x4d: TRACEI("dec bp"); DEC(bp); break;
+        case 0x4e: TRACEI("dec si"); DEC(si); break;
+        case 0x4f: TRACEI("dec di"); DEC(di); break;
 
         case 0x50: TRACEI("push eax");
                    PUSH(ax); break;
@@ -414,6 +434,11 @@ restart:
         case 0x90: TRACEI("nop"); break;
         case 0x97: TRACEI("xchg di, ax");
                    XCHG(di, ax); break;
+
+        case 0x99: TRACEI("cdq");
+                   // TODO make this its own macro 
+                   // (also it's probably wrong in some subtle way)
+                   dx = ax & (1 << (OP_SIZE - 1)) ? (uintop_t) -1 : 0; break;
 
         case 0xa1: TRACEI("mov mem, eax\t");
                    READADDR; MOV(MEM(addr), ax); break;

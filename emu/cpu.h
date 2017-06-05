@@ -88,7 +88,7 @@ struct cpu_state {
 
 typedef uint8_t reg_id_t;
 #define REG_ID(reg) offsetof(struct cpu_state, reg)
-#define REG_VAL(cpu, reg_id, size) (*((UINT(size) *) (((char *) (cpu)) + reg_id)))
+#define REG_VAL(cpu, reg_id, size) (*((uint(size) *) (((char *) (cpu)) + reg_id)))
 inline const char *reg8_name(uint8_t reg_id) {
     switch (reg_id) {
         case REG_ID(al): return "al";

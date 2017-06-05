@@ -96,6 +96,7 @@ void *tlb_handle_miss(struct mem *mem, addr_t addr, int type) {
         // 1 is not a valid page so this won't look like a hit
         tlb->page_if_writable = TLB_PAGE_EMPTY;
     tlb->data = pt->data;
+    pt->dirty = 1;
     return (char *) tlb->data + OFFSET(addr);
 }
 

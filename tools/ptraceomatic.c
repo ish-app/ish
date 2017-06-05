@@ -2,6 +2,7 @@
 // simultaneously runs the program in ish, and asserts that everything's
 // working the same.
 #include <stdio.h>
+#include <string.h>
 #include <signal.h>
 #include <unistd.h>
 #include <errno.h>
@@ -41,23 +42,21 @@ int compare_cpus(struct cpu_state *cpu, int pid) {
 
     return 0;
     // compare pages marked dirty
-    /* for (unsigned i = 0; i < PT_SIZE; i++) { */
-    /*     if (cpu->pt[i] && cpu->pt[i]->dirty) { */
-    /*         cpu->pt[i]->dirty = 0; */
-    /*         for (unsigned long addr = i << PAGE_BITS; */
-    /*                 addr < (i + 1) << PAGE_BITS; */
-    /*                 addr += 4) { */
-    /*             errno = 0; // better safe than sorry */
-    /*             dword_t real_mem = pt_read(pid, addr); */
-    /*             dword_t fake_mem = MEM_GET(cpu, addr, 32); */
-    /*             if (real_mem != fake_mem) { */
-    /*                 printf("real 0x%08lx = 0x%x, fake 0x%08lx = 0x%x\n", addr, real_mem, addr, fake_mem); */
-    /*                 return -1; */
-    /*             } */
-    /*         } */
-    /*         printf("dirty %x\n", i); */
-    /*     } */
-    /* } */
+    int fd = open_mem(pid);
+    for (unsigned i = 0; i < PT_SIZE; i++) {
+        if (cpu->mem.pt[i] && cpu->mem.pt[i]->dirty) {
+            cpu->mem.pt[i]->dirty = 0;
+            char page[PAGE_SIZE];
+            trycall(lseek(fd, i<<PAGE_BITS, SEEK_SET), "compare seek mem");
+            trycall(read(fd, page, PAGE_SIZE), "compare read mem");
+            if (memcmp(page, cpu->mem.pt[i]->data, PAGE_SIZE) != 0) {
+                printf("page %x doesn't match\n", i);
+                debugger;
+                return -1;
+            }
+        }
+    }
+    close(fd);
     return 0;
 }
 
