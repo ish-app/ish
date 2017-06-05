@@ -40,22 +40,20 @@ int compare_cpus(struct cpu_state *cpu, int pid) {
     CHECK_REG(rbp, ebp);
     CHECK_REG(rip, eip);
 
-    return 0;
     // compare pages marked dirty
     int fd = open_mem(pid);
-    for (unsigned i = 0; i < PT_SIZE; i++) {
-        if (cpu->mem.pt[i] && cpu->mem.pt[i]->dirty) {
-            cpu->mem.pt[i]->dirty = 0;
-            char page[PAGE_SIZE];
-            trycall(lseek(fd, i<<PAGE_BITS, SEEK_SET), "compare seek mem");
-            trycall(read(fd, page, PAGE_SIZE), "compare read mem");
-            if (memcmp(page, cpu->mem.pt[i]->data, PAGE_SIZE) != 0) {
-                printf("page %x doesn't match\n", i);
-                debugger;
-                return -1;
-            }
-        }
+    page_t dirty_page = cpu->mem.dirty_page;
+    char real_page[PAGE_SIZE];
+    trycall(lseek(fd, dirty_page<<PAGE_BITS, SEEK_SET), "compare seek mem");
+    trycall(read(fd, real_page, PAGE_SIZE), "compare read mem");
+    void *fake_page = cpu->mem.pt[dirty_page]->data;
+
+    if (memcmp(real_page, fake_page, PAGE_SIZE) != 0) {
+        printf("page %x doesn't match\n", dirty_page);
+        debugger;
+        return -1;
     }
+
     close(fd);
     return 0;
 }
@@ -149,8 +147,11 @@ void prepare_tracee(int pid) {
 int main(int argc, char *const args[]) {
     int err;
     current = process_create();
-    char *const argv[] = {args[1], NULL};
-    char *const envp[] = {NULL};
+    char *argv[argc];
+    for (int i = 0; i < argc; i++) {
+        argv[i] = args[i + 1];
+    }
+    char *envp[] = {NULL};
     if ((err = sys_execve(args[1], argv, envp)) < 0) {
         return -err;
     }

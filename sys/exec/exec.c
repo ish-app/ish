@@ -22,7 +22,6 @@
 static inline dword_t align_stack(dword_t sp);
 static inline size_t user_strlen(dword_t p);
 static inline void user_memset(addr_t start, dword_t len, byte_t val);
-static inline dword_t copy_data(dword_t sp, const char *data, size_t count);
 static inline dword_t copy_string(dword_t sp, const char *string);
 static inline dword_t copy_strings(dword_t sp, char *const strings[]);
 static unsigned count_args(char *const args[]);
@@ -201,6 +200,13 @@ int sys_execve(const char *file, char *const argv[], char *const envp[]) {
     // on 64-bit linux, there's 8. make ptraceomatic happy. (a major theme in this file)
     sp -= sizeof(void *);
 
+    // now the really complicated part: initializing the stack. plan of attack is
+    // 1. start at the bottom, copy the filename, arguments, and environment
+    // 2. copy the stuff elf aux points to
+    // 3. figure out how much space is needed for aux, argv, and envp, reserve
+    // it, and then align the stack
+    // 4. go up to the top and copy argc, argv, envp, and auxv
+
     // filename, argc, argv
     addr_t file_addr = sp = copy_string(sp, file);
     addr_t envp_addr = sp = copy_strings(sp, envp);
@@ -212,11 +218,11 @@ int sys_execve(const char *file, char *const argv[], char *const envp[]) {
     // 16 random bytes so no system call is needed to seed a userspace RNG
     char random[16] = {};
     if (getentropy(random, sizeof(random)) < 0)
-        abort(); // if this fails, something is badly wrong
-    addr_t random_addr = sp = copy_data(sp, random, sizeof(random));
-    sp &=~ 0x7;
+        abort(); // if this fails, something is very badly wrong indeed
+    addr_t random_addr = sp -= sizeof(random);
+    user_put_count(sp, random, sizeof(random));
 
-    // elf aux
+    // declare elf aux so we can know how big it is
     struct aux_ent aux[] = {
         {AX_SYSINFO, vdso_entry},
         {AX_SYSINFO_EHDR, vdso_addr},
@@ -240,36 +246,45 @@ int sys_execve(const char *file, char *const argv[], char *const envp[]) {
         {AX_PLATFORM, platform_addr},
         {0, 0}
     };
-    sp = copy_data(sp, (const char *) aux, sizeof(aux));
+
+    // the way linux aligns the stack at this point is kinda funky
+    // calculate how much space is needed for argv, envp, and auxv, subtract
+    // that from sp, then align, then copy argv/envp/auxv from that down
+    size_t argc = count_args(argv);
+    size_t envc = count_args(envp);
+    sp -= ((argc + 1) + (envc + 1) + 1) * sizeof(dword_t);
+    sp -= sizeof(aux);
+    sp &=~ 0xf;
+
+    // now copy down, start using p so sp is preserved
+    addr_t p = sp;
+
+    // argc
+    user_put(p, argc); p += sizeof(dword_t);
+
+    // argv
+    while (argc-- > 0) {
+        user_put(p, argv_addr);
+        argv_addr += user_strlen(argv_addr) + 1;
+        p += sizeof(dword_t); // null terminator
+    }
+    p += sizeof(dword_t); // null terminator
 
     // envp
-    size_t envc = count_args(envp);
-    sp -= sizeof(dword_t); // null terminator
-    sp -= envc * sizeof(dword_t);
-    dword_t p = sp;
     while (envc-- > 0) {
         user_put(p, envp_addr);
         envp_addr += user_strlen(envp_addr) + 1;
         p += sizeof(dword_t);
     }
+    p += sizeof(dword_t); // null terminator
 
-    // argv
-    size_t argc = count_args(argv);
-    sp -= sizeof(dword_t); // null terminator
-    sp -= argc * sizeof(dword_t);
-    p = sp;
-    while (argc-- > 0) {
-        user_put(p, argv_addr);
-        argv_addr += user_strlen(argv_addr) + 1;
-        p += sizeof(dword_t);
-    }
-
-    // argc
-    sp -= sizeof(dword_t); user_put(sp, count_args(argv));
+    // copy auxv
+    user_put_count(p, (const char *) aux, sizeof(aux));
+    p += sizeof(aux);
 
     current->cpu.esp = sp;
     current->cpu.eip = header.entry_point;
-    /* pt_dump(current->cpu.pt); */
+    curmem.dirty_page = 0xffffd;
 
     err = 0;
 out_free_interp:
@@ -306,15 +321,9 @@ static inline dword_t copy_string(addr_t sp, const char *string) {
 }
 
 static inline dword_t copy_strings(addr_t sp, char *const strings[]) {
-    for (unsigned i = 0; strings[i] != NULL; i++) {
-        sp = copy_string(sp, strings[i]);
+    for (unsigned i = count_args(strings); i > 0; i--) {
+        sp = copy_string(sp, strings[i - 1]);
     }
-    return sp;
-}
-
-static inline dword_t copy_data(addr_t sp, const char *data, size_t count) {
-    sp -= count;
-    user_put_count(sp, data, count);
     return sp;
 }
 

@@ -35,7 +35,13 @@ int handle_interrupt(struct cpu_state *cpu, int interrupt) {
         cpu->eax = result;
     } else if (interrupt == INT_GPF) {
         // page fault handling is a thing
-        return handle_pagefault(cpu->segfault_addr);
+        printf("page fault at %x\n", cpu->segfault_addr);
+        int res = handle_pagefault(cpu->segfault_addr);
+        if (res == 0) {
+            printf("could not handle, exiting\n");
+            sys_exit(1);
+        }
+        return res;
     } else {
         printf("exiting\n");
         sys_exit(interrupt);

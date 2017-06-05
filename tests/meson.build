@@ -5,3 +5,4 @@ executable('hello-libc', ['hello-clib.c'], c_args: ['-m32'], link_args: ['-m32']
 
 # simple benchmark
 executable('looper', ['looper.c', 'nothing.c'], c_args: ['-m32'], link_args: ['-m32'])
+executable('fibbonaci', ['fibbonaci.c'], c_args: ['-m32'], link_args: ['-m32', '-static'])

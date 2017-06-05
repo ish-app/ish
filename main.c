@@ -5,8 +5,11 @@
 int main(int argc, char *const args[]) {
     int err;
     current = process_create();
-    char *const argv[] = {args[1], NULL};
-    char *const envp[] = {NULL};
+    char *argv[argc];
+    for (int i = 0; i < argc; i++) {
+        argv[i] = args[i + 1];
+    }
+    char *envp[] = {NULL};
     if ((err = sys_execve(args[1], argv, envp)) < 0) {
         return -err;
     }

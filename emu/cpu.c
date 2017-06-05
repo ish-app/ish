@@ -123,6 +123,8 @@ restart:
         case 0x05: TRACEI("add imm, eax");
                    READIMM; ADD(imm, ax); break;
 
+        case 0x08: TRACEI("or reg8, modrm8");
+                   READMODRM; OR(modrm_reg8, modrm_val8_w); break;
         case 0x09: TRACEI("or reg, modrm");
                    READMODRM; OR(modrm_reg, modrm_val_w); break;
         case 0x0b: TRACEI("or modrm, reg");
@@ -271,10 +273,12 @@ restart:
                    READMODRM; CMP(modrm_reg8, modrm_val8); break;
         case 0x39: TRACEI("cmp reg, modrm");
                    READMODRM; CMP(modrm_reg, modrm_val); break;
+        case 0x3a: TRACEI("cmp modrm8, reg8");
+                   READMODRM; CMP(modrm_val8, modrm_reg8); break;
         case 0x3b: TRACEI("cmp modrm, reg");
                    READMODRM; CMP(modrm_val, modrm_reg); break;
-        case 0x3c: TRACEI("cmp al, imm8");
-                   READIMM8; CMP(cpu->al, imm8); break;
+        case 0x3c: TRACEI("cmp imm8, al\t");
+                   READIMM8; CMP(imm8, cpu->al); break;
         case 0x3d: TRACEI("cmp imm, eax\t");
                    READIMM; CMP(imm, ax); break;
 
