@@ -17,8 +17,8 @@ sys_src = [
     'sys/exec/exec.c',
 
     'sys/exit.c',
-    'sys/write.c',
     'sys/mm.c',
+    'sys/mmap.c',
     'sys/uname.c',
     'sys/tls.c',
     'sys/fs.c',
@@ -37,7 +37,7 @@ emu_src = [
 ]
 
 ish = declare_dependency(
-    link_with: library('ish', sys_src + emu_src, include_directories: includes),
+    link_with: library('ish', sys_src + emu_src + ['setup.c'], include_directories: includes),
     include_directories: includes)
 
 # testing programs

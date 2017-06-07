@@ -120,15 +120,19 @@ restart:
                    READMODRM; ADD(modrm_reg, modrm_val_w); break;
         case 0x03: TRACEI("add modrm, reg");
                    READMODRM; ADD(modrm_val, modrm_reg); break;
-        case 0x05: TRACEI("add imm, eax");
+        case 0x05: TRACEI("add imm, eax\t");
                    READIMM; ADD(imm, ax); break;
 
         case 0x08: TRACEI("or reg8, modrm8");
                    READMODRM; OR(modrm_reg8, modrm_val8_w); break;
         case 0x09: TRACEI("or reg, modrm");
                    READMODRM; OR(modrm_reg, modrm_val_w); break;
+        case 0x0a: TRACEI("or modrm8, reg8");
+                   READMODRM; OR(modrm_reg8, modrm_val8); break;
         case 0x0b: TRACEI("or modrm, reg");
                    READMODRM; OR(modrm_val, modrm_reg); break;
+        case 0x0c: TRACEI("or imm8, al\t");
+                   READIMM8; OR(imm8, cpu->al); break;
         case 0x0d: TRACEI("or imm, eax\t");
                    READIMM; OR(imm, ax); break;
 
@@ -247,6 +251,9 @@ restart:
                     return INT_UNDEFINED;
             }
             break;
+
+        case 0x19: TRACEI("sbb reg, modrm");
+                   READMODRM; SBB(modrm_reg, modrm_val); break;
 
         case 0x21: TRACEI("and reg, modrm");
                    READMODRM; AND(modrm_reg, modrm_val_w); break;
@@ -457,6 +464,8 @@ restart:
                    READIMM8; TEST(imm8, cpu->al); break;
         case 0xa9: TRACEI("test imm, ax");
                    READIMM; TEST(imm, ax); break;
+
+        case 0xaa: TRACEI("stosb"); STOSB; break;
 
         case 0xb8: TRACEI("mov imm, eax\t");
                    READIMM; MOV(imm, ax); break;

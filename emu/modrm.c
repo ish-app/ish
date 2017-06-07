@@ -41,7 +41,7 @@ struct modrm_info modrm_compute_info(byte_t byte) {
                     info.sib = true; break;
                 case 0b101:
                     info.type = mod_disp32;
-                    info.modrm_regid = (struct regptr) {0,0,0};
+                    info.modrm_regid = (struct regptr) {};
                     break;
             }
             break;

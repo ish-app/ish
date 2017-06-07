@@ -42,6 +42,12 @@
     cpu->cf = tmp; \
 } while (0)
 
+#define SBB(src, dst) do { \
+    int tmp = cpu->cf; \
+    SUB(src + tmp, dst); \
+    cpu->cf = tmp; \
+} while (0)
+
 #define OR(src, dst) \
     (dst) |= (src); \
     cpu->cf = cpu->of = 0; SETRES(dst)
@@ -146,7 +152,8 @@
         case 0: \
         case 1: TRACE("test imm"); \
                 READIMM; TEST(imm, val); break; \
-        case 2: TRACE("not"); return INT_UNDEFINED; \
+        case 2: TRACE("not"); \
+                val = ~val; break; TODO("flags"); \
         case 3: TRACE("neg"); \
                 val = -val; break; TODO("flags"); \
         case 4: TRACE("mul"); \

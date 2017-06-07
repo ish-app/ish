@@ -9,7 +9,7 @@
 #include <sys/types.h>
 
 // debug output utilities
-#if 1
+#if 0
 #define TRACE(msg, ...) printf(msg, ##__VA_ARGS__)
 #else
 #define TRACE(msg, ...) (void)NULL
@@ -40,6 +40,7 @@
 // word_t will be 64-bit to read 64-bit elves
 typedef uint64_t qword_t;
 typedef uint32_t dword_t;
+typedef int32_t sdword_t;
 typedef uint16_t word_t;
 typedef uint8_t byte_t;
 
@@ -47,5 +48,7 @@ typedef dword_t addr_t;
 
 #define uint(size) CONCAT3(uint,size,_t)
 #define sint(size) CONCAT3(int,size,_t)
+
+void setup();
 
 #endif

@@ -5,6 +5,7 @@
 #include <sys/wait.h>
 #include <sys/ptrace.h>
 #include <sys/user.h>
+#undef PAGE_SIZE // want definition from emu/memory.h
 #include "../misc.h"
 
 long trycall(long res, const char *msg) {
@@ -58,18 +59,11 @@ void pt_write(int pid, addr_t addr, dword_t val) {
     close(fd);
 }
 
-static void pt_write8(int pid, addr_t addr, byte_t val) {
+void pt_write8(int pid, addr_t addr, byte_t val) {
     int fd = open_mem(pid);
     trycall(lseek(fd, addr, SEEK_SET), "write seek");
     trycall(write(fd, &val, sizeof(val)), "write write");
     close(fd);
-}
-
-void pt_copy(int pid, addr_t addr, const void *vdata, size_t len) {
-    const byte_t *data = (byte_t *) vdata;
-    for (int i = 0; i < len; i++) {
-        pt_write8(pid, addr + i, data[i]);
-    }
 }
 
 static addr_t aux_addr(int pid, int type) {

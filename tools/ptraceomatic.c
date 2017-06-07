@@ -58,6 +58,11 @@ int compare_cpus(struct cpu_state *cpu, int pid) {
     return 0;
 }
 
+void pt_copy(int pid, addr_t start, size_t size) {
+    for (addr_t addr = start; addr < start + size; addr++)
+        pt_write8(pid, addr, user_get8(addr));
+}
+
 void step_tracing(struct cpu_state *cpu, int pid) {
     // step fake cpu
     int interrupt;
@@ -97,29 +102,32 @@ restart:
             goto do_step;
         }
     } else if ((inst & 0xff) == 0xcd && ((inst & 0xff00) >> 8) == 0x80) {
-        // int $0x80, consider intercepting the syscall
+        // int $0x80, intercept the syscall unless it's one of a few actually important ones
         dword_t syscall_num = (dword_t) regs.rax;
-        if (syscall_num == 122) {
-            // uname
-            addr_t uname_ptr = (addr_t) regs.rbx;
-            struct uname un;
-            regs.rax = sys_uname(&un);
-            pt_copy(pid, uname_ptr, &un, sizeof(struct uname));
-        } else if (syscall_num == 85) {
-            // readlink
-            regs.rax = sys_readlink(0,0,0);
-        } else if (syscall_num == 197) {
-            // fstat64
-            regs.rax = (uint32_t) _ENOSYS;
-        } else {
-            goto do_step;
+        switch (syscall_num) {
+            // put syscall result from fake process into real process
+            case 3: // read
+                pt_copy(pid, regs.rcx, cpu->eax);
+                break;
+            case 122: // uname
+                pt_copy(pid, regs.rbx, sizeof(struct uname));
+                break;
+
+            // some syscalls need to just happen
+            case 45: // brk
+            case 90: // mmap
+            case 192: // mmap2
+            case 243: // set_thread_area
+                goto do_step;
         }
+        regs.rax = cpu->eax;
         regs.rip += 2;
     } else {
-do_step: (void)0;
+        unsigned long ip;
+do_step:
         // single step on a repeated string instruction only does one
         // iteration, so loop until ip changes
-        long ip = regs.rip;
+        ip = regs.rip;
         while (regs.rip == ip) {
             trycall(ptrace(PTRACE_SINGLESTEP, pid, NULL, NULL), "ptrace step");
             trycall(wait(NULL), "wait step");
@@ -144,19 +152,15 @@ void prepare_tracee(int pid) {
     }
 }
 
-int main(int argc, char *const args[]) {
+int main(int argc, char *const argv[]) {
     int err;
-    current = process_create();
-    char *argv[argc];
-    for (int i = 0; i < argc; i++) {
-        argv[i] = args[i + 1];
-    }
+    setup();
     char *envp[] = {NULL};
-    if ((err = sys_execve(args[1], argv, envp)) < 0) {
+    if ((err = sys_execve(argv[1], argv + 1, envp)) < 0) {
         return -err;
     }
 
-    int pid = start_tracee(args[1], argv, envp);
+    int pid = start_tracee(argv[1], argv + 1, envp);
     prepare_tracee(pid);
 
     struct cpu_state *cpu = &current->cpu;

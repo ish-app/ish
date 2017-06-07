@@ -12,8 +12,10 @@ struct process {
     addr_t start_brk;
     addr_t brk;
 
-    struct node *pwd;
-    struct node *root;
+    path_t pwd;
+    path_t root;
+
+    struct fd *files[MAX_FD];
 };
 
 // current will always give the process that is currently executing

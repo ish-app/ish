@@ -22,7 +22,7 @@ int sys_set_thread_area(addr_t u_info) {
     // modify GS and add this address to any memory reference that uses GS.
     current->cpu.tls_ptr = info.base_addr;
 
-    if (info.entry_number == -1) {
+    if (info.entry_number == (unsigned) -1) {
         info.entry_number = 0xc;
     }
 

@@ -99,7 +99,7 @@ void *tlb_handle_miss(struct mem *mem, addr_t addr, int type) {
     struct pt_entry *pt = mem->pt[PAGE(addr)];
     if (pt == NULL)
         return NULL; // page does not exist
-    if (type == TLB_WRITE && !(pt->flags & P_WRITABLE))
+    if (type == TLB_WRITE && !(pt->flags & P_WRITE))
         return NULL; // unwritable
 
     // TODO if page is unwritable maybe we shouldn't bail and still add an
@@ -107,7 +107,7 @@ void *tlb_handle_miss(struct mem *mem, addr_t addr, int type) {
 
     struct tlb_entry *tlb = &mem->tlb[TLB_INDEX(addr)];
     tlb->page = TLB_PAGE(addr);
-    if (pt->flags & P_WRITABLE)
+    if (pt->flags & P_WRITE)
         tlb->page_if_writable = tlb->page;
     else
         // 1 is not a valid page so this won't look like a hit

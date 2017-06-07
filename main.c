@@ -2,15 +2,11 @@
 #include "sys/calls.h"
 #include "emu/process.h"
 
-int main(int argc, char *const args[]) {
+int main(int argc, char *const argv[]) {
     int err;
-    current = process_create();
-    char *argv[argc];
-    for (int i = 0; i < argc; i++) {
-        argv[i] = args[i + 1];
-    }
+    setup();
     char *envp[] = {NULL};
-    if ((err = sys_execve(args[1], argv, envp)) < 0) {
+    if ((err = sys_execve(argv[1], argv + 1, envp)) < 0) {
         return -err;
     }
     cpu_run(&current->cpu);

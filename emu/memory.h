@@ -35,9 +35,12 @@ struct pt_entry {
 };
 #define PT_SIZE (1 << 20) // at least on 32-bit
 // page flags
-#define P_WRITABLE (1 << 0)
-#define P_GROWSDOWN (1 << 1)
-#define P_GUARD (1 << 2)
+// P_READ and P_EXEC are ignored for now
+#define P_READ (1 << 0)
+#define P_WRITE (1 << 1)
+#define P_EXEC (1 << 2)
+#define P_GROWSDOWN (1 << 3)
+#define P_GUARD (1 << 4)
 
 page_t pt_find_hole(struct mem *mem, pages_t size);
 

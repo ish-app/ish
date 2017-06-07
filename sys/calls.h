@@ -1,5 +1,6 @@
 #include "emu/cpu.h"
 #include "emu/interrupt.h"
+#include "fs/fs.h"
 #include "misc.h"
 
 int handle_interrupt(struct cpu_state *cpu, int interrupt);
@@ -20,15 +21,22 @@ dword_t sys_exit(dword_t status);
 dword_t sys_exit_group(dword_t status);
 
 #define MAX_PATH 4096
-int sys_open(const char *pathname, int flags);
-int sys_close(int fd);
+fd_t sys_open(addr_t pathname_addr, dword_t flags);
+dword_t sys_close(fd_t fd);
 dword_t sys_readlink(addr_t pathname, addr_t buf, dword_t bufsize);
 
-ssize_t sys_write(int fd, const char *buf, size_t count);
-dword_t _sys_write(dword_t fd, addr_t data, dword_t count);
+dword_t sys_read(fd_t fd_no, addr_t buf_addr, dword_t size);
+dword_t sys_write(fd_t fd_no, addr_t buf_addr, dword_t size);
+
+dword_t sys_dup(fd_t fd);
 
 addr_t sys_brk(addr_t new_brk);
 int handle_pagefault(addr_t addr);
+
+#define MMAP_SHARED 0x1
+#define MMAP_PRIVATE 0x2
+#define MMAP_ANONYMOUS 0x20
+addr_t sys_mmap(addr_t addr, dword_t len, dword_t prot, dword_t flags, dword_t fd, off_t offset);
 
 #define UNAME_LENGTH 65
 struct uname {

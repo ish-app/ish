@@ -14,7 +14,7 @@ addr_t sys_brk(addr_t new_brk) {
         if (new_brk > old_brk) {
             // expand heap: map region from old_brk to new_brk
             err = pt_map_nothing(&curmem, PAGE_ROUND_UP(old_brk),
-                    PAGE_ROUND_UP(new_brk) - PAGE_ROUND_UP(old_brk), P_WRITABLE);
+                    PAGE_ROUND_UP(new_brk) - PAGE_ROUND_UP(old_brk), P_WRITE);
             if (err < 0) return err;
         } else if (new_brk < old_brk) {
             // shrink heap: unmap region from new_brk to old_brk
@@ -31,7 +31,7 @@ int handle_pagefault(addr_t addr) {
     if (pt == NULL)
         return 0;
     if (pt->flags & P_GUARD) {
-        pt_map_nothing(&curmem, PAGE(addr), 1, P_WRITABLE | P_GROWSDOWN);
+        pt_map_nothing(&curmem, PAGE(addr), 1, P_WRITE | P_GROWSDOWN);
         return 1;
     } else {
         sys_exit(1);

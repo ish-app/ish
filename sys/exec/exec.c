@@ -71,7 +71,7 @@ static int load_entry(struct prg_header ph, addr_t bias, int f) {
     addr_t filesize = ph.filesize;
 
     int flags = 0;
-    if (ph.flags & PH_W) flags |= P_WRITABLE;
+    if (ph.flags & PH_W) flags |= P_WRITE;
 
     if ((err = pt_map_file(&curmem, PAGE(addr),
                     PAGE_ROUND_UP(filesize + OFFSET(addr)), f,
@@ -236,7 +236,7 @@ int sys_execve(const char *file, char *const argv[], char *const envp[]) {
     // STACK TIME!
 
     // allocate 1 page of stack at 0xffffd, and let it grow down
-    if ((err = pt_map_nothing(&curmem, 0xffffd, 1, P_WRITABLE | P_GROWSDOWN)) < 0) {
+    if ((err = pt_map_nothing(&curmem, 0xffffd, 1, P_WRITE | P_GROWSDOWN)) < 0) {
         goto beyond_hope;
     }
     dword_t sp = 0xffffe000;
