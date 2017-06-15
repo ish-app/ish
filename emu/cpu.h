@@ -52,30 +52,22 @@ struct cpu_state {
     dword_t eip;
 
     // flags
-    union {
-        dword_t eflags;
-#define pad(size) unsigned CONCAT(pad,__COUNTER__):size
-        struct {
-            unsigned cf:1;
-            pad(1);
-            unsigned pf:1;
-            pad(1);
-            unsigned af:1;
-            pad(1);
-            unsigned zf:1;
-            unsigned sf:1;
-            unsigned tf:1;
-            pad(1);
-            unsigned df:1;
-            unsigned of:1;
-        };
-    };
+    bits pf:1;
+    bits af:1;
+    bits zf:1;
+    bits sf:1;
+    bits tf:1;
+    bits df:1;
     // whether the true flag values are in the above struct, or computed from
-    // the stored operands and result
-    unsigned pf_res:1;
-    unsigned zf_res:1;
-    unsigned sf_res:1;
+    // the stored result
     dword_t res;
+    bits pf_res:1;
+    bits zf_res:1;
+    bits sf_res:1;
+    // these guys are constantly set manually so I can save a few instructions
+    // by making them entire bytes
+    byte_t of;
+    byte_t cf;
 
     // See comment in sys/tls.c
     addr_t tls_ptr;

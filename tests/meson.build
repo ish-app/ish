@@ -9,3 +9,4 @@ executable('fibbonaci', ['fibbonaci.c'], c_args: ['-m32'], link_args: ['-m32', '
 
 # filesystem motivation
 executable('cat', ['cat.c'], c_args: ['-m32'], link_args: ['-m32', '-static'])
+executable('stat', ['stat.c'], c_args: ['-m32', '-D_FILE_OFFSET_BITS=64'], link_args: ['-m32', '-static'])

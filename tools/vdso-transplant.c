@@ -25,6 +25,7 @@ void transplant_vdso(int pid, const void *new_vdso, size_t new_vdso_size) {
         }
         free(map_type);
     }
+    fclose(maps);
 
     // copy the new vdso in
     for (dword_t addr = start; addr < end; addr += sizeof(unsigned long)) {

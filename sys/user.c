@@ -1,6 +1,8 @@
 #include "sys/calls.h"
 #include "emu/process.h"
 
+// TODO all this crap can and should return errors
+
 dword_t user_get(addr_t addr) {
     return *(dword_t *) mem_read_ptr(&curmem, addr);
 }

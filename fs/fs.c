@@ -17,7 +17,7 @@ path_t find_mount(const char *pathname, const struct fs_ops **fs) {
     return pathname + strlen(mount->mount_point);
 }
 
-// for now just collapses slashes, may eventually do something with . and ..
+// for now just collapses slashes, will eventually do something with . and ..
 // TODO move to fs/pathname.c or something
 void pathname_normalize(char *pathname) {
     char *s = pathname, *d = pathname;
@@ -42,7 +42,7 @@ char *pathname_expand(const char *pathname) {
     size_t full_path_len = strlen(pathname);
     if (pathname[0] != '/')
         full_path_len += strlen(current->pwd) + 1; // plus one for slash
-    char *full_path = malloc(full_path_len); full_path[0] = '\0';
+    char *full_path = malloc(full_path_len + 1); full_path[0] = '\0';
     if (pathname[0] != '/') {
         strcat(full_path, current->pwd);
         strcat(full_path, "/");
@@ -58,13 +58,26 @@ int generic_open(const char *pathname, struct fd *fd, int flags) {
     path_t path = find_mount(full_path, &fs);
     int err = fs->open(path, fd, flags);
     free(full_path);
-    if (err >= 0)
-        fd->fs = fs;
     return err;
 }
 
-int generic_close(struct fd *fd) {
-    return fd->fs->close(fd);
+int generic_stat(const char *pathname, struct statbuf *stat) {
+    char *full_path = pathname_expand(pathname);
+    const struct fs_ops *fs;
+    path_t path = find_mount(full_path, &fs);
+    int err = fs->stat(path, stat);
+    free(full_path);
+    return err;
+}
+
+// TODO I bet this can be shorter
+int generic_access(const char *pathname, int mode) {
+    char *full_path = pathname_expand(pathname);
+    const struct fs_ops *fs;
+    path_t path = find_mount(full_path, &fs);
+    int err = fs->access(path, mode);
+    free(full_path);
+    return err;
 }
 
 ssize_t generic_readlink(const char *pathname, char *buf, size_t bufsize) {

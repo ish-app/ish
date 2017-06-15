@@ -9,7 +9,7 @@
 #include <sys/types.h>
 
 // debug output utilities
-#if 0
+#if 1
 #define TRACE(msg, ...) printf(msg, ##__VA_ARGS__)
 #else
 #define TRACE(msg, ...) (void)NULL
@@ -35,6 +35,12 @@
 // keywords
 #define bits unsigned int
 #define forceinline inline __attribute__((always_inline))
+#define flatten __attribute__((flatten))
+#ifdef NDEBUG
+#define postulate __builtin_assume
+#else
+#define postulate assert
+#endif
 
 // types
 // word_t will be 64-bit to read 64-bit elves
@@ -45,6 +51,8 @@ typedef uint16_t word_t;
 typedef uint8_t byte_t;
 
 typedef dword_t addr_t;
+typedef dword_t uint_t;
+typedef sdword_t int_t;
 
 #define uint(size) CONCAT3(uint,size,_t)
 #define sint(size) CONCAT3(int,size,_t)

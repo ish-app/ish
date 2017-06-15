@@ -142,6 +142,7 @@ restart:
             switch (insn) {
                 case 0x1f: TRACEI("nop modrm\t"); READMODRM; break;
                 case 0x31: TRACEI("rdtsc");
+                           // TODO there's a clang builtin for this
                            __asm__("rdtsc" : "=a" (cpu->eax), "=d" (cpu->edx)); break;
 
                 case 0x40: TRACEI("cmovo modrm, reg\t");
@@ -181,6 +182,12 @@ restart:
                     TRACEI("cpuid");
                     do_cpuid(&cpu->eax, &cpu->ebx, &cpu->ecx, &cpu->edx);
                     break;
+
+                case 0xa5: TRACEI("shld cl, reg, modrm");
+                           READMODRM; SHLD(cpu->cl, modrm_reg, modrm_val); break;
+
+                case 0xac: TRACEI("shrd imm8, reg, modrm");
+                           READMODRM; READIMM8; SHRD(imm8, modrm_reg, modrm_val); break;
 
                 case 0x80: TRACEI("jo rel\t");
                            READIMM; J_REL(O, imm); break;
@@ -275,6 +282,8 @@ restart:
                    READMODRM; XOR(modrm_reg8, modrm_val8_w); break;
         case 0x31: TRACEI("xor reg, modrm");
                    READMODRM; XOR(modrm_reg, modrm_val_w); break;
+        case 0x32: TRACEI("xor modrm8, reg8");
+                   READMODRM; XOR(modrm_val8, modrm_reg8); break;
         case 0x33: TRACEI("xor modrm, reg");
                    READMODRM; XOR(modrm_val, modrm_reg); break;
 
@@ -484,6 +493,8 @@ restart:
         case 0xbf: TRACEI("mov imm, edi\t");
                    READIMM; MOV(imm, di); break;
 
+        case 0xc0: TRACEI("grp2 imm8, modrm8");
+                   READMODRM; READIMM8; GRP2(imm8, modrm_val8_w); break;
         case 0xc1: TRACEI("grp2 imm8, modrm");
                    READMODRM; READIMM8; GRP2(imm8, modrm_val_w); break;
 
@@ -503,6 +514,8 @@ restart:
         case 0xc7: TRACEI("mov imm, modrm");
                    READMODRM; READIMM; MOV(imm, modrm_val_w); break;
 
+        case 0xd0: TRACEI("grp2 1, modrm8");
+                   READMODRM; GRP2(1, modrm_val8_w); break;
         case 0xd1: TRACEI("grp2 1, modrm");
                    READMODRM; GRP2(1, modrm_val_w); break;
         case 0xd3: TRACEI("grp2 cl, modrm");
@@ -573,7 +586,7 @@ restart:
 #define OP_SIZE 16
 #include "cpu.c"
 
-void cpu_run(struct cpu_state *cpu) {
+flatten void cpu_run(struct cpu_state *cpu) {
     while (true) {
         int interrupt = cpu_step32(cpu);
         if (interrupt != INT_NONE) {

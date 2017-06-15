@@ -72,7 +72,9 @@ void *tlb_handle_miss(struct mem *mem, addr_t addr, int type);
 forceinline void *mem_read_ptr(struct mem *mem, addr_t addr) {
     struct tlb_entry entry = mem->tlb[TLB_INDEX(addr)];
     if (entry.page == TLB_PAGE(addr)) {
-        return (char *) entry.data + OFFSET(addr);
+        void *address = (char *) entry.data + OFFSET(addr);
+        postulate(address != NULL);
+        return address;
     }
     return tlb_handle_miss(mem, addr, TLB_READ);
 }
@@ -81,7 +83,9 @@ forceinline void *mem_write_ptr(struct mem *mem, addr_t addr) {
     struct tlb_entry entry = mem->tlb[TLB_INDEX(addr)];
     if (entry.page_if_writable == TLB_PAGE(addr)) {
         mem->dirty_page = PAGE(addr);
-        return (char *) entry.data + OFFSET(addr);
+        void *address = (char *) entry.data + OFFSET(addr);
+        postulate(address != NULL);
+        return address;
     }
     return tlb_handle_miss(mem, addr, TLB_WRITE);
 }

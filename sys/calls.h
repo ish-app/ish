@@ -23,6 +23,8 @@ dword_t sys_exit_group(dword_t status);
 #define MAX_PATH 4096
 fd_t sys_open(addr_t pathname_addr, dword_t flags);
 dword_t sys_close(fd_t fd);
+dword_t sys_fstat64(fd_t fd_no, addr_t statbuf_addr);
+dword_t sys_access(addr_t pathname_addr, dword_t mode);
 dword_t sys_readlink(addr_t pathname, addr_t buf, dword_t bufsize);
 
 dword_t sys_read(fd_t fd_no, addr_t buf_addr, dword_t size);
@@ -36,7 +38,7 @@ int handle_pagefault(addr_t addr);
 #define MMAP_SHARED 0x1
 #define MMAP_PRIVATE 0x2
 #define MMAP_ANONYMOUS 0x20
-addr_t sys_mmap(addr_t addr, dword_t len, dword_t prot, dword_t flags, dword_t fd, off_t offset);
+addr_t sys_mmap(addr_t addr, dword_t len, dword_t prot, dword_t flags, fd_t fd_no, dword_t offset);
 
 #define UNAME_LENGTH 65
 struct uname {

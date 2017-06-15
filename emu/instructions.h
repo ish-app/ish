@@ -147,6 +147,13 @@
                 val = ((int32_t) val) >> count; break; \
     }
 
+#define SHRD(count, extra, dst) \
+    (dst) = (dst) >> (count) | (extra) << (OP_SIZE - count)
+
+#define SHLD(count, extra, dst) \
+    (dst) = (dst) << (count) | (extra) >> (OP_SIZE - count)
+
+
 #define GRP3(val) \
     switch (modrm.opcode) { \
         case 0: \

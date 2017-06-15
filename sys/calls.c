@@ -18,16 +18,17 @@ syscall_t syscall_table[] = {
     [5] = (syscall_t) sys_open,
     [6] = (syscall_t) sys_close,
     [11] = (syscall_t) _sys_execve,
+    [33] = (syscall_t) sys_access,
     [41] = (syscall_t) sys_dup,
     [45] = (syscall_t) sys_brk,
     [85] = (syscall_t) sys_readlink,
     [122] = (syscall_t) _sys_uname,
     [192] = (syscall_t) sys_mmap,
+    [197] = (syscall_t) sys_fstat64,
     [243] = (syscall_t) sys_set_thread_area,
     [252] = (syscall_t) sys_exit_group,
 
     // stubs
-    [197] = (syscall_t) syscall_stub, // fstat64
     [221] = (syscall_t) syscall_stub, // fcntl64
 };
 

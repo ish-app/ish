@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
@@ -5,6 +6,8 @@
 #include <sys/wait.h>
 #include <sys/ptrace.h>
 #include <sys/user.h>
+#include <sched.h>
+#include <syscall.h>
 #undef PAGE_SIZE // want definition from emu/memory.h
 #include "../misc.h"
 
@@ -15,25 +18,33 @@ long trycall(long res, const char *msg) {
     return res;
 }
 
+// the glibc wrapper for clone is basically my worst enemy
+struct motherfucker {
+    const char *program;
+    char *const *argv;
+    char *const *envp;
+};
+int exec_tracee(struct motherfucker *mofo) {
+    trycall(ptrace(PTRACE_TRACEME, 0, NULL, NULL), "ptrace traceme");
+    trycall(execve(mofo->program, mofo->argv, mofo->envp), "execl");
+    return 00;
+}
 int start_tracee(const char *program, char *const argv[], char *const envp[]) {
     // shut off aslr
     int persona = personality(0xffffffff);
     persona |= ADDR_NO_RANDOMIZE;
     personality(persona);
 
-    int pid = fork();
+    // use CLONE_FILES so we can use our file descriptors in the child's mmap calls (in ptraceomatic)
+    struct motherfucker mofo = {program, argv, envp};
+    char motherfucking_stack[10000];
+    int pid = clone((int(*)(void*))exec_tracee, motherfucking_stack, SIGCHLD | CLONE_FILES, &mofo);
     if (pid < 0) {
-        perror("fork");
+        perror("clone");
         exit(1);
     }
-    if (pid == 0) {
-        // child
-        trycall(ptrace(PTRACE_TRACEME, 0, NULL, NULL), "ptrace traceme");
-        trycall(execve(program, argv, envp), "execl");
-    } else {
-        // parent, wait for child to stop after exec
-        trycall(wait(NULL), "wait");
-    }
+    // wait for child to stop after exec
+    trycall(wait(NULL), "wait");
     return pid;
 }
 
@@ -43,27 +54,32 @@ int open_mem(int pid) {
     return trycall(open(filename, O_RDWR), "open mem");
 }
 
-dword_t pt_read(int pid, addr_t addr) {
+void pt_readn(int pid, addr_t addr, void *buf, size_t count) {
     int fd = open_mem(pid);
     trycall(lseek(fd, addr, SEEK_SET), "read seek");
-    dword_t res;
-    trycall(read(fd, &res, sizeof(res)), "read read");
+    trycall(read(fd, buf, count), "read read");
     close(fd);
+}
+
+void pt_writen(int pid, addr_t addr, void *buf, size_t count) {
+    int fd = open_mem(pid);
+    trycall(lseek(fd, addr, SEEK_SET), "write seek");
+    trycall(write(fd, buf, count), "write write");
+    close(fd);
+}
+
+dword_t pt_read(int pid, addr_t addr) {
+    dword_t res;
+    pt_readn(pid, addr, &res, sizeof(res));
     return res;
 }
 
 void pt_write(int pid, addr_t addr, dword_t val) {
-    int fd = open_mem(pid);
-    trycall(lseek(fd, addr, SEEK_SET), "write seek");
-    trycall(write(fd, &val, sizeof(val)), "write write");
-    close(fd);
+    pt_writen(pid, addr, &val, sizeof(val));
 }
 
 void pt_write8(int pid, addr_t addr, byte_t val) {
-    int fd = open_mem(pid);
-    trycall(lseek(fd, addr, SEEK_SET), "write seek");
-    trycall(write(fd, &val, sizeof(val)), "write write");
-    close(fd);
+    pt_writen(pid, addr, &val, sizeof(val));
 }
 
 static addr_t aux_addr(int pid, int type) {
