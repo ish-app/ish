@@ -210,6 +210,7 @@ restart:
                 pt_copy(pid, regs.rcx, sizeof(struct newstat64));
                 break;
 
+            case 90: // mmap
             case 192: // mmap2
                 if (cpu->eax < 0xfffff000 && cpu->edi != (dword_t) -1) {
                     // fake mmap didn't fail, change fd
@@ -220,7 +221,7 @@ restart:
 
             // some syscalls need to just happen
             case 45: // brk
-            case 90: // mmap
+            case 125: // mprotect
             case 243: // set_thread_area
                 goto do_step;
         }

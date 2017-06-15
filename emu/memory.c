@@ -44,6 +44,7 @@ int pt_map(struct mem *mem, page_t start, pages_t pages, void *memory, unsigned 
             pt_unmap(mem, page, 1);
         }
         struct pt_entry *entry = malloc(sizeof(struct pt_entry));
+        // FIXME this could allocate some of the memory and then abort
         if (entry == NULL) return _ENOMEM;
         entry->data = memory;
         entry->refcount = 1;
@@ -57,7 +58,10 @@ int pt_map(struct mem *mem, page_t start, pages_t pages, void *memory, unsigned 
     return 0;
 }
 
-void pt_unmap(struct mem *mem, page_t start, pages_t pages) {
+int pt_unmap(struct mem *mem, page_t start, pages_t pages) {
+    for (page_t page = start; page < start + pages; page++)
+        if (mem->pt[page] == NULL)
+            return -1;
     for (page_t page = start; page < start + pages; page++) {
         struct pt_entry *entry = mem->pt[page];
         mem->pt[page] = NULL;
@@ -67,6 +71,7 @@ void pt_unmap(struct mem *mem, page_t start, pages_t pages) {
             free(entry);
         }
     }
+    return 0;
 }
 
 int pt_map_nothing(struct mem *mem, page_t start, pages_t pages, unsigned flags) {
@@ -82,6 +87,17 @@ int pt_map_file(struct mem *mem, page_t start, pages_t pages, int fd, off_t off,
     void *memory = mmap(NULL, pages * PAGE_SIZE,
             PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, off);
     return pt_map(mem, start, pages, memory, flags);
+}
+
+// FIXME this can overwrite P_GROWSDOWN or P_GUARD
+int pt_set_flags(struct mem *mem, page_t start, pages_t pages, int flags) {
+    for (page_t page = start; page < start + pages; page++)
+        if (mem->pt[page] == NULL)
+            return _ENOMEM;
+    for (page_t page = start; page < start + pages; page++) {
+        mem->pt[page]->flags = flags;
+    }
+    return 0;
 }
 
 void pt_dump(struct mem *mem) {

@@ -27,8 +27,13 @@ dword_t sys_fstat64(fd_t fd_no, addr_t statbuf_addr);
 dword_t sys_access(addr_t pathname_addr, dword_t mode);
 dword_t sys_readlink(addr_t pathname, addr_t buf, dword_t bufsize);
 
+struct io_vec {
+    addr_t base;
+    uint_t len;
+};
 dword_t sys_read(fd_t fd_no, addr_t buf_addr, dword_t size);
 dword_t sys_write(fd_t fd_no, addr_t buf_addr, dword_t size);
+dword_t sys_writev(fd_t fd_no, addr_t iovec_addr, dword_t iovec_count);
 
 dword_t sys_dup(fd_t fd);
 
@@ -37,8 +42,12 @@ int handle_pagefault(addr_t addr);
 
 #define MMAP_SHARED 0x1
 #define MMAP_PRIVATE 0x2
+#define MMAP_FIXED 0x10
 #define MMAP_ANONYMOUS 0x20
 addr_t sys_mmap(addr_t addr, dword_t len, dword_t prot, dword_t flags, fd_t fd_no, dword_t offset);
+addr_t sys_mmap2(addr_t addr, dword_t len, dword_t prot, dword_t flags, fd_t fd_no, dword_t offset);
+int_t sys_munmap(addr_t addr, uint_t len);
+int_t sys_mprotect(addr_t addr, uint_t len, int_t prot);
 
 #define UNAME_LENGTH 65
 struct uname {

@@ -45,4 +45,4 @@ subdir('tests')
 # ptraceomatic et al
 subdir('tools')
 
-executable('thingy', ['main.c'], dependencies: [ish])
+executable('ish', ['main.c'], dependencies: [ish])

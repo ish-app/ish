@@ -50,8 +50,10 @@ int pt_map(struct mem *mem, page_t start, pages_t pages, void *memory, unsigned 
 int pt_map_file(struct mem *mem, page_t start, pages_t pages, int fd, off_t off, unsigned flags);
 // Map empty space into fake memory
 int pt_map_nothing(struct mem *mem, page_t page, pages_t pages, unsigned flags);
-// Unmap fake memory
-void pt_unmap(struct mem *mem, page_t page, pages_t pages);
+// Unmap fake memory, return -1 if any part of the range isn't mapped and 0 otherwise
+int pt_unmap(struct mem *mem, page_t start, pages_t pages);
+// Set the flags on memory
+int pt_set_flags(struct mem *mem, page_t start, pages_t pages, int flags);
 
 void pt_dump(struct mem *mem);
 

@@ -183,6 +183,9 @@ restart:
                     do_cpuid(&cpu->eax, &cpu->ebx, &cpu->ecx, &cpu->edx);
                     break;
 
+                case 0xa3: TRACEI("bt reg, modrm\t");
+                           READMODRM; BT(modrm_reg, modrm_val); break;
+
                 case 0xa5: TRACEI("shld cl, reg, modrm");
                            READMODRM; SHLD(cpu->cl, modrm_reg, modrm_val); break;
 
@@ -259,8 +262,13 @@ restart:
             }
             break;
 
+        case 0x11: TRACEI("adc reg, modrm");
+                   READMODRM; ADC(modrm_reg, modrm_val_w); break;
+
         case 0x19: TRACEI("sbb reg, modrm");
                    READMODRM; SBB(modrm_reg, modrm_val); break;
+        case 0x1b: TRACEI("sbb modrm, reg");
+                   READMODRM; SBB(modrm_val, modrm_reg); break;
 
         case 0x21: TRACEI("and reg, modrm");
                    READMODRM; AND(modrm_reg, modrm_val_w); break;
@@ -379,7 +387,7 @@ restart:
         case 0x6a: TRACEI("push imm8\t");
                    READIMM8; PUSH((int8_t) imm8); break;
         case 0x6b: TRACEI("imul imm8\t");
-                   READMODRM; READIMM8; MUL3((int8_t) imm8, (int8_t) modrm_val, modrm_reg); break;
+                   READMODRM; READIMM8; MUL3((int8_t) imm8, (int32_t) modrm_val, modrm_reg); break;
 
         case 0x70: TRACEI("jo rel8\t");
                    READIMM8; J_REL(O, (int8_t) imm8); break;

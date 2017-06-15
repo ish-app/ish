@@ -69,6 +69,20 @@ dword_t sys_write(fd_t fd_no, addr_t buf_addr, dword_t size) {
     return fd->ops->write(fd, buf, size);
 }
 
+dword_t sys_writev(fd_t fd_no, addr_t iovec_addr, dword_t iovec_count) {
+    struct io_vec iovecs[iovec_count];
+    user_get_count(iovec_addr, iovecs, sizeof(iovecs));
+    int res;
+    dword_t count = 0;
+    for (unsigned i = 0; i < iovec_count; i++) {
+        res = sys_write(fd_no, iovecs[i].base, iovecs[i].len);
+        if (res < 0)
+            return res;
+        count += res;
+    }
+    return count;
+}
+
 dword_t sys_fstat64(fd_t fd_no, addr_t statbuf_addr) {
     struct fd *fd = current->files[fd_no];
     struct statbuf stat;

@@ -115,6 +115,8 @@
                 OR(src, dst##_w); break; \
         case 2: TRACE("adc"); \
                 ADC(src, dst##_w); break; \
+        case 3: TRACE("sbb"); \
+                SBB(src, dst##_w); break; \
         case 4: TRACE("and"); \
                 AND(src, dst##_w); break; \
         case 5: TRACE("sub"); \
@@ -202,6 +204,9 @@
                 PUSH(val); break; \
         case 7: TRACE("undefined"); return INT_UNDEFINED; \
     }
+
+#define BT(bit, val) \
+    cpu->cf = (val) & (1 << bit)
 
 #define BUMP_SI(size) \
     if (!cpu->df) \

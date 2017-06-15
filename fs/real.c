@@ -32,7 +32,7 @@ static void copy_stat(struct statbuf *fake_stat, struct stat *real_stat) {
     fake_stat->nlink = real_stat->st_nlink;
     fake_stat->uid = real_stat->st_uid;
     fake_stat->gid = real_stat->st_gid;
-    fake_stat->rdev = real_stat->st_dev;
+    fake_stat->rdev = real_stat->st_rdev;
     fake_stat->size = real_stat->st_size;
     fake_stat->blksize = real_stat->st_blksize;
     fake_stat->blocks = real_stat->st_blocks;
@@ -91,7 +91,7 @@ static int realfs_mmap(struct fd *fd, off_t offset, size_t len, int prot, int fl
     int mmap_flags = 0;
     if (flags & MMAP_PRIVATE) mmap_flags |= MAP_PRIVATE;
     // TODO more flags are probably needed
-    void *mem = mmap(NULL, len, prot, flags, fd->real_fd, offset);
+    void *mem = mmap(NULL, len, prot, mmap_flags, fd->real_fd, offset);
     if (mem == MAP_FAILED)
         return err_map(errno);
     *mem_out = mem;

@@ -3,6 +3,10 @@
 #include "emu/process.h"
 #include "emu/memory.h"
 
+addr_t sys_mmap2(addr_t addr, dword_t len, dword_t prot, dword_t flags, fd_t fd_no, dword_t offset) {
+    return sys_mmap(addr, len, prot, flags, fd_no, offset << PAGE_BITS);
+}
+
 addr_t sys_mmap(addr_t addr, dword_t len, dword_t prot, dword_t flags, fd_t fd_no, dword_t offset) {
     int err;
 
@@ -10,16 +14,22 @@ addr_t sys_mmap(addr_t addr, dword_t len, dword_t prot, dword_t flags, fd_t fd_n
         return _EINVAL;
     if (prot & ~(P_READ | P_WRITE | P_EXEC))
         return _EINVAL;
-    if (!(flags & MMAP_PRIVATE))
-        // TODO MMAP_SHARED
+    if (!(flags & MMAP_PRIVATE)) {
+        TODO("MMAP_SHARED");
         return _EINVAL;
-    if (addr != 0)
-        return _EINVAL;
+    }
 
     pages_t pages = PAGE_ROUND_UP(len);
-    page_t page = pt_find_hole(&curmem, pages);
-    if (page == BAD_PAGE)
-        return _ENOMEM;
+    page_t page;
+    if (addr == 0) {
+        page = pt_find_hole(&curmem, pages);
+        if (page == BAD_PAGE)
+            return _ENOMEM;
+    } else {
+        if (OFFSET(addr) != 0)
+            return _EINVAL;
+        page = PAGE(addr);
+    }
     if (flags & MMAP_ANONYMOUS) {
         if ((err = pt_map_nothing(&curmem, page, pages, prot)) < 0)
             return err;
@@ -39,3 +49,21 @@ addr_t sys_mmap(addr_t addr, dword_t len, dword_t prot, dword_t flags, fd_t fd_n
     return page << PAGE_BITS;
 }
 
+int_t sys_munmap(addr_t addr, uint_t len) {
+    if (OFFSET(addr) != 0)
+        return _EINVAL;
+    if (len == 0)
+        return _EINVAL;
+    if (pt_unmap(&curmem, PAGE(addr), PAGE_ROUND_UP(len)) < 0)
+        return _EINVAL;
+    return 0;
+}
+
+int_t sys_mprotect(addr_t addr, uint_t len, int_t prot) {
+    if (OFFSET(addr) != 0)
+        return _EINVAL;
+    if (prot & ~(P_READ | P_WRITE | P_EXEC))
+        return _EINVAL;
+    pages_t pages = PAGE_ROUND_UP(len);
+    return pt_set_flags(&curmem, PAGE(addr), pages, prot);
+}
