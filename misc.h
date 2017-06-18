@@ -9,7 +9,7 @@
 #include <sys/types.h>
 
 // debug output utilities
-#if 0
+#if DEBUG_LOG
 #define TRACE(msg, ...) printf(msg, ##__VA_ARGS__)
 #else
 #define TRACE(msg, ...) (void)NULL

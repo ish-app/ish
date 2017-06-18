@@ -1,5 +1,9 @@
-project('ish', 'c', default_options: ['default_library=static'])
-add_global_arguments('-std=gnu99', language: 'c')
+project('ish', 'c',
+    default_options: ['default_library=static', 'c_std=gnu99'])
+
+if get_option('debug_log')
+    add_global_arguments('-DDEBUG_LOG=1', language: 'c')
+endif
 
 includes = [include_directories('.')]
 

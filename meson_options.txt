@@ -1,0 +1,1 @@
+option('debug_log', type: 'boolean', value: true)
