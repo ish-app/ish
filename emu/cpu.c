@@ -229,13 +229,22 @@ restart:
                 case 0x8f: TRACEI("jnle rel\t");
                            READIMM; J_REL(!LE, imm); break;
 
-                // TODO more sets
+                case 0x90: TRACEI("seto\t");
+                           READMODRM; SET(O, modrm_val8_w); break;
+                case 0x91: TRACEI("setno\t");
+                           READMODRM; SET(!O, modrm_val8_w); break;
                 case 0x92: TRACEI("setb\t");
                            READMODRM; SET(B, modrm_val8_w); break;
+                case 0x93: TRACEI("setnb\t");
+                           READMODRM; SET(!B, modrm_val8_w); break;
                 case 0x94: TRACEI("sete\t");
                            READMODRM; SET(E, modrm_val8_w); break;
                 case 0x95: TRACEI("setne\t");
                            READMODRM; SET(!E, modrm_val8_w); break;
+                case 0x96: TRACEI("setbe\t");
+                           READMODRM; SET(BE, modrm_val8_w); break;
+                case 0x97: TRACEI("setnbe\t");
+                           READMODRM; SET(!BE, modrm_val8_w); break;
 
                 case 0xa2:
                     TRACEI("cpuid");

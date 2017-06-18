@@ -52,6 +52,8 @@ int pt_map_file(struct mem *mem, page_t start, pages_t pages, int fd, off_t off,
 int pt_map_nothing(struct mem *mem, page_t page, pages_t pages, unsigned flags);
 // Unmap fake memory, return -1 if any part of the range isn't mapped and 0 otherwise
 int pt_unmap(struct mem *mem, page_t start, pages_t pages);
+// Same as pt_unmap, but skips over unmapped parts
+int pt_unmap_force(struct mem *mem, page_t start, pages_t pages);
 // Set the flags on memory
 int pt_set_flags(struct mem *mem, page_t start, pages_t pages, int flags);
 

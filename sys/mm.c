@@ -18,7 +18,9 @@ addr_t sys_brk(addr_t new_brk) {
             if (err < 0) return err;
         } else if (new_brk < old_brk) {
             // shrink heap: unmap region from new_brk to old_brk
-            TODO("shrink heap");
+            // first page to unmap is PAGE(new_brk);
+            // last page to unmap is PAGE(old_brk)
+            pt_unmap_force(&curmem, PAGE(new_brk), PAGE(old_brk));
         }
         current->brk = new_brk;
     }

@@ -58,18 +58,30 @@ int pt_map(struct mem *mem, page_t start, pages_t pages, void *memory, unsigned 
     return 0;
 }
 
+static void pt_drop(struct mem *mem, page_t page) {
+    struct pt_entry *entry = mem->pt[page];
+    mem->pt[page] = NULL;
+    entry->refcount--;
+    if (entry->refcount == 0) {
+        // TODO actually free the memory
+        free(entry);
+    }
+}
+
 int pt_unmap(struct mem *mem, page_t start, pages_t pages) {
     for (page_t page = start; page < start + pages; page++)
         if (mem->pt[page] == NULL)
             return -1;
     for (page_t page = start; page < start + pages; page++) {
-        struct pt_entry *entry = mem->pt[page];
-        mem->pt[page] = NULL;
-        entry->refcount--;
-        if (entry->refcount == 0) {
-            // TODO actually free the memory
-            free(entry);
-        }
+        pt_drop(mem, page);
+    }
+    return 0;
+}
+
+int pt_unmap_force(struct mem *mem, page_t start, pages_t pages) {
+    for (page_t page = start; page < start + pages; page++) {
+        if (mem->pt[page] != NULL)
+            pt_drop(mem, page);
     }
     return 0;
 }
