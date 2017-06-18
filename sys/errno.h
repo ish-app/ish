@@ -44,6 +44,7 @@
 #define	_ENOLCK       -37 /* No record locks available */
 #define	_ENOSYS       -38 /* Invalid system call number */
 
+#define	_EOVERFLOW    -75 /* Value too large for defined data type */
 #define _ELIBBAD      -80 /* Accessing a corrupted shared library */
 
 static inline int err_map(int err) {

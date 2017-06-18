@@ -118,6 +118,29 @@ dword_t sys_fstat64(fd_t fd_no, addr_t statbuf_addr) {
     return 0;
 }
 
+// TODO doesn't work very well if off_t isn't 64 bits
+dword_t sys__llseek(fd_t f, dword_t off_high, dword_t off_low, addr_t res_addr, dword_t whence) {
+    struct fd *fd = current->files[f];
+    if (fd == NULL)
+        return _EBADF;
+    off_t off = ((off_t) off_high << 32) | off_low;
+    off_t res = fd->ops->lseek(fd, off, whence);
+    if (res < 0)
+        return res;
+    user_put_count(res_addr, &res, sizeof(res));
+    return 0;
+}
+
+dword_t sys_lseek(fd_t f, dword_t off, dword_t whence) {
+    struct fd *fd = current->files[f];
+    if (fd == NULL)
+        return _EBADF;
+    off_t res = fd->ops->lseek(fd, off, whence);
+    if ((dword_t) res != res)
+        return _EOVERFLOW;
+    return res;
+}
+
 dword_t sys_ioctl(fd_t f, dword_t cmd, dword_t arg) {
     struct fd *fd = current->files[f];
     if (fd == NULL)

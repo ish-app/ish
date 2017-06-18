@@ -88,6 +88,17 @@ static ssize_t realfs_write(struct fd *fd, char *buf, size_t bufsize) {
     return res;
 }
 
+static off_t realfs_lseek(struct fd *fd, off_t offset, int whence) {
+    if (whence == LSEEK_SET)
+        whence = SEEK_SET;
+    else if (whence == LSEEK_CUR)
+        whence = SEEK_CUR;
+    else if (whence == LSEEK_END)
+        whence = SEEK_END;
+    else
+        return _EINVAL;
+}
+
 static int realfs_mmap(struct fd *fd, off_t offset, size_t len, int prot, int flags, void **mem_out) {
     int mmap_flags = 0;
     if (flags & MMAP_PRIVATE) mmap_flags |= MAP_PRIVATE;
@@ -137,6 +148,7 @@ const struct fs_ops realfs = {
 const struct fd_ops realfs_fdops = {
     .read = realfs_read,
     .write = realfs_write,
+    .lseek = realfs_lseek,
     .mmap = realfs_mmap,
     .stat = realfs_fstat,
     .ioctl_size = realfs_ioctl_size,

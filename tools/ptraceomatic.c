@@ -225,8 +225,7 @@ restart:
         switch (syscall_num) {
             // put syscall result from fake process into real process
             case 3: // read
-                pt_copy(pid, regs.rcx, cpu->edx);
-                break;
+                pt_copy(pid, regs.rcx, cpu->edx); break;
             case 54: { // ioctl (god help us)
                 struct fd *fd = current->files[cpu->ebx];
                 if (fd) {
@@ -237,11 +236,11 @@ restart:
                 break;
             }
             case 122: // uname
-                pt_copy(pid, regs.rbx, sizeof(struct uname));
-                break;
+                pt_copy(pid, regs.rbx, sizeof(struct uname)); break;
+            case 140: // _llseek
+                pt_copy(pid, regs.rsi, 8); break;
             case 197: // fstat64
-                pt_copy(pid, regs.rcx, sizeof(struct newstat64));
-                break;
+                pt_copy(pid, regs.rcx, sizeof(struct newstat64)); break;
 
             case 90: // mmap
             case 192: // mmap2

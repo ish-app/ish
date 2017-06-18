@@ -296,6 +296,8 @@ restart:
 
         case 0x21: TRACEI("and reg, modrm");
                    READMODRM; AND(modrm_reg, modrm_val_w); break;
+        case 0x22: TRACEI("and modrm8, reg8");
+                   READMODRM; AND(modrm_val8, modrm_reg8); break;
         case 0x23: TRACEI("and modrm, reg");
                    READMODRM; AND(modrm_val, modrm_reg); break;
         case 0x25: TRACEI("and imm, ax\t");

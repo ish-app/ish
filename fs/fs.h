@@ -39,6 +39,7 @@ struct fs_ops {
 struct fd_ops {
     ssize_t (*read)(struct fd *fd, char *buf, size_t bufsize);
     ssize_t (*write)(struct fd *fd, char *buf, size_t bufsize);
+    off_t (*lseek)(struct fd *fd, off_t off, int whence);
     int (*mmap)(struct fd *fd, off_t offset, size_t len, int prot, int flags, void **mem_out);
     int (*stat)(struct fd *fd, struct statbuf *stat);
     // returns the size needed for the output of ioctl, 0 if the arg is not a
