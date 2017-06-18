@@ -132,7 +132,7 @@ restart:
         case 0x09: TRACEI("or reg, modrm");
                    READMODRM; OR(modrm_reg, modrm_val_w); break;
         case 0x0a: TRACEI("or modrm8, reg8");
-                   READMODRM; OR(modrm_reg8, modrm_val8); break;
+                   READMODRM; OR(modrm_val8, modrm_reg8); break;
         case 0x0b: TRACEI("or modrm, reg");
                    READMODRM; OR(modrm_val, modrm_reg); break;
         case 0x0c: TRACEI("or imm8, al\t");
@@ -278,6 +278,8 @@ restart:
                     }
                     break;
 
+                case 0xfb: TRACEI("psubq modrm, reg");
+                           READMODRM; PSUB(modrm_val_sse, modrm_reg_sse); break;
                 default:
                     TRACEI("undefined");
                     return INT_UNDEFINED;
@@ -578,7 +580,7 @@ restart:
                     READINSN;
                     switch (insn) {
                         case 0x7e: TRACEI("movq modrm, xmm");
-                                   READMODRM; MOV(modrm_val64, modrm_reg64);
+                                   READMODRM; MOVQ(modrm_val_sse, modrm_reg_sse); break;
                     }
                     break;
 

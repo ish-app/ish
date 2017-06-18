@@ -23,3 +23,11 @@
 #define PADD(src, dst) \
     dst->qw[0] += src->qw[0]; \
     dst->qw[1] += src->qw[1]
+
+#define PSUB(src, dst) \
+    dst->qw[0] -= src->qw[0]; \
+    dst->qw[1] -= src->qw[1]
+
+#define MOVQ(src, dst) \
+    dst->qw[0] = src->qw[0]; \
+    dst->qw[1] = 0
