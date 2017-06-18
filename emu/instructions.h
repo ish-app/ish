@@ -250,6 +250,9 @@
     else \
         MOV(dst, ax)
 
+#define BSWAP(dst) \
+    dst = __builtin_bswap32(dst)
+
 // condition codes
 #define E ZF
 #define B CF

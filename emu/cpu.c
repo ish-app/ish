@@ -245,6 +245,8 @@ restart:
                 case 0xa3: TRACEI("bt reg, modrm");
                            READMODRM; BT(modrm_reg, modrm_val); break;
 
+                case 0xa4: TRACEI("shld imm8, reg, modrm");
+                           READMODRM; READIMM8; SHLD(imm8, modrm_reg, modrm_val); break;
                 case 0xa5: TRACEI("shld cl, reg, modrm");
                            READMODRM; SHLD(cpu->cl, modrm_reg, modrm_val); break;
 
@@ -265,6 +267,23 @@ restart:
                            READMODRM; MOV((int8_t) modrm_val8, modrm_reg); break;
                 case 0xbf: TRACEI("movs modrm16, reg");
                            READMODRM; MOV((int16_t) modrm_val16, modrm_reg); break;
+
+                case 0xc8: TRACEI("bswap eax");
+                           BSWAP(cpu->eax); break;
+                case 0xc9: TRACEI("bswap ecx");
+                           BSWAP(cpu->ecx); break;
+                case 0xca: TRACEI("bswap edx");
+                           BSWAP(cpu->edx); break;
+                case 0xcb: TRACEI("bswap ebx");
+                           BSWAP(cpu->ebx); break;
+                case 0xcc: TRACEI("bswap esp");
+                           BSWAP(cpu->esp); break;
+                case 0xcd: TRACEI("bswap ebp");
+                           BSWAP(cpu->ebp); break;
+                case 0xce: TRACEI("bswap esi");
+                           BSWAP(cpu->esi); break;
+                case 0xcf: TRACEI("bswap edi");
+                           BSWAP(cpu->edi); break;
 
                 case 0xd4: TRACEI("paddq modrm, reg");
                            READMODRM; PADD(modrm_val_sse, modrm_reg_sse); break;
@@ -288,6 +307,8 @@ restart:
 
         case 0x11: TRACEI("adc reg, modrm");
                    READMODRM; ADC(modrm_reg, modrm_val_w); break;
+        case 0x13: TRACEI("adc modrm, reg");
+                   READMODRM; ADC(modrm_val, modrm_reg); break;
 
         case 0x19: TRACEI("sbb reg, modrm");
                    READMODRM; SBB(modrm_reg, modrm_val); break;
