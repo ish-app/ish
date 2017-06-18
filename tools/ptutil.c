@@ -18,33 +18,25 @@ long trycall(long res, const char *msg) {
     return res;
 }
 
-// the glibc wrapper for clone is basically my worst enemy
-struct motherfucker {
-    const char *program;
-    char *const *argv;
-    char *const *envp;
-};
-int exec_tracee(struct motherfucker *mofo) {
-    trycall(ptrace(PTRACE_TRACEME, 0, NULL, NULL), "ptrace traceme");
-    trycall(execve(mofo->program, mofo->argv, mofo->envp), "execl");
-    return 00;
-}
 int start_tracee(const char *program, char *const argv[], char *const envp[]) {
     // shut off aslr
     int persona = personality(0xffffffff);
     persona |= ADDR_NO_RANDOMIZE;
     personality(persona);
 
-    // use CLONE_FILES so we can use our file descriptors in the child's mmap calls (in ptraceomatic)
-    struct motherfucker mofo = {program, argv, envp};
-    char motherfucking_stack[10000];
-    int pid = clone((int(*)(void*))exec_tracee, motherfucking_stack, SIGCHLD | CLONE_FILES, &mofo);
+    int pid = fork();
     if (pid < 0) {
-        perror("clone");
+        perror("fork");
         exit(1);
     }
-    // wait for child to stop after exec
-    trycall(wait(NULL), "wait");
+    if (pid == 0) {
+        // child
+        trycall(ptrace(PTRACE_TRACEME, 0, NULL, NULL), "ptrace traceme");
+        trycall(execve(program, argv, envp), "execl");
+    } else {
+        // parent, wait for child to stop after exec
+        trycall(wait(NULL), "wait");
+    }
     return pid;
 }
 

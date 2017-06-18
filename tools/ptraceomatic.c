@@ -26,10 +26,17 @@
 
 int compare_cpus(struct cpu_state *cpu, int pid) {
     struct user_regs_struct regs;
+    struct user_fpregs_struct fpregs;
     trycall(ptrace(PTRACE_GETREGS, pid, NULL, &regs), "ptrace getregs compare");
+    trycall(ptrace(PTRACE_GETFPREGS, pid, NULL, &fpregs), "ptrace getregs compare");
 #define CHECK_REG(pt, cp) \
     if (regs.pt != cpu->cp) { \
         printf(#pt " = 0x%llx, " #cp " = 0x%x\n", regs.pt, cpu->cp); \
+        return -1; \
+    }
+#define CHECK_FPREG(pt, cp) \
+    if (fpregs.pt != cpu->cp) { \
+        printf(#pt " = 0x%x, " #cp " = 0x%x\n", fpregs.pt, cpu->cp); \
         return -1; \
     }
     CHECK_REG(rax, eax);
@@ -41,6 +48,23 @@ int compare_cpus(struct cpu_state *cpu, int pid) {
     CHECK_REG(rsp, esp);
     CHECK_REG(rbp, ebp);
     CHECK_REG(rip, eip);
+    CHECK_FPREG(xmm_space[0], xmm[0].dw[0]);
+    CHECK_FPREG(xmm_space[1], xmm[0].dw[1]);
+    CHECK_FPREG(xmm_space[2], xmm[0].dw[2]);
+    CHECK_FPREG(xmm_space[3], xmm[0].dw[3]);
+    CHECK_FPREG(xmm_space[4], xmm[1].dw[0]);
+    CHECK_FPREG(xmm_space[5], xmm[1].dw[1]);
+    CHECK_FPREG(xmm_space[6], xmm[1].dw[2]);
+    CHECK_FPREG(xmm_space[7], xmm[1].dw[3]);
+    CHECK_FPREG(xmm_space[8], xmm[2].dw[0]);
+    CHECK_FPREG(xmm_space[9], xmm[2].dw[1]);
+    CHECK_FPREG(xmm_space[10], xmm[2].dw[2]);
+    CHECK_FPREG(xmm_space[11], xmm[2].dw[3]);
+    CHECK_FPREG(xmm_space[12], xmm[3].dw[0]);
+    CHECK_FPREG(xmm_space[13], xmm[3].dw[1]);
+    CHECK_FPREG(xmm_space[14], xmm[3].dw[2]);
+    CHECK_FPREG(xmm_space[15], xmm[3].dw[3]);
+    // 4 xmm regs is enough for now
 
     // compare pages marked dirty
     int fd = open_mem(pid);
@@ -201,8 +225,17 @@ restart:
         switch (syscall_num) {
             // put syscall result from fake process into real process
             case 3: // read
-                pt_copy(pid, regs.rcx, cpu->eax);
+                pt_copy(pid, regs.rcx, cpu->edx);
                 break;
+            case 54: { // ioctl (god help us)
+                struct fd *fd = current->files[cpu->ebx];
+                if (fd) {
+                    ssize_t ioctl_size = fd->ops->ioctl_size(fd, cpu->ecx);
+                    if (ioctl_size >= 0)
+                        pt_copy(pid, regs.rdx, ioctl_size);
+                }
+                break;
+            }
             case 122: // uname
                 pt_copy(pid, regs.rbx, sizeof(struct uname));
                 break;

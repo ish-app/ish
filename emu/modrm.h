@@ -7,7 +7,6 @@ struct regptr {
     reg_id_t reg16_id;
     reg_id_t reg32_id;
     reg_id_t reg64_id;
-    reg_id_t reg64_high_id;
 };
 static const char *regptr_name(struct regptr regptr) {
     static char buf[15];

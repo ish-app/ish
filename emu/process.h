@@ -9,6 +9,8 @@ struct process {
 
     dword_t pid;
 
+    dword_t uid, gid;
+
     addr_t start_brk;
     addr_t brk;
 

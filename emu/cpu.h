@@ -11,9 +11,8 @@ int cpu_step32(struct cpu_state *cpu);
 int cpu_step16(struct cpu_state *cpu);
 
 union xmm_reg {
-    struct {
-        qword_t qhigh, qlow;
-    };
+    qword_t qw[2];
+    dword_t dw[4];
     // TODO more forms
 };
 

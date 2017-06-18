@@ -22,6 +22,7 @@ sys_src = [
     'sys/uname.c',
     'sys/tls.c',
     'sys/fs.c',
+    'sys/getid.c',
 
     'fs/fs.c',
     'fs/path.c',

@@ -40,9 +40,9 @@ fd_t sys_open(addr_t pathname_addr, dword_t flags) {
 }
 
 dword_t sys_close(fd_t f) {
-    if (current->files[f] == NULL)
-        return _EBADF;
     struct fd *fd = current->files[f];
+    if (fd == NULL)
+        return _EBADF;
     if (--fd->refcnt == 0) {
         int err = fd->ops->close(fd);
         if (err < 0)
@@ -56,6 +56,8 @@ dword_t sys_close(fd_t f) {
 dword_t sys_read(fd_t fd_no, addr_t buf_addr, dword_t size) {
     char buf[size];
     struct fd *fd = current->files[fd_no];
+    if (fd == NULL)
+        return _EBADF;
     int res = fd->ops->read(fd, buf, size);
     if (res >= 0)
         user_put_count(buf_addr, buf, res);
@@ -66,6 +68,8 @@ dword_t sys_write(fd_t fd_no, addr_t buf_addr, dword_t size) {
     char buf[size];
     user_get_count(buf_addr, buf, size);
     struct fd *fd = current->files[fd_no];
+    if (fd == NULL)
+        return _EBADF;
     return fd->ops->write(fd, buf, size);
 }
 
@@ -85,6 +89,8 @@ dword_t sys_writev(fd_t fd_no, addr_t iovec_addr, dword_t iovec_count) {
 
 dword_t sys_fstat64(fd_t fd_no, addr_t statbuf_addr) {
     struct fd *fd = current->files[fd_no];
+    if (fd == NULL)
+        return _EBADF;
     struct statbuf stat;
     int err = fd->ops->stat(fd, &stat);
     if (err < 0)
@@ -112,6 +118,26 @@ dword_t sys_fstat64(fd_t fd_no, addr_t statbuf_addr) {
     return 0;
 }
 
+dword_t sys_ioctl(fd_t f, dword_t cmd, dword_t arg) {
+    struct fd *fd = current->files[f];
+    if (fd == NULL)
+        return _EBADF;
+    ssize_t size = fd->ops->ioctl_size(fd, cmd);
+    if (size < 0)
+        return _EINVAL;
+    if (size == 0)
+        return fd->ops->ioctl(fd, cmd, (void *) (long) arg);
+
+    // praying that this won't break
+    char buf[size];
+    user_get_count(arg, buf, size);
+    int res = fd->ops->ioctl(fd, cmd, buf);
+    if (res < 0)
+        return res;
+    user_put_count(arg, buf, size);
+    return res;
+}
+
 dword_t sys_dup(fd_t fd) {
     if (current->files[fd] == NULL)
         return _EBADF;
@@ -119,9 +145,36 @@ dword_t sys_dup(fd_t fd) {
     if (new_fd < 0)
         return _EMFILE;
     current->files[new_fd] = current->files[fd];
+    current->files[new_fd]->refcnt++;
     return 0;
 }
 
+dword_t sys_dup2(fd_t fd, fd_t new_fd) {
+    int res;
+    if (fd == new_fd)
+        return fd;
+    if (current->files[fd] == NULL)
+        return _EBADF;
+    if (new_fd >= MAX_FD)
+        return _EBADF;
+    if (current->files[new_fd] != NULL) {
+        res = sys_close(new_fd);
+        if (res < 0)
+            return res;
+    }
+
+    current->files[new_fd] = current->files[fd];
+    current->files[new_fd]->refcnt++;
+    return 0;
+}
+
+// a few stubs
 dword_t sys_readlink(addr_t pathname_addr, addr_t buf_addr, dword_t bufsize) {
     return _ENOENT;
+}
+dword_t sys_sendfile(fd_t out_fd, fd_t in_fd, addr_t offset_addr, dword_t count) {
+    return _EINVAL;
+}
+dword_t sys_sendfile64(fd_t out_fd, fd_t in_fd, addr_t offset_addr, dword_t count) {
+    return _EINVAL;
 }

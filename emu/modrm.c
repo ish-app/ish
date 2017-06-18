@@ -8,8 +8,7 @@
         .reg32_id = REG_ID(r32), \
         .reg16_id = REG_ID(r16), \
         .reg8_id = REG_ID(r8), \
-        .reg64_id = REG_ID(xmm.qlow), \
-        .reg64_high_id = REG_ID(xmm.qhigh) \
+        .reg64_id = REG_ID(xmm), \
         })
 
 static inline struct regptr decode_reg(byte_t reg) {

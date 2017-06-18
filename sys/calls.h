@@ -26,6 +26,13 @@ dword_t sys_close(fd_t fd);
 dword_t sys_fstat64(fd_t fd_no, addr_t statbuf_addr);
 dword_t sys_access(addr_t pathname_addr, dword_t mode);
 dword_t sys_readlink(addr_t pathname, addr_t buf, dword_t bufsize);
+dword_t sys_sendfile(fd_t out_fd, fd_t in_fd, addr_t offset_addr, dword_t count);
+dword_t sys_sendfile64(fd_t out_fd, fd_t in_fd, addr_t offset_addr, dword_t count);
+
+dword_t sys_getuid32();
+dword_t sys_getuid();
+dword_t sys_getgid32();
+dword_t sys_getgid();
 
 struct io_vec {
     addr_t base;
@@ -34,8 +41,10 @@ struct io_vec {
 dword_t sys_read(fd_t fd_no, addr_t buf_addr, dword_t size);
 dword_t sys_write(fd_t fd_no, addr_t buf_addr, dword_t size);
 dword_t sys_writev(fd_t fd_no, addr_t iovec_addr, dword_t iovec_count);
+dword_t sys_ioctl(fd_t f, dword_t cmd, dword_t arg);
 
 dword_t sys_dup(fd_t fd);
+dword_t sys_dup2(fd_t fd, fd_t new_fd);
 
 addr_t sys_brk(addr_t new_brk);
 int handle_pagefault(addr_t addr);

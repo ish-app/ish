@@ -206,7 +206,7 @@
     }
 
 #define BT(bit, val) \
-    cpu->cf = (val) & (1 << bit)
+    cpu->cf = ((val) & (1 << bit)) ? 1 : 0;
 
 #define BUMP_SI(size) \
     if (!cpu->df) \

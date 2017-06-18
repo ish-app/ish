@@ -41,6 +41,11 @@ struct fd_ops {
     ssize_t (*write)(struct fd *fd, char *buf, size_t bufsize);
     int (*mmap)(struct fd *fd, off_t offset, size_t len, int prot, int flags, void **mem_out);
     int (*stat)(struct fd *fd, struct statbuf *stat);
+    // returns the size needed for the output of ioctl, 0 if the arg is not a
+    // pointer, -1 for invalid command
+    ssize_t (*ioctl_size)(struct fd *fd, int cmd);
+    // if ioctl_size returns non-zero, arg must point to ioctl_size valid bytes
+    int (*ioctl)(struct fd *fd, int cmd, void *arg);
     int (*close)(struct fd *fd);
 };
 

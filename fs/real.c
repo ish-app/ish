@@ -1,6 +1,7 @@
-#include <fcntl.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <sys/stat.h>
+#include <sys/ioctl.h>
 #include <sys/mman.h>
 
 #include "sys/errno.h"
@@ -98,6 +99,27 @@ static int realfs_mmap(struct fd *fd, off_t offset, size_t len, int prot, int fl
     return 0;
 }
 
+struct win_size {
+    word_t row;
+    word_t col;
+    word_t xpixel;
+    word_t ypixel;
+};
+
+static ssize_t realfs_ioctl_size(struct fd *fd, int cmd) {
+    switch (cmd) {
+        case TIOCGWINSZ: return sizeof(struct win_size);
+    }
+    return -1;
+}
+
+static int realfs_ioctl(struct fd *fd, int cmd, void *arg) {
+    int res = ioctl(fd->real_fd, cmd, arg);
+    if (res < 0)
+        return err_map(errno);
+    return res;
+}
+
 static ssize_t realfs_readlink(char *path, char *buf, size_t bufsize) {
     ssize_t size = readlink(path, buf, bufsize);
     if (size < 0)
@@ -117,5 +139,7 @@ const struct fd_ops realfs_fdops = {
     .write = realfs_write,
     .mmap = realfs_mmap,
     .stat = realfs_fstat,
+    .ioctl_size = realfs_ioctl_size,
+    .ioctl = realfs_ioctl,
     .close = realfs_close,
 };
