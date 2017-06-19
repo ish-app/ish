@@ -1,3 +1,4 @@
+#include <string.h>
 #include "sys/calls.h"
 #include "sys/errno.h"
 #include "emu/process.h"
@@ -26,7 +27,7 @@ dword_t sys_access(addr_t pathname_addr, dword_t mode) {
     return generic_access(pathname, mode);
 }
 
-fd_t sys_open(addr_t pathname_addr, dword_t flags) {
+fd_t sys_open(addr_t pathname_addr, dword_t flags, dword_t mode) {
     int err;
     char pathname[MAX_PATH];
     user_get_string(pathname_addr, pathname, sizeof(pathname));
@@ -34,9 +35,15 @@ fd_t sys_open(addr_t pathname_addr, dword_t flags) {
     fd_t fd = create_fd();
     if (fd == -1)
         return _EMFILE;
-    if ((err = generic_open(pathname, current->files[fd], flags)) < 0)
+    if ((err = generic_open(pathname, current->files[fd], flags, mode)) < 0)
         return err;
     return fd;
+}
+
+dword_t sys_unlink(addr_t pathname_addr) {
+    char pathname[MAX_PATH];
+    user_get_string(pathname_addr, pathname, sizeof(pathname));
+    return generic_unlink(pathname);
 }
 
 dword_t sys_close(fd_t f) {
@@ -87,15 +94,7 @@ dword_t sys_writev(fd_t fd_no, addr_t iovec_addr, dword_t iovec_count) {
     return count;
 }
 
-dword_t sys_fstat64(fd_t fd_no, addr_t statbuf_addr) {
-    struct fd *fd = current->files[fd_no];
-    if (fd == NULL)
-        return _EBADF;
-    struct statbuf stat;
-    int err = fd->ops->stat(fd, &stat);
-    if (err < 0)
-        return err;
-
+struct newstat64 stat_convert_newstat64(struct statbuf stat) {
     struct newstat64 newstat;
     newstat.dev = stat.dev;
     newstat.fucked_ino = stat.inode;
@@ -114,6 +113,30 @@ dword_t sys_fstat64(fd_t fd_no, addr_t statbuf_addr) {
     newstat.mtime_nsec = stat.mtime_nsec;
     newstat.ctime = stat.ctime;
     newstat.ctime_nsec = stat.ctime_nsec;
+    return newstat;
+}
+
+dword_t sys_stat64(addr_t pathname_addr, addr_t statbuf_addr) {
+    int err;
+    char pathname[MAX_PATH];
+    user_get_string(pathname_addr, pathname, sizeof(pathname));
+    struct statbuf stat;
+    if ((err = generic_stat(pathname, &stat)) < 0)
+        return err;
+    struct newstat64 newstat = stat_convert_newstat64(stat);
+    user_put_count(statbuf_addr, &newstat, sizeof(newstat));
+    return 0;
+}
+
+dword_t sys_fstat64(fd_t fd_no, addr_t statbuf_addr) {
+    struct fd *fd = current->files[fd_no];
+    if (fd == NULL)
+        return _EBADF;
+    struct statbuf stat;
+    int err = fd->ops->stat(fd, &stat);
+    if (err < 0)
+        return err;
+    struct newstat64 newstat = stat_convert_newstat64(stat);
     user_put_count(statbuf_addr, &newstat, sizeof(newstat));
     return 0;
 }
@@ -169,7 +192,7 @@ dword_t sys_dup(fd_t fd) {
         return _EMFILE;
     current->files[new_fd] = current->files[fd];
     current->files[new_fd]->refcnt++;
-    return 0;
+    return new_fd;
 }
 
 dword_t sys_dup2(fd_t fd, fd_t new_fd) {
@@ -188,7 +211,7 @@ dword_t sys_dup2(fd_t fd, fd_t new_fd) {
 
     current->files[new_fd] = current->files[fd];
     current->files[new_fd]->refcnt++;
-    return 0;
+    return new_fd;
 }
 
 // a few stubs

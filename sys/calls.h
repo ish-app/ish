@@ -21,9 +21,11 @@ dword_t sys_exit(dword_t status);
 dword_t sys_exit_group(dword_t status);
 
 #define MAX_PATH 4096
-fd_t sys_open(addr_t pathname_addr, dword_t flags);
+fd_t sys_open(addr_t pathname_addr, dword_t flags, dword_t mode);
 dword_t sys_close(fd_t fd);
+dword_t sys_stat64(addr_t pathname_addr, addr_t statbuf_addr);
 dword_t sys_fstat64(fd_t fd_no, addr_t statbuf_addr);
+dword_t sys_unlink(addr_t pathname_addr);
 dword_t sys_access(addr_t pathname_addr, dword_t mode);
 dword_t sys_readlink(addr_t pathname, addr_t buf, dword_t bufsize);
 dword_t sys_sendfile(fd_t out_fd, fd_t in_fd, addr_t offset_addr, dword_t count);

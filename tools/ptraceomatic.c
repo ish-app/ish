@@ -239,6 +239,8 @@ restart:
                 pt_copy(pid, regs.rbx, sizeof(struct uname)); break;
             case 140: // _llseek
                 pt_copy(pid, regs.rsi, 8); break;
+
+            case 195: // stat64
             case 197: // fstat64
                 pt_copy(pid, regs.rcx, sizeof(struct newstat64)); break;
 
@@ -253,6 +255,7 @@ restart:
 
             // some syscalls need to just happen
             case 45: // brk
+            case 91: // munmap
             case 125: // mprotect
             case 243: // set_thread_area
                 goto do_step;

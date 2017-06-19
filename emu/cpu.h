@@ -24,13 +24,11 @@ struct cpu_state {
     union { \
         dword_t e##n; \
         word_t n; \
-        word_t n##_; \
     };
 #define _REGX(n) \
     union { \
         dword_t e##n##x; \
         word_t n##x; \
-        word_t n##x##_; \
         struct { \
             byte_t n##l; \
             byte_t n##h; \

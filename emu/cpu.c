@@ -272,10 +272,22 @@ restart:
                            READMODRM; MOV(modrm_val8, modrm_reg); break;
                 case 0xb7: TRACEI("movz modrm16, reg");
                            READMODRM; MOV(modrm_val16, modrm_reg); break;
+
+                case 0xba: TRACEI("grp8 imm8, modrm");
+                           READMODRM; READIMM8; GRP8(imm8, modrm_val); break;
+
+                case 0xbc: TRACEI("bsf modrm, reg");
+                           READMODRM; BSF(modrm_val, modrm_reg); break;
+
                 case 0xbe: TRACEI("movs modrm8, reg");
                            READMODRM; MOV((int8_t) modrm_val8, modrm_reg); break;
                 case 0xbf: TRACEI("movs modrm16, reg");
                            READMODRM; MOV((int16_t) modrm_val16, modrm_reg); break;
+
+                case 0xc0: TRACEI("xadd reg8, modrm8");
+                           READMODRM; XADD(modrm_reg8, modrm_val8); break;
+                case 0xc1: TRACEI("xadd reg, modrm");
+                           READMODRM; XADD(modrm_reg, modrm_val); break;
 
                 case 0xc8: TRACEI("bswap eax");
                            BSWAP(cpu->eax); break;
@@ -602,6 +614,8 @@ restart:
                    READIMM; JMP_REL(imm); break;
         case 0xeb: TRACEI("jmp rel8\t");
                    READIMM8; JMP_REL((int8_t) imm8); break;
+
+        case 0xf0: TRACE("lock (ignored for now)\n"); goto restart;
 
         case 0xf3:
             READINSN;

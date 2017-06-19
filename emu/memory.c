@@ -1,5 +1,6 @@
 #include <unistd.h>
 #include <sys/mman.h>
+#include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
@@ -7,14 +8,13 @@
 #include "sys/errno.h"
 #include "emu/memory.h"
 
+static void tlb_flush(struct mem *mem);
+
 // this code currently assumes the system page size is 4k
 
 void mem_init(struct mem *mem) {
     mem->pt = calloc(PT_SIZE, sizeof(struct pt_entry *));
-    mem->tlb = calloc(TLB_SIZE, sizeof(struct tlb_entry));
-    for (unsigned i = 0; i < TLB_SIZE; i++) {
-        mem->tlb[i].page = mem->tlb[i].page_if_writable = TLB_PAGE_EMPTY;
-    }
+    mem->tlb = malloc(TLB_SIZE * sizeof(struct tlb_entry));
 }
 
 page_t pt_find_hole(struct mem *mem, pages_t size) {
@@ -55,6 +55,7 @@ int pt_map(struct mem *mem, page_t start, pages_t pages, void *memory, unsigned 
     if (flags & P_GROWSDOWN) {
         pt_map(mem, start - 1, 1, NULL, P_GUARD);
     }
+    tlb_flush(mem);
     return 0;
 }
 
@@ -75,6 +76,7 @@ int pt_unmap(struct mem *mem, page_t start, pages_t pages) {
     for (page_t page = start; page < start + pages; page++) {
         pt_drop(mem, page);
     }
+    tlb_flush(mem);
     return 0;
 }
 
@@ -83,6 +85,7 @@ int pt_unmap_force(struct mem *mem, page_t start, pages_t pages) {
         if (mem->pt[page] != NULL)
             pt_drop(mem, page);
     }
+    tlb_flush(mem);
     return 0;
 }
 
@@ -109,6 +112,7 @@ int pt_set_flags(struct mem *mem, page_t start, pages_t pages, int flags) {
     for (page_t page = start; page < start + pages; page++) {
         mem->pt[page]->flags = flags;
     }
+    tlb_flush(mem);
     return 0;
 }
 
@@ -120,6 +124,13 @@ void pt_dump(struct mem *mem) {
             TRACE("refcount %u", mem->pt[i]->refcount);
             TRACE("flags    %x", mem->pt[i]->flags);
         }
+    }
+}
+
+static void tlb_flush(struct mem *mem) {
+    memset(mem->tlb, TLB_SIZE * sizeof(struct tlb_entry), 0);
+    for (unsigned i = 0; i < TLB_SIZE; i++) {
+        mem->tlb[i].page = mem->tlb[i].page_if_writable = TLB_PAGE_EMPTY;
     }
 }
 

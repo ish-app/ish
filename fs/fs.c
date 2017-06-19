@@ -52,7 +52,7 @@ char *pathname_expand(const char *pathname) {
     return full_path;
 }
 
-int generic_open(const char *pathname, struct fd *fd, int flags) {
+int generic_open(const char *pathname, struct fd *fd, int flags, int mode) {
     char *full_path = pathname_expand(pathname);
     const struct fs_ops *fs;
     path_t path = find_mount(full_path, &fs);
@@ -76,6 +76,16 @@ int generic_access(const char *pathname, int mode) {
     const struct fs_ops *fs;
     path_t path = find_mount(full_path, &fs);
     int err = fs->access(path, mode);
+    free(full_path);
+    return err;
+}
+
+// TODO I bet this can be shorter
+int generic_unlink(const char *pathname) {
+    char *full_path = pathname_expand(pathname);
+    const struct fs_ops *fs;
+    path_t path = find_mount(full_path, &fs);
+    int err = fs->unlink(path);
     free(full_path);
     return err;
 }

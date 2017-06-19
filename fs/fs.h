@@ -13,11 +13,12 @@ struct fd {
 typedef sdword_t fd_t;
 #define MAX_FD 1024 // dynamically expanding fd table coming soon:tm:
 
-int generic_open(const char *pathname, struct fd *fd, int flags);
+int generic_open(const char *pathname, struct fd *fd, int flags, int mode);
 #define AC_R 4
 #define AC_W 2
 #define AC_X 1
 #define AC_F 0
+int generic_unlink(const char *pathname);
 int generic_access(const char *pathname, int mode);
 int generic_stat(const char *pathname, struct statbuf *stat);
 ssize_t generic_readlink(const char *pathname, char *buf, size_t bufsize);
@@ -31,6 +32,7 @@ struct mount *mounts;
 
 struct fs_ops {
     int (*open)(char *path, struct fd *fd, int flags);
+    int (*unlink)(const char *pathname);
     int (*access)(const char *path, int mode);
     int (*stat)(const char *path, struct statbuf *stat);
     ssize_t (*readlink)(char *path, char *buf, size_t bufsize);

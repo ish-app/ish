@@ -10,8 +10,9 @@
 
 // TODO translate goddamn flags
 
-static int realfs_open(char *path, struct fd *fd, int flags) {
-    int fd_no = open(path, flags);
+static int realfs_open(char *path, struct fd *fd, int flags, int mode) {
+    /* debugger; */
+    int fd_no = open(path, flags, mode);
     if (fd_no < 0)
         return err_map(errno);
     fd->real_fd = fd_no;
@@ -62,6 +63,13 @@ static int realfs_fstat(struct fd *fd, struct statbuf *fake_stat) {
     return 0;
 }
 
+static int realfs_unlink(const char *path) {
+    int res = unlink(path);
+    if (res < 0)
+        return err_map(errno);
+    return res;
+}
+
 static int realfs_access(const char *path, int mode) {
     int real_mode = 0;
     if (mode & AC_F) real_mode |= F_OK;
@@ -97,6 +105,10 @@ static off_t realfs_lseek(struct fd *fd, off_t offset, int whence) {
         whence = SEEK_END;
     else
         return _EINVAL;
+    off_t res = lseek(fd->real_fd, offset, whence);
+    if (res < 0)
+        return err_map(errno);
+    return res;
 }
 
 static int realfs_mmap(struct fd *fd, off_t offset, size_t len, int prot, int flags, void **mem_out) {
@@ -140,6 +152,7 @@ static ssize_t realfs_readlink(char *path, char *buf, size_t bufsize) {
 
 const struct fs_ops realfs = {
     .open = realfs_open,
+    .unlink = realfs_unlink,
     .stat = realfs_stat,
     .access = realfs_access,
     .readlink = realfs_readlink,

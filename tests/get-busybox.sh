@@ -7,4 +7,4 @@ cd $file
 export CFLAGS=-m32 LDFLAGS=-m32
 make defconfig
 make
-cp busybox ..
+cp busybox_unstripped ../busybox

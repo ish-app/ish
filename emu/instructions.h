@@ -205,8 +205,23 @@
         case 7: TRACE("undefined"); return INT_UNDEFINED; \
     }
 
+#define GRP8(bit, val) \
+    switch(modrm.opcode) { \
+        case 4: TRACEI("bt"); \
+                BT(bit, val); break; \
+        case 5: TRACEI("bts"); return INT_UNDEFINED; \
+        case 6: TRACEI("btr"); return INT_UNDEFINED; \
+        case 7: TRACEI("btc"); return INT_UNDEFINED; \
+        default: return INT_UNDEFINED; \
+    }
+
 #define BT(bit, val) \
     cpu->cf = ((val) & (1 << bit)) ? 1 : 0;
+
+#define BSF(src, dst) \
+    dst = __builtin_ctz(src); \
+    cpu->zf = src == 0; \
+    cpu->zf_res = 0
 
 #define BUMP_SI(size) \
     if (!cpu->df) \
@@ -249,6 +264,10 @@
         MOV(src, dst##_w); \
     else \
         MOV(dst, ax)
+
+#define XADD(src, dst) \
+    XCHG(src, dst); \
+    ADD(src, dst)
 
 #define BSWAP(dst) \
     dst = __builtin_bswap32(dst)
