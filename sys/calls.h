@@ -20,6 +20,8 @@ dword_t _sys_execve(addr_t file, addr_t argv, addr_t envp);
 dword_t sys_exit(dword_t status);
 dword_t sys_exit_group(dword_t status);
 
+dword_t sys_time(addr_t time_out);
+
 #define MAX_PATH 4096
 fd_t sys_open(addr_t pathname_addr, dword_t flags, dword_t mode);
 dword_t sys_close(fd_t fd);

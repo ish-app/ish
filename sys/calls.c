@@ -19,6 +19,7 @@ syscall_t syscall_table[] = {
     [6] = (syscall_t) sys_close,
     [10] = (syscall_t) sys_unlink,
     [11] = (syscall_t) _sys_execve,
+    [13] = (syscall_t) sys_time,
     [19] = (syscall_t) sys_lseek,
     [24] = (syscall_t) sys_getuid,
     [47] = (syscall_t) sys_getgid,

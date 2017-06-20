@@ -21,6 +21,7 @@ sys_src = [
     'sys/exec/exec.c',
 
     'sys/exit.c',
+    'sys/time.c',
     'sys/mm.c',
     'sys/mmap.c',
     'sys/uname.c',
