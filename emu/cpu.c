@@ -120,6 +120,8 @@ restart:
         // any subtraction that occurs probably needs to have a cast to a
         // signed type, so sign extension happens.
 
+        case 0x00: TRACEI("add reg8, modrm8");
+                   READMODRM; ADD(modrm_reg8, modrm_val8_w); break;
         case 0x01: TRACEI("add reg, modrm");
                    READMODRM; ADD(modrm_reg, modrm_val_w); break;
         case 0x03: TRACEI("add modrm, reg");
@@ -148,6 +150,8 @@ restart:
 
                 case 0x28: TRACEI("movp modrm, reg");
                            READMODRM; MOVP(modrm_val_sse, modrm_reg_sse); break;
+                case 0x29: TRACEI("movp reg, modrm");
+                           READMODRM; MOVP(modrm_reg_sse, modrm_val_sse); break;
 
                 case 0x31: TRACEI("rdtsc");
                            // TODO there's a clang builtin for this
@@ -558,6 +562,23 @@ restart:
                    READIMM; TEST(imm, ax); break;
 
         case 0xaa: TRACEI("stosb"); STOSB; break;
+
+        case 0xb0: TRACEI("mov imm, al\t");
+                   READIMM8; MOV(imm8, cpu->al); break;
+        case 0xb1: TRACEI("mov imm, cl\t");
+                   READIMM8; MOV(imm8, cpu->cl); break;
+        case 0xb2: TRACEI("mov imm, dl\t");
+                   READIMM8; MOV(imm8, cpu->dl); break;
+        case 0xb3: TRACEI("mov imm, bl\t");
+                   READIMM8; MOV(imm8, cpu->bl); break;
+        case 0xb4: TRACEI("mov imm, ah\t");
+                   READIMM8; MOV(imm8, cpu->ah); break;
+        case 0xb5: TRACEI("mov imm, ch\t");
+                   READIMM8; MOV(imm8, cpu->ch); break;
+        case 0xb6: TRACEI("mov imm, dh\t");
+                   READIMM8; MOV(imm8, cpu->dh); break;
+        case 0xb7: TRACEI("mov imm, bh\t");
+                   READIMM8; MOV(imm8, cpu->bh); break;
 
         case 0xb8: TRACEI("mov imm, eax\t");
                    READIMM; MOV(imm, ax); break;
