@@ -15,12 +15,11 @@
 #include "ptutil.h"
 #include "transplant.h"
 
-int main(int argc, char *const args[]) {
-    char *const argv[] = {args[2], NULL};
+int main(int argc, char *const argv[]) {
     char *const envp[] = {NULL};
-    int pid = start_tracee(args[2], argv, envp);
+    int pid = start_tracee(argv[2], argv + 2, envp);
 
-    int vdso_fd = trycall(open(args[1], O_RDONLY), "open vdso");
+    int vdso_fd = trycall(open(argv[1], O_RDONLY), "open vdso");
     struct stat statbuf;
     trycall(fstat(vdso_fd, &statbuf), "stat vdso");
     size_t vdso_size = statbuf.st_size;

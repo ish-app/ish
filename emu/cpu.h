@@ -43,6 +43,8 @@ struct cpu_state {
     _REG(di);
     _REG(bp);
     _REG(sp);
+#undef REGX
+#undef REG
 
     union xmm_reg xmm[8];
 
@@ -71,8 +73,6 @@ struct cpu_state {
 
     // for the page fault handler
     addr_t segfault_addr;
-#undef REGX
-#undef REG
 };
 
 typedef uint8_t reg_id_t;

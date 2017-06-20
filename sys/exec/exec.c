@@ -218,10 +218,11 @@ int sys_execve(const char *file, char *const argv[], char *const envp[]) {
 
     // map vdso
     err = _ENOMEM;
-    page_t vdso_page = pt_find_hole(&curmem, sizeof(vdso_data) >> PAGE_BITS);
+    pages_t vdso_pages = sizeof(vdso_data) >> PAGE_BITS;
+    page_t vdso_page = pt_find_hole(&curmem, vdso_pages);
     if (vdso_page == BAD_PAGE)
         goto beyond_hope;
-    if ((err = pt_map(&curmem, vdso_page, 1, (void *) vdso_data, 0)) < 0)
+    if ((err = pt_map(&curmem, vdso_page, vdso_pages, (void *) vdso_data, 0)) < 0)
         goto beyond_hope;
     addr_t vdso_addr = vdso_page << PAGE_BITS;
     addr_t vdso_entry = vdso_addr + ((struct elf_header *) vdso_data)->entry_point;
