@@ -74,7 +74,7 @@ void pt_write8(int pid, addr_t addr, byte_t val) {
     pt_writen(pid, addr, &val, sizeof(val));
 }
 
-static addr_t aux_addr(int pid, int type) {
+static addr_t aux_addr(int pid, unsigned type) {
     struct user_regs_struct regs;
     trycall(ptrace(PTRACE_GETREGS, pid, NULL, &regs), "ptrace get sp for aux");
     dword_t sp = (dword_t) regs.rsp;

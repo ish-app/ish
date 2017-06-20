@@ -1,5 +1,5 @@
 #include "emu/process.h"
-#include "fs/fs.h"
+#include "sys/fs.h"
 
 void setup() {
     // god help us

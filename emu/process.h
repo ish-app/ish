@@ -2,7 +2,7 @@
 #define PROCESS_H
 
 #include "emu/cpu.h"
-#include "fs/fs.h"
+#include "sys/fs.h"
 
 struct process {
     struct cpu_state cpu;

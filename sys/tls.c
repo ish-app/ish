@@ -1,4 +1,3 @@
-#include "emu/process.h"
 #include "sys/calls.h"
 
 struct user_desc {

@@ -1,6 +1,9 @@
-#include "emu/cpu.h"
+#ifndef CALLS_H
+#define CALLS_H
+
+#include "emu/process.h"
 #include "emu/interrupt.h"
-#include "fs/fs.h"
+#include "sys/fs.h"
 #include "misc.h"
 
 int handle_interrupt(struct cpu_state *cpu, int interrupt);
@@ -82,3 +85,5 @@ dword_t _sys_uname(addr_t uts_addr);
 int sys_set_thread_area(addr_t u_info);
 
 typedef int (*syscall_t)(dword_t,dword_t,dword_t,dword_t,dword_t,dword_t);
+
+#endif

@@ -7,8 +7,6 @@
 #include <string.h>
 
 #include "misc.h"
-#include "emu/memory.h"
-#include "emu/process.h"
 #include "sys/calls.h"
 #include "sys/errno.h"
 #include "sys/exec/elf.h"
@@ -42,7 +40,7 @@ static int read_header(int f, struct elf_header *header) {
 }
 
 static int read_prg_headers(int f, struct elf_header header, struct prg_header **ph_out) {
-    size_t ph_size = sizeof(struct prg_header) * header.phent_count;
+    ssize_t ph_size = sizeof(struct prg_header) * header.phent_count;
     struct prg_header *ph = malloc(ph_size);
     if (ph == NULL)
         return _ENOMEM;

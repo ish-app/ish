@@ -1,6 +1,5 @@
 #include "sys/calls.h"
 #include "sys/errno.h"
-#include "emu/process.h"
 #include "emu/memory.h"
 
 addr_t sys_brk(addr_t new_brk) {

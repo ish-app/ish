@@ -1,5 +1,4 @@
 #include "sys/calls.h"
-#include "emu/process.h"
 
 dword_t sys_getuid32() {
     return current->uid;

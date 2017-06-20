@@ -1,6 +1,6 @@
 #include <string.h>
 
-#include "fs/path.h"
+#include "sys/fs/path.h"
 #include "misc.h"
 
 void path_parse(path_t path) {

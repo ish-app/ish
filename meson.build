@@ -26,12 +26,14 @@ sys_src = [
     'sys/mmap.c',
     'sys/uname.c',
     'sys/tls.c',
-    'sys/fs.c',
     'sys/getid.c',
 
-    'fs/fs.c',
-    'fs/path.c',
-    'fs/real.c',
+    'sys/fs.c',
+    'sys/fs/stat.c',
+    'sys/fs/generic.c',
+    'sys/fs/path.c',
+    'sys/fs/pathname.c',
+    'sys/fs/real.c',
 ]
 emu_src = [
     'emu/memory.c',

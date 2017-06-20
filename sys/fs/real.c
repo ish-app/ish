@@ -6,7 +6,7 @@
 
 #include "sys/errno.h"
 #include "sys/calls.h"
-#include "fs/fs.h"
+#include "sys/fs.h"
 
 // TODO translate goddamn flags
 
