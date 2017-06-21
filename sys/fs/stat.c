@@ -27,16 +27,33 @@ struct newstat64 stat_convert_newstat64(struct statbuf stat) {
     return newstat;
 }
 
-dword_t sys_stat64(addr_t pathname_addr, addr_t statbuf_addr) {
+int generic_stat(const char *pathname, struct statbuf *stat, bool follow_links) {
+    char *full_path = pathname_expand(pathname);
+    const struct fs_ops *fs;
+    path_t path = find_mount(full_path, &fs);
+    int err = fs->stat(path, stat, follow_links);
+    free(full_path);
+    return err;
+}
+
+static dword_t sys_stat_path(addr_t pathname_addr, addr_t statbuf_addr, bool follow_links) {
     int err;
     char pathname[MAX_PATH];
     user_get_string(pathname_addr, pathname, sizeof(pathname));
     struct statbuf stat;
-    if ((err = generic_stat(pathname, &stat)) < 0)
+    if ((err = generic_stat(pathname, &stat, follow_links)) < 0)
         return err;
     struct newstat64 newstat = stat_convert_newstat64(stat);
     user_put_count(statbuf_addr, &newstat, sizeof(newstat));
     return 0;
+}
+
+dword_t sys_stat64(addr_t pathname_addr, addr_t statbuf_addr) {
+    return sys_stat_path(pathname_addr, statbuf_addr, false);
+}
+
+dword_t sys_lstat64(addr_t pathname_addr, addr_t statbuf_addr) {
+    return sys_stat_path(pathname_addr, statbuf_addr, true);
 }
 
 dword_t sys_fstat64(fd_t fd_no, addr_t statbuf_addr) {
@@ -50,13 +67,4 @@ dword_t sys_fstat64(fd_t fd_no, addr_t statbuf_addr) {
     struct newstat64 newstat = stat_convert_newstat64(stat);
     user_put_count(statbuf_addr, &newstat, sizeof(newstat));
     return 0;
-}
-
-int generic_stat(const char *pathname, struct statbuf *stat) {
-    char *full_path = pathname_expand(pathname);
-    const struct fs_ops *fs;
-    path_t path = find_mount(full_path, &fs);
-    int err = fs->stat(path, stat);
-    free(full_path);
-    return err;
 }

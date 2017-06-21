@@ -30,6 +30,7 @@ sys_src = [
 
     'sys/fs.c',
     'sys/fs/stat.c',
+    'sys/fs/dir.c',
     'sys/fs/generic.c',
     'sys/fs/path.c',
     'sys/fs/pathname.c',

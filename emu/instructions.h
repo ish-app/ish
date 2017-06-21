@@ -13,11 +13,11 @@
 } while (0)
 
 #define PUSH(thing) \
-    MEM_W(sp - OP_SIZE/8) = thing; \
-    sp -= OP_SIZE/8
+    MEM_W(osp - OP_SIZE/8) = thing; \
+    osp -= OP_SIZE/8
 #define POP(thing) \
-    thing = MEM(sp); \
-    sp += OP_SIZE/8
+    thing = MEM(osp); \
+    osp += OP_SIZE/8
 
 #define INT(code) \
     return code
@@ -83,14 +83,14 @@
 } while (0)
 
 // TODO flags
-#define MUL18(val) cpu->ax_ = cpu->al * val
+#define MUL18(val) cpu->ax = cpu->al * val
 #define MUL1(val) do { \
-    uint64_t tmp = ax * (uint64_t) val; \
-    ax = tmp; dx = tmp >> OP_SIZE; \
+    uint64_t tmp = oax * (uint64_t) val; \
+    oax = tmp; odx = tmp >> OP_SIZE; \
 } while (0)
 #define IMUL1(val) do { \
-    int64_t tmp = ax * (int64_t) val; \
-    ax = tmp; dx = tmp >> OP_SIZE; \
+    int64_t tmp = (int64_t) (sint(OP_SIZE)) oax * (sint(OP_SIZE)) val; \
+    oax = tmp; odx = tmp >> OP_SIZE; \
 } while (0)
 #define MUL2(val, reg) reg *= val
 #define MUL3(imm, src, dst) dst = src * imm
@@ -167,9 +167,10 @@
                 val = -val; break; TODO("flags"); \
         case 4: TRACE("mul"); \
                 MUL1(modrm_val); break; \
-        case 5: TRACE("imul"); return INT_UNDEFINED; \
+        case 5: TRACE("imul"); \
+                IMUL1(modrm_val); break; \
         case 6: TRACE("div"); \
-                DIV(ax, modrm_val, dx); break; \
+                DIV(oax, modrm_val, odx); break; \
         case 7: TRACE("idiv"); return INT_UNDEFINED; \
         default: TRACE("undefined"); return INT_UNDEFINED; \
     }
@@ -245,25 +246,25 @@
     BUMP_SI_DI(1)
 
 #define STOS \
-    MEM_W(cpu->edi) = ax; \
+    MEM_W(cpu->edi) = oax; \
     BUMP_DI(OP_SIZE/8)
 
 #define STOSB \
-    MEM8_W(di) = cpu->al; \
+    MEM8_W(odi) = cpu->al; \
     BUMP_DI(1)
 
 #define REP(OP) \
-    while (cx != 0) { \
+    while (ocx != 0) { \
         OP; \
-        cx--; \
+        ocx--; \
     }
 
 #define CMPXCHG(src, dst) \
-    CMP(ax, dst); \
+    CMP(oax, dst); \
     if (E) \
         MOV(src, dst##_w); \
     else \
-        MOV(dst, ax)
+        MOV(dst, oax)
 
 #define XADD(src, dst) \
     XCHG(src, dst); \
@@ -301,7 +302,7 @@
     }
 
 #define RET_NEAR() POP(cpu->eip); FIX_EIP
-#define RET_NEAR_IMM(imm) RET_NEAR(); sp += imm
+#define RET_NEAR_IMM(imm) RET_NEAR(); osp += imm
 
 #define SET(cond, val) \
     val = (cond ? 1 : 0)

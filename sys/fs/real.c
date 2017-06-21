@@ -1,5 +1,7 @@
+#include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <dirent.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
@@ -16,12 +18,17 @@ static int realfs_open(char *path, struct fd *fd, int flags, int mode) {
     if (fd_no < 0)
         return err_map(errno);
     fd->real_fd = fd_no;
+    fd->dir = NULL;
     fd->ops = &realfs_fdops;
     return 0;
 }
 
 static int realfs_close(struct fd *fd) {
-    int err = close(fd->real_fd);
+    int err;
+    if (fd->dir != NULL)
+        err = closedir(fd->dir);
+    else
+        err = close(fd->real_fd);
     if (err < 0)
         return err_map(errno);
     return 0;
@@ -47,9 +54,9 @@ static void copy_stat(struct statbuf *fake_stat, struct stat *real_stat) {
     fake_stat->ctime_nsec = real_stat->st_ctim.tv_nsec;
 }
 
-static int realfs_stat(const char *path, struct statbuf *fake_stat) {
+static int realfs_stat(const char *path, struct statbuf *fake_stat, bool follow_links) {
     struct stat real_stat;
-    if (stat(path, &real_stat) < 0)
+    if ((follow_links ? lstat : stat)(path, &real_stat) < 0)
         return err_map(errno);
     copy_stat(fake_stat, &real_stat);
     return 0;
@@ -94,6 +101,25 @@ static ssize_t realfs_write(struct fd *fd, char *buf, size_t bufsize) {
     if (res < 0)
         return err_map(errno);
     return res;
+}
+
+static int realfs_readdir(struct fd *fd, struct dir_entry *entry) {
+    if (fd->dir == NULL)
+        fd->dir = fdopendir(fd->real_fd);
+    if (fd->dir == NULL)
+        return err_map(errno);
+    errno = 0;
+    struct dirent *dirent = readdir(fd->dir);
+    if (dirent == NULL) {
+        if (errno != 0)
+            return err_map(errno);
+        else
+            return 1;
+    }
+    entry->inode = dirent->d_ino;
+    entry->offset = dirent->d_off;
+    strcpy(entry->name, dirent->d_name);
+    return 0;
 }
 
 static off_t realfs_lseek(struct fd *fd, off_t offset, int whence) {
@@ -161,6 +187,7 @@ const struct fs_ops realfs = {
 const struct fd_ops realfs_fdops = {
     .read = realfs_read,
     .write = realfs_write,
+    .readdir = realfs_readdir,
     .lseek = realfs_lseek,
     .mmap = realfs_mmap,
     .stat = realfs_fstat,

@@ -16,32 +16,32 @@
 // this will be the next PyEval_EvalFrameEx.
 int cpu_step(struct cpu_state *cpu) {
 
-#undef ax
-#undef bx
-#undef cx
-#undef dx
-#undef si
-#undef di
-#undef bp
-#undef sp
+#undef oax
+#undef obx
+#undef ocx
+#undef odx
+#undef osi
+#undef odi
+#undef obp
+#undef osp
 #if OP_SIZE == 32
-#define ax cpu->eax
-#define bx cpu->ebx
-#define cx cpu->ecx
-#define dx cpu->edx
-#define si cpu->esi
-#define di cpu->edi
-#define bp cpu->ebp
-#define sp cpu->esp
+#define oax cpu->eax
+#define obx cpu->ebx
+#define ocx cpu->ecx
+#define odx cpu->edx
+#define osi cpu->esi
+#define odi cpu->edi
+#define obp cpu->ebp
+#define osp cpu->esp
 #else
-#define ax cpu->ax
-#define bx cpu->bx
-#define cx cpu->cx
-#define dx cpu->dx
-#define si cpu->si
-#define di cpu->di
-#define bp cpu->bp
-#define sp cpu->sp
+#define oax cpu->ax
+#define obx cpu->bx
+#define ocx cpu->cx
+#define odx cpu->dx
+#define osi cpu->si
+#define odi cpu->di
+#define obp cpu->bp
+#define osp cpu->sp
 #endif
 #define uintop_t uint(OP_SIZE)
 #define intop_t sint(OP_SIZE)
@@ -126,8 +126,8 @@ restart:
                    READMODRM; ADD(modrm_reg, modrm_val_w); break;
         case 0x03: TRACEI("add modrm, reg");
                    READMODRM; ADD(modrm_val, modrm_reg); break;
-        case 0x05: TRACEI("add imm, eax\t");
-                   READIMM; ADD(imm, ax); break;
+        case 0x05: TRACEI("add imm, oax\t");
+                   READIMM; ADD(imm, oax); break;
 
         case 0x08: TRACEI("or reg8, modrm8");
                    READMODRM; OR(modrm_reg8, modrm_val8_w); break;
@@ -140,7 +140,7 @@ restart:
         case 0x0c: TRACEI("or imm8, al\t");
                    READIMM8; OR(imm8, cpu->al); break;
         case 0x0d: TRACEI("or imm, eax\t");
-                   READIMM; OR(imm, ax); break;
+                   READIMM; OR(imm, oax); break;
 
         case 0x0f:
             // 2-byte opcode prefix
@@ -340,21 +340,23 @@ restart:
         case 0x1b: TRACEI("sbb modrm, reg");
                    READMODRM; SBB(modrm_val, modrm_reg); break;
 
+        case 0x20: TRACEI("and reg8, modrm8");
+                   READMODRM; AND(modrm_reg8, modrm_val8_w); break;
         case 0x21: TRACEI("and reg, modrm");
                    READMODRM; AND(modrm_reg, modrm_val_w); break;
         case 0x22: TRACEI("and modrm8, reg8");
                    READMODRM; AND(modrm_val8, modrm_reg8); break;
         case 0x23: TRACEI("and modrm, reg");
                    READMODRM; AND(modrm_val, modrm_reg); break;
-        case 0x25: TRACEI("and imm, ax\t");
-                   READIMM; AND(imm, ax); break;
+        case 0x25: TRACEI("and imm, oax\t");
+                   READIMM; AND(imm, oax); break;
 
         case 0x29: TRACEI("sub reg, modrm");
                    READMODRM; SUB(modrm_reg, modrm_val_w); break;
         case 0x2b: TRACEI("sub modrm, reg");
                    READMODRM; SUB(modrm_val, modrm_reg); break;
-        case 0x2d: TRACEI("sub imm, ax\t");
-                   READIMM; SUB(imm, ax); break;
+        case 0x2d: TRACEI("sub imm, oax\t");
+                   READIMM; SUB(imm, oax); break;
 
         case 0x2e: TRACEI("segment cs (ignoring)"); goto restart;
 
@@ -377,68 +379,54 @@ restart:
                    READMODRM; CMP(modrm_val, modrm_reg); break;
         case 0x3c: TRACEI("cmp imm8, al\t");
                    READIMM8; CMP(imm8, cpu->al); break;
-        case 0x3d: TRACEI("cmp imm, eax\t");
-                   READIMM; CMP(imm, ax); break;
+        case 0x3d: TRACEI("cmp imm, oax\t");
+                   READIMM; CMP(imm, oax); break;
 
-        case 0x40: TRACEI("inc ax"); INC(ax); break;
-        case 0x41: TRACEI("inc cx"); INC(cx); break;
-        case 0x42: TRACEI("inc dx"); INC(dx); break;
-        case 0x43: TRACEI("inc bx"); INC(bx); break;
-        case 0x44: TRACEI("inc sp"); INC(sp); break;
-        case 0x45: TRACEI("inc bp"); INC(bp); break;
-        case 0x46: TRACEI("inc si"); INC(si); break;
-        case 0x47: TRACEI("inc di"); INC(di); break;
-        case 0x48: TRACEI("dec ax"); DEC(ax); break;
-        case 0x49: TRACEI("dec cx"); DEC(cx); break;
-        case 0x4a: TRACEI("dec dx"); DEC(dx); break;
-        case 0x4b: TRACEI("dec bx"); DEC(bx); break;
-        case 0x4c: TRACEI("dec sp"); DEC(sp); break;
-        case 0x4d: TRACEI("dec bp"); DEC(bp); break;
-        case 0x4e: TRACEI("dec si"); DEC(si); break;
-        case 0x4f: TRACEI("dec di"); DEC(di); break;
+        case 0x40: TRACEI("inc oax"); INC(oax); break;
+        case 0x41: TRACEI("inc ocx"); INC(ocx); break;
+        case 0x42: TRACEI("inc odx"); INC(odx); break;
+        case 0x43: TRACEI("inc obx"); INC(obx); break;
+        case 0x44: TRACEI("inc osp"); INC(osp); break;
+        case 0x45: TRACEI("inc obp"); INC(obp); break;
+        case 0x46: TRACEI("inc osi"); INC(osi); break;
+        case 0x47: TRACEI("inc odi"); INC(odi); break;
+        case 0x48: TRACEI("dec oax"); DEC(oax); break;
+        case 0x49: TRACEI("dec ocx"); DEC(ocx); break;
+        case 0x4a: TRACEI("dec odx"); DEC(odx); break;
+        case 0x4b: TRACEI("dec obx"); DEC(obx); break;
+        case 0x4c: TRACEI("dec osp"); DEC(osp); break;
+        case 0x4d: TRACEI("dec obp"); DEC(obp); break;
+        case 0x4e: TRACEI("dec osi"); DEC(osi); break;
+        case 0x4f: TRACEI("dec odi"); DEC(odi); break;
 
-        case 0x50: TRACEI("push eax");
-                   PUSH(ax); break;
-        case 0x51: TRACEI("push ecx");
-                   PUSH(cx); break;
-        case 0x52: TRACEI("push edx");
-                   PUSH(dx); break;
-        case 0x53: TRACEI("push ebx");
-                   PUSH(bx); break;
+        case 0x50: TRACEI("push oax"); PUSH(oax); break;
+        case 0x51: TRACEI("push ocx"); PUSH(ocx); break;
+        case 0x52: TRACEI("push odx"); PUSH(odx); break;
+        case 0x53: TRACEI("push obx"); PUSH(obx); break;
         case 0x54: {
-            TRACEI("push esp");
+            TRACEI("push osp");
             // need to make sure to push the old value
-            dword_t old_sp = sp;
+            dword_t old_sp = osp;
             PUSH(old_sp); break;
         }
-        case 0x55: TRACEI("push ebp");
-                   PUSH(bp); break;
-        case 0x56: TRACEI("push esi");
-                   PUSH(si); break;
-        case 0x57: TRACEI("push edi");
-                   PUSH(di); break;
+        case 0x55: TRACEI("push obp"); PUSH(obp); break;
+        case 0x56: TRACEI("push osi"); PUSH(osi); break;
+        case 0x57: TRACEI("push odi"); PUSH(odi); break;
 
-        case 0x58: TRACEI("pop eax");
-                   POP(ax); break;
-        case 0x59: TRACEI("pop ecx");
-                   POP(cx); break;
-        case 0x5a: TRACEI("pop edx");
-                   POP(dx); break;
-        case 0x5b: TRACEI("pop ebx");
-                   POP(bx); break;
+        case 0x58: TRACEI("pop oax"); POP(oax); break;
+        case 0x59: TRACEI("pop ocx"); POP(ocx); break;
+        case 0x5a: TRACEI("pop odx"); POP(odx); break;
+        case 0x5b: TRACEI("pop obx"); POP(obx); break;
         case 0x5c: {
-            TRACEI("pop esp");
+            TRACEI("pop osp");
             dword_t new_sp;
             POP(new_sp);
-            sp = new_sp;
+            osp = new_sp;
             break;
         }
-        case 0x5d: TRACEI("pop ebp");
-                   POP(bp); break;
-        case 0x5e: TRACEI("pop esi");
-                   POP(si); break;
-        case 0x5f: TRACEI("pop edi");
-                   POP(di); break;
+        case 0x5d: TRACEI("pop obp"); POP(obp); break;
+        case 0x5e: TRACEI("pop osi"); POP(osi); break;
+        case 0x5f: TRACEI("pop odi"); POP(odi); break;
 
         case 0x65: TRACE("segment gs\n");
                    addr += cpu->tls_ptr; goto restart;
@@ -539,27 +527,27 @@ restart:
             break;
 
         case 0x90: TRACEI("nop"); break;
-        case 0x97: TRACEI("xchg di, ax");
-                   XCHG(di, ax); break;
+        case 0x97: TRACEI("xchg odi, oax");
+                   XCHG(odi, oax); break;
 
         case 0x99: TRACEI("cdq");
                    // TODO make this its own macro 
                    // (also it's probably wrong in some subtle way)
-                   dx = ax & (1 << (OP_SIZE - 1)) ? (uintop_t) -1 : 0; break;
+                   odx = oax & (1 << (OP_SIZE - 1)) ? (uintop_t) -1 : 0; break;
 
         case 0xa1: TRACEI("mov mem, eax\t");
-                   READADDR; MOV(MEM(addr), ax); break;
+                   READADDR; MOV(MEM(addr), oax); break;
         case 0xa2: TRACEI("mov al, mem\t");
                    READADDR; MOV(cpu->al, MEM8_W(addr)); break;
-        case 0xa3: TRACEI("mov eax, mem\t");
-                   READADDR; MOV(ax, MEM_W(addr)); break;
+        case 0xa3: TRACEI("mov oax, mem\t");
+                   READADDR; MOV(oax, MEM_W(addr)); break;
         case 0xa4: TRACEI("movsb"); MOVSB; break;
         case 0xa5: TRACEI("movs"); MOVS; break;
 
         case 0xa8: TRACEI("test imm8, al");
                    READIMM8; TEST(imm8, cpu->al); break;
-        case 0xa9: TRACEI("test imm, ax");
-                   READIMM; TEST(imm, ax); break;
+        case 0xa9: TRACEI("test imm, oax");
+                   READIMM; TEST(imm, oax); break;
 
         case 0xaa: TRACEI("stosb"); STOSB; break;
 
@@ -580,22 +568,22 @@ restart:
         case 0xb7: TRACEI("mov imm, bh\t");
                    READIMM8; MOV(imm8, cpu->bh); break;
 
-        case 0xb8: TRACEI("mov imm, eax\t");
-                   READIMM; MOV(imm, ax); break;
-        case 0xb9: TRACEI("mov imm, ecx\t");
-                   READIMM; MOV(imm, cx); break;
-        case 0xba: TRACEI("mov imm, edx\t");
-                   READIMM; MOV(imm, dx); break;
-        case 0xbb: TRACEI("mov imm, ebx\t");
-                   READIMM; MOV(imm, bx); break;
-        case 0xbc: TRACEI("mov imm, esp\t");
-                   READIMM; MOV(imm, sp); break;
-        case 0xbd: TRACEI("mov imm, ebp\t");
-                   READIMM; MOV(imm, bp); break;
-        case 0xbe: TRACEI("mov imm, esi\t");
-                   READIMM; MOV(imm, si); break;
-        case 0xbf: TRACEI("mov imm, edi\t");
-                   READIMM; MOV(imm, di); break;
+        case 0xb8: TRACEI("mov imm, oax\t");
+                   READIMM; MOV(imm, oax); break;
+        case 0xb9: TRACEI("mov imm, ocx\t");
+                   READIMM; MOV(imm, ocx); break;
+        case 0xba: TRACEI("mov imm, odx\t");
+                   READIMM; MOV(imm, odx); break;
+        case 0xbb: TRACEI("mov imm, obx\t");
+                   READIMM; MOV(imm, obx); break;
+        case 0xbc: TRACEI("mov imm, osp\t");
+                   READIMM; MOV(imm, osp); break;
+        case 0xbd: TRACEI("mov imm, obp\t");
+                   READIMM; MOV(imm, obp); break;
+        case 0xbe: TRACEI("mov imm, osi\t");
+                   READIMM; MOV(imm, osi); break;
+        case 0xbf: TRACEI("mov imm, odi\t");
+                   READIMM; MOV(imm, odi); break;
 
         case 0xc0: TRACEI("grp2 imm8, modrm8");
                    READMODRM; READIMM8; GRP2(imm8, modrm_val8_w); break;
@@ -608,7 +596,7 @@ restart:
                    RET_NEAR(); break;
 
         case 0xc9: TRACEI("leave");
-                   MOV(cpu->ebp, cpu->esp); POP(bp); break;
+                   MOV(cpu->ebp, cpu->esp); POP(cpu->ebp); break;
 
         case 0xcd: TRACEI("int imm8\t");
                    READIMM8; INT(imm8); break;
@@ -626,7 +614,7 @@ restart:
                    READMODRM; GRP2(cpu->cl, modrm_val_w); break;
 
         case 0xe3: TRACEI("jcxz rel8\t");
-                  READIMM8; if (cx == 0) JMP_REL((int8_t) imm8); break;
+                  READIMM8; if (ocx == 0) JMP_REL((int8_t) imm8); break;
 
         case 0xe8: TRACEI("call near\t");
                    READIMM; CALL_REL(imm); break;

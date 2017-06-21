@@ -41,6 +41,7 @@
 #else
 #define postulate assert
 #endif
+#define unlikely(x) __builtin_expect((x), 0)
 
 // types
 // word_t will be 64-bit to read 64-bit elves

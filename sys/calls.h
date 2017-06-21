@@ -28,7 +28,9 @@ dword_t sys_time(addr_t time_out);
 #define MAX_PATH 4096
 fd_t sys_open(addr_t pathname_addr, dword_t flags, dword_t mode);
 dword_t sys_close(fd_t fd);
+int_t sys_getdents64(fd_t f, addr_t dirents, dword_t count);
 dword_t sys_stat64(addr_t pathname_addr, addr_t statbuf_addr);
+dword_t sys_lstat64(addr_t pathname_addr, addr_t statbuf_addr);
 dword_t sys_fstat64(fd_t fd_no, addr_t statbuf_addr);
 dword_t sys_unlink(addr_t pathname_addr);
 dword_t sys_access(addr_t pathname_addr, dword_t mode);
