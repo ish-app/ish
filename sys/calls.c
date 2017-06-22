@@ -48,6 +48,7 @@ syscall_t syscall_table[] = {
     [239] = (syscall_t) sys_sendfile64,
     [243] = (syscall_t) sys_set_thread_area,
     [252] = (syscall_t) sys_exit_group,
+    [265] = (syscall_t) sys_clock_gettime,
 
     // stubs
     [221] = (syscall_t) syscall_stub, // fcntl64
@@ -58,14 +59,14 @@ int handle_interrupt(struct cpu_state *cpu, int interrupt) {
     TRACE("\nint %d ", interrupt);
     if (interrupt == INT_SYSCALL) {
         int syscall_num = cpu->eax;
-        TRACE("syscall %d ", syscall_num);
         int result;
         if (syscall_num >= NUM_SYSCALLS || syscall_table[syscall_num] == NULL) {
             // TODO SIGSYS
-            TRACE("\n");
+            printf("missing syscall %d\n", syscall_num);
             debugger;
             exit(1);
         } else {
+            TRACE("syscall %d ", syscall_num);
             result = syscall_table[syscall_num](cpu->ebx, cpu->ecx, cpu->edx, cpu->esi, cpu->edi, cpu->ebp);
         }
         TRACE("result %x\n", result);

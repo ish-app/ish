@@ -249,6 +249,22 @@ restart:
                            READMODRM; SET(BE, modrm_val8_w); break;
                 case 0x97: TRACEI("setnbe\t");
                            READMODRM; SET(!BE, modrm_val8_w); break;
+                case 0x98: TRACEI("sets\t");
+                           READMODRM; SET(S, modrm_val8_w); break;
+                case 0x99: TRACEI("setns\t");
+                           READMODRM; SET(!S, modrm_val8_w); break;
+                case 0x9a: TRACEI("setp\t");
+                           READMODRM; SET(P, modrm_val8_w); break;
+                case 0x9b: TRACEI("setnp\t");
+                           READMODRM; SET(!P, modrm_val8_w); break;
+                case 0x9c: TRACEI("setl\t");
+                           READMODRM; SET(L, modrm_val8_w); break;
+                case 0x9d: TRACEI("setnl\t");
+                           READMODRM; SET(!L, modrm_val8_w); break;
+                case 0x9e: TRACEI("setle\t");
+                           READMODRM; SET(LE, modrm_val8_w); break;
+                case 0x9f: TRACEI("setnle\t");
+                           READMODRM; SET(!LE, modrm_val8_w); break;
 
                 case 0xa2:
                     TRACEI("cpuid");

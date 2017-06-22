@@ -107,7 +107,16 @@ struct sys_info {
 };
 dword_t sys_sysinfo(addr_t info_addr);
 
+// time
+struct time_spec {
+    dword_t sec;
+    dword_t nsec;
+};
+
 dword_t sys_time(addr_t time_out);
+#define CLOCK_REALTIME_ 0
+#define CLOCK_MONOTONIC_ 1
+dword_t sys_clock_gettime(dword_t clock, addr_t tp);
 
 typedef int (*syscall_t)(dword_t,dword_t,dword_t,dword_t,dword_t,dword_t);
 

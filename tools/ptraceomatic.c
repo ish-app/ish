@@ -254,6 +254,8 @@ restart:
                 pt_copy(pid, regs.rcx, sizeof(struct newstat64)); break;
             case 220: // getdents64
                 pt_copy(pid, regs.rcx, cpu->eax); break;
+            case 265: // clock_gettime
+                pt_copy(pid, regs.rcx, sizeof(struct time_spec)); break;
 
             case 90: // mmap
             case 192: // mmap2
