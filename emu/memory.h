@@ -62,11 +62,11 @@ void pt_dump(struct mem *mem);
 struct tlb_entry {
     page_t page;
     page_t page_if_writable;
-    void *data;
+    uintptr_t data_minus_addr;
 };
 #define TLB_BITS 10
 #define TLB_SIZE (1 << TLB_BITS)
-#define TLB_INDEX(addr) (((addr) & 0x003ff000) >> 12)
+#define TLB_INDEX(addr) ((addr >> PAGE_BITS) & (TLB_SIZE - 1))
 #define TLB_READ 0
 #define TLB_WRITE 1
 #define TLB_PAGE(addr) (addr & 0xfffff000)
@@ -76,7 +76,7 @@ void *tlb_handle_miss(struct mem *mem, addr_t addr, int type);
 forceinline void *mem_read_ptr(struct mem *mem, addr_t addr) {
     struct tlb_entry entry = mem->tlb[TLB_INDEX(addr)];
     if (entry.page == TLB_PAGE(addr)) {
-        void *address = (char *) entry.data + OFFSET(addr);
+        void *address = (void *) (entry.data_minus_addr + addr);
         postulate(address != NULL);
         return address;
     }
@@ -86,8 +86,8 @@ forceinline void *mem_read_ptr(struct mem *mem, addr_t addr) {
 forceinline void *mem_write_ptr(struct mem *mem, addr_t addr) {
     struct tlb_entry entry = mem->tlb[TLB_INDEX(addr)];
     if (entry.page_if_writable == TLB_PAGE(addr)) {
-        mem->dirty_page = PAGE(addr);
-        void *address = (char *) entry.data + OFFSET(addr);
+        mem->dirty_page = TLB_PAGE(addr);
+        void *address = (void *) (entry.data_minus_addr + addr);
         postulate(address != NULL);
         return address;
     }

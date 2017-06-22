@@ -151,9 +151,9 @@ void *tlb_handle_miss(struct mem *mem, addr_t addr, int type) {
     else
         // 1 is not a valid page so this won't look like a hit
         tlb->page_if_writable = TLB_PAGE_EMPTY;
-    tlb->data = pt->data;
-    mem->dirty_page = PAGE(addr);
-    return (char *) tlb->data + OFFSET(addr);
+    tlb->data_minus_addr = (uintptr_t) pt->data - TLB_PAGE(addr);
+    mem->dirty_page = TLB_PAGE(addr);
+    return (void *) (tlb->data_minus_addr + addr);
 }
 
 __attribute__((constructor))
