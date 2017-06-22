@@ -104,6 +104,10 @@
     if (val == 0) return INT_DIV; \
     rem = reg % val; reg = reg / val;
 
+#define IDIV(reg, val, rem) \
+    if (val == 0) return INT_DIV; \
+    rem = (int32_t) reg % val; reg = (int32_t) reg / val;
+
 #define CALL(loc) PUSH(cpu->eip); JMP(loc)
 #define CALL_REL(offset) PUSH(cpu->eip); JMP_REL(offset)
 
@@ -171,7 +175,8 @@
                 IMUL1(modrm_val); break; \
         case 6: TRACE("div"); \
                 DIV(oax, modrm_val, odx); break; \
-        case 7: TRACE("idiv"); return INT_UNDEFINED; \
+        case 7: TRACE("idiv"); \
+                IDIV(oax, modrm_val, odx); break; \
         default: TRACE("undefined"); return INT_UNDEFINED; \
     }
 
@@ -186,6 +191,8 @@
         case 5: TRACE("imul"); return INT_UNDEFINED; \
         case 6: TRACE("div"); \
                 DIV(cpu->al, modrm_val8, cpu->ah); break; \
+        case 7: TRACE("idiv"); \
+                IDIV(oax, modrm_val, odx); break; \
         default: TRACE("undefined"); return INT_UNDEFINED; \
     }
 
