@@ -31,6 +31,7 @@ syscall_t syscall_table[] = {
     [85] = (syscall_t) sys_readlink,
     [90] = (syscall_t) sys_mmap,
     [91] = (syscall_t) sys_munmap,
+    [116] = (syscall_t) sys_sysinfo,
     [122] = (syscall_t) _sys_uname,
     [125] = (syscall_t) sys_mprotect,
     [140] = (syscall_t) sys__llseek,

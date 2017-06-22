@@ -84,6 +84,23 @@ struct uname {
 int sys_uname(struct uname *uts);
 dword_t _sys_uname(addr_t uts_addr);
 
+struct sys_info {
+    dword_t uptime;
+    dword_t loads[3];
+    dword_t totalram;
+    dword_t freeram;
+    dword_t sharedram;
+    dword_t bufferram;
+    dword_t totalswap;
+    dword_t freeswap;
+    word_t procs;
+    dword_t totalhigh;
+    dword_t freehigh;
+    dword_t mem_unit;
+    char pad[8];
+};
+dword_t sys_sysinfo(addr_t info_addr);
+
 int sys_set_thread_area(addr_t u_info);
 
 typedef int (*syscall_t)(dword_t,dword_t,dword_t,dword_t,dword_t,dword_t);
