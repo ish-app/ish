@@ -245,6 +245,8 @@ restart:
                 pt_copy(pid, regs.rbx, sizeof(struct uname)); break;
             case 140: // _llseek
                 pt_copy(pid, regs.rsi, 8); break;
+            case 183: // getcwd
+                pt_copy(pid, regs.rbx, cpu->eax); break;
 
             case 195: // stat64
             case 196: // lstat64

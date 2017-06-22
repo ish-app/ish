@@ -6,6 +6,8 @@
 #include "sys/fs.h"
 #include "misc.h"
 
+// TODO this is a mess, organize it
+
 int handle_interrupt(struct cpu_state *cpu, int interrupt);
 
 dword_t user_get(addr_t addr);
@@ -59,6 +61,8 @@ dword_t sys_ioctl(fd_t f, dword_t cmd, dword_t arg);
 
 dword_t sys_dup(fd_t fd);
 dword_t sys_dup2(fd_t fd, fd_t new_fd);
+
+dword_t sys_getcwd(addr_t buf_addr, dword_t size);
 
 addr_t sys_brk(addr_t new_brk);
 int handle_pagefault(addr_t addr);

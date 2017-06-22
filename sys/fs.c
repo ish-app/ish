@@ -167,6 +167,15 @@ dword_t sys_dup2(fd_t fd, fd_t new_fd) {
     return new_fd;
 }
 
+dword_t sys_getcwd(addr_t buf_addr, dword_t size) {
+    char buf[size];
+    if (getcwd(buf, size) == NULL)
+        return err_map(errno);
+    size_t len = strlen(buf) + 1;
+    user_put_count(buf_addr, buf, len);
+    return len;
+}
+
 // a few stubs
 dword_t sys_readlink(addr_t pathname_addr, addr_t buf_addr, dword_t bufsize) {
     return _ENOENT;

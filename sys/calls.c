@@ -36,6 +36,7 @@ syscall_t syscall_table[] = {
     [125] = (syscall_t) sys_mprotect,
     [140] = (syscall_t) sys__llseek,
     [146] = (syscall_t) sys_writev,
+    [183] = (syscall_t) sys_getcwd,
     [187] = (syscall_t) sys_sendfile,
     [192] = (syscall_t) sys_mmap2,
     [195] = (syscall_t) sys_stat64,
