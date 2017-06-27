@@ -24,4 +24,4 @@ __kernel_rt_sigreturn:
     // this will probably need to be adjusted as the vdso grows, or ptrace
     // failures may result as the real linux vdso is exactly 8k and the fake
     // one needs to be the same number of pages
-    .fill 4096, 1, 0
+    .fill 4096, 1, 0x0b0f

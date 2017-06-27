@@ -27,6 +27,7 @@ sys_src = [
     'sys/uname.c',
     'sys/tls.c',
     'sys/getid.c',
+    'sys/signal.c',
 
     'sys/fs.c',
     'sys/fs/stat.c',

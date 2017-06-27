@@ -1,6 +1,5 @@
-#include "emu/process.h"
 #include "sys/calls.h"
-#include "sys/errno.h"
+#include "emu/interrupt.h"
 
 #define NUM_SYSCALLS 300
 
@@ -37,6 +36,7 @@ syscall_t syscall_table[] = {
     [140] = (syscall_t) sys__llseek,
     [146] = (syscall_t) sys_writev,
     [183] = (syscall_t) sys_getcwd,
+    [174] = (syscall_t) sys_rt_sigaction,
     [187] = (syscall_t) sys_sendfile,
     [192] = (syscall_t) sys_mmap2,
     [195] = (syscall_t) sys_stat64,
@@ -59,18 +59,18 @@ int handle_interrupt(struct cpu_state *cpu, int interrupt) {
     TRACE("\nint %d ", interrupt);
     if (interrupt == INT_SYSCALL) {
         int syscall_num = cpu->eax;
-        int result;
         if (syscall_num >= NUM_SYSCALLS || syscall_table[syscall_num] == NULL) {
             // TODO SIGSYS
             printf("missing syscall %d\n", syscall_num);
             debugger;
-            exit(1);
+            if (send_signal(current, SIGSYS_) < 0)
+                printf("send sigsys failed\n");
         } else {
             TRACE("syscall %d ", syscall_num);
-            result = syscall_table[syscall_num](cpu->ebx, cpu->ecx, cpu->edx, cpu->esi, cpu->edi, cpu->ebp);
+            int result = syscall_table[syscall_num](cpu->ebx, cpu->ecx, cpu->edx, cpu->esi, cpu->edi, cpu->ebp);
+            TRACE("result %x\n", result);
+            cpu->eax = result;
         }
-        TRACE("result %x\n", result);
-        cpu->eax = result;
     } else if (interrupt == INT_GPF) {
         // page fault handling is a thing
         TRACE("page fault at %x\n", cpu->segfault_addr);
@@ -80,6 +80,10 @@ int handle_interrupt(struct cpu_state *cpu, int interrupt) {
             sys_exit(1);
         }
         return res;
+    } else if (interrupt == INT_UNDEFINED) {
+        printf("illegal instruction\n");
+        if (send_signal(current, SIGILL_) < 0)
+            printf("send sigill failed\n");
     } else {
         printf("exiting\n");
         sys_exit(interrupt);

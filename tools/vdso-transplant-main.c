@@ -1,4 +1,4 @@
-// Run a process but replace the vdso with the one in the given file. 
+// Run a process but replace the vdso with the one in the given file.
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>

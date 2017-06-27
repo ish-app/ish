@@ -3,12 +3,12 @@
 
 #include "emu/cpu.h"
 #include "sys/fs.h"
+#include "sys/signal.h"
 
 struct process {
     struct cpu_state cpu;
 
     dword_t pid;
-
     dword_t uid, gid;
 
     addr_t start_brk;
@@ -16,8 +16,9 @@ struct process {
 
     path_t pwd;
     path_t root;
-
     struct fd *files[MAX_FD];
+
+    struct sigaction_ sigactions[NUM_SIGS];
 };
 
 // current will always give the process that is currently executing

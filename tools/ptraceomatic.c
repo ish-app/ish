@@ -15,8 +15,7 @@
 #include <sys/socket.h>
 
 #include "sys/calls.h"
-#include "sys/errno.h"
-#include "emu/process.h"
+#include "emu/interrupt.h"
 #include "emu/cpuid.h"
 
 #include "sys/exec/elf.h"
@@ -24,19 +23,43 @@
 #include "tools/ptutil.h"
 #include "libvdso.so.h"
 
+// ptrace utility functions
+
+static inline void step(int pid) {
+    trycall(ptrace(PTRACE_SINGLESTEP, pid, NULL, 0), "ptrace step");
+    int status;
+    trycall(waitpid(pid, &status, 0), "wait step");
+    if (WIFSTOPPED(status) && WSTOPSIG(status) != SIGTRAP) {
+        int signal = WSTOPSIG(status);
+        // a signal arrived, we now have to actually deliver it
+        trycall(ptrace(PTRACE_SINGLESTEP, pid, NULL, signal), "ptrace step");
+        trycall(waitpid(pid, &status, 0), "wait step");
+    }
+}
+
+static inline void getregs(int pid, struct user_regs_struct *regs) {
+    trycall(ptrace(PTRACE_GETREGS, pid, NULL, regs), "ptrace getregs");
+}
+
+static inline void setregs(int pid, struct user_regs_struct *regs) {
+    trycall(ptrace(PTRACE_SETREGS, pid, NULL, regs), "ptrace setregs");
+}
+
 int compare_cpus(struct cpu_state *cpu, int pid) {
     struct user_regs_struct regs;
     struct user_fpregs_struct fpregs;
-    trycall(ptrace(PTRACE_GETREGS, pid, NULL, &regs), "ptrace getregs compare");
+    getregs(pid, &regs);
     trycall(ptrace(PTRACE_GETFPREGS, pid, NULL, &fpregs), "ptrace getregs compare");
 #define CHECK_REG(pt, cp) \
     if (regs.pt != cpu->cp) { \
         printf(#pt " = 0x%llx, " #cp " = 0x%x\n", regs.pt, cpu->cp); \
+        debugger; \
         return -1; \
     }
 #define CHECK_FPREG(pt, cp) \
     if (fpregs.pt != cpu->cp) { \
         printf(#pt " = 0x%x, " #cp " = 0x%x\n", fpregs.pt, cpu->cp); \
+        debugger; \
         return -1; \
     }
     CHECK_REG(rax, eax);
@@ -113,7 +136,7 @@ int transmit_fd(int pid, int sender, int receiver, int fake_fd) {
     // receiving part
     // painful, because we're 64-bit and the child is 32-bit and I want to kill myself
     struct user_regs_struct saved_regs;
-    trycall(ptrace(PTRACE_GETREGS, pid, NULL, &saved_regs), "ptrace getregs");
+    getregs(pid, &saved_regs);
     struct user_regs_struct regs = saved_regs;
 
     // reserve space for 32-bit version of cmsg
@@ -135,10 +158,9 @@ int transmit_fd(int pid, int sender, int receiver, int fake_fd) {
     regs.rcx = msg_addr;
     regs.rdx = 0;
     // assume we're already on an int $0x80
-    trycall(ptrace(PTRACE_SETREGS, pid, NULL, &regs), "ptrace setregs");
-    trycall(ptrace(PTRACE_SINGLESTEP, pid, NULL, NULL), "ptrace step");
-    trycall(wait(NULL), "wait step");
-    trycall(ptrace(PTRACE_GETREGS, pid, NULL, &regs), "ptrace getregs");
+    setregs(pid, &regs);
+    step(pid);
+    getregs(pid, &regs);
 
     int sent_fd;
     if ((long) regs.rax >= 0)
@@ -149,7 +171,7 @@ int transmit_fd(int pid, int sender, int receiver, int fake_fd) {
     // restore crap
     pt_writen(pid, cmsg_addr, cmsg_bak, sizeof(cmsg_bak));
     pt_writen(pid, msg_addr, msg_bak, sizeof(msg_bak));
-    trycall(ptrace(PTRACE_SETREGS, pid, NULL, &saved_regs), "ptrace setregs");
+    setregs(pid, &regs);
 
     if (sent_fd < 0) {
         errno = -sent_fd;
@@ -163,21 +185,20 @@ int transmit_fd(int pid, int sender, int receiver, int fake_fd) {
 void remote_close_fd(int pid, int fd, long int80_ip) {
     // lettuce spray
     struct user_regs_struct saved_regs;
-    trycall(ptrace(PTRACE_GETREGS, pid, NULL, &saved_regs), "ptrace getregs");
+    getregs(pid, &saved_regs);
     struct user_regs_struct regs = saved_regs;
     regs.rip = int80_ip;
     regs.rax = 6;
     regs.rbx = fd;
-    trycall(ptrace(PTRACE_SETREGS, pid, NULL, &regs), "ptrace setregs");
-    trycall(ptrace(PTRACE_SINGLESTEP, pid, NULL, NULL), "ptrace step");
-    trycall(wait(NULL), "wait step");
-    trycall(ptrace(PTRACE_GETREGS, pid, NULL, &regs), "ptrace getregs");
+    setregs(pid, &regs);
+    step(pid);
+    getregs(pid, &regs);
     if ((long) regs.rax < 0) {
         errno = -regs.rax;
         perror("remote close fd");
         exit(1);
     }
-    trycall(ptrace(PTRACE_SETREGS, pid, NULL, &saved_regs), "ptrace setregs");
+    setregs(pid, &regs);
 }
 
 void step_tracing(struct cpu_state *cpu, int pid, int sender, int receiver) {
@@ -202,7 +223,7 @@ restart:
     // intercept cpuid, rdtsc, and int $0x80, though
     struct user_regs_struct regs;
     errno = 0;
-    trycall(ptrace(PTRACE_GETREGS, pid, NULL, &regs), "ptrace getregs step");
+    getregs(pid, &regs);
     long inst = trycall(ptrace(PTRACE_PEEKTEXT, pid, regs.rip, NULL), "ptrace get inst step");
     long saved_fd = -1; // annoying hack for mmap
 
@@ -270,6 +291,7 @@ restart:
             case 45: // brk
             case 91: // munmap
             case 125: // mprotect
+            case 174: // rt_sigaction
             case 243: // set_thread_area
                 goto do_step;
         }
@@ -277,21 +299,20 @@ restart:
         regs.rip += 2;
     } else {
 do_step:
-        trycall(ptrace(PTRACE_SETREGS, pid, NULL, &regs), "ptrace setregs step");
+        setregs(pid, &regs);
         // single step on a repeated string instruction only does one
         // iteration, so loop until ip changes
         unsigned long ip = regs.rip;
         while (regs.rip == ip) {
-            trycall(ptrace(PTRACE_SINGLESTEP, pid, NULL, NULL), "ptrace step");
-            trycall(wait(NULL), "wait step");
-            trycall(ptrace(PTRACE_GETREGS, pid, NULL, &regs), "ptrace getregs step");
+            step(pid);
+            getregs(pid, &regs);
         }
         if (saved_fd >= 0) {
             remote_close_fd(pid, regs.rdi, ip);
             regs.rdi = saved_fd;
         }
     }
-    trycall(ptrace(PTRACE_SETREGS, pid, NULL, &regs), "ptrace setregs step");
+    setregs(pid, &regs);
 }
 
 void prepare_tracee(int pid) {
@@ -307,6 +328,29 @@ void prepare_tracee(int pid) {
     for (addr_t a = random; a < random + 16; a += sizeof(dword_t)) {
         pt_write(pid, a, user_get(a));
     }
+
+    // find out how big the signal stack frame needs to be
+    debugger;
+    __asm__("cpuid"
+            : "=b" (xsave_extra)
+            : "a" (0xd), "c" (0)
+            : "edx");
+    // if xsave is supported, add 4 bytes. why? idk
+    int features_ecx;
+    __asm__("cpuid"
+            : "=c" (features_ecx)
+            : "a" (1)
+            : "ebx", "edx");
+    if (features_ecx & (1 << 26))
+        xsave_extra += 4;
+    // if fxsave/fxrestore is supported, use 112 bytes for that
+    int features_edx;
+    __asm__("cpuid"
+            : "=c" (features_edx)
+            : "a" (1)
+            : "ebx", "edx");
+    if (features_edx & (1 << 24))
+        fxsave_extra = 112;
 }
 
 int main(int argc, char *const argv[]) {

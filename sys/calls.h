@@ -2,9 +2,11 @@
 #define CALLS_H
 
 #include "emu/process.h"
-#include "emu/interrupt.h"
+#include "sys/errno.h"
 #include "sys/fs.h"
 #include "misc.h"
+
+#include "sys/signal.h"
 
 int handle_interrupt(struct cpu_state *cpu, int interrupt);
 
