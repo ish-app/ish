@@ -14,6 +14,9 @@ executable('getdents', ['getdents.c'], c_args: ['-m32'], link_args: ['-m32'])
 
 executable('signal', ['signal.c'], c_args: ['-m32'], link_args: ['-m32', '-static'])
 
+# qemu test program
+executable('qemu-test', ['qemu-test.c'], c_args: ['-m32'], link_args: ['-m32', '-lm'])
+
 custom_target('busybox', input: ['get-busybox.sh'], output: ['busybox'],
     command: [find_program('get-busybox.sh')],
     build_by_default: true)
