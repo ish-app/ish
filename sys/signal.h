@@ -52,7 +52,8 @@ struct sigaction_ {
 #define SIGUNUSED_ 31
 
 struct process;
-int send_signal(struct process *proc, int sig);
+// TODO will eventually be possible to send signals to other processes
+int send_signal(int sig);
 
 dword_t sys_rt_sigaction(dword_t signum, addr_t action_addr, addr_t oldaction_addr, dword_t sigset_size);
 dword_t sys_sigaction(dword_t signum, addr_t action_addr, addr_t oldaction_addr);
@@ -129,7 +130,11 @@ struct sigframe_ {
     struct sigcontext_ sc;
     struct fpstate_ fpstate;
     dword_t extramask[1];
-    char retcode[8];
+    struct {
+        uint16_t popmov;
+        dword_t nr_sigreturn;
+        uint16_t int80;
+    } __attribute__((packed)) retcode;
 };
 
 // On a 64-bit system with 32-bit emulation, the fpu state is stored in extra

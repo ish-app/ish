@@ -21,6 +21,7 @@
 #include "sys/exec/elf.h"
 #include "tools/transplant.h"
 #include "tools/ptutil.h"
+#include "undefined-flags.h"
 #include "libvdso.so.h"
 
 // ptrace utility functions
@@ -45,11 +46,12 @@ static inline void setregs(int pid, struct user_regs_struct *regs) {
     trycall(ptrace(PTRACE_SETREGS, pid, NULL, regs), "ptrace setregs");
 }
 
-int compare_cpus(struct cpu_state *cpu, int pid) {
+static int compare_cpus(struct cpu_state *cpu, int pid, int undefined_flags) {
     struct user_regs_struct regs;
     struct user_fpregs_struct fpregs;
     getregs(pid, &regs);
     trycall(ptrace(PTRACE_GETFPREGS, pid, NULL, &fpregs), "ptrace getregs compare");
+    collapse_flags(cpu);
 #define CHECK_REG(pt, cp) \
     if (regs.pt != cpu->cp) { \
         printf(#pt " = 0x%llx, " #cp " = 0x%x\n", regs.pt, cpu->cp); \
@@ -71,6 +73,19 @@ int compare_cpus(struct cpu_state *cpu, int pid) {
     CHECK_REG(rsp, esp);
     CHECK_REG(rbp, ebp);
     CHECK_REG(rip, eip);
+    undefined_flags |= (1 << 8); // treat trap flag as undefined
+    regs.eflags = (regs.eflags & ~undefined_flags) | (cpu->eflags & undefined_flags);
+    // give a nice visual representation of the flags
+    if (regs.eflags != cpu->eflags) {
+#define f(x,n) ((regs.eflags & (1 << n)) ? #x : "-"),
+        printf("real eflags = 0x%llx %s%s%s%s%s%s%s%s%s, fake eflags = 0x%x %s%s%s%s%s%s%s%s%s\n%0d",
+                regs.eflags, f(o,11)f(d,10)f(i,9)f(t,8)f(s,7)f(z,6)f(a,4)f(p,2)f(c,0)
+#undef f
+#define f(x,n) ((cpu->eflags & (1 << n)) ? #x : "-"),
+                cpu->eflags, f(o,11)f(d,10)f(i,9)f(t,8)f(s,7)f(z,6)f(a,4)f(p,2)f(c,0)0);
+        debugger;
+        return -1;
+    }
     CHECK_FPREG(xmm_space[0], xmm[0].dw[0]);
     CHECK_FPREG(xmm_space[1], xmm[0].dw[1]);
     CHECK_FPREG(xmm_space[2], xmm[0].dw[2]);
@@ -104,16 +119,17 @@ int compare_cpus(struct cpu_state *cpu, int pid) {
     }
 
     close(fd);
+    setregs(pid, &regs);
     return 0;
 }
 
-void pt_copy(int pid, addr_t start, size_t size) {
+static void pt_copy(int pid, addr_t start, size_t size) {
     for (addr_t addr = start; addr < start + size; addr++)
         pt_write8(pid, addr, user_get8(addr));
 }
 
 // I'd like to apologize in advance for this code
-int transmit_fd(int pid, int sender, int receiver, int fake_fd) {
+static int transmit_fd(int pid, int sender, int receiver, int fake_fd) {
     // this sends the fd over a unix domain socket. yes, I'm crazy
 
     // sending part
@@ -182,7 +198,7 @@ int transmit_fd(int pid, int sender, int receiver, int fake_fd) {
     return sent_fd;
 }
 
-void remote_close_fd(int pid, int fd, long int80_ip) {
+static void remote_close_fd(int pid, int fd, long int80_ip) {
     // lettuce spray
     struct user_regs_struct saved_regs;
     getregs(pid, &saved_regs);
@@ -201,10 +217,11 @@ void remote_close_fd(int pid, int fd, long int80_ip) {
     setregs(pid, &regs);
 }
 
-void step_tracing(struct cpu_state *cpu, int pid, int sender, int receiver) {
+static void step_tracing(struct cpu_state *cpu, int pid, int sender, int receiver) {
     // step fake cpu
     int interrupt;
 restart:
+    cpu->tf = 1;
     interrupt = cpu_step32(cpu);
     if (interrupt != INT_NONE) {
         // hack to clean up before the exit syscall
@@ -315,7 +332,7 @@ do_step:
     setregs(pid, &regs);
 }
 
-void prepare_tracee(int pid) {
+static void prepare_tracee(int pid) {
     transplant_vdso(pid, vdso_data, sizeof(vdso_data));
     aux_write(pid, AX_HWCAP, 0); // again, suck that
     aux_write(pid, AX_UID, 0);
@@ -330,7 +347,6 @@ void prepare_tracee(int pid) {
     }
 
     // find out how big the signal stack frame needs to be
-    debugger;
     __asm__("cpuid"
             : "=b" (xsave_extra)
             : "a" (0xd), "c" (0)
@@ -371,8 +387,9 @@ int main(int argc, char *const argv[]) {
     struct cpu_state *cpu = &current->cpu;
     while (true) {
         struct cpu_state old_cpu = *cpu;
+        int undefined_flags = undefined_flags_mask(pid, cpu);
         step_tracing(cpu, pid, sender, receiver);
-        if (compare_cpus(cpu, pid) < 0) {
+        if (compare_cpus(cpu, pid, undefined_flags) < 0) {
             printf("failure: resetting cpu\n");
             *cpu = old_cpu;
             __asm__("int3");

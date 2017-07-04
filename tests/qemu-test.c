@@ -369,7 +369,7 @@ void test_lea(void)
     asm("movl $0, %0\n\t"\
         "cmpl %2, %1\n\t"\
         "set" JCC " %b0\n\t"\
-        : "=r" (res)\
+        : "=q" (res)\
         : "r" (v1), "r" (v2));\
     printf("%-10s %d\n", "set" JCC, res);\
  if (TEST_CMOV) {\
@@ -491,15 +491,12 @@ void test_loop(void)
 
 #if !defined(__x86_64__)
     TEST_LOOP("jcxz");
-    TEST_LOOP("loopw");
-    TEST_LOOP("loopzw");
-    TEST_LOOP("loopnzw");
 #endif
 
     TEST_LOOP("jecxz");
-    TEST_LOOP("loopl");
-    TEST_LOOP("loopzl");
-    TEST_LOOP("loopnzl");
+    TEST_LOOP("loop");
+    TEST_LOOP("loopz");
+    TEST_LOOP("loopnz");
 }
 
 #undef CC_MASK
@@ -867,7 +864,7 @@ void test_fcvt(double a)
         uint16_t val16;
         val16 = (fpuc & ~0x0c00) | (i << 10);
         asm volatile ("fldcw %0" : : "m" (val16));
-        asm volatile ("fist %0" : "=m" (wa) : "t" (a));
+        asm volatile ("fists %0" : "=m" (wa) : "t" (a));
         asm volatile ("fistl %0" : "=m" (ia) : "t" (a));
         asm volatile ("fistpll %0" : "=m" (lla) : "t" (a) : "st");
         asm volatile ("frndint ; fstl %0" : "=m" (ra) : "t" (a));
@@ -1764,7 +1761,11 @@ void test_exceptions(void)
         /* bound exception */
         tab[0] = 1;
         tab[1] = 10;
-        asm volatile ("bound %0, %1" : : "r" (11), "m" (tab[0]));
+#ifdef __clang__
+        asm volatile ("bound %1, %0" : : "r" (11), "m" (tab[0]));
+#else
+        asm volatile ("bound %1, %0" : : "r" (11), "m" (tab[0]));
+#endif
     }
 #endif
 

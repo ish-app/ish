@@ -1,3 +1,6 @@
+#ifndef MODRM_H
+#define MODRM_H
+
 #include "misc.h"
 #include "emu/cpu.h"
 
@@ -6,7 +9,7 @@ struct regptr {
     reg_id_t reg8_id;
     reg_id_t reg16_id;
     reg_id_t reg32_id;
-    reg_id_t reg64_id;
+    reg_id_t reg128_id;
 };
 #if DEBUG_LOG
 static const char *regptr_name(struct regptr regptr) {
@@ -73,3 +76,5 @@ static inline struct modrm_info modrm_get_info(byte_t byte) {
 #define RM(byte)  ((byte & 0b00000111) >> 0)
 
 void modrm_decode32(struct cpu_state *cpu, addr_t *addr_out, struct modrm_info *info_out);
+
+#endif

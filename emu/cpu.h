@@ -51,22 +51,33 @@ struct cpu_state {
     dword_t eip;
 
     // flags
-    bits pf:1;
-    bits af:1;
-    bits zf:1;
-    bits sf:1;
-    bits tf:1;
-    bits df:1;
+    union {
+        dword_t eflags;
+        struct {
+            bits cf:1;
+            bits pad1_1:1;
+            bits pf:1;
+            bits pad2_0:1;
+            bits af:1;
+            bits pad3_0:1;
+            bits zf:1;
+            bits sf:1;
+            bits tf:1;
+            bits if_:1;
+            bits df:1;
+            bits of:1;
+            bits iopl:2;
+        };
+    };
     // whether the true flag values are in the above struct, or computed from
-    // the stored result
-    dword_t res;
+    // the stored result and operands
+    dword_t res, op1, op2;
     bits pf_res:1;
     bits zf_res:1;
     bits sf_res:1;
-    // these guys are constantly set manually so I can save a few instructions
-    // by making them entire bytes
-    byte_t of;
-    byte_t cf;
+    bits cf_ops:1;
+    bits of_ops:1;
+    bits af_ops:1;
 
     // See comment in sys/tls.c
     addr_t tls_ptr;
@@ -74,6 +85,26 @@ struct cpu_state {
     // for the page fault handler
     addr_t segfault_addr;
 };
+
+// flags
+#define ZF (cpu->zf_res ? cpu->res == 0 : cpu->zf)
+#define SF (cpu->sf_res ? (int32_t) cpu->res < 0 : cpu->sf)
+#define CF (cpu->cf)
+#define OF (cpu->of)
+#define PF (cpu->pf_res ? !__builtin_parity(cpu->res & 0xff) : cpu->pf)
+#define AF (cpu->af_ops ? ((cpu->op1 ^ cpu->op2 ^ cpu->res) >> 4) & 1 : cpu->af)
+
+static inline void collapse_flags(struct cpu_state *cpu) {
+    cpu->zf = ZF;
+    cpu->sf = SF;
+    cpu->pf = PF;
+    cpu->zf_res = cpu->sf_res = cpu->pf_res = 0;
+    cpu->af = AF;
+    cpu->af_ops = 0;
+    cpu->pad1_1 = 1;
+    cpu->pad2_0 = cpu->pad3_0 = 0;
+    cpu->if_ = 1;
+}
 
 typedef uint8_t reg_id_t;
 #define REG_ID(reg) offsetof(struct cpu_state, reg)

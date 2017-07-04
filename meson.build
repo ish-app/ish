@@ -40,7 +40,7 @@ sys_src = [
 emu_src = [
     'emu/memory.c',
     'emu/process.c',
-    'emu/cpu.c',
+    'emu/interp.c',
     'emu/modrm.c',
     'emu/debug.c',
     cified_vdso,

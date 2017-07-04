@@ -4,16 +4,40 @@
 int xsave_extra = 0;
 int fxsave_extra = 0;
 
-int send_signal(struct process *proc, int sig) {
-    if (proc->sigactions[sig].handler == SIG_IGN_)
+int send_signal(int sig) {
+    if (current->sigactions[sig].handler == SIG_IGN_)
         return 0;
-    if (proc->sigactions[sig].handler == SIG_DFL_)
+    if (current->sigactions[sig].handler == SIG_DFL_)
         sys_exit(0);
 
-    proc->cpu.eax = sig;
-    proc->cpu.eip = proc->sigactions[sig].handler;
+    // setup the frame
+    struct sigframe_ frame;
+    frame.sig = sig;
 
-    dword_t sp = proc->cpu.esp;
+    struct cpu_state *cpu = &current->cpu;
+    frame.sc.ax = cpu->eax;
+    frame.sc.bx = cpu->ebx;
+    frame.sc.cx = cpu->ecx;
+    frame.sc.dx = cpu->edx;
+    frame.sc.di = cpu->edi;
+    frame.sc.si = cpu->esi;
+    frame.sc.bp = cpu->ebp;
+    frame.sc.sp = frame.sc.sp_at_signal = cpu->esp;
+    frame.sc.ip = cpu->eip;
+    // TODO more shit
+
+    // TODO get address of sigreturn from vdso symbol table
+    frame.pretcode = 0;
+    // for legacy purposes
+    frame.retcode.popmov = 0xb858;
+    frame.retcode.nr_sigreturn = 173; // rt_sigreturn
+    frame.retcode.int80 = 0x80cd;
+
+    // set up registers for signal handler
+    cpu->eax = sig;
+    cpu->eip = current->sigactions[sig].handler;
+
+    dword_t sp = cpu->esp;
     if (xsave_extra) {
         // do as the kernel does
         // this is superhypermega condensed version of fpu__alloc_mathframe in
@@ -26,7 +50,11 @@ int send_signal(struct process *proc, int sig) {
     sp -= sizeof(struct sigframe_);
     // align sp + 4 on a 16-byte boundary because that's what the abi says
 	sp = ((sp + 4) & ~0xf) - 4;
-    proc->cpu.esp = sp;
+    cpu->esp = sp;
+
+    // install frame
+    user_put_count(sp, &frame, sizeof(frame));
+
     return 0;
 }
 

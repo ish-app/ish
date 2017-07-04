@@ -63,7 +63,7 @@ int handle_interrupt(struct cpu_state *cpu, int interrupt) {
             // TODO SIGSYS
             printf("missing syscall %d\n", syscall_num);
             debugger;
-            if (send_signal(current, SIGSYS_) < 0)
+            if (send_signal(SIGSYS_) < 0)
                 printf("send sigsys failed\n");
         } else {
             TRACE("syscall %d ", syscall_num);
@@ -82,7 +82,7 @@ int handle_interrupt(struct cpu_state *cpu, int interrupt) {
         return res;
     } else if (interrupt == INT_UNDEFINED) {
         printf("illegal instruction\n");
-        if (send_signal(current, SIGILL_) < 0)
+        if (send_signal(SIGILL_) < 0)
             printf("send sigill failed\n");
     } else {
         printf("exiting\n");

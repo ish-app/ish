@@ -128,7 +128,7 @@ void pt_dump(struct mem *mem) {
 }
 
 static void tlb_flush(struct mem *mem) {
-    memset(mem->tlb, TLB_SIZE * sizeof(struct tlb_entry), 0);
+    memset(mem->tlb, 0, TLB_SIZE * sizeof(struct tlb_entry));
     for (unsigned i = 0; i < TLB_SIZE; i++) {
         mem->tlb[i].page = mem->tlb[i].page_if_writable = TLB_PAGE_EMPTY;
     }
