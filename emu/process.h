@@ -8,7 +8,7 @@
 struct process {
     struct cpu_state cpu;
 
-    dword_t pid;
+    dword_t pid, ppid;
     dword_t uid, gid;
 
     addr_t vdso;

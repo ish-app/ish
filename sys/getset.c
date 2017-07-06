@@ -1,5 +1,12 @@
 #include "sys/calls.h"
 
+dword_t sys_getpid() {
+    return current->pid;
+}
+dword_t sys_getppid() {
+    return current->ppid;
+}
+
 dword_t sys_getuid32() {
     return current->uid;
 }

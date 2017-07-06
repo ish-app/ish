@@ -4,6 +4,7 @@
 void setup() {
     // god help us
     current = process_create();
+    current->ppid = 1;
     current->uid = current->gid = 0;
     mount_root();
     current->pwd = getcwd(NULL, 0);

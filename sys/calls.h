@@ -72,6 +72,8 @@ dword_t sys_sendfile(fd_t out_fd, fd_t in_fd, addr_t offset_addr, dword_t count)
 dword_t sys_sendfile64(fd_t out_fd, fd_t in_fd, addr_t offset_addr, dword_t count);
 
 // process information
+dword_t sys_getpid();
+dword_t sys_getppid();
 dword_t sys_getuid32();
 dword_t sys_getuid();
 dword_t sys_getgid32();

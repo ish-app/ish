@@ -27,7 +27,7 @@ sys_src = [
     'sys/mmap.c',
     'sys/uname.c',
     'sys/tls.c',
-    'sys/getid.c',
+    'sys/getset.c',
     'sys/signal.c',
 
     'sys/fs.c',

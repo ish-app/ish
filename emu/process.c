@@ -8,7 +8,7 @@ struct process *current;
 static struct process *procs[MAX_PROCS] = {};
 
 struct process *process_create() {
-    static int cur_pid = 0;
+    static int cur_pid = 1;
     while (procs[cur_pid] != NULL) {
         cur_pid++;
         if (cur_pid > MAX_PROCS) cur_pid = 0;
