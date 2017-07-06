@@ -11,6 +11,8 @@ int CONCAT(decoder_name, OP_SIZE)(struct cpu_state *cpu) {
     dword_t addr_offset = 0;
 #define READADDR READIMM_(addr_offset, 32); addr += addr_offset
 
+#define UNDEFINED { cpu->eip = saved_ip; return INT_UNDEFINED; }
+
 restart:
     TRACE("%08x\t", cpu->eip);
     READINSN;
@@ -209,7 +211,7 @@ restart:
         case 5: TRACEI("bts"); BTS(bit, val,z); break; \
         case 6: TRACEI("btr"); BTR(bit, val,z); break; \
         case 7: TRACEI("btc"); BTC(bit, val,z); break; \
-        default: return INT_UNDEFINED; \
+        default: UNDEFINED; \
     }
 
                 case 0xba: TRACEI("grp8 imm8, modrm");
@@ -259,7 +261,7 @@ restart:
                 case 0xfb: TRACEI("psubq modrm, reg");
                            READMODRM; PSUB(modrm_val, modrm_reg); break;
                 default: TRACEI("undefined");
-                         return INT_UNDEFINED;
+                         UNDEFINED;
             }
             break;
 
@@ -427,7 +429,7 @@ restart:
         case 7: TRACE("cmp"); \
                 CMP(src, dst,z); break; \
         default: TRACE("undefined"); \
-                 return INT_UNDEFINED; \
+                 UNDEFINED; \
     }
 
         case 0x80: TRACEI("grp1 imm8, modrm8");
@@ -461,7 +463,7 @@ restart:
         case 0x8d: TRACEI("lea\t\t");
                    READMODRM; 
                    if (modrm.type == mod_reg)
-                       return INT_UNDEFINED;
+                       UNDEFINED;
                    MOV(addr, modrm_reg,); break;
         case 0x8e:
             TRACEI("mov modrm, seg\t");
@@ -469,7 +471,7 @@ restart:
             // see comment in sys/tls.c
             READMODRM;
             if (modrm.reg.reg32_id != REG_ID(ebp)) {
-                return INT_UNDEFINED;
+                UNDEFINED;
             }
             break;
 
@@ -538,8 +540,8 @@ restart:
     switch (modrm.opcode) { \
         case 0: TRACE("rol"); ROL(count, val,z); break; \
         case 1: TRACE("ror"); ROR(count, val,z); break; \
-        case 2: TRACE("rcl"); return INT_UNDEFINED; \
-        case 3: TRACE("rcr"); return INT_UNDEFINED; \
+        case 2: TRACE("rcl"); UNDEFINED; \
+        case 3: TRACE("rcr"); UNDEFINED; \
         case 4: \
         case 6: TRACE("shl"); SHL(count, val,z); break; \
         case 5: TRACE("shr"); SHR(count, val,z); break; \
@@ -613,7 +615,7 @@ restart:
                 // ret. gcc used to use nop ret but repz ret is only one
                 // instruction
                 case 0xc3: TRACEI("repz ret\t"); RET_NEAR(); break;
-                default: TRACE("undefined\n"); return INT_UNDEFINED;
+                default: TRACE("undefined\n"); UNDEFINED;
             }
             break;
 
@@ -634,7 +636,7 @@ restart:
                 DIV(oax, modrm_val, odx,z); break; \
         case 7: TRACE("idiv"); \
                 IDIV(oax, modrm_val, odx,z); break; \
-        default: TRACE("undefined"); return INT_UNDEFINED; \
+        default: TRACE("undefined"); UNDEFINED; \
     }
 
         case 0xf6: TRACEI("grp3 modrm8\t");
@@ -655,13 +657,13 @@ restart:
                 DEC(val,z); break; \
         case 2: TRACE("call indirect near"); \
                 CALL(val); break; \
-        case 3: TRACE("call indirect far"); return INT_UNDEFINED; \
+        case 3: TRACE("call indirect far"); UNDEFINED; \
         case 4: TRACE("jmp indirect near"); \
                 JMP(val); break; \
-        case 5: TRACE("jmp indirect far"); return INT_UNDEFINED; \
+        case 5: TRACE("jmp indirect far"); UNDEFINED; \
         case 6: TRACE("push"); \
                 PUSH(val); break; \
-        case 7: TRACE("undefined"); return INT_UNDEFINED; \
+        case 7: TRACE("undefined"); UNDEFINED; \
     }
 
         case 0xff: TRACEI("grp5 modrm\t");
@@ -671,7 +673,7 @@ restart:
 
         default:
             TRACE("undefined\n");
-            return INT_UNDEFINED;
+            UNDEFINED;
     }
     TRACE("\n");
     return -1; // everything is ok.

@@ -18,7 +18,8 @@ cified_vdso = custom_target('cify-vdso',
 sys_src = [
     'sys/calls.c',
     'sys/user.c',
-    'sys/exec/exec.c',
+    'sys/exec.c',
+    'sys/vdso.c',
 
     'sys/exit.c',
     'sys/time.c',

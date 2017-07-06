@@ -4,7 +4,7 @@
 #include <string.h>
 #include <sys/user.h>
 #include <sys/ptrace.h>
-#include "sys/exec/elf.h"
+#include "sys/elf.h"
 #include "tools/ptutil.h"
 #include "misc.h"
 

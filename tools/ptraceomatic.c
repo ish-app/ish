@@ -18,7 +18,7 @@
 #include "emu/interrupt.h"
 #include "emu/cpuid.h"
 
-#include "sys/exec/elf.h"
+#include "sys/elf.h"
 #include "tools/transplant.h"
 #include "tools/ptutil.h"
 #include "undefined-flags.h"
@@ -26,7 +26,8 @@
 
 // ptrace utility functions
 
-static inline void step(int pid) {
+// returns 1 for a signal stop
+static inline int step(int pid) {
     trycall(ptrace(PTRACE_SINGLESTEP, pid, NULL, 0), "ptrace step");
     int status;
     trycall(waitpid(pid, &status, 0), "wait step");
@@ -35,7 +36,9 @@ static inline void step(int pid) {
         // a signal arrived, we now have to actually deliver it
         trycall(ptrace(PTRACE_SINGLESTEP, pid, NULL, signal), "ptrace step");
         trycall(waitpid(pid, &status, 0), "wait step");
+        return 1;
     }
+    return 0;
 }
 
 static inline void getregs(int pid, struct user_regs_struct *regs) {
@@ -121,11 +124,6 @@ static int compare_cpus(struct cpu_state *cpu, int pid, int undefined_flags) {
     close(fd);
     setregs(pid, &regs);
     return 0;
-}
-
-static void pt_copy(int pid, addr_t start, size_t size) {
-    for (addr_t addr = start; addr < start + size; addr++)
-        pt_write8(pid, addr, user_get8(addr));
 }
 
 // I'd like to apologize in advance for this code
@@ -217,6 +215,20 @@ static void remote_close_fd(int pid, int fd, long int80_ip) {
     setregs(pid, &regs);
 }
 
+static void pt_copy(int pid, addr_t start, size_t size) {
+    for (addr_t addr = start; addr < start + size; addr++)
+        pt_write8(pid, addr, user_get8(addr));
+}
+
+// Please don't use unless absolutely necessary.
+static void pt_copy_to_real(int pid, addr_t start, size_t size) {
+    byte_t byte;
+    for (addr_t addr = start; addr < start + size; addr++) {
+        pt_readn(pid, addr, &byte, sizeof(byte));
+        user_put8(addr, byte);
+    }
+}
+
 static void step_tracing(struct cpu_state *cpu, int pid, int sender, int receiver) {
     // step fake cpu
     int interrupt;
@@ -224,6 +236,7 @@ restart:
     cpu->tf = 1;
     interrupt = cpu_step32(cpu);
     if (interrupt != INT_NONE) {
+        cpu->trapno = interrupt;
         // hack to clean up before the exit syscall
         if (interrupt == INT_SYSCALL && cpu->eax == 1) {
             if (kill(pid, SIGKILL) < 0) {
@@ -243,6 +256,7 @@ restart:
     getregs(pid, &regs);
     long inst = trycall(ptrace(PTRACE_PEEKTEXT, pid, regs.rip, NULL), "ptrace get inst step");
     long saved_fd = -1; // annoying hack for mmap
+    long old_sp = regs.rsp; // so we know where a sigframe ends
 
     if ((inst & 0xff) == 0x0f) {
         if (((inst & 0xff00) >> 8) == 0xa2) {
@@ -320,13 +334,21 @@ do_step:
         // single step on a repeated string instruction only does one
         // iteration, so loop until ip changes
         unsigned long ip = regs.rip;
+        int was_signal;
         while (regs.rip == ip) {
-            step(pid);
+            was_signal = step(pid);
             getregs(pid, &regs);
         }
         if (saved_fd >= 0) {
             remote_close_fd(pid, regs.rdi, ip);
             regs.rdi = saved_fd;
+        }
+
+        if (was_signal) {
+            // copy the return address
+            pt_copy(pid, regs.rsp, sizeof(addr_t));
+            // and copy the rest the other way
+            pt_copy_to_real(pid, regs.rsp + sizeof(addr_t), old_sp - regs.rsp - sizeof(addr_t));
         }
     }
     setregs(pid, &regs);

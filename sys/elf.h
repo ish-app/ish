@@ -86,4 +86,23 @@ struct aux_ent {
 #define AX_SYSINFO 32
 #define AX_SYSINFO_EHDR 33
 
+struct dyn_ent {
+    dword_t tag;
+    dword_t val;
+};
+
+#define DT_NULL 0
+#define DT_HASH 4
+#define DT_STRTAB 5
+#define DT_SYMTAB 6
+
+struct elf_sym {
+    uint32_t name;
+    addr_t value;
+    dword_t size;
+    byte_t info;
+    byte_t other;
+    uint16_t shndx;
+};
+
 #endif

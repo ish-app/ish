@@ -1,5 +1,6 @@
 #include "sys/calls.h"
 #include "sys/signal.h"
+#include "sys/vdso.h"
 
 int xsave_extra = 0;
 int fxsave_extra = 0;
@@ -11,7 +12,7 @@ int send_signal(int sig) {
         sys_exit(0);
 
     // setup the frame
-    struct sigframe_ frame;
+    struct sigframe_ frame = {};
     frame.sig = sig;
 
     struct cpu_state *cpu = &current->cpu;
@@ -24,10 +25,18 @@ int send_signal(int sig) {
     frame.sc.bp = cpu->ebp;
     frame.sc.sp = frame.sc.sp_at_signal = cpu->esp;
     frame.sc.ip = cpu->eip;
+    collapse_flags(cpu);
+    frame.sc.flags = cpu->eflags;
+    frame.sc.trapno = cpu->trapno;
     // TODO more shit
 
     // TODO get address of sigreturn from vdso symbol table
-    frame.pretcode = 0;
+    addr_t sigreturn_addr = vdso_symbol("__kernel_rt_sigreturn");
+    if (sigreturn_addr == 0) {
+        fprintf(stderr, "sigreturn not found in vdso, this should never happen\n");
+        abort();
+    }
+    frame.pretcode = current->vdso + sigreturn_addr;
     // for legacy purposes
     frame.retcode.popmov = 0xb858;
     frame.retcode.nr_sigreturn = 173; // rt_sigreturn

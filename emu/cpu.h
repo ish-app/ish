@@ -84,6 +84,8 @@ struct cpu_state {
 
     // for the page fault handler
     addr_t segfault_addr;
+
+    dword_t trapno;
 };
 
 // flags

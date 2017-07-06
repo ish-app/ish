@@ -111,7 +111,7 @@ struct fpstate_ {
     dword_t cssel;
     dword_t dataoff;
     dword_t datasel;
-    struct fpreg_	_st[8];
+    struct fpreg_ st[8];
     word_t status;
     word_t magic;
 

@@ -9,7 +9,7 @@
 #include "misc.h"
 #include "sys/calls.h"
 #include "sys/errno.h"
-#include "sys/exec/elf.h"
+#include "sys/elf.h"
 #include "libvdso.so.h"
 
 #define ERRNO_FAIL(label) { \
@@ -222,8 +222,8 @@ int sys_execve(const char *file, char *const argv[], char *const envp[]) {
         goto beyond_hope;
     if ((err = pt_map(&curmem, vdso_page, vdso_pages, (void *) vdso_data, 0)) < 0)
         goto beyond_hope;
-    addr_t vdso_addr = vdso_page << PAGE_BITS;
-    addr_t vdso_entry = vdso_addr + ((struct elf_header *) vdso_data)->entry_point;
+    current->vdso = vdso_page << PAGE_BITS;
+    addr_t vdso_entry = current->vdso + ((struct elf_header *) vdso_data)->entry_point;
 
     // map 2 empty "vvar" pages to satisfy ptraceomatic
     page_t vvar_page = pt_find_hole(&curmem, 2);
@@ -265,7 +265,7 @@ int sys_execve(const char *file, char *const argv[], char *const envp[]) {
     // declare elf aux now so we can know how big it is
     struct aux_ent aux[] = {
         {AX_SYSINFO, vdso_entry},
-        {AX_SYSINFO_EHDR, vdso_addr},
+        {AX_SYSINFO_EHDR, current->vdso},
         {AX_HWCAP, 0x00000000}, // suck that
         {AX_PAGESZ, PAGE_SIZE},
         {AX_CLKTCK, 0x64},
