@@ -1,5 +1,5 @@
 #!/bin/bash
-cd tests
+cd $MESON_SOURCE_ROOT/$MESON_SUBDIR
 file=busybox-1.26.2
 curl -LO http://busybox.net/downloads/$file.tar.bz2
 tar -xf $file.tar.bz2
