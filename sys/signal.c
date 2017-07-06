@@ -73,8 +73,10 @@ static int do_sigaction(int sig, const struct sigaction_ *action, struct sigacti
     if (sig == SIGKILL_ || sig == SIGSTOP_)
         return _EINVAL;
 
-    *oldaction = current->sigactions[sig];
-    current->sigactions[sig] = *action;
+    if (oldaction)
+        *oldaction = current->sigactions[sig];
+    if (action)
+        current->sigactions[sig] = *action;
     return 0;
 }
 
@@ -82,11 +84,14 @@ dword_t sys_rt_sigaction(dword_t signum, addr_t action_addr, addr_t oldaction_ad
     if (sigset_size != sizeof(sigset_t_))
         return _EINVAL;
     struct sigaction_ action, oldaction;
-    user_get_count(action_addr, &action, sizeof(action));
+    if (action_addr != 0)
+        user_get_count(action_addr, &action, sizeof(action));
     if (oldaction_addr != 0)
         user_get_count(oldaction_addr, &oldaction, sizeof(oldaction));
 
-    int err = do_sigaction(signum, &action, &oldaction);
+    int err = do_sigaction(signum,
+            action_addr ? &action : NULL,
+            oldaction_addr ? &oldaction : NULL);
     if (err < 0)
         return err;
 

@@ -13,6 +13,7 @@ struct sigaction_ {
     addr_t handler;
     sigset_t_ mask;
     dword_t flags;
+    addr_t restorer;
 } __attribute__((packed));
 
 #define NUM_SIGS 64
