@@ -4,6 +4,7 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
+#include <termios.h>
 #include <sys/mman.h>
 
 #include "sys/errno.h"
@@ -155,15 +156,64 @@ struct win_size {
     word_t ypixel;
 };
 
+// This is the definition of __kernel_termios from glibc
+struct termios_ {
+    dword_t iflags;
+    dword_t oflags;
+    dword_t cflags;
+    dword_t lflags;
+    byte_t cc[19];
+    byte_t line;
+};
+
+#define TCGETS_ 0x5401
+#define TCSETS_ 0x5402
+#define TIOCGWINSZ_ 0x5413
+
 static ssize_t realfs_ioctl_size(struct fd *fd, int cmd) {
     switch (cmd) {
-        case TIOCGWINSZ: return sizeof(struct win_size);
+        case TIOCGWINSZ_: return sizeof(struct win_size);
+        case TCGETS_: return sizeof(struct termios_);
+        case TCSETS_: return sizeof(struct termios_);
     }
     return -1;
 }
 
 static int realfs_ioctl(struct fd *fd, int cmd, void *arg) {
-    int res = ioctl(fd->real_fd, cmd, arg);
+    int res;
+    struct winsize winsz;
+    struct win_size *winsz_ = arg;
+    struct termios termios;
+    struct termios_ *termios_ = arg;
+    switch (cmd) {
+        case TIOCGWINSZ_:
+            if (!(res = ioctl(fd->real_fd, TIOCGWINSZ, &winsz))) {
+                winsz_->col = winsz.ws_col;
+                winsz_->row = winsz.ws_row;
+                winsz_->xpixel = winsz.ws_xpixel;
+                winsz_->ypixel = winsz.ws_ypixel;
+            }
+            break;
+        case TCGETS_:
+            if (!(res = tcgetattr(fd->real_fd, &termios))) {
+                termios_->iflags = termios.c_iflag;
+                termios_->oflags = termios.c_oflag;
+                termios_->cflags = termios.c_cflag;
+                termios_->lflags = termios.c_lflag;
+                termios_->line = termios.c_line;
+                memcpy(&termios_->cc, &termios.c_cc, sizeof(termios_->cc));
+            }
+            break;
+        case TCSETS_:
+            termios.c_iflag = termios_->iflags;
+            termios.c_oflag = termios_->oflags;
+            termios.c_cflag = termios_->cflags;
+            termios.c_lflag = termios_->lflags;
+            termios.c_line = termios_->line;
+            memcpy(&termios.c_cc, &termios_->cc, sizeof(termios_->cc));
+            res = tcsetattr(fd->real_fd, TCSANOW, &termios);
+            break;
+    }
     if (res < 0)
         return err_map(errno);
     return res;

@@ -122,8 +122,10 @@ dword_t sys_ioctl(fd_t f, dword_t cmd, dword_t arg) {
     if (fd == NULL)
         return _EBADF;
     ssize_t size = fd->ops->ioctl_size(fd, cmd);
-    if (size < 0)
+    if (size < 0) {
+        printf("unknown ioctl %x\n", cmd);
         return _EINVAL;
+    }
     if (size == 0)
         return fd->ops->ioctl(fd, cmd, (void *) (long) arg);
 
