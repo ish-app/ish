@@ -10,6 +10,7 @@ struct process {
 
     dword_t pid, ppid;
     dword_t uid, gid;
+    dword_t euid, egid;
 
     addr_t vdso;
     addr_t start_brk;

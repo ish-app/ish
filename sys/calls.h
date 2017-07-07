@@ -76,6 +76,8 @@ dword_t sys_getpid();
 dword_t sys_getppid();
 dword_t sys_getuid32();
 dword_t sys_getuid();
+dword_t sys_geteuid32();
+dword_t sys_geteuid();
 dword_t sys_getgid32();
 dword_t sys_getgid();
 dword_t sys_getcwd(addr_t buf_addr, dword_t size);

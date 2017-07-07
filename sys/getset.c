@@ -14,6 +14,13 @@ dword_t sys_getuid() {
     return current->uid & 0xffff;
 }
 
+dword_t sys_geteuid32() {
+    return current->euid;
+}
+dword_t sys_geteuid() {
+    return current->euid & 0xffff;
+}
+
 dword_t sys_getgid32() {
     return current->gid;
 }
