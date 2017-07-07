@@ -307,6 +307,8 @@ restart:
                    READMODRM; XOR(modrm_val, modrm_reg,8); break;
         case 0x33: TRACEI("xor modrm, reg");
                    READMODRM; XOR(modrm_val, modrm_reg,); break;
+        case 0x35: TRACEI("xor imm, oax");
+                   READIMM; XOR(imm, oax,); break;
 
         case 0x38: TRACEI("cmp reg8, modrm8");
                    READMODRM; CMP(modrm_reg, modrm_val,8); break;
