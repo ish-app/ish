@@ -232,7 +232,6 @@ static void pt_copy_to_real(int pid, addr_t start, size_t size) {
 static void step_tracing(struct cpu_state *cpu, int pid, int sender, int receiver) {
     // step fake cpu
     int interrupt;
-restart:
     cpu->tf = 1;
     interrupt = cpu_step32(cpu);
     if (interrupt != INT_NONE) {
@@ -244,9 +243,7 @@ restart:
                 exit(1);
             }
         }
-        if (handle_interrupt(cpu, interrupt)) {
-            goto restart;
-        }
+        handle_interrupt(cpu, interrupt);
     }
 
     // step real cpu

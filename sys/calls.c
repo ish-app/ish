@@ -34,6 +34,7 @@ syscall_t syscall_table[] = {
     [90] = (syscall_t) sys_mmap,
     [91] = (syscall_t) sys_munmap,
     [116] = (syscall_t) sys_sysinfo,
+    [120] = (syscall_t) sys_clone,
     [122] = (syscall_t) _sys_uname,
     [125] = (syscall_t) sys_mprotect,
     [140] = (syscall_t) sys__llseek,
@@ -59,7 +60,7 @@ syscall_t syscall_table[] = {
 };
 
 // returns true if a step is necessary (subject to change)
-int handle_interrupt(struct cpu_state *cpu, int interrupt) {
+void handle_interrupt(struct cpu_state *cpu, int interrupt) {
     TRACE("\nint %d ", interrupt);
     if (interrupt == INT_SYSCALL) {
         int syscall_num = cpu->eax;
@@ -77,13 +78,8 @@ int handle_interrupt(struct cpu_state *cpu, int interrupt) {
         }
     } else if (interrupt == INT_GPF) {
         // page fault handling is a thing
-        TRACE("page fault at %x\n", cpu->segfault_addr);
-        int res = handle_pagefault(cpu->segfault_addr);
-        if (res == 0) {
-            printf("could not handle page fault at %x, exiting\n", cpu->segfault_addr);
-            sys_exit(1);
-        }
-        return res;
+        printf("could not handle page fault at %x, exiting\n", cpu->segfault_addr);
+        sys_exit(1);
     } else if (interrupt == INT_UNDEFINED) {
         printf("illegal instruction\n");
         if (send_signal(SIGILL_) < 0)
@@ -92,5 +88,4 @@ int handle_interrupt(struct cpu_state *cpu, int interrupt) {
         printf("exiting\n");
         sys_exit(interrupt);
     }
-    return 0;
 }

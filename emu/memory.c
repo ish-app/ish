@@ -15,6 +15,7 @@ static void tlb_flush(struct mem *mem);
 void mem_init(struct mem *mem) {
     mem->pt = calloc(PT_SIZE, sizeof(struct pt_entry *));
     mem->tlb = malloc(TLB_SIZE * sizeof(struct tlb_entry));
+    tlb_flush(mem);
 }
 
 page_t pt_find_hole(struct mem *mem, pages_t size) {
@@ -41,7 +42,7 @@ int pt_map(struct mem *mem, page_t start, pages_t pages, void *memory, unsigned 
     for (page_t page = start; page < start + pages; page++) {
         if (mem->pt[page] != NULL) {
             // FIXME this is probably wrong
-            pt_unmap(mem, page, 1);
+            pt_unmap(mem, page, 1, 0);
         }
         struct pt_entry *entry = malloc(sizeof(struct pt_entry));
         // FIXME this could allocate some of the memory and then abort
@@ -52,38 +53,26 @@ int pt_map(struct mem *mem, page_t start, pages_t pages, void *memory, unsigned 
         mem->pt[page] = entry;
         memory = (char *) memory + PAGE_SIZE;
     }
-    if (flags & P_GROWSDOWN) {
-        pt_map(mem, start - 1, 1, NULL, P_GUARD);
-    }
     tlb_flush(mem);
     return 0;
 }
 
-static void pt_drop(struct mem *mem, page_t page) {
-    struct pt_entry *entry = mem->pt[page];
-    mem->pt[page] = NULL;
-    entry->refcount--;
-    if (entry->refcount == 0) {
-        // TODO actually free the memory
-        free(entry);
-    }
-}
+int pt_unmap(struct mem *mem, page_t start, pages_t pages, int force) {
+    if (!force)
+        for (page_t page = start; page < start + pages; page++)
+            if (mem->pt[page] == NULL)
+                return -1;
 
-int pt_unmap(struct mem *mem, page_t start, pages_t pages) {
-    for (page_t page = start; page < start + pages; page++)
-        if (mem->pt[page] == NULL)
-            return -1;
     for (page_t page = start; page < start + pages; page++) {
-        pt_drop(mem, page);
-    }
-    tlb_flush(mem);
-    return 0;
-}
-
-int pt_unmap_force(struct mem *mem, page_t start, pages_t pages) {
-    for (page_t page = start; page < start + pages; page++) {
-        if (mem->pt[page] != NULL)
-            pt_drop(mem, page);
+        if (mem->pt[page] != NULL) {
+            struct pt_entry *entry = mem->pt[page];
+            mem->pt[page] = NULL;
+            entry->refcount--;
+            if (entry->refcount == 0) {
+                // TODO actually free the memory
+                free(entry);
+            }
+        }
     }
     tlb_flush(mem);
     return 0;
@@ -116,15 +105,22 @@ int pt_set_flags(struct mem *mem, page_t start, pages_t pages, int flags) {
     return 0;
 }
 
-void pt_dump(struct mem *mem) {
-    for (unsigned i = 0; i < PT_SIZE; i++) {
-        if (mem->pt[i] != NULL) {
-            TRACE("page     %u", i);
-            TRACE("data at  %p", mem->pt[i]->data);
-            TRACE("refcount %u", mem->pt[i]->refcount);
-            TRACE("flags    %x", mem->pt[i]->flags);
+int pt_copy_on_write(struct mem *src, page_t src_start, struct mem *dst, page_t dst_start, page_t pages) {
+    for (page_t src_page = src_start, dst_page = dst_start;
+            src_page < src_start + pages;
+            src_page++, dst_page++) {
+        if (src->pt[src_page] != NULL) {
+            if (pt_unmap(dst, dst_page, 1, PT_FORCE) < 0)
+                return -1;
+            struct pt_entry *entry = src->pt[src_page];
+            entry->flags |= P_COW;
+            entry->refcount++;
+            dst->pt[dst_page] = entry;
         }
     }
+    tlb_flush(src);
+    tlb_flush(dst);
+    return 0;
 }
 
 static void tlb_flush(struct mem *mem) {
@@ -136,17 +132,40 @@ static void tlb_flush(struct mem *mem) {
 
 void *tlb_handle_miss(struct mem *mem, addr_t addr, int type) {
     struct pt_entry *pt = mem->pt[PAGE(addr)];
-    if (pt == NULL)
-        return NULL; // page does not exist
-    if (type == TLB_WRITE && !(pt->flags & P_WRITE))
-        return NULL; // unwritable
+
+    if (pt == NULL) {
+        // page does not exist
+        // check if the stack needs to grow
+        struct pt_entry *next_pt = mem->pt[PAGE(addr) + 1];
+        if (next_pt != NULL && next_pt->flags & P_GROWSDOWN) {
+            pt_map_nothing(mem, PAGE(addr), 1, P_WRITE | P_GROWSDOWN);
+            pt = mem->pt[PAGE(addr)];
+        } else {
+            return NULL;
+        }
+    }
+
+    if (type == TLB_WRITE && !P_WRITABLE(pt->flags)) {
+        // page is unwritable or cow
+        // if page is cow, ~~milk~~ copy it
+        if (pt->flags & P_COW) {
+            void *data = pt->data;
+            void *copy = mmap(NULL, PAGE_SIZE, PROT_READ | PROT_WRITE, 
+                    MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
+            memcpy(copy, data, PAGE_SIZE);
+            pt_map(mem, PAGE(addr), 1, copy, pt->flags &~ P_COW);
+            pt = mem->pt[PAGE(addr)];
+        } else {
+            return NULL;
+        }
+    }
 
     // TODO if page is unwritable maybe we shouldn't bail and still add an
     // entry to the TLB
 
     struct tlb_entry *tlb = &mem->tlb[TLB_INDEX(addr)];
     tlb->page = TLB_PAGE(addr);
-    if (pt->flags & P_WRITE)
+    if (P_WRITABLE(pt->flags))
         tlb->page_if_writable = tlb->page;
     else
         // 1 is not a valid page so this won't look like a hit

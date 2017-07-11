@@ -4,8 +4,8 @@ void _start() {
     long result;
     __asm__ volatile("int $0x80"
             : "=a" (result)
-            : "a" ((long) 4), "b" ((long) 1), "c" ((long) hello), "d" ((long) sizeof(hello) - 1));
+            : "a" (4), "b" (1), "c" (hello), "d" (sizeof(hello) - 1));
     __asm__ volatile("int $0x80"
             : "=a" (result)
-            : "a" ((long) 1));
+            : "a" (1), "b" (0));
 }

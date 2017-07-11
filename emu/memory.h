@@ -40,9 +40,12 @@ struct pt_entry {
 #define P_WRITE (1 << 1)
 #define P_EXEC (1 << 2)
 #define P_GROWSDOWN (1 << 3)
-#define P_GUARD (1 << 4)
+#define P_COW (1 << 4)
+#define P_WRITABLE(flags) (flags & P_WRITE && !(flags & P_COW))
 
 page_t pt_find_hole(struct mem *mem, pages_t size);
+
+#define PT_FORCE 1
 
 // Map real memory into fake memory (unmaps existing mappings)
 int pt_map(struct mem *mem, page_t start, pages_t pages, void *memory, unsigned flags);
@@ -51,13 +54,11 @@ int pt_map_file(struct mem *mem, page_t start, pages_t pages, int fd, off_t off,
 // Map empty space into fake memory
 int pt_map_nothing(struct mem *mem, page_t page, pages_t pages, unsigned flags);
 // Unmap fake memory, return -1 if any part of the range isn't mapped and 0 otherwise
-int pt_unmap(struct mem *mem, page_t start, pages_t pages);
-// Same as pt_unmap, but skips over unmapped parts
-int pt_unmap_force(struct mem *mem, page_t start, pages_t pages);
+int pt_unmap(struct mem *mem, page_t start, pages_t pages, int force);
 // Set the flags on memory
 int pt_set_flags(struct mem *mem, page_t start, pages_t pages, int flags);
-
-void pt_dump(struct mem *mem);
+// Copy pages from src memory to dst memory using copy-on-write
+int pt_copy_on_write(struct mem *src, page_t src_start, struct mem *dst, page_t dst_start, page_t pages);
 
 struct tlb_entry {
     page_t page;

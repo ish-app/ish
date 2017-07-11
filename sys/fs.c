@@ -1,7 +1,7 @@
 #include <string.h>
 #include "sys/calls.h"
 #include "sys/errno.h"
-#include "emu/process.h"
+#include "sys/process.h"
 #include "sys/fs.h"
 
 fd_t find_fd() {

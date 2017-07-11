@@ -1,5 +1,5 @@
 project('ish', 'c',
-    default_options: ['default_library=static', 'c_std=gnu99'])
+    default_options: ['default_library=static', 'c_std=c11'])
 
 if get_option('debug_log')
     add_global_arguments('-DDEBUG_LOG=1', language: 'c')
@@ -21,6 +21,8 @@ sys_src = [
     'sys/exec.c',
     'sys/vdso.c',
 
+    'sys/process.c',
+
     'sys/exit.c',
     'sys/time.c',
     'sys/mm.c',
@@ -40,15 +42,18 @@ sys_src = [
 ]
 emu_src = [
     'emu/memory.c',
-    'emu/process.c',
     'emu/interp.c',
     'emu/modrm.c',
     'emu/debug.c',
     cified_vdso,
 ]
 
+threads = dependency('threads')
+
+libish = library('ish', sys_src + emu_src + ['setup.c'],
+    include_directories: includes)
 ish = declare_dependency(
-    link_with: library('ish', sys_src + emu_src + ['setup.c'], include_directories: includes),
+    link_with: libish,
     include_directories: includes)
 
 # testing programs
@@ -56,4 +61,4 @@ subdir('tests')
 # ptraceomatic et al
 subdir('tools')
 
-executable('ish', ['main.c'], dependencies: [ish])
+executable('ish', ['main.c'], dependencies: [ish, threads])

@@ -1,3 +1,5 @@
+#include <sys/mman.h>
+#include <string.h>
 #include "sys/calls.h"
 #include "sys/errno.h"
 #include "emu/memory.h"
@@ -19,23 +21,9 @@ addr_t sys_brk(addr_t new_brk) {
             // shrink heap: unmap region from new_brk to old_brk
             // first page to unmap is PAGE(new_brk);
             // last page to unmap is PAGE(old_brk)
-            pt_unmap_force(&curmem, PAGE(new_brk), PAGE(old_brk));
+            pt_unmap(&curmem, PAGE(new_brk), PAGE(old_brk), PT_FORCE);
         }
         current->brk = new_brk;
     }
     return current->brk;
-}
-
-int handle_pagefault(addr_t addr) {
-    // TODO error handling
-    struct pt_entry *pt = curmem.pt[PAGE(addr)];
-    if (pt == NULL)
-        return 0;
-    if (pt->flags & P_GUARD) {
-        pt_map_nothing(&curmem, PAGE(addr), 1, P_WRITE | P_GROWSDOWN);
-        return 1;
-    } else {
-        sys_exit(1);
-    }
-    return 0;
 }

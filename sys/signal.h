@@ -2,7 +2,7 @@
 #define SIGNAL_H
 
 #include "misc.h"
-#include "emu/process.h"
+#include "sys/process.h"
 
 typedef qword_t sigset_t_;
 

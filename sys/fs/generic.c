@@ -2,7 +2,7 @@
 #include <string.h>
 
 #include "sys/fs.h"
-#include "emu/process.h"
+#include "sys/process.h"
 
 path_t find_mount(char *pathname, const struct fs_ops **fs) {
     struct mount *mount;

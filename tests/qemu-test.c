@@ -1764,7 +1764,7 @@ void test_exceptions(void)
 #ifdef __clang__
         asm volatile ("bound %1, %0" : : "r" (11), "m" (tab[0]));
 #else
-        asm volatile ("bound %1, %0" : : "r" (11), "m" (tab[0]));
+        asm volatile ("bound %0, %1" : : "r" (11), "m" (tab[0]));
 #endif
     }
 #endif

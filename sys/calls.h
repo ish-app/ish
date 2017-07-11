@@ -1,18 +1,19 @@
 #ifndef CALLS_H
 #define CALLS_H
 
-#include "emu/process.h"
+#include "sys/process.h"
 #include "sys/errno.h"
 #include "sys/fs.h"
 #include "misc.h"
 
 #include "sys/signal.h"
 
-int handle_interrupt(struct cpu_state *cpu, int interrupt);
+void handle_interrupt(struct cpu_state *cpu, int interrupt);
 
 dword_t user_get(addr_t addr);
 byte_t user_get8(addr_t addr);
 void user_put(addr_t addr, dword_t value);
+void user_put_proc(struct process *proc, addr_t addr, dword_t value);
 void user_put8(addr_t addr, byte_t value);
 int user_get_string(addr_t addr, char *buf, size_t max);
 void user_put_string(addr_t addr, const char *buf);
@@ -20,6 +21,7 @@ int user_get_count(addr_t addr, void *buf, size_t count);
 void user_put_count(addr_t addr, const void *buf, size_t count);
 
 // process lifecycle
+dword_t sys_clone(dword_t flags, addr_t stack, addr_t ptid, addr_t tls, addr_t ctid);
 int sys_execve(const char *file, char *const argv[], char *const envp[]);
 dword_t _sys_execve(addr_t file, addr_t argv, addr_t envp);
 dword_t sys_exit(dword_t status);
@@ -27,7 +29,6 @@ dword_t sys_exit_group(dword_t status);
 
 // memory management
 addr_t sys_brk(addr_t new_brk);
-int handle_pagefault(addr_t addr);
 
 #define MMAP_SHARED 0x1
 #define MMAP_PRIVATE 0x2

@@ -1,6 +1,6 @@
 #include "sys/calls.h"
 #include "sys/errno.h"
-#include "emu/process.h"
+#include "sys/process.h"
 #include "emu/memory.h"
 
 addr_t sys_mmap2(addr_t addr, dword_t len, dword_t prot, dword_t flags, fd_t fd_no, dword_t offset) {
@@ -54,7 +54,7 @@ int_t sys_munmap(addr_t addr, uint_t len) {
         return _EINVAL;
     if (len == 0)
         return _EINVAL;
-    if (pt_unmap(&curmem, PAGE(addr), PAGE_ROUND_UP(len)) < 0)
+    if (pt_unmap(&curmem, PAGE(addr), PAGE_ROUND_UP(len), 0) < 0)
         return _EINVAL;
     return 0;
 }

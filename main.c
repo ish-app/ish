@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include "sys/calls.h"
-#include "emu/process.h"
+#include "sys/process.h"
 
 int main(int argc, char *const argv[]) {
     int err;

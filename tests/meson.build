@@ -13,6 +13,7 @@ executable('stat', ['stat.c'], c_args: ['-m32', '-D_FILE_OFFSET_BITS=64'], link_
 executable('getdents', ['getdents.c'], c_args: ['-m32'], link_args: ['-m32'])
 
 executable('signal', ['signal.c'], c_args: ['-m32'], link_args: ['-m32', '-static'])
+executable('forkexec', ['forkexec.c'], c_args: ['-m32'], link_args: ['-m32'])
 
 # qemu test program
 executable('qemu-test', ['qemu-test.c'], c_args: ['-m32'], link_args: ['-m32', '-lm'])

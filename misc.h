@@ -16,7 +16,8 @@
 #endif
 #define TRACEI(msg, ...) TRACE(msg "\t", ##__VA_ARGS__)
 
-#define TODO(msg, ...) TRACE("TODO: " msg "\n", ##__VA_ARGS__); abort();
+#define TODO(msg, ...) TRACE("TODO: " msg "\n", ##__VA_ARGS__); abort()
+#define FIXME(msg, ...) printf("FIXME " msg "\n", ##__VA_ARGS__)
 
 #if defined(__i386__) || defined(__x86_64__)
 #define debugger __asm__("int3")

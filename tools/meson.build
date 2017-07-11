@@ -3,7 +3,7 @@ transplant_src = [
     'ptutil.c',
     cified_vdso,
 ]
-executable('ptraceomatic', ['ptraceomatic.c', 'undefined-flags.c', transplant_src], dependencies: [ish])
+executable('ptraceomatic', ['ptraceomatic.c', 'undefined-flags.c', transplant_src], dependencies: [ish, threads])
 configure_file(input: 'ptraceomatic-gdb.gdb', output: '@PLAINNAME@', configuration: configuration_data())
 
 # tools for messing with vdsos

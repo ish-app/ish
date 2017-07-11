@@ -11,7 +11,11 @@ byte_t user_get8(addr_t addr) {
 }
 
 void user_put(addr_t addr, dword_t value) {
-    *(dword_t *) mem_write_ptr(&curmem, addr) = value;
+    user_put_proc(current, addr, value);
+}
+
+void user_put_proc(struct process *proc, addr_t addr, dword_t value) {
+    *(dword_t *) mem_write_ptr(&proc->cpu.mem, addr) = value;
 }
 
 void user_put8(addr_t addr, byte_t value) {

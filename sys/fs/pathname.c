@@ -1,6 +1,6 @@
 #include <string.h>
 
-#include "emu/process.h"
+#include "sys/process.h"
 
 // for now just collapses slashes, will eventually do something with . and ..
 // TODO move to fs/pathname.c or something
