@@ -374,9 +374,32 @@ static inline void user_memset(addr_t start, dword_t len, byte_t val) {
     }
 }
 
-dword_t _sys_execve(addr_t filename, addr_t argv, addr_t envp) {
-    // TODO translate rest of arguments
-    char buf[255];
-    user_get_string(filename, buf, sizeof(buf));
-    return sys_execve(buf, NULL, NULL);
+#define MAX_ARGS 256 // for now
+dword_t _sys_execve(addr_t filename_addr, addr_t argv_addr, addr_t envp_addr) {
+    // TODO this code is shit, fix it
+    char filename[MAX_PATH];
+    user_get_string(filename_addr, filename, sizeof(filename));
+    char *argv[MAX_ARGS];
+    int i;
+    for (i = 0; user_get(argv_addr + i * 4) != 0; i++) {
+        if (i > MAX_ARGS)
+            return _E2BIG;
+        argv[i] = malloc(MAX_PATH);
+        user_get_string(user_get(argv_addr + i * 4), argv[i], MAX_PATH);
+    }
+    argv[i] = NULL;
+    char *envp[MAX_ARGS];
+    for (i = 0; user_get(envp_addr + i * 4) != 0; i++) {
+        if (i >= MAX_ARGS)
+            return _E2BIG;
+        envp[i] = malloc(MAX_PATH);
+        user_get_string(user_get(envp_addr + i * 4), envp[i], MAX_PATH);
+    }
+    envp[i] = NULL;
+    int res = sys_execve(filename, argv, envp);
+    for (i = 0; argv[i] != NULL; i++)
+        free(argv[i]);
+    for (i = 0; envp[i] != NULL; i++)
+        free(envp[i]);
+    return res;
 }
