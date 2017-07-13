@@ -173,7 +173,7 @@ struct termios_ {
 static ssize_t realfs_ioctl_size(struct fd *fd, int cmd) {
     switch (cmd) {
         case TIOCGWINSZ_: return sizeof(struct win_size);
-        case TCGETS_: return sizeof(struct termios_);
+        /* case TCGETS_: return sizeof(struct termios_); */
         case TCSETS_: return sizeof(struct termios_);
     }
     return -1;

@@ -16,6 +16,7 @@ syscall_t syscall_table[] = {
     [4] =  (syscall_t) sys_write,
     [5] = (syscall_t) sys_open,
     [6] = (syscall_t) sys_close,
+    [7] = (syscall_t) sys_waitpid,
     [10] = (syscall_t) sys_unlink,
     [11] = (syscall_t) _sys_execve,
     [13] = (syscall_t) sys_time,

@@ -26,6 +26,7 @@ int sys_execve(const char *file, char *const argv[], char *const envp[]);
 dword_t _sys_execve(addr_t file, addr_t argv, addr_t envp);
 dword_t sys_exit(dword_t status);
 dword_t sys_exit_group(dword_t status);
+dword_t sys_waitpid(dword_t pid, addr_t status_addr, dword_t options);
 
 // memory management
 addr_t sys_brk(addr_t new_brk);

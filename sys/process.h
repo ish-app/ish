@@ -2,6 +2,7 @@
 #define PROCESS_H
 
 #include <pthread.h>
+#include "list.h"
 #include "emu/cpu.h"
 #include "sys/fs.h"
 #include "sys/signal.h"
@@ -25,9 +26,16 @@ struct process {
     struct sigaction_ sigactions[NUM_SIGS];
 
     struct process *parent;
-    struct process *children;
-    struct process *next_sibling;
-    struct process *prev_sibling;
+    struct list children;
+    struct list siblings;
+
+    // the next two fields are protected by the lock on the parent process, not
+    // the lock on the process. this is because waitpid locks the parent
+    // process to wait for any of its children to exit.
+    dword_t exit_code;
+    bool zombie;
+    pthread_cond_t child_exit;
+    pthread_mutex_t lock;
 };
 
 // current will always give the process that is currently executing
@@ -37,6 +45,11 @@ extern __thread struct process *current;
 
 // Creates a new process, returns NULL in case of failure
 struct process *process_create(void);
+// Removes the process from the process table and frees it.
+void process_destroy(struct process *proc);
+
+// Returns the process with the given PID, or NULL if it doesn't exist.
+struct process *process_for_pid(dword_t pid);
 
 // When a thread is created to run a new process, this function is used.
 extern void (*run_process_func)();

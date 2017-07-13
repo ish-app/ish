@@ -4,6 +4,7 @@
 void setup() {
     // god help us
     current = process_create();
+    mem_init(&curmem);
     current->ppid = 1;
     current->uid = current->gid = 0;
     mount_root();

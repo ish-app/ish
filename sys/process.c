@@ -22,12 +22,23 @@ static int next_pid() {
 struct process *process_create() {
     struct process *proc = malloc(sizeof(struct process));
     if (proc == NULL) return NULL;
-
     proc->pid = next_pid();
-    mem_init(&proc->cpu.mem);
+    list_init(&proc->children);
+    list_init(&proc->siblings);
+    pthread_mutex_init(&proc->lock, NULL);
+    pthread_cond_init(&proc->child_exit, NULL);
     procs[proc->pid] = proc;
-
     return proc;
+}
+
+void process_destroy(struct process *proc) {
+    list_remove(&proc->siblings);
+    procs[proc->pid] = NULL;
+    free(proc);
+}
+
+struct process *process_for_pid(dword_t pid) {
+    return procs[pid];
 }
 
 void (*process_run_func)() = NULL;
@@ -100,9 +111,12 @@ static int dup_process(int flags, addr_t stack, addr_t ptid, addr_t tls, addr_t 
     if (stack == 0)
         stack = current->cpu.esp;
 
-    struct process *proc = malloc(sizeof(struct process));
+    struct process *proc = process_create();
+    if (proc == NULL)
+        return _ENOMEM;
+    dword_t pid = proc->pid;
     *proc = *current;
-    proc->pid = next_pid();
+    proc->pid = pid;
     proc->ppid = current->pid;
 
     int err = 0;
@@ -110,12 +124,7 @@ static int dup_process(int flags, addr_t stack, addr_t ptid, addr_t tls, addr_t 
         goto fail_free_proc;
 
     proc->parent = current;
-    proc->next_sibling = current->children;
-    current->children = proc;
-    if (proc->next_sibling) {
-        assert(proc->next_sibling->prev_sibling == NULL);
-        proc->next_sibling->prev_sibling = proc;
-    }
+    list_add(&current->children, &proc->siblings);
 
     proc->cpu.eax = 0;
     if (flags & CLONE_CHILD_SETTID_)

@@ -156,10 +156,11 @@ int sys_execve(const char *file, char *const argv[], char *const envp[]) {
         }
     }
 
+    // free the process's memory.
     // from this point on, if any error occurs the process will have to be
     // killed before it even starts. please don't be too sad about it, it's
     // just a process.
-    // TODO make that actually happen
+    pt_unmap(&curmem, 0, PT_SIZE, PT_FORCE);
 
     addr_t load_addr; // used for AX_PHDR
     bool load_addr_set = false;
