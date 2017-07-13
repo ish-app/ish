@@ -67,7 +67,6 @@ void handle_interrupt(struct cpu_state *cpu, int interrupt) {
         if (syscall_num >= NUM_SYSCALLS || syscall_table[syscall_num] == NULL) {
             // TODO SIGSYS
             printf("missing syscall %d\n", syscall_num);
-            debugger;
             if (send_signal(SIGSYS_) < 0)
                 printf("send sigsys failed\n");
         } else {
@@ -78,6 +77,7 @@ void handle_interrupt(struct cpu_state *cpu, int interrupt) {
         }
     } else if (interrupt == INT_GPF) {
         // page fault handling is a thing
+        // TODO SIGSEGV
         printf("could not handle page fault at %x, exiting\n", cpu->segfault_addr);
         sys_exit(1);
     } else if (interrupt == INT_UNDEFINED) {

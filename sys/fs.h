@@ -59,6 +59,7 @@ struct fd_ops {
     // Reads a directory entry from the stream
     int (*readdir)(struct fd *fd, struct dir_entry *entry);
 
+    // memory returned must be allocated with mmap, as it is freed with munmap
     int (*mmap)(struct fd *fd, off_t offset, size_t len, int prot, int flags, void **mem_out);
     int (*stat)(struct fd *fd, struct statbuf *stat);
 

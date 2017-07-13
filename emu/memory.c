@@ -69,7 +69,7 @@ int pt_unmap(struct mem *mem, page_t start, pages_t pages, int force) {
             mem->pt[page] = NULL;
             entry->refcount--;
             if (entry->refcount == 0) {
-                // TODO actually free the memory
+                munmap(entry->data, PAGE_SIZE);
                 free(entry);
             }
         }

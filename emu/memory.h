@@ -47,7 +47,8 @@ page_t pt_find_hole(struct mem *mem, pages_t size);
 
 #define PT_FORCE 1
 
-// Map real memory into fake memory (unmaps existing mappings)
+// Map real memory into fake memory (unmaps existing mappings). The memory is
+// freed with munmap, so it must be allocated with mmap
 int pt_map(struct mem *mem, page_t start, pages_t pages, void *memory, unsigned flags);
 // Map fake file into fake memory
 int pt_map_file(struct mem *mem, page_t start, pages_t pages, int fd, off_t off, unsigned flags);
