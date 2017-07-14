@@ -2,8 +2,6 @@
 #include "sys/calls.h"
 
 noreturn void do_exit(int status) {
-    // TODO free current task structure
-    printf("pid %d exit status 0x%x\n", current->pid, status);
     if (current->pid == 1) {
         exit(status >> 8);
     }
@@ -43,26 +41,26 @@ dword_t sys_waitpid(dword_t pid, addr_t status_addr, dword_t options) {
 
     pthread_mutex_lock(&current->lock);
 
-    while (true) {
-        if (pid == -1) {
-            // look for a zombie child
-            struct process *proc;
-            int pid;
-            list_for_each_entry(&current->children, proc, siblings) {
-                pid = proc->pid;
-                if (reap_if_zombie(proc, status_addr))
-                    break;
-            }
-        } else {
-            // check if this child is a zombie
-            if (reap_if_zombie(process_for_pid(pid), status_addr))
-                break;
+retry:
+    if (pid == -1) {
+        // look for a zombie child
+        struct process *proc;
+        list_for_each_entry(&current->children, proc, siblings) {
+            pid = proc->pid;
+            if (reap_if_zombie(proc, status_addr))
+                goto found_zombie;
         }
-
-        // no matching zombie found, wait for one
-        pthread_cond_wait(&current->child_exit, &current->lock);
+    } else {
+        // check if this child is a zombie
+        if (reap_if_zombie(process_for_pid(pid), status_addr))
+            goto found_zombie;
     }
 
+    // no matching zombie found, wait for one
+    pthread_cond_wait(&current->child_exit, &current->lock);
+    goto retry;
+
+found_zombie:
     pthread_mutex_unlock(&current->lock);
     return pid;
 }

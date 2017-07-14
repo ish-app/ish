@@ -670,6 +670,8 @@ restart:
         case 7: TRACE("undefined"); UNDEFINED; \
     }
 
+        case 0xfe: TRACEI("grp5 modrm8\t");
+                   READMODRM; GRP5(modrm_val,8); break;
         case 0xff: TRACEI("grp5 modrm\t");
                    READMODRM; GRP5(modrm_val,); break;
 

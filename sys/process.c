@@ -101,8 +101,6 @@ static int dup_process(int flags, addr_t stack, addr_t ptid, addr_t tls, addr_t 
         FIXME("clone with ptid or ts not null");
         return _EINVAL;
     }
-    if (flags & CLONE_CHILD_CLEARTID_)
-        FIXME("clone(CLONE_CHILD_CLEARTID)");
     if ((flags & CSIGNAL_) != SIGCHLD_) {
         FIXME("clone non sigchld");
         return _EINVAL;
