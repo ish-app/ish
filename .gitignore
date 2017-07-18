@@ -1,3 +1,5 @@
 build
-llvm
 build-gcc/
+tags
+tags.log
+.floo
