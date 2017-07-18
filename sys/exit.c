@@ -32,7 +32,7 @@ static int reap_if_zombie(struct process *proc, addr_t status_addr) {
 }
 
 dword_t sys_waitpid(dword_t pid, addr_t status_addr, dword_t options) {
-    if (pid == -1) {
+    if (pid == (dword_t) -1) {
         if (list_empty(&current->children))
             return _ESRCH;
     } else if (process_for_pid(pid) == NULL) {
@@ -42,7 +42,7 @@ dword_t sys_waitpid(dword_t pid, addr_t status_addr, dword_t options) {
     pthread_mutex_lock(&current->lock);
 
 retry:
-    if (pid == -1) {
+    if (pid == (dword_t) -1) {
         // look for a zombie child
         struct process *proc;
         list_for_each_entry(&current->children, proc, siblings) {

@@ -16,9 +16,6 @@ struct fd {
 typedef sdword_t fd_t;
 #define MAX_FD 1024 // dynamically expanding fd table coming soon:tm:
 
-void pathname_normalize(char *pathname);
-char *pathname_expand(const char *pathname);
-
 int generic_open(const char *pathname, struct fd *fd, int flags, int mode);
 #define AC_R 4
 #define AC_W 2
@@ -72,7 +69,8 @@ struct fd_ops {
     int (*close)(struct fd *fd);
 };
 
-path_t find_mount(char *pathname, const struct fs_ops **fs);
+struct mount *find_mount(char *pathname);
+char *path_in_mount(char *path, struct mount *mount);
 
 // real fs
 extern const struct fs_ops realfs;

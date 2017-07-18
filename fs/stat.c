@@ -28,12 +28,12 @@ struct newstat64 stat_convert_newstat64(struct statbuf stat) {
 }
 
 int generic_stat(const char *pathname, struct statbuf *stat, bool follow_links) {
-    char *full_path = pathname_expand(pathname);
-    const struct fs_ops *fs;
-    path_t path = find_mount(full_path, &fs);
-    int err = fs->stat(path, stat, follow_links);
-    free(full_path);
-    return err;
+    char path[MAX_PATH];
+    int err = path_normalize(pathname, path);
+    if (err < 0)
+        return err;
+    struct mount *mount = find_mount(path);
+    return mount->fs->stat(path_in_mount(path, mount), stat, follow_links);
 }
 
 static dword_t sys_stat_path(addr_t pathname_addr, addr_t statbuf_addr, bool follow_links) {

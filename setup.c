@@ -1,3 +1,4 @@
+#include <string.h>
 #include "sys/process.h"
 #include "sys/fs.h"
 
@@ -8,6 +9,7 @@ void setup() {
     current->ppid = 1;
     current->uid = current->gid = 0;
     mount_root();
+    current->root = strdup("");
     current->pwd = getcwd(NULL, 0);
     current->files[0] = malloc(sizeof(struct fd));
     current->files[0]->ops = &realfs_fdops;

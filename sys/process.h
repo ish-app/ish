@@ -19,8 +19,8 @@ struct process {
     addr_t start_brk;
     addr_t brk;
 
-    path_t pwd;
-    path_t root;
+    const char *pwd;
+    const char *root;
     struct fd *files[MAX_FD];
 
     struct sigaction_ sigactions[NUM_SIGS];

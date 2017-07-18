@@ -33,12 +33,11 @@ sys_src = [
     'sys/signal.c',
 
     'sys/fs.c',
-    'sys/fs/stat.c',
-    'sys/fs/dir.c',
-    'sys/fs/generic.c',
-    'sys/fs/path.c',
-    'sys/fs/pathname.c',
-    'sys/fs/real.c',
+    'fs/stat.c',
+    'fs/dir.c',
+    'fs/generic.c',
+    'fs/path.c',
+    'fs/real.c',
 ]
 emu_src = [
     'emu/memory.c',
