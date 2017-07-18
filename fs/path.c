@@ -20,9 +20,9 @@ int path_normalize(const char *path, char *out) {
         while (*p == '/')
             p++;
     } else {
-        o = strcpy(o, current->pwd);
-        n -= strlen(current->root);
-        o += strlen(current->root);
+        strcpy(o, current->pwd);
+        n -= strlen(current->pwd);
+        o += strlen(current->pwd);
     }
 
     while (*p != '\0') {
