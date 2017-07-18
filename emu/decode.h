@@ -595,6 +595,13 @@ restart:
 
         case 0xf0: TRACE("lock (ignored for now)\n"); goto restart;
 
+        case 0xf2:
+            READINSN;
+            switch (insn) {
+                case 0xae: TRACEI("repnz scasb"); REPNZ(SCAS(8)); break;
+            }
+            break;
+
         case 0xf3:
             READINSN;
             switch (insn) {

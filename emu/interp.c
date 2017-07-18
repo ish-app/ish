@@ -418,29 +418,41 @@
 
 #define BUMP_SI(size) \
     if (!cpu->df) \
-        cpu->esi += size; \
+        cpu->esi += sz(size)/8; \
     else \
-        cpu->esi -= size
+        cpu->esi -= sz(size)/8
 #define BUMP_DI(size) \
     if (!cpu->df) \
-        cpu->edi += size; \
+        cpu->edi += sz(size)/8; \
     else \
-        cpu->edi -= size
+        cpu->edi -= sz(size)/8
 #define BUMP_SI_DI(size) \
     BUMP_SI(size); BUMP_DI(size)
 
 #define MOVS(z) \
     mem_write(cpu->edi, mem_read(cpu->esi, sz(z)), sz(z)); \
-    BUMP_SI_DI(sz(z)/8)
+    BUMP_SI_DI(z)
 
 #define STOS(z) \
     mem_write(cpu->edi, cpu->oax, sz(z)); \
-    BUMP_DI(sz(z)/8)
+    BUMP_DI(z)
+
+// TODO find an alternative to al here
+#define SCAS(z) \
+    addr = cpu->edi; CMP(al, mem_addr,z); \
+    BUMP_DI(z)
 
 #define REP(OP) \
     while (cpu->ocx != 0) { \
         OP; \
         cpu->ocx--; \
+    }
+
+#define REPNZ(OP) \
+    while (cpu->ocx != 0) { \
+        OP; \
+        cpu->ocx--; \
+        if (ZF) break; \
     }
 
 #define CMPXCHG(src, dst,z) \
