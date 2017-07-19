@@ -335,7 +335,7 @@ out_free_f:
     return err;
 
 beyond_hope:
-    // TODO call sys_exit
+    // TODO force sigsegv
     goto out_free_interp;
 }
 

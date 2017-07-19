@@ -6,6 +6,7 @@
 #include <sys/ioctl.h>
 #include <termios.h>
 #include <sys/mman.h>
+#include <sys/xattr.h>
 
 #include "sys/errno.h"
 #include "sys/calls.h"
@@ -35,6 +36,22 @@ static int realfs_close(struct fd *fd) {
     return 0;
 }
 
+// The values in this structure are stored in an extended attribute on a file,
+// because on iOS I can't change the uid or gid of a file.
+// TODO the xattr api is a little different on darwin
+struct xattr_stat {
+    dword_t mode;
+    dword_t uid;
+    dword_t gid;
+    dword_t dev;
+    dword_t rdev;
+};
+#if defined(__linux__)
+#define STAT_XATTR "user.ish.stat"
+#elif defined(__APPLE__)
+#define STAT_XATTR "com.tbodt.ish.stat"
+#endif
+
 static void copy_stat(struct statbuf *fake_stat, struct stat *real_stat) {
     fake_stat->dev = real_stat->st_dev;
     fake_stat->inode = real_stat->st_ino;
@@ -55,11 +72,23 @@ static void copy_stat(struct statbuf *fake_stat, struct stat *real_stat) {
     fake_stat->ctime_nsec = real_stat->st_ctim.tv_nsec;
 }
 
+static void copy_xattr_stat(struct statbuf *fake_stat, struct xattr_stat *xstat) {
+    fake_stat->dev = xstat->dev;
+    fake_stat->mode = xstat->mode;
+    fake_stat->uid = xstat->uid;
+    fake_stat->gid = xstat->gid;
+    fake_stat->rdev = xstat->rdev;
+}
+
 static int realfs_stat(const char *path, struct statbuf *fake_stat, bool follow_links) {
     struct stat real_stat;
     if ((follow_links ? lstat : stat)(path, &real_stat) < 0)
         return err_map(errno);
     copy_stat(fake_stat, &real_stat);
+
+    struct xattr_stat xstat;
+    if (lgetxattr(path, STAT_XATTR, &xstat, sizeof(xstat)) == sizeof(xstat))
+        copy_xattr_stat(fake_stat, &xstat);
     return 0;
 }
 
@@ -68,6 +97,10 @@ static int realfs_fstat(struct fd *fd, struct statbuf *fake_stat) {
     if (fstat(fd->real_fd, &real_stat) < 0)
         return err_map(errno);
     copy_stat(fake_stat, &real_stat);
+
+    struct xattr_stat xstat;
+    if (fgetxattr(fd->real_fd, STAT_XATTR, &xstat, sizeof(xstat)) == sizeof(xstat))
+        copy_xattr_stat(fake_stat, &xstat);
     return 0;
 }
 
