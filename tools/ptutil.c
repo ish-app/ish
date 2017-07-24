@@ -18,7 +18,7 @@ long trycall(long res, const char *msg) {
     return res;
 }
 
-int start_tracee(const char *program, char *const argv[], char *const envp[]) {
+int start_tracee(const char *path, char *const argv[], char *const envp[]) {
     // shut off aslr
     int persona = personality(0xffffffff);
     persona |= ADDR_NO_RANDOMIZE;
@@ -32,10 +32,15 @@ int start_tracee(const char *program, char *const argv[], char *const envp[]) {
     if (pid == 0) {
         // child
         trycall(ptrace(PTRACE_TRACEME, 0, NULL, NULL), "ptrace traceme");
-        trycall(execve(program, argv, envp), "execl");
+        trycall(execve(path, argv, envp), "fexecve");
     } else {
         // parent, wait for child to stop after exec
-        trycall(wait(NULL), "wait");
+        int status;
+        trycall(wait(&status), "wait");
+        if (!WIFSTOPPED(status)) {
+            fprintf(stderr, "child failed to start\n");
+            exit(1);
+        }
     }
     return pid;
 }
@@ -72,37 +77,4 @@ void pt_write(int pid, addr_t addr, dword_t val) {
 
 void pt_write8(int pid, addr_t addr, byte_t val) {
     pt_writen(pid, addr, &val, sizeof(val));
-}
-
-static addr_t aux_addr(int pid, unsigned type) {
-    struct user_regs_struct regs;
-    trycall(ptrace(PTRACE_GETREGS, pid, NULL, &regs), "ptrace get sp for aux");
-    dword_t sp = (dword_t) regs.rsp;
-    // skip argc
-    sp += 4;
-    // skip argv
-    while (pt_read(pid, sp) != 0)
-        sp += 4;
-    sp += 4;
-    // skip envp
-    while (pt_read(pid, sp) != 0)
-        sp += 4;
-    sp += 4;
-    // dig through auxv
-    dword_t aux_type;
-    while ((aux_type = pt_read(pid, sp)) != 0) {
-        sp += 4;
-        if (aux_type == type) {
-            return sp;
-        }
-        sp += 4;
-    }
-    return 0;
-}
-
-dword_t aux_read(int pid, int type) {
-    return pt_read(pid, aux_addr(pid, type));
-}
-void aux_write(int pid, int type, dword_t value) {
-    return pt_write(pid, aux_addr(pid, type), value);
 }

@@ -60,6 +60,4 @@ typedef sdword_t int_t;
 #define uint(size) CONCAT3(uint,size,_t)
 #define sint(size) CONCAT3(int,size,_t)
 
-void setup();
-
 #endif

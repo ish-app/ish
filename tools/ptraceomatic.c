@@ -7,6 +7,7 @@
 #include <signal.h>
 #include <unistd.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <sys/wait.h>
 #include <sys/ptrace.h>
 #include <sys/user.h>
@@ -23,6 +24,8 @@
 #include "tools/ptutil.h"
 #include "undefined-flags.h"
 #include "libvdso.so.h"
+
+#include "xX_main_Xx.h"
 
 // ptrace utility functions
 
@@ -353,17 +356,13 @@ do_step:
 
 static void prepare_tracee(int pid) {
     transplant_vdso(pid, vdso_data, sizeof(vdso_data));
-    aux_write(pid, AX_HWCAP, 0); // again, suck that
-    aux_write(pid, AX_UID, 0);
-    aux_write(pid, AX_EUID, 0);
-    aux_write(pid, AX_GID, 0);
-    aux_write(pid, AX_EGID, 0);
 
-    // copy random bytes
-    addr_t random = aux_read(pid, AX_RANDOM);
-    for (addr_t a = random; a < random + 16; a += sizeof(dword_t)) {
-        pt_write(pid, a, user_get(a));
-    }
+    // copy the stack
+    pt_copy(pid, 0xffffd000, 0x1000);
+    struct user_regs_struct regs;
+    getregs(pid, &regs);
+    regs.rsp = current->cpu.esp;
+    setregs(pid, &regs);
 
     // find out how big the signal stack frame needs to be
     __asm__("cpuid"
@@ -389,16 +388,22 @@ static void prepare_tracee(int pid) {
 }
 
 int main(int argc, char *const argv[]) {
-    int err;
-    setup();
-    char *envp[] = {NULL};
-    if ((err = sys_execve(argv[1], argv + 1, envp)) < 0) {
-        return -err;
-    }
+    int err = xX_main_Xx(argc, argv);
+    if (err < 0)
+        return err;
 
+    // execute the traced program in a new process and throw up some sockets
+    char exec_path[MAX_PATH];
+    if (path_normalize(argv[optind], exec_path) != 0) {
+        fprintf(stderr, "enametoolong\n"); exit(1);
+    }
+    struct mount *mount = find_mount_and_trim_path(exec_path);
+    if (strnprepend(exec_path, mount->source, MAX_PATH) == NULL) {
+        fprintf(stderr, "enametoolong\n"); exit(1);
+    }
     int fds[2];
     trycall(socketpair(AF_UNIX, SOCK_DGRAM, 0, fds), "socketpair");
-    int pid = start_tracee(argv[1], argv + 1, envp);
+    int pid = start_tracee(exec_path, argv + optind, (char *[]) {NULL});
     int sender = fds[0], receiver = fds[1];
     /* close(receiver); // only needed in the child */
     prepare_tracee(pid);

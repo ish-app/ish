@@ -8,6 +8,36 @@
 #include "tools/ptutil.h"
 #include "misc.h"
 
+static addr_t aux_addr(int pid, unsigned type) {
+    struct user_regs_struct regs;
+    trycall(ptrace(PTRACE_GETREGS, pid, NULL, &regs), "ptrace get sp for aux");
+    dword_t sp = (dword_t) regs.rsp;
+    // skip argc
+    sp += 4;
+    // skip argv
+    while (pt_read(pid, sp) != 0)
+        sp += 4;
+    sp += 4;
+    // skip envp
+    while (pt_read(pid, sp) != 0)
+        sp += 4;
+    sp += 4;
+    // dig through auxv
+    dword_t aux_type;
+    while ((aux_type = pt_read(pid, sp)) != 0) {
+        sp += 4;
+        if (aux_type == type) {
+            return sp;
+        }
+        sp += 4;
+    }
+    return 0;
+}
+
+static void aux_write(int pid, int type, dword_t value) {
+    return pt_write(pid, aux_addr(pid, type), value);
+}
+
 void transplant_vdso(int pid, const void *new_vdso, size_t new_vdso_size) {
     // get the vdso address and size from /proc/pid/maps
     char maps_file[32];
@@ -19,11 +49,13 @@ void transplant_vdso(int pid, const void *new_vdso, size_t new_vdso_size) {
     while (fgets(line, sizeof(line), maps) != NULL) {
         char *map_type = NULL;
         sscanf(line, "%8x-%8x %*s %*s %*s %*s %ms\n", &start, &end, &map_type);
-        if (strcmp(map_type, "[vdso]") == 0) {
+        if (map_type) {
+            if (strcmp(map_type, "[vdso]") == 0) {
+                free(map_type);
+                break;
+            }
             free(map_type);
-            break;
         }
-        free(map_type);
     }
     fclose(maps);
 

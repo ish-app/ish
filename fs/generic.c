@@ -4,10 +4,10 @@
 #include "sys/fs.h"
 #include "sys/process.h"
 
-struct mount *find_mount(char *pathname) {
+static struct mount *find_mount(char *pathname) {
     struct mount *mount;
     for (mount = mounts; mount != NULL; mount = mount->next) {
-        if (strncmp(pathname, mount->mount_point, strlen(mount->mount_point)) == 0) {
+        if (strncmp(pathname, mount->point, strlen(mount->point)) == 0) {
             break;
         }
     }
@@ -15,8 +15,14 @@ struct mount *find_mount(char *pathname) {
     return mount;
 }
 
-char *path_in_mount(char *path, struct mount *mount) {
-    return path + strlen(mount->mount_point);
+struct mount *find_mount_and_trim_path(char *path) {
+    struct mount *mount = find_mount(path);
+    char *dst = path;
+    const char *src = path + strlen(mount->point);
+    while (*src != '\0')
+        *dst++ = *src++;
+    *dst = '\0';
+    return mount;
 }
 
 int generic_open(const char *pathname, struct fd *fd, int flags, int mode) {
@@ -24,8 +30,8 @@ int generic_open(const char *pathname, struct fd *fd, int flags, int mode) {
     int err = path_normalize(pathname, path);
     if (err < 0)
         return err;
-    struct mount *mount = find_mount(path);
-    return mount->fs->open(path_in_mount(path, mount), fd, flags, mode);
+    struct mount *mount = find_mount_and_trim_path(path);
+    return mount->fs->open(mount, path, fd, flags, mode);
 }
 
 // TODO I bet this can be shorter
@@ -34,8 +40,8 @@ int generic_access(const char *pathname, int mode) {
     int err = path_normalize(pathname, path);
     if (err < 0)
         return err;
-    struct mount *mount = find_mount(path);
-    return mount->fs->access(path_in_mount(path, mount), mode);
+    struct mount *mount = find_mount_and_trim_path(path);
+    return mount->fs->access(mount, path, mode);
 }
 
 // TODO I bet this can be shorter
@@ -44,8 +50,8 @@ int generic_unlink(const char *pathname) {
     int err = path_normalize(pathname, path);
     if (err < 0)
         return err;
-    struct mount *mount = find_mount(path);
-    return mount->fs->unlink(path_in_mount(path, mount));
+    struct mount *mount = find_mount_and_trim_path(path);
+    return mount->fs->unlink(mount, path);
 }
 
 ssize_t generic_readlink(const char *pathname, char *buf, size_t bufsize) {
@@ -53,13 +59,6 @@ ssize_t generic_readlink(const char *pathname, char *buf, size_t bufsize) {
     int err = path_normalize(pathname, path);
     if (err < 0)
         return err;
-    struct mount *mount = find_mount(path);
-    return mount->fs->readlink(path_in_mount(path, mount), buf, bufsize);
-}
-
-void mount_root() {
-    mounts = malloc(sizeof(struct mount));
-    mounts->mount_point = strdup("");
-    mounts->fs = &realfs;
-    mounts->next = NULL;
+    struct mount *mount = find_mount_and_trim_path(path);
+    return mount->fs->readlink(mount, path, buf, bufsize);
 }

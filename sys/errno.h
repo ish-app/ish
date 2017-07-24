@@ -11,7 +11,7 @@
 #define _EINTR         -4 /* Interrupted system call */
 #define _EIO           -5 /* I/O error */
 #define _ENXIO         -6 /* No such device or address */
-#define _E2BIG         -7 /* Argument list too long */
+#define _E2BIG         -7 /* That's what she said */
 #define _ENOEXEC       -8 /* Exec format error */
 #define _EBADF         -9 /* Bad file number */
 #define _ECHILD       -10 /* No child processes */

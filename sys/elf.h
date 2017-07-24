@@ -10,6 +10,7 @@
 #define ELF_BIGENDIAN 2
 #define ELF_LINUX_ABI 3
 #define ELF_EXECUTABLE 2
+#define ELF_DYNAMIC 3
 #define ELF_X86 3
 
 struct elf_header {

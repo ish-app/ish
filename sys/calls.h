@@ -83,6 +83,7 @@ dword_t sys_getgid32();
 dword_t sys_getgid();
 dword_t sys_getcwd(addr_t buf_addr, dword_t size);
 int sys_set_thread_area(addr_t u_info);
+int sys_set_tid_address(addr_t blahblahblah);
 
 // system information
 #define UNAME_LENGTH 65

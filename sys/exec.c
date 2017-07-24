@@ -24,13 +24,15 @@ static inline dword_t copy_string(dword_t sp, const char *string);
 static inline dword_t copy_strings(dword_t sp, char *const strings[]);
 static unsigned count_args(char *const args[]);
 
-static int read_header(int f, struct elf_header *header) {
-    if (read(f, header, sizeof(*header)) != sizeof(*header)) {
-        if (errno != 0)
+static int read_header(struct fd *fd, struct elf_header *header) {
+    int err;
+    if ((err = fd->ops->read(fd, header, sizeof(*header))) != sizeof(*header)) {
+        if (err != 0)
             return _EIO;
         return _ENOEXEC;
     }
     if (memcmp(&header->magic, ELF_MAGIC, sizeof(header->magic)) != 0
+            || (header->type != ELF_EXECUTABLE && header->type != ELF_DYNAMIC)
             || header->bitness != ELF_32BIT
             || header->endian != ELF_LITTLEENDIAN
             || header->elfversion1 != 1
@@ -39,17 +41,17 @@ static int read_header(int f, struct elf_header *header) {
     return 0;
 }
 
-static int read_prg_headers(int f, struct elf_header header, struct prg_header **ph_out) {
+static int read_prg_headers(struct fd *fd, struct elf_header header, struct prg_header **ph_out) {
     ssize_t ph_size = sizeof(struct prg_header) * header.phent_count;
     struct prg_header *ph = malloc(ph_size);
     if (ph == NULL)
         return _ENOMEM;
 
-    if (lseek(f, header.prghead_off, SEEK_SET) < 0) {
+    if (fd->ops->lseek(fd, header.prghead_off, SEEK_SET) < 0) {
         free(ph);
         return _EIO;
     }
-    if (read(f, ph, ph_size) != ph_size) {
+    if (fd->ops->read(fd, ph, ph_size) != ph_size) {
         free(ph);
         if (errno != 0)
             return _EIO;
@@ -60,7 +62,7 @@ static int read_prg_headers(int f, struct elf_header header, struct prg_header *
     return 0;
 }
 
-static int load_entry(struct prg_header ph, addr_t bias, int f) {
+static int load_entry(struct prg_header ph, addr_t bias, struct fd *fd) {
     int err;
 
     addr_t addr = ph.vaddr + bias;
@@ -71,10 +73,12 @@ static int load_entry(struct prg_header ph, addr_t bias, int f) {
     int flags = 0;
     if (ph.flags & PH_W) flags |= P_WRITE;
 
+    // TODO stop using fd->real_fd here
     if ((err = pt_map_file(&curmem, PAGE(addr),
-                    PAGE_ROUND_UP(filesize + OFFSET(addr)), f,
+                    PAGE_ROUND_UP(filesize + OFFSET(addr)), fd->real_fd,
                     offset - OFFSET(addr), flags)) < 0)
         return err;
+    TRACE("%x %x %x\n", PAGE(addr), PAGE_ROUND_UP(filesize + OFFSET(addr)), offset - OFFSET(addr));
 
     if (memsize > filesize) {
         // put zeroes between addr + filesize and addr + memsize, call that bss
@@ -105,19 +109,22 @@ int sys_execve(const char *file, char *const argv[], char *const envp[]) {
     int err = 0;
 
     // open the file and read the headers
-    int f;
-    if ((f = open(file, O_RDONLY)) < 0)
+    struct fd f;
+    struct fd *fd;
+    if (generic_open(file, &f, O_RDONLY, 0) < 0)
         return err_map(errno);
+    fd = &f;
     struct elf_header header;
-    if ((err = read_header(f, &header)) < 0)
-        goto out_free_f;
+    if ((err = read_header(fd, &header)) < 0)
+        goto out_free_fd;
     struct prg_header *ph;
-    if ((err = read_prg_headers(f, header, &ph)) < 0)
-        goto out_free_f;
+    if ((err = read_prg_headers(fd, header, &ph)) < 0)
+        goto out_free_fd;
 
     // look for an interpreter
     char *interp_name = NULL;
-    int interp_f = -1;
+    struct fd interp_f;
+    struct fd *interp_fd = NULL;
     struct elf_header interp_header;
     struct prg_header *interp_ph;
     for (unsigned i = 0; i < header.phent_count; i++) {
@@ -136,21 +143,22 @@ int sys_execve(const char *file, char *const argv[], char *const envp[]) {
 
         // read the interpreter name out of the file
         err = _EIO;
-        if (lseek(f, ph[i].offset, SEEK_SET) < 0)
+        if (fd->ops->lseek(fd, ph[i].offset, SEEK_SET) < 0)
             goto out_free_interp;
-        if (read(f, interp_name, ph[i].filesize) != ph[i].filesize)
+        if (fd->ops->read(fd, interp_name, ph[i].filesize) != ph[i].filesize)
             goto out_free_interp;
 
         // open interpreter and read headers
-        if ((interp_f = open(interp_name, O_RDONLY)) < 0) {
+        if ((generic_open(interp_name, &interp_f, O_RDONLY, 0)) < 0) {
             err = err_map(errno);
             goto out_free_interp;
         }
-        if ((err = read_header(interp_f, &interp_header)) < 0) {
+        interp_fd = &interp_f;
+        if ((err = read_header(interp_fd, &interp_header)) < 0) {
             if (err == _ENOEXEC) err = _ELIBBAD;
             goto out_free_interp;
         }
-        if ((err = read_prg_headers(interp_f, interp_header, &interp_ph)) < 0) {
+        if ((err = read_prg_headers(interp_fd, interp_header, &interp_ph)) < 0) {
             if (err == _ENOEXEC) err = _ELIBBAD;
             goto out_free_interp;
         }
@@ -164,27 +172,32 @@ int sys_execve(const char *file, char *const argv[], char *const envp[]) {
 
     addr_t load_addr; // used for AX_PHDR
     bool load_addr_set = false;
+    addr_t bias = 0; // offset for loading shared libraries as executables
 
     // map dat shit!
     for (unsigned i = 0; i < header.phent_count; i++) {
         if (ph[i].type != PT_LOAD)
             continue;
 
-        if ((err = load_entry(ph[i], 0, f)) < 0)
+        if (!load_addr_set && header.type == ELF_DYNAMIC)
+            bias = 0x56555000; // I've no idea why
+
+        if ((err = load_entry(ph[i], bias, fd)) < 0)
             goto beyond_hope;
 
         // load_addr is used to get a value for AX_PHDR et al
         if (!load_addr_set) {
-            load_addr = ph[i].vaddr - ph[i].offset;
+            load_addr = bias + ph[i].vaddr - ph[i].offset;
             load_addr_set = true;
         }
 
         // we have to know where the brk starts
-        if (ph[i].vaddr + ph[i].memsize > current->start_brk)
-            current->start_brk = current->brk = BYTES_ROUND_UP(ph[i].vaddr + ph[i].memsize);
+        addr_t brk = bias + ph[i].vaddr + ph[i].memsize;
+        if (brk > current->start_brk)
+            current->start_brk = current->brk = BYTES_ROUND_UP(brk);
     }
 
-    addr_t entry = header.entry_point;
+    addr_t entry = bias + header.entry_point;
     addr_t interp_addr = 0;
 
     if (interp_name) {
@@ -209,7 +222,7 @@ int sys_execve(const char *file, char *const argv[], char *const envp[]) {
         for (int i = interp_header.phent_count; i >= 0; i--) {
             if (interp_ph[i].type != PT_LOAD)
                 continue;
-            if ((err = load_entry(interp_ph[i], interp_addr, interp_f)) < 0)
+            if ((err = load_entry(interp_ph[i], interp_addr, interp_fd)) < 0)
                 goto beyond_hope;
         }
         entry = interp_addr + interp_header.entry_point;
@@ -275,7 +288,7 @@ int sys_execve(const char *file, char *const argv[], char *const envp[]) {
         {AX_PHNUM, header.phent_count},
         {AX_BASE, interp_addr},
         {AX_FLAGS, 0},
-        {AX_ENTRY, header.entry_point},
+        {AX_ENTRY, bias + header.entry_point},
         {AX_UID, 0},
         {AX_EUID, 0},
         {AX_GID, 0},
@@ -326,12 +339,12 @@ int sys_execve(const char *file, char *const argv[], char *const envp[]) {
 out_free_interp:
     if (interp_name != NULL)
         free(interp_name);
-    if (interp_f != -1)
-        close(interp_f);
+    if (interp_fd != NULL)
+        interp_fd->ops->close(interp_fd);
 out_free_ph:
     free(ph);
-out_free_f:
-    close(f);
+out_free_fd:
+    fd->ops->close(fd);
     return err;
 
 beyond_hope:

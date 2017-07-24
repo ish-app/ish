@@ -85,6 +85,11 @@
 #define get_mem_addr(size) mem_read(addr, size)
 #define set_mem_addr(to, size) mem_write(addr, to, size)
 
+#define get_mem_si(size) mem_read(cpu->osi, size)
+#define set_mem_si(size) mem_write(cpu->osi, size)
+#define get_mem_di(size) mem_read(cpu->odi, size)
+#define set_mem_di(size) mem_write(cpu->osi, size)
+
 // DEFINE ALL THE MACROS
 #define get_oax(size) cpu->oax
 #define get_obx(size) cpu->obx
@@ -439,8 +444,12 @@
 
 // TODO find an alternative to al here
 #define SCAS(z) \
-    addr = cpu->edi; CMP(al, mem_addr,z); \
+    CMP(al, mem_di,z); \
     BUMP_DI(z)
+
+#define CMPS(z) \
+    CMP(mem_di, mem_si,z); \
+    BUMP_SI_DI(z)
 
 #define REP(OP) \
     while (cpu->ocx != 0) { \
@@ -453,6 +462,13 @@
         OP; \
         cpu->ocx--; \
         if (ZF) break; \
+    }
+
+#define REPZ(OP) \
+    while (cpu->ocx != 0) { \
+        OP; \
+        cpu->ocx--; \
+        if (!ZF) break; \
     }
 
 #define CMPXCHG(src, dst,z) \

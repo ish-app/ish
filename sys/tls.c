@@ -28,3 +28,8 @@ int sys_set_thread_area(addr_t u_info) {
     user_put_count(u_info, (char *) &info, sizeof(struct user_desc));
     return 0;
 }
+
+int sys_set_tid_address(addr_t blahblahblah) {
+    // TODO this is supposed to actually do something...pthread_join someday
+    return sys_getpid();
+}

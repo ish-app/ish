@@ -54,6 +54,7 @@ syscall_t syscall_table[] = {
     [239] = (syscall_t) sys_sendfile64,
     [243] = (syscall_t) sys_set_thread_area,
     [252] = (syscall_t) sys_exit_group,
+    [258] = (syscall_t) sys_set_tid_address,
     [265] = (syscall_t) sys_clock_gettime,
 
     // stubs

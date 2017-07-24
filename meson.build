@@ -49,7 +49,7 @@ emu_src = [
 
 threads = dependency('threads')
 
-libish = library('ish', sys_src + emu_src + ['setup.c'],
+libish = library('ish', sys_src + emu_src,
     include_directories: includes)
 ish = declare_dependency(
     link_with: libish,

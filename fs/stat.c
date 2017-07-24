@@ -32,8 +32,8 @@ int generic_stat(const char *pathname, struct statbuf *stat, bool follow_links) 
     int err = path_normalize(pathname, path);
     if (err < 0)
         return err;
-    struct mount *mount = find_mount(path);
-    return mount->fs->stat(path_in_mount(path, mount), stat, follow_links);
+    struct mount *mount = find_mount_and_trim_path(path);
+    return mount->fs->stat(mount, path, stat, follow_links);
 }
 
 static dword_t sys_stat_path(addr_t pathname_addr, addr_t statbuf_addr, bool follow_links) {

@@ -618,6 +618,8 @@ restart:
                 case 0xa4: TRACEI("rep movsb"); REP(MOVS(8)); break;
                 case 0xa5: TRACEI("rep movs"); REP(MOVS(OP_SIZE)); break;
 
+                case 0xa6: TRACEI("repz cmpsb"); REPZ(CMPS(8)); break;
+
                 case 0xaa: TRACEI("rep stosb"); REP(STOS(8)); break;
                 case 0xab: TRACEI("rep stos"); REP(STOS(OP_SIZE)); break;
 
