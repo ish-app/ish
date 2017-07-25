@@ -103,3 +103,12 @@ dword_t sys_rt_sigaction(dword_t signum, addr_t action_addr, addr_t oldaction_ad
 dword_t sys_sigaction(dword_t signum, addr_t action_addr, addr_t oldaction_addr) {
     return sys_rt_sigaction(signum, action_addr, oldaction_addr, 1);
 }
+
+#define FAKE_SIG_UNBLOCK 1
+
+dword_t sys_rt_sigprocmask(dword_t how, addr_t set, addr_t oldset, dword_t size) {
+    // only allow musl's funky thing it does in sigaction
+    if (how != FAKE_SIG_UNBLOCK || oldset != 0 || size != 8)
+        TODO("rt_sigprocmask should actuall work");
+    return 0;
+}

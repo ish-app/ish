@@ -42,6 +42,7 @@ syscall_t syscall_table[] = {
     [146] = (syscall_t) sys_writev,
     [183] = (syscall_t) sys_getcwd,
     [174] = (syscall_t) sys_rt_sigaction,
+    [175] = (syscall_t) sys_rt_sigprocmask,
     [187] = (syscall_t) sys_sendfile,
     [192] = (syscall_t) sys_mmap2,
     [195] = (syscall_t) sys_stat64,

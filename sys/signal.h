@@ -58,6 +58,7 @@ int send_signal(int sig);
 
 dword_t sys_rt_sigaction(dword_t signum, addr_t action_addr, addr_t oldaction_addr, dword_t sigset_size);
 dword_t sys_sigaction(dword_t signum, addr_t action_addr, addr_t oldaction_addr);
+dword_t sys_rt_sigprocmask(dword_t how, addr_t set, addr_t oldset, dword_t size);
 
 // signal frame structs. There's a good chance this should go in its own header file
 
