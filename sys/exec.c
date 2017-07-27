@@ -334,6 +334,7 @@ int sys_execve(const char *file, char *const argv[], char *const envp[]) {
 
     current->cpu.esp = sp;
     current->cpu.eip = entry;
+    pthread_cond_broadcast(&current->vfork_done);
 
     err = 0;
 out_free_interp:

@@ -81,6 +81,6 @@ extern const struct fs_ops realfs;
 extern const struct fd_ops realfs_fdops; // TODO remove from header file
 
 // TODO put this somewhere else
-char *strnprepend(char *str, const char *prefix, int max);
+char *strnprepend(char *str, const char *prefix, size_t max);
 
 #endif

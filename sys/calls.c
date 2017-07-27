@@ -34,16 +34,21 @@ syscall_t syscall_table[] = {
     [85] = (syscall_t) sys_readlink,
     [90] = (syscall_t) sys_mmap,
     [91] = (syscall_t) sys_munmap,
+    [104] = (syscall_t) sys_setitimer,
+    [114] = (syscall_t) sys_wait4,
     [116] = (syscall_t) sys_sysinfo,
     [120] = (syscall_t) sys_clone,
     [122] = (syscall_t) _sys_uname,
     [125] = (syscall_t) sys_mprotect,
     [140] = (syscall_t) sys__llseek,
+    [145] = (syscall_t) sys_readv,
     [146] = (syscall_t) sys_writev,
+    [162] = (syscall_t) sys_nanosleep,
     [183] = (syscall_t) sys_getcwd,
     [174] = (syscall_t) sys_rt_sigaction,
     [175] = (syscall_t) sys_rt_sigprocmask,
     [187] = (syscall_t) sys_sendfile,
+    [190] = (syscall_t) sys_vfork,
     [192] = (syscall_t) sys_mmap2,
     [195] = (syscall_t) sys_stat64,
     [196] = (syscall_t) sys_lstat64,
@@ -70,8 +75,7 @@ void handle_interrupt(struct cpu_state *cpu, int interrupt) {
         if (syscall_num >= NUM_SYSCALLS || syscall_table[syscall_num] == NULL) {
             // TODO SIGSYS
             printf("missing syscall %d\n", syscall_num);
-            if (send_signal(SIGSYS_) < 0)
-                printf("send sigsys failed\n");
+            send_signal(current, SIGSYS_);
         } else {
             TRACE("syscall %d ", syscall_num);
             int result = syscall_table[syscall_num](cpu->ebx, cpu->ecx, cpu->edx, cpu->esi, cpu->edi, cpu->ebp);
@@ -85,8 +89,7 @@ void handle_interrupt(struct cpu_state *cpu, int interrupt) {
         sys_exit(1);
     } else if (interrupt == INT_UNDEFINED) {
         printf("illegal instruction\n");
-        if (send_signal(SIGILL_) < 0)
-            printf("send sigill failed\n");
+        send_signal(current, SIGILL_);
     } else {
         printf("exiting\n");
         sys_exit(interrupt);

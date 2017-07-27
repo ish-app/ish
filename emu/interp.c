@@ -1,6 +1,10 @@
 #include "emu/cpu.h"
 #include "emu/cpuid.h"
 
+// TODO get rid of these
+#pragma GCC diagnostic ignored "-Wsign-compare"
+#pragma GCC diagnostic ignored "-Wtautological-constant-out-of-range-compare"
+
 #define DECLARE_LOCALS \
     dword_t saved_ip = cpu->eip; \
     byte_t insn; \
@@ -228,7 +232,7 @@
 #define ADC(src, dst,z) \
     SETAF(src, dst,z); \
     cpu->of = signed_overflow(add, get(dst,z), get(src,z) + cpu->cf, cpu->res,z) \
-        || (get(src,z) + cpu->cf == -1); \
+        || (get(src,z) + cpu->cf == (uint(sz(z))) -1); \
     cpu->cf = unsigned_overflow(add, get(dst,z), get(src,z) + cpu->cf, cpu->res,z) \
         || (cpu->cf && get(src,z) == (uint(sz(z))) -1); \
     set(dst, cpu->res,z); SETRESFLAGS
@@ -236,7 +240,7 @@
 #define SBB(src, dst,z) \
     SETAF(src, dst,z); \
     cpu->of = signed_overflow(sub, get(dst,z), get(src,z) + cpu->cf, cpu->res,z) \
-        || (get(src,z) + cpu->cf == -1); \
+        || (get(src,z) + cpu->cf == (uint(sz(z))) -1); \
     cpu->cf = unsigned_overflow(sub, get(dst,z), get(src,z) + cpu->cf, cpu->res,z) \
         || (cpu->cf && get(src,z) == (uint(sz(z))) -1); \
     set(dst, cpu->res,z); SETRESFLAGS

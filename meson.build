@@ -48,9 +48,11 @@ emu_src = [
 ]
 
 threads = dependency('threads')
+librt = meson.get_compiler('c').find_library('rt', required: false)
 
 libish = library('ish', sys_src + emu_src,
-    include_directories: includes)
+    include_directories: includes,
+    dependencies: [librt, threads])
 ish = declare_dependency(
     link_with: libish,
     include_directories: includes)

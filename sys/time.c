@@ -1,4 +1,5 @@
 #include <time.h>
+#include <signal.h>
 #include "sys/calls.h"
 #include "sys/errno.h"
 
@@ -25,5 +26,66 @@ dword_t sys_clock_gettime(dword_t clock, addr_t tp) {
     t.sec = ts.tv_sec;
     t.nsec = ts.tv_nsec;
     user_put_count(tp, &t, sizeof(t));
+    return 0;
+}
+
+static void itimer_notify(union sigval sv) {
+    struct process *proc = sv.sival_ptr;
+    send_signal(proc, SIGALRM_);
+}
+
+dword_t sys_setitimer(dword_t which, addr_t new_val_addr, addr_t old_val_addr) {
+    if (which != ITIMER_REAL_)
+        TODO("setitimer %d", which);
+
+    struct itimerval_ val;
+    user_get_count(new_val_addr, &val, sizeof(val));
+
+    if (!current->has_timer) {
+        struct sigevent sigev;
+        sigev.sigev_notify = SIGEV_THREAD;
+        sigev.sigev_notify_function = itimer_notify;
+        sigev.sigev_value.sival_ptr = current;
+        if (timer_create(CLOCK_REALTIME, &sigev, &current->timer) < 0)
+            return err_map(errno);
+        current->has_timer = true;
+    }
+
+    struct itimerspec spec;
+    spec.it_interval.tv_sec = val.interval.sec;
+    spec.it_interval.tv_nsec = val.interval.usec * 1000;
+    spec.it_value.tv_sec = val.value.sec;
+    spec.it_value.tv_nsec = val.value.usec * 1000;
+    struct itimerspec old_spec;
+    if (timer_settime(current->timer, 0, &spec, &old_spec) < 0)
+        return err_map(errno);
+
+    if (old_val_addr != 0) {
+        struct itimerval_ old_val;
+        old_val.interval.sec = old_spec.it_interval.tv_sec;
+        old_val.interval.usec = old_spec.it_interval.tv_nsec / 1000;
+        old_val.value.sec = old_spec.it_value.tv_sec;
+        old_val.value.usec = old_spec.it_value.tv_nsec / 1000;
+        user_put_count(old_val_addr, &old_val, sizeof(old_val));
+    }
+
+    return 0;
+}
+
+dword_t sys_nanosleep(addr_t req_addr, addr_t rem_addr) {
+    struct timespec_ req_ts;
+    user_get_count(req_addr, &req_ts, sizeof(req_ts));
+    struct timespec req;
+    req.tv_sec = req_ts.sec;
+    req.tv_nsec = req_ts.nsec;
+    struct timespec rem;
+    if (nanosleep(&req, &rem) < 0)
+        return err_map(errno);
+    if (rem_addr != 0) {
+        struct timespec_ rem_ts;
+        rem_ts.sec = rem.tv_sec;
+        rem_ts.nsec = rem.tv_nsec;
+        user_put_count(rem_addr, &rem_ts, sizeof(rem_ts));
+    }
     return 0;
 }

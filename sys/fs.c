@@ -71,6 +71,22 @@ dword_t sys_read(fd_t fd_no, addr_t buf_addr, dword_t size) {
     return res;
 }
 
+dword_t sys_readv(fd_t fd_no, addr_t iovec_addr, dword_t iovec_count) {
+    struct io_vec iovecs[iovec_count];
+    user_get_count(iovec_addr, iovecs, sizeof(iovecs));
+    int res;
+    dword_t count = 0;
+    for (unsigned i = 0; i < iovec_count; i++) {
+        res = sys_read(fd_no, iovecs[i].base, iovecs[i].len);
+        if (iovecs[i].len != 0 && res == 0)
+            break;
+        if (res < 0)
+            return res;
+        count += res;
+    }
+    return count;
+}
+
 dword_t sys_write(fd_t fd_no, addr_t buf_addr, dword_t size) {
     char buf[size];
     user_get_count(buf_addr, buf, size);

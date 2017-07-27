@@ -22,10 +22,12 @@ void user_put_count(addr_t addr, const void *buf, size_t count);
 
 // process lifecycle
 dword_t sys_clone(dword_t flags, addr_t stack, addr_t ptid, addr_t tls, addr_t ctid);
+dword_t sys_vfork();
 int sys_execve(const char *file, char *const argv[], char *const envp[]);
 dword_t _sys_execve(addr_t file, addr_t argv, addr_t envp);
 dword_t sys_exit(dword_t status);
 dword_t sys_exit_group(dword_t status);
+dword_t sys_wait4(dword_t pid, addr_t status_addr, dword_t options, addr_t rusage_addr);
 dword_t sys_waitpid(dword_t pid, addr_t status_addr, dword_t options);
 
 // memory management
@@ -49,6 +51,7 @@ struct io_vec {
 #define LSEEK_CUR 1
 #define LSEEK_END 2
 dword_t sys_read(fd_t fd_no, addr_t buf_addr, dword_t size);
+dword_t sys_readv(fd_t fd_no, addr_t iovec_addr, dword_t iovec_count);
 dword_t sys_write(fd_t fd_no, addr_t buf_addr, dword_t size);
 dword_t sys_writev(fd_t fd_no, addr_t iovec_addr, dword_t iovec_count);
 dword_t sys__llseek(fd_t f, dword_t off_high, dword_t off_low, addr_t res_addr, dword_t whence);
@@ -125,6 +128,27 @@ dword_t sys_time(addr_t time_out);
 #define CLOCK_REALTIME_ 0
 #define CLOCK_MONOTONIC_ 1
 dword_t sys_clock_gettime(dword_t clock, addr_t tp);
+
+struct timeval_ {
+    dword_t sec;
+    dword_t usec;
+};
+struct timespec_ {
+    dword_t sec;
+    dword_t nsec;
+};
+
+#define ITIMER_REAL_ 0
+#define ITIMER_VIRTUAL_ 1
+#define ITIMER_PROF_ 2
+struct itimerval_ {
+    struct timeval_ interval;
+    struct timeval_ value;
+};
+dword_t sys_getitimer(dword_t which, addr_t val);
+dword_t sys_setitimer(dword_t which, addr_t new_val, addr_t old_val);
+
+dword_t sys_nanosleep(addr_t req, addr_t rem);
 
 typedef int (*syscall_t)(dword_t,dword_t,dword_t,dword_t,dword_t,dword_t);
 

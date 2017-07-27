@@ -29,12 +29,18 @@ struct process {
     struct list children;
     struct list siblings;
 
+    bool has_timer;
+    timer_t timer;
+
     // the next two fields are protected by the lock on the parent process, not
     // the lock on the process. this is because waitpid locks the parent
     // process to wait for any of its children to exit.
     dword_t exit_code;
     bool zombie;
     pthread_cond_t child_exit;
+
+    pthread_cond_t vfork_done;
+
     pthread_mutex_t lock;
 };
 

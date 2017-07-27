@@ -5,17 +5,17 @@
 int xsave_extra = 0;
 int fxsave_extra = 0;
 
-int send_signal(int sig) {
-    if (current->sigactions[sig].handler == SIG_IGN_)
-        return 0;
-    if (current->sigactions[sig].handler == SIG_DFL_)
+void send_signal(struct process *proc, int sig) {
+    if (proc->sigactions[sig].handler == SIG_IGN_)
+        return;
+    if (proc->sigactions[sig].handler == SIG_DFL_)
         sys_exit(0);
 
     // setup the frame
     struct sigframe_ frame = {};
     frame.sig = sig;
 
-    struct cpu_state *cpu = &current->cpu;
+    struct cpu_state *cpu = &proc->cpu;
     frame.sc.ax = cpu->eax;
     frame.sc.bx = cpu->ebx;
     frame.sc.cx = cpu->ecx;
@@ -36,7 +36,7 @@ int send_signal(int sig) {
         fprintf(stderr, "sigreturn not found in vdso, this should never happen\n");
         abort();
     }
-    frame.pretcode = current->vdso + sigreturn_addr;
+    frame.pretcode = proc->vdso + sigreturn_addr;
     // for legacy purposes
     frame.retcode.popmov = 0xb858;
     frame.retcode.nr_sigreturn = 173; // rt_sigreturn
@@ -44,7 +44,7 @@ int send_signal(int sig) {
 
     // set up registers for signal handler
     cpu->eax = sig;
-    cpu->eip = current->sigactions[sig].handler;
+    cpu->eip = proc->sigactions[sig].handler;
 
     dword_t sp = cpu->esp;
     if (xsave_extra) {
@@ -64,7 +64,7 @@ int send_signal(int sig) {
     // install frame
     user_put_count(sp, &frame, sizeof(frame));
 
-    return 0;
+    return;
 }
 
 static int do_sigaction(int sig, const struct sigaction_ *action, struct sigaction_ *oldaction) {

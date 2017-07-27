@@ -12,7 +12,7 @@
 #include "sys/calls.h"
 #include "sys/fs.h"
 
-char *strnprepend(char *str, const char *prefix, int max) {
+char *strnprepend(char *str, const char *prefix, size_t max) {
     if (strlen(str) + strlen(prefix) + 1 > max)
         return NULL;
     const char *src = str + strlen(str) + 1;

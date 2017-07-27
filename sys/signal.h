@@ -53,8 +53,7 @@ struct sigaction_ {
 #define SIGUNUSED_ 31
 
 struct process;
-// TODO will eventually be possible to send signals to other processes
-int send_signal(int sig);
+void send_signal(struct process *proc, int sig);
 
 dword_t sys_rt_sigaction(dword_t signum, addr_t action_addr, addr_t oldaction_addr, dword_t sigset_size);
 dword_t sys_sigaction(dword_t signum, addr_t action_addr, addr_t oldaction_addr);

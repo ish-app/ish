@@ -27,6 +27,8 @@ struct process *process_create() {
     list_init(&proc->siblings);
     pthread_mutex_init(&proc->lock, NULL);
     pthread_cond_init(&proc->child_exit, NULL);
+    pthread_cond_init(&proc->vfork_done, NULL);
+    proc->has_timer = false;
     procs[proc->pid] = proc;
     return proc;
 }
@@ -92,10 +94,6 @@ static int copy_memory(struct process *proc, int flags) {
     return 0;
 }
 
-// eax = syscall number
-// ebx = flags
-// ecx = stack
-// edx, esi, edi = unimplemented garbage
 static int dup_process(int flags, addr_t stack, addr_t ptid, addr_t tls, addr_t ctid, struct process **p) {
     if (ptid != 0 || tls != 0) {
         FIXME("clone with ptid or ts not null");
@@ -112,6 +110,7 @@ static int dup_process(int flags, addr_t stack, addr_t ptid, addr_t tls, addr_t 
     struct process *proc = process_create();
     if (proc == NULL)
         return _ENOMEM;
+    pthread_mutex_lock(&proc->lock);
     dword_t pid = proc->pid;
     *proc = *current;
     proc->pid = pid;
@@ -129,18 +128,32 @@ static int dup_process(int flags, addr_t stack, addr_t ptid, addr_t tls, addr_t 
         user_put_proc(proc, ctid, proc->pid);
     start_thread(proc);
 
-    *p = proc;
+    if (flags & CLONE_VFORK_)
+        pthread_cond_wait(&proc->vfork_done, &proc->lock);
+
+    pthread_mutex_unlock(&proc->lock);
+    if (p)
+        *p = proc;
     return 0;
 
 fail_free_proc:
+    pthread_mutex_unlock(&proc->lock);
     free(proc);
     return err;
 }
 
+// eax = syscall number
+// ebx = flags
+// ecx = stack
+// edx, esi, edi = unimplemented garbage
 dword_t sys_clone(dword_t flags, addr_t stack, addr_t ptid, addr_t tls, addr_t ctid) {
     struct process *proc;
     int err = dup_process(flags, stack, ptid, tls, ctid, &proc);
     if (err < 0)
         return err;
     return proc->pid;
+}
+
+dword_t sys_vfork() {
+    return sys_clone(CLONE_VFORK_ | CLONE_VM_ | SIGCHLD_, current->cpu.esp, 0, 0, 0);
 }
