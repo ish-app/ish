@@ -9,11 +9,13 @@
 //  - prepending the current or root directory
 //  - converting multiple slashes into one
 //  - resolving . and .. (unimplemented)
-//  - resolving symlinks (unimplemented)
+//  - resolving symlinks, skipping the last path component if the follow_links
+//    argument is true
 // The result will always begin with a slash.
 //
-// If the normalized path would be longer than MAX_PATH, _ENAMETOOLONG is
-// returned. The out buffer is expected to be at least MAX_PATH + 1 in size.
-int path_normalize(const char *path, char *out);
+// If the normalized path plus the null terminator would be longer than
+// MAX_PATH, _ENAMETOOLONG is returned. The out buffer is expected to be at
+// least MAX_PATH in size.
+int path_normalize(const char *path, char *out, bool follow_links);
 
 #endif

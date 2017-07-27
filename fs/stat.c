@@ -29,7 +29,7 @@ struct newstat64 stat_convert_newstat64(struct statbuf stat) {
 
 int generic_stat(const char *pathname, struct statbuf *stat, bool follow_links) {
     char path[MAX_PATH];
-    int err = path_normalize(pathname, path);
+    int err = path_normalize(pathname, path, follow_links);
     if (err < 0)
         return err;
     struct mount *mount = find_mount_and_trim_path(path);
@@ -49,11 +49,11 @@ static dword_t sys_stat_path(addr_t pathname_addr, addr_t statbuf_addr, bool fol
 }
 
 dword_t sys_stat64(addr_t pathname_addr, addr_t statbuf_addr) {
-    return sys_stat_path(pathname_addr, statbuf_addr, false);
+    return sys_stat_path(pathname_addr, statbuf_addr, true);
 }
 
 dword_t sys_lstat64(addr_t pathname_addr, addr_t statbuf_addr) {
-    return sys_stat_path(pathname_addr, statbuf_addr, true);
+    return sys_stat_path(pathname_addr, statbuf_addr, false);
 }
 
 dword_t sys_fstat64(fd_t fd_no, addr_t statbuf_addr) {

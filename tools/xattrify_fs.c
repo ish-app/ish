@@ -20,8 +20,7 @@ int xattrify_file(const char *file, const struct stat *stat, int type) {
     xstat.gid = stat->st_gid;
     xstat.dev = stat->st_dev;
     xstat.rdev = stat->st_rdev;
-    if (setxattr(file, "user.ish.stat", &xstat, sizeof(xstat), 0) < 0
-            || chown(file, 1000, 1000) < 0)
+    if (setxattr(file, "user.ish.stat", &xstat, sizeof(xstat), 0) < 0)
         perror(file);
     return 0;
 }

@@ -104,9 +104,9 @@ static int realfs_stat(struct mount *mount, char *path, struct statbuf *fake_sta
     struct stat real_stat;
     int (*stat_fn)(const char *path, struct stat *buf);
     if (follow_links)
-        stat_fn = lstat;
-    else
         stat_fn = stat;
+    else
+        stat_fn = lstat;
     if (stat_fn(path, &real_stat) < 0)
         return err_map(errno);
     copy_stat(fake_stat, &real_stat);

@@ -40,6 +40,16 @@ fd_t sys_open(addr_t pathname_addr, dword_t flags, dword_t mode) {
     return fd;
 }
 
+dword_t sys_readlink(addr_t pathname_addr, addr_t buf_addr, dword_t bufsize) {
+    char pathname[MAX_PATH];
+    user_get_string(pathname_addr, pathname, sizeof(pathname));
+    char buf[bufsize];
+    int err = generic_readlink(pathname, buf, bufsize);
+    if (err >= 0)
+        user_put_string(buf_addr, buf);
+    return err;
+}
+
 dword_t sys_unlink(addr_t pathname_addr) {
     char pathname[MAX_PATH];
     user_get_string(pathname_addr, pathname, sizeof(pathname));
@@ -195,9 +205,6 @@ dword_t sys_getcwd(addr_t buf_addr, dword_t size) {
 }
 
 // a few stubs
-dword_t sys_readlink(addr_t pathname_addr, addr_t buf_addr, dword_t bufsize) {
-    return _ENOENT;
-}
 dword_t sys_sendfile(fd_t out_fd, fd_t in_fd, addr_t offset_addr, dword_t count) {
     return _EINVAL;
 }

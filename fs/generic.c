@@ -27,7 +27,7 @@ struct mount *find_mount_and_trim_path(char *path) {
 
 int generic_open(const char *pathname, struct fd *fd, int flags, int mode) {
     char path[MAX_PATH];
-    int err = path_normalize(pathname, path);
+    int err = path_normalize(pathname, path, true);
     if (err < 0)
         return err;
     struct mount *mount = find_mount_and_trim_path(path);
@@ -37,7 +37,7 @@ int generic_open(const char *pathname, struct fd *fd, int flags, int mode) {
 // TODO I bet this can be shorter
 int generic_access(const char *pathname, int mode) {
     char path[MAX_PATH];
-    int err = path_normalize(pathname, path);
+    int err = path_normalize(pathname, path, true);
     if (err < 0)
         return err;
     struct mount *mount = find_mount_and_trim_path(path);
@@ -47,7 +47,7 @@ int generic_access(const char *pathname, int mode) {
 // TODO I bet this can be shorter
 int generic_unlink(const char *pathname) {
     char path[MAX_PATH];
-    int err = path_normalize(pathname, path);
+    int err = path_normalize(pathname, path, true);
     if (err < 0)
         return err;
     struct mount *mount = find_mount_and_trim_path(path);
@@ -56,7 +56,7 @@ int generic_unlink(const char *pathname) {
 
 ssize_t generic_readlink(const char *pathname, char *buf, size_t bufsize) {
     char path[MAX_PATH];
-    int err = path_normalize(pathname, path);
+    int err = path_normalize(pathname, path, false);
     if (err < 0)
         return err;
     struct mount *mount = find_mount_and_trim_path(path);
