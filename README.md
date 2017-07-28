@@ -14,6 +14,6 @@ Roadmap:
  - [ ] QEMU cpu test program
  - [ ] Busybox wget
 
-Build system is meson. Run programs with `./thingy program`. If you're not sure what to run, there are some test programs in (you guessed it) `tests`. Run `ninja busybox` to download and build busybox.
+Build system is meson. Run programs with `./ish program`. If you're not sure what to run, there are some test programs in (you guessed it) `tests`. Run `ninja busybox` to download and build busybox.
 
-You can also replace `thingy` with `ptraceomatic` to run the program in a real process and single step and compare the registers at each step. I use it for debugging. Requires 64-bit Linux 4.11 or later.
+You can also replace `ish` with `tools/ptraceomatic` to run the program in a real process and single step and compare the registers at each step. I use it for debugging. Requires 64-bit Linux 4.11 or later.
