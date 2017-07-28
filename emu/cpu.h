@@ -8,7 +8,6 @@
 struct cpu_state;
 void cpu_run(struct cpu_state *cpu);
 int cpu_step32(struct cpu_state *cpu);
-int cpu_step16(struct cpu_state *cpu);
 
 union xmm_reg {
     qword_t qw[2];
