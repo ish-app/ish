@@ -7,7 +7,9 @@ Roadmap:
  - [x] Hello world in assembler
  - [x] Hello world with statically linked C library
  - [x] Hello world with dynamically linked C library
- - [ ] Busybox shell
+ - [x] Busybox shell
+ - [ ] Busybox vi (VIM MASTER RACE)
+ - [ ] Busybox login, getty
  - [ ] Port the thing to Darwin/iOS, release on the app store
  - [ ] QEMU cpu test program
  - [ ] Busybox wget
