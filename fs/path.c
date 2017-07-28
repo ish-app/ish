@@ -71,11 +71,11 @@ int path_normalize(const char *path, char *out, bool follow_links) {
                 // if we should restart from the root, copy down
                 if (*c == '/')
                     memmove(out, c, strlen(c) + 1);
-                // from this point on pretend possible_symlink is called expanded_path
-                strcpy(possible_symlink, out);
-                strcat(possible_symlink, "/");
-                strcat(possible_symlink, p);
-                return path_normalize(possible_symlink, out, follow_links);
+                char *expanded_path = possible_symlink;
+                strcpy(expanded_path, out);
+                strcat(expanded_path, "/");
+                strcat(expanded_path, p);
+                return path_normalize(expanded_path, out, follow_links);
             }
         }
     }

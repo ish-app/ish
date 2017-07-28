@@ -8,7 +8,7 @@
 // Normalization means:
 //  - prepending the current or root directory
 //  - converting multiple slashes into one
-//  - resolving . and .. (unimplemented)
+//  - resolving . and ..
 //  - resolving symlinks, skipping the last path component if the follow_links
 //    argument is true
 // The result will always begin with a slash.
