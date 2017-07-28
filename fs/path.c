@@ -23,8 +23,29 @@ int path_normalize(const char *path, char *out, bool follow_links) {
     }
 
     while (*p != '\0') {
+        if (p[0] == '.') {
+            if (p[1] == '\0' || p[1] == '/') {
+                // single dot path component, ignore
+                p++;
+                while (*p == '/')
+                    p++;
+                continue;
+            } else if (p[1] == '.' && (p[2] == '\0' || p[2] == '/')) {
+                // double dot path component, delete the last component
+                do {
+                    o--;
+                    n++;
+                } while (*o != '/');
+                p += 2;
+                while (*p == '/')
+                    p++;
+                continue;
+            }
+        }
+
         // output a slash
         *o++ = '/'; n--;
+        char *c = o;
         // copy up to a slash or null
         while (*p != '/' && *p != '\0' && --n > 0)
             *o++ = *p++;
@@ -43,10 +64,13 @@ int path_normalize(const char *path, char *out, bool follow_links) {
             strcpy(possible_symlink, out);
             possible_symlink[o - out] = '\0';
             struct mount *mount = find_mount_and_trim_path(possible_symlink);
-            int res = mount->fs->readlink(mount, possible_symlink, out, MAX_PATH);
+            int res = mount->fs->readlink(mount, possible_symlink, c, MAX_PATH - (c - out));
             if (res >= 0) {
                 // readlink does not null terminate
-                out[res] = '\0';
+                c[res] = '\0';
+                // if we should restart from the root, copy down
+                if (*c == '/')
+                    memmove(out, c, strlen(c) + 1);
                 // from this point on pretend possible_symlink is called expanded_path
                 strcpy(possible_symlink, out);
                 strcat(possible_symlink, "/");
