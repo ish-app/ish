@@ -8,23 +8,6 @@
 #include <stdbool.h>
 #include <sys/types.h>
 
-// debug output utilities
-#if DEBUG_LOG
-#define TRACE(msg, ...) printf(msg, ##__VA_ARGS__)
-#else
-#define TRACE(msg, ...) (void)NULL
-#endif
-#define TRACEI(msg, ...) TRACE(msg "\t", ##__VA_ARGS__)
-
-#define TODO(msg, ...) { printf("TODO: " msg "\n", ##__VA_ARGS__); abort(); }
-#define FIXME(msg, ...) printf("FIXME " msg "\n", ##__VA_ARGS__)
-
-#if defined(__i386__) || defined(__x86_64__)
-#define debugger __asm__("int3")
-#elif defined(__arm__)
-#define debugger __asm__("trap")
-#endif
-
 // utility macros
 #define CONCAT(a, b) _CONCAT(a, b)
 #define _CONCAT(a, b) a##b
@@ -32,6 +15,8 @@
 
 #define STR(x) _STR(x)
 #define _STR(x) #x
+
+#include "debug.h"
 
 // keywords
 #define bits unsigned int

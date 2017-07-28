@@ -2,6 +2,7 @@
 #error "VDSO must be built in Linux in 32-bit mode"
 #endif
 
+#define _GNU_SOURCE
 #include <sys/time.h>
 #include <time.h>
 #include <asm/unistd.h>
@@ -13,7 +14,7 @@ time_t __vdso_time(time_t *t) {
     return result;
 }
 
-int __vdso_gettimeofday(struct timeval *tv, struct timezone *tz) {
+int __vdso_gettimeofday(struct timeval *tv, void *tz) {
     int result;
     __asm__("int $0x80" : "=a" (result) :
             "0" (__NR_gettimeofday), "b" (tv), "c" (tz));

@@ -109,6 +109,6 @@ dword_t sys_sigaction(dword_t signum, addr_t action_addr, addr_t oldaction_addr)
 dword_t sys_rt_sigprocmask(dword_t how, addr_t set, addr_t oldset, dword_t size) {
     // only allow musl's funky thing it does in sigaction
     if (how != FAKE_SIG_UNBLOCK || oldset != 0 || size != 8)
-        TODO("rt_sigprocmask should actuall work");
+        TODO("rt_sigprocmask should actually work");
     return 0;
 }

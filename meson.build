@@ -1,9 +1,15 @@
 project('ish', 'c',
-    default_options: ['default_library=static', 'c_std=c11'])
+    default_options: ['default_library=static', 'c_std=gnu11'])
 
-if get_option('debug_log')
-    add_global_arguments('-DDEBUG_LOG=1', language: 'c')
-endif
+log_on = get_option('log').split()
+log_off = get_option('nolog').split()
+foreach channel : log_on + log_off
+    if log_on.contains(channel)
+        add_global_arguments('-DDEBUG_' + channel + '=1', language: 'c')
+    else
+        add_global_arguments('-DDEBUG_' + channel + '=0', language: 'c')
+    endif
+endforeach
 
 includes = [include_directories('.')]
 

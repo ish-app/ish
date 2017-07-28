@@ -4,6 +4,9 @@
 #include "misc.h"
 #include "emu/cpu.h"
 
+#undef DEFAULT_CHANNEL
+#define DEFAULT_CHANNEL instr
+
 struct regptr {
     // offsets into the cpu_state structure
     reg_id_t reg8_id;
@@ -11,7 +14,7 @@ struct regptr {
     reg_id_t reg32_id;
     reg_id_t reg128_id;
 };
-#if DEBUG_LOG
+#if DEBUG_instr
 static const char *regptr_name(struct regptr regptr) {
     static char buf[15];
     sprintf(buf, "%s/%s/%s",

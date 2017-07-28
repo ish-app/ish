@@ -69,7 +69,8 @@ syscall_t syscall_table[] = {
 
 // returns true if a step is necessary (subject to change)
 void handle_interrupt(struct cpu_state *cpu, int interrupt) {
-    TRACE("\nint %d ", interrupt);
+    TRACE_(instr, "\n");
+    TRACE("int %d ", interrupt);
     if (interrupt == INT_SYSCALL) {
         int syscall_num = cpu->eax;
         if (syscall_num >= NUM_SYSCALLS || syscall_table[syscall_num] == NULL) {

@@ -1,3 +1,4 @@
+#include <strings.h>
 #include <string.h>
 #include <sys/sysinfo.h>
 #include "sys/calls.h"

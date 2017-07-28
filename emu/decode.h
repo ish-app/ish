@@ -4,6 +4,10 @@
 #include "emu/interrupt.h"
 #include "sys/calls.h"
 
+#undef DEFAULT_CHANNEL
+#define DEFAULT_CHANNEL instr
+#define TRACEI(msg, ...) TRACE(msg "\t", ##__VA_ARGS__)
+
 // this will be the next PyEval_EvalFrameEx.
 int CONCAT(decoder_name, OP_SIZE)(struct cpu_state *cpu) {
     DECLARE_LOCALS;

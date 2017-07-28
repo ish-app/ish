@@ -1,1 +1,2 @@
-option('debug_log', type: 'boolean', value: true)
+option('log', type: 'string', value: '')
+option('nolog', type: 'string', value: '')
