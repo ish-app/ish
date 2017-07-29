@@ -1,4 +1,5 @@
 #include <string.h>
+#include <sys/stat.h>
 #include "sys/calls.h"
 #include "sys/errno.h"
 #include "sys/process.h"
@@ -202,6 +203,20 @@ dword_t sys_getcwd(addr_t buf_addr, dword_t size) {
     size_t len = strlen(buf) + 1;
     user_put_count(buf_addr, buf, len);
     return len;
+}
+
+dword_t sys_chdir(addr_t path_addr) {
+    char path[MAX_PATH];
+    user_get_string(path_addr, path, sizeof(path));
+
+    struct statbuf stat;
+    int err = generic_stat(path, &stat, true);
+    if (err < 0)
+        return err;
+    if (!(stat.mode & S_IFDIR))
+        return _ENOTDIR;
+    path_normalize(path, current->pwd, true);
+    return 0;
 }
 
 // a few stubs

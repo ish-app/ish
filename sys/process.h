@@ -19,8 +19,8 @@ struct process {
     addr_t start_brk;
     addr_t brk;
 
-    const char *pwd;
-    const char *root;
+    char *pwd;
+    char *root;
     struct fd *files[MAX_FD];
 
     struct sigaction_ sigactions[NUM_SIGS];
@@ -61,5 +61,8 @@ struct process *process_for_pid(dword_t pid);
 
 // When a thread is created to run a new process, this function is used.
 extern void (*run_process_func)();
+
+// TODO document
+void start_thread(struct process *proc);
 
 #endif

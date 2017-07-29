@@ -22,6 +22,7 @@ void user_put_count(addr_t addr, const void *buf, size_t count);
 
 // process lifecycle
 dword_t sys_clone(dword_t flags, addr_t stack, addr_t ptid, addr_t tls, addr_t ctid);
+dword_t sys_fork();
 dword_t sys_vfork();
 int sys_execve(const char *file, char *const argv[], char *const envp[]);
 dword_t _sys_execve(addr_t file, addr_t argv, addr_t envp);
@@ -77,6 +78,7 @@ dword_t sys_sendfile64(fd_t out_fd, fd_t in_fd, addr_t offset_addr, dword_t coun
 
 // process information
 dword_t sys_getpid();
+dword_t sys_gettid();
 dword_t sys_getppid();
 dword_t sys_getuid32();
 dword_t sys_getuid();
@@ -85,6 +87,7 @@ dword_t sys_geteuid();
 dword_t sys_getgid32();
 dword_t sys_getgid();
 dword_t sys_getcwd(addr_t buf_addr, dword_t size);
+dword_t sys_chdir(addr_t path_addr);
 int sys_set_thread_area(addr_t u_info);
 int sys_set_tid_address(addr_t blahblahblah);
 
