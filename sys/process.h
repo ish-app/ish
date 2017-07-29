@@ -24,6 +24,8 @@ struct process {
     struct fd *files[MAX_FD];
 
     struct sigaction_ sigactions[NUM_SIGS];
+    sigset_t_ mask;
+    sigset_t_ queued;
 
     struct process *parent;
     struct list children;

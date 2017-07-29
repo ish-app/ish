@@ -10,6 +10,10 @@ void send_signal(struct process *proc, int sig) {
         return;
     if (proc->sigactions[sig].handler == SIG_DFL_)
         sys_exit(0);
+    if (proc->mask & (1 << sig)) {
+        proc->queued |= (1 << sig);
+        return;
+    }
 
     // setup the frame
     struct sigframe_ frame = {};
@@ -30,7 +34,6 @@ void send_signal(struct process *proc, int sig) {
     frame.sc.trapno = cpu->trapno;
     // TODO more shit
 
-    // TODO get address of sigreturn from vdso symbol table
     addr_t sigreturn_addr = vdso_symbol("__kernel_rt_sigreturn");
     if (sigreturn_addr == 0) {
         fprintf(stderr, "sigreturn not found in vdso, this should never happen\n");
@@ -104,11 +107,33 @@ dword_t sys_sigaction(dword_t signum, addr_t action_addr, addr_t oldaction_addr)
     return sys_rt_sigaction(signum, action_addr, oldaction_addr, 1);
 }
 
-#define FAKE_SIG_UNBLOCK 1
-
-dword_t sys_rt_sigprocmask(dword_t how, addr_t set, addr_t oldset, dword_t size) {
+dword_t sys_rt_sigprocmask(dword_t how, addr_t set_addr, addr_t oldset_addr, dword_t size) {
     // only allow musl's funky thing it does in sigaction
-    if (how != FAKE_SIG_UNBLOCK || oldset != 0 || size != 8)
-        TODO("rt_sigprocmask should actually work");
+    if (size != sizeof(sigset_t_))
+        return _EINVAL;
+
+    sigset_t_ set;
+    user_get_count(set_addr, &set, sizeof(set));
+    sigset_t_ oldset = current->mask;
+
+    if (how == SIG_BLOCK_)
+        current->mask |= set;
+    else if (how == SIG_UNBLOCK_)
+        current->mask &= ~set;
+    else if (how == SIG_SETMASK_)
+        current->mask = set;
+    else
+        return _EINVAL;
+
+    sigset_t_ pending = current->queued & oldset & ~current->mask;
+    if (pending)
+        for (int sig = 0; sig < NUM_SIGS; sig++)
+            if (pending & (1 << sig))
+                send_signal(current, sig);
+    current->queued &= ~pending;
+
+    if (oldset_addr != 0)
+        user_put_count(oldset_addr, &oldset, sizeof(oldset));
+
     return 0;
 }
