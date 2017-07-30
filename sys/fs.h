@@ -8,6 +8,7 @@
 
 struct fd {
     unsigned refcnt;
+    unsigned flags;
     const struct fd_ops *ops;
     const struct mount *mount;
     // TODO something more generic probably

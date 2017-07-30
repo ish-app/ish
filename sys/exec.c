@@ -78,7 +78,6 @@ static int load_entry(struct prg_header ph, addr_t bias, struct fd *fd) {
                     PAGE_ROUND_UP(filesize + OFFSET(addr)), fd->real_fd,
                     offset - OFFSET(addr), flags)) < 0)
         return err;
-    TRACE("%x %x %x\n", PAGE(addr), PAGE_ROUND_UP(filesize + OFFSET(addr)), offset - OFFSET(addr));
 
     if (memsize > filesize) {
         // put zeroes between addr + filesize and addr + memsize, call that bss

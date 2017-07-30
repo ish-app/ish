@@ -59,15 +59,13 @@ syscall_t syscall_table[] = {
     /* [200] = (syscall_t) sys_getgid32, */
     [201] = (syscall_t) sys_geteuid32,
     [220] = (syscall_t) sys_getdents64,
+    [221] = (syscall_t) sys_fcntl64,
     [224] = (syscall_t) sys_gettid,
     [239] = (syscall_t) sys_sendfile64,
     [243] = (syscall_t) sys_set_thread_area,
     [252] = (syscall_t) sys_exit_group,
     [258] = (syscall_t) sys_set_tid_address,
     [265] = (syscall_t) sys_clock_gettime,
-
-    // stubs
-    [221] = (syscall_t) syscall_stub, // fcntl64
 };
 
 // returns true if a step is necessary (subject to change)

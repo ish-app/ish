@@ -7,9 +7,8 @@
 
 fd_t find_fd() {
     for (fd_t fd = 0; fd < MAX_FD; fd++)
-        if (current->files[fd] == NULL) {
+        if (current->files[fd] == NULL)
             return fd;
-        }
     return -1;
 }
 
@@ -164,6 +163,40 @@ dword_t sys_ioctl(fd_t f, dword_t cmd, dword_t arg) {
         return res;
     user_put_count(arg, buf, size);
     return res;
+}
+
+#define F_DUPFD_ 0
+#define F_GETFD_ 1
+#define F_SETFD_ 2
+#define F_GETFL_ 3
+#define F_SETFL_ 4
+
+dword_t sys_fcntl64(fd_t f, dword_t cmd, dword_t arg) {
+    struct fd *fd = current->files[f];
+    if (fd == NULL)
+        return _EBADF;
+    switch (cmd) {
+        case F_DUPFD_: {
+            fd_t new_fd;
+            for (new_fd = arg; new_fd < MAX_FD; new_fd++)
+                if (current->files[new_fd] == NULL)
+                    break;
+            if (new_fd == MAX_FD)
+                return _EMFILE;
+            current->files[new_fd] = current->files[f];
+            current->files[new_fd]->refcnt++;
+            return new_fd;
+        }
+
+        case F_GETFD_:
+            return fd->flags;
+        case F_SETFD_:
+            fd->flags = arg;
+            return 0;
+
+        default:
+            return _EINVAL;
+    }
 }
 
 dword_t sys_dup(fd_t fd) {

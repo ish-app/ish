@@ -374,6 +374,8 @@ restart:
             return cpu_step32(cpu);
 #endif
 
+        case 0x67: TRACEI("address size prefix (ignored)"); goto restart;
+
         case 0x68: TRACEI("push imm\t");
                    READIMM; PUSH(imm); break;
         case 0x69: TRACEI("imul imm\t");
