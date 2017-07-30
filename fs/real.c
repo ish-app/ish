@@ -11,6 +11,7 @@
 #include "sys/errno.h"
 #include "sys/calls.h"
 #include "sys/fs.h"
+#include "fs/dev.h"
 
 char *strnprepend(char *str, const char *prefix, size_t max) {
     if (strlen(str) + strlen(prefix) + 1 > max)
@@ -70,13 +71,13 @@ struct xattr_stat {
 #endif
 
 static void copy_stat(struct statbuf *fake_stat, struct stat *real_stat) {
-    fake_stat->dev = real_stat->st_dev;
+    fake_stat->dev = dev_fake_from_real(real_stat->st_dev);
     fake_stat->inode = real_stat->st_ino;
     fake_stat->mode = real_stat->st_mode;
     fake_stat->nlink = real_stat->st_nlink;
     fake_stat->uid = real_stat->st_uid;
     fake_stat->gid = real_stat->st_gid;
-    fake_stat->rdev = real_stat->st_rdev;
+    fake_stat->rdev = dev_fake_from_real(real_stat->st_rdev);
     fake_stat->size = real_stat->st_size;
     fake_stat->blksize = real_stat->st_blksize;
     fake_stat->blocks = real_stat->st_blocks;

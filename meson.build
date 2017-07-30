@@ -44,6 +44,7 @@ sys_src = [
     'fs/generic.c',
     'fs/path.c',
     'fs/real.c',
+    'fs/dev.c'
 ]
 emu_src = [
     'emu/memory.c',

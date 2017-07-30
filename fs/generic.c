@@ -1,7 +1,9 @@
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 
 #include "sys/fs.h"
+#include "fs/dev.h"
 #include "sys/process.h"
 
 static struct mount *find_mount(char *pathname) {
@@ -26,8 +28,24 @@ struct mount *find_mount_and_trim_path(char *path) {
 }
 
 int generic_open(const char *pathname, struct fd *fd, int flags, int mode) {
+    // TODO really, really, seriously reconsider what I'm doing with the strings
+    struct statbuf stat;
+    int err = generic_stat(pathname, &stat, true);
+    if (err < 0)
+        return err;
+    int type = stat.mode & S_IFMT;
+    if (type == S_IFBLK || type == S_IFCHR) {
+        if (stat.mode & S_IFBLK)
+            type = DEV_BLOCK;
+        else
+            type = DEV_CHAR;
+        int major = dev_major(stat.rdev);
+        int minor = dev_minor(stat.rdev);
+        return dev_open(major, minor, type, fd);
+    }
+
     char path[MAX_PATH];
-    int err = path_normalize(pathname, path, true);
+    err = path_normalize(pathname, path, true);
     if (err < 0)
         return err;
     struct mount *mount = find_mount_and_trim_path(path);
