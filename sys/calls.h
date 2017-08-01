@@ -154,6 +154,9 @@ dword_t sys_setitimer(dword_t which, addr_t new_val, addr_t old_val);
 
 dword_t sys_nanosleep(addr_t req, addr_t rem);
 
+// crap that ideally shouldn't exist
+dword_t sys_poll(addr_t fds, dword_t nfds, dword_t timeout);
+
 typedef int (*syscall_t)(dword_t,dword_t,dword_t,dword_t,dword_t,dword_t);
 
 #endif
