@@ -362,15 +362,17 @@
     }
 
 #define SHRD(count, extra, dst,z) \
-    if (get(count,z) != 0) { \
-        cpu->res = get(dst,z) >> get(count,z) | get(extra,z) << (sz(z) - get(count,z)); \
+    if (get(count,z) % sz(z) != 0) { \
+        int cnt = get(count,z) % sz(z); \
+        cpu->res = get(dst,z) >> cnt | get(extra,z) << (sz(z) - cnt); \
         set(dst, cpu->res,z); \
         SETRESFLAGS; \
     }
 
 #define SHLD(count, extra, dst,z) \
-    if (get(count,z) != 0) { \
-        cpu->res = get(dst,z) << get(count,z) | get(extra,z) >> (sz(z) - get(count,z)); \
+    if (get(count,z) % sz(z) != 0) { \
+        int cnt = get(count,z) % sz(z); \
+        cpu->res = get(dst,z) << cnt | get(extra,z) >> (sz(z) - cnt); \
         set(dst, cpu->res,z); \
         SETRESFLAGS; \
     }
@@ -419,9 +421,9 @@
     set(val, get(val,z) & ~msk(bit,z),z)
 
 #define BSF(src, dst,z) \
-    set(dst, __builtin_ctz(get(src,z)),z); \
     cpu->zf = get(src,z) == 0; \
-    cpu->zf_res = 0
+    cpu->zf_res = 0; \
+    if (!cpu->zf) set(dst, __builtin_ctz(get(src,z)),z)
 
 // string instructions
 
