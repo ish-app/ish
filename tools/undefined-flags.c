@@ -18,17 +18,25 @@ int undefined_flags_mask(int pid, struct cpu_state *cpu) {
         case 0x0f:
             read(opcode);
             switch(opcode) {
-                case 0xaf: return S|Z|A|P; // imul
-                case 0xac: {
+                case 0xac:
+                case 0xad: {
                     ip++;
-                    byte_t shift_count;
-                    read(shift_count);
-                    if (shift_count > 0)
+                    byte_t shift;
+                    if (opcode == 0xad)
+                        shift = cpu->cl;
+                    else
+                        read(shift);
+                    if (shift == 1)
                         return A;
+                    else if (shift > 1)
+                        return O|A;
                     break;
                 }
+                case 0xaf: return S|Z|A|P; // imul
+                case 0xbc: return O|S|A|P|C; // bsf
             }
             break;
+        case 0x69:
         case 0x6b: return S|Z|A|P; // imul
 
         case 0xc0:

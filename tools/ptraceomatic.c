@@ -297,6 +297,13 @@ static void step_tracing(struct cpu_state *cpu, int pid, int sender, int receive
                 pt_copy(pid, regs.rbx, sizeof(struct uname)); break;
             case 140: // _llseek
                 pt_copy(pid, regs.rsi, 8); break;
+            case 145: { // readv
+                struct io_vec vecs[regs.rdx];
+                user_get_count(regs.rcx, vecs, sizeof(vecs));
+                for (int i = 0; i < regs.rdx; i++)
+                    pt_copy(pid, vecs[i].base, vecs[i].len);
+                break;
+            }
             case 183: // getcwd
                 pt_copy(pid, regs.rbx, cpu->eax); break;
 
