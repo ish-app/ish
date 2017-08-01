@@ -230,12 +230,16 @@ dword_t sys_dup2(fd_t fd, fd_t new_fd) {
 }
 
 dword_t sys_getcwd(addr_t buf_addr, dword_t size) {
+    char *pwd = current->pwd;
+    if (*pwd == '\0')
+        pwd = "/";
+
+    if (strlen(pwd) + 1 > size)
+        return _ERANGE;
     char buf[size];
-    if (getcwd(buf, size) == NULL)
-        return err_map(errno);
-    size_t len = strlen(buf) + 1;
-    user_put_count(buf_addr, buf, len);
-    return len;
+    strcpy(buf, pwd);
+    user_put_count(buf_addr, buf, sizeof(buf));
+    return size;
 }
 
 dword_t sys_chdir(addr_t path_addr) {
