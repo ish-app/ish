@@ -6,7 +6,8 @@
 dword_t sys_time(addr_t time_out) {
     dword_t now = time(NULL);
     if (time_out != 0)
-        user_put_count(time_out, &now, sizeof(now));
+        if (user_put(time_out, now))
+            return _EFAULT;
     return now;
 }
 
@@ -25,7 +26,8 @@ dword_t sys_clock_gettime(dword_t clock, addr_t tp) {
     struct time_spec t;
     t.sec = ts.tv_sec;
     t.nsec = ts.tv_nsec;
-    user_put_count(tp, &t, sizeof(t));
+    if (user_put(tp, t))
+        return _EFAULT;
     return 0;
 }
 
@@ -39,7 +41,8 @@ dword_t sys_setitimer(dword_t which, addr_t new_val_addr, addr_t old_val_addr) {
         TODO("setitimer %d", which);
 
     struct itimerval_ val;
-    user_get_count(new_val_addr, &val, sizeof(val));
+    if (user_get(new_val_addr, val))
+        return _EFAULT;
 
     if (!current->has_timer) {
         struct sigevent sigev;
@@ -66,7 +69,8 @@ dword_t sys_setitimer(dword_t which, addr_t new_val_addr, addr_t old_val_addr) {
         old_val.interval.usec = old_spec.it_interval.tv_nsec / 1000;
         old_val.value.sec = old_spec.it_value.tv_sec;
         old_val.value.usec = old_spec.it_value.tv_nsec / 1000;
-        user_put_count(old_val_addr, &old_val, sizeof(old_val));
+        if (user_put(old_val_addr, old_val))
+            return _EFAULT;
     }
 
     return 0;
@@ -74,7 +78,8 @@ dword_t sys_setitimer(dword_t which, addr_t new_val_addr, addr_t old_val_addr) {
 
 dword_t sys_nanosleep(addr_t req_addr, addr_t rem_addr) {
     struct timespec_ req_ts;
-    user_get_count(req_addr, &req_ts, sizeof(req_ts));
+    if (user_get(req_addr, req_ts))
+        return _EFAULT;
     struct timespec req;
     req.tv_sec = req_ts.sec;
     req.tv_nsec = req_ts.nsec;
@@ -85,7 +90,8 @@ dword_t sys_nanosleep(addr_t req_addr, addr_t rem_addr) {
         struct timespec_ rem_ts;
         rem_ts.sec = rem.tv_sec;
         rem_ts.nsec = rem.tv_nsec;
-        user_put_count(rem_addr, &rem_ts, sizeof(rem_ts));
+        if (user_put(rem_addr, rem_ts))
+            return _EFAULT;
     }
     return 0;
 }

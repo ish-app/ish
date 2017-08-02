@@ -48,10 +48,12 @@ struct rusage_ {
 static int reap_if_zombie(struct process *proc, addr_t status_addr, addr_t rusage_addr) {
     if (proc->zombie) {
         if (status_addr != 0)
-            user_put(status_addr, proc->exit_code);
+            if (user_put(status_addr, proc->exit_code))
+                return _EFAULT;
         if (rusage_addr != 0) {
             struct rusage_ rusage = {};
-            user_put_count(rusage_addr, &rusage, sizeof(rusage));
+            if (user_put(rusage_addr, rusage))
+                return _EFAULT;
         }
         process_destroy(proc);
         return 1;

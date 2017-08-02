@@ -14,7 +14,8 @@ struct user_desc {
 
 int sys_set_thread_area(addr_t u_info) {
     struct user_desc info;
-    user_get_count(u_info, &info, sizeof(struct user_desc));
+    if (user_get(u_info, info))
+        return _EFAULT;
 
     // On a real system, TLS works by creating a special segment pointing to
     // the TLS buffer. Our shitty emulation of that is to ignore attempts to
@@ -25,7 +26,8 @@ int sys_set_thread_area(addr_t u_info) {
         info.entry_number = 0xc;
     }
 
-    user_put_count(u_info, (char *) &info, sizeof(struct user_desc));
+    if (user_put(u_info, info))
+            return _EFAULT;
     return 0;
 }
 

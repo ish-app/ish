@@ -29,6 +29,7 @@
 #endif
 #define unlikely(x) __builtin_expect((x), 0)
 #define noreturn __attribute__((noreturn))
+#define must_check __attribute__((warn_unused_result))
 
 // types
 // word_t will be 64-bit to read 64-bit elves

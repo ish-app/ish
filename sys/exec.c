@@ -18,8 +18,8 @@
 }
 
 static inline dword_t align_stack(dword_t sp);
-static inline size_t user_strlen(dword_t p);
-static inline void user_memset(addr_t start, dword_t len, byte_t val);
+static inline ssize_t user_strlen(dword_t p);
+static inline int user_memset(addr_t start, dword_t len, byte_t val);
 static inline dword_t copy_string(dword_t sp, const char *string);
 static inline dword_t copy_strings(dword_t sp, char *const strings[]);
 static unsigned count_args(char *const args[]);
@@ -256,20 +256,30 @@ int sys_execve(const char *file, char *const argv[], char *const envp[]) {
     // on 64-bit linux, there's 8. make ptraceomatic happy. (a major theme in this file)
     sp -= sizeof(void *);
 
+    err = _EFAULT;
     // first, copy stuff pointed to by argv/envp/auxv
     // filename, argc, argv
     addr_t file_addr = sp = copy_string(sp, file);
+    if (sp == 0)
+        goto beyond_hope;
     addr_t envp_addr = sp = copy_strings(sp, envp);
+    if (sp == 0)
+        goto beyond_hope;
     addr_t argv_addr = sp = copy_strings(sp, argv);
+    if (sp == 0)
+        goto beyond_hope;
     sp = align_stack(sp);
 
     addr_t platform_addr = sp = copy_string(sp, "i686");
+    if (sp == 0)
+        goto beyond_hope;
     // 16 random bytes so no system call is needed to seed a userspace RNG
     char random[16] = {};
     if (getentropy(random, sizeof(random)) < 0)
         abort(); // if this fails, something is very badly wrong indeed
     addr_t random_addr = sp -= sizeof(random);
-    user_put_count(sp, random, sizeof(random));
+    if (user_put(sp, random))
+        goto beyond_hope;
 
     // the way linux aligns the stack at this point is kinda funky
     // calculate how much space is needed for argv, envp, and auxv, subtract
@@ -299,8 +309,8 @@ int sys_execve(const char *file, char *const argv[], char *const envp[]) {
         {AX_PLATFORM, platform_addr},
         {0, 0}
     };
-    size_t argc = count_args(argv);
-    size_t envc = count_args(envp);
+    dword_t argc = count_args(argv);
+    dword_t envc = count_args(envp);
     sp -= ((argc + 1) + (envc + 1) + 1) * sizeof(dword_t);
     sp -= sizeof(aux);
     sp &=~ 0xf;
@@ -309,11 +319,14 @@ int sys_execve(const char *file, char *const argv[], char *const envp[]) {
     addr_t p = sp;
 
     // argc
-    user_put(p, argc); p += sizeof(dword_t);
+    if (user_put(p, argc))
+        return _EFAULT;
+    p += sizeof(dword_t);
 
     // argv
     while (argc-- > 0) {
-        user_put(p, argv_addr);
+        if (user_put(p, argv_addr))
+            return _EFAULT;
         argv_addr += user_strlen(argv_addr) + 1;
         p += sizeof(dword_t); // null terminator
     }
@@ -321,14 +334,16 @@ int sys_execve(const char *file, char *const argv[], char *const envp[]) {
 
     // envp
     while (envc-- > 0) {
-        user_put(p, envp_addr);
+        if (user_put(p, envp_addr))
+            return _EFAULT;
         envp_addr += user_strlen(envp_addr) + 1;
         p += sizeof(dword_t);
     }
     p += sizeof(dword_t); // null terminator
 
     // copy auxv
-    user_put_count(p, (const char *) aux, sizeof(aux));
+    if (user_put(p, aux))
+        goto beyond_hope;
     p += sizeof(aux);
 
     current->cpu.esp = sp;
@@ -365,49 +380,72 @@ static inline dword_t align_stack(addr_t sp) {
 
 static inline dword_t copy_string(addr_t sp, const char *string) {
     sp -= strlen(string) + 1;
-    user_put_string(sp, string);
+    if (user_write_string(sp, string))
+        return 0;
     return sp;
 }
 
 static inline dword_t copy_strings(addr_t sp, char *const strings[]) {
     for (unsigned i = count_args(strings); i > 0; i--) {
         sp = copy_string(sp, strings[i - 1]);
+        if (sp == 0)
+            return 0;
     }
     return sp;
 }
 
-static inline size_t user_strlen(addr_t p) {
+static inline ssize_t user_strlen(addr_t p) {
     size_t len = 0;
-    while (user_get8(p++) != 0) len++;
+    char c;
+    if (user_get(p + len, c))
+        return -1;
+    while (c != '\0') {
+        if (user_get(p + len, c))
+            return -1;
+        len++;
+    }
     return len;
 }
 
-static inline void user_memset(addr_t start, dword_t len, byte_t val) {
-    while (len--) {
-        user_put8(start++, val);
-    }
+static inline int user_memset(addr_t start, dword_t len, byte_t val) {
+    while (len--)
+        if (user_put(start++, val))
+            return 1;
+    return 0;
 }
 
 #define MAX_ARGS 256 // for now
 dword_t _sys_execve(addr_t filename_addr, addr_t argv_addr, addr_t envp_addr) {
     // TODO this code is shit, fix it
     char filename[MAX_PATH];
-    user_get_string(filename_addr, filename, sizeof(filename));
+    if (user_read_string(filename_addr, filename, sizeof(filename)))
+        return _EFAULT;
     char *argv[MAX_ARGS];
     int i;
-    for (i = 0; user_get(argv_addr + i * 4) != 0; i++) {
+    addr_t arg;
+    for (i = 0; ; i++) {
+        if (user_get(argv_addr + i * 4, arg))
+            return _EFAULT;
         if (i > MAX_ARGS)
             return _E2BIG;
         argv[i] = malloc(MAX_PATH);
-        user_get_string(user_get(argv_addr + i * 4), argv[i], MAX_PATH);
+        if (user_read_string(arg, argv[i], MAX_PATH))
+            return _EFAULT;
+        if (arg == 0)
+            break;
     }
     argv[i] = NULL;
     char *envp[MAX_ARGS];
-    for (i = 0; user_get(envp_addr + i * 4) != 0; i++) {
-        if (i >= MAX_ARGS)
+    for (i = 0; ; i++) {
+        if (user_get(envp_addr + i * 4, arg))
+            return _EFAULT;
+        if (i > MAX_ARGS)
             return _E2BIG;
         envp[i] = malloc(MAX_PATH);
-        user_get_string(user_get(envp_addr + i * 4), envp[i], MAX_PATH);
+        if (user_read_string(arg, envp[i], MAX_PATH))
+            return _EFAULT;
+        if (arg == 0)
+            break;
     }
     envp[i] = NULL;
     int res = sys_execve(filename, argv, envp);

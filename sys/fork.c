@@ -36,7 +36,44 @@ static int copy_memory(struct process *proc, int flags) {
     return 0;
 }
 
-static int dup_process(int flags, addr_t stack, addr_t ptid, addr_t tls, addr_t ctid, struct process **p) {
+static int init_process(struct process *proc, dword_t flags, addr_t ctid_addr) {
+    pthread_mutex_lock(&proc->lock);
+    dword_t pid = proc->pid;
+    *proc = *current;
+    proc->pid = pid;
+    proc->ppid = current->pid;
+
+    int err = 0;
+    if ((err = copy_memory(proc, flags)) < 0)
+        goto fail_free_proc;
+
+    proc->parent = current;
+    list_add(&current->children, &proc->siblings);
+
+    proc->cpu.eax = 0;
+    if (flags & CLONE_CHILD_SETTID_)
+        if (user_put_proc(proc, ctid_addr, proc->pid))
+            return _EFAULT;
+            goto fail_free_proc;
+    start_thread(proc);
+
+    if (flags & CLONE_VFORK_)
+        pthread_cond_wait(&proc->vfork_done, &proc->lock);
+
+    pthread_mutex_unlock(&proc->lock);
+    return 0;
+
+fail_free_proc:
+    pthread_mutex_unlock(&proc->lock);
+    free(proc);
+    return err;
+}
+
+// eax = syscall number
+// ebx = flags
+// ecx = stack
+// edx, esi, edi = unimplemented garbage
+dword_t sys_clone(dword_t flags, addr_t stack, addr_t ptid, addr_t tls, addr_t ctid) {
     if (ptid != 0 || tls != 0) {
         FIXME("clone with ptid or ts not null");
         return _EINVAL;
@@ -53,46 +90,12 @@ static int dup_process(int flags, addr_t stack, addr_t ptid, addr_t tls, addr_t 
     if (proc == NULL)
         return _ENOMEM;
     pthread_mutex_lock(&proc->lock);
-    dword_t pid = proc->pid;
-    *proc = *current;
-    proc->pid = pid;
-    proc->ppid = current->pid;
-
-    int err = 0;
-    if ((err = copy_memory(proc, flags)) < 0)
-        goto fail_free_proc;
-
-    proc->parent = current;
-    list_add(&current->children, &proc->siblings);
-
-    proc->cpu.eax = 0;
-    if (flags & CLONE_CHILD_SETTID_)
-        user_put_proc(proc, ctid, proc->pid);
-    start_thread(proc);
-
-    if (flags & CLONE_VFORK_)
-        pthread_cond_wait(&proc->vfork_done, &proc->lock);
-
+    int err = init_process(proc, flags, ctid);
     pthread_mutex_unlock(&proc->lock);
-    if (p)
-        *p = proc;
-    return 0;
-
-fail_free_proc:
-    pthread_mutex_unlock(&proc->lock);
-    free(proc);
-    return err;
-}
-
-// eax = syscall number
-// ebx = flags
-// ecx = stack
-// edx, esi, edi = unimplemented garbage
-dword_t sys_clone(dword_t flags, addr_t stack, addr_t ptid, addr_t tls, addr_t ctid) {
-    struct process *proc;
-    int err = dup_process(flags, stack, ptid, tls, ctid, &proc);
-    if (err < 0)
+    if (err < 0) {
+        process_destroy(proc);
         return err;
+    }
     return proc->pid;
 }
 

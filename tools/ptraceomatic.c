@@ -219,8 +219,11 @@ static void remote_close_fd(int pid, int fd, long int80_ip) {
 }
 
 static void pt_copy(int pid, addr_t start, size_t size) {
-    for (addr_t addr = start; addr < start + size; addr++)
-        pt_write8(pid, addr, user_get8(addr));
+    byte_t byte;
+    for (addr_t addr = start; addr < start + size; addr++) {
+        (void) user_get(addr, byte);
+        pt_write8(pid, addr, byte);
+    }
 }
 
 // Please don't use unless absolutely necessary.
@@ -228,7 +231,7 @@ static void pt_copy_to_real(int pid, addr_t start, size_t size) {
     byte_t byte;
     for (addr_t addr = start; addr < start + size; addr++) {
         pt_readn(pid, addr, &byte, sizeof(byte));
-        user_put8(addr, byte);
+        (void) user_put(addr, byte);
     }
 }
 
@@ -299,7 +302,7 @@ static void step_tracing(struct cpu_state *cpu, int pid, int sender, int receive
                 pt_copy(pid, regs.rsi, 8); break;
             case 145: { // readv
                 struct io_vec vecs[regs.rdx];
-                user_get_count(regs.rcx, vecs, sizeof(vecs));
+                (void) user_get(regs.rcx, vecs);
                 for (int i = 0; i < regs.rdx; i++)
                     pt_copy(pid, vecs[i].base, vecs[i].len);
                 break;

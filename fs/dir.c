@@ -39,7 +39,8 @@ int_t sys_getdents64(fd_t f, addr_t dirents, dword_t count) {
 
         if (reclen > count)
             break;
-        user_put_count(dirents, dirent_data, reclen);
+        if (user_put(dirents, dirent_data))
+            return _EFAULT;
         dirents += reclen;
         count -= reclen;
     }

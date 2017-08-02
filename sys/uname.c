@@ -17,7 +17,8 @@ int sys_uname(struct uname *uts) {
 dword_t _sys_uname(addr_t uts_addr) {
     struct uname uts;
     int res = sys_uname(&uts);
-    user_put_count(uts_addr, &uts, sizeof(struct uname));
+    if (user_put(uts_addr, uts))
+        return _EFAULT;
     return res;
 }
 
@@ -40,6 +41,7 @@ dword_t sys_sysinfo(addr_t info_addr) {
     info.totalhigh = real_info.totalhigh;
     info.freehigh = real_info.freehigh;
     info.mem_unit = real_info.mem_unit;
-    user_put_count(info_addr, &info, sizeof(info));
+    if (user_put(info_addr, info))
+        return _EFAULT;
     return 0;
 }

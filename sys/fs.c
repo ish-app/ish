@@ -23,14 +23,16 @@ fd_t create_fd() {
 
 dword_t sys_access(addr_t pathname_addr, dword_t mode) {
     char pathname[MAX_PATH];
-    user_get_string(pathname_addr, pathname, sizeof(pathname));
+    if (user_read_string(pathname_addr, pathname, sizeof(pathname)))
+        return _EFAULT;
     return generic_access(pathname, mode);
 }
 
 fd_t sys_open(addr_t pathname_addr, dword_t flags, dword_t mode) {
     int err;
     char pathname[MAX_PATH];
-    user_get_string(pathname_addr, pathname, sizeof(pathname));
+    if (user_read_string(pathname_addr, pathname, sizeof(pathname)))
+        return _EFAULT;
 
     fd_t fd = create_fd();
     if (fd == -1)
@@ -42,17 +44,20 @@ fd_t sys_open(addr_t pathname_addr, dword_t flags, dword_t mode) {
 
 dword_t sys_readlink(addr_t pathname_addr, addr_t buf_addr, dword_t bufsize) {
     char pathname[MAX_PATH];
-    user_get_string(pathname_addr, pathname, sizeof(pathname));
+    if (user_read_string(pathname_addr, pathname, sizeof(pathname)))
+        return _EFAULT;
     char buf[bufsize];
     int err = generic_readlink(pathname, buf, bufsize);
     if (err >= 0)
-        user_put_string(buf_addr, buf);
+        if (user_write_string(buf_addr, buf))
+            return _EFAULT;
     return err;
 }
 
 dword_t sys_unlink(addr_t pathname_addr) {
     char pathname[MAX_PATH];
-    user_get_string(pathname_addr, pathname, sizeof(pathname));
+    if (user_read_string(pathname_addr, pathname, sizeof(pathname)))
+        return _EFAULT;
     return generic_unlink(pathname);
 }
 
@@ -77,13 +82,15 @@ dword_t sys_read(fd_t fd_no, addr_t buf_addr, dword_t size) {
         return _EBADF;
     int res = fd->ops->read(fd, buf, size);
     if (res >= 0)
-        user_put_count(buf_addr, buf, res);
+        if (user_write(buf_addr, buf, res))
+            return _EFAULT;
     return res;
 }
 
 dword_t sys_readv(fd_t fd_no, addr_t iovec_addr, dword_t iovec_count) {
     struct io_vec iovecs[iovec_count];
-    user_get_count(iovec_addr, iovecs, sizeof(iovecs));
+    if (user_get(iovec_addr, iovecs))
+        return _EFAULT;
     int res;
     dword_t count = 0;
     for (unsigned i = 0; i < iovec_count; i++) {
@@ -99,7 +106,8 @@ dword_t sys_readv(fd_t fd_no, addr_t iovec_addr, dword_t iovec_count) {
 
 dword_t sys_write(fd_t fd_no, addr_t buf_addr, dword_t size) {
     char buf[size];
-    user_get_count(buf_addr, buf, size);
+    if (user_read(buf_addr, buf, size))
+        return _EFAULT;
     struct fd *fd = current->files[fd_no];
     if (fd == NULL)
         return _EBADF;
@@ -108,7 +116,8 @@ dword_t sys_write(fd_t fd_no, addr_t buf_addr, dword_t size) {
 
 dword_t sys_writev(fd_t fd_no, addr_t iovec_addr, dword_t iovec_count) {
     struct io_vec iovecs[iovec_count];
-    user_get_count(iovec_addr, iovecs, sizeof(iovecs));
+    if (user_get(iovec_addr, iovecs))
+        return _EFAULT;
     int res;
     dword_t count = 0;
     for (unsigned i = 0; i < iovec_count; i++) {
@@ -129,7 +138,8 @@ dword_t sys__llseek(fd_t f, dword_t off_high, dword_t off_low, addr_t res_addr, 
     off_t res = fd->ops->lseek(fd, off, whence);
     if (res < 0)
         return res;
-    user_put_count(res_addr, &res, sizeof(res));
+    if (user_put(res_addr, res))
+        return _EFAULT;
     return 0;
 }
 
@@ -157,11 +167,13 @@ dword_t sys_ioctl(fd_t f, dword_t cmd, dword_t arg) {
 
     // praying that this won't break
     char buf[size];
-    user_get_count(arg, buf, size);
+    if (user_read(arg, buf, size))
+        return _EFAULT;
     int res = fd->ops->ioctl(fd, cmd, buf);
     if (res < 0)
         return res;
-    user_put_count(arg, buf, size);
+    if (user_write(arg, buf, size))
+        return _EFAULT;
     return res;
 }
 
@@ -238,13 +250,15 @@ dword_t sys_getcwd(addr_t buf_addr, dword_t size) {
         return _ERANGE;
     char buf[size];
     strcpy(buf, pwd);
-    user_put_count(buf_addr, buf, sizeof(buf));
+    if (user_write(buf_addr, buf, sizeof(buf)))
+        return _EFAULT;
     return size;
 }
 
 dword_t sys_chdir(addr_t path_addr) {
     char path[MAX_PATH];
-    user_get_string(path_addr, path, sizeof(path));
+    if (user_read_string(path_addr, path, sizeof(path)))
+        return _EFAULT;
 
     struct statbuf stat;
     int err = generic_stat(path, &stat, true);

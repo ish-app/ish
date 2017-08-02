@@ -65,9 +65,8 @@ void send_signal(struct process *proc, int sig) {
     cpu->esp = sp;
 
     // install frame
-    user_put_count(sp, &frame, sizeof(frame));
-
-    return;
+    // nothing we can do if this fails
+    (void) user_put(sp, frame);
 }
 
 static int do_sigaction(int sig, const struct sigaction_ *action, struct sigaction_ *oldaction) {
@@ -88,9 +87,11 @@ dword_t sys_rt_sigaction(dword_t signum, addr_t action_addr, addr_t oldaction_ad
         return _EINVAL;
     struct sigaction_ action, oldaction;
     if (action_addr != 0)
-        user_get_count(action_addr, &action, sizeof(action));
+        if (user_get(action_addr, action))
+            return _EFAULT;
     if (oldaction_addr != 0)
-        user_get_count(oldaction_addr, &oldaction, sizeof(oldaction));
+        if (user_get(oldaction_addr, oldaction))
+            return _EFAULT;
 
     int err = do_sigaction(signum,
             action_addr ? &action : NULL,
@@ -99,7 +100,8 @@ dword_t sys_rt_sigaction(dword_t signum, addr_t action_addr, addr_t oldaction_ad
         return err;
 
     if (oldaction_addr != 0)
-        user_put_count(oldaction_addr, &oldaction, sizeof(oldaction));
+        if (user_put(oldaction_addr, oldaction))
+            return _EFAULT;
     return err;
 }
 
@@ -113,7 +115,8 @@ dword_t sys_rt_sigprocmask(dword_t how, addr_t set_addr, addr_t oldset_addr, dwo
         return _EINVAL;
 
     sigset_t_ set;
-    user_get_count(set_addr, &set, sizeof(set));
+    if (user_get(set_addr, set))
+        return _EFAULT;
     sigset_t_ oldset = current->mask;
 
     if (how == SIG_BLOCK_)
@@ -133,7 +136,7 @@ dword_t sys_rt_sigprocmask(dword_t how, addr_t set_addr, addr_t oldset_addr, dwo
     current->queued &= ~pending;
 
     if (oldset_addr != 0)
-        user_put_count(oldset_addr, &oldset, sizeof(oldset));
-
+        if (user_put(oldset_addr, oldset))
+            return _EFAULT;
     return 0;
 }

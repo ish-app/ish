@@ -19,16 +19,18 @@ static inline int xX_main_Xx(int argc, char *const argv[]) {
     // parse cli options
     int opt;
     const char *root = "";
+    bool has_root = false;
     while ((opt = getopt(argc, argv, "+r:")) != -1) {
         switch (opt) {
             case 'r':
                 root = optarg;
+                has_root = true;
                 break;
         }
     }
 
     char root_realpath[PATH_MAX + 1] = "";
-    if (*root != '\0' && realpath(root, root_realpath) == NULL) {
+    if (has_root && realpath(root, root_realpath) == NULL) {
         perror(root); exit(1);
     }
     mount_root(root_realpath);
@@ -38,8 +40,11 @@ static inline int xX_main_Xx(int argc, char *const argv[]) {
     mem_init(&curmem);
     current->ppid = 1;
     current->uid = current->gid = 0;
-    current->root = "";
-    current->pwd = getcwd(NULL, 0);
+    current->root = strdup("");
+    if (has_root)
+        current->pwd = strdup("");
+    else
+        current->pwd = getcwd(NULL, 0);
 
     // I can't wait for when the init system works and I don't need to do this
     current->files[0] = malloc(sizeof(struct fd));
@@ -59,6 +64,6 @@ static inline int xX_main_Xx(int argc, char *const argv[]) {
     char *envp[] = {NULL};
     int err = sys_execve(argv[optind], argv + optind, envp);
     if (err < 0)
-        return -err;
+        return err;
     return 0;
 }

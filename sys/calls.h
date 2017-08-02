@@ -10,15 +10,16 @@
 
 void handle_interrupt(struct cpu_state *cpu, int interrupt);
 
-dword_t user_get(addr_t addr);
-byte_t user_get8(addr_t addr);
-void user_put(addr_t addr, dword_t value);
-void user_put_proc(struct process *proc, addr_t addr, dword_t value);
-void user_put8(addr_t addr, byte_t value);
-int user_get_string(addr_t addr, char *buf, size_t max);
-void user_put_string(addr_t addr, const char *buf);
-int user_get_count(addr_t addr, void *buf, size_t count);
-void user_put_count(addr_t addr, const void *buf, size_t count);
+int must_check user_read(addr_t addr, void *buf, size_t count);
+int must_check user_write(addr_t addr, const void *buf, size_t count);
+int must_check user_read_proc(struct process *proc, addr_t addr, void *buf, size_t count);
+int must_check user_write_proc(struct process *proc, addr_t addr, const void *buf, size_t count);
+int must_check user_read_string(addr_t addr, char *buf, size_t max);
+int must_check user_write_string(addr_t addr, const char *buf);
+#define user_get(addr, var) user_read(addr, &(var), sizeof(var))
+#define user_put(addr, var) user_write(addr, &(var), sizeof(var))
+#define user_get_proc(proc, addr, var) user_read_proc(proc, addr, &(var), sizeof(var))
+#define user_put_proc(proc, addr, var) user_write_proc(proc, addr, &(var), sizeof(var))
 
 // process lifecycle
 dword_t sys_clone(dword_t flags, addr_t stack, addr_t ptid, addr_t tls, addr_t ctid);

@@ -39,12 +39,14 @@ int generic_stat(const char *pathname, struct statbuf *stat, bool follow_links) 
 static dword_t sys_stat_path(addr_t pathname_addr, addr_t statbuf_addr, bool follow_links) {
     int err;
     char pathname[MAX_PATH];
-    user_get_string(pathname_addr, pathname, sizeof(pathname));
+    if (user_get(pathname_addr, pathname))
+        return _EFAULT;
     struct statbuf stat;
     if ((err = generic_stat(pathname, &stat, follow_links)) < 0)
         return err;
     struct newstat64 newstat = stat_convert_newstat64(stat);
-    user_put_count(statbuf_addr, &newstat, sizeof(newstat));
+    if (user_put(statbuf_addr, newstat))
+        return _EFAULT;
     return 0;
 }
 
@@ -65,6 +67,7 @@ dword_t sys_fstat64(fd_t fd_no, addr_t statbuf_addr) {
     if (err < 0)
         return err;
     struct newstat64 newstat = stat_convert_newstat64(stat);
-    user_put_count(statbuf_addr, &newstat, sizeof(newstat));
+    if (user_put(statbuf_addr, newstat))
+        return _EFAULT;
     return 0;
 }
