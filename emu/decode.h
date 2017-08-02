@@ -469,7 +469,7 @@ restart:
                    READMODRM; MOV(modrm_val, modrm_reg,); break;
 
         case 0x8d: TRACEI("lea\t\t");
-                   READMODRM; 
+                   READMODRM;
                    if (modrm.type == mod_reg)
                        UNDEFINED;
                    MOV(addr, modrm_reg,); break;
@@ -478,10 +478,12 @@ restart:
             // only gs is supported, and it does nothing
             // see comment in sys/tls.c
             READMODRM;
-            if (modrm.reg.reg32_id != REG_ID(ebp)) {
+            if (modrm.reg.reg32_id != REG_ID(ebp))
                 UNDEFINED;
-            }
             break;
+
+        case 0x8f: TRACEI("pop modrm");
+                   READMODRM; POP(modrm_val); break;
 
         case 0x90: TRACEI("nop"); break;
         case 0x97: TRACEI("xchg odi, oax");
