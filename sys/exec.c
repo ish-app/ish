@@ -395,16 +395,14 @@ static inline dword_t copy_strings(addr_t sp, char *const strings[]) {
 }
 
 static inline ssize_t user_strlen(addr_t p) {
-    size_t len = 0;
+    size_t i = 0;
     char c;
-    if (user_get(p + len, c))
-        return -1;
-    while (c != '\0') {
-        if (user_get(p + len, c))
+    do {
+        if (user_get(p + i, c))
             return -1;
-        len++;
-    }
-    return len;
+        i++;
+    } while (c != '\0');
+    return i - 1;
 }
 
 static inline int user_memset(addr_t start, dword_t len, byte_t val) {
@@ -426,26 +424,26 @@ dword_t _sys_execve(addr_t filename_addr, addr_t argv_addr, addr_t envp_addr) {
     for (i = 0; ; i++) {
         if (user_get(argv_addr + i * 4, arg))
             return _EFAULT;
+        if (arg == 0)
+            break;
         if (i > MAX_ARGS)
             return _E2BIG;
         argv[i] = malloc(MAX_PATH);
         if (user_read_string(arg, argv[i], MAX_PATH))
             return _EFAULT;
-        if (arg == 0)
-            break;
     }
     argv[i] = NULL;
     char *envp[MAX_ARGS];
     for (i = 0; ; i++) {
         if (user_get(envp_addr + i * 4, arg))
             return _EFAULT;
+        if (arg == 0)
+            break;
         if (i > MAX_ARGS)
             return _E2BIG;
         envp[i] = malloc(MAX_PATH);
         if (user_read_string(arg, envp[i], MAX_PATH))
             return _EFAULT;
-        if (arg == 0)
-            break;
     }
     envp[i] = NULL;
     int res = sys_execve(filename, argv, envp);

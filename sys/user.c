@@ -43,7 +43,7 @@ int user_read_string(addr_t addr, char *buf, size_t max) {
             break;
         i++;
     }
-    return i;
+    return 0;
 }
 
 int user_write_string(addr_t addr, const char *buf) {

@@ -1,3 +1,4 @@
+#include "emu/modrm.h"
 #include "undefined-flags.h"
 #include "ptutil.h"
 
@@ -55,6 +56,16 @@ int undefined_flags_mask(int pid, struct cpu_state *cpu) {
                 pt_readn(pid, ip++, &shift_count, sizeof(shift_count));
             if (shift_count > 1)
                 return O;
+            break;
+        }
+
+        case 0xf7: {
+            // group 3
+            byte_t modrm;
+            read(modrm);
+            switch (REG(modrm)) {
+                case 4: return S|Z|A|P; // mul
+            }
             break;
         }
     }

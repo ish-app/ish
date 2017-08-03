@@ -135,14 +135,17 @@ void *tlb_handle_miss(struct mem *mem, addr_t addr, int type) {
 
     if (pt == NULL) {
         // page does not exist
-        // check if the stack needs to grow
-        struct pt_entry *next_pt = mem->pt[PAGE(addr) + 1];
-        if (next_pt != NULL && next_pt->flags & P_GROWSDOWN) {
-            pt_map_nothing(mem, PAGE(addr), 1, P_WRITE | P_GROWSDOWN);
-            pt = mem->pt[PAGE(addr)];
-        } else {
-            return NULL;
+        // look to see if the next VM region is willing to grow down
+        page_t page = PAGE(addr) + 1;
+        while (mem->pt[page] == NULL) {
+            if (page >= PT_SIZE)
+                return NULL;
+            page++;
         }
+        if (!(mem->pt[page]->flags & P_GROWSDOWN))
+            return NULL;
+        pt_map_nothing(mem, PAGE(addr), 1, P_WRITE | P_GROWSDOWN);
+        pt = mem->pt[PAGE(addr)];
     }
 
     if (type == TLB_WRITE && !P_WRITABLE(pt->flags)) {

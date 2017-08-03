@@ -307,6 +307,8 @@ static void step_tracing(struct cpu_state *cpu, int pid, int sender, int receive
                     pt_copy(pid, vecs[i].base, vecs[i].len);
                 break;
             }
+            case 168:
+                pt_copy(pid, regs.rbx, sizeof(struct pollfd_) * regs.rcx); break;
             case 183: // getcwd
                 pt_copy(pid, regs.rbx, cpu->eax); break;
 
@@ -399,8 +401,10 @@ static void prepare_tracee(int pid) {
 
 int main(int argc, char *const argv[]) {
     int err = xX_main_Xx(argc, argv);
-    if (err < 0)
+    if (err < 0) {
+        fprintf(stderr, "%s\n", strerror(-err));
         return err;
+    }
 
     // execute the traced program in a new process and throw up some sockets
     char exec_path[MAX_PATH];

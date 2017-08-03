@@ -39,7 +39,7 @@ int generic_stat(const char *pathname, struct statbuf *stat, bool follow_links) 
 static dword_t sys_stat_path(addr_t pathname_addr, addr_t statbuf_addr, bool follow_links) {
     int err;
     char pathname[MAX_PATH];
-    if (user_get(pathname_addr, pathname))
+    if (user_read_string(pathname_addr, pathname, sizeof(pathname)))
         return _EFAULT;
     struct statbuf stat;
     if ((err = generic_stat(pathname, &stat, follow_links)) < 0)

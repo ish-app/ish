@@ -37,7 +37,6 @@ static int copy_memory(struct process *proc, int flags) {
 }
 
 static int init_process(struct process *proc, dword_t flags, addr_t ctid_addr) {
-    pthread_mutex_lock(&proc->lock);
     dword_t pid = proc->pid;
     *proc = *current;
     proc->pid = pid;
@@ -52,19 +51,18 @@ static int init_process(struct process *proc, dword_t flags, addr_t ctid_addr) {
 
     proc->cpu.eax = 0;
     if (flags & CLONE_CHILD_SETTID_)
-        if (user_put_proc(proc, ctid_addr, proc->pid))
-            return _EFAULT;
+        if (user_put_proc(proc, ctid_addr, proc->pid)) {
+            err = _EFAULT;
             goto fail_free_proc;
+        }
     start_thread(proc);
 
     if (flags & CLONE_VFORK_)
         pthread_cond_wait(&proc->vfork_done, &proc->lock);
 
-    pthread_mutex_unlock(&proc->lock);
     return 0;
 
 fail_free_proc:
-    pthread_mutex_unlock(&proc->lock);
     free(proc);
     return err;
 }

@@ -2,12 +2,6 @@
 #include "sys/fs.h"
 #include "sys/calls.h"
 
-struct pollfd_ {
-    fd_t fd;
-    word_t events;
-    word_t revents;
-};
-
 dword_t sys_poll(addr_t fds, dword_t nfds, dword_t timeout) {
     if (nfds != 1)
         TODO("actual working poll");

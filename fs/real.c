@@ -227,8 +227,8 @@ struct termios_ {
     dword_t oflags;
     dword_t cflags;
     dword_t lflags;
-    byte_t cc[19];
     byte_t line;
+    byte_t cc[19];
 };
 
 #define TCGETS_ 0x5401
