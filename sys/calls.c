@@ -69,7 +69,6 @@ syscall_t syscall_table[] = {
     [265] = (syscall_t) sys_clock_gettime,
 };
 
-// returns true if a step is necessary (subject to change)
 void handle_interrupt(struct cpu_state *cpu, int interrupt) {
     TRACE_(instr, "\n");
     TRACE("int %d ", interrupt);
