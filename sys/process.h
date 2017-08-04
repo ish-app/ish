@@ -2,7 +2,7 @@
 #define PROCESS_H
 
 #include <pthread.h>
-#include "list.h"
+#include "util/list.h"
 #include "emu/cpu.h"
 #include "sys/fs.h"
 #include "sys/signal.h"

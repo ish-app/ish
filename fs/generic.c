@@ -52,7 +52,6 @@ int generic_open(const char *pathname, struct fd *fd, int flags, int mode) {
     return mount->fs->open(mount, path, fd, flags, mode);
 }
 
-// TODO I bet this can be shorter
 int generic_access(const char *pathname, int mode) {
     char path[MAX_PATH];
     int err = path_normalize(pathname, path, true);
@@ -62,7 +61,6 @@ int generic_access(const char *pathname, int mode) {
     return mount->fs->access(mount, path, mode);
 }
 
-// TODO I bet this can be shorter
 int generic_unlink(const char *pathname) {
     char path[MAX_PATH];
     int err = path_normalize(pathname, path, true);

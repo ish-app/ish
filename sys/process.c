@@ -36,6 +36,7 @@ struct process *process_create() {
 void process_destroy(struct process *proc) {
     list_remove(&proc->siblings);
     procs[proc->pid] = NULL;
+    // TODO free process memory
     free(proc);
 }
 

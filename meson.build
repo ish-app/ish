@@ -46,7 +46,9 @@ sys_src = [
     'fs/real.c',
     'fs/dev.c',
 
-    'sys/poll.c'
+    'sys/poll.c',
+
+    'util/buffer.c'
 ]
 emu_src = [
     'emu/memory.c',

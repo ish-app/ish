@@ -10,12 +10,16 @@ struct fd {
     unsigned refcnt;
     unsigned flags;
     const struct fd_ops *ops;
-    const struct mount *mount;
-    // TODO something more generic probably
-    int real_fd;
-    DIR *dir;
+    union {
+        struct {
+            int real_fd;
+            DIR *dir;
+        };
+    };
 };
 typedef sdword_t fd_t;
+fd_t find_fd();
+fd_t create_fd();
 #define MAX_FD 1024 // dynamically expanding fd table coming soon:tm:
 
 int generic_open(const char *pathname, struct fd *fd, int flags, int mode);

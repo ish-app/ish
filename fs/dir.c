@@ -16,6 +16,8 @@ int_t sys_getdents64(fd_t f, addr_t dirents, dword_t count) {
     struct fd *fd = current->files[f];
     if (fd == NULL)
         return _EBADF;
+    if (fd->ops->readdir == NULL)
+        return _ENOTDIR;
 
     dword_t orig_count = count;
 
