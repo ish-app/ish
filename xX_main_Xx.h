@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "sys/calls.h"
+#include "fs/tty.h"
 
 static void mount_root(const char *source) {
     mounts = malloc(sizeof(struct mount));
@@ -46,23 +47,26 @@ static inline int xX_main_Xx(int argc, char *const argv[]) {
     else
         current->pwd = getcwd(NULL, 0);
 
-    // I can't wait for when the init system works and I don't need to do this
-    current->files[0] = malloc(sizeof(struct fd));
-    current->files[0]->ops = &realfs_fdops;
-    current->files[0]->real_fd = 0;
-    current->files[0]->refcnt = 1;
-    current->files[1] = malloc(sizeof(struct fd));
-    current->files[1]->ops = &realfs_fdops;
-    current->files[1]->real_fd = 1;
-    current->files[1]->refcnt = 1;
-    current->files[2] = malloc(sizeof(struct fd));
-    current->files[2]->ops = &realfs_fdops;
-    current->files[2]->real_fd = 2;
-    current->files[2]->refcnt = 1;
+    // I can't wait for when init and udev works and I don't need to do this
+    tty_drivers[TTY_VIRTUAL] = real_tty_driver;
+    fd_t stdin_fd = create_fd();
+    assert(stdin_fd == 0);
+
+    // FIXME use generic_open (or something) to avoid this mess
+    current->files[stdin_fd]->mount = mounts;
+    current->files[stdin_fd]->real_fd = STDIN_FILENO;
+
+    int err = dev_open(4, 0, DEV_CHAR, current->files[stdin_fd]);
+    if (err < 0)
+        return err;
+    fd_t stdout_fd = sys_dup(0);
+    assert(stdout_fd == 1);
+    fd_t stderr_fd = sys_dup(0);
+    assert(stderr_fd == 2);
 
     // go.
     char *envp[] = {NULL};
-    int err = sys_execve(argv[optind], argv + optind, envp);
+    err = sys_execve(argv[optind], argv + optind, envp);
     if (err < 0)
         return err;
     return 0;

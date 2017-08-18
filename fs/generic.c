@@ -29,8 +29,18 @@ struct mount *find_mount_and_trim_path(char *path) {
 
 int generic_open(const char *pathname, struct fd *fd, int flags, int mode) {
     // TODO really, really, seriously reconsider what I'm doing with the strings
+    char path[MAX_PATH];
+    int err = path_normalize(pathname, path, true);
+    if (err < 0)
+        return err;
+    struct mount *mount = find_mount_and_trim_path(path);
+    fd->mount = mount;
+    err = mount->fs->open(mount, path, fd, flags, mode);
+    if (err < 0)
+        return err;
+
     struct statbuf stat;
-    int err = generic_stat(pathname, &stat, true);
+    err = generic_fstat(fd, &stat);
     if (err >= 0) {
         int type = stat.mode & S_IFMT;
         if (type == S_IFBLK || type == S_IFCHR) {
@@ -43,13 +53,7 @@ int generic_open(const char *pathname, struct fd *fd, int flags, int mode) {
             return dev_open(major, minor, type, fd);
         }
     }
-
-    char path[MAX_PATH];
-    err = path_normalize(pathname, path, true);
-    if (err < 0)
-        return err;
-    struct mount *mount = find_mount_and_trim_path(path);
-    return mount->fs->open(mount, path, fd, flags, mode);
+    return 0;
 }
 
 int generic_access(const char *pathname, int mode) {

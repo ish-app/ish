@@ -33,6 +33,7 @@
 
 #define TODO(msg, ...) { printf("TODO: " msg "\n", ##__VA_ARGS__); abort(); }
 #define FIXME(msg, ...) printf("FIXME " msg "\n", ##__VA_ARGS__)
+#define DIE(msg) { perror(msg); abort(); }
 
 #if defined(__i386__) || defined(__x86_64__)
 #define debugger __asm__("int3")

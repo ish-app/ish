@@ -15,8 +15,8 @@ struct buffer {
     pthread_cond_t changed;
 };
 
-int buf_init(struct buffer *buf, size_t size);
-void buf_free(struct buffer *buf, size_t capacity);
+int buf_init(struct buffer *buf, size_t capacity);
+void buf_free(struct buffer *buf);
 
 // Returns how many bytes of data are currently in the buffer.
 size_t buf_unread(struct buffer *buf);

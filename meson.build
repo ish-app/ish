@@ -46,6 +46,9 @@ sys_src = [
     'fs/real.c',
     'fs/dev.c',
 
+    'fs/tty.c',
+    'fs/tty-real.c',
+
     'sys/poll.c',
 
     'util/buffer.c'

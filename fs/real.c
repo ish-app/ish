@@ -12,6 +12,7 @@
 #include "sys/calls.h"
 #include "sys/fs.h"
 #include "fs/dev.h"
+#include "fs/tty.h"
 
 char *strnprepend(char *str, const char *prefix, size_t max) {
     if (strlen(str) + strlen(prefix) + 1 > max)
@@ -45,12 +46,14 @@ static int realfs_open(struct mount *mount, char *path, struct fd *fd, int flags
 
 static int realfs_close(struct fd *fd) {
     int err;
-    if (fd->dir != NULL)
-        err = closedir(fd->dir);
-    else
-        err = close(fd->real_fd);
+    err = close(fd->real_fd);
     if (err < 0)
         return err_map(errno);
+    if (fd->dir != NULL) {
+        err = closedir(fd->dir);
+        if (err < 0)
+            return err_map(errno);
+    }
     return 0;
 }
 
@@ -162,7 +165,7 @@ static ssize_t realfs_read(struct fd *fd, void *buf, size_t bufsize) {
     return res;
 }
 
-static ssize_t realfs_write(struct fd *fd, void *buf, size_t bufsize) {
+static ssize_t realfs_write(struct fd *fd, const void *buf, size_t bufsize) {
     ssize_t res = write(fd->real_fd, buf, bufsize);
     if (res < 0)
         return err_map(errno);
@@ -214,76 +217,6 @@ static int realfs_mmap(struct fd *fd, off_t offset, size_t len, int prot, int fl
     return 0;
 }
 
-struct win_size {
-    word_t row;
-    word_t col;
-    word_t xpixel;
-    word_t ypixel;
-};
-
-// This is the definition of __kernel_termios from glibc
-struct termios_ {
-    dword_t iflags;
-    dword_t oflags;
-    dword_t cflags;
-    dword_t lflags;
-    byte_t line;
-    byte_t cc[19];
-};
-
-#define TCGETS_ 0x5401
-#define TCSETS_ 0x5402
-#define TIOCGWINSZ_ 0x5413
-
-static ssize_t realfs_ioctl_size(struct fd *fd, int cmd) {
-    switch (cmd) {
-        case TIOCGWINSZ_: return sizeof(struct win_size);
-        case TCGETS_: return sizeof(struct termios_);
-        case TCSETS_: return sizeof(struct termios_);
-    }
-    return -1;
-}
-
-static int realfs_ioctl(struct fd *fd, int cmd, void *arg) {
-    int res;
-    struct winsize winsz;
-    struct win_size *winsz_ = arg;
-    struct termios termios;
-    struct termios_ *termios_ = arg;
-    switch (cmd) {
-        case TIOCGWINSZ_:
-            if (!(res = ioctl(fd->real_fd, TIOCGWINSZ, &winsz))) {
-                winsz_->col = winsz.ws_col;
-                winsz_->row = winsz.ws_row;
-                winsz_->xpixel = winsz.ws_xpixel;
-                winsz_->ypixel = winsz.ws_ypixel;
-            }
-            break;
-        case TCGETS_:
-            if (!(res = tcgetattr(fd->real_fd, &termios))) {
-                termios_->iflags = termios.c_iflag;
-                termios_->oflags = termios.c_oflag;
-                termios_->cflags = termios.c_cflag;
-                termios_->lflags = termios.c_lflag;
-                termios_->line = termios.c_line;
-                memcpy(&termios_->cc, &termios.c_cc, sizeof(termios_->cc));
-            }
-            break;
-        case TCSETS_:
-            termios.c_iflag = termios_->iflags;
-            termios.c_oflag = termios_->oflags;
-            termios.c_cflag = termios_->cflags;
-            termios.c_lflag = termios_->lflags;
-            termios.c_line = termios_->line;
-            memcpy(&termios.c_cc, &termios_->cc, sizeof(termios_->cc));
-            res = tcsetattr(fd->real_fd, TCSANOW, &termios);
-            break;
-    }
-    if (res < 0)
-        return err_map(errno);
-    return res;
-}
-
 static ssize_t realfs_readlink(struct mount *mount, char *path, char *buf, size_t bufsize) {
     if (strnprepend(path, mount->source, MAX_PATH) == NULL)
         return _ENAMETOOLONG;
@@ -300,6 +233,7 @@ const struct fs_ops realfs = {
     .stat = realfs_stat,
     .access = realfs_access,
     .readlink = realfs_readlink,
+    .fstat = realfs_fstat,
 };
 
 const struct fd_ops realfs_fdops = {
@@ -308,8 +242,5 @@ const struct fd_ops realfs_fdops = {
     .readdir = realfs_readdir,
     .lseek = realfs_lseek,
     .mmap = realfs_mmap,
-    .stat = realfs_fstat,
-    .ioctl_size = realfs_ioctl_size,
-    .ioctl = realfs_ioctl,
     .close = realfs_close,
 };

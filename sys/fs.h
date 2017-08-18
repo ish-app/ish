@@ -12,9 +12,15 @@ struct fd {
     const struct fd_ops *ops;
     union {
         struct {
-            int real_fd;
             DIR *dir;
         };
+        struct tty *tty;
+    };
+    // "inode"
+    struct mount *mount;
+    union {
+        int real_fd;
+        struct statbuf *stat;
     };
 };
 typedef sdword_t fd_t;
@@ -30,6 +36,7 @@ int generic_unlink(const char *pathname);
 #define AC_F 0
 int generic_access(const char *pathname, int mode);
 int generic_stat(const char *pathname, struct statbuf *stat, bool follow_links);
+int generic_fstat(struct fd *fd, struct statbuf *stat);
 ssize_t generic_readlink(const char *pathname, char *buf, size_t bufsize);
 
 struct mount {
@@ -49,6 +56,8 @@ struct fs_ops {
     int (*access)(struct mount *mount, char *path, int mode);
     int (*stat)(struct mount *mount, char *path, struct statbuf *stat, bool follow_links);
     ssize_t (*readlink)(struct mount *mount, char *path, char *buf, size_t bufsize);
+    // i'm considering removing stat, and just having fstat, which would then be called stat
+    int (*fstat)(struct fd *fd, struct statbuf *stat);
 };
 
 #define NAME_MAX 255
@@ -60,7 +69,7 @@ struct dir_entry {
 
 struct fd_ops {
     ssize_t (*read)(struct fd *fd, void *buf, size_t bufsize);
-    ssize_t (*write)(struct fd *fd, void *buf, size_t bufsize);
+    ssize_t (*write)(struct fd *fd, const void *buf, size_t bufsize);
     off_t (*lseek)(struct fd *fd, off_t off, int whence);
 
     // Reads a directory entry from the stream
@@ -68,7 +77,6 @@ struct fd_ops {
 
     // memory returned must be allocated with mmap, as it is freed with munmap
     int (*mmap)(struct fd *fd, off_t offset, size_t len, int prot, int flags, void **mem_out);
-    int (*stat)(struct fd *fd, struct statbuf *stat);
 
     // returns the size needed for the output of ioctl, 0 if the arg is not a
     // pointer, -1 for invalid command

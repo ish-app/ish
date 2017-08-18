@@ -17,6 +17,7 @@ fd_t create_fd() {
     current->files[fd] = malloc(sizeof(struct fd));
     current->files[fd]->refcnt = 1;
     current->files[fd]->flags = 0;
+    current->files[fd]->mount = NULL;
     return fd;
 }
 

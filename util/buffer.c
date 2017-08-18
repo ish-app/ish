@@ -13,7 +13,7 @@ int buf_init(struct buffer *buf, size_t capacity) {
     return 0;
 }
 
-void buf_free(struct buffer *buf, size_t capacity) {
+void buf_free(struct buffer *buf) {
     free(buf->data);
 }
 
