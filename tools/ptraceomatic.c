@@ -60,13 +60,13 @@ static int compare_cpus(struct cpu_state *cpu, int pid, int undefined_flags) {
     collapse_flags(cpu);
 #define CHECK_REG(pt, cp) \
     if (regs.pt != cpu->cp) { \
-        printf(#pt " = 0x%llx, " #cp " = 0x%x\n", regs.pt, cpu->cp); \
+        println(#pt " = 0x%llx, " #cp " = 0x%x", regs.pt, cpu->cp); \
         debugger; \
         return -1; \
     }
 #define CHECK_FPREG(pt, cp) \
     if (fpregs.pt != cpu->cp) { \
-        printf(#pt " = 0x%x, " #cp " = 0x%x\n", fpregs.pt, cpu->cp); \
+        println(#pt " = 0x%x, " #cp " = 0x%x", fpregs.pt, cpu->cp); \
         debugger; \
         return -1; \
     }
@@ -119,7 +119,7 @@ static int compare_cpus(struct cpu_state *cpu, int pid, int undefined_flags) {
     void *fake_page = cpu->mem.pt[PAGE(dirty_page)]->data;
 
     if (memcmp(real_page, fake_page, PAGE_SIZE) != 0) {
-        printf("page %x doesn't match\n", dirty_page);
+        println("page %x doesn't match", dirty_page);
         debugger;
         return -1;
     }

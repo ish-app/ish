@@ -9,8 +9,9 @@
 
 static void real_tty_read_thread(struct tty *tty) {
     char ch;
-    while (read(STDIN_FILENO, &ch, 1) == 1)
+    while (read(STDIN_FILENO, &ch, 1) == 1) {
         tty_input(tty, &ch, 1);
+    }
 }
 
 static struct termios old_termios;

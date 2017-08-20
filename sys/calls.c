@@ -76,7 +76,7 @@ void handle_interrupt(struct cpu_state *cpu, int interrupt) {
         int syscall_num = cpu->eax;
         if (syscall_num >= NUM_SYSCALLS || syscall_table[syscall_num] == NULL) {
             // TODO SIGSYS
-            printf("missing syscall %d\n", syscall_num);
+            println("missing syscall %d", syscall_num);
             send_signal(current, SIGSYS_);
         } else {
             TRACE("syscall %d ", syscall_num);
@@ -87,13 +87,13 @@ void handle_interrupt(struct cpu_state *cpu, int interrupt) {
     } else if (interrupt == INT_GPF) {
         // page fault handling is a thing
         // TODO SIGSEGV
-        printf("could not handle page fault at %x, exiting\n", cpu->segfault_addr);
+        println("could not handle page fault at %x, exiting", cpu->segfault_addr);
         sys_exit(1);
     } else if (interrupt == INT_UNDEFINED) {
-        printf("illegal instruction\n");
+        println("illegal instruction");
         send_signal(current, SIGILL_);
     } else {
-        printf("exiting\n");
+        println("exiting");
         sys_exit(interrupt);
     }
 }

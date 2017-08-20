@@ -2,6 +2,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+// all line endings should use \r\n so it can work even with the terminal in raw mode
+// this is subject to change, so use this macro whenever you output a newline
+#define println(msg, ...) printf(msg "\r\n", ##__VA_ARGS__)
+
 // debug output utilities
 
 #ifndef DEBUG_all
@@ -26,13 +30,13 @@
 #endif
 
 #define TRACE__NOP(msg, ...) do {} while(0)
-#define TRACE__(msg, ...) printf(msg, ##__VA_ARGS__)
+#define TRACE__(msg, ...) println(msg, ##__VA_ARGS__)
 #define TRACE_(chan, msg, ...) CONCAT(TRACE_, chan)(msg, ##__VA_ARGS__)
 #define TRACE(msg, ...) TRACE_(DEFAULT_CHANNEL, msg, ##__VA_ARGS__)
 #define DEFAULT_CHANNEL default
 
-#define TODO(msg, ...) { printf("TODO: " msg "\n", ##__VA_ARGS__); abort(); }
-#define FIXME(msg, ...) printf("FIXME " msg "\n", ##__VA_ARGS__)
+#define TODO(msg, ...) { println("TODO: " msg, ##__VA_ARGS__); abort(); }
+#define FIXME(msg, ...) println("FIXME " msg, ##__VA_ARGS__)
 #define DIE(msg) { perror(msg); abort(); }
 
 #if defined(__i386__) || defined(__x86_64__)

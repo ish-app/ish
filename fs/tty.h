@@ -74,8 +74,9 @@ struct tty {
 
     char buf[4096];
     size_t bufsize;
-    bool buf_ready;
-    pthread_cond_t buf_ready_changed;
+    bool canon_ready;
+    pthread_cond_t produced;
+    pthread_cond_t consumed;
 
     struct winsize_ winsize;
     struct termios_ termios;
