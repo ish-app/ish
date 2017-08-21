@@ -70,6 +70,7 @@ extern struct tty_driver real_tty_driver;
 
 struct tty {
     unsigned refcnt;
+    struct pollable pl;
     struct tty_driver *driver;
 
     char buf[4096];

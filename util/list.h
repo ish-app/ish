@@ -1,5 +1,9 @@
+#ifndef LIST_H
+#define LIST_H
+
 #include <unistd.h>
 #include <stdbool.h>
+#include <stddef.h>
 
 struct list {
     struct list *next, *prev;
@@ -33,11 +37,25 @@ static inline bool list_empty(struct list *list) {
 
 #define list_entry(item, type, member) \
     (type *) ((char *) (item) - offsetof(type, member))
+#define list_first_entry(list, type, member) \
+    list_entry((list)->next, type, member)
+#define list_next_entry(item, member) \
+    list_entry((item)->member.next, typeof(*(item)), member)
 
 #define list_for_each(list, item) \
     for (item = (list)->next; item != (list); item = item->next)
+#define list_for_each_safe(list, item, tmp) \
+    for (item = (list)->next, tmp = item->next; item != (list); \
+            item = tmp, tmp = item->next)
 
 #define list_for_each_entry(list, item, member) \
-    for (item = list_entry((list)->next, __typeof__(*item), member); \
+    for (item = list_entry((list)->next, typeof(*item), member); \
             &item->member != (list); \
-            item = list_entry(item->member.next, __typeof__(*item), member))
+            item = list_entry(item->member.next, typeof(*item), member))
+#define list_for_each_entry_safe(list, item, tmp, member) \
+    for (item = list_first_entry(list, typeof(*(item)), member), \
+            tmp = list_next_entry(item, member); \
+            &item->member != (list); \
+            item = tmp, tmp = list_next_entry(item, member))
+
+#endif

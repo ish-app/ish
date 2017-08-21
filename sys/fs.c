@@ -13,12 +13,14 @@ fd_t find_fd() {
 }
 
 fd_t create_fd() {
-    fd_t fd = find_fd();
-    current->files[fd] = malloc(sizeof(struct fd));
-    current->files[fd]->refcnt = 1;
-    current->files[fd]->flags = 0;
-    current->files[fd]->mount = NULL;
-    return fd;
+    fd_t f = find_fd();
+    struct fd *fd = malloc(sizeof(struct fd));
+    fd->refcnt = 1;
+    fd->flags = 0;
+    fd->mount = NULL;
+    list_init(&fd->poll_fds);
+    current->files[f] = fd;
+    return f;
 }
 
 // TODO ENAMETOOLONG
@@ -72,7 +74,17 @@ dword_t sys_close(fd_t f) {
         if (err < 0)
             return err;
         free(fd);
-        current->files[f] = NULL;
+    }
+    current->files[f] = NULL;
+    return 0;
+}
+
+int generic_close(struct fd *fd) {
+    if (--fd->refcnt == 0) {
+        int err = fd->ops->close(fd);
+        if (err < 0)
+            return err;
+        return 1;
     }
     return 0;
 }

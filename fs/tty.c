@@ -22,9 +22,11 @@ static int tty_get(int type, int num, struct tty **tty_out) {
         tty->refcnt = 0;
         tty->type = type;
         tty->num = num;
+        list_init(&tty->pl.fds);
+        lock_init(&tty->pl.lock);
         // TODO default termios
         memset(&tty->winsize, sizeof(tty->winsize), 0);
-        pthread_mutex_init(&tty->lock, NULL);
+        lock_init(&tty->lock);
         pthread_cond_init(&tty->produced, NULL);
         pthread_cond_init(&tty->consumed, NULL);
 
@@ -75,10 +77,21 @@ static int tty_open(int major, int minor, int type, struct fd *fd) {
     if (err < 0)
         return err;
     fd->tty = tty;
+    lock(&tty->pl);
+    lock(fd);
+    list_add(&tty->pl.fds, &fd->pollable_other_fds);
+    fd->pollable = &tty->pl;
+    unlock(fd);
+    unlock(&tty->pl);
     return 0;
 }
 
 static int tty_close(struct fd *fd) {
+    lock(fd->pollable);
+    lock(fd);
+    list_remove(&fd->pollable_other_fds);
+    unlock(fd);
+    unlock(fd->pollable);
     tty_release(fd->tty);
     return 0;
 }
@@ -126,6 +139,7 @@ int tty_input(struct tty *tty, const char *input, size_t size) {
 
                 tty->canon_ready = true;
                 signal(tty, produced);
+                poll_wake_pollable(&tty->pl);
                 while (tty->canon_ready)
                     wait_for(tty, consumed);
             } else {
@@ -142,6 +156,7 @@ int tty_input(struct tty *tty, const char *input, size_t size) {
         memcpy(tty->buf + tty->bufsize, input, size);
         tty->bufsize += size;
         signal(tty, produced);
+        poll_wake_pollable(&tty->pl);
     }
 
     unlock(tty);
@@ -160,10 +175,8 @@ static ssize_t tty_read(struct fd *fd, void *buf, size_t bufsize) {
         if (min == 0 && time == 0) {
             // no need to wait for anything
         } else if (min > 0 && time == 0) {
-            while (tty->bufsize < min) {
-                println("have %zu, waiting for %d", tty->bufsize, min);
+            while (tty->bufsize < min)
                 wait_for(tty, produced);
-            }
         } else {
             TODO("VTIME != 0");
         }
@@ -178,10 +191,6 @@ static ssize_t tty_read(struct fd *fd, void *buf, size_t bufsize) {
     signal(tty, consumed);
 
     unlock(tty);
-    for (size_t i = 0; i < bufsize; i++) {
-        printf("read %x %c\r\n", ((char*)buf)[i], ((char*)buf)[i]);
-    }
-    println("done");
     return bufsize;
 }
 
@@ -206,6 +215,19 @@ static ssize_t tty_write(struct fd *fd, const void *buf, size_t bufsize) {
     return bufsize;
 }
 
+static int tty_poll(struct fd *fd) {
+    struct tty *tty = fd->tty;
+    int types = POLL_WRITE;
+    if (tty->termios.lflags & ICANON_) {
+        if (tty->canon_ready)
+            types |= POLL_READ;
+    } else {
+        if (tty->bufsize > 0)
+            types |= POLL_READ;
+    }
+    return types;
+}
+
 static ssize_t tty_ioctl_size(struct fd *fd, int cmd) {
     return fd->tty->driver->ioctl_size(fd->tty, cmd);
 }
@@ -219,6 +241,7 @@ struct dev_ops tty_dev = {
         .close = tty_close,
         .read = tty_read,
         .write = tty_write,
+        .poll = tty_poll,
         .ioctl_size = tty_ioctl_size,
         .ioctl = tty_ioctl,
     },

@@ -44,8 +44,9 @@ sys_src = [
     'fs/generic.c',
     'fs/path.c',
     'fs/real.c',
-    'fs/dev.c',
+    'fs/poll.c',
 
+    'fs/dev.c',
     'fs/tty.c',
     'fs/tty-real.c',
 

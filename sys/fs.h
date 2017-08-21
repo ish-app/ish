@@ -2,26 +2,37 @@
 #define FS_H
 
 #include "misc.h"
+#include "util/list.h"
 #include "fs/path.h"
 #include "fs/stat.h"
 #include <dirent.h>
+
+struct poll;
 
 struct fd {
     unsigned refcnt;
     unsigned flags;
     const struct fd_ops *ops;
+
+    struct list poll_fds;
+    struct pollable *pollable;
+    struct list pollable_other_fds;
+
     union {
         struct {
             DIR *dir;
         };
         struct tty *tty;
     };
+
     // "inode"
     struct mount *mount;
     union {
         int real_fd;
         struct statbuf *stat;
     };
+
+    pthread_mutex_t lock;
 };
 typedef sdword_t fd_t;
 fd_t find_fd();
@@ -78,6 +89,9 @@ struct fd_ops {
     // memory returned must be allocated with mmap, as it is freed with munmap
     int (*mmap)(struct fd *fd, off_t offset, size_t len, int prot, int flags, void **mem_out);
 
+    // returns a bitmask of operations that won't block
+    int (*poll)(struct fd *fd);
+
     // returns the size needed for the output of ioctl, 0 if the arg is not a
     // pointer, -1 for invalid command
     ssize_t (*ioctl_size)(struct fd *fd, int cmd);
@@ -88,6 +102,41 @@ struct fd_ops {
 };
 
 struct mount *find_mount_and_trim_path(char *path);
+
+struct pollable {
+    struct list fds;
+    pthread_mutex_t lock;
+};
+
+struct poll {
+    struct list poll_fds;
+    int notify_pipe[2];
+    pthread_mutex_t lock;
+};
+
+struct poll_fd {
+    // locked by containing struct poll
+    struct fd *fd;
+    struct list fds;
+    int types;
+
+    // locked by containing struct fd
+    struct poll *poll;
+    struct list polls;
+};
+
+#define POLL_READ 1
+#define POLL_WRITE 4
+struct poll_event {
+    struct fd *fd;
+    int types;
+};
+struct poll *poll_create();
+int poll_add_fd(struct poll *poll, struct fd *fd, int types);
+int poll_del_fd(struct poll *poll, struct fd *fd);
+void poll_wake_pollable(struct pollable *pollable);
+int poll_wait(struct poll *poll, struct poll_event *event, int timeout);
+void poll_destroy(struct poll *poll);
 
 // real fs
 extern const struct fs_ops realfs;

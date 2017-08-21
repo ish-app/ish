@@ -7,6 +7,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <sys/types.h>
+#include <pthread.h>
 
 // utility macros
 #define CONCAT(a, b) _CONCAT(a, b)
@@ -45,17 +46,7 @@ typedef sdword_t int_t;
 #define uint(size) CONCAT3(uint,size,_t)
 #define sint(size) CONCAT3(int,size,_t)
 
-#if 1
-#include <pthread.h>
-static inline void mutex_init(pthread_mutex_t *mutex) {
-    pthread_mutexattr_t attr;
-    pthread_mutexattr_init(&attr);
-    pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK);
-    pthread_mutex_init(mutex, &attr);
-}
-#else
-#define mutex_init(mutex) pthread_mutex_init(mutex, NULL)
-#endif
+#define lock_init(mutex) pthread_mutex_init(mutex, NULL)
 #define lock(thing) pthread_mutex_lock(&(thing)->lock)
 #define unlock(thing) pthread_mutex_unlock(&(thing)->lock)
 #define wait_for(thing, what) pthread_cond_wait(&(thing)->what, &(thing)->lock)
