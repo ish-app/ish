@@ -64,17 +64,16 @@ emu_src = [
 
 threads = dependency('threads')
 librt = meson.get_compiler('c').find_library('rt', required: false)
+softfloat = subproject('softfloat').get_variable('softfloat_dep')
 
 libish = library('ish', sys_src + emu_src,
     include_directories: includes,
-    dependencies: [librt, threads])
+    dependencies: [librt, threads, softfloat])
 ish = declare_dependency(
     link_with: libish,
     include_directories: includes)
 
-# testing programs
-subdir('tests')
 # ptraceomatic et al
 subdir('tools')
 
-executable('ish', ['main.c'], dependencies: [ish, threads])
+executable('ish', ['main.c'], dependencies: [ish, softfloat, threads])

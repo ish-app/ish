@@ -1,6 +1,7 @@
 #ifndef MODRM_H
 #define MODRM_H
 
+#include "debug.h"
 #include "misc.h"
 #include "emu/cpu.h"
 
@@ -35,12 +36,13 @@ struct modrm_info {
         mod_reg,
     } type;
     struct regptr modrm_regid;
+    byte_t rm_opcode;
 
     // REG BITS
     // offsets of the register into the cpu_state structure
     struct regptr reg;
     // for when it's not a register
-    uint8_t opcode;
+    byte_t opcode;
 };
 
 #ifdef DISABLE_MODRM_TABLE

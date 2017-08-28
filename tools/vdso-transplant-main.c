@@ -12,6 +12,7 @@
 #include <sys/wait.h>
 #include <signal.h>
 
+#include "debug.h"
 #include "ptutil.h"
 #include "transplant.h"
 

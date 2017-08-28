@@ -1,3 +1,4 @@
+#include "debug.h"
 #include "sys/calls.h"
 #include "sys/signal.h"
 #include "sys/vdso.h"
@@ -55,7 +56,6 @@ void send_signal(struct process *proc, int sig) {
         // this is superhypermega condensed version of fpu__alloc_mathframe in
         // arch/x86/kernel/fpu/signal.c
         sp -= xsave_extra;
-        debugger;
         sp &=~ 0x3f;
         sp -= fxsave_extra;
     }

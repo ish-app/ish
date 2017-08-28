@@ -1,8 +1,10 @@
+#include "debug.h"
 #include <string.h>
 #include <unistd.h>
 #include <termios.h>
 #include <sys/ioctl.h>
 #include <pthread.h>
+#include <signal.h>
 
 #include "sys/calls.h"
 #include "fs/tty.h"
@@ -10,6 +12,10 @@
 static void real_tty_read_thread(struct tty *tty) {
     char ch;
     while (read(STDIN_FILENO, &ch, 1) == 1) {
+        if (ch == '\x1c') {
+            // ^\ (so ^C still works for emulated SIGINT)
+            raise(SIGINT);
+        }
         tty_input(tty, &ch, 1);
     }
 }

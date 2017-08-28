@@ -48,3 +48,7 @@
 
 #define MOVD(src, dst) \
     set(dst, get(src,128).dw[0],32)
+
+#include <softfloat.h>
+#define CVTTSD2SI(src, dst) \
+    set(dst, f64_to_i32(get(src,64), softfloat_round_minMag, false),32)

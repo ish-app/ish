@@ -13,7 +13,7 @@
 
 long trycall(long res, const char *msg) {
     if (res == -1 && errno != 0) {
-        perror(msg); exit(1);
+        perror(msg); printf("\r\n"); exit(1);
     }
     return res;
 }

@@ -536,6 +536,7 @@
 #define CLD cpu->df = 0
 
 #include "emu/interp/sse.h"
+#include "emu/interp/fpu.h"
 
 // ok now include the decoding function
 #define decoder_name cpu_step

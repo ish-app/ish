@@ -28,6 +28,7 @@ static inline struct regptr decode_reg(byte_t reg) {
 struct modrm_info modrm_compute_info(byte_t byte) {
     struct modrm_info info;
     info.opcode = REG(byte);
+    info.rm_opcode = RM(byte); // for floating point
     info.sib = false;
     info.reg = decode_reg(REG(byte));
     info.modrm_regid = decode_reg(RM(byte));

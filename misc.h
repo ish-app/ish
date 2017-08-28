@@ -13,11 +13,10 @@
 #define CONCAT(a, b) _CONCAT(a, b)
 #define _CONCAT(a, b) a##b
 #define CONCAT3(a,b,c) CONCAT(a, CONCAT(b, c))
+#define CONCAT4(a,b,c,d) CONCAT(a, CONCAT3(b, c, d))
 
 #define STR(x) _STR(x)
 #define _STR(x) #x
-
-#include "debug.h"
 
 // keywords
 #define bits unsigned int
@@ -31,6 +30,12 @@
 #define unlikely(x) __builtin_expect((x), 0)
 #define noreturn __attribute__((noreturn))
 #define must_check __attribute__((warn_unused_result))
+
+#if defined(__i386__) || defined(__x86_64__)
+#define debugger __asm__("int3")
+#elif defined(__arm__)
+#define debugger __asm__("trap")
+#endif
 
 // types
 typedef uint64_t qword_t;

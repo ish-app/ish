@@ -15,6 +15,7 @@
 #include <sys/personality.h>
 #include <sys/socket.h>
 
+#include "debug.h"
 #include "sys/calls.h"
 #include "emu/interrupt.h"
 #include "emu/cpuid.h"
@@ -58,18 +59,13 @@ static int compare_cpus(struct cpu_state *cpu, int pid, int undefined_flags) {
     getregs(pid, &regs);
     trycall(ptrace(PTRACE_GETFPREGS, pid, NULL, &fpregs), "ptrace getregs compare");
     collapse_flags(cpu);
-#define CHECK_REG(pt, cp) \
-    if (regs.pt != cpu->cp) { \
-        println(#pt " = 0x%llx, " #cp " = 0x%x", regs.pt, cpu->cp); \
+#define CHECK(real, fake, name) \
+    if ((real) != (fake)) { \
+        println(name ": real 0x%llx, fake 0x%llx", (unsigned long long) (real), (unsigned long long) (fake)); \
         debugger; \
         return -1; \
     }
-#define CHECK_FPREG(pt, cp) \
-    if (fpregs.pt != cpu->cp) { \
-        println(#pt " = 0x%x, " #cp " = 0x%x", fpregs.pt, cpu->cp); \
-        debugger; \
-        return -1; \
-    }
+#define CHECK_REG(pt, cp) CHECK(regs.pt, cpu->cp, #cp)
     CHECK_REG(rax, eax);
     CHECK_REG(rbx, ebx);
     CHECK_REG(rcx, ecx);
@@ -84,7 +80,7 @@ static int compare_cpus(struct cpu_state *cpu, int pid, int undefined_flags) {
     // give a nice visual representation of the flags
     if (regs.eflags != cpu->eflags) {
 #define f(x,n) ((regs.eflags & (1 << n)) ? #x : "-"),
-        printf("real eflags = 0x%llx %s%s%s%s%s%s%s%s%s, fake eflags = 0x%x %s%s%s%s%s%s%s%s%s\n%0d",
+        printf("real eflags = 0x%llx %s%s%s%s%s%s%s%s%s, fake eflags = 0x%x %s%s%s%s%s%s%s%s%s\r\n%0d",
                 regs.eflags, f(o,11)f(d,10)f(i,9)f(t,8)f(s,7)f(z,6)f(a,4)f(p,2)f(c,0)
 #undef f
 #define f(x,n) ((cpu->eflags & (1 << n)) ? #x : "-"),
@@ -92,23 +88,30 @@ static int compare_cpus(struct cpu_state *cpu, int pid, int undefined_flags) {
         debugger;
         return -1;
     }
-    CHECK_FPREG(xmm_space[0], xmm[0].dw[0]);
-    CHECK_FPREG(xmm_space[1], xmm[0].dw[1]);
-    CHECK_FPREG(xmm_space[2], xmm[0].dw[2]);
-    CHECK_FPREG(xmm_space[3], xmm[0].dw[3]);
-    CHECK_FPREG(xmm_space[4], xmm[1].dw[0]);
-    CHECK_FPREG(xmm_space[5], xmm[1].dw[1]);
-    CHECK_FPREG(xmm_space[6], xmm[1].dw[2]);
-    CHECK_FPREG(xmm_space[7], xmm[1].dw[3]);
-    CHECK_FPREG(xmm_space[8], xmm[2].dw[0]);
-    CHECK_FPREG(xmm_space[9], xmm[2].dw[1]);
-    CHECK_FPREG(xmm_space[10], xmm[2].dw[2]);
-    CHECK_FPREG(xmm_space[11], xmm[2].dw[3]);
-    CHECK_FPREG(xmm_space[12], xmm[3].dw[0]);
-    CHECK_FPREG(xmm_space[13], xmm[3].dw[1]);
-    CHECK_FPREG(xmm_space[14], xmm[3].dw[2]);
-    CHECK_FPREG(xmm_space[15], xmm[3].dw[3]);
-    // 4 xmm regs is enough for now
+#define CHECK_XMMREG(i) \
+    CHECK(*(uint64_t *) &fpregs.xmm_space[i * 2],   cpu->xmm[i].qw[0], "xmm" #i " low") \
+    CHECK(*(uint64_t *) &fpregs.xmm_space[(i+1)*2], cpu->xmm[i].qw[1], "xmm" #i " high")
+    CHECK_XMMREG(0);
+    CHECK_XMMREG(1);
+    CHECK_XMMREG(2);
+    CHECK_XMMREG(3);
+    CHECK_XMMREG(4);
+    CHECK_XMMREG(5);
+    CHECK_XMMREG(6);
+    CHECK_XMMREG(7);
+
+    CHECK((fpregs.swd >> 11) & 7, cpu->top, "top");
+#define CHECK_FPREG(i) \
+    CHECK(*(uint64_t *) &fpregs.st_space[i * 4], cpu->fp[(cpu->top + i)%8].signif,  "st(" #i ") signif") \
+    CHECK(*(uint16_t *) &fpregs.st_space[i*4+2], cpu->fp[(cpu->top + i)%8].signExp, "st(" #i ") sign/exp")
+    CHECK_FPREG(0);
+    CHECK_FPREG(1);
+    CHECK_FPREG(2);
+    CHECK_FPREG(3);
+    CHECK_FPREG(4);
+    CHECK_FPREG(5);
+    CHECK_FPREG(6);
+    CHECK_FPREG(7);
 
     // compare pages marked dirty
     int fd = open_mem(pid);
@@ -307,7 +310,9 @@ static void step_tracing(struct cpu_state *cpu, int pid, int sender, int receive
                     pt_copy(pid, vecs[i].base, vecs[i].len);
                 break;
             }
-            case 168:
+            case 162: // nanosleep
+                pt_copy(pid, regs.rcx, sizeof(struct timespec_)); break;
+            case 168: // poll
                 pt_copy(pid, regs.rbx, sizeof(struct pollfd_) * regs.rcx); break;
             case 183: // getcwd
                 pt_copy(pid, regs.rbx, cpu->eax); break;
@@ -423,17 +428,19 @@ int main(int argc, char *const argv[]) {
     prepare_tracee(pid);
 
     struct cpu_state *cpu = &current->cpu;
+    int undefined_flags = 2;
+    struct cpu_state old_cpu = *cpu;
     while (true) {
-        struct cpu_state old_cpu = *cpu;
-        int undefined_flags = undefined_flags_mask(pid, cpu);
-        step_tracing(cpu, pid, sender, receiver);
         if (compare_cpus(cpu, pid, undefined_flags) < 0) {
-            printf("failure: resetting cpu\n");
+            println("failure: resetting cpu");
             *cpu = old_cpu;
             __asm__("int3");
             cpu_step32(cpu);
             return -1;
         }
+        undefined_flags = undefined_flags_mask(pid, cpu);
+        old_cpu = *cpu;
+        step_tracing(cpu, pid, sender, receiver);
     }
 }
 

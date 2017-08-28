@@ -364,15 +364,15 @@ restart:
         case 0x5e: TRACEI("pop osi"); POP(osi); break;
         case 0x5f: TRACEI("pop odi"); POP(odi); break;
 
-        case 0x65: TRACE("segment gs\n");
+        case 0x65: TRACELN("segment gs");
                    addr += cpu->tls_ptr; goto restart;
 
         case 0x66:
 #if OP_SIZE == 32
-            TRACE("entering 16 bit mode\n");
+            TRACELN("entering 16 bit mode");
             return cpu_step16(cpu);
 #else
-            TRACE("entering 32 bit mode\n");
+            TRACELN("entering 32 bit mode");
             return cpu_step32(cpu);
 #endif
 
@@ -592,6 +592,35 @@ restart:
 
 #undef GRP2
 
+        case 0xd8: case 0xd9: case 0xda: case 0xdb: case 0xdc: case 0xdd: case 0xde: case 0xdf:
+            TRACEI("fpu\t\t"); READMODRM;
+            if (modrm.type != mod_reg) {
+                switch (insn << 4 | modrm.opcode) {
+                    case 0xd81: TRACE("fmul mem32"); FMUL(mem_addr_real,32); break;
+                    case 0xda4: TRACE("fisub mem32"); FISUB(mem_addr,32); break;
+                    case 0xdc0: TRACE("fadd mem64"); FADDM(mem_addr_real,64); break;
+                    case 0xdd0: TRACE("fld mem64"); FLD(mem_addr_real,64); break;
+                    case 0xdd2: TRACE("fst mem64"); FSTM(mem_addr_real,64); break;
+                    case 0xdd3: TRACE("fstp mem64"); FSTM(mem_addr_real,64); FPOP; break;
+                    case 0xdf5: TRACE("fild mem64"); FILD(mem_addr,64); break;
+                    default: TRACE("undefined"); UNDEFINED;
+                }
+            } else {
+                switch (insn << 4 | modrm.opcode) {
+                    case 0xd95:
+                        switch (modrm.rm_opcode) {
+                            case 6: TRACE("fldz"); FLDC(zero); break;
+                            default: TRACE("undefined"); UNDEFINED;
+                        }
+                        break;
+                    case 0xdb5: TRACE("fucomi st"); FUCOMI(); break;
+                    case 0xdd3: TRACE("fstp st"); FST(); FPOP; break;
+                    case 0xdf5: TRACE("fucomip st"); FUCOMI(); FPOP; break;
+                    default: TRACE("undefined"); UNDEFINED;
+                }
+            }
+            break;
+
         case 0xe3: TRACEI("jcxz rel8\t");
                    READIMM8; JCXZ_REL(imm8); break;
 
@@ -603,12 +632,22 @@ restart:
         case 0xeb: TRACEI("jmp rel8\t");
                    READIMM8; JMP_REL(imm8); break;
 
-        case 0xf0: TRACE("lock (ignored for now)\n"); goto restart;
+        case 0xf0: TRACELN("lock (ignored for now)"); goto restart;
 
         case 0xf2:
             READINSN;
             switch (insn) {
+                case 0x0f:
+                    READINSN;
+                    switch (insn) {
+                        case 0x2c: TRACEI("cvttsd2si modrm64, reg32");
+                                   READMODRM; if (modrm.type == mod_reg) UNDEFINED; // TODO xmm
+                                   CVTTSD2SI(mem_addr_real, modrm_reg); break;
+                        default: TRACE("undefined"); UNDEFINED;
+                    }
+                    break;
                 case 0xae: TRACEI("repnz scasb"); REPNZ(SCAS(8)); break;
+                default: TRACE("undefined"); UNDEFINED;
             }
             break;
 
@@ -622,6 +661,7 @@ restart:
                     switch (insn) {
                         case 0x7e: TRACEI("movq modrm, xmm");
                                    READMODRM; MOVQ(modrm_val, modrm_reg); break;
+                        default: TRACE("undefined"); UNDEFINED;
                     }
                     break;
 
@@ -638,7 +678,7 @@ restart:
                 // ret. gcc used to use nop ret but repz ret is only one
                 // instruction
                 case 0xc3: TRACEI("repz ret\t"); RET_NEAR(); break;
-                default: TRACE("undefined\n"); UNDEFINED;
+                default: TRACELN("undefined"); UNDEFINED;
             }
             break;
 
@@ -697,9 +737,9 @@ restart:
 #undef GRP5
 
         default:
-            TRACE("undefined\n");
+            TRACELN("undefined");
             UNDEFINED;
     }
-    TRACE("\n");
+    TRACELN("");
     return -1; // everything is ok.
 }

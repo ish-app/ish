@@ -1,22 +1,26 @@
+project('ish-tests', 'c')
+add_project_arguments(['-m32', '-fno-stack-protector'], language: 'c')
+add_project_link_arguments('-m32', language: 'c')
+
 # hello world
-executable('hello', ['hello.c'], c_args: ['-m32'], link_args: ['-m32', '-nostdlib'])
-executable('hello-libc-static', ['hello-clib.c'], c_args: ['-m32'], link_args: ['-m32', '-static'])
-executable('hello-libc', ['hello-clib.c'], c_args: ['-m32'], link_args: ['-m32'])
+executable('hello', ['hello.c'], link_args: ['-nostdlib'])
+executable('hello-libc-static', ['hello-clib.c'], link_args: ['-static'])
+executable('hello-libc', ['hello-clib.c'])
 
 # simple benchmark
-executable('looper', ['looper.c', 'nothing.c'], c_args: ['-m32'], link_args: ['-m32'])
-executable('fibbonaci', ['fibbonaci.c'], c_args: ['-m32'], link_args: ['-m32'])
+executable('looper', ['looper.c', 'nothing.c'])
+executable('fibbonaci', ['fibbonaci.c'])
 
 # filesystem
-executable('cat', ['cat.c'], c_args: ['-m32'], link_args: ['-m32'])
-executable('stat', ['stat.c'], c_args: ['-m32', '-D_FILE_OFFSET_BITS=64'], link_args: ['-m32'])
-executable('getdents', ['getdents.c'], c_args: ['-m32'], link_args: ['-m32'])
+executable('cat', ['cat.c'])
+executable('stat', ['stat.c'], c_args: ['-D_FILE_OFFSET_BITS=64'])
+executable('getdents', ['getdents.c'])
 
-executable('signal', ['signal.c'], c_args: ['-m32'], link_args: ['-m32', '-static'])
-executable('forkexec', ['forkexec.c'], c_args: ['-m32'], link_args: ['-m32'])
+executable('signal', ['signal.c'], link_args: ['-static'])
+executable('forkexec', ['forkexec.c'])
 
 # qemu test program
-executable('qemu-test', ['qemu-test.c'], c_args: ['-m32'], link_args: ['-m32', '-lm'])
+executable('qemu-test', ['qemu-test.c'], link_args: ['-lm'])
 
 run_target('busybox',
     command: ['get-busybox.sh'])

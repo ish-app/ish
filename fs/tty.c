@@ -1,3 +1,4 @@
+#include "debug.h"
 #include <string.h>
 #include "sys/calls.h"
 #include "fs/tty.h"

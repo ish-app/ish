@@ -1,3 +1,4 @@
+#include "debug.h"
 #include "sys/calls.h"
 #include "sys/errno.h"
 #include "sys/process.h"

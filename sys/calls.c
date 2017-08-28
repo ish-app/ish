@@ -1,3 +1,4 @@
+#include "debug.h"
 #include "sys/calls.h"
 #include "emu/interrupt.h"
 
@@ -70,7 +71,7 @@ syscall_t syscall_table[] = {
 };
 
 void handle_interrupt(struct cpu_state *cpu, int interrupt) {
-    TRACE_(instr, "\n");
+    TRACELN_(instr, "\n");
     TRACE("int %d ", interrupt);
     if (interrupt == INT_SYSCALL) {
         int syscall_num = cpu->eax;
@@ -81,7 +82,7 @@ void handle_interrupt(struct cpu_state *cpu, int interrupt) {
         } else {
             TRACE("syscall %d ", syscall_num);
             int result = syscall_table[syscall_num](cpu->ebx, cpu->ecx, cpu->edx, cpu->esi, cpu->edi, cpu->ebp);
-            TRACE("result %x\n", result);
+            TRACELN("result %x", result);
             cpu->eax = result;
         }
     } else if (interrupt == INT_GPF) {

@@ -1,3 +1,4 @@
+#include "debug.h"
 #include <time.h>
 #include <signal.h>
 #include "sys/calls.h"

@@ -2,6 +2,7 @@
 #define EMU_H
 
 #include <stddef.h>
+#include <softfloat.h>
 #include "misc.h"
 #include "emu/memory.h"
 
@@ -78,6 +79,10 @@ struct cpu_state {
     bits cf_ops:1;
     bits of_ops:1;
     bits af_ops:1;
+
+    // fpu
+    extFloat80_t fp[8];
+    unsigned top:3;
 
     // See comment in sys/tls.c
     addr_t tls_ptr;

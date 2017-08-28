@@ -238,8 +238,8 @@ int sys_execve(const char *file, char *const argv[], char *const envp[]) {
     current->vdso = vdso_page << PAGE_BITS;
     addr_t vdso_entry = current->vdso + ((struct elf_header *) vdso_data)->entry_point;
 
-    // map 2 empty "vvar" pages to satisfy ptraceomatic
-    page_t vvar_page = pt_find_hole(&curmem, 2);
+    // map 3 empty "vvar" pages to satisfy ptraceomatic
+    page_t vvar_page = pt_find_hole(&curmem, 3);
     if (vvar_page == BAD_PAGE)
         goto beyond_hope;
     if ((err = pt_map_nothing(&curmem, vvar_page, 2, 0)) < 0)

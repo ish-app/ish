@@ -1,0 +1,5 @@
+[wrap-git]
+directory = softfloat
+url = https://github.com/tbodt/berkeley-softfloat-3
+push-url = git@github.com:tbodt/berkeley-softfloat-3
+revision = head
