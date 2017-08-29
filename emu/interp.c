@@ -535,6 +535,12 @@
 #define STD cpu->df = 1
 #define CLD cpu->df = 0
 
+#define AH_FLAG_MASK 0b11010101
+#define SAHF \
+    cpu->eflags &= 0xffffff00 | ~AH_FLAG_MASK; \
+    cpu->eflags |= cpu->ah & AH_FLAG_MASK; \
+    cpu->cf_ops = cpu->pf_res = cpu->af_ops = cpu->zf_res = cpu->sf_res = 0
+
 #include "emu/interp/sse.h"
 #include "emu/interp/fpu.h"
 

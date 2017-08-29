@@ -82,7 +82,40 @@ struct cpu_state {
 
     // fpu
     extFloat80_t fp[8];
-    unsigned top:3;
+    union {
+        word_t fsw;
+        struct {
+            bits ie:1; // invalid operation
+            bits de:1; // denormalized operand
+            bits ze:1; // divide by zero
+            bits oe:1; // overflow
+            bits ue:1; // underflow
+            bits pe:1; // precision
+            bits stf:1; // stack fault
+            bits es:1; // exception status
+            bits c0:1;
+            bits c1:1;
+            bits c2:1;
+            unsigned top:3;
+            bits c3:1;
+            bits b:1; // fpu busy (?)
+        };
+    };
+    union {
+        word_t fcw;
+        struct {
+            bits im:1;
+            bits dm:1;
+            bits zm:1;
+            bits om:1;
+            bits um:1;
+            bits pm:1;
+            bits pad4:2;
+            bits pc:2;
+            bits rc:2;
+            bits y:1;
+        };
+    };
 
     // See comment in sys/tls.c
     addr_t tls_ptr;

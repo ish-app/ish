@@ -100,7 +100,8 @@ static int compare_cpus(struct cpu_state *cpu, int pid, int undefined_flags) {
     CHECK_XMMREG(6);
     CHECK_XMMREG(7);
 
-    CHECK((fpregs.swd >> 11) & 7, cpu->top, "top");
+    CHECK(fpregs.swd, cpu->fsw, "fsw");
+    CHECK(fpregs.cwd, cpu->fcw, "fcw");
 #define CHECK_FPREG(i) \
     CHECK(*(uint64_t *) &fpregs.st_space[i * 4], cpu->fp[(cpu->top + i)%8].signif,  "st(" #i ") signif") \
     CHECK(*(uint16_t *) &fpregs.st_space[i*4+2], cpu->fp[(cpu->top + i)%8].signExp, "st(" #i ") sign/exp")

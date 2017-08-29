@@ -491,8 +491,9 @@ restart:
         case 0x97: TRACEI("xchg odi, oax");
                    XCHG(odi, oax,); break;
 
+        case 0x9e: TRACEI("sahf\t\t"); SAHF; break;
+
         case 0x99: TRACEI("cdq"); CDQ; break;
-                   // TODO make this its own macro
 
         case 0x9c: TRACEI("pushf"); PUSHF(); break;
         case 0x9d: TRACEI("popf"); POPF(); break;
@@ -597,7 +598,11 @@ restart:
             if (modrm.type != mod_reg) {
                 switch (insn << 4 | modrm.opcode) {
                     case 0xd81: TRACE("fmul mem32"); FMUL(mem_addr_real,32); break;
+                    case 0xd95: TRACE("fldcw mem16"); FLDCW(mem_addr); break;
+                    case 0xd97: TRACE("fnstcw mem16"); FSTCW(mem_addr); break;
                     case 0xda4: TRACE("fisub mem32"); FISUB(mem_addr,32); break;
+                    case 0xdb2: TRACE("fist mem32"); FIST(mem_addr,32); break;
+                    case 0xdb3: TRACE("fistp mem32"); FIST(mem_addr,32); FPOP; break;
                     case 0xdc0: TRACE("fadd mem64"); FADDM(mem_addr_real,64); break;
                     case 0xdd0: TRACE("fld mem64"); FLD(mem_addr_real,64); break;
                     case 0xdd2: TRACE("fst mem64"); FSTM(mem_addr_real,64); break;
@@ -607,6 +612,7 @@ restart:
                 }
             } else {
                 switch (insn << 4 | modrm.opcode) {
+                    case 0xd91: TRACE("fxch st"); FXCH(); break;
                     case 0xd95:
                         switch (modrm.rm_opcode) {
                             case 6: TRACE("fldz"); FLDC(zero); break;
@@ -615,6 +621,10 @@ restart:
                         break;
                     case 0xdb5: TRACE("fucomi st"); FUCOMI(); break;
                     case 0xdd3: TRACE("fstp st"); FST(); FPOP; break;
+                    case 0xdd4: TRACE("fucom st"); FUCOM(); break;
+                    case 0xdd5: TRACE("fucomp st"); FUCOM(); FPOP; break;
+                    case 0xde0: TRACE("faddp st, st(i)"); FADD(st_0, st_i); FPOP; break;
+                    case 0xdf4: TRACE("fnstsw ax"); FSTSW(ax); break;
                     case 0xdf5: TRACE("fucomip st"); FUCOMI(); FPOP; break;
                     default: TRACE("undefined"); UNDEFINED;
                 }
