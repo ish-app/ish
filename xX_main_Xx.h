@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
 #include "sys/calls.h"
 #include "fs/tty.h"
 
@@ -35,6 +36,10 @@ static inline int xX_main_Xx(int argc, char *const argv[]) {
         perror(root); exit(1);
     }
     mount_root(root_realpath);
+
+    struct sigaction sa;
+    sa.sa_handler = (void (*)(int)) receive_signals;
+    sigaction(SIGUSR1, &sa, NULL);
 
     // make a process
     current = process_create();

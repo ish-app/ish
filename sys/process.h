@@ -24,8 +24,9 @@ struct process {
     struct fd *files[MAX_FD];
 
     struct sigaction_ sigactions[NUM_SIGS];
-    sigset_t_ mask;
-    sigset_t_ queued;
+    sigset_t_ blocked;
+    sigset_t_ queued; // where blocked signals go when they're sent
+    sigset_t_ pending;
 
     struct process *parent;
     struct list children;

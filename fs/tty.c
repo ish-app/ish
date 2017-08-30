@@ -139,7 +139,7 @@ int tty_input(struct tty *tty, const char *input, size_t size) {
                 }
 
                 tty->canon_ready = true;
-                signal(tty, produced);
+                notify(tty, produced);
                 poll_wake_pollable(&tty->pl);
                 while (tty->canon_ready)
                     wait_for(tty, consumed);
@@ -156,7 +156,7 @@ int tty_input(struct tty *tty, const char *input, size_t size) {
             size = sizeof(tty->buf) - 1 - tty->bufsize;
         memcpy(tty->buf + tty->bufsize, input, size);
         tty->bufsize += size;
-        signal(tty, produced);
+        notify(tty, produced);
         poll_wake_pollable(&tty->pl);
     }
 
@@ -189,7 +189,7 @@ static ssize_t tty_read(struct fd *fd, void *buf, size_t bufsize) {
     tty->bufsize -= bufsize;
     memmove(tty->buf, tty->buf + bufsize, tty->bufsize); // magic!
     tty->canon_ready = false;
-    signal(tty, consumed);
+    notify(tty, consumed);
 
     unlock(tty);
     return bufsize;

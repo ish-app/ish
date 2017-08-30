@@ -52,7 +52,7 @@ size_t buf_read(struct buffer *buf, char *str, size_t len, int flags) {
     if (buf->start >= buf->capacity)
         buf->start -= buf->capacity;
     buf->unread -= len;
-    signal(buf, changed);
+    notify(buf, changed);
     unlock(buf);
     return len;
 }
@@ -77,7 +77,7 @@ size_t buf_write(struct buffer *buf, char *str, size_t len, int flags) {
     memcpy(buf->data, str + len1, len - len1);
 
     buf->unread += len;
-    signal(buf, changed);
+    notify(buf, changed);
     unlock(buf);
     return len;
 }

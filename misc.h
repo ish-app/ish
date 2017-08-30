@@ -55,6 +55,6 @@ typedef sdword_t int_t;
 #define lock(thing) pthread_mutex_lock(&(thing)->lock)
 #define unlock(thing) pthread_mutex_unlock(&(thing)->lock)
 #define wait_for(thing, what) pthread_cond_wait(&(thing)->what, &(thing)->lock)
-#define signal(thing, what) pthread_cond_broadcast(&(thing)->what)
+#define notify(thing, what) pthread_cond_broadcast(&(thing)->what)
 
 #endif

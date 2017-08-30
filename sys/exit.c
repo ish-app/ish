@@ -5,15 +5,15 @@ noreturn void do_exit(int status) {
     if (current->pid == 1) {
         exit(status >> 8);
     }
-    pthread_mutex_lock(&current->parent->lock);
+    lock(current->parent);
     current->exit_code = status;
     current->zombie = true;
-    pthread_cond_broadcast(&current->parent->child_exit);
-    pthread_mutex_unlock(&current->parent->lock);
+    notify(current->parent, child_exit);
+    unlock(current->parent);
 
-    pthread_mutex_lock(&current->lock);
-    pthread_cond_broadcast(&current->vfork_done);
-    pthread_mutex_unlock(&current->lock);
+    lock(current);
+    notify(current, vfork_done);
+    unlock(current);
 
     pthread_exit(NULL);
 }
@@ -69,7 +69,7 @@ dword_t sys_wait4(dword_t pid, addr_t status_addr, dword_t options, addr_t rusag
         return _ESRCH;
     }
 
-    pthread_mutex_lock(&current->lock);
+    lock(current);
 
 retry:
     if (pid == (dword_t) -1) {
@@ -87,11 +87,11 @@ retry:
     }
 
     // no matching zombie found, wait for one
-    pthread_cond_wait(&current->child_exit, &current->lock);
+    wait_for(current, child_exit);
     goto retry;
 
 found_zombie:
-    pthread_mutex_unlock(&current->lock);
+    unlock(current);
     return pid;
 }
 

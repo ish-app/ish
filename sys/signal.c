@@ -1,4 +1,5 @@
 #include "debug.h"
+#include <signal.h>
 #include "sys/calls.h"
 #include "sys/signal.h"
 #include "sys/vdso.h"
@@ -7,20 +8,29 @@ int xsave_extra = 0;
 int fxsave_extra = 0;
 
 void send_signal(struct process *proc, int sig) {
-    if (proc->sigactions[sig].handler == SIG_IGN_)
-        return;
-    if (proc->sigactions[sig].handler == SIG_DFL_)
-        sys_exit(0);
-    if (proc->mask & (1 << sig)) {
-        proc->queued |= (1 << sig);
-        return;
+    lock(proc);
+    if (proc->sigactions[sig].handler != SIG_IGN_) {
+        if (proc->blocked & (1 << sig)) {
+            proc->queued |= (1 << sig);
+            unlock(proc);
+        } else {
+            proc->pending |= (1 << sig);
+            unlock(proc);
+            pthread_kill(proc->thread, SIGUSR1);
+        }
+    }
+}
+
+static void receive_signal(int sig) {
+    if (current->sigactions[sig].handler == SIG_DFL_) {
+        do_exit(sig);
     }
 
     // setup the frame
     struct sigframe_ frame = {};
     frame.sig = sig;
 
-    struct cpu_state *cpu = &proc->cpu;
+    struct cpu_state *cpu = &current->cpu;
     frame.sc.ax = cpu->eax;
     frame.sc.bx = cpu->ebx;
     frame.sc.cx = cpu->ecx;
@@ -40,7 +50,7 @@ void send_signal(struct process *proc, int sig) {
         fprintf(stderr, "sigreturn not found in vdso, this should never happen\n");
         abort();
     }
-    frame.pretcode = proc->vdso + sigreturn_addr;
+    frame.pretcode = current->vdso + sigreturn_addr;
     // for legacy purposes
     frame.retcode.popmov = 0xb858;
     frame.retcode.nr_sigreturn = 173; // rt_sigreturn
@@ -48,7 +58,7 @@ void send_signal(struct process *proc, int sig) {
 
     // set up registers for signal handler
     cpu->eax = sig;
-    cpu->eip = proc->sigactions[sig].handler;
+    cpu->eip = current->sigactions[sig].handler;
 
     dword_t sp = cpu->esp;
     if (xsave_extra) {
@@ -66,7 +76,20 @@ void send_signal(struct process *proc, int sig) {
 
     // install frame
     // nothing we can do if this fails
+    // TODO do something other than nothing, like printk maybe
     (void) user_put(sp, frame);
+
+    current->queued &= ~(1 << sig);
+}
+
+void receive_signals() {
+    lock(current);
+    if (current->pending) {
+        for (int sig = 0; sig < NUM_SIGS; sig++)
+            if (current->pending & (1 << sig))
+                receive_signal(sig);
+    }
+    unlock(current);
 }
 
 static int do_sigaction(int sig, const struct sigaction_ *action, struct sigaction_ *oldaction) {
@@ -75,10 +98,12 @@ static int do_sigaction(int sig, const struct sigaction_ *action, struct sigacti
     if (sig == SIGKILL_ || sig == SIGSTOP_)
         return _EINVAL;
 
+    lock(current);
     if (oldaction)
         *oldaction = current->sigactions[sig];
     if (action)
         current->sigactions[sig] = *action;
+    unlock(current);
     return 0;
 }
 
@@ -117,23 +142,25 @@ dword_t sys_rt_sigprocmask(dword_t how, addr_t set_addr, addr_t oldset_addr, dwo
     sigset_t_ set;
     if (user_get(set_addr, set))
         return _EFAULT;
-    sigset_t_ oldset = current->mask;
+    sigset_t_ oldset = current->blocked;
 
+    lock(current);
     if (how == SIG_BLOCK_)
-        current->mask |= set;
+        current->blocked |= set;
     else if (how == SIG_UNBLOCK_)
-        current->mask &= ~set;
+        current->blocked &= ~set;
     else if (how == SIG_SETMASK_)
-        current->mask = set;
-    else
+        current->blocked = set;
+    else {
+        unlock(current);
         return _EINVAL;
+    }
 
-    sigset_t_ pending = current->queued & oldset & ~current->mask;
-    if (pending)
-        for (int sig = 0; sig < NUM_SIGS; sig++)
-            if (pending & (1 << sig))
-                send_signal(current, sig);
-    current->queued &= ~pending;
+    // transfer unblocked signals from queued to pending
+    sigset_t_ unblocked = oldset & ~current->blocked;
+    current->pending |= current->queued & unblocked;
+    current->queued &= ~unblocked;
+    unlock(current);
 
     if (oldset_addr != 0)
         if (user_put(oldset_addr, oldset))
