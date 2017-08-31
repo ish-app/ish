@@ -61,28 +61,38 @@ static int reap_if_zombie(struct process *proc, addr_t status_addr, addr_t rusag
     return 0;
 }
 
-dword_t sys_wait4(dword_t pid, addr_t status_addr, dword_t options, addr_t rusage_addr) {
-    if (pid == (dword_t) -1) {
-        if (list_empty(&current->children))
-            return _ESRCH;
-    } else if (process_for_pid(pid) == NULL) {
-        return _ESRCH;
-    }
-
+dword_t sys_wait4(dword_t id, addr_t status_addr, dword_t options, addr_t rusage_addr) {
     lock(current);
 
+    if (id == (dword_t) -1) {
+        if (list_empty(&current->children)) {
+            unlock(current);
+            return _ESRCH;
+        }
+    }
+
 retry:
-    if (pid == (dword_t) -1) {
+    if (id == (dword_t) -1) {
         // look for a zombie child
         struct process *proc;
         list_for_each_entry(&current->children, proc, siblings) {
-            pid = proc->pid;
+            id = proc->pid;
             if (reap_if_zombie(proc, status_addr, rusage_addr))
                 goto found_zombie;
         }
     } else {
         // check if this child is a zombie
-        if (reap_if_zombie(process_for_pid(pid), status_addr, rusage_addr))
+        struct pid *pid = pid_get(id);
+        if (pid == NULL) {
+            unlock(current);
+            return _ECHILD;
+        }
+        struct process *proc = pid->proc;
+        if (proc == NULL || proc->parent != current) {
+            unlock(current);
+            return _ECHILD;
+        }
+        if (reap_if_zombie(proc, status_addr, rusage_addr))
             goto found_zombie;
     }
 
@@ -92,7 +102,7 @@ retry:
 
 found_zombie:
     unlock(current);
-    return pid;
+    return id;
 }
 
 dword_t sys_waitpid(dword_t pid, addr_t status_addr, dword_t options) {

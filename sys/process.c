@@ -7,41 +7,80 @@
 
 __thread struct process *current;
 
-#define MAX_PROCS (1 << 10) // oughta be enough
-static struct process *procs[MAX_PROCS] = {};
+#define MAX_PID (1 << 10) // oughta be enough
+static struct pid *pids[MAX_PID + 1] = {};
+pthread_mutex_t pids_lock = PTHREAD_MUTEX_INITIALIZER;
 
-static int next_pid() {
+static struct pid *pid_create() {
     static int cur_pid = 1;
-    while (procs[cur_pid] != NULL) {
+    pthread_mutex_lock(&pids_lock);
+    while (pids[cur_pid] != NULL) {
         cur_pid++;
-        if (cur_pid > MAX_PROCS) cur_pid = 0;
+        if (cur_pid > MAX_PID) cur_pid = 0;
     }
-    return cur_pid;
+    struct pid *pid = malloc(sizeof(struct pid));
+    if (pid == NULL)
+        return NULL;
+    pid->refcnt = 1;
+    pid->id = cur_pid;
+    pthread_mutex_init(&pid->lock, NULL);
+    pids[cur_pid] = pid;
+    pthread_mutex_unlock(&pids_lock);
+    return pid;
+}
+
+static void pid_retain(struct pid *pid) {
+    pid->refcnt++;
+}
+static void pid_release(struct pid *pid) {
+    pthread_mutex_lock(&pids_lock);
+    if (--pid->refcnt == 0) {
+        pids[pid->id] = NULL;
+        free(pid);
+    }
+    pthread_mutex_unlock(&pids_lock);
+}
+
+struct pid *pid_get(dword_t id) {
+    pthread_mutex_lock(&pids_lock);
+    struct pid *pid = pids[id];
+    lock(pid);
+    pid->refcnt++;
+    unlock(pid);
+    pthread_mutex_unlock(&pids_lock);
+    return pid;
 }
 
 struct process *process_create() {
+    struct pid *pid = pid_create();
+    if (pid == NULL)
+        return NULL;
+    lock(pid);
     struct process *proc = malloc(sizeof(struct process));
-    if (proc == NULL) return NULL;
-    proc->pid = next_pid();
+    if (proc == NULL) {
+        pid_release(pid);
+        return NULL;
+    }
+    proc->pid = pid->id;
+    unlock(pid);
     list_init(&proc->children);
     list_init(&proc->siblings);
     pthread_mutex_init(&proc->lock, NULL);
     pthread_cond_init(&proc->child_exit, NULL);
     pthread_cond_init(&proc->vfork_done, NULL);
     proc->has_timer = false;
-    procs[proc->pid] = proc;
     return proc;
 }
 
 void process_destroy(struct process *proc) {
     list_remove(&proc->siblings);
-    procs[proc->pid] = NULL;
+    struct pid *pid = pids[proc->pid];
+    lock(pid);
+    pid->proc = NULL;
+    unlock(pid);
+    pid_release(pid);
     // TODO free process memory
     free(proc);
-}
-
-struct process *process_for_pid(dword_t pid) {
-    return procs[pid];
 }
 
 void (*process_run_func)() = NULL;

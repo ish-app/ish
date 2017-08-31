@@ -7,6 +7,9 @@
 #include "sys/fs.h"
 #include "sys/signal.h"
 
+struct proc_group;
+struct session;
+
 struct process {
     struct cpu_state cpu;
     pthread_t thread;
@@ -31,6 +34,9 @@ struct process {
     struct process *parent;
     struct list children;
     struct list siblings;
+
+    struct proc_group *group;
+    struct list group_procs;
 
     bool has_timer;
     timer_t timer;
@@ -57,12 +63,32 @@ struct process *process_create(void);
 // Removes the process from the process table and frees it.
 void process_destroy(struct process *proc);
 
+struct pid {
+    unsigned refcnt;
+    dword_t id;
+    struct process *proc;
+    struct proc_group *group;
+    struct session *session;
+    pthread_mutex_t lock;
+};
+
 // Returns the process with the given PID, or NULL if it doesn't exist.
-struct process *process_for_pid(dword_t pid);
+struct pid *pid_get(dword_t pid);
+
+struct proc_group {
+    struct list procs;
+    struct session *session;
+    struct list session_groups;
+    pthread_mutex_t lock;
+};
+
+struct session {
+    struct list groups;
+    pthread_mutex_t lock;
+};
 
 // When a thread is created to run a new process, this function is used.
 extern void (*run_process_func)();
-
 // TODO document
 void start_thread(struct process *proc);
 
