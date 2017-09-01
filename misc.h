@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <stdnoreturn.h>
 #include <sys/types.h>
 #include <pthread.h>
 
@@ -28,7 +29,6 @@
 #define postulate assert
 #endif
 #define unlikely(x) __builtin_expect((x), 0)
-#define noreturn __attribute__((noreturn))
 #define must_check __attribute__((warn_unused_result))
 
 #if defined(__i386__) || defined(__x86_64__)

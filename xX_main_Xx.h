@@ -14,6 +14,8 @@ static void mount_root(const char *source) {
     mounts->next = NULL;
 }
 
+static void nop_handler() {}
+
 // this function parses command line arguments and initializes global
 // data structures. thanks programming discussions discord server for the name.
 // https://discord.gg/9zT7NHP
@@ -37,9 +39,7 @@ static inline int xX_main_Xx(int argc, char *const argv[]) {
     }
     mount_root(root_realpath);
 
-    struct sigaction sa;
-    sa.sa_handler = (void (*)(int)) receive_signals;
-    sigaction(SIGUSR1, &sa, NULL);
+    signal(SIGUSR1, nop_handler);
 
     // make a process
     current = process_create();
@@ -51,6 +51,8 @@ static inline int xX_main_Xx(int argc, char *const argv[]) {
         current->pwd = strdup("");
     else
         current->pwd = getcwd(NULL, 0);
+    current->thread = pthread_self();
+    sys_setsid();
 
     // I can't wait for when init and udev works and I don't need to do this
     tty_drivers[TTY_VIRTUAL] = real_tty_driver;

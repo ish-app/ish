@@ -82,12 +82,7 @@ retry:
         }
     } else {
         // check if this child is a zombie
-        struct pid *pid = pid_get(id);
-        if (pid == NULL) {
-            unlock(current);
-            return _ECHILD;
-        }
-        struct process *proc = pid->proc;
+        struct process *proc = pid_get_proc(id);
         if (proc == NULL || proc->parent != current) {
             unlock(current);
             return _ECHILD;

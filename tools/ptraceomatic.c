@@ -285,6 +285,8 @@ static void step_tracing(struct cpu_state *cpu, int pid, int sender, int receive
             // put syscall result from fake process into real process
             case 3: // read
                 pt_copy(pid, regs.rcx, cpu->edx); break;
+            case 7: // waitpid
+                pt_copy(pid, regs.rcx, sizeof(dword_t)); break;
             case 13: // time
                 if (regs.rbx != 0)
                     pt_copy(pid, regs.rbx, sizeof(dword_t));

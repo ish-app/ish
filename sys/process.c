@@ -29,26 +29,56 @@ static struct pid *pid_create() {
     return pid;
 }
 
-static void pid_retain(struct pid *pid) {
+void pid_retain(struct pid *pid) {
     pid->refcnt++;
 }
-static void pid_release(struct pid *pid) {
-    pthread_mutex_lock(&pids_lock);
+void pid_release(struct pid *pid) {
     if (--pid->refcnt == 0) {
+        pthread_mutex_lock(&pids_lock);
         pids[pid->id] = NULL;
+        pthread_mutex_unlock(&pids_lock);
         free(pid);
     }
-    pthread_mutex_unlock(&pids_lock);
 }
 
 struct pid *pid_get(dword_t id) {
     pthread_mutex_lock(&pids_lock);
     struct pid *pid = pids[id];
-    lock(pid);
-    pid->refcnt++;
-    unlock(pid);
+    if (pid != NULL)
+        pid_retain(pid);
     pthread_mutex_unlock(&pids_lock);
     return pid;
+}
+
+// TODO more dry
+struct process *pid_get_proc(dword_t id) {
+    struct pid *pid = pid_get(id);
+    if (pid == NULL) return NULL;
+    lock(pid);
+    struct process *proc = pid->proc;
+    unlock(pid);
+    pid_release(pid);
+    return proc;
+}
+
+struct pgroup *pid_get_group(dword_t id) {
+    struct pid *pid = pid_get(id);
+    if (pid == NULL) return NULL;
+    lock(pid);
+    struct pgroup *group = pid->group;
+    unlock(pid);
+    pid_release(pid);
+    return group;
+}
+
+struct session *pid_get_session(dword_t id) {
+    struct pid *pid = pid_get(id);
+    if (pid == NULL) return NULL;
+    lock(pid);
+    struct session *session = pid->session;
+    unlock(pid);
+    pid_release(pid);
+    return session;
 }
 
 struct process *process_create() {

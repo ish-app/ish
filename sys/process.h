@@ -2,16 +2,17 @@
 #define PROCESS_H
 
 #include <pthread.h>
+#include <stdatomic.h>
 #include "util/list.h"
 #include "emu/cpu.h"
 #include "sys/fs.h"
 #include "sys/signal.h"
 
-struct proc_group;
+struct pgroup;
 struct session;
 
 struct process {
-    struct cpu_state cpu;
+    struct cpu_state cpu; // do not access this field except on the current process
     pthread_t thread;
 
     dword_t pid, ppid;
@@ -35,7 +36,7 @@ struct process {
     struct list children;
     struct list siblings;
 
-    struct proc_group *group;
+    dword_t sid, pgid;
     struct list group_procs;
 
     bool has_timer;
@@ -64,28 +65,21 @@ struct process *process_create(void);
 void process_destroy(struct process *proc);
 
 struct pid {
-    unsigned refcnt;
-    dword_t id;
+    atomic_uint refcnt;
+    dword_t id; // immutable, no lock needed
     struct process *proc;
-    struct proc_group *group;
+    struct pgroup *group;
     struct session *session;
     pthread_mutex_t lock;
 };
 
-// Returns the process with the given PID, or NULL if it doesn't exist.
 struct pid *pid_get(dword_t pid);
+struct process *pid_get_proc(dword_t pid);
+struct pgroup *pid_get_group(dword_t pid);
+struct session *pid_get_session(dword_t pid);
 
-struct proc_group {
-    struct list procs;
-    struct session *session;
-    struct list session_groups;
-    pthread_mutex_t lock;
-};
-
-struct session {
-    struct list groups;
-    pthread_mutex_t lock;
-};
+void pid_retain(struct pid *pid);
+void pid_release(struct pid *pid);
 
 // When a thread is created to run a new process, this function is used.
 extern void (*run_process_func)();

@@ -34,6 +34,7 @@ syscall_t syscall_table[] = {
     [54]  = (syscall_t) sys_ioctl,
     [63]  = (syscall_t) sys_dup2,
     [64]  = (syscall_t) sys_getppid,
+    [65]  = (syscall_t) sys_getpgrp,
     [85]  = (syscall_t) sys_readlink,
     [90]  = (syscall_t) sys_mmap,
     [91]  = (syscall_t) sys_munmap,
@@ -43,6 +44,7 @@ syscall_t syscall_table[] = {
     [120] = (syscall_t) sys_clone,
     [122] = (syscall_t) _sys_uname,
     [125] = (syscall_t) sys_mprotect,
+    [132] = (syscall_t) sys_getpgid,
     [140] = (syscall_t) sys__llseek,
     [145] = (syscall_t) sys_readv,
     [146] = (syscall_t) sys_writev,
@@ -78,6 +80,7 @@ void handle_interrupt(struct cpu_state *cpu, int interrupt) {
         if (syscall_num >= NUM_SYSCALLS || syscall_table[syscall_num] == NULL) {
             // TODO SIGSYS
             println("missing syscall %d", syscall_num);
+            debugger;
             send_signal(current, SIGSYS_);
         } else {
             TRACE("syscall %d ", syscall_num);
@@ -97,4 +100,5 @@ void handle_interrupt(struct cpu_state *cpu, int interrupt) {
         println("exiting");
         sys_exit(interrupt);
     }
+    receive_signals();
 }

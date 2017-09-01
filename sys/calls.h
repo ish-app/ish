@@ -83,6 +83,8 @@ dword_t sys_sendfile64(fd_t out_fd, fd_t in_fd, addr_t offset_addr, dword_t coun
 dword_t sys_getpid();
 dword_t sys_gettid();
 dword_t sys_getppid();
+dword_t sys_getpgid(dword_t pid);
+dword_t sys_getpgrp();
 dword_t sys_getuid32();
 dword_t sys_getuid();
 dword_t sys_geteuid32();
@@ -93,6 +95,7 @@ dword_t sys_getcwd(addr_t buf_addr, dword_t size);
 dword_t sys_chdir(addr_t path_addr);
 int sys_set_thread_area(addr_t u_info);
 int sys_set_tid_address(addr_t blahblahblah);
+dword_t sys_setsid();
 
 // system information
 #define UNAME_LENGTH 65

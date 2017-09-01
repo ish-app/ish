@@ -9,6 +9,14 @@ dword_t sys_gettid() {
 dword_t sys_getppid() {
     return current->ppid;
 }
+dword_t sys_getpgid(dword_t pid) {
+    if (pid != 0)
+        return _EPERM;
+    return current->pgid;
+}
+dword_t sys_getpgrp() {
+    return current->pgid;
+}
 
 dword_t sys_getuid32() {
     return current->uid;

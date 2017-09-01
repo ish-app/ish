@@ -59,8 +59,6 @@ struct termios_ {
 struct tty_driver {
     int (*open)(struct tty *tty);
     ssize_t (*write)(struct tty *tty, const void *buf, size_t len);
-    ssize_t (*ioctl_size)(struct tty *tty, int cmd);
-    int (*ioctl)(struct tty *tty, int cmd, void *arg);
     void (*close)(struct tty *tty);
 };
 
@@ -83,6 +81,9 @@ struct tty {
     struct termios_ termios;
     int type;
     int num;
+
+    dword_t session;
+    dword_t fg_group;
 
     pthread_mutex_t lock;
 

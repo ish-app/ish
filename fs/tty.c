@@ -1,6 +1,7 @@
 #include "debug.h"
 #include <string.h>
 #include "sys/calls.h"
+#include "sys/group.h"
 #include "fs/tty.h"
 
 // TODO remove magic number
@@ -38,6 +39,9 @@ static int tty_get(int type, int num, struct tty **tty_out) {
             return err;
         }
 
+        tty->session = 0;
+        tty->fg_group = 0;
+
         ttys[type][num] = tty;
         pthread_mutex_unlock(&ttys_lock);
     }
@@ -73,17 +77,33 @@ static int tty_open(int major, int minor, int type, struct fd *fd) {
         type = TTY_PSEUDO;
     else
         assert(false);
+
     struct tty *tty;
     int err = tty_get(type, minor, &tty);
     if (err < 0)
         return err;
     fd->tty = tty;
+
     lock(&tty->pl);
     lock(fd);
     list_add(&tty->pl.fds, &fd->pollable_other_fds);
     fd->pollable = &tty->pl;
     unlock(fd);
     unlock(&tty->pl);
+
+    lock(current);
+    if (current->sid == current->pid) {
+        struct session *session = pid_get_session(current->sid);
+        lock(session);
+        if (session->tty == NULL) {
+            session->tty = tty;
+            tty->session = current->sid;
+            tty->fg_group = current->pgid;
+        }
+        unlock(session);
+    }
+    unlock(current);
+
     return 0;
 }
 
@@ -229,11 +249,31 @@ static int tty_poll(struct fd *fd) {
     return types;
 }
 
+#define TCGETS_ 0x5401
+#define TCSETS_ 0x5402
+#define TIOCGWINSZ_ 0x5413
+#define TIOCGPRGP_ 0x540f
+#define TIOCSPGRP_ 0x5410
+
 static ssize_t tty_ioctl_size(struct fd *fd, int cmd) {
-    return fd->tty->driver->ioctl_size(fd->tty, cmd);
+    switch (cmd) {
+        case TIOCGWINSZ_: return sizeof(struct winsize_);
+        case TCGETS_: return sizeof(struct termios_);
+        case TCSETS_: return sizeof(struct termios_);
+        case TIOCGPRGP_: return sizeof(dword_t);
+    }
+    return -1;
 }
+
 static int tty_ioctl(struct fd *fd, int cmd, void *arg) {
-    return fd->tty->driver->ioctl(fd->tty, cmd, arg);
+    switch (cmd) {
+        case TIOCGWINSZ_: *(struct winsize_ *) arg = fd->tty->winsize; break;
+        case TCGETS_: *(struct termios_ *) arg = fd->tty->termios; break;
+        case TCSETS_: fd->tty->termios = *(struct termios_ *) arg; break;
+        case TIOCGPRGP_: *(dword_t *) arg = fd->tty->fg_group;
+                         TRACELN("fg_group %d", fd->tty->fg_group); break;
+    }
+    return 0;
 }
 
 struct dev_ops tty_dev = {

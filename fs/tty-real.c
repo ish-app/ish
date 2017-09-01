@@ -62,32 +62,8 @@ void real_tty_close(struct tty *tty) {
     pthread_cancel(tty->thread);
 }
 
-#define TCGETS_ 0x5401
-#define TCSETS_ 0x5402
-#define TIOCGWINSZ_ 0x5413
-
-static ssize_t real_tty_ioctl_size(struct tty *tty, int cmd) {
-    switch (cmd) {
-        case TIOCGWINSZ_: return sizeof(struct winsize_);
-        case TCGETS_: return sizeof(struct termios_);
-        case TCSETS_: return sizeof(struct termios_);
-    }
-    return -1;
-}
-
-static int real_tty_ioctl(struct tty *tty, int cmd, void *arg) {
-    switch (cmd) {
-        case TIOCGWINSZ_: *(struct winsize_ *) arg = tty->winsize; break;
-        case TCGETS_: *(struct termios_ *) arg = tty->termios; break;
-        case TCSETS_: tty->termios = *(struct termios_ *) arg; break;
-    }
-    return 0;
-}
-
 struct tty_driver real_tty_driver = {
     .open = real_tty_open,
     .write = real_tty_write,
-    .ioctl_size = real_tty_ioctl_size,
-    .ioctl = real_tty_ioctl,
     .close = real_tty_close,
 };

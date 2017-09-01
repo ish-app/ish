@@ -26,6 +26,7 @@ sys_src = [
     'sys/user.c',
     'sys/vdso.c',
     'sys/process.c',
+    'sys/group.c',
 
     'sys/fork.c',
     'sys/exec.c',
@@ -50,9 +51,7 @@ sys_src = [
     'fs/tty.c',
     'fs/tty-real.c',
 
-    'sys/poll.c',
-
-    'util/buffer.c'
+    'sys/poll.c'
 ]
 emu_src = [
     'emu/memory.c',
