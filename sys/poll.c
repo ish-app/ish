@@ -1,4 +1,3 @@
-#define DEFAULT_CHANNEL debug
 #include "debug.h"
 #include "sys/fs.h"
 #include "sys/calls.h"
@@ -10,7 +9,6 @@ dword_t sys_poll(addr_t fds, dword_t nfds, dword_t timeout) {
     struct pollfd_ fake_poll;
     if (user_get(fds, fake_poll))
         return _EFAULT;
-    TRACELN("polling");
     struct poll *poll = poll_create();
     if (poll == NULL)
         return _ENOMEM;
@@ -25,6 +23,5 @@ dword_t sys_poll(addr_t fds, dword_t nfds, dword_t timeout) {
     poll_destroy(poll);
     if (user_put(fds, fake_poll))
         return _EFAULT;
-    TRACELN("poll done, returning 1");
     return err;
 }

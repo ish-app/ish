@@ -61,6 +61,8 @@ static int reap_if_zombie(struct process *proc, addr_t status_addr, addr_t rusag
     return 0;
 }
 
+#define WNOHANG_ 1
+
 dword_t sys_wait4(dword_t id, addr_t status_addr, dword_t options, addr_t rusage_addr) {
     lock(current);
 
@@ -89,6 +91,11 @@ retry:
         }
         if (reap_if_zombie(proc, status_addr, rusage_addr))
             goto found_zombie;
+    }
+
+    if (options & WNOHANG_) {
+        unlock(current);
+        return _ECHILD;
     }
 
     // no matching zombie found, wait for one

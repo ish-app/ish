@@ -364,6 +364,7 @@
 #define SHRD(count, extra, dst,z) \
     if (get(count,z) % sz(z) != 0) { \
         int cnt = get(count,z) % sz(z); \
+        cpu->cf = (get(dst,z) >> (cnt - 1)) & 1; cpu->cf_ops = 0; \
         cpu->res = get(dst,z) >> cnt | get(extra,z) << (sz(z) - cnt); \
         set(dst, cpu->res,z); \
         SETRESFLAGS; \

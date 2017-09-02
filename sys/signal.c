@@ -21,6 +21,16 @@ void send_signal(struct process *proc, int sig) {
     }
 }
 
+void send_group_signal(dword_t pgid, int sig) {
+    struct pid *pid = pid_get(pgid);
+    lock(pid);
+    struct process *proc;
+    list_for_each_entry(&pid->group, proc, group) {
+        send_signal(proc, sig);
+    }
+    unlock(pid);
+}
+
 static void receive_signal(int sig) {
     if (current->sigactions[sig].handler == SIG_DFL_) {
         do_exit(sig);
@@ -79,7 +89,7 @@ static void receive_signal(int sig) {
     // TODO do something other than nothing, like printk maybe
     (void) user_put(sp, frame);
 
-    current->queued &= ~(1 << sig);
+    current->pending &= ~(1 << sig);
 }
 
 void receive_signals() {
@@ -166,4 +176,18 @@ dword_t sys_rt_sigprocmask(dword_t how, addr_t set_addr, addr_t oldset_addr, dwo
         if (user_put(oldset_addr, oldset))
             return _EFAULT;
     return 0;
+}
+
+dword_t sys_kill(dword_t pid, dword_t sig) {
+    // TODO permission checks
+    // TODO process groups
+    struct process *proc = pid_get_proc(pid);
+    if (proc == NULL)
+        return _ESRCH;
+    send_signal(proc, sig);
+    return 0;
+}
+
+dword_t sys_tkill(dword_t tid, dword_t sig) {
+    return sys_kill(tid, sig);
 }

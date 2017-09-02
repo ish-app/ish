@@ -32,7 +32,7 @@ static inline void list_remove(struct list *item) {
 }
 
 static inline bool list_empty(struct list *list) {
-    return list->next == list;
+    return list->next == list || (list->next == NULL && list->prev == NULL);
 }
 
 #define list_entry(item, type, member) \

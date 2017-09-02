@@ -1,3 +1,4 @@
+#define DEFAULT_CHANNEL debug
 #include "debug.h"
 #include <string.h>
 #include "sys/calls.h"
@@ -93,14 +94,11 @@ static int tty_open(int major, int minor, int type, struct fd *fd) {
 
     lock(current);
     if (current->sid == current->pid) {
-        struct session *session = pid_get_session(current->sid);
-        lock(session);
-        if (session->tty == NULL) {
-            session->tty = tty;
+        if (current->tty == NULL) {
+            current->tty = tty;
             tty->session = current->sid;
             tty->fg_group = current->pgid;
         }
-        unlock(session);
     }
     unlock(current);
 
@@ -122,6 +120,18 @@ int tty_input(struct tty *tty, const char *input, size_t size) {
     dword_t lflags = tty->termios.lflags;
     dword_t iflags = tty->termios.iflags;
     unsigned char *cc = tty->termios.cc;
+
+    if (lflags & ISIG_) {
+        for (size_t i = 0; i < size; i++) {
+            char ch = input[i];
+            if (ch == cc[VINTR_]) {
+                input += i + 1;
+                size -= i + 1;
+                i = 0;
+                send_group_signal(tty->fg_group, SIGINT_);
+            }
+        }
+    }
 
     if (lflags & ICANON_) {
         for (size_t i = 0; i < size; i++) {
@@ -260,7 +270,7 @@ static ssize_t tty_ioctl_size(struct fd *fd, int cmd) {
         case TIOCGWINSZ_: return sizeof(struct winsize_);
         case TCGETS_: return sizeof(struct termios_);
         case TCSETS_: return sizeof(struct termios_);
-        case TIOCGPRGP_: return sizeof(dword_t);
+        case TIOCGPRGP_: case TIOCSPGRP_: return sizeof(dword_t);
     }
     return -1;
 }
@@ -270,8 +280,22 @@ static int tty_ioctl(struct fd *fd, int cmd, void *arg) {
         case TIOCGWINSZ_: *(struct winsize_ *) arg = fd->tty->winsize; break;
         case TCGETS_: *(struct termios_ *) arg = fd->tty->termios; break;
         case TCSETS_: fd->tty->termios = *(struct termios_ *) arg; break;
-        case TIOCGPRGP_: *(dword_t *) arg = fd->tty->fg_group;
-                         TRACELN("fg_group %d", fd->tty->fg_group); break;
+        case TIOCGPRGP_:
+            if (fd->tty != current->tty)
+                return _ENOTTY;
+            if (fd->tty->fg_group == 0)
+                return _ENOTTY;
+            TRACELN("tty group = %d", fd->tty->fg_group);
+            *(dword_t *) arg = fd->tty->fg_group; break;
+        case TIOCSPGRP_:
+            if (fd->tty != current->tty)
+                return _ENOTTY;
+            if (current->sid != fd->tty->session)
+                return _ENOTTY;
+            // TODO group must be in the right session
+            fd->tty->fg_group = *(dword_t *) arg;
+            TRACELN("tty group set to = %d", fd->tty->fg_group);
+            break;
     }
     return 0;
 }

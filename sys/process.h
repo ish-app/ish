@@ -8,9 +8,6 @@
 #include "sys/fs.h"
 #include "sys/signal.h"
 
-struct pgroup;
-struct session;
-
 struct process {
     struct cpu_state cpu; // do not access this field except on the current process
     pthread_t thread;
@@ -37,7 +34,9 @@ struct process {
     struct list siblings;
 
     dword_t sid, pgid;
-    struct list group_procs;
+    struct list session;
+    struct list group;
+    struct tty *tty;
 
     bool has_timer;
     timer_t timer;
@@ -65,21 +64,15 @@ struct process *process_create(void);
 void process_destroy(struct process *proc);
 
 struct pid {
-    atomic_uint refcnt;
     dword_t id; // immutable, no lock needed
     struct process *proc;
-    struct pgroup *group;
-    struct session *session;
+    struct list session;
+    struct list group;
     pthread_mutex_t lock;
 };
 
 struct pid *pid_get(dword_t pid);
 struct process *pid_get_proc(dword_t pid);
-struct pgroup *pid_get_group(dword_t pid);
-struct session *pid_get_session(dword_t pid);
-
-void pid_retain(struct pid *pid);
-void pid_release(struct pid *pid);
 
 // When a thread is created to run a new process, this function is used.
 extern void (*run_process_func)();

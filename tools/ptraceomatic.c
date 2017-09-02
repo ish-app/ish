@@ -343,6 +343,7 @@ static void step_tracing(struct cpu_state *cpu, int pid, int sender, int receive
             case 91: // munmap
             case 125: // mprotect
             case 174: // rt_sigaction
+            case 175: // rt_sigprocmask
             case 243: // set_thread_area
                 goto do_step;
         }

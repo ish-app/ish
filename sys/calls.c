@@ -28,10 +28,12 @@ syscall_t syscall_table[] = {
     [24]  = (syscall_t) sys_getuid,
     [47]  = (syscall_t) sys_getgid,
     [33]  = (syscall_t) sys_access,
+    [37]  = (syscall_t) sys_kill,
     [41]  = (syscall_t) sys_dup,
     [45]  = (syscall_t) sys_brk,
     [49]  = (syscall_t) sys_geteuid,
     [54]  = (syscall_t) sys_ioctl,
+    [57]  = (syscall_t) sys_setpgid,
     [63]  = (syscall_t) sys_dup2,
     [64]  = (syscall_t) sys_getppid,
     [65]  = (syscall_t) sys_getpgrp,
@@ -65,6 +67,7 @@ syscall_t syscall_table[] = {
     [220] = (syscall_t) sys_getdents64,
     [221] = (syscall_t) sys_fcntl64,
     [224] = (syscall_t) sys_gettid,
+    [238] = (syscall_t) sys_tkill,
     [239] = (syscall_t) sys_sendfile64,
     [243] = (syscall_t) sys_set_thread_area,
     [252] = (syscall_t) sys_exit_group,
@@ -78,9 +81,7 @@ void handle_interrupt(struct cpu_state *cpu, int interrupt) {
     if (interrupt == INT_SYSCALL) {
         int syscall_num = cpu->eax;
         if (syscall_num >= NUM_SYSCALLS || syscall_table[syscall_num] == NULL) {
-            // TODO SIGSYS
             println("missing syscall %d", syscall_num);
-            debugger;
             send_signal(current, SIGSYS_);
         } else {
             TRACE("syscall %d ", syscall_num);

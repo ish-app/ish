@@ -54,6 +54,7 @@ struct sigaction_ {
 
 struct process;
 void send_signal(struct process *proc, int sig);
+void send_group_signal(dword_t pgid, int sig);
 void receive_signals();
 
 dword_t sys_rt_sigaction(dword_t signum, addr_t action_addr, addr_t oldaction_addr, dword_t sigset_size);
@@ -64,6 +65,9 @@ dword_t sys_sigaction(dword_t signum, addr_t action_addr, addr_t oldaction_addr)
 #define SIG_SETMASK_ 2
 typedef uint64_t sigset_t_;
 dword_t sys_rt_sigprocmask(dword_t how, addr_t set, addr_t oldset, dword_t size);
+
+dword_t sys_kill(dword_t pid, dword_t sig);
+dword_t sys_tkill(dword_t tid, dword_t sig);
 
 // signal frame structs. There's a good chance this should go in its own header file
 

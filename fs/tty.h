@@ -39,6 +39,7 @@ struct termios_ {
 #define VLNEXT_ 15
 #define VEOL2_ 16
 
+#define ISIG_ (1 << 0)
 #define ICANON_ (1 << 1)
 #define ECHO_ (1 << 3)
 #define ECHOE_ (1 << 4)

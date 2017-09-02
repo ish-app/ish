@@ -8,91 +8,50 @@
 __thread struct process *current;
 
 #define MAX_PID (1 << 10) // oughta be enough
-static struct pid *pids[MAX_PID + 1] = {};
-pthread_mutex_t pids_lock = PTHREAD_MUTEX_INITIALIZER;
+static struct pid pids[MAX_PID + 1] = {};
 
-static struct pid *pid_create() {
-    static int cur_pid = 1;
-    pthread_mutex_lock(&pids_lock);
-    while (pids[cur_pid] != NULL) {
-        cur_pid++;
-        if (cur_pid > MAX_PID) cur_pid = 0;
-    }
-    struct pid *pid = malloc(sizeof(struct pid));
-    if (pid == NULL)
-        return NULL;
-    pid->refcnt = 1;
-    pid->id = cur_pid;
-    pthread_mutex_init(&pid->lock, NULL);
-    pids[cur_pid] = pid;
-    pthread_mutex_unlock(&pids_lock);
-    return pid;
-}
-
-void pid_retain(struct pid *pid) {
-    pid->refcnt++;
-}
-void pid_release(struct pid *pid) {
-    if (--pid->refcnt == 0) {
-        pthread_mutex_lock(&pids_lock);
-        pids[pid->id] = NULL;
-        pthread_mutex_unlock(&pids_lock);
-        free(pid);
-    }
+static bool pid_empty(struct pid *pid) {
+    lock(pid);
+    bool empty = pid->proc == NULL && list_empty(&pid->session) && list_empty(&pid->group);
+    unlock(pid);
+    return empty;
 }
 
 struct pid *pid_get(dword_t id) {
-    pthread_mutex_lock(&pids_lock);
-    struct pid *pid = pids[id];
-    if (pid != NULL)
-        pid_retain(pid);
-    pthread_mutex_unlock(&pids_lock);
+    struct pid *pid = &pids[id];
+    if (pid_empty(pid))
+        return NULL;
     return pid;
 }
 
-// TODO more dry
 struct process *pid_get_proc(dword_t id) {
     struct pid *pid = pid_get(id);
     if (pid == NULL) return NULL;
     lock(pid);
     struct process *proc = pid->proc;
     unlock(pid);
-    pid_release(pid);
     return proc;
 }
 
-struct pgroup *pid_get_group(dword_t id) {
-    struct pid *pid = pid_get(id);
-    if (pid == NULL) return NULL;
-    lock(pid);
-    struct pgroup *group = pid->group;
-    unlock(pid);
-    pid_release(pid);
-    return group;
-}
-
-struct session *pid_get_session(dword_t id) {
-    struct pid *pid = pid_get(id);
-    if (pid == NULL) return NULL;
-    lock(pid);
-    struct session *session = pid->session;
-    unlock(pid);
-    pid_release(pid);
-    return session;
-}
-
 struct process *process_create() {
-    struct pid *pid = pid_create();
-    if (pid == NULL)
-        return NULL;
-    lock(pid);
-    struct process *proc = malloc(sizeof(struct process));
-    if (proc == NULL) {
-        pid_release(pid);
-        return NULL;
+    static int cur_pid = 1;
+    while (!pid_empty(&pids[cur_pid])) {
+        cur_pid++;
+        if (cur_pid > MAX_PID) cur_pid = 0;
     }
+    struct pid *pid = &pids[cur_pid];
+    lock(pid);
+    pid->id = cur_pid;
+    list_init(&pid->session);
+    list_init(&pid->group);
+
+    struct process *proc = malloc(sizeof(struct process));
+    if (proc == NULL)
+        return NULL;
     proc->pid = pid->id;
+    pid->proc = proc;
     unlock(pid);
+
     list_init(&proc->children);
     list_init(&proc->siblings);
     pthread_mutex_init(&proc->lock, NULL);
@@ -104,11 +63,12 @@ struct process *process_create() {
 
 void process_destroy(struct process *proc) {
     list_remove(&proc->siblings);
-    struct pid *pid = pids[proc->pid];
+    struct pid *pid = pid_get(proc->pid);
     lock(pid);
+    list_remove(&proc->group);
+    list_remove(&proc->session);
     pid->proc = NULL;
     unlock(pid);
-    pid_release(pid);
     // TODO free process memory
     free(proc);
 }
