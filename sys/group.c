@@ -1,7 +1,6 @@
 #include "util/list.h"
 #include "sys/calls.h"
 #include "sys/process.h"
-#include "sys/group.h"
 
 dword_t sys_setpgid(dword_t id, dword_t pgid) {
     int err;
