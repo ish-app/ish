@@ -53,6 +53,7 @@ syscall_t syscall_table[] = {
     [162] = (syscall_t) sys_nanosleep,
     [168] = (syscall_t) sys_poll,
     [183] = (syscall_t) sys_getcwd,
+    [173] = (syscall_t) sys_rt_sigreturn,
     [174] = (syscall_t) sys_rt_sigaction,
     [175] = (syscall_t) sys_rt_sigprocmask,
     [187] = (syscall_t) sys_sendfile,

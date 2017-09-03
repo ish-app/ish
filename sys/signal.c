@@ -102,6 +102,28 @@ void receive_signals() {
     unlock(current);
 }
 
+dword_t sys_rt_sigreturn(dword_t sig) {
+    struct cpu_state *cpu = &current->cpu;
+    struct sigcontext_ sc;
+    // skip the first two fields of the frame
+    // the return address was popped by the ret instruction
+    // the signal number was popped into ebx and passed as an argument
+    (void) user_get(cpu->esp, sc);
+    // TODO check for errors in that
+    cpu->eax = sc.ax;
+    cpu->ebx = sc.bx;
+    cpu->ecx = sc.cx;
+    cpu->edx = sc.dx;
+    cpu->edi = sc.di;
+    cpu->esi = sc.si;
+    cpu->ebp = sc.bp;
+    cpu->esp = sc.sp;
+    cpu->eip = sc.ip;
+    collapse_flags(cpu);
+    cpu->eflags = sc.flags;
+    return cpu->eax;
+}
+
 static int do_sigaction(int sig, const struct sigaction_ *action, struct sigaction_ *oldaction) {
     if (sig >= NUM_SIGS)
         return _EINVAL;

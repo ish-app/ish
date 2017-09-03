@@ -56,6 +56,7 @@ struct process;
 void send_signal(struct process *proc, int sig);
 void send_group_signal(dword_t pgid, int sig);
 void receive_signals();
+dword_t sys_rt_sigreturn(dword_t sig);
 
 dword_t sys_rt_sigaction(dword_t signum, addr_t action_addr, addr_t oldaction_addr, dword_t sigset_size);
 dword_t sys_sigaction(dword_t signum, addr_t action_addr, addr_t oldaction_addr);

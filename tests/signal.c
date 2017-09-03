@@ -5,10 +5,10 @@
 
 void handler(int signal) {
     printf("caught signal %d\n", signal);
-    exit(0);
 }
 
 int main() {
     signal(SIGILL, handler);
     __asm__("ud2");
+    printf("back in main\n");
 }

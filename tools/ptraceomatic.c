@@ -300,6 +300,8 @@ static void step_tracing(struct cpu_state *cpu, int pid, int sender, int receive
                 }
                 break;
             }
+            case 85: // readlink
+                pt_copy(pid, regs.rcx, regs.rdx); break;
             case 116: // sysinfo
                 pt_copy(pid, regs.rbx, sizeof(struct sys_info)); break;
             case 122: // uname
@@ -342,6 +344,7 @@ static void step_tracing(struct cpu_state *cpu, int pid, int sender, int receive
             case 45: // brk
             case 91: // munmap
             case 125: // mprotect
+            case 173: // rt_sigreturn
             case 174: // rt_sigaction
             case 175: // rt_sigprocmask
             case 243: // set_thread_area
