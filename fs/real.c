@@ -8,40 +8,38 @@
 #include <sys/mman.h>
 #include <sys/xattr.h>
 
+#include "util/getpath.h"
 #include "sys/errno.h"
 #include "sys/calls.h"
 #include "sys/fs.h"
 #include "fs/dev.h"
 #include "fs/tty.h"
 
-char *strnprepend(char *str, const char *prefix, size_t max) {
-    if (strlen(str) + strlen(prefix) + 1 > max)
-        return NULL;
-    const char *src = str + strlen(str) + 1;
-    char *dst = (char *) src + strlen(prefix);
-    while (src != str)
-        *dst-- = *src--;
-    *dst = *src;
-    src = prefix;
-    dst = str;
-    while (*src != '\0')
-        *dst++ = *src++;
-    return str;
+static struct fd *realfs_open_root(struct mount *mount) {
+    struct fd *fd = fd_create();
+    int root = open(mount->source, O_DIRECTORY);
+    if (root < 0)
+        return ERR_PTR(root);
+    fd->real_fd = root;
+    fd->ops = &realfs_fdops;
+    fd->fs = &realfs;
+    fd->mount = mount;
+    return fd;
 }
 
 // TODO translate goddamn flags
 
-static int realfs_open(struct mount *mount, char *path, struct fd *fd, int flags, int mode) {
-    if (strnprepend(path, mount->source, MAX_PATH) == NULL)
-        return _ENAMETOOLONG;
-
-    int fd_no = open(path, flags, mode);
+static struct fd *realfs_lookup(struct fd *dir, const char *name, int flags) {
+    int fd_no = openat(dir->real_fd, name, flags);
     if (fd_no < 0)
-        return err_map(errno);
+        return ERR_PTR(err_map(errno));
+    struct fd *fd = fd_create();
     fd->real_fd = fd_no;
     fd->dir = NULL;
     fd->ops = &realfs_fdops;
-    return 0;
+    fd->fs = &realfs;
+    fd->mount = dir->mount;
+    return fd;
 }
 
 static int realfs_close(struct fd *fd) {
@@ -101,21 +99,21 @@ static void copy_xattr_stat(struct statbuf *fake_stat, struct xattr_stat *xstat)
     fake_stat->rdev = xstat->rdev;
 }
 
-static int realfs_stat(struct mount *mount, char *path, struct statbuf *fake_stat, bool follow_links) {
-    if (strnprepend(path, mount->source, MAX_PATH) == NULL)
-        return _ENAMETOOLONG;
-
+static int realfs_stat(struct fd *dir, const char *file, struct statbuf *fake_stat, bool follow_links) {
     struct stat real_stat;
-    int (*stat_fn)(const char *path, struct stat *buf);
-    if (follow_links)
-        stat_fn = stat;
-    else
-        stat_fn = lstat;
-    if (stat_fn(path, &real_stat) < 0)
+    int flags = follow_links ? 0 : AT_SYMLINK_NOFOLLOW;
+    if (fstatat(dir->real_fd, file, &real_stat, flags) < 0)
         return err_map(errno);
     copy_stat(fake_stat, &real_stat);
 
     struct xattr_stat xstat;
+    // this is painful
+    char path[MAX_PATH];
+    int err = getpath(dir->real_fd, path);
+    if (err < 0)
+        return err;
+    strcat(path, "/");
+    strcat(path, file); // this is a giant security hole ofc
     if (lgetxattr(path, STAT_XATTR, &xstat, sizeof(xstat)) == sizeof(xstat))
         copy_xattr_stat(fake_stat, &xstat);
     return 0;
@@ -133,26 +131,20 @@ static int realfs_fstat(struct fd *fd, struct statbuf *fake_stat) {
     return 0;
 }
 
-static int realfs_unlink(struct mount *mount, char *path) {
-    if (strnprepend(path, mount->source, MAX_PATH) == NULL)
-        return _ENAMETOOLONG;
-
-    int res = unlink(path);
+static int realfs_unlink(struct fd *dir, const char *name) {
+    int res = unlinkat(dir->real_fd, name, 0);
     if (res < 0)
         return err_map(errno);
     return res;
 }
 
-static int realfs_access(struct mount *mount, char *path, int mode) {
-    if (strnprepend(path, mount->source, MAX_PATH) == NULL)
-        return _ENAMETOOLONG;
-
+static int realfs_access(struct fd *dir, const char *name, int mode) {
     int real_mode = 0;
     if (mode & AC_F) real_mode |= F_OK;
     if (mode & AC_R) real_mode |= R_OK;
     if (mode & AC_W) real_mode |= W_OK;
     if (mode & AC_X) real_mode |= X_OK;
-    int res = access(path, real_mode);
+    int res = faccessat(dir->real_fd, name, real_mode, 0);
     if (res < 0)
         return err_map(errno);
     return res;
@@ -217,30 +209,42 @@ static int realfs_mmap(struct fd *fd, off_t offset, size_t len, int prot, int fl
     return 0;
 }
 
-static ssize_t realfs_readlink(struct mount *mount, char *path, char *buf, size_t bufsize) {
-    if (strnprepend(path, mount->source, MAX_PATH) == NULL)
-        return _ENAMETOOLONG;
-
-    ssize_t size = readlink(path, buf, bufsize);
+static ssize_t realfs_readlink(struct fd *dir, const char *name, char *buf, size_t bufsize) {
+    ssize_t size = readlinkat(dir->real_fd, name, buf, bufsize);
     if (size < 0)
         return err_map(errno);
     return size;
 }
 
+static int realfs_getpath(struct fd *fd, char *buf) {
+    int err = getpath(fd->real_fd, buf);
+    if (err < 0)
+        return err;
+    size_t source_len = strlen(fd->mount->source);
+    memmove(buf, buf + source_len, MAX_PATH - source_len);
+    if (*buf == '\0') {
+        buf[0] = '/';
+        buf[1] = '\0';
+    }
+    return 0;
+}
+
 const struct fs_ops realfs = {
-    .open = realfs_open,
+    .open_root = realfs_open_root,
+    .lookup = realfs_lookup,
+    .readdir = realfs_readdir,
     .unlink = realfs_unlink,
-    .stat = realfs_stat,
     .access = realfs_access,
     .readlink = realfs_readlink,
     .fstat = realfs_fstat,
+    .stat = realfs_stat,
 };
 
 const struct fd_ops realfs_fdops = {
     .read = realfs_read,
     .write = realfs_write,
-    .readdir = realfs_readdir,
     .lseek = realfs_lseek,
     .mmap = realfs_mmap,
+    .getpath = realfs_getpath,
     .close = realfs_close,
 };

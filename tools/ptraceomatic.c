@@ -19,6 +19,7 @@
 #include "sys/calls.h"
 #include "emu/interrupt.h"
 #include "emu/cpuid.h"
+#include "util/getpath.h"
 
 #include "sys/elf.h"
 #include "tools/transplant.h"
@@ -420,12 +421,10 @@ int main(int argc, char *const argv[]) {
 
     // execute the traced program in a new process and throw up some sockets
     char exec_path[MAX_PATH];
-    if (path_normalize(argv[optind], exec_path, true) != 0) {
-        fprintf(stderr, "enametoolong\n"); exit(1);
-    }
-    struct mount *mount = find_mount_and_trim_path(exec_path);
-    if (strnprepend(exec_path, mount->source, MAX_PATH) == NULL) {
-        fprintf(stderr, "enametoolong\n"); exit(1);
+    struct fd *fd = generic_open(argv[optind], 0, 0);
+    if (getpath(fd->real_fd, exec_path) < 0) {
+        fprintf(stderr, "fuck\n");
+        exit(1);
     }
     int fds[2];
     trycall(socketpair(AF_UNIX, SOCK_DGRAM, 0, fds), "socketpair");

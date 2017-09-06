@@ -28,31 +28,13 @@ struct newstat64 stat_convert_newstat64(struct statbuf stat) {
     return newstat;
 }
 
-int generic_stat(const char *pathname, struct statbuf *stat, bool follow_links) {
-    char path[MAX_PATH];
-    int err = path_normalize(pathname, path, follow_links);
-    if (err < 0)
-        return err;
-    struct mount *mount = find_mount_and_trim_path(path);
-    return mount->fs->stat(mount, path, stat, follow_links);
-}
-
-int generic_fstat(struct fd *fd, struct statbuf *stat) {
-    if (fd->mount) {
-        return fd->mount->fs->fstat(fd, stat);
-    } else {
-        memcpy(stat, fd->stat, sizeof(*stat));
-        return 0;
-    }
-}
-
-static dword_t sys_stat_path(addr_t pathname_addr, addr_t statbuf_addr, bool follow_links) {
+static dword_t sys_stat_path(addr_t path_addr, addr_t statbuf_addr, bool follow_links) {
     int err;
-    char pathname[MAX_PATH];
-    if (user_read_string(pathname_addr, pathname, sizeof(pathname)))
+    char path[MAX_PATH];
+    if (user_read_string(path_addr, path, sizeof(path)))
         return _EFAULT;
     struct statbuf stat;
-    if ((err = generic_stat(pathname, &stat, follow_links)) < 0)
+    if ((err = generic_stat(path, &stat, follow_links)) < 0)
         return err;
     struct newstat64 newstat = stat_convert_newstat64(stat);
     if (user_put(statbuf_addr, newstat))

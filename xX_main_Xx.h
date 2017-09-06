@@ -8,9 +8,9 @@
 
 static void mount_root(const char *source) {
     mounts = malloc(sizeof(struct mount));
-    mounts->point = "";
     mounts->source = strdup(source);
     mounts->fs = &realfs;
+    mounts->root = realfs.open_root(mounts);
     mounts->next = NULL;
 }
 
@@ -46,30 +46,26 @@ static inline int xX_main_Xx(int argc, char *const argv[]) {
     mem_init(&curmem);
     current->ppid = 1;
     current->uid = current->gid = 0;
-    current->root = strdup("");
+    current->root = mounts->root;
     if (has_root)
-        current->pwd = strdup("");
+        current->pwd = generic_dup(current->root);
     else
-        current->pwd = getcwd(NULL, 0);
+        current->pwd = generic_open(getcwd(NULL, 0), 0, 0);
     current->thread = pthread_self();
     sys_setsid();
 
     // I can't wait for when init and udev works and I don't need to do this
     tty_drivers[TTY_VIRTUAL] = real_tty_driver;
-    fd_t stdin_fd = create_fd();
-    assert(stdin_fd == 0);
 
     // FIXME use generic_open (or something) to avoid this mess
-    current->files[stdin_fd]->mount = mounts;
-    current->files[stdin_fd]->real_fd = STDIN_FILENO;
-
-    int err = dev_open(4, 0, DEV_CHAR, current->files[stdin_fd]);
+    struct fd *fd = fd_create();
+    fd->real_fd = STDIN_FILENO;
+    int err = dev_open(4, 0, DEV_CHAR, fd);
     if (err < 0)
         return err;
-    fd_t stdout_fd = sys_dup(0);
-    assert(stdout_fd == 1);
-    fd_t stderr_fd = sys_dup(0);
-    assert(stderr_fd == 2);
+    current->files[0] = fd;
+    current->files[1] = fd;
+    current->files[2] = fd;
 
     // go.
     char *envp[] = {NULL};

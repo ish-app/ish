@@ -48,6 +48,9 @@ typedef dword_t addr_t;
 typedef dword_t uint_t;
 typedef sdword_t int_t;
 
+typedef dword_t pid_t_;
+typedef word_t mode_t_;
+
 #define uint(size) CONCAT3(uint,size,_t)
 #define sint(size) CONCAT3(int,size,_t)
 
@@ -56,5 +59,9 @@ typedef sdword_t int_t;
 #define unlock(thing) pthread_mutex_unlock(&(thing)->lock)
 #define wait_for(thing, what) pthread_cond_wait(&(thing)->what, &(thing)->lock)
 #define notify(thing, what) pthread_cond_broadcast(&(thing)->what)
+
+#define ERR_PTR(err) (void *) (intptr_t) (err)
+#define PTR_ERR(ptr) (intptr_t) (ptr)
+#define IS_ERR(ptr) ((uintptr_t) (ptr) > (uintptr_t) -0xfff)
 
 #endif
