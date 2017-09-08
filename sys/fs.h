@@ -107,6 +107,8 @@ struct fs_ops {
     int (*fstat)(struct fd *fd, struct statbuf *stat);
 
     int (*statfs)(struct statfs_ *buf);
+
+    int (*flock)(struct fd *fd, int operation);
 };
 
 struct fd_ops {

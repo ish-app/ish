@@ -60,15 +60,19 @@ dword_t sys_writev(fd_t fd_no, addr_t iovec_addr, dword_t iovec_count);
 dword_t sys__llseek(fd_t f, dword_t off_high, dword_t off_low, addr_t res_addr, dword_t whence);
 dword_t sys_lseek(fd_t f, dword_t off, dword_t whence);
 dword_t sys_ioctl(fd_t f, dword_t cmd, dword_t arg);
-
 dword_t sys_fcntl64(fd_t f, dword_t cmd, dword_t arg);
 dword_t sys_dup(fd_t fd);
 dword_t sys_dup2(fd_t fd, fd_t new_fd);
+dword_t sys_close(fd_t fd);
+#define	LOCK_SH_ 1
+#define	LOCK_EX_ 2
+#define	LOCK_NB_ 4
+#define	LOCK_UN_ 8
+dword_t sys_flock(fd_t fd, dword_t operation);
 
 // file management
 fd_t sys_open(addr_t pathname_addr, dword_t flags, dword_t mode);
 fd_t sys_openat(fd_t dirfd, addr_t pathname_addr, dword_t flags, dword_t mode);
-dword_t sys_close(fd_t fd);
 dword_t sys_unlink(addr_t pathname_addr);
 dword_t sys_access(addr_t pathname_addr, dword_t mode);
 dword_t sys_readlink(addr_t pathname, addr_t buf, dword_t bufsize);
@@ -78,7 +82,6 @@ dword_t sys_lstat64(addr_t pathname_addr, addr_t statbuf_addr);
 dword_t sys_fstat64(fd_t fd_no, addr_t statbuf_addr);
 dword_t sys_umask(dword_t mask);
 
-dword_t sys_statfs(addr_t path_addr, addr_t stat_addr);
 dword_t sys_fstatfs(fd_t fd, addr_t stat_addr);
 
 dword_t sys_sendfile(fd_t out_fd, fd_t in_fd, addr_t offset_addr, dword_t count);
