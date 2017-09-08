@@ -310,6 +310,13 @@ dword_t sys_fstatfs64(fd_t f, addr_t buf_addr) {
     return statfs_mount(current->files[f]->mount, buf_addr);
 }
 
+dword_t sys_flock(fd_t f, dword_t operation) {
+    struct fd *fd = current->files[f];
+    if (fd == NULL)
+        return _EBADF;
+    return fd->mount->fs->flock(fd, operation);
+}
+
 // a few stubs
 dword_t sys_sendfile(fd_t out_fd, fd_t in_fd, addr_t offset_addr, dword_t count) {
     return _EINVAL;

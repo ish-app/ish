@@ -50,6 +50,7 @@ syscall_t syscall_table[] = {
     [125] = (syscall_t) sys_mprotect,
     [132] = (syscall_t) sys_getpgid,
     [140] = (syscall_t) sys__llseek,
+    [143] = (syscall_t) sys_flock,
     [145] = (syscall_t) sys_readv,
     [146] = (syscall_t) sys_writev,
     [162] = (syscall_t) sys_nanosleep,

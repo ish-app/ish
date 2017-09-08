@@ -60,10 +60,15 @@ dword_t sys_writev(fd_t fd_no, addr_t iovec_addr, dword_t iovec_count);
 dword_t sys__llseek(fd_t f, dword_t off_high, dword_t off_low, addr_t res_addr, dword_t whence);
 dword_t sys_lseek(fd_t f, dword_t off, dword_t whence);
 dword_t sys_ioctl(fd_t f, dword_t cmd, dword_t arg);
-
 dword_t sys_fcntl64(fd_t f, dword_t cmd, dword_t arg);
 dword_t sys_dup(fd_t fd);
 dword_t sys_dup2(fd_t fd, fd_t new_fd);
+dword_t sys_close(fd_t fd);
+#define	LOCK_SH_ 1
+#define	LOCK_EX_ 2
+#define	LOCK_NB_ 4
+#define	LOCK_UN_ 8
+dword_t sys_flock(fd_t fd, dword_t operation);
 
 // file management
 fd_t sys_open(addr_t path_addr, dword_t flags, dword_t mode);

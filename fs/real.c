@@ -7,6 +7,7 @@
 #include <termios.h>
 #include <sys/mman.h>
 #include <sys/xattr.h>
+#include <sys/file.h>
 
 #include "sys/errno.h"
 #include "sys/calls.h"
@@ -261,6 +262,15 @@ static int realfs_statfs(struct mount *mount, struct statfsbuf *stat) {
     return 0;
 }
 
+static int realfs_flock(struct fd *fd, int operation) {
+    int real_op = 0;
+    if (operation & LOCK_SH_) real_op |= LOCK_SH;
+    if (operation & LOCK_EX_) real_op |= LOCK_EX;
+    if (operation & LOCK_UN_) real_op |= LOCK_UN;
+    if (operation & LOCK_NB_) real_op |= LOCK_NB;
+    return flock(fd->real_fd, real_op);
+}
+
 const struct fs_ops realfs = {
     .open = realfs_open,
     .unlink = realfs_unlink,
@@ -269,6 +279,7 @@ const struct fs_ops realfs = {
     .readlink = realfs_readlink,
     .fstat = realfs_fstat,
     .statfs = realfs_statfs,
+    .flock = realfs_flock,
 };
 
 const struct fd_ops realfs_fdops = {
