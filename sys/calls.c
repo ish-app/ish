@@ -75,6 +75,8 @@ syscall_t syscall_table[] = {
     [252] = (syscall_t) sys_exit_group,
     [258] = (syscall_t) sys_set_tid_address,
     [265] = (syscall_t) sys_clock_gettime,
+    [269] = (syscall_t) sys_fstatfs,
+    [295] = (syscall_t) sys_openat,
 };
 
 void handle_interrupt(struct cpu_state *cpu, int interrupt) {
@@ -86,9 +88,9 @@ void handle_interrupt(struct cpu_state *cpu, int interrupt) {
             println("missing syscall %d", syscall_num);
             send_signal(current, SIGSYS_);
         } else {
-            TRACE("syscall %d ", syscall_num);
+            STRACE("call %-3d ", syscall_num);
             int result = syscall_table[syscall_num](cpu->ebx, cpu->ecx, cpu->edx, cpu->esi, cpu->edi, cpu->ebp);
-            TRACELN("result %x", result);
+            STRACELN(" = 0x%x", result);
             cpu->eax = result;
         }
     } else if (interrupt == INT_GPF) {

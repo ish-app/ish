@@ -67,6 +67,7 @@ dword_t sys_dup2(fd_t fd, fd_t new_fd);
 
 // file management
 fd_t sys_open(addr_t pathname_addr, dword_t flags, dword_t mode);
+fd_t sys_openat(fd_t dirfd, addr_t pathname_addr, dword_t flags, dword_t mode);
 dword_t sys_close(fd_t fd);
 dword_t sys_unlink(addr_t pathname_addr);
 dword_t sys_access(addr_t pathname_addr, dword_t mode);
@@ -76,6 +77,9 @@ dword_t sys_stat64(addr_t pathname_addr, addr_t statbuf_addr);
 dword_t sys_lstat64(addr_t pathname_addr, addr_t statbuf_addr);
 dword_t sys_fstat64(fd_t fd_no, addr_t statbuf_addr);
 dword_t sys_umask(dword_t mask);
+
+dword_t sys_statfs(addr_t path_addr, addr_t stat_addr);
+dword_t sys_fstatfs(fd_t fd, addr_t stat_addr);
 
 dword_t sys_sendfile(fd_t out_fd, fd_t in_fd, addr_t offset_addr, dword_t count);
 dword_t sys_sendfile64(fd_t out_fd, fd_t in_fd, addr_t offset_addr, dword_t count);

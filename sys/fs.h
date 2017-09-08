@@ -40,9 +40,11 @@ struct fd {
 struct fd *fd_create();
 typedef sdword_t fd_t;
 #define MAX_FD 1024 // dynamically expanding fd table coming soon:tm:
+#define AT_FDCWD_ ((fd_t) -100)
 
 struct fd *generic_lookup(struct fd *dir, const char *name, int flags);
-struct fd *generic_open(const char *pathname, int flags, int mode);
+struct fd *generic_open(const char *path, int flags, int mode);
+struct fd *generic_openat(struct fd *dir, const char *pathname, int flags, int mode);
 struct fd *generic_dup(struct fd *fd);
 int generic_close(struct fd *fd);
 int generic_unlink(const char *pathname);
@@ -75,6 +77,20 @@ struct dir_entry {
 #define O_CREAT_ (1 << 6)
 #define O_DIRECTORY_ (1 << 16)
 
+struct statfs_ {
+    dword_t type;
+    dword_t bsize;
+    sdword_t blocks;
+    sdword_t bfree;
+    sdword_t bavail;
+    dword_t files;
+    dword_t ffree;
+    dword_t namelen;
+    dword_t frsize;
+    dword_t flags;
+    dword_t pad[4];
+};
+
 struct fs_ops {
     // will be called once, on mount
     struct fd *(*open_root)(struct mount *mount);
@@ -89,6 +105,8 @@ struct fs_ops {
     ssize_t (*readlink)(struct fd *dir, const char *name, char *buf, size_t bufsize);
     int (*stat)(struct fd *dir, const char *name, struct statbuf *stat, bool follow_links);
     int (*fstat)(struct fd *fd, struct statbuf *stat);
+
+    int (*statfs)(struct statfs_ *buf);
 };
 
 struct fd_ops {

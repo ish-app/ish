@@ -7,6 +7,7 @@
 #define println(msg, ...) printf(msg "\r\n", ##__VA_ARGS__)
 
 // debug output utilities
+// save me
 
 #ifndef DEBUG_all
 #define DEBUG_all 0
@@ -19,6 +20,9 @@
 #endif
 #ifndef DEBUG_debug
 #define DEBUG_debug DEBUG_all
+#endif
+#ifndef DEBUG_strace
+#define DEBUG_strace DEBUG_all
 #endif
 
 #if DEBUG_default
@@ -36,6 +40,11 @@
 #else
 #define TRACE_debug TRACE__NOP
 #endif
+#if DEBUG_strace
+#define TRACE_strace TRACE__
+#else
+#define TRACE_strace TRACE__NOP
+#endif
 
 #define TRACE__NOP(msg, ...) do {} while(0)
 #define TRACE__(msg, ...) printf(msg, ##__VA_ARGS__)
@@ -51,3 +60,5 @@
 #define FIXME(msg, ...) println("FIXME " msg, ##__VA_ARGS__)
 #define DIE(msg) { perror(msg); abort(); }
 
+#define STRACE(msg, ...) TRACE_(strace, msg, ##__VA_ARGS__)
+#define STRACELN(msg, ...) TRACELN_(strace, msg, ##__VA_ARGS__)

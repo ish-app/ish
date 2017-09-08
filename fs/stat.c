@@ -2,6 +2,7 @@
 #include <sys/stat.h>
 #include <limits.h>
 
+#include "debug.h"
 #include "sys/calls.h"
 #include "sys/errno.h"
 #include "sys/fs.h"
@@ -51,6 +52,7 @@ dword_t sys_lstat64(addr_t pathname_addr, addr_t statbuf_addr) {
 }
 
 dword_t sys_fstat64(fd_t fd_no, addr_t statbuf_addr) {
+    STRACE("fstat64(%d, 0x%x)", fd_no, statbuf_addr);
     struct fd *fd = current->files[fd_no];
     if (fd == NULL)
         return _EBADF;

@@ -52,8 +52,7 @@ struct fd *dir_open(struct fd *at, const char *path, const char **file) {
         if (*path == '/') {
             while (*path == '/')
                 path++;
-            if (*path != '\0')
-                *file = path;
+            *file = path;
         }
         path++;
     }
@@ -77,11 +76,11 @@ struct fd *generic_lookup(struct fd *dir, const char *name, int flags) {
     return dir->fs->lookup(dir, name, flags);
 }
 
-struct fd *generic_open(const char *path, int flags, int mode) {
+struct fd *generic_openat(struct fd *dir, const char *path, int flags, int mode) {
     // TODO O_DIRECTORY_
 
     const char *file;
-    struct fd *dir = dir_open(current->pwd, path, &file);
+    dir = dir_open(dir, path, &file);
     if (IS_ERR(dir))
         return dir;
     struct fd *fd = generic_lookup(dir, file, flags);
@@ -106,6 +105,10 @@ struct fd *generic_open(const char *path, int flags, int mode) {
         }
     }
     return fd;
+}
+
+struct fd *generic_open(const char *path, int flags, int mode) {
+    return generic_openat(current->pwd, path, flags, mode);
 }
 
 int generic_close(struct fd *fd) {
