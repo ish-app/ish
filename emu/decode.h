@@ -516,6 +516,7 @@ restart:
 
         case 0xaa: TRACEI("stosb"); STOS(8); break;
         case 0xab: TRACEI("stos"); STOS(OP_SIZE); break;
+        case 0xac: TRACEI("lodsb"); LODS(8); break;
 
         case 0xb0: TRACEI("mov imm, al\t");
                    READIMM8; MOV(imm8, al,); break;

@@ -332,13 +332,15 @@
         int cnt = get(count,z) % sz(z); \
         /* the compiler miraculously turns this into a rol instruction with optimizations on */\
         set(val, get(val,z) << cnt | get(val,z) >> (sz(z) - cnt),z); \
-        cpu->cf = get(val,z) & 1; \
+        cpu->cf = get(val,z) & 1; cpu->cf_ops = 0; \
+        if (cnt == 1) { cpu->of = cpu->cf ^ (get(val,z) >> (OP_SIZE - 1)); cpu->of_ops = 0; } \
     }
 #define ROR(count, val,z) \
     if (get(count,z) % sz(z) != 0) { \
         int cnt = get(count,z) % sz(z); \
         set(val, get(val,z) >> cnt | get(val,z) << (sz(z) - cnt),z); \
-        cpu->cf = get(val,z) >> (OP_SIZE - 1); \
+        cpu->cf = get(val,z) >> (OP_SIZE - 1); cpu->cf_ops = 0; \
+        if (cnt == 1) { cpu->of = cpu->cf ^ (get(val,z) & 1); cpu->of_ops = 0; } \
     }
 #define SHL(count, val,z) \
     if (get(count,z) % sz(z) != 0) { \
@@ -446,10 +448,14 @@
     BUMP_SI_DI(z)
 
 #define STOS(z) \
-    mem_write(cpu->edi, cpu->oax, sz(z)); \
+    mem_write(cpu->edi, REG_VAL(cpu, REG_ID(eax), sz(z)), sz(z)); \
     BUMP_DI(z)
 
-// TODO find an alternative to al here
+#define LODS(z) \
+    REG_VAL(cpu, REG_ID(eax), sz(z)) = mem_read(cpu->esi, sz(z)); \
+    BUMP_SI(z)
+
+// found an alternative to al, see above, needs polishing
 #define SCAS(z) \
     CMP(al, mem_di,z); \
     BUMP_DI(z)
