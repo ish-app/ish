@@ -25,6 +25,7 @@ syscall_t syscall_table[] = {
     [13]  = (syscall_t) sys_time,
     [19]  = (syscall_t) sys_lseek,
     [20]  = (syscall_t) sys_getpid,
+    [21]  = (syscall_t) sys_mount,
     [24]  = (syscall_t) sys_getuid,
     [47]  = (syscall_t) sys_getgid,
     [33]  = (syscall_t) sys_access,

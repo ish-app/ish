@@ -87,6 +87,8 @@ dword_t sys_fstatfs(fd_t fd, addr_t stat_addr);
 dword_t sys_sendfile(fd_t out_fd, fd_t in_fd, addr_t offset_addr, dword_t count);
 dword_t sys_sendfile64(fd_t out_fd, fd_t in_fd, addr_t offset_addr, dword_t count);
 
+dword_t sys_mount(addr_t source_addr, addr_t target_addr, addr_t type_addr, dword_t flags, addr_t data_addr);
+
 // process information
 dword_t sys_getpid();
 dword_t sys_gettid();
