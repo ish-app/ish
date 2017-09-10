@@ -7,7 +7,7 @@ int sys_uname(struct uname *uts) {
     bzero(uts, sizeof(struct uname));
     strcpy(uts->system, "Linux");
     strcpy(uts->hostname, "compotar");
-    strcpy(uts->release, "2.6.32-ish");
+    strcpy(uts->release, "3.2.0-ish");
     strcpy(uts->version, "SUPER AWESOME");
     strcpy(uts->arch, "i686");
     strcpy(uts->domain, "compotar.me");
