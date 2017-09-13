@@ -1,14 +1,11 @@
 #include <sys/mman.h>
 #include <string.h>
-#include "debug.h"
 #include "sys/calls.h"
 #include "sys/errno.h"
 #include "emu/memory.h"
 
 addr_t sys_brk(addr_t new_brk) {
     int err;
-
-    STRACE("brk(0x%x)", new_brk);
 
     if (new_brk != 0) {
         if (new_brk < current->start_brk) return _EINVAL;

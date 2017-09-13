@@ -35,7 +35,6 @@ syscall_t syscall_table[] = {
     [49]  = (syscall_t) sys_geteuid,
     [54]  = (syscall_t) sys_ioctl,
     [57]  = (syscall_t) sys_setpgid,
-    [60]  = (syscall_t) sys_umask,
     [63]  = (syscall_t) sys_dup2,
     [64]  = (syscall_t) sys_getppid,
     [65]  = (syscall_t) sys_getpgrp,
@@ -50,7 +49,6 @@ syscall_t syscall_table[] = {
     [125] = (syscall_t) sys_mprotect,
     [132] = (syscall_t) sys_getpgid,
     [140] = (syscall_t) sys__llseek,
-    [143] = (syscall_t) sys_flock,
     [145] = (syscall_t) sys_readv,
     [146] = (syscall_t) sys_writev,
     [162] = (syscall_t) sys_nanosleep,
@@ -77,8 +75,6 @@ syscall_t syscall_table[] = {
     [252] = (syscall_t) sys_exit_group,
     [258] = (syscall_t) sys_set_tid_address,
     [265] = (syscall_t) sys_clock_gettime,
-    [269] = (syscall_t) sys_fstatfs,
-    [295] = (syscall_t) sys_openat,
 };
 
 void handle_interrupt(struct cpu_state *cpu, int interrupt) {
@@ -90,9 +86,9 @@ void handle_interrupt(struct cpu_state *cpu, int interrupt) {
             println("missing syscall %d", syscall_num);
             send_signal(current, SIGSYS_);
         } else {
-            STRACE("call %-3d ", syscall_num);
+            TRACE("syscall %d ", syscall_num);
             int result = syscall_table[syscall_num](cpu->ebx, cpu->ecx, cpu->edx, cpu->esi, cpu->edi, cpu->ebp);
-            STRACELN(" = 0x%x", result);
+            TRACELN("result %x", result);
             cpu->eax = result;
         }
     } else if (interrupt == INT_GPF) {

@@ -43,6 +43,7 @@ sys_src = [
     'fs/stat.c',
     'fs/dir.c',
     'fs/generic.c',
+    'fs/path.c',
     'fs/real.c',
     'fs/poll.c',
 
@@ -50,9 +51,7 @@ sys_src = [
     'fs/tty.c',
     'fs/tty-real.c',
 
-    'sys/poll.c',
-
-    'util/getpath.c'
+    'sys/poll.c'
 ]
 emu_src = [
     'emu/memory.c',
