@@ -58,6 +58,12 @@ struct mount {
 };
 struct mount *mounts;
 
+// open flags
+#define O_RDONLY_ 0
+#define O_WRONLY_ (1 << 0)
+#define O_RDWR_ (1 << 1)
+#define O_CREAT_ (1 << 6)
+
 struct fs_ops {
     // the path parameter points to MAX_PATH bytes of allocated memory, which
     // you can do whatever you want with (but make sure to return _ENAMETOOLONG
