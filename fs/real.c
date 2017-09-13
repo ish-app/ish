@@ -31,17 +31,18 @@ char *strnprepend(char *str, const char *prefix, size_t max) {
 
 // TODO translate goddamn flags
 
-static int realfs_open(struct mount *mount, char *path, struct fd *fd, int flags, int mode) {
+static struct fd *realfs_open(struct mount *mount, char *path, int flags, int mode) {
     if (strnprepend(path, mount->source, MAX_PATH) == NULL)
-        return _ENAMETOOLONG;
+        return ERR_PTR(_ENAMETOOLONG);
 
     int fd_no = open(path, flags, mode);
     if (fd_no < 0)
-        return err_map(errno);
+        return ERR_PTR(err_map(errno));
+    struct fd *fd = fd_create();
     fd->real_fd = fd_no;
     fd->dir = NULL;
     fd->ops = &realfs_fdops;
-    return 0;
+    return fd;
 }
 
 static int realfs_close(struct fd *fd) {

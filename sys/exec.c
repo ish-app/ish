@@ -108,11 +108,9 @@ int sys_execve(const char *file, char *const argv[], char *const envp[]) {
     int err = 0;
 
     // open the file and read the headers
-    struct fd f;
-    struct fd *fd;
-    if (generic_open(file, &f, O_RDONLY, 0) < 0)
-        return err_map(errno);
-    fd = &f;
+    struct fd *fd = generic_open(file, O_RDONLY, 0);
+    if (IS_ERR(fd))
+        return PTR_ERR(fd);
     struct elf_header header;
     if ((err = read_header(fd, &header)) < 0)
         goto out_free_fd;
@@ -122,7 +120,6 @@ int sys_execve(const char *file, char *const argv[], char *const envp[]) {
 
     // look for an interpreter
     char *interp_name = NULL;
-    struct fd interp_f;
     struct fd *interp_fd = NULL;
     struct elf_header interp_header;
     struct prg_header *interp_ph;
@@ -148,11 +145,11 @@ int sys_execve(const char *file, char *const argv[], char *const envp[]) {
             goto out_free_interp;
 
         // open interpreter and read headers
-        if ((generic_open(interp_name, &interp_f, O_RDONLY, 0)) < 0) {
-            err = err_map(errno);
+        interp_fd = generic_open(interp_name, O_RDONLY, 0);
+        if (IS_ERR(interp_fd)) {
+            err = PTR_ERR(err);
             goto out_free_interp;
         }
-        interp_fd = &interp_f;
         if ((err = read_header(interp_fd, &interp_header)) < 0) {
             if (err == _ENOEXEC) err = _ELIBBAD;
             goto out_free_interp;

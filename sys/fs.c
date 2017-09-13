@@ -6,22 +6,11 @@
 #include "sys/process.h"
 #include "sys/fs.h"
 
-fd_t find_fd() {
+fd_t fd_next() {
     for (fd_t fd = 0; fd < MAX_FD; fd++)
         if (current->files[fd] == NULL)
             return fd;
     return -1;
-}
-
-fd_t create_fd() {
-    fd_t f = find_fd();
-    struct fd *fd = malloc(sizeof(struct fd));
-    fd->refcnt = 1;
-    fd->flags = 0;
-    fd->mount = NULL;
-    list_init(&fd->poll_fds);
-    current->files[f] = fd;
-    return f;
 }
 
 // TODO ENAMETOOLONG
@@ -34,7 +23,6 @@ dword_t sys_access(addr_t path_addr, dword_t mode) {
 }
 
 fd_t sys_open(addr_t path_addr, dword_t flags, dword_t mode) {
-    int err;
     char path[MAX_PATH];
     if (user_read_string(path_addr, path, sizeof(path)))
         return _EFAULT;
@@ -42,12 +30,14 @@ fd_t sys_open(addr_t path_addr, dword_t flags, dword_t mode) {
     if (flags & O_CREAT_)
         mode &= current->umask;
 
-    fd_t fd = create_fd();
-    if (fd == -1)
+    fd_t fd_no = fd_next();
+    if (fd_no == -1)
         return _EMFILE;
-    if ((err = generic_open(path, current->files[fd], flags, mode)) < 0)
-        return err;
-    return fd;
+    struct fd *fd = generic_open(path, flags, mode);
+    if (IS_ERR(fd))
+        return PTR_ERR(fd);
+    current->files[fd_no] = fd;
+    return fd_no;
 }
 
 dword_t sys_readlink(addr_t path_addr, addr_t buf_addr, dword_t bufsize) {
@@ -80,16 +70,6 @@ dword_t sys_close(fd_t f) {
         free(fd);
     }
     current->files[f] = NULL;
-    return 0;
-}
-
-int generic_close(struct fd *fd) {
-    if (--fd->refcnt == 0) {
-        int err = fd->ops->close(fd);
-        if (err < 0)
-            return err;
-        return 1;
-    }
     return 0;
 }
 
@@ -232,7 +212,7 @@ dword_t sys_fcntl64(fd_t f, dword_t cmd, dword_t arg) {
 dword_t sys_dup(fd_t fd) {
     if (current->files[fd] == NULL)
         return _EBADF;
-    fd_t new_fd = find_fd();
+    fd_t new_fd = fd_next();
     if (new_fd < 0)
         return _EMFILE;
     current->files[new_fd] = current->files[fd];

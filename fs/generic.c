@@ -6,6 +6,15 @@
 #include "fs/dev.h"
 #include "sys/process.h"
 
+struct fd *fd_create() {
+    struct fd *fd = malloc(sizeof(struct fd));
+    fd->refcnt = 1;
+    fd->flags = 0;
+    fd->mount = NULL;
+    list_init(&fd->poll_fds);
+    return fd;
+}
+
 static struct mount *find_mount(char *pathname) {
     struct mount *mount;
     for (mount = mounts; mount != NULL; mount = mount->next) {
@@ -27,17 +36,17 @@ struct mount *find_mount_and_trim_path(char *path) {
     return mount;
 }
 
-int generic_open(const char *pathname, struct fd *fd, int flags, int mode) {
+struct fd *generic_open(const char *pathname, int flags, int mode) {
     // TODO really, really, seriously reconsider what I'm doing with the strings
     char path[MAX_PATH];
     int err = path_normalize(pathname, path, true);
     if (err < 0)
-        return err;
+        return ERR_PTR(err);
     struct mount *mount = find_mount_and_trim_path(path);
+    struct fd *fd = mount->fs->open(mount, path, flags, mode);
+    if (IS_ERR(fd))
+        return fd;
     fd->mount = mount;
-    err = mount->fs->open(mount, path, fd, flags, mode);
-    if (err < 0)
-        return err;
 
     struct statbuf stat;
     err = generic_fstat(fd, &stat);
@@ -50,10 +59,29 @@ int generic_open(const char *pathname, struct fd *fd, int flags, int mode) {
                 type = DEV_CHAR;
             int major = dev_major(stat.rdev);
             int minor = dev_minor(stat.rdev);
-            return dev_open(major, minor, type, fd);
+            err = dev_open(major, minor, type, fd);
+            if (err < 0) {
+                generic_close(fd);
+                return ERR_PTR(err);
+            }
         }
     }
+    return fd;
+}
+
+int generic_close(struct fd *fd) {
+    if (--fd->refcnt == 0) {
+        int err = fd->ops->close(fd);
+        if (err < 0)
+            return err;
+        free(fd);
+    }
     return 0;
+}
+
+struct fd *generic_dup(struct fd *fd) {
+    fd->refcnt++;
+    return fd;
 }
 
 int generic_access(const char *pathname, int mode) {

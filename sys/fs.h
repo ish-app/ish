@@ -35,11 +35,12 @@ struct fd {
     pthread_mutex_t lock;
 };
 typedef sdword_t fd_t;
-fd_t find_fd();
-fd_t create_fd();
+struct fd *fd_create();
 #define MAX_FD 1024 // dynamically expanding fd table coming soon:tm:
 
-int generic_open(const char *pathname, struct fd *fd, int flags, int mode);
+struct fd *generic_open(const char *pathname, int flags, int mode);
+struct fd *generic_dup(struct fd *fd);
+int generic_close(struct fd *fd);
 int generic_unlink(const char *pathname);
 #define AC_R 4
 #define AC_W 2
@@ -68,7 +69,7 @@ struct fs_ops {
     // the path parameter points to MAX_PATH bytes of allocated memory, which
     // you can do whatever you want with (but make sure to return _ENAMETOOLONG
     // instead of overflowing the buffer)
-    int (*open)(struct mount *mount, char *path, struct fd *fd, int flags, int mode);
+    struct fd *(*open)(struct mount *mount, char *path, int flags, int mode);
     int (*unlink)(struct mount *mount, char *pathname);
     int (*access)(struct mount *mount, char *path, int mode);
     int (*stat)(struct mount *mount, char *path, struct statbuf *stat, bool follow_links);
