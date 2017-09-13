@@ -26,17 +26,17 @@ fd_t create_fd() {
 
 // TODO ENAMETOOLONG
 
-dword_t sys_access(addr_t pathname_addr, dword_t mode) {
-    char pathname[MAX_PATH];
-    if (user_read_string(pathname_addr, pathname, sizeof(pathname)))
+dword_t sys_access(addr_t path_addr, dword_t mode) {
+    char path[MAX_PATH];
+    if (user_read_string(path_addr, path, sizeof(path)))
         return _EFAULT;
-    return generic_access(pathname, mode);
+    return generic_access(path, mode);
 }
 
-fd_t sys_open(addr_t pathname_addr, dword_t flags, dword_t mode) {
+fd_t sys_open(addr_t path_addr, dword_t flags, dword_t mode) {
     int err;
-    char pathname[MAX_PATH];
-    if (user_read_string(pathname_addr, pathname, sizeof(pathname)))
+    char path[MAX_PATH];
+    if (user_read_string(path_addr, path, sizeof(path)))
         return _EFAULT;
 
     if (flags & O_CREAT_)
@@ -45,28 +45,28 @@ fd_t sys_open(addr_t pathname_addr, dword_t flags, dword_t mode) {
     fd_t fd = create_fd();
     if (fd == -1)
         return _EMFILE;
-    if ((err = generic_open(pathname, current->files[fd], flags, mode)) < 0)
+    if ((err = generic_open(path, current->files[fd], flags, mode)) < 0)
         return err;
     return fd;
 }
 
-dword_t sys_readlink(addr_t pathname_addr, addr_t buf_addr, dword_t bufsize) {
-    char pathname[MAX_PATH];
-    if (user_read_string(pathname_addr, pathname, sizeof(pathname)))
+dword_t sys_readlink(addr_t path_addr, addr_t buf_addr, dword_t bufsize) {
+    char path[MAX_PATH];
+    if (user_read_string(path_addr, path, sizeof(path)))
         return _EFAULT;
     char buf[bufsize];
-    int err = generic_readlink(pathname, buf, bufsize);
+    int err = generic_readlink(path, buf, bufsize);
     if (err >= 0)
         if (user_write_string(buf_addr, buf))
             return _EFAULT;
     return err;
 }
 
-dword_t sys_unlink(addr_t pathname_addr) {
-    char pathname[MAX_PATH];
-    if (user_read_string(pathname_addr, pathname, sizeof(pathname)))
+dword_t sys_unlink(addr_t path_addr) {
+    char path[MAX_PATH];
+    if (user_read_string(path_addr, path, sizeof(path)))
         return _EFAULT;
-    return generic_unlink(pathname);
+    return generic_unlink(path);
 }
 
 dword_t sys_close(fd_t f) {
