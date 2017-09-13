@@ -39,6 +39,9 @@ fd_t sys_open(addr_t pathname_addr, dword_t flags, dword_t mode) {
     if (user_read_string(pathname_addr, pathname, sizeof(pathname)))
         return _EFAULT;
 
+    if (flags & O_CREAT_)
+        mode &= current->umask;
+
     fd_t fd = create_fd();
     if (fd == -1)
         return _EMFILE;
@@ -283,6 +286,12 @@ dword_t sys_chdir(addr_t path_addr) {
         return _ENOTDIR;
     path_normalize(path, current->pwd, true);
     return 0;
+}
+
+dword_t sys_umask(dword_t mask) {
+    mode_t_ old_umask = current->umask;
+    current->umask = ((mode_t_) mask) & 0777;
+    return old_umask;
 }
 
 // a few stubs

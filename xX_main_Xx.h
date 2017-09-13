@@ -51,6 +51,7 @@ static inline int xX_main_Xx(int argc, char *const argv[]) {
         current->pwd = strdup("");
     else
         current->pwd = getcwd(NULL, 0);
+    current->umask = 0022;
     current->thread = pthread_self();
     sys_setsid();
 

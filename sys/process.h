@@ -23,6 +23,7 @@ struct process {
     char *pwd;
     char *root;
     struct fd *files[MAX_FD];
+    mode_t_ umask;
 
     struct sigaction_ sigactions[NUM_SIGS];
     sigset_t_ blocked;
