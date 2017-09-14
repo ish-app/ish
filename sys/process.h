@@ -20,8 +20,8 @@ struct process {
     addr_t start_brk;
     addr_t brk;
 
-    char *pwd;
-    char *root;
+    struct fd *pwd;
+    struct fd *root;
     struct fd *files[MAX_FD];
     mode_t_ umask;
 

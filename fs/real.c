@@ -14,6 +14,19 @@
 #include "fs/dev.h"
 #include "fs/tty.h"
 
+static int getpath(int fd, char *buf) {
+#if defined(__linux__)
+    char proc_fd[20];
+    sprintf(proc_fd, "/proc/self/fd/%d", fd);
+    ssize_t size = readlink(proc_fd, buf, MAX_PATH - 1);
+    if (size >= 0)
+        buf[size] = '\0';
+    return size;
+#elif defined(__APPLE__)
+    return fcntl(fd, F_GEPATH, buf);
+#endif
+}
+
 char *strnprepend(char *str, const char *prefix, size_t max) {
     if (strlen(str) + strlen(prefix) + 1 > max)
         return NULL;
@@ -228,6 +241,19 @@ static ssize_t realfs_readlink(struct mount *mount, char *path, char *buf, size_
     return size;
 }
 
+static int realfs_getpath(struct fd *fd, char *buf) {
+    int err = getpath(fd->real_fd, buf);
+    if (err < 0)
+        return err;
+    size_t source_len = strlen(fd->mount->source);
+    memmove(buf, buf + source_len, MAX_PATH - source_len);
+    if (*buf == '\0') {
+        buf[0] = '/';
+        buf[1] = '\0';
+    }
+    return 0;
+}
+
 const struct fs_ops realfs = {
     .open = realfs_open,
     .unlink = realfs_unlink,
@@ -243,5 +269,6 @@ const struct fd_ops realfs_fdops = {
     .readdir = realfs_readdir,
     .lseek = realfs_lseek,
     .mmap = realfs_mmap,
+    .getpath = realfs_getpath,
     .close = realfs_close,
 };

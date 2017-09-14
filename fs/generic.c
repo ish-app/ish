@@ -36,10 +36,10 @@ struct mount *find_mount_and_trim_path(char *path) {
     return mount;
 }
 
-struct fd *generic_open(const char *pathname, int flags, int mode) {
+struct fd *generic_openat(struct fd *at, const char *pathname, int flags, int mode) {
     // TODO really, really, seriously reconsider what I'm doing with the strings
     char path[MAX_PATH];
-    int err = path_normalize(pathname, path, true);
+    int err = path_normalize(at, pathname, path, true);
     if (err < 0)
         return ERR_PTR(err);
     struct mount *mount = find_mount_and_trim_path(path);
@@ -69,6 +69,10 @@ struct fd *generic_open(const char *pathname, int flags, int mode) {
     return fd;
 }
 
+struct fd *generic_open(const char *path, int flags, int mode) {
+    return generic_openat(current->pwd, path, flags, mode);
+}
+
 int generic_close(struct fd *fd) {
     if (--fd->refcnt == 0) {
         int err = fd->ops->close(fd);
@@ -86,7 +90,7 @@ struct fd *generic_dup(struct fd *fd) {
 
 int generic_access(const char *pathname, int mode) {
     char path[MAX_PATH];
-    int err = path_normalize(pathname, path, true);
+    int err = path_normalize(NULL, pathname, path, true);
     if (err < 0)
         return err;
     struct mount *mount = find_mount_and_trim_path(path);
@@ -95,7 +99,7 @@ int generic_access(const char *pathname, int mode) {
 
 int generic_unlink(const char *pathname) {
     char path[MAX_PATH];
-    int err = path_normalize(pathname, path, true);
+    int err = path_normalize(NULL, pathname, path, true);
     if (err < 0)
         return err;
     struct mount *mount = find_mount_and_trim_path(path);
@@ -104,7 +108,7 @@ int generic_unlink(const char *pathname) {
 
 ssize_t generic_readlink(const char *pathname, char *buf, size_t bufsize) {
     char path[MAX_PATH];
-    int err = path_normalize(pathname, path, false);
+    int err = path_normalize(NULL, pathname, path, false);
     if (err < 0)
         return err;
     struct mount *mount = find_mount_and_trim_path(path);

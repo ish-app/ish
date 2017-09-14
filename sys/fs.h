@@ -3,9 +3,11 @@
 
 #include "misc.h"
 #include "util/list.h"
-#include "fs/path.h"
 #include "fs/stat.h"
 #include <dirent.h>
+
+#define MAX_PATH 4096
+#define MAX_NAME 256
 
 struct poll;
 
@@ -37,8 +39,10 @@ struct fd {
 typedef sdword_t fd_t;
 struct fd *fd_create();
 #define MAX_FD 1024 // dynamically expanding fd table coming soon:tm:
+#define AT_FDCWD_ -100
 
 struct fd *generic_open(const char *pathname, int flags, int mode);
+struct fd *generic_openat(struct fd *at, const char *path, int flags, int mode);
 struct fd *generic_dup(struct fd *fd);
 int generic_close(struct fd *fd);
 int generic_unlink(const char *pathname);
@@ -105,6 +109,9 @@ struct fd_ops {
     // if ioctl_size returns non-zero, arg must point to ioctl_size valid bytes
     int (*ioctl)(struct fd *fd, int cmd, void *arg);
 
+    // Returns the path of the file descriptor, buf must be at least MAX_PATH
+    int (*getpath)(struct fd *fd, char *buf);
+
     int (*close)(struct fd *fd);
 };
 
@@ -144,6 +151,21 @@ int poll_del_fd(struct poll *poll, struct fd *fd);
 void poll_wake_pollable(struct pollable *pollable);
 int poll_wait(struct poll *poll, struct poll_event *event, int timeout);
 void poll_destroy(struct poll *poll);
+
+// Normalizes the path specified and writes the result into the out buffer.
+//
+// Normalization means:
+//  - prepending the current or root directory
+//  - converting multiple slashes into one
+//  - resolving . and ..
+//  - resolving symlinks, skipping the last path component if the follow_links
+//    argument is true
+// The result will always begin with a slash.
+//
+// If the normalized path plus the null terminator would be longer than
+// MAX_PATH, _ENAMETOOLONG is returned. The out buffer is expected to be at
+// least MAX_PATH in size.
+int path_normalize(struct fd *at, const char *path, char *out, bool follow_links);
 
 // real fs
 extern const struct fs_ops realfs;

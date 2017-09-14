@@ -67,6 +67,7 @@ dword_t sys_dup2(fd_t fd, fd_t new_fd);
 
 // file management
 fd_t sys_open(addr_t pathname_addr, dword_t flags, dword_t mode);
+fd_t sys_openat(fd_t at, addr_t pathname_addr, dword_t flags, dword_t mode);
 dword_t sys_close(fd_t fd);
 dword_t sys_unlink(addr_t pathname_addr);
 dword_t sys_access(addr_t pathname_addr, dword_t mode);

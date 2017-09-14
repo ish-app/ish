@@ -30,7 +30,7 @@ struct newstat64 stat_convert_newstat64(struct statbuf stat) {
 
 int generic_stat(const char *pathname, struct statbuf *stat, bool follow_links) {
     char path[MAX_PATH];
-    int err = path_normalize(pathname, path, follow_links);
+    int err = path_normalize(NULL, pathname, path, follow_links);
     if (err < 0)
         return err;
     struct mount *mount = find_mount_and_trim_path(path);

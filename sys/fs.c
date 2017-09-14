@@ -22,22 +22,31 @@ dword_t sys_access(addr_t path_addr, dword_t mode) {
     return generic_access(path, mode);
 }
 
-fd_t sys_open(addr_t path_addr, dword_t flags, dword_t mode) {
+fd_t sys_openat(fd_t at_fd, addr_t path_addr, dword_t flags, dword_t mode) {
     char path[MAX_PATH];
     if (user_read_string(path_addr, path, sizeof(path)))
         return _EFAULT;
 
     if (flags & O_CREAT_)
-        mode &= current->umask;
+        mode &= ~current->umask;
 
     fd_t fd_no = fd_next();
     if (fd_no == -1)
         return _EMFILE;
-    struct fd *fd = generic_open(path, flags, mode);
+    struct fd *at;
+    if (at_fd == AT_FDCWD_)
+        at = current->pwd;
+    else
+        at = current->files[at_fd];
+    struct fd *fd = generic_openat(at, path, flags, mode);
     if (IS_ERR(fd))
         return PTR_ERR(fd);
     current->files[fd_no] = fd;
     return fd_no;
+}
+
+fd_t sys_open(addr_t path_addr, dword_t flags, dword_t mode) {
+    return sys_openat(AT_FDCWD_, path_addr, flags, mode);
 }
 
 dword_t sys_readlink(addr_t path_addr, addr_t buf_addr, dword_t bufsize) {
@@ -240,9 +249,10 @@ dword_t sys_dup2(fd_t fd, fd_t new_fd) {
 }
 
 dword_t sys_getcwd(addr_t buf_addr, dword_t size) {
-    char *pwd = current->pwd;
-    if (*pwd == '\0')
-        pwd = "/";
+    char pwd[MAX_PATH];
+    int err = current->pwd->ops->getpath(current->pwd, pwd);
+    if (err < 0)
+        return err;
 
     if (strlen(pwd) + 1 > size)
         return _ERANGE;
@@ -258,13 +268,19 @@ dword_t sys_chdir(addr_t path_addr) {
     if (user_read_string(path_addr, path, sizeof(path)))
         return _EFAULT;
 
+    // TODO only normalize the path once
+
     struct statbuf stat;
     int err = generic_stat(path, &stat, true);
     if (err < 0)
         return err;
     if (!(stat.mode & S_IFDIR))
         return _ENOTDIR;
-    path_normalize(path, current->pwd, true);
+
+    struct fd *dir = generic_open(path, O_RDONLY_, 0);
+    if (IS_ERR(dir))
+        return PTR_ERR(dir);
+    current->pwd = dir;
     return 0;
 }
 

@@ -46,11 +46,11 @@ static inline int xX_main_Xx(int argc, char *const argv[]) {
     mem_init(&curmem);
     current->ppid = 1;
     current->uid = current->gid = 0;
-    current->root = strdup("");
+    current->root = generic_open("/", O_RDONLY_, 0);
     if (has_root)
-        current->pwd = strdup("");
+        current->pwd = generic_dup(current->root);
     else
-        current->pwd = getcwd(NULL, 0);
+        current->pwd = generic_open(getcwd(NULL, 0), O_RDONLY_, 0);
     current->umask = 0022;
     current->thread = pthread_self();
     sys_setsid();
