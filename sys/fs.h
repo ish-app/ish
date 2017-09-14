@@ -41,19 +41,19 @@ struct fd *fd_create();
 #define MAX_FD 1024 // dynamically expanding fd table coming soon:tm:
 #define AT_FDCWD_ -100
 
-struct fd *generic_open(const char *pathname, int flags, int mode);
+struct fd *generic_open(const char *path, int flags, int mode);
 struct fd *generic_openat(struct fd *at, const char *path, int flags, int mode);
 struct fd *generic_dup(struct fd *fd);
 int generic_close(struct fd *fd);
-int generic_unlink(const char *pathname);
+int generic_unlink(const char *path);
 #define AC_R 4
 #define AC_W 2
 #define AC_X 1
 #define AC_F 0
-int generic_access(const char *pathname, int mode);
-int generic_stat(const char *pathname, struct statbuf *stat, bool follow_links);
+int generic_access(const char *path, int mode);
+int generic_stat(const char *path, struct statbuf *stat, bool follow_links);
 int generic_fstat(struct fd *fd, struct statbuf *stat);
-ssize_t generic_readlink(const char *pathname, char *buf, size_t bufsize);
+ssize_t generic_readlink(const char *path, char *buf, size_t bufsize);
 
 struct mount {
     const char *point;
@@ -74,7 +74,7 @@ struct fs_ops {
     // you can do whatever you want with (but make sure to return _ENAMETOOLONG
     // instead of overflowing the buffer)
     struct fd *(*open)(struct mount *mount, char *path, int flags, int mode);
-    int (*unlink)(struct mount *mount, char *pathname);
+    int (*unlink)(struct mount *mount, char *path);
     int (*access)(struct mount *mount, char *path, int mode);
     int (*stat)(struct mount *mount, char *path, struct statbuf *stat, bool follow_links);
     ssize_t (*readlink)(struct mount *mount, char *path, char *buf, size_t bufsize);
