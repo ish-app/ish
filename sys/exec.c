@@ -1,6 +1,5 @@
 #include <unistd.h>
 #include <fcntl.h>
-#include <sys/random.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -272,7 +271,9 @@ int sys_execve(const char *file, char *const argv[], char *const envp[]) {
         goto beyond_hope;
     // 16 random bytes so no system call is needed to seed a userspace RNG
     char random[16] = {};
-    if (getentropy(random, sizeof(random)) < 0)
+    int dev_random = open("/dev/urandom", O_RDONLY);
+    if (dev_random < 0 || 
+            read(dev_random, random, sizeof(random)) != sizeof(random))
         abort(); // if this fails, something is very badly wrong indeed
     addr_t random_addr = sp -= sizeof(random);
     if (user_put(sp, random))
