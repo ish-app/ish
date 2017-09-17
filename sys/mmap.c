@@ -15,10 +15,6 @@ addr_t sys_mmap(addr_t addr, dword_t len, dword_t prot, dword_t flags, fd_t fd_n
         return _EINVAL;
     if (prot & ~(P_READ | P_WRITE | P_EXEC))
         return _EINVAL;
-    if (!(flags & MMAP_PRIVATE)) {
-        TODO("MMAP_SHARED");
-        return _EINVAL;
-    }
 
     pages_t pages = PAGE_ROUND_UP(len);
     page_t page;
@@ -32,6 +28,10 @@ addr_t sys_mmap(addr_t addr, dword_t len, dword_t prot, dword_t flags, fd_t fd_n
         page = PAGE(addr);
     }
     if (flags & MMAP_ANONYMOUS) {
+        if (!(flags & MMAP_PRIVATE)) {
+            TODO("MMAP_SHARED");
+            return _EINVAL;
+        }
         if ((err = pt_map_nothing(&curmem, page, pages, prot)) < 0)
             return err;
     } else {

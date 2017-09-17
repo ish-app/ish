@@ -224,6 +224,7 @@ static off_t realfs_lseek(struct fd *fd, off_t offset, int whence) {
 static int realfs_mmap(struct fd *fd, off_t offset, size_t len, int prot, int flags, void **mem_out) {
     int mmap_flags = 0;
     if (flags & MMAP_PRIVATE) mmap_flags |= MAP_PRIVATE;
+    if (flags & MMAP_SHARED) mmap_flags |= MAP_SHARED;
     // TODO more flags are probably needed
     void *mem = mmap(NULL, len, prot, mmap_flags, fd->real_fd, offset);
     if (mem == MAP_FAILED)
