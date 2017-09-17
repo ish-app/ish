@@ -38,6 +38,7 @@ sys_src = [
     'sys/tls.c',
     'sys/getset.c',
     'sys/signal.c',
+    'sys/net.c',
 
     'sys/fs.c',
     'fs/stat.c',

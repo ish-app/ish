@@ -59,7 +59,7 @@ static struct fd *realfs_open(struct mount *mount, char *path, int flags, int mo
     return fd;
 }
 
-static int realfs_close(struct fd *fd) {
+int realfs_close(struct fd *fd) {
     int err;
     err = close(fd->real_fd);
     if (err < 0)
@@ -173,14 +173,14 @@ static int realfs_access(struct mount *mount, char *path, int mode) {
     return res;
 }
 
-static ssize_t realfs_read(struct fd *fd, void *buf, size_t bufsize) {
+ssize_t realfs_read(struct fd *fd, void *buf, size_t bufsize) {
     ssize_t res = read(fd->real_fd, buf, bufsize);
     if (res < 0)
         return err_map(errno);
     return res;
 }
 
-static ssize_t realfs_write(struct fd *fd, const void *buf, size_t bufsize) {
+ssize_t realfs_write(struct fd *fd, const void *buf, size_t bufsize) {
     ssize_t res = write(fd->real_fd, buf, bufsize);
     if (res < 0)
         return err_map(errno);

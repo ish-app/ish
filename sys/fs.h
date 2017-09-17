@@ -38,6 +38,7 @@ struct fd {
 };
 typedef sdword_t fd_t;
 struct fd *fd_create();
+fd_t fd_next();
 #define MAX_FD 1024 // dynamically expanding fd table coming soon:tm:
 #define AT_FDCWD_ -100
 
@@ -176,7 +177,10 @@ int path_normalize(struct fd *at, const char *path, char *out, bool follow_links
 
 // real fs
 extern const struct fs_ops realfs;
-extern const struct fd_ops realfs_fdops; // TODO remove from header file
+extern const struct fd_ops realfs_fdops;
+ssize_t realfs_read(struct fd *fd, void *buf, size_t bufsize);
+ssize_t realfs_write(struct fd *fd, const void *buf, size_t bufsize);
+int realfs_close(struct fd *fd);
 
 // TODO put this somewhere else
 char *strnprepend(char *str, const char *prefix, size_t max);

@@ -42,6 +42,7 @@ syscall_t syscall_table[] = {
     [85]  = (syscall_t) sys_readlink,
     [90]  = (syscall_t) sys_mmap,
     [91]  = (syscall_t) sys_munmap,
+    [102] = (syscall_t) sys_socketcall,
     [104] = (syscall_t) sys_setitimer,
     [114] = (syscall_t) sys_wait4,
     [116] = (syscall_t) sys_sysinfo,

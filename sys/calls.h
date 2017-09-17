@@ -7,6 +7,7 @@
 #include "misc.h"
 
 #include "sys/signal.h"
+#include "sys/net.h"
 
 void handle_interrupt(struct cpu_state *cpu, int interrupt);
 
