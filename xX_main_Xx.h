@@ -61,6 +61,7 @@ static inline int xX_main_Xx(int argc, char *const argv[]) {
     // FIXME use generic_open (or something) to avoid this mess
     struct fd *fd = fd_create();
     fd->real_fd = STDIN_FILENO;
+    fd->mount = mounts;
     int err = dev_open(4, 0, DEV_CHAR, fd);
     if (err < 0)
         return err;
