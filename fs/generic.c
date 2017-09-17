@@ -15,13 +15,11 @@ struct fd *fd_create() {
     return fd;
 }
 
-static struct mount *find_mount(char *path) {
+struct mount *find_mount(char *path) {
     struct mount *mount;
-    for (mount = mounts; mount != NULL; mount = mount->next) {
-        if (strncmp(path, mount->point, strlen(mount->point)) == 0) {
+    for (mount = mounts; mount != NULL; mount = mount->next)
+        if (strncmp(path, mount->point, strlen(mount->point)) == 0)
             break;
-        }
-    }
     assert(mount != NULL); // this would mean there's no root FS mounted
     return mount;
 }

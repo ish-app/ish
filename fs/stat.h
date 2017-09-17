@@ -78,4 +78,19 @@ struct newstat64 {
     qword_t ino;
 } __attribute__((packed));
 
+struct statfsbuf {
+    dword_t type;
+    dword_t bsize;
+    qword_t blocks;
+    qword_t bfree;
+    qword_t bavail;
+    qword_t files;
+    qword_t ffree;
+    qword_t fsid;
+    dword_t namelen;
+    dword_t frsize;
+    dword_t flags;
+    dword_t pad[4];
+};
+
 #endif

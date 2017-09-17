@@ -38,6 +38,7 @@
 #endif
 
 // types
+typedef int64_t sqword_t;
 typedef uint64_t qword_t;
 typedef uint32_t dword_t;
 typedef int32_t sdword_t;

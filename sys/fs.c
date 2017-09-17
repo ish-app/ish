@@ -290,6 +290,26 @@ dword_t sys_umask(dword_t mask) {
     return old_umask;
 }
 
+static dword_t statfs_mount(struct mount *mount, addr_t buf_addr) {
+    struct statfsbuf stat;
+    int err = mount->fs->statfs(mount, &stat);
+    if (err >= 0)
+        if (user_put(buf_addr, stat))
+            return _EFAULT;
+    return err;
+}
+
+dword_t sys_statfs64(addr_t path_addr, addr_t buf_addr) {
+    char path[MAX_PATH];
+    if (user_read_string(path_addr, path, sizeof(path)))
+        return _EFAULT;
+    return statfs_mount(find_mount(path), buf_addr);
+}
+
+dword_t sys_fstatfs64(fd_t f, addr_t buf_addr) {
+    return statfs_mount(current->files[f]->mount, buf_addr);
+}
+
 // a few stubs
 dword_t sys_sendfile(fd_t out_fd, fd_t in_fd, addr_t offset_addr, dword_t count) {
     return _EINVAL;

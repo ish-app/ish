@@ -254,6 +254,13 @@ static int realfs_getpath(struct fd *fd, char *buf) {
     return 0;
 }
 
+static int realfs_statfs(struct mount *mount, struct statfsbuf *stat) {
+    stat->type = 0x7265616c;
+    stat->namelen = NAME_MAX;
+    stat->bsize = PAGE_SIZE;
+    return 0;
+}
+
 const struct fs_ops realfs = {
     .open = realfs_open,
     .unlink = realfs_unlink,
@@ -261,6 +268,7 @@ const struct fs_ops realfs = {
     .access = realfs_access,
     .readlink = realfs_readlink,
     .fstat = realfs_fstat,
+    .statfs = realfs_statfs,
 };
 
 const struct fd_ops realfs_fdops = {

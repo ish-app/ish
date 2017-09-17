@@ -76,6 +76,8 @@ syscall_t syscall_table[] = {
     [252] = (syscall_t) sys_exit_group,
     [258] = (syscall_t) sys_set_tid_address,
     [265] = (syscall_t) sys_clock_gettime,
+    [268] = (syscall_t) sys_statfs64,
+    [269] = (syscall_t) sys_fstatfs64,
     [295] = (syscall_t) sys_openat,
 };
 

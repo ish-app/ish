@@ -80,6 +80,8 @@ struct fs_ops {
     ssize_t (*readlink)(struct mount *mount, char *path, char *buf, size_t bufsize);
     // i'm considering removing stat, and just having fstat, which would then be called stat
     int (*fstat)(struct fd *fd, struct statbuf *stat);
+
+    int (*statfs)(struct mount *mount, struct statfsbuf *stat);
 };
 
 #define NAME_MAX 255
@@ -115,6 +117,7 @@ struct fd_ops {
     int (*close)(struct fd *fd);
 };
 
+struct mount *find_mount(char *path);
 struct mount *find_mount_and_trim_path(char *path);
 
 struct pollable {
