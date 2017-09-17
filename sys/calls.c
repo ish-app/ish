@@ -2,7 +2,7 @@
 #include "sys/calls.h"
 #include "emu/interrupt.h"
 
-#define NUM_SYSCALLS 300
+#define NUM_SYSCALLS 400
 
 dword_t syscall_stub() {
     return _ENOSYS;
@@ -80,6 +80,7 @@ syscall_t syscall_table[] = {
     [268] = (syscall_t) sys_statfs64,
     [269] = (syscall_t) sys_fstatfs64,
     [295] = (syscall_t) sys_openat,
+    [300] = (syscall_t) sys_fstatat64,
 };
 
 void handle_interrupt(struct cpu_state *cpu, int interrupt) {

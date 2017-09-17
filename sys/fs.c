@@ -13,6 +13,12 @@ fd_t fd_next() {
     return -1;
 }
 
+struct fd *at_fd(fd_t f) {
+    if (f == AT_FDCWD_)
+        return current->pwd;
+    return current->files[f];
+}
+
 // TODO ENAMETOOLONG
 
 dword_t sys_access(addr_t path_addr, dword_t mode) {
@@ -22,7 +28,7 @@ dword_t sys_access(addr_t path_addr, dword_t mode) {
     return generic_access(path, mode);
 }
 
-fd_t sys_openat(fd_t at_fd, addr_t path_addr, dword_t flags, dword_t mode) {
+fd_t sys_openat(fd_t at_f, addr_t path_addr, dword_t flags, dword_t mode) {
     char path[MAX_PATH];
     if (user_read_string(path_addr, path, sizeof(path)))
         return _EFAULT;
@@ -33,11 +39,9 @@ fd_t sys_openat(fd_t at_fd, addr_t path_addr, dword_t flags, dword_t mode) {
     fd_t fd_no = fd_next();
     if (fd_no == -1)
         return _EMFILE;
-    struct fd *at;
-    if (at_fd == AT_FDCWD_)
-        at = current->pwd;
-    else
-        at = current->files[at_fd];
+    struct fd *at = at_fd(at_f);
+    if (at == NULL)
+        return _EBADF;
     struct fd *fd = generic_openat(at, path, flags, mode);
     if (IS_ERR(fd))
         return PTR_ERR(fd);
@@ -271,7 +275,7 @@ dword_t sys_chdir(addr_t path_addr) {
     // TODO only normalize the path once
 
     struct statbuf stat;
-    int err = generic_stat(path, &stat, true);
+    int err = generic_statat(NULL, path, &stat, true);
     if (err < 0)
         return err;
     if (!(stat.mode & S_IFDIR))

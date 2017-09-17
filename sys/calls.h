@@ -81,6 +81,7 @@ int_t sys_getdents64(fd_t f, addr_t dirents, dword_t count);
 dword_t sys_stat64(addr_t path_addr, addr_t statbuf_addr);
 dword_t sys_lstat64(addr_t path_addr, addr_t statbuf_addr);
 dword_t sys_fstat64(fd_t fd_no, addr_t statbuf_addr);
+dword_t sys_fstatat64(fd_t at, addr_t path_addr, addr_t statbuf_addr, dword_t flags);
 dword_t sys_umask(dword_t mask);
 
 dword_t sys_sendfile(fd_t out_fd, fd_t in_fd, addr_t offset_addr, dword_t count);

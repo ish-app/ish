@@ -51,9 +51,12 @@ int generic_unlink(const char *path);
 #define AC_X 1
 #define AC_F 0
 int generic_access(const char *path, int mode);
-int generic_stat(const char *path, struct statbuf *stat, bool follow_links);
+int generic_statat(struct fd *at, const char *path, struct statbuf *stat, bool follow_links);
 int generic_fstat(struct fd *fd, struct statbuf *stat);
 ssize_t generic_readlink(const char *path, char *buf, size_t bufsize);
+
+// Converts an at argument to a system call to a struct fd *, returns NULL if you pass a bad fd
+struct fd *at_fd(fd_t fd);
 
 struct mount {
     const char *point;
