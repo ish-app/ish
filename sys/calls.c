@@ -69,6 +69,7 @@ syscall_t syscall_table[] = {
     [199] = (syscall_t) sys_getuid32,
     /* [200] = (syscall_t) sys_getgid32, */
     [201] = (syscall_t) sys_geteuid32,
+    [219] = (syscall_t) sys_madvise,
     [220] = (syscall_t) sys_getdents64,
     [221] = (syscall_t) sys_fcntl64,
     [224] = (syscall_t) sys_gettid,

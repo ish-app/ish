@@ -45,6 +45,7 @@ addr_t sys_mmap(addr_t addr, dword_t len, dword_t prot, dword_t flags, fd_t fd_n
 addr_t sys_mmap2(addr_t addr, dword_t len, dword_t prot, dword_t flags, fd_t fd_no, dword_t offset);
 int_t sys_munmap(addr_t addr, uint_t len);
 int_t sys_mprotect(addr_t addr, uint_t len, int_t prot);
+dword_t sys_madvise(addr_t addr, dword_t len, dword_t advice);
 
 // file descriptor things
 struct io_vec {

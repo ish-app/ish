@@ -68,3 +68,8 @@ int_t sys_mprotect(addr_t addr, uint_t len, int_t prot) {
     pages_t pages = PAGE_ROUND_UP(len);
     return pt_set_flags(&curmem, PAGE(addr), pages, prot);
 }
+
+dword_t sys_madvise(addr_t addr, dword_t len, dword_t advice) {
+    // portable applications should not rely on linux's destructive semantics for MAVD_DONTNEED.
+    return 0;
+}
