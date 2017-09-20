@@ -132,6 +132,7 @@ struct pollable {
 
 struct poll {
     struct list poll_fds;
+    struct list real_poll_fds;
     int notify_pipe[2];
     pthread_mutex_t lock;
 };

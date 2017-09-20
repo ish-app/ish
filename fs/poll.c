@@ -9,6 +9,7 @@ struct poll *poll_create() {
     if (poll == NULL)
         return NULL;
     list_init(&poll->poll_fds);
+    list_init(&poll->real_poll_fds);
     lock_init(&poll->lock);
     return poll;
 }
@@ -23,7 +24,11 @@ int poll_add_fd(struct poll *poll, struct fd *fd, int types) {
     poll_fd->types = types;
 
     lock(poll);
-    list_add(&poll->poll_fds, &poll_fd->fds);
+    if (fd->ops->poll) {
+        list_add(&poll->poll_fds, &poll_fd->fds);
+    } else {
+        list_add(&poll->real_poll_fds, &poll_fd->fds);
+    }
     unlock(poll);
     lock(fd);
     list_add(&fd->poll_fds, &poll_fd->polls);
@@ -88,11 +93,21 @@ int poll_wait(struct poll *poll_, struct poll_event *event, int timeout) {
             res = err_map(errno);
             break;
         }
-        struct pollfd pollfd;
-        pollfd.fd = poll_->notify_pipe[0];
-        pollfd.events = POLLIN;
+        size_t pollfd_count = list_size(&poll_->real_poll_fds) + 1;
+        struct pollfd pollfds[pollfd_count];
+        pollfds[0].fd = poll_->notify_pipe[0];
+        pollfds[0].events = POLLIN;
+
+        int i = 1;
+        list_for_each_entry(&poll_->real_poll_fds, poll_fd, fds) {
+            pollfds[i].fd = poll_fd->fd->real_fd;
+            // TODO translate flags
+            pollfds[i].events = poll_fd->types;
+            i++;
+        }
+
         unlock(poll_);
-        res = poll(&pollfd, 1, timeout);
+        res = poll(pollfds, pollfd_count, timeout);
         lock(poll_);
         if (res < 0) {
             res = err_map(errno);
@@ -101,10 +116,25 @@ int poll_wait(struct poll *poll_, struct poll_event *event, int timeout) {
         if (res == 0)
             break;
 
-        char fuck;
-        if (read(poll_->notify_pipe[0], &fuck, 1) != 1) {
-            res = err_map(errno);
-            break;
+        if (pollfds[0].revents & POLLIN) {
+            char fuck;
+            if (read(poll_->notify_pipe[0], &fuck, 1) != 1) {
+                res = err_map(errno);
+                break;
+            }
+        } else {
+            i = 1;
+            // FIXME real_poll_fds could change since pollfds array was created,
+            // this is probably a race condition
+            list_for_each_entry(&poll_->real_poll_fds, poll_fd, fds) {
+                if (pollfds[i].revents) {
+                    event->fd = poll_fd->fd;
+                    // TODO translate flags
+                    event->types = pollfds[i].revents;
+                    unlock(poll_);
+                    return 1;
+                }
+            }
         }
 
         close(poll_->notify_pipe[0]);

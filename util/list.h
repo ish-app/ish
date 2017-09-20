@@ -58,4 +58,13 @@ static inline bool list_empty(struct list *list) {
             &item->member != (list); \
             item = tmp, tmp = list_next_entry(item, member))
 
+static inline int list_size(struct list *list) {
+    int count = 0;
+    struct list *item;
+    list_for_each(list, item) {
+        count++;
+    }
+    return count;
+}
+
 #endif
