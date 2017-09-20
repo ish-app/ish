@@ -298,6 +298,8 @@ restart:
                    READMODRM; SUB(modrm_reg, modrm_val,8); break;
         case 0x29: TRACEI("sub reg, modrm");
                    READMODRM; SUB(modrm_reg, modrm_val,); break;
+        case 0x2a: TRACEI("sub modrm8, reg8");
+                   READMODRM; SUB(modrm_val, modrm_reg,8); break;
         case 0x2b: TRACEI("sub modrm, reg");
                    READMODRM; SUB(modrm_val, modrm_reg,); break;
         case 0x2d: TRACEI("sub imm, oax\t");
