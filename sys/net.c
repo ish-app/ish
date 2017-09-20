@@ -6,7 +6,7 @@
 static struct fd_ops socket_fdops;
 
 dword_t sys_socket(dword_t domain, dword_t type, dword_t protocol) {
-    int real_domain = family_to_real(domain);
+    int real_domain = sock_family_to_real(domain);
     if (real_domain < 0)
         return _EINVAL;
     int real_type;
@@ -38,16 +38,48 @@ static struct fd *sock_getfd(fd_t sock_fd) {
     return sock;
 }
 
+static int convert_sockaddr(void *p) {
+    struct sockaddr_ *sockaddr = p;
+    sockaddr->family = sock_family_to_real(sockaddr->family);
+    if (sockaddr->family < 0)
+        return -1;
+    return 0;
+}
+
 dword_t sys_bind(fd_t sock_fd, addr_t sockaddr_addr, dword_t sockaddr_len) {
     struct fd *sock = sock_getfd(sock_fd);
     if (sock == NULL)
         return _EBADF;
-    char sockaddr_buf[sockaddr_len];
-    if (user_read(sockaddr_addr, sockaddr_buf, sockaddr_len))
+    char sockaddr[sockaddr_len];
+    if (user_read(sockaddr_addr, sockaddr, sockaddr_len))
         return _EFAULT;
-    struct sockaddr_ *sockaddr = (void *) sockaddr_buf;
-    sockaddr->family = family_to_real(sockaddr->family);
+    if (convert_sockaddr(sockaddr) < 0)
+        return _EINVAL;
+
     return bind(sock->real_fd, (void *) sockaddr, sockaddr_len);
+}
+
+dword_t sys_sendto(fd_t sock_fd, addr_t buffer_addr, dword_t len, dword_t flags, addr_t destaddr_addr, dword_t destaddr_len) {
+    struct fd *sock = sock_getfd(sock_fd);
+    if (sock == NULL)
+        return _EBADF;
+    char buffer[len];
+    if (user_read(buffer_addr, buffer, len))
+        return _EFAULT;
+    int real_flags = sock_flags_to_real(flags);
+    if (real_flags < 0)
+        return _EINVAL;
+    char destaddr[destaddr_len];
+    if (user_read(destaddr_addr, destaddr, destaddr_len))
+        return _EFAULT;
+    if (convert_sockaddr(destaddr) < 0)
+        return _EINVAL;
+
+    ssize_t res = sendto(sock->real_fd, buffer, len, real_flags, (void *) destaddr, destaddr_len);
+    if (res >= 0)
+        if (user_write(buffer_addr, buffer, len))
+            return _EFAULT;
+    return res;
 }
 
 static struct fd_ops socket_fdops = {
@@ -70,8 +102,8 @@ static struct socket_call {
     {NULL, 0}, // getpeername
     {NULL, 0}, // socketpair
     {NULL, 0}, // send
-    {NULL, 0}, // sendto
     {NULL, 0}, // recv
+    {(syscall_t) sys_sendto, 6}, // sendto
     {NULL, 0}, // recvfrom
     {NULL, 0}, // shutdown
     {NULL, 0}, // setsockopt
