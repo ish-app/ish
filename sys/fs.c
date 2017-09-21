@@ -65,11 +65,19 @@ dword_t sys_readlink(addr_t path_addr, addr_t buf_addr, dword_t bufsize) {
     return err;
 }
 
-dword_t sys_unlink(addr_t path_addr) {
+dword_t sys_unlinkat(fd_t at_f, addr_t path_addr) {
+    abort();
     char path[MAX_PATH];
     if (user_read_string(path_addr, path, sizeof(path)))
         return _EFAULT;
-    return generic_unlink(path);
+    struct fd *at = at_fd(at_f);
+    if (at == NULL)
+        return _EBADF;
+    return generic_unlinkat(at, path);
+}
+
+dword_t sys_unlink(addr_t path_addr) {
+    return sys_unlinkat(AT_FDCWD_, path_addr);
 }
 
 dword_t sys_close(fd_t f) {

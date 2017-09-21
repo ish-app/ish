@@ -46,7 +46,7 @@ struct fd *generic_open(const char *path, int flags, int mode);
 struct fd *generic_openat(struct fd *at, const char *path, int flags, int mode);
 struct fd *generic_dup(struct fd *fd);
 int generic_close(struct fd *fd);
-int generic_unlink(const char *path);
+int generic_unlinkat(struct fd *at, const char *path);
 #define AC_R 4
 #define AC_W 2
 #define AC_X 1

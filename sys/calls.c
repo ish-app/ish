@@ -83,6 +83,7 @@ syscall_t syscall_table[] = {
     [269] = (syscall_t) sys_fstatfs64,
     [295] = (syscall_t) sys_openat,
     [300] = (syscall_t) sys_fstatat64,
+    [301] = (syscall_t) sys_unlinkat,
 };
 
 void handle_interrupt(struct cpu_state *cpu, int interrupt) {

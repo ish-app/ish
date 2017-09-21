@@ -77,6 +77,7 @@ fd_t sys_open(addr_t path_addr, dword_t flags, dword_t mode);
 fd_t sys_openat(fd_t at, addr_t path_addr, dword_t flags, dword_t mode);
 dword_t sys_close(fd_t fd);
 dword_t sys_unlink(addr_t path_addr);
+dword_t sys_unlinkat(fd_t at_f, addr_t path_addr);
 dword_t sys_access(addr_t path_addr, dword_t mode);
 dword_t sys_readlink(addr_t path, addr_t buf, dword_t bufsize);
 int_t sys_getdents64(fd_t f, addr_t dirents, dword_t count);
