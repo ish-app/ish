@@ -32,6 +32,7 @@ fd_t sys_openat(fd_t at_f, addr_t path_addr, dword_t flags, dword_t mode) {
     char path[MAX_PATH];
     if (user_read_string(path_addr, path, sizeof(path)))
         return _EFAULT;
+    STRACE("openat(%d, \"%s\", 0x%x, 0x%x)", at_f, path, flags, mode);
 
     if (flags & O_CREAT_)
         mode &= ~current->umask;
@@ -81,6 +82,7 @@ dword_t sys_unlink(addr_t path_addr) {
 }
 
 dword_t sys_close(fd_t f) {
+    STRACE("close(%d)", f);
     struct fd *fd = current->files[f];
     if (fd == NULL)
         return _EBADF;
@@ -95,11 +97,13 @@ dword_t sys_close(fd_t f) {
 }
 
 dword_t sys_read(fd_t fd_no, addr_t buf_addr, dword_t size) {
-    char buf[size];
+    char buf[size+1];
     struct fd *fd = current->files[fd_no];
     if (fd == NULL)
         return _EBADF;
     int res = fd->ops->read(fd, buf, size);
+    buf[size] = 0; // null termination for nice debug output
+    STRACE("read(%d, \"%s\", %d)", fd_no, buf, size);
     if (res >= 0)
         if (user_write(buf_addr, buf, res))
             return _EFAULT;
@@ -124,9 +128,11 @@ dword_t sys_readv(fd_t fd_no, addr_t iovec_addr, dword_t iovec_count) {
 }
 
 dword_t sys_write(fd_t fd_no, addr_t buf_addr, dword_t size) {
-    char buf[size];
+    char buf[size+1];
     if (user_read(buf_addr, buf, size))
         return _EFAULT;
+    buf[size] = 0; // null termination for nice debug output
+    STRACE("write(%d, \"%s\", %d)", fd_no, buf, size);
     struct fd *fd = current->files[fd_no];
     if (fd == NULL)
         return _EBADF;
@@ -173,6 +179,7 @@ dword_t sys_lseek(fd_t f, dword_t off, dword_t whence) {
 }
 
 dword_t sys_ioctl(fd_t f, dword_t cmd, dword_t arg) {
+    STRACE("ioctl(%d, 0x%x, 0x%x)", f, cmd, arg);
     struct fd *fd = current->files[f];
     if (fd == NULL)
         return _EBADF;
@@ -208,6 +215,7 @@ dword_t sys_fcntl64(fd_t f, dword_t cmd, dword_t arg) {
         return _EBADF;
     switch (cmd) {
         case F_DUPFD_: {
+            STRACE("fcntl(%d, F_DUPFD, %d)", f, arg);
             fd_t new_fd;
             for (new_fd = arg; new_fd < MAX_FD; new_fd++)
                 if (current->files[new_fd] == NULL)
@@ -220,8 +228,10 @@ dword_t sys_fcntl64(fd_t f, dword_t cmd, dword_t arg) {
         }
 
         case F_GETFD_:
+            STRACE("fcntl(%d, F_GETFD)", f);
             return fd->flags;
         case F_SETFD_:
+            STRACE("fcntl(%d, F_SETFD, 0x%x)", f, arg);
             fd->flags = arg;
             return 0;
 

@@ -9,6 +9,7 @@ addr_t sys_mmap2(addr_t addr, dword_t len, dword_t prot, dword_t flags, fd_t fd_
 }
 
 addr_t sys_mmap(addr_t addr, dword_t len, dword_t prot, dword_t flags, fd_t fd_no, dword_t offset) {
+    STRACE("mmap(0x%x, 0x%x, 0x%x, 0x%x, %d, %d)", addr, len, prot, flags, fd_no, offset);
     int err;
 
     if (len == 0)
@@ -61,6 +62,7 @@ int_t sys_munmap(addr_t addr, uint_t len) {
 }
 
 int_t sys_mprotect(addr_t addr, uint_t len, int_t prot) {
+    STRACE("mprotect(0x%x, 0x%x, 0x%x)", addr, len, prot);
     if (OFFSET(addr) != 0)
         return _EINVAL;
     if (prot & ~(P_READ | P_WRITE | P_EXEC))

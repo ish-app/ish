@@ -78,6 +78,7 @@ dword_t sys_fstatat64(fd_t at, addr_t path_addr, addr_t statbuf_addr, dword_t fl
 }
 
 dword_t sys_fstat64(fd_t fd_no, addr_t statbuf_addr) {
+    STRACE("fstat64(%d, 0x%x)", fd_no, statbuf_addr);
     struct fd *fd = current->files[fd_no];
     if (fd == NULL)
         return _EBADF;

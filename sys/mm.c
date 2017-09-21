@@ -5,6 +5,7 @@
 #include "emu/memory.h"
 
 addr_t sys_brk(addr_t new_brk) {
+    STRACE("brk(0x%x)", new_brk);
     int err;
 
     if (new_brk != 0) {
