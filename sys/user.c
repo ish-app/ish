@@ -35,6 +35,8 @@ int user_write(addr_t addr, const void *buf, size_t count) {
 }
 
 int user_read_string(addr_t addr, char *buf, size_t max) {
+    if (addr == 0)
+        return 1;
     size_t i = 0;
     while (i < max) {
         if (user_read(addr + i, &buf[i], sizeof(buf[i])))
@@ -47,6 +49,8 @@ int user_read_string(addr_t addr, char *buf, size_t max) {
 }
 
 int user_write_string(addr_t addr, const char *buf) {
+    if (addr == 0)
+        return 1;
     size_t i = 0;
     while (buf[i] != '\0') {
         if (user_write(addr + i, &buf[i], sizeof(buf[i])))

@@ -41,6 +41,7 @@ struct fd *fd_create();
 fd_t fd_next();
 #define MAX_FD 1024 // dynamically expanding fd table coming soon:tm:
 #define AT_FDCWD_ -100
+#define FD_CLOEXEC_ 1
 
 struct fd *generic_open(const char *path, int flags, int mode);
 struct fd *generic_openat(struct fd *at, const char *path, int flags, int mode);

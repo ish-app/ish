@@ -15,19 +15,24 @@ struct sockaddr_ {
 
 #define PF_LOCAL_ 1
 #define PF_INET_ 2
+#define PF_INET6_ 10
 #define AF_LOCAL_ PF_LOCAL_
 #define AF_INET_ PF_INET_
+#define AF_INET6_ PF_INET6_
 
 static inline int sock_family_to_real(int fake) {
     switch (fake) {
         case PF_LOCAL_: return PF_LOCAL;
         case PF_INET_: return PF_INET;
-        default: return -1;
+        case PF_INET6_: return PF_INET6;
     }
+    return -1;
 }
 
 #define SOCK_STREAM_ 1
 #define SOCK_DGRAM_ 2
+#define SOCK_NONBLOCK_ 0x800
+#define SOCK_CLOEXEC_ 0x80000
 
 #define MSG_OOB_ 0x1
 #define MSG_PEEK_ 0x2
@@ -41,6 +46,15 @@ static inline int sock_flags_to_real(int fake) {
     if (fake & ~(MSG_OOB_|MSG_PEEK_|MSG_WAITALL_))
         TRACELN("unimplemented socket flags %d", fake);
     return real;
+}
+
+#define TCP_NODELAY_ 1
+
+static inline int sock_opt_to_real(int fake) {
+    switch (fake) {
+        case TCP_NODELAY_: return 1;
+    }
+    return -1;
 }
 
 #endif
