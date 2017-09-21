@@ -493,9 +493,10 @@ restart:
         case 0x97: TRACEI("xchg odi, oax");
                    XCHG(odi, oax,); break;
 
-        case 0x9e: TRACEI("sahf\t\t"); SAHF; break;
+        case 0x98: TRACEI("cvte"); CVTE; break;
+        case 0x99: TRACEI("cvt"); CVT; break;
 
-        case 0x99: TRACEI("cdq"); CDQ; break;
+        case 0x9e: TRACEI("sahf\t\t"); SAHF; break;
 
         case 0x9c: TRACEI("pushf"); PUSHF(); break;
         case 0x9d: TRACEI("popf"); POPF(); break;

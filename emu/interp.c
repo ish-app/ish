@@ -284,12 +284,13 @@
 #define MUL1(val,z) do { \
     uint64_t tmp = cpu->oax * (uint64_t) get(val,z); \
     cpu->oax = tmp; cpu->odx = tmp >> sz(z); \
-    cpu->cf = cpu->of = (tmp != (uint32_t) tmp); ZEROAF; \
+    cpu->cf = cpu->of = (tmp != (uint32_t) tmp); cpu->cf_ops = cpu->of_ops = 0; ZEROAF; \
     cpu->zf = cpu->sf = cpu->pf = cpu->zf_res = cpu->sf_res = cpu->pf_res = 0; \
 } while (0)
 #define IMUL1(val,z) do { \
     int64_t tmp = (int64_t) (sint(sz(z))) cpu->oax * (sint(sz(z))) get(val,z); \
     cpu->oax = tmp; cpu->odx = tmp >> sz(z); \
+    cpu->cf = cpu->of = (tmp != (int32_t) tmp); cpu->cf_ops = cpu->of_ops = 0; \
     cpu->zf = cpu->sf = cpu->pf = cpu->zf_res = cpu->sf_res = cpu->pf_res = 0; \
 } while (0)
 #define MUL2(val, reg) \
@@ -321,8 +322,13 @@
     set(rem, (int32_t) get(reg,z) % get(val,z),z); set(reg, (int32_t) get(reg,z) / get(val,z),z)
 
 // TODO this is probably wrong in some subtle way
-#define CDQ \
-    cpu->odx = cpu->oax & (1 << (OP_SIZE - 1)) ? (uint(OP_SIZE)) -1 : 0; break;
+#define HALF_OP_SIZE CONCAT(HALF_, OP_SIZE)
+#define HALF_16 8
+#define HALF_32 16
+#define CVT \
+    cpu->odx = cpu->oax & (1 << (OP_SIZE - 1)) ? (uint(OP_SIZE)) -1 : 0
+#define CVTE \
+    REG_VAL(cpu, REG_ID(eax), HALF_OP_SIZE) = (sint(OP_SIZE)) REG_VAL(cpu, REG_ID(ax), OP_SIZE)
 
 #define CALL(loc) PUSH(eip); JMP(loc)
 #define CALL_REL(offset) PUSH(eip); JMP_REL(offset)
