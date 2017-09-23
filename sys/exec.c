@@ -238,7 +238,7 @@ int sys_execve(const char *file, char *const argv[], char *const envp[]) {
     page_t vvar_page = pt_find_hole(&curmem, 3);
     if (vvar_page == BAD_PAGE)
         goto beyond_hope;
-    if ((err = pt_map_nothing(&curmem, vvar_page, 2, 0)) < 0)
+    if ((err = pt_map_nothing(&curmem, vvar_page, 3, 0)) < 0)
         goto beyond_hope;
 
     // STACK TIME!
