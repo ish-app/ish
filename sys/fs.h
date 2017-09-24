@@ -75,19 +75,20 @@ struct mount *mounts;
 #define O_CREAT_ (1 << 6)
 
 struct fs_ops {
+    int (*statfs)(struct mount *mount, struct statfsbuf *stat);
     // the path parameter points to MAX_PATH bytes of allocated memory, which
     // you can do whatever you want with (but make sure to return _ENAMETOOLONG
     // instead of overflowing the buffer)
     struct fd *(*open)(struct mount *mount, char *path, int flags, int mode);
+    int (*stat)(struct mount *mount, char *path, struct statbuf *stat, bool follow_links);
     int (*unlink)(struct mount *mount, char *path);
     int (*access)(struct mount *mount, char *path, int mode);
-    int (*stat)(struct mount *mount, char *path, struct statbuf *stat, bool follow_links);
     ssize_t (*readlink)(struct mount *mount, char *path, char *buf, size_t bufsize);
     // i'm considering removing stat, and just having fstat, which would then be called stat
+    // but that wouldn't work because links
     int (*fstat)(struct fd *fd, struct statbuf *stat);
-
-    int (*statfs)(struct mount *mount, struct statfsbuf *stat);
     int (*flock)(struct fd *fd, int operation);
+    int (*utime)(struct mount *mount, char *path, struct timespec atime, struct timespec mtime);
 };
 
 #define NAME_MAX 255

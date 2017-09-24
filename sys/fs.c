@@ -67,7 +67,6 @@ dword_t sys_readlink(addr_t path_addr, addr_t buf_addr, dword_t bufsize) {
 }
 
 dword_t sys_unlinkat(fd_t at_f, addr_t path_addr) {
-    abort();
     char path[MAX_PATH];
     if (user_read_string(path_addr, path, sizeof(path)))
         return _EFAULT;
@@ -337,6 +336,16 @@ dword_t sys_flock(fd_t f, dword_t operation) {
     if (fd == NULL)
         return _EBADF;
     return fd->mount->fs->flock(fd, operation);
+}
+
+dword_t sys_utimensat(fd_t at_f, addr_t path_addr, addr_t times_addr, dword_t flags) {
+    struct timespec_ times[2];
+    if (user_get(times_addr, times))
+        return _EFAULT;
+    char path[MAX_PATH];
+    if (user_read_string(path_addr, path, sizeof(path)))
+        return _EFAULT;
+    return 0; // TODO implement
 }
 
 // a few stubs
