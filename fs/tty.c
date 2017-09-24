@@ -21,7 +21,7 @@ static int tty_get(int type, int num, struct tty **tty_out) {
         tty = malloc(sizeof(struct tty));
         if (tty == NULL)
             return _ENOMEM;
-        tty->refcnt = 0;
+        tty->refcount = 0;
         tty->type = type;
         tty->num = num;
         list_init(&tty->pl.fds);
@@ -46,7 +46,7 @@ static int tty_get(int type, int num, struct tty **tty_out) {
         pthread_mutex_unlock(&ttys_lock);
     }
     lock(tty);
-    tty->refcnt++;
+    tty->refcount++;
     unlock(tty);
     pthread_mutex_unlock(&ttys_lock);
     *tty_out = tty;
@@ -55,7 +55,7 @@ static int tty_get(int type, int num, struct tty **tty_out) {
 
 static void tty_release(struct tty *tty) {
     lock(tty);
-    if (--tty->refcnt == 0) {
+    if (--tty->refcount == 0) {
         tty->driver->close(tty);
         // dance necessary to prevent deadlock
         unlock(tty);

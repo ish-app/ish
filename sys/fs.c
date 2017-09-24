@@ -85,7 +85,7 @@ dword_t sys_close(fd_t f) {
     struct fd *fd = current->files[f];
     if (fd == NULL)
         return _EBADF;
-    if (--fd->refcnt == 0) {
+    if (--fd->refcount == 0) {
         int err = fd->ops->close(fd);
         if (err < 0)
             return err;
@@ -222,7 +222,7 @@ dword_t sys_fcntl64(fd_t f, dword_t cmd, dword_t arg) {
             if (new_fd == MAX_FD)
                 return _EMFILE;
             current->files[new_fd] = current->files[f];
-            current->files[new_fd]->refcnt++;
+            current->files[new_fd]->refcount++;
             return new_fd;
         }
 
@@ -246,7 +246,7 @@ dword_t sys_dup(fd_t fd) {
     if (new_fd < 0)
         return _EMFILE;
     current->files[new_fd] = current->files[fd];
-    current->files[new_fd]->refcnt++;
+    current->files[new_fd]->refcount++;
     return new_fd;
 }
 
@@ -265,7 +265,7 @@ dword_t sys_dup2(fd_t fd, fd_t new_fd) {
     }
 
     current->files[new_fd] = current->files[fd];
-    current->files[new_fd]->refcnt++;
+    current->files[new_fd]->refcount++;
     return new_fd;
 }
 

@@ -12,7 +12,7 @@
 struct poll;
 
 struct fd {
-    unsigned refcnt;
+    unsigned refcount;
     unsigned flags;
     const struct fd_ops *ops;
 

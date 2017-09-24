@@ -68,7 +68,7 @@ extern struct tty_driver tty_drivers[2];
 extern struct tty_driver real_tty_driver;
 
 struct tty {
-    unsigned refcnt;
+    unsigned refcount;
     struct pollable pl;
     struct tty_driver *driver;
 

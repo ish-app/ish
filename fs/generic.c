@@ -8,7 +8,7 @@
 
 struct fd *fd_create() {
     struct fd *fd = malloc(sizeof(struct fd));
-    fd->refcnt = 1;
+    fd->refcount = 1;
     fd->flags = 0;
     fd->mount = NULL;
     list_init(&fd->poll_fds);
@@ -72,7 +72,7 @@ struct fd *generic_open(const char *path, int flags, int mode) {
 }
 
 int generic_close(struct fd *fd) {
-    if (--fd->refcnt == 0) {
+    if (--fd->refcount == 0) {
         int err = fd->ops->close(fd);
         if (err < 0)
             return err;
@@ -82,7 +82,7 @@ int generic_close(struct fd *fd) {
 }
 
 struct fd *generic_dup(struct fd *fd) {
-    fd->refcnt++;
+    fd->refcount++;
     return fd;
 }
 
