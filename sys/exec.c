@@ -272,9 +272,10 @@ int sys_execve(const char *file, char *const argv[], char *const envp[]) {
     // 16 random bytes so no system call is needed to seed a userspace RNG
     char random[16] = {};
     int dev_random = open("/dev/urandom", O_RDONLY);
-    if (dev_random < 0 || 
+    if (dev_random < 0 ||
             read(dev_random, random, sizeof(random)) != sizeof(random))
         abort(); // if this fails, something is very badly wrong indeed
+    close(dev_random);
     addr_t random_addr = sp -= sizeof(random);
     if (user_put(sp, random))
         goto beyond_hope;
