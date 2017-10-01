@@ -18,12 +18,12 @@ noreturn void do_exit(int status) {
     pthread_exit(NULL);
 }
 
-noreturn dword_t sys_exit(dword_t status) {
+dword_t sys_exit(dword_t status) {
     do_exit(status << 8);
 }
 
 dword_t sys_exit_group(dword_t status) {
-    sys_exit(status);
+    do_exit(status << 8);
 }
 
 struct rusage_ {

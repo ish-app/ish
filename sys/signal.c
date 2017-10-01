@@ -33,6 +33,7 @@ void send_group_signal(dword_t pgid, int sig) {
 
 static void receive_signal(int sig) {
     if (current->sigactions[sig].handler == SIG_DFL_) {
+        unlock(current); // do_exit must be called without this lock
         do_exit(sig);
     }
 

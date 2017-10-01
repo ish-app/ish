@@ -59,7 +59,7 @@ static int init_process(struct process *proc, dword_t flags, addr_t ctid_addr) {
     start_thread(proc);
 
     if (flags & CLONE_VFORK_)
-        pthread_cond_wait(&proc->vfork_done, &proc->lock);
+        wait_for(proc, vfork_done);
 
     return 0;
 
@@ -88,9 +88,9 @@ dword_t sys_clone(dword_t flags, addr_t stack, addr_t ptid, addr_t tls, addr_t c
     struct process *proc = process_create();
     if (proc == NULL)
         return _ENOMEM;
-    pthread_mutex_lock(&proc->lock);
+    lock(proc);
     int err = init_process(proc, flags, ctid);
-    pthread_mutex_unlock(&proc->lock);
+    unlock(proc);
     if (err < 0) {
         process_destroy(proc);
         return err;
