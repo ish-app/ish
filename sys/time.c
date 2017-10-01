@@ -49,6 +49,7 @@ dword_t sys_setitimer(dword_t which, addr_t new_val_addr, addr_t old_val_addr) {
         struct sigevent sigev;
         sigev.sigev_notify = SIGEV_THREAD;
         sigev.sigev_notify_function = itimer_notify;
+        sigev.sigev_notify_attributes = NULL;
         sigev.sigev_value.sival_ptr = current;
         if (timer_create(CLOCK_REALTIME, &sigev, &current->timer) < 0)
             return err_map(errno);
