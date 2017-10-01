@@ -217,8 +217,10 @@ static ssize_t tty_read(struct fd *fd, void *buf, size_t bufsize) {
     memcpy(buf, tty->buf, bufsize);
     tty->bufsize -= bufsize;
     memmove(tty->buf, tty->buf + bufsize, tty->bufsize); // magic!
-    tty->canon_ready = false;
-    notify(tty, consumed);
+    if (tty->bufsize == 0) {
+        tty->canon_ready = false;
+        notify(tty, consumed);
+    }
 
     unlock(tty);
     return bufsize;
