@@ -1,7 +1,7 @@
 # ish
 
-[![goto counter](https://img.shields.io/github/search/tbodt/ish/goto.svg)](https://https://github.com/tbodt/ish/search?&q=goto)
-[![fuck counter](https://img.shields.io/github/search/tbodt/ish/fuck.svg)](https://https://github.com/tbodt/ish/search?&q=fuck)
+[![goto counter](https://img.shields.io/github/search/tbodt/ish/goto.svg)](https://https://github.com/tbodt/ish/search?q=goto)
+[![fuck counter](https://img.shields.io/github/search/tbodt/ish/fuck.svg)](https://https://github.com/tbodt/ish/search?q=fuck)
 
 A project to get a Linux shell running on iOS. Currently, a usermode x86 emulator for Linux.
 
