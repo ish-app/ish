@@ -12,12 +12,12 @@ dword_t sys_socket(dword_t domain, dword_t type, dword_t protocol) {
         return _EINVAL;
     int real_type;
     switch (type & 0xff) {
-        case SOCK_STREAM_: 
+        case SOCK_STREAM_:
             real_type = SOCK_STREAM;
             if (protocol != 0 && protocol != 6)
                 return _EINVAL;
             break;
-        case SOCK_DGRAM_: 
+        case SOCK_DGRAM_:
             real_type = SOCK_DGRAM;
             if (protocol != 0 && protocol != 17)
                 return _EINVAL;
