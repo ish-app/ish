@@ -37,15 +37,6 @@ int generic_statat(struct fd *at, const char *path_raw, struct statbuf *stat, bo
     return mount->fs->stat(mount, path, stat, follow_links);
 }
 
-int generic_fstat(struct fd *fd, struct statbuf *stat) {
-    if (fd->mount) {
-        return fd->mount->fs->fstat(fd, stat);
-    } else {
-        memcpy(stat, fd->stat, sizeof(*stat));
-        return 0;
-    }
-}
-
 static dword_t sys_stat_path(fd_t at_f, addr_t path_addr, addr_t statbuf_addr, bool follow_links) {
     int err;
     char path[MAX_PATH];
@@ -83,7 +74,7 @@ dword_t sys_fstat64(fd_t fd_no, addr_t statbuf_addr) {
     if (fd == NULL)
         return _EBADF;
     struct statbuf stat;
-    int err = generic_fstat(fd, &stat);
+    int err = fd->mount->fs->fstat(fd, &stat);
     if (err < 0)
         return err;
     struct newstat64 newstat = stat_convert_newstat64(stat);

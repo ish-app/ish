@@ -47,7 +47,7 @@ struct fd *generic_openat(struct fd *at, const char *path_raw, int flags, int mo
     fd->mount = mount;
 
     struct statbuf stat;
-    err = generic_fstat(fd, &stat);
+    err = fd->mount->fs->fstat(fd, &stat);
     if (err >= 0) {
         int type = stat.mode & S_IFMT;
         if (type == S_IFBLK || type == S_IFCHR) {
@@ -59,7 +59,7 @@ struct fd *generic_openat(struct fd *at, const char *path_raw, int flags, int mo
             int minor = dev_minor(stat.rdev);
             err = dev_open(major, minor, type, fd);
             if (err < 0) {
-                generic_close(fd);
+                fd_close(fd);
                 return ERR_PTR(err);
             }
         }
@@ -71,7 +71,7 @@ struct fd *generic_open(const char *path, int flags, int mode) {
     return generic_openat(current->pwd, path, flags, mode);
 }
 
-int generic_close(struct fd *fd) {
+int fd_close(struct fd *fd) {
     if (--fd->refcount == 0) {
         int err = fd->ops->close(fd);
         if (err < 0)

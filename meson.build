@@ -47,6 +47,7 @@ sys_src = [
     'fs/path.c',
     'fs/real.c',
     'fs/poll.c',
+    'fs/adhoc.c',
 
     'fs/dev.c',
     'fs/tty.c',

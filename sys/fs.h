@@ -20,6 +20,7 @@ struct fd {
     struct pollable *pollable;
     struct list pollable_other_fds;
 
+    // fd data
     union {
         struct {
             DIR *dir;
@@ -27,7 +28,7 @@ struct fd {
         struct tty *tty;
     };
 
-    // "inode"
+    // fs/inode data
     struct mount *mount;
     union {
         int real_fd;
@@ -46,7 +47,7 @@ fd_t fd_next();
 struct fd *generic_open(const char *path, int flags, int mode);
 struct fd *generic_openat(struct fd *at, const char *path, int flags, int mode);
 struct fd *generic_dup(struct fd *fd);
-int generic_close(struct fd *fd);
+int fd_close(struct fd *fd);
 int generic_unlinkat(struct fd *at, const char *path);
 #define AC_R 4
 #define AC_W 2
@@ -54,7 +55,6 @@ int generic_unlinkat(struct fd *at, const char *path);
 #define AC_F 0
 int generic_access(const char *path, int mode);
 int generic_statat(struct fd *at, const char *path, struct statbuf *stat, bool follow_links);
-int generic_fstat(struct fd *fd, struct statbuf *stat);
 ssize_t generic_readlink(const char *path, char *buf, size_t bufsize);
 
 // Converts an at argument to a system call to a struct fd *, returns NULL if you pass a bad fd
@@ -184,6 +184,9 @@ extern const struct fd_ops realfs_fdops;
 ssize_t realfs_read(struct fd *fd, void *buf, size_t bufsize);
 ssize_t realfs_write(struct fd *fd, const void *buf, size_t bufsize);
 int realfs_close(struct fd *fd);
+
+// adhoc fs
+struct fd *adhoc_fd_create();
 
 // TODO put this somewhere else
 char *strnprepend(char *str, const char *prefix, size_t max);

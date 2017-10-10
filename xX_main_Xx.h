@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
+#include <sys/stat.h>
 #include "sys/calls.h"
 #include "fs/tty.h"
 
@@ -59,9 +60,9 @@ static inline int xX_main_Xx(int argc, char *const argv[]) {
     tty_drivers[TTY_VIRTUAL] = real_tty_driver;
 
     // FIXME use generic_open (or something) to avoid this mess
-    struct fd *fd = fd_create();
-    fd->real_fd = STDIN_FILENO;
-    fd->mount = mounts;
+    struct fd *fd = adhoc_fd_create();
+    fd->stat->rdev = dev_make(4, 0);
+    fd->stat->mode = S_IFCHR | S_IRUSR;
     int err = dev_open(4, 0, DEV_CHAR, fd);
     if (err < 0)
         return err;
