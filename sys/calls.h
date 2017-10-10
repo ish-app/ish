@@ -48,13 +48,17 @@ int_t sys_mprotect(addr_t addr, uint_t len, int_t prot);
 dword_t sys_madvise(addr_t addr, dword_t len, dword_t advice);
 
 // file descriptor things
+#define LSEEK_SET 0
+#define LSEEK_CUR 1
+#define LSEEK_END 2
+#define LOCK_SH_ 1
+#define LOCK_EX_ 2
+#define LOCK_NB_ 4
+#define LOCK_UN_ 8
 struct io_vec {
     addr_t base;
     uint_t len;
 };
-#define LSEEK_SET 0
-#define LSEEK_CUR 1
-#define LSEEK_END 2
 dword_t sys_read(fd_t fd_no, addr_t buf_addr, dword_t size);
 dword_t sys_readv(fd_t fd_no, addr_t iovec_addr, dword_t iovec_count);
 dword_t sys_write(fd_t fd_no, addr_t buf_addr, dword_t size);
@@ -66,11 +70,9 @@ dword_t sys_fcntl64(fd_t f, dword_t cmd, dword_t arg);
 dword_t sys_dup(fd_t fd);
 dword_t sys_dup2(fd_t fd, fd_t new_fd);
 dword_t sys_close(fd_t fd);
-#define	LOCK_SH_ 1
-#define	LOCK_EX_ 2
-#define	LOCK_NB_ 4
-#define	LOCK_UN_ 8
 dword_t sys_flock(fd_t fd, dword_t operation);
+dword_t sys_fchmod(fd_t f, dword_t mode);
+dword_t sys_fchown32(fd_t f, dword_t owner, dword_t group);
 
 // file management
 fd_t sys_open(addr_t path_addr, dword_t flags, dword_t mode);

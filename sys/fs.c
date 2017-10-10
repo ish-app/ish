@@ -348,6 +348,21 @@ dword_t sys_utimensat(fd_t at_f, addr_t path_addr, addr_t times_addr, dword_t fl
     return 0; // TODO implement
 }
 
+dword_t sys_fchmod(fd_t f, dword_t mode) {
+    struct fd *fd = current->files[f];
+    if (fd == NULL)
+        return _EBADF;
+    mode &= ~S_IFMT;
+    return fd->mount->fs->fchmod(fd, mode);
+}
+
+dword_t sys_fchown32(fd_t f, dword_t owner, dword_t group) {
+    struct fd *fd = current->files[f];
+    if (fd == NULL)
+        return _EBADF;
+    return fd->mount->fs->fchown(fd, owner, group);
+}
+
 // a few stubs
 dword_t sys_sendfile(fd_t out_fd, fd_t in_fd, addr_t offset_addr, dword_t count) {
     return _EINVAL;

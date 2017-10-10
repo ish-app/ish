@@ -50,6 +50,7 @@ typedef dword_t uint_t;
 typedef sdword_t int_t;
 
 typedef dword_t pid_t_;
+typedef dword_t uid_t_;
 typedef word_t mode_t_;
 
 #define uint(size) CONCAT3(uint,size,_t)

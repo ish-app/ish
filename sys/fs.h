@@ -80,13 +80,13 @@ struct fs_ops {
     // you can do whatever you want with (but make sure to return _ENAMETOOLONG
     // instead of overflowing the buffer)
     struct fd *(*open)(struct mount *mount, char *path, int flags, int mode);
-    int (*stat)(struct mount *mount, char *path, struct statbuf *stat, bool follow_links);
-    int (*unlink)(struct mount *mount, char *path);
-    int (*access)(struct mount *mount, char *path, int mode);
     ssize_t (*readlink)(struct mount *mount, char *path, char *buf, size_t bufsize);
-    // i'm considering removing stat, and just having fstat, which would then be called stat
-    // but that wouldn't work because links
+    int (*access)(struct mount *mount, char *path, int mode);
+    int (*unlink)(struct mount *mount, char *path);
+    int (*stat)(struct mount *mount, char *path, struct statbuf *stat, bool follow_links);
     int (*fstat)(struct fd *fd, struct statbuf *stat);
+    int (*fchmod)(struct fd *fd, mode_t_ mode);
+    int (*fchown)(struct fd *fd, uid_t_ owner, uid_t_ group);
     int (*flock)(struct fd *fd, int operation);
     int (*utime)(struct mount *mount, char *path, struct timespec atime, struct timespec mtime);
 };
