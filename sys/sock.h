@@ -1,5 +1,5 @@
-#ifndef SYS_SOCKET_H
-#define SYS_SOCKET_H
+#ifndef SYS_SOCK_H
+#define SYS_SOCK_H
 
 #include <sys/socket.h>
 #include "sys/errno.h"

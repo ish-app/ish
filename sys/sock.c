@@ -1,6 +1,6 @@
 #include <sys/socket.h>
 #include "sys/calls.h"
-#include "sys/net.h"
+#include "sys/sock.h"
 #include "debug.h"
 
 static struct fd_ops socket_fdops;
