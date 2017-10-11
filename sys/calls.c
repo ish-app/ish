@@ -12,7 +12,7 @@ dword_t syscall_stub() {
 syscall_t syscall_table[] = {
     [0 ... NUM_SYSCALLS] = NULL,
 
-    [1]   = (syscall_t)  sys_exit,
+    [1]   = (syscall_t) sys_exit,
     [2]   = (syscall_t) sys_fork,
     [3]   = (syscall_t) sys_read,
     [4]   = (syscall_t) sys_write,
@@ -70,6 +70,7 @@ syscall_t syscall_table[] = {
     [199] = (syscall_t) sys_getuid32,
     /* [200] = (syscall_t) sys_getgid32, */
     [201] = (syscall_t) sys_geteuid32,
+    [206] = (syscall_t) syscall_stub,
     [207] = (syscall_t) sys_fchown32,
     [219] = (syscall_t) sys_madvise,
     [220] = (syscall_t) sys_getdents64,
