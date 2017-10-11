@@ -9,9 +9,13 @@
 dword_t sys_socketcall(dword_t call_num, addr_t args_addr);
 
 struct sockaddr_ {
-    word_t family;
-    byte_t data[14];
+    uint16_t family;
+    char data[14];
 };
+
+size_t sockaddr_size(void *p);
+// result comes from malloc
+struct sockaddr *sockaddr_to_real(void *p);
 
 #define PF_LOCAL_ 1
 #define PF_INET_ 2

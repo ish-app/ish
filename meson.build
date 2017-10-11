@@ -39,6 +39,7 @@ sys_src = [
     'sys/getset.c',
     'sys/signal.c',
     'sys/sock.c',
+    'sys/sockaddr.c',
 
     'sys/fs.c',
     'fs/stat.c',
