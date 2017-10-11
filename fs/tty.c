@@ -228,6 +228,7 @@ static ssize_t tty_read(struct fd *fd, void *buf, size_t bufsize) {
 
 static ssize_t tty_write(struct fd *fd, const void *buf, size_t bufsize) {
     struct tty *tty = fd->tty;
+    lock(tty);
     dword_t oflags = tty->termios.oflags;
     if (oflags & OPOST_) {
         const char *cbuf = buf;
@@ -244,11 +245,22 @@ static ssize_t tty_write(struct fd *fd, const void *buf, size_t bufsize) {
     } else {
         tty->driver->write(tty, buf, bufsize);
     }
+    unlock(tty);
     return bufsize;
+}
+
+static int tty_flush(struct tty *tty) {
+    lock(tty);
+    tty->bufsize = 0;
+    tty->canon_ready = false;
+    notify(tty, consumed);
+    unlock(tty);
+    return 0;
 }
 
 static int tty_poll(struct fd *fd) {
     struct tty *tty = fd->tty;
+    lock(tty);
     int types = POLL_WRITE;
     if (tty->termios.lflags & ICANON_) {
         if (tty->canon_ready)
@@ -257,48 +269,83 @@ static int tty_poll(struct fd *fd) {
         if (tty->bufsize > 0)
             types |= POLL_READ;
     }
+    unlock(tty);
     return types;
 }
 
 #define TCGETS_ 0x5401
 #define TCSETS_ 0x5402
-#define TIOCGWINSZ_ 0x5413
+#define TCFLSH_ 0x540b
 #define TIOCGPRGP_ 0x540f
 #define TIOCSPGRP_ 0x5410
+#define TIOCGWINSZ_ 0x5413
+#define TCIFLUSH_ 0
+#define TCOFLUSH_ 1
+#define TCIOFLUSH_ 2
 
 static ssize_t tty_ioctl_size(struct fd *fd, int cmd) {
     switch (cmd) {
-        case TIOCGWINSZ_: return sizeof(struct winsize_);
         case TCGETS_: return sizeof(struct termios_);
         case TCSETS_: return sizeof(struct termios_);
+        case TCFLSH_: return sizeof(dword_t);
         case TIOCGPRGP_: case TIOCSPGRP_: return sizeof(dword_t);
+        case TIOCGWINSZ_: return sizeof(struct winsize_);
     }
     return -1;
 }
 
 static int tty_ioctl(struct fd *fd, int cmd, void *arg) {
+    int err = 0;
+    struct tty *tty = fd->tty;
+    lock(tty);
+
     switch (cmd) {
-        case TIOCGWINSZ_: *(struct winsize_ *) arg = fd->tty->winsize; break;
-        case TCGETS_: *(struct termios_ *) arg = fd->tty->termios; break;
-        case TCSETS_: fd->tty->termios = *(struct termios_ *) arg; break;
+        case TCGETS_:
+            *(struct termios_ *) arg = tty->termios;
+            break;
+        case TCSETS_:
+            tty->termios = *(struct termios_ *) arg;
+            break;
+
+        case TCFLSH_:
+            // only input flushing is currently useful
+            switch (*(dword_t *) arg) {
+                case TCIFLUSH_:
+                case TCIOFLUSH_:
+                    err = tty_flush(tty);
+                    break;
+                case TCOFLUSH_:
+                    break;
+                default:
+                    err = _EINVAL;
+                    break;
+            };
+            break;
+
         case TIOCGPRGP_:
-            if (fd->tty != current->tty)
-                return _ENOTTY;
-            if (fd->tty->fg_group == 0)
-                return _ENOTTY;
-            TRACELN("tty group = %d", fd->tty->fg_group);
-            *(dword_t *) arg = fd->tty->fg_group; break;
+            if (tty != current->tty || tty->fg_group == 0) {
+                err = _ENOTTY;
+                break;
+            }
+            TRACELN("tty group = %d", tty->fg_group);
+            *(dword_t *) arg = tty->fg_group; break;
         case TIOCSPGRP_:
-            if (fd->tty != current->tty)
-                return _ENOTTY;
-            if (current->sid != fd->tty->session)
-                return _ENOTTY;
+            if (tty != current->tty || current->sid != tty->session) {
+                err = _ENOTTY;
+                break;
+            }
             // TODO group must be in the right session
-            fd->tty->fg_group = *(dword_t *) arg;
-            TRACELN("tty group set to = %d", fd->tty->fg_group);
+            tty->fg_group = *(dword_t *) arg;
+            TRACELN("tty group set to = %d", tty->fg_group);
+            break;
+
+        case TIOCGWINSZ_:
+            *(struct winsize_ *) arg = fd->tty->winsize;
             break;
     }
-    return 0;
+
+    unlock(tty);
+    return err;
 }
 
 struct dev_ops tty_dev = {
