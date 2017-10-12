@@ -15,14 +15,14 @@ addr_t sys_brk(addr_t new_brk) {
         addr_t old_brk = current->brk;
         if (new_brk > old_brk) {
             // expand heap: map region from old_brk to new_brk
-            err = pt_map_nothing(&curmem, PAGE_ROUND_UP(old_brk),
+            err = pt_map_nothing(current->cpu.mem, PAGE_ROUND_UP(old_brk),
                     PAGE_ROUND_UP(new_brk) - PAGE_ROUND_UP(old_brk), P_WRITE);
             if (err < 0) return err;
         } else if (new_brk < old_brk) {
             // shrink heap: unmap region from new_brk to old_brk
             // first page to unmap is PAGE(new_brk);
             // last page to unmap is PAGE(old_brk)
-            pt_unmap(&curmem, PAGE(new_brk), PAGE(old_brk), PT_FORCE);
+            pt_unmap(current->cpu.mem, PAGE(new_brk), PAGE(old_brk), PT_FORCE);
         }
         current->brk = new_brk;
     }

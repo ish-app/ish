@@ -9,13 +9,18 @@ typedef dword_t page_t;
 #define BAD_PAGE 0x10000
 
 struct mem {
+    unsigned refcount;
     struct pt_entry **pt;
     struct tlb_entry *tlb;
     page_t dirty_page;
 };
 
-// Initialize a mem struct
-void mem_init(struct mem *mem);
+// Create a new address space
+struct mem *mem_new();
+// Increment the refcount
+void mem_retain(struct mem *mem);
+// Decrement the refcount, destroy everything in the space if 0
+void mem_release(struct mem *mem);
 
 #define PAGE_BITS 12
 #define PAGE_SIZE (1 << PAGE_BITS)

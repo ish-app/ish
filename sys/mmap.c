@@ -20,7 +20,7 @@ addr_t sys_mmap(addr_t addr, dword_t len, dword_t prot, dword_t flags, fd_t fd_n
     pages_t pages = PAGE_ROUND_UP(len);
     page_t page;
     if (addr == 0) {
-        page = pt_find_hole(&curmem, pages);
+        page = pt_find_hole(current->cpu.mem, pages);
         if (page == BAD_PAGE)
             return _ENOMEM;
     } else {
@@ -33,7 +33,7 @@ addr_t sys_mmap(addr_t addr, dword_t len, dword_t prot, dword_t flags, fd_t fd_n
             TODO("MMAP_SHARED");
             return _EINVAL;
         }
-        if ((err = pt_map_nothing(&curmem, page, pages, prot)) < 0)
+        if ((err = pt_map_nothing(current->cpu.mem, page, pages, prot)) < 0)
             return err;
     } else {
         // fd must be valid
@@ -45,7 +45,7 @@ addr_t sys_mmap(addr_t addr, dword_t len, dword_t prot, dword_t flags, fd_t fd_n
         void *memory;
         if ((err = fd->ops->mmap(fd, offset, len, prot, flags, &memory)) < 0)
             return err;
-        if ((err = pt_map(&curmem, page, pages, memory, flags)) < 0)
+        if ((err = pt_map(current->cpu.mem, page, pages, memory, flags)) < 0)
             return err;
     }
     return page << PAGE_BITS;
@@ -56,7 +56,7 @@ int_t sys_munmap(addr_t addr, uint_t len) {
         return _EINVAL;
     if (len == 0)
         return _EINVAL;
-    if (pt_unmap(&curmem, PAGE(addr), PAGE_ROUND_UP(len), 0) < 0)
+    if (pt_unmap(current->cpu.mem, PAGE(addr), PAGE_ROUND_UP(len), 0) < 0)
         return _EINVAL;
     return 0;
 }
@@ -68,7 +68,7 @@ int_t sys_mprotect(addr_t addr, uint_t len, int_t prot) {
     if (prot & ~(P_READ | P_WRITE | P_EXEC))
         return _EINVAL;
     pages_t pages = PAGE_ROUND_UP(len);
-    return pt_set_flags(&curmem, PAGE(addr), pages, prot);
+    return pt_set_flags(current->cpu.mem, PAGE(addr), pages, prot);
 }
 
 dword_t sys_madvise(addr_t addr, dword_t len, dword_t advice) {

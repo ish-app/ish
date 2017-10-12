@@ -46,7 +46,7 @@
 #define ty_128 union xmm_reg
 
 #define mem_ptr(addr, type) ({ \
-    void *ptr = mem_##type##_ptr(&cpu->mem, addr); \
+    void *ptr = mem_##type##_ptr(cpu->mem, addr); \
     if (ptr == NULL) { \
         cpu->eip = saved_ip; \
         cpu->segfault_addr = addr; \

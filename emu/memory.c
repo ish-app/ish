@@ -12,10 +12,26 @@ static void tlb_flush(struct mem *mem);
 
 // this code currently assumes the system page size is 4k
 
-void mem_init(struct mem *mem) {
+struct mem *mem_new() {
+    struct mem *mem = malloc(sizeof(struct mem));
+    mem->refcount = 1;
     mem->pt = calloc(PT_SIZE, sizeof(struct pt_entry *));
     mem->tlb = malloc(TLB_SIZE * sizeof(struct tlb_entry));
     tlb_flush(mem);
+    return mem;
+}
+
+void mem_retain(struct mem *mem) {
+    mem->refcount++;
+}
+
+void mem_release(struct mem *mem) {
+    if (mem->refcount-- == 0) {
+        pt_unmap(mem, 0, PT_SIZE, PT_FORCE);
+        free(mem->pt);
+        free(mem->tlb);
+        free(mem);
+    }
 }
 
 page_t pt_find_hole(struct mem *mem, pages_t size) {

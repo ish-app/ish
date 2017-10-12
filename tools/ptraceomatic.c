@@ -116,11 +116,11 @@ static int compare_cpus(struct cpu_state *cpu, int pid, int undefined_flags) {
 
     // compare pages marked dirty
     int fd = open_mem(pid);
-    page_t dirty_page = cpu->mem.dirty_page;
+    page_t dirty_page = cpu->mem->dirty_page;
     char real_page[PAGE_SIZE];
     trycall(lseek(fd, dirty_page, SEEK_SET), "compare seek mem");
     trycall(read(fd, real_page, PAGE_SIZE), "compare read mem");
-    void *fake_page = cpu->mem.pt[PAGE(dirty_page)]->data;
+    void *fake_page = cpu->mem->pt[PAGE(dirty_page)]->data;
 
     if (memcmp(real_page, fake_page, PAGE_SIZE) != 0) {
         println("page %x doesn't match", dirty_page);

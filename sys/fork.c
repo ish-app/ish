@@ -28,12 +28,13 @@
 #define CLONE_IO_ 0x80000000
 
 static int copy_memory(struct process *proc, int flags) {
-    if (flags & CLONE_VM_)
+    struct mem *mem = proc->cpu.mem;
+    if (flags & CLONE_VM_) {
+        mem_retain(mem);
         return 0;
-    struct mem old_mem = proc->cpu.mem;
-    struct mem *new_mem = &proc->cpu.mem;
-    mem_init(new_mem);
-    pt_copy_on_write(&old_mem, 0, new_mem, 0, PT_SIZE);
+    }
+    struct mem *new_mem = mem_new();
+    pt_copy_on_write(mem, 0, new_mem, 0, PT_SIZE);
     return 0;
 }
 
@@ -74,6 +75,7 @@ fail_free_proc:
 // ecx = stack
 // edx, esi, edi = unimplemented garbage
 dword_t sys_clone(dword_t flags, addr_t stack, addr_t ptid, addr_t tls, addr_t ctid) {
+    STRACE("clone()");
     if (ptid != 0 || tls != 0) {
         FIXME("clone with ptid or ts not null");
         return _EINVAL;

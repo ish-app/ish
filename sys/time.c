@@ -38,6 +38,7 @@ static void itimer_notify(union sigval sv) {
 }
 
 dword_t sys_setitimer(dword_t which, addr_t new_val_addr, addr_t old_val_addr) {
+    STRACE("setitimer");
     if (which != ITIMER_REAL_)
         TODO("setitimer %d", which);
 

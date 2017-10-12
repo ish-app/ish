@@ -88,3 +88,6 @@ void start_thread(struct process *proc) {
     if (pthread_create(&proc->thread, NULL, process_run, proc) < 0)
         abort();
 }
+
+// dumps out a tree of the processes, useful for running from a debugger
+/* static void pstree( */

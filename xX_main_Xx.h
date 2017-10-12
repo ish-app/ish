@@ -44,7 +44,7 @@ static inline int xX_main_Xx(int argc, char *const argv[]) {
 
     // make a process
     current = process_create();
-    mem_init(&curmem);
+    current->cpu.mem = mem_new();
     current->ppid = 1;
     current->uid = current->gid = 0;
     current->root = generic_open("/", O_RDONLY_, 0);
