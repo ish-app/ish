@@ -79,3 +79,11 @@ ish = declare_dependency(
 subdir('tools')
 
 executable('ish', ['main.c'], dependencies: [ish, softfloat, threads])
+
+gdb_scripts = ['ish-gdb.gdb']
+foreach script : gdb_scripts
+    custom_target(script,
+        output: script, input: script,
+        command: ['ln', '-sf', '@INPUT@', '@OUTPUT@'],
+        build_by_default: true)
+endforeach
