@@ -223,6 +223,8 @@ static void remote_close_fd(int pid, int fd, long int80_ip) {
 }
 
 static void pt_copy(int pid, addr_t start, size_t size) {
+    if (start == 0)
+        return;
     byte_t byte;
     for (addr_t addr = start; addr < start + size; addr++) {
         (void) user_get(addr, byte);
@@ -302,6 +304,8 @@ static void step_tracing(struct cpu_state *cpu, int pid, int sender, int receive
             }
             case 85: // readlink
                 pt_copy(pid, regs.rcx, regs.rdx); break;
+            case 104: // setitimer
+                pt_copy(pid, regs.rdx, sizeof(struct itimerval_)); break;
             case 116: // sysinfo
                 pt_copy(pid, regs.rbx, sizeof(struct sys_info)); break;
             case 122: // uname
