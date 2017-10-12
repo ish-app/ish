@@ -18,7 +18,7 @@ int CONCAT(decoder_name, OP_SIZE)(struct cpu_state *cpu) {
 #define UNDEFINED { cpu->eip = saved_ip; return INT_UNDEFINED; }
 
 restart:
-    TRACE("%08x\t", cpu->eip);
+    TRACE("%d %08x\t", current->pid, cpu->eip);
     READINSN;
     switch (insn) {
         // if any instruction handlers declare variables, they should create a

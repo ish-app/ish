@@ -99,7 +99,7 @@ void handle_interrupt(struct cpu_state *cpu, int interrupt) {
             println("missing syscall %d", syscall_num);
             send_signal(current, SIGSYS_);
         } else {
-            STRACE("call %-3d ", syscall_num);
+            STRACE("%d call %-3d ", current->pid, syscall_num);
             int result = syscall_table[syscall_num](cpu->ebx, cpu->ecx, cpu->edx, cpu->esi, cpu->edi, cpu->ebp);
             STRACELN(" = 0x%x", result);
             cpu->eax = result;
