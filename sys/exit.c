@@ -64,14 +64,8 @@ static int reap_if_zombie(struct process *proc, addr_t status_addr, addr_t rusag
 #define WNOHANG_ 1
 
 dword_t sys_wait4(dword_t id, addr_t status_addr, dword_t options, addr_t rusage_addr) {
+    STRACE("wait(%d, 0x%x, 0x%x, 0x%x)", id, status_addr, options, rusage_addr);
     lock(current);
-
-    if (id == (dword_t) -1) {
-        if (list_empty(&current->children)) {
-            unlock(current);
-            return _ESRCH;
-        }
-    }
 
 retry:
     if (id == (dword_t) -1) {

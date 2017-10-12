@@ -418,6 +418,7 @@ dword_t _sys_execve(addr_t filename_addr, addr_t argv_addr, addr_t envp_addr) {
     char filename[MAX_PATH];
     if (user_read_string(filename_addr, filename, sizeof(filename)))
         return _EFAULT;
+    STRACE("execve(\"%s\", some args, some env)", filename);
     char *argv[MAX_ARGS];
     int i;
     addr_t arg;
