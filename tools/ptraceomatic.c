@@ -397,22 +397,19 @@ static void prepare_tracee(int pid) {
             : "=b" (xsave_extra)
             : "a" (0xd), "c" (0)
             : "edx");
-    // if xsave is supported, add 4 bytes. why? idk
-    int features_ecx;
+
+    int features_ecx, features_edx;
     __asm__("cpuid"
-            : "=c" (features_ecx)
+            : "=c" (features_ecx), "=d" (features_edx)
             : "a" (1)
-            : "ebx", "edx");
+            : "ebx");
+    // if xsave is supported, add 4 bytes. why? idk
     if (features_ecx & (1 << 26))
         xsave_extra += 4;
     // if fxsave/fxrestore is supported, use 112 bytes for that
-    int features_edx;
-    __asm__("cpuid"
-            : "=c" (features_edx)
-            : "a" (1)
-            : "ebx", "edx");
     if (features_edx & (1 << 24))
         fxsave_extra = 112;
+
 }
 
 int main(int argc, char *const argv[]) {

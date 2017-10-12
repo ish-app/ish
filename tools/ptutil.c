@@ -7,7 +7,9 @@
 #include <sys/ptrace.h>
 #include <sys/user.h>
 #include <sched.h>
-#include <syscall.h>
+#include <sys/prctl.h>
+#include <sys/syscall.h>
+#include <asm/prctl.h>
 #undef PAGE_SIZE // want definition from emu/memory.h
 #include "../misc.h"
 
@@ -16,6 +18,11 @@ long trycall(long res, const char *msg) {
         perror(msg); printf("\r\n"); exit(1);
     }
     return res;
+}
+
+// wow i'm sooo bleeding edge
+static int arch_prctl(int code, unsigned long arg) {
+    return syscall(SYS_arch_prctl, code, arg);
 }
 
 int start_tracee(const char *path, char *const argv[], char *const envp[]) {
@@ -31,6 +38,9 @@ int start_tracee(const char *path, char *const argv[], char *const envp[]) {
     }
     if (pid == 0) {
         // child
+        // enable segfaulting on rdtsc and cpuid
+        trycall(prctl(PR_SET_TSC, PR_TSC_SIGSEGV), "rdtsc faulting");
+        trycall(arch_prctl(ARCH_SET_CPUID, 0), "cpuid faulting");
         trycall(ptrace(PTRACE_TRACEME, 0, NULL, NULL), "ptrace traceme");
         trycall(execve(path, argv, envp), "fexecve");
     } else {
