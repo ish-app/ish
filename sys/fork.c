@@ -49,6 +49,7 @@ static int init_process(struct process *proc, dword_t flags, addr_t ctid_addr) {
 
     proc->parent = current;
     list_add(&current->children, &proc->siblings);
+    list_init(&proc->children);
 
     proc->cpu.eax = 0;
     if (flags & CLONE_CHILD_SETTID_)

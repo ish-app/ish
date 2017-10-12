@@ -36,7 +36,7 @@ static inline bool list_empty(struct list *list) {
 }
 
 #define list_entry(item, type, member) \
-    (type *) ((char *) (item) - offsetof(type, member))
+    ((type *) ((char *) (item) - offsetof(type, member)))
 #define list_first_entry(list, type, member) \
     list_entry((list)->next, type, member)
 #define list_next_entry(item, member) \
