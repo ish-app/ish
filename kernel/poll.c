@@ -1,6 +1,6 @@
 #include "debug.h"
-#include "sys/fs.h"
-#include "sys/calls.h"
+#include "kernel/fs.h"
+#include "kernel/calls.h"
 
 dword_t sys_poll(addr_t fds, dword_t nfds, dword_t timeout) {
     if (nfds != 1)

@@ -1,6 +1,6 @@
 #include "debug.h"
-#include "sys/process.h"
-#include "sys/calls.h"
+#include "kernel/process.h"
+#include "kernel/calls.h"
 
 #define CSIGNAL_ 0x000000ff
 #define CLONE_VM_ 0x00000100

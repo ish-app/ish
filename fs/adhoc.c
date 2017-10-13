@@ -1,5 +1,5 @@
 #include <sys/stat.h>
-#include "sys/fs.h"
+#include "kernel/fs.h"
 
 static struct mount adhoc_mount;
 

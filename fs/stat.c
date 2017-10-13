@@ -2,9 +2,9 @@
 #include <sys/stat.h>
 #include <limits.h>
 
-#include "sys/calls.h"
-#include "sys/errno.h"
-#include "sys/fs.h"
+#include "kernel/calls.h"
+#include "kernel/errno.h"
+#include "kernel/fs.h"
 
 struct newstat64 stat_convert_newstat64(struct statbuf stat) {
     struct newstat64 newstat;

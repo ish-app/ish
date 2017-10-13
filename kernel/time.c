@@ -1,8 +1,8 @@
 #include "debug.h"
 #include <time.h>
 #include <signal.h>
-#include "sys/calls.h"
-#include "sys/errno.h"
+#include "kernel/calls.h"
+#include "kernel/errno.h"
 
 dword_t sys_time(addr_t time_out) {
     dword_t now = time(NULL);

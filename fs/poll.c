@@ -1,8 +1,8 @@
 #include <poll.h>
 #include "misc.h"
 #include "util/list.h"
-#include "sys/errno.h"
-#include "sys/fs.h"
+#include "kernel/errno.h"
+#include "kernel/fs.h"
 
 struct poll *poll_create() {
     struct poll *poll = malloc(sizeof(struct poll));

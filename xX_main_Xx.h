@@ -4,7 +4,7 @@
 #include <string.h>
 #include <signal.h>
 #include <sys/stat.h>
-#include "sys/calls.h"
+#include "kernel/calls.h"
 #include "fs/tty.h"
 
 static void mount_root(const char *source) {

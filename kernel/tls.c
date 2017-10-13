@@ -1,4 +1,4 @@
-#include "sys/calls.h"
+#include "kernel/calls.h"
 
 struct user_desc {
     dword_t entry_number;

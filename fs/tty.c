@@ -1,7 +1,7 @@
 #define DEFAULT_CHANNEL debug
 #include "debug.h"
 #include <string.h>
-#include "sys/calls.h"
+#include "kernel/calls.h"
 #include "fs/tty.h"
 
 // TODO remove magic number

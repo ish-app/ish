@@ -16,11 +16,11 @@
 #include <sys/socket.h>
 
 #include "debug.h"
-#include "sys/calls.h"
+#include "kernel/calls.h"
 #include "emu/interrupt.h"
 #include "emu/cpuid.h"
 
-#include "sys/elf.h"
+#include "kernel/elf.h"
 #include "tools/transplant.h"
 #include "tools/ptutil.h"
 #include "undefined-flags.h"

@@ -1,6 +1,6 @@
 #include <string.h>
 #include "util/buffer.h"
-#include "sys/errno.h"
+#include "kernel/errno.h"
 
 int buf_init(struct buffer *buf, size_t capacity) {
     buf->data = malloc(capacity);

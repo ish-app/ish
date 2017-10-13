@@ -1,8 +1,8 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <netinet/in.h>
-#include "sys/sock.h"
-#include "sys/fs.h"
+#include "kernel/sock.h"
+#include "kernel/fs.h"
 
 struct sockaddr_un_ {
     uint16_t family;

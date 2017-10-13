@@ -1,8 +1,8 @@
 #include <pthread.h>
 #include <stdlib.h>
 #include <string.h>
-#include "sys/calls.h"
-#include "sys/process.h"
+#include "kernel/calls.h"
+#include "kernel/process.h"
 #include "emu/memory.h"
 
 __thread struct process *current;

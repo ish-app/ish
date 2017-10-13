@@ -1,4 +1,4 @@
-#include "sys/calls.h"
+#include "kernel/calls.h"
 
 int user_read_proc(struct process *proc, addr_t addr, void *buf, size_t count) {
     char *cbuf = (char *) buf;

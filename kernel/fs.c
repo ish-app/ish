@@ -1,10 +1,10 @@
 #include "debug.h"
 #include <string.h>
 #include <sys/stat.h>
-#include "sys/calls.h"
-#include "sys/errno.h"
-#include "sys/process.h"
-#include "sys/fs.h"
+#include "kernel/calls.h"
+#include "kernel/errno.h"
+#include "kernel/process.h"
+#include "kernel/fs.h"
 
 fd_t fd_next() {
     for (fd_t fd = 0; fd < MAX_FD; fd++)

@@ -1,5 +1,5 @@
 #include <pthread.h>
-#include "sys/calls.h"
+#include "kernel/calls.h"
 
 noreturn void do_exit(int status) {
     if (current->pid == 1) {

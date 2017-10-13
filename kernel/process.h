@@ -5,8 +5,8 @@
 #include <stdatomic.h>
 #include "util/list.h"
 #include "emu/cpu.h"
-#include "sys/fs.h"
-#include "sys/signal.h"
+#include "kernel/fs.h"
+#include "kernel/signal.h"
 
 struct process {
     struct cpu_state cpu; // do not access this field except on the current process

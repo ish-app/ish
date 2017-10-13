@@ -1,7 +1,7 @@
 #include <strings.h>
 #include <string.h>
 #include <sys/sysinfo.h>
-#include "sys/calls.h"
+#include "kernel/calls.h"
 
 int sys_uname(struct uname *uts) {
     bzero(uts, sizeof(struct uname));

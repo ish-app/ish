@@ -1,13 +1,13 @@
 #ifndef CALLS_H
 #define CALLS_H
 
-#include "sys/process.h"
-#include "sys/errno.h"
-#include "sys/fs.h"
+#include "kernel/process.h"
+#include "kernel/errno.h"
+#include "kernel/fs.h"
 #include "misc.h"
 
-#include "sys/signal.h"
-#include "sys/sock.h"
+#include "kernel/signal.h"
+#include "kernel/sock.h"
 
 void handle_interrupt(struct cpu_state *cpu, int interrupt);
 

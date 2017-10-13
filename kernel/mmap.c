@@ -1,7 +1,7 @@
 #include "debug.h"
-#include "sys/calls.h"
-#include "sys/errno.h"
-#include "sys/process.h"
+#include "kernel/calls.h"
+#include "kernel/errno.h"
+#include "kernel/process.h"
 #include "emu/memory.h"
 
 addr_t sys_mmap2(addr_t addr, dword_t len, dword_t prot, dword_t flags, fd_t fd_no, dword_t offset) {

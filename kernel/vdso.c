@@ -1,6 +1,6 @@
 #include <string.h>
-#include "sys/elf.h"
-#include "sys/vdso.h"
+#include "kernel/elf.h"
+#include "kernel/vdso.h"
 
 int vdso_symbol(const char *name) {
     struct elf_header *header = (void *) vdso_data;

@@ -6,7 +6,7 @@
 #include <pthread.h>
 #include <signal.h>
 
-#include "sys/calls.h"
+#include "kernel/calls.h"
 #include "fs/tty.h"
 
 static void real_tty_read_thread(struct tty *tty) {

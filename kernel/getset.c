@@ -1,4 +1,4 @@
-#include "sys/calls.h"
+#include "kernel/calls.h"
 
 dword_t sys_getpid() {
     STRACE("getpid()");

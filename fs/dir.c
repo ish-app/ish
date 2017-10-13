@@ -1,8 +1,8 @@
 #include <string.h>
 
-#include "sys/calls.h"
-#include "sys/errno.h"
-#include "sys/fs.h"
+#include "kernel/calls.h"
+#include "kernel/errno.h"
+#include "kernel/fs.h"
 
 struct linux_dirent64 {
     qword_t inode;

@@ -2,7 +2,7 @@
 #include "emu/cpu.h"
 #include "emu/modrm.h"
 #include "emu/interrupt.h"
-#include "sys/calls.h"
+#include "kernel/calls.h"
 
 #undef DEFAULT_CHANNEL
 #define DEFAULT_CHANNEL instr

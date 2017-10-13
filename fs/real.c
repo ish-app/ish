@@ -9,9 +9,9 @@
 #include <sys/xattr.h>
 #include <sys/file.h>
 
-#include "sys/errno.h"
-#include "sys/calls.h"
-#include "sys/fs.h"
+#include "kernel/errno.h"
+#include "kernel/calls.h"
+#include "kernel/fs.h"
 #include "fs/dev.h"
 #include "fs/tty.h"
 

@@ -1,7 +1,7 @@
 #include <sys/mman.h>
 #include <string.h>
-#include "sys/calls.h"
-#include "sys/errno.h"
+#include "kernel/calls.h"
+#include "kernel/errno.h"
 #include "emu/memory.h"
 
 addr_t sys_brk(addr_t new_brk) {

@@ -3,7 +3,7 @@
 
 #include <sys/types.h>
 #include <sys/sysmacros.h>
-#include "sys/fs.h"
+#include "kernel/fs.h"
 
 // a dev_t is encoded like this in hex, where M is major and m is minor:
 // mmmMMMmm

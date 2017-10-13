@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <errno.h>
 
-#include "sys/errno.h"
+#include "kernel/errno.h"
 #include "emu/memory.h"
 
 static void tlb_flush(struct mem *mem);

@@ -1,5 +1,5 @@
 #include "debug.h"
-#include "sys/calls.h"
+#include "kernel/calls.h"
 #include "emu/interrupt.h"
 
 #define NUM_SYSCALLS 400

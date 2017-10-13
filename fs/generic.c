@@ -2,9 +2,9 @@
 #include <string.h>
 #include <sys/stat.h>
 
-#include "sys/fs.h"
+#include "kernel/fs.h"
 #include "fs/dev.h"
-#include "sys/process.h"
+#include "kernel/process.h"
 
 struct fd *fd_create() {
     struct fd *fd = malloc(sizeof(struct fd));

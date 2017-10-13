@@ -1,7 +1,7 @@
 #ifndef TTY_H
 #define TTY_H
 
-#include "sys/fs.h"
+#include "kernel/fs.h"
 #include "fs/dev.h"
 
 struct winsize_ {

@@ -2,7 +2,7 @@
 #define SYS_SOCK_H
 
 #include <sys/socket.h>
-#include "sys/errno.h"
+#include "kernel/errno.h"
 #include "misc.h"
 #include "debug.h"
 

@@ -1,4 +1,4 @@
-#include "sys/errno.h"
+#include "kernel/errno.h"
 #include "fs/dev.h"
 #include "fs/tty.h"
 

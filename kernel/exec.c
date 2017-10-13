@@ -6,9 +6,9 @@
 #include <string.h>
 
 #include "misc.h"
-#include "sys/calls.h"
-#include "sys/errno.h"
-#include "sys/elf.h"
+#include "kernel/calls.h"
+#include "kernel/errno.h"
+#include "kernel/elf.h"
 #include "libvdso.so.h"
 
 #define ERRNO_FAIL(label) { \

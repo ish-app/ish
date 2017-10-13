@@ -25,27 +25,27 @@ cified_vdso = custom_target('cify-vdso',
     depends: [vdso],
     command: [cify, 'vdso_data', vdso.full_path(), '@OUTPUT@'])
 
-sys_src = [
-    'sys/calls.c',
-    'sys/user.c',
-    'sys/vdso.c',
-    'sys/process.c',
-    'sys/group.c',
+kernel_src = [
+    'kernel/calls.c',
+    'kernel/user.c',
+    'kernel/vdso.c',
+    'kernel/process.c',
+    'kernel/group.c',
 
-    'sys/fork.c',
-    'sys/exec.c',
-    'sys/exit.c',
-    'sys/time.c',
-    'sys/mm.c',
-    'sys/mmap.c',
-    'sys/uname.c',
-    'sys/tls.c',
-    'sys/getset.c',
-    'sys/signal.c',
-    'sys/sock.c',
-    'sys/sockaddr.c',
+    'kernel/fork.c',
+    'kernel/exec.c',
+    'kernel/exit.c',
+    'kernel/time.c',
+    'kernel/mm.c',
+    'kernel/mmap.c',
+    'kernel/uname.c',
+    'kernel/tls.c',
+    'kernel/getset.c',
+    'kernel/signal.c',
+    'kernel/sock.c',
+    'kernel/sockaddr.c',
 
-    'sys/fs.c',
+    'kernel/fs.c',
     'fs/stat.c',
     'fs/dir.c',
     'fs/generic.c',
@@ -58,7 +58,7 @@ sys_src = [
     'fs/tty.c',
     'fs/tty-real.c',
 
-    'sys/poll.c'
+    'kernel/poll.c'
 ]
 emu_src = [
     'emu/memory.c',
@@ -72,7 +72,7 @@ threads = dependency('threads')
 librt = meson.get_compiler('c').find_library('rt', required: false)
 softfloat = subproject('softfloat').get_variable('softfloat_dep')
 
-libish = library('ish', sys_src + emu_src,
+libish = library('ish', kernel_src + emu_src,
     include_directories: includes,
     dependencies: [librt, threads, softfloat])
 ish = declare_dependency(
