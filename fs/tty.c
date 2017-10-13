@@ -43,7 +43,6 @@ static int tty_get(int type, int num, struct tty **tty_out) {
         tty->fg_group = 0;
 
         ttys[type][num] = tty;
-        pthread_mutex_unlock(&ttys_lock);
     }
     lock(tty);
     tty->refcount++;
