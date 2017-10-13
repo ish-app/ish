@@ -111,7 +111,7 @@ void handle_interrupt(struct cpu_state *cpu, int interrupt) {
         sys_exit(1);
     } else if (interrupt == INT_UNDEFINED) {
         println("illegal instruction");
-        send_signal(current, SIGILL_);
+        deliver_signal(current, SIGILL_);
     } else {
         println("exiting");
         sys_exit(interrupt);

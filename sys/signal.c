@@ -7,6 +7,13 @@
 int xsave_extra = 0;
 int fxsave_extra = 0;
 
+void deliver_signal(struct process *proc, int sig) {
+    lock(proc);
+    proc->pending |= (1 << sig);
+    unlock(proc); // must do this before pthread_kill because the signal handler will lock proc
+    pthread_kill(proc->thread, SIGUSR1);
+}
+
 void send_signal(struct process *proc, int sig) {
     lock(proc);
     if (proc->sigactions[sig].handler != SIG_IGN_) {
@@ -14,9 +21,8 @@ void send_signal(struct process *proc, int sig) {
             proc->queued |= (1 << sig);
             unlock(proc);
         } else {
-            proc->pending |= (1 << sig);
             unlock(proc);
-            pthread_kill(proc->thread, SIGUSR1);
+            deliver_signal(proc, sig);
         }
     }
 }
