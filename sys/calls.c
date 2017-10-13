@@ -107,8 +107,8 @@ void handle_interrupt(struct cpu_state *cpu, int interrupt) {
     } else if (interrupt == INT_GPF) {
         // page fault handling is a thing
         // TODO SIGSEGV
-        println("could not handle page fault at %x, exiting", cpu->segfault_addr);
-        sys_exit(1);
+        println("page fault at %x", cpu->segfault_addr);
+        deliver_signal(current, SIGSEGV_);
     } else if (interrupt == INT_UNDEFINED) {
         println("illegal instruction");
         deliver_signal(current, SIGILL_);
