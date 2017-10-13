@@ -12,7 +12,8 @@ Roadmap:
  - [x] Hello world with dynamically linked C library
  - [x] Busybox shell
  - [x] Busybox vi (VIM MASTER RACE)
- - [ ] Busybox login, getty
+ - [x] Busybox login
+ - [ ] Busybox getty
  - [ ] Port the thing to Darwin/iOS, release on the app store
  - [ ] QEMU cpu test program
  - [ ] Busybox wget
