@@ -215,7 +215,7 @@ int sys_execve(const char *file, char *const argv[], char *const envp[]) {
         }
         interp_addr = pt_find_hole(current->cpu.mem, interp_size) << PAGE_BITS;
         // now back to map dat shit! interpreter edition
-        for (int i = interp_header.phent_count; i >= 0; i--) {
+        for (int i = interp_header.phent_count - 1; i >= 0; i--) {
             if (interp_ph[i].type != PT_LOAD)
                 continue;
             if ((err = load_entry(interp_ph[i], interp_addr, interp_fd)) < 0)

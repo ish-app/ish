@@ -48,6 +48,7 @@ struct process *process_create() {
     struct process *proc = malloc(sizeof(struct process));
     if (proc == NULL)
         return NULL;
+    *proc = (struct process) {};
     proc->pid = pid->id;
     pid->proc = proc;
     unlock(pid);

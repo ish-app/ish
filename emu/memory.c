@@ -153,11 +153,10 @@ void *tlb_handle_miss(struct mem *mem, addr_t addr, int type) {
         // page does not exist
         // look to see if the next VM region is willing to grow down
         page_t page = PAGE(addr) + 1;
-        while (mem->pt[page] == NULL) {
-            if (page >= PT_SIZE)
-                return NULL;
+        while (page < PT_SIZE && mem->pt[page] == NULL)
             page++;
-        }
+        if (page >= PT_SIZE)
+            return NULL;
         if (!(mem->pt[page]->flags & P_GROWSDOWN))
             return NULL;
         pt_map_nothing(mem, PAGE(addr), 1, P_WRITE | P_GROWSDOWN);

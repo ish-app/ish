@@ -8,6 +8,7 @@
 
 struct fd *fd_create() {
     struct fd *fd = malloc(sizeof(struct fd));
+    *fd = (struct fd) {};
     fd->refcount = 1;
     fd->flags = 0;
     fd->mount = NULL;
