@@ -11,6 +11,10 @@ foreach channel : log_on + log_off
     endif
 endforeach
 
+if get_option('no_crlf')
+    add_global_arguments('-DNO_CRLF', language: 'c')
+endif
+
 includes = [include_directories('.')]
 
 subdir('vdso') # ish depends on the vdso

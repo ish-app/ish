@@ -42,6 +42,9 @@ int real_tty_open(struct tty *tty) {
 
     old_termios = termios;
     cfmakeraw(&termios);
+#ifdef NO_CRLF
+    termios.c_oflag |= OPOST | ONLCR;
+#endif
     if (tcsetattr(STDIN_FILENO, TCSANOW, &termios) < 0)
         DIE("failed to set terminal to raw mode");
 
