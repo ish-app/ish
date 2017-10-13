@@ -33,8 +33,8 @@ static int copy_memory(struct process *proc, int flags) {
         mem_retain(mem);
         return 0;
     }
-    struct mem *new_mem = mem_new();
-    pt_copy_on_write(mem, 0, new_mem, 0, PT_SIZE);
+    proc->cpu.mem = mem_new();
+    pt_copy_on_write(mem, 0, proc->cpu.mem, 0, PT_SIZE);
     return 0;
 }
 
