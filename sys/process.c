@@ -70,7 +70,7 @@ void process_destroy(struct process *proc) {
     list_remove(&proc->session);
     pid->proc = NULL;
     unlock(pid);
-    // TODO free process memory
+    mem_release(proc->cpu.mem);
     free(proc);
 }
 
