@@ -9,12 +9,10 @@ __thread struct process *current;
 
 #define MAX_PID (1 << 10) // oughta be enough
 static struct pid pids[MAX_PID + 1] = {};
+pthread_mutex_t pids_lock = PTHREAD_MUTEX_INITIALIZER;
 
 static bool pid_empty(struct pid *pid) {
-    lock(pid);
-    bool empty = pid->proc == NULL && list_empty(&pid->session) && list_empty(&pid->group);
-    unlock(pid);
-    return empty;
+    return pid->proc == NULL && list_empty(&pid->session) && list_empty(&pid->group);
 }
 
 struct pid *pid_get(dword_t id) {
@@ -27,20 +25,18 @@ struct pid *pid_get(dword_t id) {
 struct process *pid_get_proc(dword_t id) {
     struct pid *pid = pid_get(id);
     if (pid == NULL) return NULL;
-    lock(pid);
     struct process *proc = pid->proc;
-    unlock(pid);
     return proc;
 }
 
 struct process *process_create() {
+    big_lock(pids);
     static int cur_pid = 1;
     while (!pid_empty(&pids[cur_pid])) {
         cur_pid++;
         if (cur_pid > MAX_PID) cur_pid = 0;
     }
     struct pid *pid = &pids[cur_pid];
-    lock(pid);
     pid->id = cur_pid;
     list_init(&pid->session);
     list_init(&pid->group);
@@ -51,7 +47,7 @@ struct process *process_create() {
     *proc = (struct process) {};
     proc->pid = pid->id;
     pid->proc = proc;
-    unlock(pid);
+    big_unlock(pids);
 
     list_init(&proc->children);
     list_init(&proc->siblings);
@@ -64,12 +60,12 @@ struct process *process_create() {
 
 void process_destroy(struct process *proc) {
     list_remove(&proc->siblings);
+    big_lock(pids);
     struct pid *pid = pid_get(proc->pid);
-    lock(pid);
     list_remove(&proc->group);
     list_remove(&proc->session);
     pid->proc = NULL;
-    unlock(pid);
+    big_unlock(pids);
     mem_release(proc->cpu.mem);
     free(proc);
 }

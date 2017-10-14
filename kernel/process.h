@@ -64,15 +64,16 @@ struct process *process_create(void);
 void process_destroy(struct process *proc);
 
 struct pid {
-    dword_t id; // immutable, no lock needed
+    dword_t id;
     struct process *proc;
     struct list session;
     struct list group;
-    pthread_mutex_t lock;
 };
 
+// these functions must be called with pids_lock
 struct pid *pid_get(dword_t pid);
 struct process *pid_get_proc(dword_t pid);
+extern pthread_mutex_t pids_lock;
 
 // When a thread is created to run a new process, this function is used.
 extern void (*run_process_func)();

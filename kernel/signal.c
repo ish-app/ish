@@ -28,13 +28,13 @@ void send_signal(struct process *proc, int sig) {
 }
 
 void send_group_signal(dword_t pgid, int sig) {
+    big_lock(pids);
     struct pid *pid = pid_get(pgid);
-    lock(pid);
     struct process *proc;
     list_for_each_entry(&pid->group, proc, group) {
         send_signal(proc, sig);
     }
-    unlock(pid);
+    big_unlock(pids);
 }
 
 static void receive_signal(int sig) {
