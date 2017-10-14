@@ -25,7 +25,7 @@ cified_vdso = custom_target('cify-vdso',
     depends: [vdso],
     command: [cify, 'vdso_data', vdso.full_path(), '@OUTPUT@'])
 
-kernel_src = [
+src = [
     'kernel/calls.c',
     'kernel/user.c',
     'kernel/vdso.c',
@@ -58,9 +58,10 @@ kernel_src = [
     'fs/tty.c',
     'fs/tty-real.c',
 
-    'kernel/poll.c'
-]
-emu_src = [
+    'kernel/poll.c',
+
+    'util/timer.c',
+
     'emu/memory.c',
     'emu/interp.c',
     'emu/modrm.c',
@@ -72,7 +73,7 @@ threads = dependency('threads')
 librt = meson.get_compiler('c').find_library('rt', required: false)
 softfloat = subproject('softfloat').get_variable('softfloat_dep')
 
-libish = library('ish', kernel_src + emu_src,
+libish = library('ish', src,
     include_directories: includes,
     dependencies: [librt, threads, softfloat])
 ish = declare_dependency(

@@ -32,8 +32,7 @@ dword_t sys_clock_gettime(dword_t clock, addr_t tp) {
     return 0;
 }
 
-static void itimer_notify(union sigval sv) {
-    struct process *proc = sv.sival_ptr;
+static void itimer_notify(struct process *proc) {
     send_signal(proc, SIGALRM_);
 }
 
@@ -47,31 +46,27 @@ dword_t sys_setitimer(dword_t which, addr_t new_val_addr, addr_t old_val_addr) {
         return _EFAULT;
 
     if (!current->has_timer) {
-        struct sigevent sigev;
-        sigev.sigev_notify = SIGEV_THREAD;
-        sigev.sigev_notify_function = itimer_notify;
-        sigev.sigev_notify_attributes = NULL;
-        sigev.sigev_value.sival_ptr = current;
-        if (timer_create(CLOCK_REALTIME, &sigev, &current->timer) < 0)
-            return err_map(errno);
+        current->timer = timer_new((timer_callback_t) itimer_notify, current);
+        if (IS_ERR(current->timer))
+            return PTR_ERR(current->timer);
         current->has_timer = true;
     }
 
-    struct itimerspec spec;
-    spec.it_interval.tv_sec = val.interval.sec;
-    spec.it_interval.tv_nsec = val.interval.usec * 1000;
-    spec.it_value.tv_sec = val.value.sec;
-    spec.it_value.tv_nsec = val.value.usec * 1000;
-    struct itimerspec old_spec;
-    if (timer_settime(current->timer, 0, &spec, &old_spec) < 0)
+    struct timer_spec spec;
+    spec.interval.tv_sec = val.interval.sec;
+    spec.interval.tv_nsec = val.interval.usec * 1000;
+    spec.value.tv_sec = val.value.sec;
+    spec.value.tv_nsec = val.value.usec * 1000;
+    struct timer_spec old_spec;
+    if (timer_set(current->timer, spec, &old_spec) < 0)
         return err_map(errno);
 
     if (old_val_addr != 0) {
         struct itimerval_ old_val;
-        old_val.interval.sec = old_spec.it_interval.tv_sec;
-        old_val.interval.usec = old_spec.it_interval.tv_nsec / 1000;
-        old_val.value.sec = old_spec.it_value.tv_sec;
-        old_val.value.usec = old_spec.it_value.tv_nsec / 1000;
+        old_val.interval.sec = old_spec.interval.tv_sec;
+        old_val.interval.usec = old_spec.interval.tv_nsec / 1000;
+        old_val.value.sec = old_spec.value.tv_sec;
+        old_val.value.usec = old_spec.value.tv_nsec / 1000;
         if (user_put(old_val_addr, old_val))
             return _EFAULT;
     }

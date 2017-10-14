@@ -4,6 +4,7 @@
 #include <pthread.h>
 #include <stdatomic.h>
 #include "util/list.h"
+#include "util/timer.h"
 #include "emu/cpu.h"
 #include "kernel/fs.h"
 #include "kernel/signal.h"
@@ -40,7 +41,7 @@ struct process {
     struct tty *tty;
 
     bool has_timer;
-    timer_t timer;
+    struct timer *timer;
 
     // the next two fields are protected by the lock on the parent process, not
     // the lock on the process. this is because waitpid locks the parent
