@@ -4,14 +4,7 @@
 #include <unistd.h>
 #include <sys/xattr.h>
 #include <ftw.h>
-
-struct xattr_stat {
-    uint32_t mode;
-    uint32_t uid;
-    uint32_t gid;
-    uint32_t dev;
-    uint32_t rdev;
-};
+#include "fs/ishstat.h"
 
 int xattrify_file(const char *file, const struct stat *stat, int type) {
     struct xattr_stat xstat;
@@ -20,7 +13,7 @@ int xattrify_file(const char *file, const struct stat *stat, int type) {
     xstat.gid = stat->st_gid;
     xstat.dev = stat->st_dev;
     xstat.rdev = stat->st_rdev;
-    if (setxattr(file, "user.ish.stat", &xstat, sizeof(xstat), 0) < 0)
+    if (set_ishstat(file, &xstat) < 0)
         perror(file);
     return 0;
 }

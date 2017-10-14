@@ -14,6 +14,7 @@
 #include "kernel/fs.h"
 #include "fs/dev.h"
 #include "fs/tty.h"
+#include "fs/ishstat.h"
 
 static int getpath(int fd, char *buf) {
 #if defined(__linux__)
@@ -24,7 +25,7 @@ static int getpath(int fd, char *buf) {
         buf[size] = '\0';
     return size;
 #elif defined(__APPLE__)
-    return fcntl(fd, F_GEPATH, buf);
+    return fcntl(fd, F_GETPATH, buf);
 #endif
 }
 
@@ -72,22 +73,6 @@ int realfs_close(struct fd *fd) {
     return 0;
 }
 
-// The values in this structure are stored in an extended attribute on a file,
-// because on iOS I can't change the uid or gid of a file.
-// TODO the xattr api is a little different on darwin
-struct xattr_stat {
-    dword_t mode;
-    dword_t uid;
-    dword_t gid;
-    dword_t dev;
-    dword_t rdev;
-};
-#if defined(__linux__)
-#define STAT_XATTR "user.ish.stat"
-#elif defined(__APPLE__)
-#define STAT_XATTR "com.tbodt.ish.stat"
-#endif
-
 static void copy_stat(struct statbuf *fake_stat, struct stat *real_stat) {
     fake_stat->dev = dev_fake_from_real(real_stat->st_dev);
     fake_stat->inode = real_stat->st_ino;
@@ -131,7 +116,7 @@ static int realfs_stat(struct mount *mount, char *path, struct statbuf *fake_sta
     copy_stat(fake_stat, &real_stat);
 
     struct xattr_stat xstat;
-    if (lgetxattr(path, STAT_XATTR, &xstat, sizeof(xstat)) == sizeof(xstat))
+    if (lget_ishstat(path, &xstat) == sizeof(xstat))
         copy_xattr_stat(fake_stat, &xstat);
     return 0;
 }
@@ -143,7 +128,7 @@ static int realfs_fstat(struct fd *fd, struct statbuf *fake_stat) {
     copy_stat(fake_stat, &real_stat);
 
     struct xattr_stat xstat;
-    if (fgetxattr(fd->real_fd, STAT_XATTR, &xstat, sizeof(xstat)) == sizeof(xstat))
+    if (fget_ishstat(fd->real_fd, &xstat) == sizeof(xstat))
         copy_xattr_stat(fake_stat, &xstat);
     return 0;
 }

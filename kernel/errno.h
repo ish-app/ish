@@ -89,7 +89,9 @@ static inline int err_map(int err) {
         ERRCASE(ENAMETOOLONG)
         ERRCASE(ENOLCK)
         ERRCASE(ENOSYS)
+#ifdef ELIBBAD
         ERRCASE(ELIBBAD)
+#endif
     }
 #undef ERRCASE
     return 1337; // TODO FIXME XXX

@@ -23,6 +23,7 @@ void mem_retain(struct mem *mem);
 void mem_release(struct mem *mem);
 
 #define PAGE_BITS 12
+#undef PAGE_SIZE // defined in system headers somewhere
 #define PAGE_SIZE (1 << PAGE_BITS)
 #define PAGE(addr) ((addr) >> PAGE_BITS)
 #define OFFSET(addr) ((addr) & (PAGE_SIZE - 1))
@@ -43,6 +44,7 @@ struct pt_entry {
 // P_READ and P_EXEC are ignored for now
 #define P_READ (1 << 0)
 #define P_WRITE (1 << 1)
+#undef P_EXEC
 #define P_EXEC (1 << 2)
 #define P_GROWSDOWN (1 << 3)
 #define P_COW (1 << 4)

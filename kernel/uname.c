@@ -1,6 +1,10 @@
 #include <strings.h>
 #include <string.h>
+#if __APPLE__
+#include <sys/sysctl.h>
+#elif __linux__
 #include <sys/sysinfo.h>
+#endif
 #include "kernel/calls.h"
 
 int sys_uname(struct uname *uts) {
@@ -22,25 +26,24 @@ dword_t _sys_uname(addr_t uts_addr) {
     return res;
 }
 
-// TODO portability
+#if __APPLE__
+static uint64_t get_total_ram() {
+    uint64_t total_ram;
+    sysctl((int []) {CTL_DEBUG, HW_PHYSMEM}, 2, &total_ram, NULL, NULL, 0);
+    return total_ram;
+}
+#elif __linux__
+static uint64_t get_total_ram() {
+    struct sysinfo info;
+    sysinfo(&info);
+    return info.totalram;
+}
+#endif
+
 dword_t sys_sysinfo(addr_t info_addr) {
     struct sys_info info;
-    struct sysinfo real_info;
-    sysinfo(&real_info);
-    info.uptime = real_info.uptime;
-    info.loads[0] = real_info.loads[0];
-    info.loads[1] = real_info.loads[1];
-    info.loads[2] = real_info.loads[2];
-    info.totalram = real_info.totalram;
-    info.freeram = real_info.freeram;
-    info.sharedram = real_info.sharedram;
-    info.bufferram = real_info.bufferram;
-    info.totalswap = real_info.totalswap;
-    info.freeswap = real_info.freeswap;
-    info.procs = real_info.procs;
-    info.totalhigh = real_info.totalhigh;
-    info.freehigh = real_info.freehigh;
-    info.mem_unit = real_info.mem_unit;
+    info.totalram = get_total_ram();
+    // TODO everything else
     if (user_put(info_addr, info))
         return _EFAULT;
     return 0;

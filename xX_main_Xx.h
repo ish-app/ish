@@ -34,7 +34,7 @@ static inline int xX_main_Xx(int argc, char *const argv[]) {
         }
     }
 
-    char root_realpath[PATH_MAX + 1] = "/";
+    char root_realpath[MAX_PATH + 1] = "/";
     if (has_root && realpath(root, root_realpath) == NULL) {
         perror(root); exit(1);
     }
