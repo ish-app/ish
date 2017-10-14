@@ -10,7 +10,7 @@ struct poll *poll_create() {
         return NULL;
     list_init(&poll->poll_fds);
     list_init(&poll->real_poll_fds);
-    lock_init(&poll->lock);
+    lock_init(poll);
     return poll;
 }
 

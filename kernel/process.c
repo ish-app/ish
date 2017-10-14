@@ -55,7 +55,7 @@ struct process *process_create() {
 
     list_init(&proc->children);
     list_init(&proc->siblings);
-    pthread_mutex_init(&proc->lock, NULL);
+    lock_init(proc);
     pthread_cond_init(&proc->child_exit, NULL);
     pthread_cond_init(&proc->vfork_done, NULL);
     proc->has_timer = false;

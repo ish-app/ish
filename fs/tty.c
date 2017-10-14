@@ -15,7 +15,7 @@ static struct tty *ttys[2][64];
 static pthread_mutex_t ttys_lock = PTHREAD_MUTEX_INITIALIZER;
 
 static int tty_get(int type, int num, struct tty **tty_out) {
-    pthread_mutex_lock(&ttys_lock);
+    big_lock(ttys);
     struct tty *tty = ttys[type][num];
     if (tty == NULL) {
         tty = malloc(sizeof(struct tty));
@@ -25,10 +25,10 @@ static int tty_get(int type, int num, struct tty **tty_out) {
         tty->type = type;
         tty->num = num;
         list_init(&tty->pl.fds);
-        lock_init(&tty->pl.lock);
+        lock_init(&tty->pl);
         // TODO default termios
         memset(&tty->winsize, sizeof(tty->winsize), 0);
-        lock_init(&tty->lock);
+        lock_init(tty);
         pthread_cond_init(&tty->produced, NULL);
         pthread_cond_init(&tty->consumed, NULL);
 
@@ -47,7 +47,7 @@ static int tty_get(int type, int num, struct tty **tty_out) {
     lock(tty);
     tty->refcount++;
     unlock(tty);
-    pthread_mutex_unlock(&ttys_lock);
+    big_unlock(ttys);
     *tty_out = tty;
     return 0;
 }
@@ -58,11 +58,11 @@ static void tty_release(struct tty *tty) {
         tty->driver->close(tty);
         // dance necessary to prevent deadlock
         unlock(tty);
-        pthread_mutex_lock(&ttys_lock);
+        big_lock(ttys);
         lock(tty);
         ttys[tty->type][tty->num] = NULL;
         free(tty);
-        pthread_mutex_unlock(&ttys_lock);
+        big_unlock(ttys);
     } else {
         unlock(tty);
     }
