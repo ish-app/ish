@@ -14,13 +14,15 @@ void timer_free(struct timer *timer) {
     free(timer);
 }
 
-static void *timer_thread(struct timer *timer) {
+static void *timer_thread(void *param) {
+    struct timer *timer = param;
     while (true) {
         struct timespec remaining = timespec_subtract(timer->end, timespec_now());
         while (timespec_positive(remaining)) {
             nanosleep(&remaining, NULL);
             remaining = timespec_subtract(timer->end, timespec_now());
         }
+        timer->callback(timer->data);
         if (timespec_positive(timer->interval)) {
             timer->start = timespec_now();
             timer->end = timespec_add(timer->start, timer->interval);
@@ -40,9 +42,9 @@ int timer_set(struct timer *timer, struct timer_spec spec, struct timer_spec *ol
     timer->start = now;
     timer->end = timespec_add(timer->start, spec.value);
     timer->interval = spec.interval;
-    if (!timespec_is_zero(spec.value) && !timespec_is_zero(spec.interval)) {
+    if (!timespec_is_zero(spec.value)) {
         if (!timer->running) {
-            pthread_create(&timer->thread, NULL, (void *(*)(void*)) timer_thread, timer);
+            pthread_create(&timer->thread, NULL, timer_thread, timer);
             timer->running = true;
         }
     } else {
