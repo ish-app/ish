@@ -2,7 +2,6 @@
 #define PROCESS_H
 
 #include <pthread.h>
-#include <stdatomic.h>
 #include "util/list.h"
 #include "util/timer.h"
 #include "emu/cpu.h"
