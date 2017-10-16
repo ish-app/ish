@@ -25,15 +25,18 @@ static struct termios_ termios_from_real(struct termios real) {
 #define FLAG(t, x) \
     if (real.c_##t##flag & x) \
         fake.t##flags |= x##_
-    FLAG(o,OPOST);
-    FLAG(o,ONLCR);
-    FLAG(o,OCRNL);
-    FLAG(o,ONOCR);
-    FLAG(o,ONLRET);
-    FLAG(l,ISIG);
-    FLAG(l,ICANON);
-    FLAG(l,ECHO);
-    FLAG(l,ECHOE);
+    FLAG(o, OPOST);
+    FLAG(o, ONLCR);
+    FLAG(o, OCRNL);
+    FLAG(o, ONOCR);
+    FLAG(o, ONLRET);
+    FLAG(i, INLCR);
+    FLAG(i, IGNCR);
+    FLAG(i, ICRNL);
+    FLAG(l, ISIG);
+    FLAG(l, ICANON);
+    FLAG(l, ECHO);
+    FLAG(l, ECHOE);
 #undef FLAG
 
 #define CC(x) \
