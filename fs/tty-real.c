@@ -20,6 +20,44 @@ static void real_tty_read_thread(struct tty *tty) {
     }
 }
 
+static struct termios_ termios_from_real(struct termios real) {
+    struct termios_ fake = {};
+#define FLAG(t, x) \
+    if (real.c_##t##flag & x) \
+        fake.t##flags |= x##_
+    FLAG(o,OPOST);
+    FLAG(o,ONLCR);
+    FLAG(o,OCRNL);
+    FLAG(o,ONOCR);
+    FLAG(o,ONLRET);
+    FLAG(l,ISIG);
+    FLAG(l,ICANON);
+    FLAG(l,ECHO);
+    FLAG(l,ECHOE);
+#undef FLAG
+
+#define CC(x) \
+    fake.cc[V##x##_] = real.c_cc[V##x]
+    CC(INTR);
+    CC(QUIT);
+    CC(ERASE);
+    CC(KILL);
+    CC(EOF);
+    CC(TIME);
+    CC(MIN);
+    CC(START);
+    CC(STOP);
+    CC(SUSP);
+    CC(EOL);
+    CC(REPRINT);
+    CC(DISCARD);
+    CC(WERASE);
+    CC(LNEXT);
+    CC(EOL2);
+#undef CC
+    return fake;
+}
+
 static struct termios old_termios;
 int real_tty_open(struct tty *tty) {
     struct winsize winsz;
@@ -33,12 +71,7 @@ int real_tty_open(struct tty *tty) {
     struct termios termios;
     if (tcgetattr(STDIN_FILENO, &termios) < 0)
         return err_map(errno);
-    tty->termios.iflags = termios.c_iflag;
-    tty->termios.oflags = termios.c_oflag;
-    tty->termios.cflags = termios.c_cflag;
-    tty->termios.lflags = termios.c_lflag;
-    tty->termios.line = termios.c_line;
-    memcpy(&tty->termios.cc, &termios.c_cc, sizeof(tty->termios.cc));
+    tty->termios = termios_from_real(termios);
 
     old_termios = termios;
     cfmakeraw(&termios);
