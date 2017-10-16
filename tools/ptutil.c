@@ -40,7 +40,7 @@ int start_tracee(const char *path, char *const argv[], char *const envp[]) {
         // child
         // enable segfaulting on rdtsc and cpuid
         trycall(prctl(PR_SET_TSC, PR_TSC_SIGSEGV), "rdtsc faulting");
-        trycall(arch_prctl(ARCH_SET_CPUID, 0), "cpuid faulting");
+        /* trycall(arch_prctl(ARCH_SET_CPUID, 0), "cpuid faulting"); */
         trycall(ptrace(PTRACE_TRACEME, 0, NULL, NULL), "ptrace traceme");
         trycall(execve(path, argv, envp), "fexecve");
     } else {
