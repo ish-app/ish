@@ -192,11 +192,3 @@ void *tlb_handle_miss(struct mem *mem, addr_t addr, int type) {
     mem->dirty_page = TLB_PAGE(addr);
     return (void *) (tlb->data_minus_addr + addr);
 }
-
-__attribute__((constructor))
-static void check_pagesize(void) {
-    if (sysconf(_SC_PAGESIZE) != 1 << 12) {
-        fprintf(stderr, "wtf is this page size\n");
-        abort();
-    }
-}

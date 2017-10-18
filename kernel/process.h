@@ -76,7 +76,7 @@ struct process *pid_get_proc(dword_t pid);
 extern pthread_mutex_t pids_lock;
 
 // When a thread is created to run a new process, this function is used.
-extern void (*run_process_func)();
+extern void (*run_process_func)(void);
 // TODO document
 void start_thread(struct process *proc);
 

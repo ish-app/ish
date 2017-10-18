@@ -16,7 +16,7 @@ struct mem {
 };
 
 // Create a new address space
-struct mem *mem_new();
+struct mem *mem_new(void);
 // Increment the refcount
 void mem_retain(struct mem *mem);
 // Decrement the refcount, destroy everything in the space if 0

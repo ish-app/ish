@@ -59,7 +59,7 @@ void deliver_signal(struct process *proc, int sig);
 // send a signal to all processes in a group
 void send_group_signal(dword_t pgid, int sig);
 // check for and deliver pending signals on current, should be called from SIGUSR1 handler
-void receive_signals();
+void receive_signals(void);
 dword_t sys_rt_sigreturn(dword_t sig);
 
 dword_t sys_rt_sigaction(dword_t signum, addr_t action_addr, addr_t oldaction_addr, dword_t sigset_size);

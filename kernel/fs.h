@@ -38,8 +38,8 @@ struct fd {
     pthread_mutex_t lock;
 };
 typedef sdword_t fd_t;
-struct fd *fd_create();
-fd_t fd_next();
+struct fd *fd_create(void);
+fd_t fd_next(void);
 #define MAX_FD 1024 // dynamically expanding fd table coming soon:tm:
 #define AT_FDCWD_ -100
 #define FD_CLOEXEC_ 1
@@ -156,7 +156,7 @@ struct poll_event {
     struct fd *fd;
     int types;
 };
-struct poll *poll_create();
+struct poll *poll_create(void);
 int poll_add_fd(struct poll *poll, struct fd *fd, int types);
 int poll_del_fd(struct poll *poll, struct fd *fd);
 void poll_wake_pollable(struct pollable *pollable);
@@ -186,7 +186,7 @@ ssize_t realfs_write(struct fd *fd, const void *buf, size_t bufsize);
 int realfs_close(struct fd *fd);
 
 // adhoc fs
-struct fd *adhoc_fd_create();
+struct fd *adhoc_fd_create(void);
 
 // TODO put this somewhere else
 char *strnprepend(char *str, const char *prefix, size_t max);
