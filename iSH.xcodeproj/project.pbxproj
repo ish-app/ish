@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		BB18B2871F97F6D00059FCD8 /* libsoftfloat.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BB18B2741F97F1C40059FCD8 /* libsoftfloat.a */; };
+		BB6CEEE61F97D69E00C07635 /* hello-libc-static in Resources */ = {isa = PBXBuildFile; fileRef = BB6CEEE51F97D69E00C07635 /* hello-libc-static */; };
 		BB792B551F96D90D00FFB7A4 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = BB792B541F96D90D00FFB7A4 /* AppDelegate.m */; };
 		BB792B581F96D90D00FFB7A4 /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = BB792B571F96D90D00FFB7A4 /* ViewController.m */; };
 		BB792B5B1F96D90D00FFB7A4 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = BB792B591F96D90D00FFB7A4 /* Main.storyboard */; };
@@ -17,6 +19,20 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		BB0FC54B1F97FB7E00803272 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = BB792B461F96D8E000FFB7A4 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = BB18B2731F97F1C40059FCD8;
+			remoteInfo = libsoftfloat;
+		};
+		BB18B2811F97F4A90059FCD8 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = BB792B461F96D8E000FFB7A4 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = BB18B2731F97F1C40059FCD8;
+			remoteInfo = libsoftfloat;
+		};
 		BB792B7B1F96E31200FFB7A4 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = BB792B461F96D8E000FFB7A4 /* Project object */;
@@ -27,6 +43,9 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		BB18B2741F97F1C40059FCD8 /* libsoftfloat.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libsoftfloat.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		BB18B27E1F97F24D0059FCD8 /* xcode-meson.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "xcode-meson.sh"; sourceTree = "<group>"; };
+		BB6CEEE51F97D69E00C07635 /* hello-libc-static */ = {isa = PBXFileReference; lastKnownFileType = file; path = "hello-libc-static"; sourceTree = "<group>"; };
 		BB792B501F96D90D00FFB7A4 /* iSH.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iSH.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		BB792B531F96D90D00FFB7A4 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		BB792B541F96D90D00FFB7A4 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
@@ -46,6 +65,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BB18B2871F97F6D00059FCD8 /* libsoftfloat.a in Frameworks */,
 				BB792B7E1F96E32B00FFB7A4 /* libish.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -53,11 +73,21 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		BB18B27F1F97F2590059FCD8 /* Scripts */ = {
+			isa = PBXGroup;
+			children = (
+				BB792B891F97B3A800FFB7A4 /* no-clang-env.sh */,
+				BB18B27E1F97F24D0059FCD8 /* xcode-meson.sh */,
+			);
+			name = Scripts;
+			sourceTree = "<group>";
+		};
 		BB792B451F96D8E000FFB7A4 = {
 			isa = PBXGroup;
 			children = (
 				BB792B521F96D90D00FFB7A4 /* app */,
-				BB792B891F97B3A800FFB7A4 /* no-clang-env.sh */,
+				BB6CEEE51F97D69E00C07635 /* hello-libc-static */,
+				BB18B27F1F97F2590059FCD8 /* Scripts */,
 				BB792B511F96D90D00FFB7A4 /* Products */,
 				BB792B7D1F96E32B00FFB7A4 /* Frameworks */,
 			);
@@ -68,6 +98,7 @@
 			children = (
 				BB792B501F96D90D00FFB7A4 /* iSH.app */,
 				BB792B721F96E2C000FFB7A4 /* libish.a */,
+				BB18B2741F97F1C40059FCD8 /* libsoftfloat.a */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -98,6 +129,21 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		BB18B2731F97F1C40059FCD8 /* libsoftfloat */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = BB18B27C1F97F1C40059FCD8 /* Build configuration list for PBXNativeTarget "libsoftfloat" */;
+			buildPhases = (
+				BB18B27D1F97F1F70059FCD8 /* Build using Meson */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = libsoftfloat;
+			productName = softfloat;
+			productReference = BB18B2741F97F1C40059FCD8 /* libsoftfloat.a */;
+			productType = "com.apple.product-type.library.static";
+		};
 		BB792B4F1F96D90D00FFB7A4 /* iSH */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = BB792B661F96D90D00FFB7A4 /* Build configuration list for PBXNativeTarget "iSH" */;
@@ -109,6 +155,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				BB18B2821F97F4A90059FCD8 /* PBXTargetDependency */,
 				BB792B7C1F96E31200FFB7A4 /* PBXTargetDependency */,
 			);
 			name = iSH;
@@ -120,11 +167,12 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = BB792B781F96E2C000FFB7A4 /* Build configuration list for PBXNativeTarget "libish" */;
 			buildPhases = (
-				BB792B7F1F96E35800FFB7A4 /* Run Script */,
+				BB792B7F1F96E35800FFB7A4 /* Build using Meson */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				BB0FC54C1F97FB7E00803272 /* PBXTargetDependency */,
 			);
 			name = libish;
 			productName = iah;
@@ -140,6 +188,10 @@
 				CLASSPREFIX = ISH;
 				LastUpgradeCheck = 0900;
 				TargetAttributes = {
+					BB18B2731F97F1C40059FCD8 = {
+						CreatedOnToolsVersion = 9.0;
+						ProvisioningStyle = Automatic;
+					};
 					BB792B4F1F96D90D00FFB7A4 = {
 						CreatedOnToolsVersion = 9.0;
 						ProvisioningStyle = Automatic;
@@ -165,6 +217,7 @@
 			targets = (
 				BB792B4F1F96D90D00FFB7A4 /* iSH */,
 				BB792B711F96E2C000FFB7A4 /* libish */,
+				BB18B2731F97F1C40059FCD8 /* libsoftfloat */,
 			);
 		};
 /* End PBXProject section */
@@ -175,6 +228,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				BB792B601F96D90D00FFB7A4 /* LaunchScreen.storyboard in Resources */,
+				BB6CEEE61F97D69E00C07635 /* hello-libc-static in Resources */,
 				BB792B5D1F96D90D00FFB7A4 /* Assets.xcassets in Resources */,
 				BB792B5B1F96D90D00FFB7A4 /* Main.storyboard in Resources */,
 			);
@@ -183,20 +237,39 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		BB792B7F1F96E35800FFB7A4 /* Run Script */ = {
+		BB18B27D1F97F1F70059FCD8 /* Build using Meson */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputPaths = (
+				"$(SRCROOT)/subprojects/softfloat",
 			);
-			name = "Run Script";
+			name = "Build using Meson";
+			outputPaths = (
+				"$(BUILT_PRODUCTS_DIR)/libsoftfloat.a",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = "/bin/bash -ex";
+			shellScript = "cd $BUILT_PRODUCTS_DIR\n$SRCROOT/xcode-meson.sh\nninja subprojects/softfloat/libsoftfloat.a\ncp subprojects/softfloat/libsoftfloat.a .";
+			showEnvVarsInLog = 0;
+		};
+		BB792B7F1F96E35800FFB7A4 /* Build using Meson */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"$(SRCROOT)",
+			);
+			name = "Build using Meson";
 			outputPaths = (
 				"$(TARGET_BUILD_DIR)/libish.a",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/bash;
-			shellScript = "set -ex\ncd $BUILT_PRODUCTS_DIR\nexport CC=\"$SRCROOT/no-clang-env.sh clang\"\nif ! meson introspect --projectinfo; then\n    cat > cross.txt <<EOF\n[binaries]\nc = 'clang'\nar = 'ar'\n\n[host_machine]\nsystem = 'ios'\ncpu_family = '$ARCHS'\ncpu = '$ARCHS'\nendian = 'little'\n\n[properties]\nc_args = ['-arch', '$ARCHS']\nneeds_exe_wrapper = true\nEOF\n    meson $SRCROOT --cross-file cross.txt\nfi\nninja libish.a";
+			shellPath = "/bin/bash -ex";
+			shellScript = "export | grep iphoneos\ncd $BUILT_PRODUCTS_DIR\n$SRCROOT/xcode-meson.sh\nninja libish.a";
+			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -214,6 +287,16 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		BB0FC54C1F97FB7E00803272 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = BB18B2731F97F1C40059FCD8 /* libsoftfloat */;
+			targetProxy = BB0FC54B1F97FB7E00803272 /* PBXContainerItemProxy */;
+		};
+		BB18B2821F97F4A90059FCD8 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = BB18B2731F97F1C40059FCD8 /* libsoftfloat */;
+			targetProxy = BB18B2811F97F4A90059FCD8 /* PBXContainerItemProxy */;
+		};
 		BB792B7C1F96E31200FFB7A4 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = BB792B711F96E2C000FFB7A4 /* libish */;
@@ -241,6 +324,122 @@
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
+		BB18B27A1F97F1C40059FCD8 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = W2NF7BNM62;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_LDFLAGS = "-ObjC";
+				PRODUCT_NAME = softfloat;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		BB18B27B1F97F1C40059FCD8 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = W2NF7BNM62;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				OTHER_LDFLAGS = "-ObjC";
+				PRODUCT_NAME = softfloat;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
 		BB792B4A1F96D8E000FFB7A4 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -288,6 +487,7 @@
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = W2NF7BNM62;
+				ENABLE_BITCODE = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -304,6 +504,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = "$(SRCROOT)";
 				INFOPLIST_FILE = "$(SRCROOT)/app/Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
@@ -351,6 +552,7 @@
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = W2NF7BNM62;
+				ENABLE_BITCODE = NO;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -361,6 +563,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = "$(SRCROOT)";
 				INFOPLIST_FILE = "$(SRCROOT)/app/Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
@@ -492,6 +695,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		BB18B27C1F97F1C40059FCD8 /* Build configuration list for PBXNativeTarget "libsoftfloat" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BB18B27A1F97F1C40059FCD8 /* Debug */,
+				BB18B27B1F97F1C40059FCD8 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		BB792B491F96D8E000FFB7A4 /* Build configuration list for PBXProject "iSH" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
