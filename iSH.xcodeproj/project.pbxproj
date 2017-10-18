@@ -251,7 +251,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = "/bin/bash -ex";
-			shellScript = "cd $BUILT_PRODUCTS_DIR\n$SRCROOT/xcode-meson.sh\nninja subprojects/softfloat/libsoftfloat.a\ncp subprojects/softfloat/libsoftfloat.a .";
+			shellScript = "cd $TARGET_BUILD_DIR\n$SRCROOT/xcode-meson.sh\nninja subprojects/softfloat/libsoftfloat.a\ncp subprojects/softfloat/libsoftfloat.a .";
 			showEnvVarsInLog = 0;
 		};
 		BB792B7F1F96E35800FFB7A4 /* Build using Meson */ = {
@@ -268,7 +268,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = "/bin/bash -ex";
-			shellScript = "export | grep iphoneos\ncd $BUILT_PRODUCTS_DIR\n$SRCROOT/xcode-meson.sh\nninja libish.a";
+			shellScript = "cd $TARGET_BUILD_DIR\n$SRCROOT/xcode-meson.sh\nninja libish.a";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
@@ -504,7 +504,11 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = "$(SRCROOT)";
+				HEADER_SEARCH_PATHS = (
+					"$(SRCROOT)",
+					"$(BUILT_PRODUCTS_DIR)/subprojects/softfloat/source/include",
+					"$(SRCROOT)/subprojects/softfloat/source/include",
+				);
 				INFOPLIST_FILE = "$(SRCROOT)/app/Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
@@ -563,7 +567,11 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = "$(SRCROOT)";
+				HEADER_SEARCH_PATHS = (
+					"$(SRCROOT)",
+					"$(BUILT_PRODUCTS_DIR)/subprojects/softfloat/source/include",
+					"$(SRCROOT)/subprojects/softfloat/source/include",
+				);
 				INFOPLIST_FILE = "$(SRCROOT)/app/Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";

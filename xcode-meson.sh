@@ -1,7 +1,7 @@
 #!/bin/bash -ex
 cd $SRCROOT
 
-crossfile=cross-$(basename $BUILT_PRODUCTS_DIR).txt
+crossfile=cross-$(basename $TARGET_BUILD_DIR).txt
 cat > $crossfile <<EOF
 [binaries]
 c = 'clang'
@@ -20,5 +20,5 @@ EOF
 
 export CC="$SRCROOT/no-clang-env.sh clang"
 if ! meson introspect --projectinfo; then
-    meson $BUILT_PRODUCTS_DIR --cross-file $crossfile
+    meson $TARGET_BUILD_DIR --cross-file $crossfile
 fi
