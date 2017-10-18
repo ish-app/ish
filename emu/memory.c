@@ -8,6 +8,8 @@
 #include "kernel/errno.h"
 #include "emu/memory.h"
 
+static size_t real_page_size;
+
 static void tlb_flush(struct mem *mem);
 
 // this code currently assumes the system page size is 4k
@@ -104,8 +106,11 @@ int pt_map_nothing(struct mem *mem, page_t start, pages_t pages, unsigned flags)
 
 int pt_map_file(struct mem *mem, page_t start, pages_t pages, int fd, off_t off, unsigned flags) {
     if (pages == 0) return 0;
-    void *memory = mmap(NULL, pages * PAGE_SIZE,
-            PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, off);
+    off_t real_off = (off / real_page_size) * real_page_size;
+    char *memory = mmap(NULL, pages * PAGE_SIZE,
+            PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, real_off);
+    if (memory != MAP_FAILED)
+        memory += off - real_off;
     return pt_map(mem, start, pages, memory, flags);
 }
 
@@ -191,4 +196,8 @@ void *tlb_handle_miss(struct mem *mem, addr_t addr, int type) {
     tlb->data_minus_addr = (uintptr_t) pt->data - TLB_PAGE(addr);
     mem->dirty_page = TLB_PAGE(addr);
     return (void *) (tlb->data_minus_addr + addr);
+}
+
+__attribute__((constructor)) static void get_real_page_size() {
+    real_page_size = sysconf(_SC_PAGESIZE);
 }
