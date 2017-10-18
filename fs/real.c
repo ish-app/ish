@@ -88,9 +88,9 @@ static void copy_stat(struct statbuf *fake_stat, struct stat *real_stat) {
     fake_stat->mtime = real_stat->st_mtime;
     fake_stat->ctime = real_stat->st_ctime;
     // TODO this representation of nanosecond timestamps is linux-specific
-    fake_stat->atime_nsec = real_stat->st_atim.tv_nsec;
-    fake_stat->mtime_nsec = real_stat->st_mtim.tv_nsec;
-    fake_stat->ctime_nsec = real_stat->st_ctim.tv_nsec;
+    /* fake_stat->atime_nsec = real_stat->st_atim.tv_nsec; */
+    /* fake_stat->mtime_nsec = real_stat->st_mtim.tv_nsec; */
+    /* fake_stat->ctime_nsec = real_stat->st_ctim.tv_nsec; */
 }
 
 static void copy_xattr_stat(struct statbuf *fake_stat, struct xattr_stat *xstat) {
@@ -186,7 +186,7 @@ static int realfs_readdir(struct fd *fd, struct dir_entry *entry) {
             return 1;
     }
     entry->inode = dirent->d_ino;
-    entry->offset = dirent->d_off;
+    /* entry->offset = dirent->d_off; */
     strcpy(entry->name, dirent->d_name);
     return 0;
 }
