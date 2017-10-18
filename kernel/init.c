@@ -1,3 +1,4 @@
+#include <signal.h>
 #include <string.h>
 #include <sys/stat.h>
 #include "kernel/init.h"
