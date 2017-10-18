@@ -4,12 +4,16 @@
 #include "kernel/calls.h"
 #include "fs/tty.h"
 
-void mount_root(const char *source) {
+int mount_root(const char *source) {
+    char source_realpath[MAX_PATH + 1];
+    if (realpath(source, source_realpath) == NULL)
+        return err_map(errno);
     mounts = malloc(sizeof(struct mount));
     mounts->point = "";
-    mounts->source = strdup(source);
+    mounts->source = strdup(source_realpath);
     mounts->fs = &realfs;
     mounts->next = NULL;
+    return 0;
 }
 
 static void nop_handler() {}
