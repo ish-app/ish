@@ -1,5 +1,6 @@
 build
 build-gcc/
+xcuserdata/
 tags
 tags.log
 .floo

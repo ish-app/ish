@@ -19,7 +19,7 @@ includes = [include_directories('.')]
 
 subdir('vdso') # ish depends on the vdso
 
-cify = executable('tools/cify', ['tools/cify.c'])
+cify = executable('tools/cify', ['tools/cify.c'], native: true)
 cified_vdso = custom_target('cify-vdso',
     output: ['libvdso.so.c', 'libvdso.so.h'],
     depends: [vdso],
