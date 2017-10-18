@@ -33,10 +33,12 @@ static int tty_get(int type, int num, struct tty **tty_out) {
         pthread_cond_init(&tty->consumed, NULL);
 
         tty->driver = &tty_drivers[type];
-        int err = tty->driver->open(tty);
-        if (err < 0) {
-            pthread_mutex_unlock(&ttys_lock);
-            return err;
+        if (tty->driver->open) {
+            int err = tty->driver->open(tty);
+            if (err < 0) {
+                pthread_mutex_unlock(&ttys_lock);
+                return err;
+            }
         }
 
         tty->session = 0;
@@ -55,7 +57,8 @@ static int tty_get(int type, int num, struct tty **tty_out) {
 static void tty_release(struct tty *tty) {
     lock(tty);
     if (--tty->refcount == 0) {
-        tty->driver->close(tty);
+        if (tty->driver->close)
+            tty->driver->close(tty);
         // dance necessary to prevent deadlock
         unlock(tty);
         big_lock(ttys);

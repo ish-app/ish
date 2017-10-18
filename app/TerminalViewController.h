@@ -12,3 +12,4 @@
 
 @end
 
+extern struct tty_driver ios_tty_driver;

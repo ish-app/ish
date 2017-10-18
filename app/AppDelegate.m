@@ -6,6 +6,9 @@
 //
 
 #import "AppDelegate.h"
+#import "TerminalViewController.h"
+#include "kernel/init.h"
+#include "kernel/process.h"
 
 @interface AppDelegate ()
 
@@ -13,9 +16,30 @@
 
 @implementation AppDelegate
 
+- (int)startThings {
+    NSString *resourcePath = NSBundle.mainBundle.resourcePath;
+    int err = mount_root(resourcePath.UTF8String);
+    if (err < 0)
+        return err;
+    
+    char *program = "hello-libc-static";
+    char *argv[] = {program, NULL};
+    char *envp[] = {NULL};
+    err = create_init_process(program, argv, envp);
+    if (err < 0)
+        return err;
+    err = create_stdio(ios_tty_driver);
+    if (err < 0)
+        return err;
+    start_thread(current);
+    return 0;
+}
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
-    // Override point for customization after application launch.
+    int err = [self startThings];
+    if (err < 0) {
+        NSLog(@"failed with code %d", err);
+    }
     return YES;
 }
 

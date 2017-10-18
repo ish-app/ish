@@ -7,10 +7,11 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		BB0FC5921F980A6C00803272 /* Terminal.m in Sources */ = {isa = PBXBuildFile; fileRef = BB0FC5911F980A6B00803272 /* Terminal.m */; };
 		BB18B2871F97F6D00059FCD8 /* libsoftfloat.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BB18B2741F97F1C40059FCD8 /* libsoftfloat.a */; };
 		BB6CEEE61F97D69E00C07635 /* hello-libc-static in Resources */ = {isa = PBXBuildFile; fileRef = BB6CEEE51F97D69E00C07635 /* hello-libc-static */; };
 		BB792B551F96D90D00FFB7A4 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = BB792B541F96D90D00FFB7A4 /* AppDelegate.m */; };
-		BB792B581F96D90D00FFB7A4 /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = BB792B571F96D90D00FFB7A4 /* ViewController.m */; };
+		BB792B581F96D90D00FFB7A4 /* TerminalViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = BB792B571F96D90D00FFB7A4 /* TerminalViewController.m */; };
 		BB792B5B1F96D90D00FFB7A4 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = BB792B591F96D90D00FFB7A4 /* Main.storyboard */; };
 		BB792B5D1F96D90D00FFB7A4 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BB792B5C1F96D90D00FFB7A4 /* Assets.xcassets */; };
 		BB792B601F96D90D00FFB7A4 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = BB792B5E1F96D90D00FFB7A4 /* LaunchScreen.storyboard */; };
@@ -113,8 +114,8 @@
 		BB792B501F96D90D00FFB7A4 /* iSH.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iSH.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		BB792B531F96D90D00FFB7A4 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		BB792B541F96D90D00FFB7A4 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
-		BB792B561F96D90D00FFB7A4 /* ViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ViewController.h; sourceTree = "<group>"; };
-		BB792B571F96D90D00FFB7A4 /* ViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ViewController.m; sourceTree = "<group>"; };
+		BB792B561F96D90D00FFB7A4 /* TerminalViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TerminalViewController.h; sourceTree = "<group>"; };
+		BB792B571F96D90D00FFB7A4 /* TerminalViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TerminalViewController.m; sourceTree = "<group>"; };
 		BB792B5A1F96D90D00FFB7A4 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		BB792B5C1F96D90D00FFB7A4 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		BB792B5F1F96D90D00FFB7A4 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
@@ -274,8 +275,10 @@
 			children = (
 				BB792B531F96D90D00FFB7A4 /* AppDelegate.h */,
 				BB792B541F96D90D00FFB7A4 /* AppDelegate.m */,
-				BB792B561F96D90D00FFB7A4 /* ViewController.h */,
-				BB792B571F96D90D00FFB7A4 /* ViewController.m */,
+				BB792B561F96D90D00FFB7A4 /* TerminalViewController.h */,
+				BB792B571F96D90D00FFB7A4 /* TerminalViewController.m */,
+				BB0FC5901F980A6B00803272 /* Terminal.h */,
+				BB0FC5911F980A6B00803272 /* Terminal.m */,
 				BB792B591F96D90D00FFB7A4 /* Main.storyboard */,
 				BB792B5C1F96D90D00FFB7A4 /* Assets.xcassets */,
 				BB792B5E1F96D90D00FFB7A4 /* LaunchScreen.storyboard */,
@@ -444,7 +447,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				BB792B581F96D90D00FFB7A4 /* ViewController.m in Sources */,
+				BB792B581F96D90D00FFB7A4 /* TerminalViewController.m in Sources */,
+				BB0FC5921F980A6C00803272 /* Terminal.m in Sources */,
 				BB792B631F96D90D00FFB7A4 /* main.m in Sources */,
 				BB792B551F96D90D00FFB7A4 /* AppDelegate.m in Sources */,
 			);
