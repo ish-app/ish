@@ -66,7 +66,7 @@ struct mount {
     const struct fs_ops *fs;
     struct mount *next;
 };
-struct mount *mounts;
+extern struct mount *mounts;
 
 // open flags
 #define O_RDONLY_ 0
