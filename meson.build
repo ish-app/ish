@@ -26,6 +26,8 @@ cified_vdso = custom_target('cify-vdso',
     command: [cify, 'vdso_data', vdso.full_path(), '@OUTPUT@'])
 
 src = [
+    'kernel/init.c',
+
     'kernel/calls.c',
     'kernel/user.c',
     'kernel/vdso.c',
