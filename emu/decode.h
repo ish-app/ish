@@ -61,7 +61,7 @@ restart:
 
                 case 0x31: TRACEI("rdtsc");
                            // TODO there's a clang builtin for this
-                           __asm__("rdtsc" : "=a" (cpu->eax), "=d" (cpu->edx)); break;
+                           RDTSC; break;
 
                 case 0x40: TRACEI("cmovo modrm, reg");
                            READMODRM; CMOV(O, modrm_val, modrm_reg,); break;

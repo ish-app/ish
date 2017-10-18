@@ -554,6 +554,11 @@
     cpu->eflags |= cpu->ah & AH_FLAG_MASK; \
     cpu->cf_ops = cpu->pf_res = cpu->af_ops = cpu->zf_res = cpu->sf_res = 0
 
+#define RDTSC \
+    imm = __builtin_readcyclecounter(); \
+    cpu->eax = imm & 0xffffffff; \
+    cpu->edx = imm >> 32
+
 #include "emu/interp/sse.h"
 #include "emu/interp/fpu.h"
 
