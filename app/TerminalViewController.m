@@ -6,6 +6,7 @@
 //
 
 #import "TerminalViewController.h"
+#import "AppDelegate.h"
 
 @interface TerminalViewController ()
 
@@ -30,8 +31,15 @@
                     forKeyPath:@"content"
                        options:NSKeyValueObservingOptionInitial
                        context:NULL];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(ishExited)
+                                                 name:ISHExitedNotification
+                                               object:nil];
 }
 
+- (void)ishExited:(NSNotification *)notification {
+    NSLog(@"exit");
+}
 
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];

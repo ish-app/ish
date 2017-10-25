@@ -1,10 +1,9 @@
 #include <pthread.h>
 #include "kernel/calls.h"
 
+void (*exit_hook)(int code) = NULL;
+
 noreturn void do_exit(int status) {
-    if (current->pid == 1) {
-        exit(status >> 8);
-    }
     lock(current->parent);
     current->exit_code = status;
     current->zombie = true;
@@ -15,6 +14,20 @@ noreturn void do_exit(int status) {
     notify(current, vfork_done);
     unlock(current);
 
+    if (current->pid == 1) { 
+        // brutally murder everything
+        // which will leave everything in an inconsistent state. I will solve this problem later.
+        big_lock(pids);
+        for (int i = 2; i < MAX_PID; i++) {
+            struct process *proc = pid_get_proc(i);
+            if (proc != NULL)
+                pthread_kill(proc->thread, SIGKILL);
+        }
+        big_unlock(pids);
+
+        if (exit_hook != NULL)
+            exit_hook(status);
+    }
     pthread_exit(NULL);
 }
 

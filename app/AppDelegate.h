@@ -11,6 +11,6 @@
 
 @property (strong, nonatomic) UIWindow *window;
 
-
 @end
 
+extern NSString *const ISHExitedNotification;

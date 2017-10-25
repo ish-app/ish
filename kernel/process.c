@@ -7,7 +7,6 @@
 
 __thread struct process *current;
 
-#define MAX_PID (1 << 10) // oughta be enough
 static struct pid pids[MAX_PID + 1] = {};
 pthread_mutex_t pids_lock = PTHREAD_MUTEX_INITIALIZER;
 
@@ -70,12 +69,12 @@ void process_destroy(struct process *proc) {
     free(proc);
 }
 
-void (*process_run_func)() = NULL;
+void (*process_run_hook)() = NULL;
 
 static void *process_run(void *proc) {
     current = proc;
-    if (process_run_func)
-        process_run_func();
+    if (process_run_hook)
+        process_run_hook();
     else
         cpu_run(&current->cpu);
     assert(false);

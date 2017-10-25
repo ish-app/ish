@@ -14,6 +14,10 @@
 
 @end
 
+static void ios_handle_exit(int code) {
+    [[NSNotificationCenter defaultCenter] postNotificationName:ISHExitedNotification object:nil];
+}
+
 @implementation AppDelegate
 
 - (int)startThings {
@@ -31,6 +35,7 @@
     err = create_stdio(ios_tty_driver);
     if (err < 0)
         return err;
+    exit_hook = ios_handle_exit;
     start_thread(current);
     return 0;
 }
@@ -72,3 +77,5 @@
 
 
 @end
+
+NSString *const ISHExitedNotification = @"ISHExitedNotification";

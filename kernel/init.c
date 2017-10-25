@@ -27,6 +27,7 @@ int create_init_process(const char *program, char *const argv[], char *const env
 
     current = process_create();
     current->cpu.mem = mem_new();
+    current->parent = current;
     current->ppid = 1;
     current->uid = current->gid = 0;
     current->root = generic_open("/", O_RDONLY_, 0);

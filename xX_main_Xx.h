@@ -2,6 +2,10 @@
 #include "kernel/init.h"
 #include "kernel/fs.h"
 
+static void exit_handler(int code) {
+    exit(code >> 8);
+}
+
 // this function parses command line arguments and initializes global
 // data structures. thanks programming discussions discord server for the name.
 // https://discord.gg/9zT7NHP
@@ -33,5 +37,6 @@ static inline int xX_main_Xx(int argc, char *const argv[]) {
     err = create_stdio(real_tty_driver);
     if (err < 0)
         return err;
+    exit_hook = exit_handler;
     return 0;
 }

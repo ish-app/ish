@@ -75,9 +75,13 @@ struct pid *pid_get(dword_t pid);
 struct process *pid_get_proc(dword_t pid);
 extern pthread_mutex_t pids_lock;
 
+#define MAX_PID (1 << 10) // oughta be enough
+
 // When a thread is created to run a new process, this function is used.
-extern void (*run_process_func)(void);
+extern void (*process_run_hook)(void);
 // TODO document
 void start_thread(struct process *proc);
+
+extern void (*exit_hook)(int code);
 
 #endif
