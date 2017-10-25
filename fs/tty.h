@@ -88,8 +88,11 @@ struct tty {
 
     pthread_mutex_t lock;
 
-    // for real tty driver
-    pthread_t thread;
+    union {
+        // for real tty driver
+        pthread_t thread;
+        void *data;
+    };
 };
 
 int tty_input(struct tty *tty, const char *input, size_t len);

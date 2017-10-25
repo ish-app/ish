@@ -9,4 +9,11 @@
 
 @interface Terminal : NSObject
 
++ (Terminal *)terminalWithType:(int)type number:(int)number;
+- (size_t)write:(const void *)buf length:(size_t)len;
+
+@property (readonly) NSString *content;
+
 @end
+
+extern struct tty_driver ios_tty_driver;

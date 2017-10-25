@@ -6,20 +6,30 @@
 //
 
 #import "TerminalViewController.h"
-#include "fs/tty.h"
 
 @interface TerminalViewController ()
 
-@end
+@property Terminal *terminal;
+@property (weak, nonatomic) IBOutlet UITextView *textView;
 
-static TerminalViewController *tvc;
+@end
 
 @implementation TerminalViewController
 
+- (void)observeValueForKeyPath:(NSString *)keyPath
+                      ofObject:(id)object
+                        change:(NSDictionary<NSKeyValueChangeKey,id> *)change
+                       context:(void *)context {
+    self.textView.text = [self.textView.text stringByAppendingString:self.terminal.content];
+}
+
 - (void)viewDidLoad {
     [super viewDidLoad];
-    // Do any additional setup after loading the view, typically from a nib.
-    tvc = self;
+    self.terminal = [Terminal terminalWithType:0 number:0];
+    [self.terminal addObserver:self
+                    forKeyPath:@"content"
+                       options:NSKeyValueObservingOptionInitial
+                       context:NULL];
 }
 
 
@@ -28,18 +38,5 @@ static TerminalViewController *tvc;
     // Dispose of any resources that can be recreated.
 }
 
-- (int)write:(const void *)buf length:(size_t)len {
-    NSString *string = [[NSString alloc] initWithBytes:buf length:len encoding:NSUTF8StringEncoding];
-    NSLog(@"%@", string);
-    return 0;
-}
-
 @end
 
-static size_t ios_tty_write(struct tty *tty, const void *buf, size_t len) {
-    return [tvc write:buf length: len];
-}
-
-struct tty_driver ios_tty_driver = {
-    .write = ios_tty_write,
-};

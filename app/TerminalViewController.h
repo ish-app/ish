@@ -6,9 +6,11 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "Terminal.h"
 
 @interface TerminalViewController : UIViewController
 
+@property (readonly) Terminal *terminal;
 
 @end
 
