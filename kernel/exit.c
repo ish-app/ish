@@ -1,4 +1,5 @@
 #include <pthread.h>
+#include <signal.h>
 #include "kernel/calls.h"
 
 void (*exit_hook)(int code) = NULL;
