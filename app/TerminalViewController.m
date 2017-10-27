@@ -32,7 +32,7 @@
                        options:NSKeyValueObservingOptionInitial
                        context:NULL];
     [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(ishExited)
+                                             selector:@selector(ishExited:)
                                                  name:ISHExitedNotification
                                                object:nil];
 }
@@ -47,4 +47,3 @@
 }
 
 @end
-

@@ -33,7 +33,6 @@
 
 - (size_t)write:(const void *)buf length:(size_t)len {
     NSString *str = [[NSString alloc] initWithBytes:buf length:len encoding:NSUTF8StringEncoding];
-    NSLog(@"%@", str);
     self.content = [self.content stringByAppendingString:str];
     return len;
 }
