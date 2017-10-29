@@ -28,7 +28,7 @@ static inline int xX_main_Xx(int argc, char *const argv[]) {
         perror(root);
         exit(1);
     }
-    mount_root(root_realpath);
+    mount_root(&fakefs, root_realpath);
 
     char *envp[] = {NULL};
     int err = create_init_process(argv[optind], argv + optind, envp);

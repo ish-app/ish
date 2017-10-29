@@ -14,7 +14,6 @@
 #include "kernel/fs.h"
 #include "fs/dev.h"
 #include "fs/tty.h"
-#include "fs/ishstat.h"
 
 static int getpath(int fd, char *buf) {
 #if defined(__linux__)
@@ -46,7 +45,7 @@ char *strnprepend(char *str, const char *prefix, size_t max) {
 
 // TODO translate goddamn flags
 
-static struct fd *realfs_open(struct mount *mount, char *path, int flags, int mode) {
+struct fd *realfs_open(struct mount *mount, char *path, int flags, int mode) {
     if (strnprepend(path, mount->source, MAX_PATH) == NULL)
         return ERR_PTR(_ENAMETOOLONG);
 
@@ -93,15 +92,7 @@ static void copy_stat(struct statbuf *fake_stat, struct stat *real_stat) {
     /* fake_stat->ctime_nsec = real_stat->st_ctim.tv_nsec; */
 }
 
-static void copy_xattr_stat(struct statbuf *fake_stat, struct xattr_stat *xstat) {
-    fake_stat->dev = xstat->dev;
-    fake_stat->mode = xstat->mode;
-    fake_stat->uid = xstat->uid;
-    fake_stat->gid = xstat->gid;
-    fake_stat->rdev = xstat->rdev;
-}
-
-static int realfs_stat(struct mount *mount, char *path, struct statbuf *fake_stat, bool follow_links) {
+int realfs_stat(struct mount *mount, char *path, struct statbuf *fake_stat, bool follow_links) {
     if (strnprepend(path, mount->source, MAX_PATH) == NULL)
         return _ENAMETOOLONG;
 
@@ -114,26 +105,18 @@ static int realfs_stat(struct mount *mount, char *path, struct statbuf *fake_sta
     if (stat_fn(path, &real_stat) < 0)
         return err_map(errno);
     copy_stat(fake_stat, &real_stat);
-
-    struct xattr_stat xstat;
-    if (lget_ishstat(path, &xstat) == sizeof(xstat))
-        copy_xattr_stat(fake_stat, &xstat);
     return 0;
 }
 
-static int realfs_fstat(struct fd *fd, struct statbuf *fake_stat) {
+int realfs_fstat(struct fd *fd, struct statbuf *fake_stat) {
     struct stat real_stat;
     if (fstat(fd->real_fd, &real_stat) < 0)
         return err_map(errno);
     copy_stat(fake_stat, &real_stat);
-
-    struct xattr_stat xstat;
-    if (fget_ishstat(fd->real_fd, &xstat) == sizeof(xstat))
-        copy_xattr_stat(fake_stat, &xstat);
     return 0;
 }
 
-static int realfs_unlink(struct mount *mount, char *path) {
+int realfs_unlink(struct mount *mount, char *path) {
     if (strnprepend(path, mount->source, MAX_PATH) == NULL)
         return _ENAMETOOLONG;
 
@@ -143,7 +126,7 @@ static int realfs_unlink(struct mount *mount, char *path) {
     return res;
 }
 
-static int realfs_access(struct mount *mount, char *path, int mode) {
+int realfs_access(struct mount *mount, char *path, int mode) {
     if (strnprepend(path, mount->source, MAX_PATH) == NULL)
         return _ENAMETOOLONG;
 
@@ -172,7 +155,7 @@ ssize_t realfs_write(struct fd *fd, const void *buf, size_t bufsize) {
     return res;
 }
 
-static int realfs_readdir(struct fd *fd, struct dir_entry *entry) {
+int realfs_readdir(struct fd *fd, struct dir_entry *entry) {
     if (fd->dir == NULL)
         fd->dir = fdopendir(fd->real_fd);
     if (fd->dir == NULL)
@@ -191,7 +174,7 @@ static int realfs_readdir(struct fd *fd, struct dir_entry *entry) {
     return 0;
 }
 
-static off_t realfs_lseek(struct fd *fd, off_t offset, int whence) {
+off_t realfs_lseek(struct fd *fd, off_t offset, int whence) {
     if (whence == LSEEK_SET)
         whence = SEEK_SET;
     else if (whence == LSEEK_CUR)
@@ -206,7 +189,7 @@ static off_t realfs_lseek(struct fd *fd, off_t offset, int whence) {
     return res;
 }
 
-static int realfs_mmap(struct fd *fd, off_t offset, size_t len, int prot, int flags, void **mem_out) {
+int realfs_mmap(struct fd *fd, off_t offset, size_t len, int prot, int flags, void **mem_out) {
     int mmap_flags = 0;
     if (flags & MMAP_PRIVATE) mmap_flags |= MAP_PRIVATE;
     if (flags & MMAP_SHARED) mmap_flags |= MAP_SHARED;
@@ -218,7 +201,7 @@ static int realfs_mmap(struct fd *fd, off_t offset, size_t len, int prot, int fl
     return 0;
 }
 
-static ssize_t realfs_readlink(struct mount *mount, char *path, char *buf, size_t bufsize) {
+ssize_t realfs_readlink(struct mount *mount, char *path, char *buf, size_t bufsize) {
     if (strnprepend(path, mount->source, MAX_PATH) == NULL)
         return _ENAMETOOLONG;
 
@@ -228,7 +211,7 @@ static ssize_t realfs_readlink(struct mount *mount, char *path, char *buf, size_
     return size;
 }
 
-static int realfs_getpath(struct fd *fd, char *buf) {
+int realfs_getpath(struct fd *fd, char *buf) {
     int err = getpath(fd->real_fd, buf);
     if (err < 0)
         return err;
@@ -241,14 +224,14 @@ static int realfs_getpath(struct fd *fd, char *buf) {
     return 0;
 }
 
-static int realfs_statfs(struct mount *mount, struct statfsbuf *stat) {
+int realfs_statfs(struct mount *mount, struct statfsbuf *stat) {
     stat->type = 0x7265616c;
     stat->namelen = NAME_MAX;
     stat->bsize = PAGE_SIZE;
     return 0;
 }
 
-static int realfs_flock(struct fd *fd, int operation) {
+int realfs_flock(struct fd *fd, int operation) {
     int real_op = 0;
     if (operation & LOCK_SH_) real_op |= LOCK_SH;
     if (operation & LOCK_EX_) real_op |= LOCK_EX;

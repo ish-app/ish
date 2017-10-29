@@ -65,6 +65,7 @@ struct mount {
     const char *source;
     const struct fs_ops *fs;
     struct mount *next;
+    void *data;
 };
 extern struct mount *mounts;
 
@@ -180,6 +181,15 @@ int path_normalize(struct fd *at, const char *path, char *out, bool follow_links
 
 // real fs
 extern const struct fs_ops realfs;
+
+struct fd *realfs_open(struct mount *mount, char *path, int flags, int mode);
+int realfs_stat(struct mount *mount, char *path, struct statbuf *fake_stat, bool follow_links);
+int realfs_fstat(struct fd *fd, struct statbuf *fake_stat);
+int realfs_unlink(struct mount *mount, char *path);
+int realfs_access(struct mount *mount, char *path, int mode);
+ssize_t realfs_readlink(struct mount *mount, char *path, char *buf, size_t bufsize);
+int realfs_statfs(struct mount *mount, struct statfsbuf *stat);
+int realfs_flock(struct fd *fd, int operation);
 extern const struct fd_ops realfs_fdops;
 ssize_t realfs_read(struct fd *fd, void *buf, size_t bufsize);
 ssize_t realfs_write(struct fd *fd, const void *buf, size_t bufsize);
@@ -187,6 +197,9 @@ int realfs_close(struct fd *fd);
 
 // adhoc fs
 struct fd *adhoc_fd_create(void);
+
+// fake fs
+extern const struct fs_ops fakefs;
 
 // TODO put this somewhere else
 char *strnprepend(char *str, const char *prefix, size_t max);

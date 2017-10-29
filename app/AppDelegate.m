@@ -22,7 +22,7 @@ static void ios_handle_exit(int code) {
 
 - (int)startThings {
     NSString *resourcePath = NSBundle.mainBundle.resourcePath;
-    int err = mount_root(resourcePath.UTF8String);
+    int err = mount_root(&realfs, resourcePath.UTF8String);
     if (err < 0)
         return err;
     

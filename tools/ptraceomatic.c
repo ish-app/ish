@@ -315,7 +315,7 @@ static void step_tracing(struct cpu_state *cpu, int pid, int sender, int receive
             case 145: { // readv
                 struct io_vec vecs[regs.rdx];
                 (void) user_get(regs.rcx, vecs);
-                for (int i = 0; i < regs.rdx; i++)
+                for (unsigned i = 0; i < regs.rdx; i++)
                     pt_copy(pid, vecs[i].base, vecs[i].len);
                 break;
             }

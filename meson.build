@@ -53,6 +53,7 @@ src = [
     'fs/generic.c',
     'fs/path.c',
     'fs/real.c',
+    'fs/fake.c',
     'fs/poll.c',
     'fs/adhoc.c',
 
@@ -71,13 +72,15 @@ src = [
     cified_vdso,
 ]
 
+cc = meson.get_compiler('c')
 threads = dependency('threads')
-librt = meson.get_compiler('c').find_library('rt', required: false)
+librt = cc.find_library('rt', required: false)
 softfloat = subproject('softfloat').get_variable('softfloat_dep')
+dbm = [cc.find_library('gdbm', required: false), cc.find_library('gdbm_compat', required: false)]
 
 libish = library('ish', src,
     include_directories: includes,
-    dependencies: [librt, threads, softfloat])
+    dependencies: [librt, threads, softfloat, dbm])
 ish = declare_dependency(
     link_with: libish,
     include_directories: includes)
@@ -85,7 +88,7 @@ ish = declare_dependency(
 # ptraceomatic et al
 subdir('tools')
 
-executable('ish', ['main.c'], dependencies: [ish, softfloat, threads])
+executable('ish', ['main.c'], dependencies: [ish, softfloat, threads, dbm])
 
 gdb_scripts = ['ish-gdb.gdb']
 foreach script : gdb_scripts

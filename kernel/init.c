@@ -5,14 +5,14 @@
 #include "kernel/calls.h"
 #include "fs/tty.h"
 
-int mount_root(const char *source) {
+int mount_root(const struct fs_ops *fs, const char *source) {
     char source_realpath[MAX_PATH + 1];
     if (realpath(source, source_realpath) == NULL)
         return err_map(errno);
     mounts = malloc(sizeof(struct mount));
     mounts->point = "";
     mounts->source = strdup(source_realpath);
-    mounts->fs = &realfs;
+    mounts->fs = fs;
     mounts->next = NULL;
     return 0;
 }
