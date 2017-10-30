@@ -20,7 +20,6 @@ includes = [include_directories('.')]
 cc = meson.get_compiler('c')
 threads = dependency('threads')
 librt = cc.find_library('rt', required: false)
-softfloat = subproject('softfloat').get_variable('softfloat_dep')
 
 # this is annoying af
 if host_machine.system() == 'darwin'
@@ -34,6 +33,8 @@ elif host_machine.system() == 'linux'
         add_global_arguments('-DGDBM_NDBM=1', language: 'c')
     endif
 endif
+
+softfloat = subproject('softfloat').get_variable('softfloat_dep')
 
 subdir('vdso') # ish depends on the vdso
 
