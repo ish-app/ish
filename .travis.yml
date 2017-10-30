@@ -1,4 +1,3 @@
-# this is a lie, but I need python 3 for meson
 language: c
 compiler: clang
 install:
@@ -9,6 +8,10 @@ install:
     - curl -LO https://github.com/ninja-build/ninja/releases/download/v1.8.2/ninja-linux.zip
     - unzip ninja-linux.zip ninja
     - export PATH=$PATH:.
+addons:
+    apt:
+        packages:
+            - libgdbm-dev
 
 # man I wish I could get away with a container, but I currently need docker for compiling the vdso
 sudo: required
