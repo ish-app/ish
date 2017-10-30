@@ -1,4 +1,9 @@
+#include <limits.h>
+#ifndef GDBM_NDBM
 #include <ndbm.h>
+#else
+#include <gdbm-ndbm.h>
+#endif
 #include <string.h>
 #include <fcntl.h>
 #include "kernel/fs.h"

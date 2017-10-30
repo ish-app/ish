@@ -8,7 +8,7 @@ c = 'clang'
 ar = 'ar'
 
 [host_machine]
-system = 'ios'
+system = 'darwin'
 cpu_family = '$ARCHS'
 cpu = '$ARCHS'
 endian = 'little'
