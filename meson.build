@@ -84,7 +84,7 @@ if host_machine.system() == 'darwin'
 elif host_machine.system() == 'linux'
     # we're going to use gdbm
     dbm = [cc.find_library('gdbm'), cc.find_library('gdbm_compat')]
-    if not cc.find_header('ndbm.h') and cc.find_header('gdbm-ndbm.h')
+    if not cc.has_header('ndbm.h') and cc.has_header('gdbm-ndbm.h')
         # slight problem: on debian the header is called gdbm-ndbm.h for some reason
         add_global_arguments('-DGDBM_NDBM=1', language: 'c')
     endif
