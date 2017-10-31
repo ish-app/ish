@@ -36,7 +36,8 @@ def extract_archive(archive, db):
             rdev,
         )
         meta_path = path.relative_to(data)
-        db[b'meta:/' + (bytes(meta_path) if meta_path.parts else b'')] = metadata
+        meta_path = b'/' + bytes(meta_path) if meta_path.parts else b''
+        db[b'meta:' + meta_path] = metadata
 
         if member.isdir():
             path.mkdir(parents=True, exist_ok=True)

@@ -39,7 +39,7 @@ static void ios_handle_exit(int code) {
     if (err < 0)
         return err;
     
-    char *program = "/bin/ls";
+    char *program = "/bin/sh";
     char *argv[] = {program, NULL};
     char *envp[] = {NULL};
     err = create_init_process(program, argv, envp);

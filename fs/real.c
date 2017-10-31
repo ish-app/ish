@@ -217,10 +217,6 @@ int realfs_getpath(struct fd *fd, char *buf) {
         return err;
     size_t source_len = strlen(fd->mount->source);
     memmove(buf, buf + source_len, MAX_PATH - source_len);
-    if (*buf == '\0') {
-        buf[0] = '/';
-        buf[1] = '\0';
-    }
     return 0;
 }
 
