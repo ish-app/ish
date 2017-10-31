@@ -11,24 +11,26 @@ int path_normalize(struct fd *at, const char *path, char *out, bool follow_links
     
     if (at != __NO_AT) {
         // start with root or cwd, depending on whether it starts with a slash
-        if (*p == '/') {
+        if (*p == '/')
             at = current->root;
-            while (*p == '/')
-                p++;
-            // if it does start with a slash, make sure to skip all the slashes
-        } else if (at == NULL) {
+        else if (at == NULL)
             at = current->pwd;
-        }
         if (at != NULL) {
             char at_path[MAX_PATH];
             int err = at->ops->getpath(at, at_path);
             if (err < 0)
                 return err;
-            strcpy(o, at_path);
-            n -= strlen(at_path);
-            o += strlen(at_path);
+            assert(path_is_normalized(at_path));
+            if (at_path[0] != '/' && at_path[1] != '\0') {
+                strcpy(o, at_path);
+                n -= strlen(at_path);
+                o += strlen(at_path);
+            }
         }
     }
+
+    while (*p == '/')
+        p++;
 
     while (*p != '\0') {
         if (p[0] == '.') {
@@ -72,6 +74,7 @@ int path_normalize(struct fd *at, const char *path, char *out, bool follow_links
             strcpy(possible_symlink, out);
             possible_symlink[o - out] = '\0';
             struct mount *mount = find_mount_and_trim_path(possible_symlink);
+            assert(path_is_normalized(possible_symlink));
             int res = mount->fs->readlink(mount, possible_symlink, c, MAX_PATH - (c - out));
             if (res >= 0) {
                 // readlink does not null terminate
@@ -81,13 +84,29 @@ int path_normalize(struct fd *at, const char *path, char *out, bool follow_links
                     memmove(out, c, strlen(c) + 1);
                 char *expanded_path = possible_symlink;
                 strcpy(expanded_path, out);
-                strcat(expanded_path, "/");
-                strcat(expanded_path, p);
+                // if (*p) {
+                    strcat(expanded_path, "/");
+                    strcat(expanded_path, p);
+                // }
                 return path_normalize(__NO_AT, expanded_path, out, follow_links);
             }
         }
     }
 
     *o = '\0';
+    assert(path_is_normalized(out));
     return 0;
+}
+
+bool path_is_normalized(const char *path) {
+    while (*path != '\0') {
+        if (*path != '/')
+            return false;
+        path++;
+        if (*path == '/')
+            return false;
+        while (*path != '/' && *path != '\0')
+            path++;
+    }
+    return true;
 }

@@ -178,6 +178,7 @@ void poll_destroy(struct poll *poll);
 // MAX_PATH, _ENAMETOOLONG is returned. The out buffer is expected to be at
 // least MAX_PATH in size.
 int path_normalize(struct fd *at, const char *path, char *out, bool follow_links);
+bool path_is_normalized(const char *path);
 
 // real fs
 extern const struct fs_ops realfs;

@@ -14,6 +14,7 @@ int mount_root(const struct fs_ops *fs, const char *source) {
     mounts->source = strdup(source_realpath);
     mounts->fs = fs;
     mounts->next = NULL;
+    mounts->data = NULL;
     return 0;
 }
 

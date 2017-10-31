@@ -21,7 +21,7 @@
                       ofObject:(id)object
                         change:(NSDictionary<NSKeyValueChangeKey,id> *)change
                        context:(void *)context {
-    self.textView.text = [self.textView.text stringByAppendingString:self.terminal.content];
+    [self.textView performSelectorOnMainThread:@selector(setText:) withObject:self.terminal.content waitUntilDone:NO];
 }
 
 - (void)viewDidLoad {

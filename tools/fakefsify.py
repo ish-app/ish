@@ -2,7 +2,7 @@
 import sys
 from pathlib import Path
 import struct
-import urllib
+import urllib.request
 import tarfile
 import dbm
 
@@ -35,32 +35,24 @@ def extract_archive(archive, db):
             member.gid,
             rdev,
         )
-        db[b'meta:' + bytes(path)] = metadata
+        meta_path = path.relative_to(data)
+        db[b'meta:/' + (bytes(meta_path) if meta_path.parts else b'')] = metadata
 
         if member.isdir():
             path.mkdir(parents=True, exist_ok=True)
         elif member.issym():
-            path.symlink_to(member.linkname)
+            path.write_text(member.linkname)
         elif member.isfile():
             archive.extract(member, data)
         else:
             path.touch()
 
 _, archive_path, fs = sys.argv
-
 fs = Path(fs)
 fs.mkdir(parents=True, exist_ok=True)
 data = fs/'data'
-data.mkdir()
-db = dbm.ndbm.open(str(fs/'meta'), 'c')
 
-try:
-    archive = open(archive_path, 'rb')
-except FileNotFoundError:
-    archive = urllib.request.urlopen(archive_path)
-
-with archive:
-    archive = tarfile.open(fileobj=archive)
-    with archive:
-        with db:
+with open(archive_path, 'rb') as archive:
+    with tarfile.open(fileobj=archive) as archive:
+        with dbm.ndbm.open(str(fs/'meta'), 'c') as db:
             extract_archive(archive, db)

@@ -21,12 +21,25 @@ static void ios_handle_exit(int code) {
 @implementation AppDelegate
 
 - (int)startThings {
-    NSString *resourcePath = NSBundle.mainBundle.resourcePath;
-    int err = mount_root(&realfs, resourcePath.UTF8String);
+    NSFileManager *manager = NSFileManager.defaultManager;
+    NSURL *documents = [manager URLsForDirectory:NSDocumentDirectory
+                                       inDomains:NSUserDomainMask][0];
+    NSURL *alpineRoot = [documents URLByAppendingPathComponent:@"alpine"];
+    if (![manager fileExistsAtPath:alpineRoot.path]) {
+        NSURL *alpineMaster = [NSBundle.mainBundle URLForResource:@"alpine" withExtension:nil];
+        NSError *error = nil;
+        [manager copyItemAtURL:alpineMaster toURL:alpineRoot error:&error];
+        if (error != nil) {
+            NSLog(@"%@", error);
+            exit(1);
+        }
+    }
+    alpineRoot = [alpineRoot URLByAppendingPathComponent:@"data"];
+    int err = mount_root(&fakefs, alpineRoot.fileSystemRepresentation);
     if (err < 0)
         return err;
     
-    char *program = "hello-libc-static";
+    char *program = "/bin/ls";
     char *argv[] = {program, NULL};
     char *envp[] = {NULL};
     err = create_init_process(program, argv, envp);

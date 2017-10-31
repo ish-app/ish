@@ -3,13 +3,13 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 48;
+	objectVersion = 47;
 	objects = {
 
 /* Begin PBXBuildFile section */
 		BB0FC5921F980A6C00803272 /* Terminal.m in Sources */ = {isa = PBXBuildFile; fileRef = BB0FC5911F980A6B00803272 /* Terminal.m */; };
 		BB18B2871F97F6D00059FCD8 /* libsoftfloat.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BB18B2741F97F1C40059FCD8 /* libsoftfloat.a */; };
-		BB6CEEE61F97D69E00C07635 /* hello-libc-static in Resources */ = {isa = PBXBuildFile; fileRef = BB6CEEE51F97D69E00C07635 /* hello-libc-static */; };
+		BB623CF91FA7C68800932047 /* alpine in Resources */ = {isa = PBXBuildFile; fileRef = BBF124901FA7C3100088FB50 /* alpine */; };
 		BB792B551F96D90D00FFB7A4 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = BB792B541F96D90D00FFB7A4 /* AppDelegate.m */; };
 		BB792B581F96D90D00FFB7A4 /* TerminalViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = BB792B571F96D90D00FFB7A4 /* TerminalViewController.m */; };
 		BB792B5B1F96D90D00FFB7A4 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = BB792B591F96D90D00FFB7A4 /* Main.storyboard */; };
@@ -110,7 +110,6 @@
 		BB0FC5911F980A6B00803272 /* Terminal.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Terminal.m; sourceTree = "<group>"; };
 		BB18B2741F97F1C40059FCD8 /* libsoftfloat.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libsoftfloat.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		BB18B27E1F97F24D0059FCD8 /* xcode-meson.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "xcode-meson.sh"; sourceTree = "<group>"; };
-		BB6CEEE51F97D69E00C07635 /* hello-libc-static */ = {isa = PBXFileReference; lastKnownFileType = file; path = "hello-libc-static"; sourceTree = "<group>"; };
 		BB792B501F96D90D00FFB7A4 /* iSH.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iSH.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		BB792B531F96D90D00FFB7A4 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		BB792B541F96D90D00FFB7A4 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
@@ -123,6 +122,7 @@
 		BB792B621F96D90D00FFB7A4 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		BB792B721F96E2C000FFB7A4 /* libish.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libish.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		BB792B891F97B3A800FFB7A4 /* no-clang-env.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "no-clang-env.sh"; sourceTree = "<group>"; };
+		BBF124901FA7C3100088FB50 /* alpine */ = {isa = PBXFileReference; lastKnownFileType = folder; path = alpine; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -253,7 +253,7 @@
 				BB0FC5811F98026700803272 /* fs */,
 				BB0FC5631F98026700803272 /* kernel */,
 				BB0FC55D1F98026600803272 /* util */,
-				BB6CEEE51F97D69E00C07635 /* hello-libc-static */,
+				BBF124901FA7C3100088FB50 /* alpine */,
 				BB18B27F1F97F2590059FCD8 /* Scripts */,
 				BB792B511F96D90D00FFB7A4 /* Products */,
 				BB792B7D1F96E32B00FFB7A4 /* Frameworks */,
@@ -319,6 +319,8 @@
 			buildPhases = (
 				BB792B4C1F96D90D00FFB7A4 /* Sources */,
 				BB792B4D1F96D90D00FFB7A4 /* Frameworks */,
+				BBF1248B1FA7BF530088FB50 /* Download Alpine */,
+				BBF1248A1FA7BDBA0088FB50 /* Create Alpine Filesystem */,
 				BB792B4E1F96D90D00FFB7A4 /* Resources */,
 			);
 			buildRules = (
@@ -344,7 +346,7 @@
 				BB0FC54C1F97FB7E00803272 /* PBXTargetDependency */,
 			);
 			name = libish;
-			productName = iah;
+			productName = ish;
 			productReference = BB792B721F96E2C000FFB7A4 /* libish.a */;
 			productType = "com.apple.product-type.library.static";
 		};
@@ -359,20 +361,23 @@
 				TargetAttributes = {
 					BB18B2731F97F1C40059FCD8 = {
 						CreatedOnToolsVersion = 9.0;
+						DevelopmentTeam = W2NF7BNM62;
 						ProvisioningStyle = Automatic;
 					};
 					BB792B4F1F96D90D00FFB7A4 = {
 						CreatedOnToolsVersion = 9.0;
+						DevelopmentTeam = W2NF7BNM62;
 						ProvisioningStyle = Automatic;
 					};
 					BB792B711F96E2C000FFB7A4 = {
 						CreatedOnToolsVersion = 9.0;
+						DevelopmentTeam = W2NF7BNM62;
 						ProvisioningStyle = Automatic;
 					};
 				};
 			};
 			buildConfigurationList = BB792B491F96D8E000FFB7A4 /* Build configuration list for PBXProject "iSH" */;
-			compatibilityVersion = "Xcode 8.0";
+			compatibilityVersion = "Xcode 6.3";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -396,8 +401,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BB623CF91FA7C68800932047 /* alpine in Resources */,
 				BB792B601F96D90D00FFB7A4 /* LaunchScreen.storyboard in Resources */,
-				BB6CEEE61F97D69E00C07635 /* hello-libc-static in Resources */,
 				BB792B5D1F96D90D00FFB7A4 /* Assets.xcassets in Resources */,
 				BB792B5B1F96D90D00FFB7A4 /* Main.storyboard in Resources */,
 			);
@@ -438,6 +443,40 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = "/bin/bash -ex";
 			shellScript = "cd $TARGET_BUILD_DIR\n$SRCROOT/xcode-meson.sh\nninja libish.a";
+			showEnvVarsInLog = 0;
+		};
+		BBF1248A1FA7BDBA0088FB50 /* Create Alpine Filesystem */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/tools/fakefsify.py",
+				"$(DERIVED_FILE_DIR)/alpine.tar.gz",
+			);
+			name = "Create Alpine Filesystem";
+			outputPaths = (
+				"$(SRCROOT)/alpine",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "rm -rf $SRCROOT/alpine\n$SRCROOT/tools/fakefsify.py $DERIVED_FILE_DIR/alpine.tar.gz $SRCROOT/alpine";
+			showEnvVarsInLog = 0;
+		};
+		BBF1248B1FA7BF530088FB50 /* Download Alpine */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Download Alpine";
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/alpine.tar.gz",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "curl -L http://dl-cdn.alpinelinux.org/alpine/v3.6/releases/x86/alpine-minirootfs-3.6.2-x86.tar.gz -o $DERIVED_FILE_DIR/alpine.tar.gz";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */

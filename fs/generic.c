@@ -50,8 +50,9 @@ struct fd *generic_openat(struct fd *at, const char *path_raw, int flags, int mo
     struct statbuf stat;
     err = fd->mount->fs->fstat(fd, &stat);
     if (err >= 0) {
-        int type = stat.mode & S_IFMT;
-        if (type == S_IFBLK || type == S_IFCHR) {
+        assert(!S_ISLNK(stat.mode));
+        if (S_ISBLK(stat.mode) || S_ISCHR(stat.mode)) {
+            int type;
             if (stat.mode & S_IFBLK)
                 type = DEV_BLOCK;
             else
