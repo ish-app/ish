@@ -97,7 +97,6 @@
 		BB0FC5841F98026700803272 /* dev.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = dev.h; sourceTree = "<group>"; };
 		BB0FC5851F98026700803272 /* dir.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = dir.c; sourceTree = "<group>"; };
 		BB0FC5861F98026700803272 /* generic.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = generic.c; sourceTree = "<group>"; };
-		BB0FC5871F98026700803272 /* ishstat.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ishstat.h; sourceTree = "<group>"; };
 		BB0FC5881F98026700803272 /* path.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = path.c; sourceTree = "<group>"; };
 		BB0FC5891F98026700803272 /* poll.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = poll.c; sourceTree = "<group>"; };
 		BB0FC58A1F98026700803272 /* real.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = real.c; sourceTree = "<group>"; };
@@ -122,7 +121,7 @@
 		BB792B621F96D90D00FFB7A4 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		BB792B721F96E2C000FFB7A4 /* libish.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libish.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		BB792B891F97B3A800FFB7A4 /* no-clang-env.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "no-clang-env.sh"; sourceTree = "<group>"; };
-		BBF124901FA7C3100088FB50 /* alpine */ = {isa = PBXFileReference; lastKnownFileType = folder; path = alpine; sourceTree = "<group>"; };
+		BBF124901FA7C3100088FB50 /* alpine */ = {isa = PBXFileReference; explicitFileType = folder; includeInIndex = 0; path = alpine; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -223,7 +222,6 @@
 				BB0FC5841F98026700803272 /* dev.h */,
 				BB0FC5851F98026700803272 /* dir.c */,
 				BB0FC5861F98026700803272 /* generic.c */,
-				BB0FC5871F98026700803272 /* ishstat.h */,
 				BB0FC5881F98026700803272 /* path.c */,
 				BB0FC5891F98026700803272 /* poll.c */,
 				BB0FC58A1F98026700803272 /* real.c */,
@@ -245,15 +243,22 @@
 			name = Scripts;
 			sourceTree = "<group>";
 		};
-		BB792B451F96D8E000FFB7A4 = {
+		BB4A53931FAA393B00A72ACE /* most of the code */ = {
 			isa = PBXGroup;
 			children = (
-				BB792B521F96D90D00FFB7A4 /* app */,
 				BB0FC54D1F98026600803272 /* emu */,
 				BB0FC5811F98026700803272 /* fs */,
 				BB0FC5631F98026700803272 /* kernel */,
 				BB0FC55D1F98026600803272 /* util */,
-				BBF124901FA7C3100088FB50 /* alpine */,
+			);
+			name = "most of the code";
+			sourceTree = "<group>";
+		};
+		BB792B451F96D8E000FFB7A4 = {
+			isa = PBXGroup;
+			children = (
+				BB792B521F96D90D00FFB7A4 /* app */,
+				BB4A53931FAA393B00A72ACE /* most of the code */,
 				BB18B27F1F97F2590059FCD8 /* Scripts */,
 				BB792B511F96D90D00FFB7A4 /* Products */,
 				BB792B7D1F96E32B00FFB7A4 /* Frameworks */,
@@ -266,6 +271,7 @@
 				BB792B501F96D90D00FFB7A4 /* iSH.app */,
 				BB792B721F96E2C000FFB7A4 /* libish.a */,
 				BB18B2741F97F1C40059FCD8 /* libsoftfloat.a */,
+				BBF124901FA7C3100088FB50 /* alpine */,
 			);
 			name = Products;
 			sourceTree = "<group>";
