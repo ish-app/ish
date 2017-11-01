@@ -87,6 +87,28 @@ static int ios_tty_open(struct tty *tty) {
     Terminal *terminal = [Terminal terminalWithType:tty->type number:tty->num];
     terminal.tty = tty;
     tty->data = (void *) CFBridgingRetain(terminal);
+
+    // termios
+    tty->termios.lflags = ISIG_ | ICANON_ | ECHO_ | ECHOE_;
+    tty->termios.iflags = ICRNL_;
+    tty->termios.oflags = OPOST_ | ONLCR_;
+    tty->termios.cc[VINTR_] = '\x03';
+    tty->termios.cc[VQUIT_] = '\x1c';
+    tty->termios.cc[VERASE_] = '\x7f';
+    tty->termios.cc[VKILL_] = '\x15';
+    tty->termios.cc[VEOF_] = '\x04';
+    tty->termios.cc[VTIME_] = 0;
+    tty->termios.cc[VMIN_] = 1;
+    tty->termios.cc[VSTART_] = '\x11';
+    tty->termios.cc[VSTOP_] = '\x13';
+    tty->termios.cc[VSUSP_] = '\x1a';
+    tty->termios.cc[VEOL_] = 0;
+    tty->termios.cc[VREPRINT_] = '\x12';
+    tty->termios.cc[VDISCARD_] = '\x0f';
+    tty->termios.cc[VWERASE_] = '\x17';
+    tty->termios.cc[VLNEXT_] = '\x16';
+    tty->termios.cc[VEOL2_] = 0;
+
     return 0;
 }
 

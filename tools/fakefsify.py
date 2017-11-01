@@ -8,6 +8,10 @@ import dbm
 
 def extract_archive(archive, db):
     for member in archive.getmembers():
+        # hack
+        if member.name == './etc/securetty':
+            continue
+
         path = data/(member.name)
         major = member.devmajor
         minor = member.devminor
