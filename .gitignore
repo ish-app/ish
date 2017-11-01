@@ -6,3 +6,6 @@ tags.log
 .floo
 pdfs
 cross-*.txt
+
+bundle.js
+node_modules

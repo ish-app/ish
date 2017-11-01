@@ -1,0 +1,31 @@
+html, body, #terminal {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+}
+
+#terminal {
+    margin: 0 5px;
+}
+
+.terminal {
+    background: transparent;
+    color: black;
+    font-family: "Menlo";
+    font-size: 12px;
+}
+
+.terminal .xterm-viewport {
+    background: transparent;
+}
+
+.terminal.focus:not(.xterm-cursor-style-underline):not(.xterm-cursor-style-bar) .terminal-cursor {
+    background-color: black;
+    color: #000;
+}
+.terminal:not(.focus) .terminal-cursor {
+    outline: 1px solid black;
+    outline-offset: -1px;
+    background-color: transparent;
+}

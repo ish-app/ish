@@ -8,39 +8,85 @@
 #import "Terminal.h"
 #include "fs/tty.h"
 
-@interface Terminal ()
+@interface Terminal () <WKScriptMessageHandler>
 
-@property NSString *content;
+@property WKWebView *webView;
+@property struct tty *tty;
+@property NSMutableData *pendingData;
 
 @end
 
 @implementation Terminal
 
+static Terminal *terminal = nil;
+
 - (instancetype)init {
+    if (terminal)
+        return terminal;
     if (self = [super init]) {
-        self.content = @"";
+        self.pendingData = [NSMutableData new];
+        WKWebViewConfiguration *config = [WKWebViewConfiguration new];
+        for (NSString *name in @[@"sendInput", @"log"]) {
+            [config.userContentController addScriptMessageHandler:self name:name];
+        }
+        self.webView = [[WKWebView alloc] initWithFrame:CGRectZero configuration:config];
+        [self.webView loadRequest:
+         [NSURLRequest requestWithURL:
+          [NSBundle.mainBundle URLForResource:@"term" withExtension:@"html"]]];
+        [self.webView addObserver:self forKeyPath:@"loading" options:0 context:NULL];
+        terminal = self;
     }
     return self;
 }
 
+- (void)userContentController:(WKUserContentController *)userContentController didReceiveScriptMessage:(WKScriptMessage *)message {
+    if ([message.name isEqualToString:@"log"]) {
+        NSLog(@"%@", message.body);
+    } else if ([message.name isEqualToString:@"sendInput"]) {
+        NSString *input = message.body;
+        NSData *data = [input dataUsingEncoding:NSUTF8StringEncoding];
+        tty_input(self.tty, data.bytes, data.length);
+    }
+}
+
 + (Terminal *)terminalWithType:(int)type number:(int)number {
-    // there's only one terminal currently
-    static Terminal *terminal = nil;
-    if (terminal == nil)
-        terminal = [Terminal new];
-    return terminal;
+    return [Terminal new];
 }
 
 - (size_t)write:(const void *)buf length:(size_t)len {
-    NSString *str = [[NSString alloc] initWithBytes:buf length:len encoding:NSUTF8StringEncoding];
-    self.content = [self.content stringByAppendingString:str];
+    [self.pendingData appendData:[NSData dataWithBytes:buf length:len]];
+    [self performSelectorOnMainThread:@selector(sendPendingOutput) withObject:nil waitUntilDone:NO];
     return len;
+}
+
+- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context {
+    if (object == self.webView && [keyPath isEqualToString:@"loading"] && !self.webView.loading) {
+        [self sendPendingOutput];
+        [self.webView removeObserver:self forKeyPath:@"loading"];
+    }
+}
+
+- (void)sendPendingOutput {
+    if (self.webView.loading)
+        return;
+    if (self.pendingData.length == 0)
+        return;
+    NSString *str = [[NSString alloc] initWithData:self.pendingData encoding:NSUTF8StringEncoding];
+    self.pendingData = [NSMutableData new];
+    NSError *err;
+    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:@[str] options:0 error:&err];
+    if (err != nil)
+        NSLog(@"%@", err);
+    NSString *jsToEvaluate = [NSString stringWithFormat:@"output(%@[0])", [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding]];
+    [self.webView evaluateJavaScript:jsToEvaluate completionHandler:nil];
 }
 
 @end
 
 static int ios_tty_open(struct tty *tty) {
-    tty->data = (void *) CFBridgingRetain([Terminal terminalWithType:tty->type number:tty->num]);
+    Terminal *terminal = [Terminal terminalWithType:tty->type number:tty->num];
+    terminal.tty = tty;
+    tty->data = (void *) CFBridgingRetain(terminal);
     return 0;
 }
 

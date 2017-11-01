@@ -11,7 +11,6 @@
 @interface TerminalViewController ()
 
 @property Terminal *terminal;
-@property (weak, nonatomic) IBOutlet UITextView *textView;
 
 @end
 
@@ -21,7 +20,7 @@
                       ofObject:(id)object
                         change:(NSDictionary<NSKeyValueChangeKey,id> *)change
                        context:(void *)context {
-    [self.textView performSelectorOnMainThread:@selector(setText:) withObject:self.terminal.content waitUntilDone:NO];
+    //[self.textView performSelectorOnMainThread:@selector(setText:) withObject:self.terminal.content waitUntilDone:NO];
 }
 
 - (void)viewDidLoad {
@@ -31,6 +30,12 @@
                     forKeyPath:@"content"
                        options:NSKeyValueObservingOptionInitial
                        context:NULL];
+    [self.terminal.webView.configuration.preferences setValue:@YES forKey:@"developerExtrasEnabled"];
+    UIView *termView = self.terminal.webView;
+    termView.frame = self.view.frame;
+    [self.view addSubview:termView];
+    termView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+    termView.translatesAutoresizingMaskIntoConstraints = YES;
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(ishExited:)
                                                  name:ISHExitedNotification

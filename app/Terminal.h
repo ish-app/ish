@@ -5,14 +5,15 @@
 //  Created by Theodore Dubois on 10/18/17.
 //
 
-#import <Foundation/Foundation.h>
+#import <UIKit/UIKit.h>
+#import <WebKit/WebKit.h>
 
 @interface Terminal : NSObject
 
 + (Terminal *)terminalWithType:(int)type number:(int)number;
 - (size_t)write:(const void *)buf length:(size_t)len;
 
-@property (readonly) NSString *content;
+@property (readonly) WKWebView *webView;
 
 @end
 
