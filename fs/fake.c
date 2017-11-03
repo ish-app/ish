@@ -28,6 +28,7 @@ static datum read_meta(struct mount *mount, const char *path, const char *type) 
         strncpy(basename, "meta", 4);
         db = dbm_open(db_path, O_RDWR, 0666);
         assert(db != NULL);
+        mount->data = db;
     }
     char keydata[MAX_PATH+strlen(type)+1];
     strcpy(keydata, type);
