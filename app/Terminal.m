@@ -16,6 +16,14 @@
 
 @end
 
+@interface CustomWebView : WKWebView
+@end
+@implementation CustomWebView
+- (BOOL)becomeFirstResponder {
+    return NO;
+}
+@end
+
 @implementation Terminal
 
 static Terminal *terminal = nil;
@@ -26,10 +34,11 @@ static Terminal *terminal = nil;
     if (self = [super init]) {
         self.pendingData = [NSMutableData new];
         WKWebViewConfiguration *config = [WKWebViewConfiguration new];
-        for (NSString *name in @[@"sendInput", @"log"]) {
+        for (NSString *name in @[@"log"]) {
             [config.userContentController addScriptMessageHandler:self name:name];
         }
-        self.webView = [[WKWebView alloc] initWithFrame:CGRectZero configuration:config];
+        self.webView = [[CustomWebView alloc] initWithFrame:CGRectZero configuration:config];
+        self.webView.scrollView.scrollEnabled = NO;
         [self.webView loadRequest:
          [NSURLRequest requestWithURL:
           [NSBundle.mainBundle URLForResource:@"term" withExtension:@"html"]]];
@@ -42,21 +51,17 @@ static Terminal *terminal = nil;
 - (void)userContentController:(WKUserContentController *)userContentController didReceiveScriptMessage:(WKScriptMessage *)message {
     if ([message.name isEqualToString:@"log"]) {
         NSLog(@"%@", message.body);
-    } else if ([message.name isEqualToString:@"sendInput"]) {
-        NSString *input = message.body;
-        NSData *data = [input dataUsingEncoding:NSUTF8StringEncoding];
-        tty_input(self.tty, data.bytes, data.length);
     }
-}
-
-+ (Terminal *)terminalWithType:(int)type number:(int)number {
-    return [Terminal new];
 }
 
 - (size_t)write:(const void *)buf length:(size_t)len {
     [self.pendingData appendData:[NSData dataWithBytes:buf length:len]];
     [self performSelectorOnMainThread:@selector(sendPendingOutput) withObject:nil waitUntilDone:NO];
     return len;
+}
+
+- (void)sendInput:(const char *)buf length:(size_t)len {
+    tty_input(self.tty, buf, len);
 }
 
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context {
@@ -79,6 +84,10 @@ static Terminal *terminal = nil;
         NSLog(@"%@", err);
     NSString *jsToEvaluate = [NSString stringWithFormat:@"output(%@[0])", [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding]];
     [self.webView evaluateJavaScript:jsToEvaluate completionHandler:nil];
+}
+
++ (Terminal *)terminalWithType:(int)type number:(int)number {
+    return [Terminal new];
 }
 
 @end

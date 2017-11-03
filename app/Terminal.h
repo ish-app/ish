@@ -11,7 +11,9 @@
 @interface Terminal : NSObject
 
 + (Terminal *)terminalWithType:(int)type number:(int)number;
+
 - (size_t)write:(const void *)buf length:(size_t)len;
+- (void)sendInput:(const char *)buf length:(size_t)len;
 
 @property (readonly) WKWebView *webView;
 

@@ -6,7 +6,7 @@ html, body, #terminal {
 }
 
 #terminal {
-    margin: 0 5px;
+    padding: 0 5px;
 }
 
 .terminal {
@@ -14,6 +14,10 @@ html, body, #terminal {
     color: black;
     font-family: "Menlo";
     font-size: 12px;
+    
+    user-select: text;
+    -webkit-user-select: text;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .terminal .xterm-viewport {
