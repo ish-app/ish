@@ -43,8 +43,10 @@ static Terminal *terminal = nil;
 }
 
 - (size_t)write:(const void *)buf length:(size_t)len {
-    [self.pendingData appendData:[NSData dataWithBytes:buf length:len]];
-    [self performSelectorOnMainThread:@selector(sendPendingOutput) withObject:nil waitUntilDone:NO];
+    @synchronized (self) {
+        [self.pendingData appendData:[NSData dataWithBytes:buf length:len]];
+        [self performSelectorOnMainThread:@selector(sendPendingOutput) withObject:nil waitUntilDone:NO];
+    }
     return len;
 }
 
@@ -60,12 +62,15 @@ static Terminal *terminal = nil;
 }
 
 - (void)sendPendingOutput {
-    if (self.webView.loading)
-        return;
-    if (self.pendingData.length == 0)
-        return;
-    NSString *str = [[NSString alloc] initWithData:self.pendingData encoding:NSUTF8StringEncoding];
-    self.pendingData = [NSMutableData new];
+    NSString *str;
+    @synchronized (self) {
+        if (self.webView.loading)
+            return;
+        if (self.pendingData.length == 0)
+            return;
+        str = [[NSString alloc] initWithData:self.pendingData encoding:NSUTF8StringEncoding];
+        self.pendingData = [NSMutableData new];
+    }
     NSError *err;
     NSData *jsonData = [NSJSONSerialization dataWithJSONObject:@[str] options:0 error:&err];
     if (err != nil)
