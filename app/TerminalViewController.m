@@ -50,7 +50,15 @@
 }
 
 - (void)ishExited:(NSNotification *)notification {
-    NSLog(@"exit");
+    [self performSelectorOnMainThread:@selector(displayExitThing) withObject:nil waitUntilDone:YES];
+}
+
+- (void)displayExitThing {
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"attempted to kill init" message:nil preferredStyle:UIAlertControllerStyleAlert];
+    [alert addAction:[UIAlertAction actionWithTitle:@"goodbye" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        exit(0);
+    }]];
+    [self presentViewController:alert animated:YES completion:nil];
 }
 
 @end
