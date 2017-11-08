@@ -10,15 +10,45 @@
 @implementation TerminalView
 
 - (void)setTerminal:(Terminal *)terminal {
+    if (self.terminal) {
+        // remove old terminal
+        NSAssert(self.terminal.webView.superview == self, @"old terminal view was not in our view");
+        [self.terminal.webView removeFromSuperview];
+        [self.terminal.webView.configuration.userContentController removeScriptMessageHandlerForName:@"focus"];
+    }
+    
     _terminal = terminal;
-    UIView *webView = terminal.webView;
+    WKWebView *webView = terminal.webView;
+    [webView.configuration.userContentController addScriptMessageHandler:self name:@"focus"];
     webView.frame = self.frame;
     [self addSubview:webView];
-    webView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-    webView.translatesAutoresizingMaskIntoConstraints = YES;
+    webView.translatesAutoresizingMaskIntoConstraints = NO;
+    [webView.topAnchor constraintEqualToAnchor:self.topAnchor].active = YES;
+    [webView.bottomAnchor constraintEqualToAnchor:self.bottomAnchor].active = YES;
+    [webView.leadingAnchor constraintEqualToAnchor:self.leadingAnchor].active = YES;
+    [webView.trailingAnchor constraintEqualToAnchor:self.trailingAnchor].active = YES;
+}
+
+- (UIScrollView *)scrollView {
+    return self.terminal.webView.scrollView;
 }
 
 - (BOOL)canBecomeFirstResponder {
+    return YES;
+}
+
+- (void)userContentController:(WKUserContentController *)userContentController didReceiveScriptMessage:(WKScriptMessage *)message {
+    if ([message.body isEqualToString:@"focus"]) {
+        if (!self.isFirstResponder) {
+            [self becomeFirstResponder];
+        }
+    }
+}
+
+- (BOOL)resignFirstResponder {
+    if (![super resignFirstResponder])
+        return NO;
+    [self.terminal.webView evaluateJavaScript:@"term.blur()" completionHandler:nil];
     return YES;
 }
 
@@ -31,7 +61,7 @@
 }
 
 - (void)deleteBackward {
-    [self insertText:@"\b"];
+    [self insertText:@"\x7f"];
 }
 
 - (BOOL)hasText {

@@ -8,8 +8,9 @@
 #import <UIKit/UIKit.h>
 #import "Terminal.h"
 
-@interface TerminalView : UIView <UIKeyInput>
+@interface TerminalView : UIView <UIKeyInput, WKScriptMessageHandler>
 
 @property (nonatomic) Terminal *terminal;
+@property (readonly) UIScrollView *scrollView;
 
 @end

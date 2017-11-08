@@ -20,6 +20,10 @@ html, body, #terminal {
     -webkit-tap-highlight-color: transparent;
 }
 
+.terminal textarea {
+    display: none;
+}
+
 .terminal .xterm-viewport {
     background: transparent;
 }

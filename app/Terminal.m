@@ -16,14 +16,6 @@
 
 @end
 
-@interface CustomWebView : WKWebView
-@end
-@implementation CustomWebView
-- (BOOL)becomeFirstResponder {
-    return NO;
-}
-@end
-
 @implementation Terminal
 
 static Terminal *terminal = nil;
@@ -34,10 +26,8 @@ static Terminal *terminal = nil;
     if (self = [super init]) {
         self.pendingData = [NSMutableData new];
         WKWebViewConfiguration *config = [WKWebViewConfiguration new];
-        for (NSString *name in @[@"log"]) {
-            [config.userContentController addScriptMessageHandler:self name:name];
-        }
-        self.webView = [[CustomWebView alloc] initWithFrame:CGRectZero configuration:config];
+        [config.userContentController addScriptMessageHandler:self name:@"log"];
+        self.webView = [[WKWebView alloc] initWithFrame:CGRectZero configuration:config];
         self.webView.scrollView.scrollEnabled = NO;
         [self.webView loadRequest:
          [NSURLRequest requestWithURL:
@@ -49,9 +39,7 @@ static Terminal *terminal = nil;
 }
 
 - (void)userContentController:(WKUserContentController *)userContentController didReceiveScriptMessage:(WKScriptMessage *)message {
-    if ([message.name isEqualToString:@"log"]) {
-        NSLog(@"%@", message.body);
-    }
+    NSLog(@"%@", message.body);
 }
 
 - (size_t)write:(const void *)buf length:(size_t)len {
@@ -82,7 +70,7 @@ static Terminal *terminal = nil;
     NSData *jsonData = [NSJSONSerialization dataWithJSONObject:@[str] options:0 error:&err];
     if (err != nil)
         NSLog(@"%@", err);
-    NSString *jsToEvaluate = [NSString stringWithFormat:@"output(%@[0])", [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding]];
+    NSString *jsToEvaluate = [NSString stringWithFormat:@"term.write(%@[0])", [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding]];
     [self.webView evaluateJavaScript:jsToEvaluate completionHandler:nil];
 }
 
