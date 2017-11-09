@@ -21,6 +21,8 @@
     WKWebView *webView = terminal.webView;
     [webView.configuration.userContentController addScriptMessageHandler:self name:@"focus"];
     webView.frame = self.frame;
+    self.opaque = webView.opaque = NO;
+    webView.backgroundColor = UIColor.clearColor;
     [self addSubview:webView];
     webView.translatesAutoresizingMaskIntoConstraints = NO;
     [webView.topAnchor constraintEqualToAnchor:self.topAnchor].active = YES;

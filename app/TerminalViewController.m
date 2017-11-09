@@ -29,7 +29,7 @@
     NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
     [center addObserver:self
                selector:@selector(keyboardDidSomething:)
-                   name:UIKeyboardDidShowNotification
+                   name:UIKeyboardWillShowNotification
                  object:nil];
     [center addObserver:self
                selector:@selector(keyboardDidSomething:)
@@ -42,11 +42,33 @@
                  object:nil];
 }
 
+- (BOOL)prefersStatusBarHidden {
+    return YES;
+}
+
 - (void)keyboardDidSomething:(NSNotification *)notification {
-    NSValue *frame = notification.userInfo[UIKeyboardFrameEndUserInfoKey];
-    self.bottomConstraint.constant = -frame.CGRectValue.size.height;
-    NSLog(@"bottom constant = %f", self.bottomConstraint.constant);
-    [self.termView setNeedsUpdateConstraints];
+    if (self.termView.needsUpdateConstraints) {
+        // initial layout hasn't happened yet, so animation is going to look really bad
+        return;
+    }
+    
+    CGFloat pad = 0;
+    if ([notification.name isEqualToString:UIKeyboardWillShowNotification]) {
+        NSValue *frame = notification.userInfo[UIKeyboardFrameEndUserInfoKey];
+        pad = frame.CGRectValue.size.height;
+    }
+    NSLog(@"pad = %f", pad);
+    self.bottomConstraint.constant = -pad;
+    [self.view setNeedsUpdateConstraints];
+    NSNumber *interval = notification.userInfo[UIKeyboardAnimationDurationUserInfoKey];
+    NSNumber *curve = notification.userInfo[UIKeyboardAnimationCurveUserInfoKey];
+    [UIView animateWithDuration:interval.doubleValue
+                          delay:0
+                        options:curve.integerValue << 16
+                     animations:^{
+                         [self.view layoutIfNeeded];
+    }
+                     completion:nil];
 }
 
 - (void)ishExited:(NSNotification *)notification {

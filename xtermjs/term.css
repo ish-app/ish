@@ -5,6 +5,10 @@ html, body, #terminal {
     margin: 0;
 }
 
+body {
+    background: transparent;
+}
+
 #terminal {
     padding: 0 5px;
 }

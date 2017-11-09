@@ -6,6 +6,7 @@
 //
 
 #import "Terminal.h"
+#import "DelayedUITask.h"
 #include "fs/tty.h"
 
 @interface Terminal () <WKScriptMessageHandler>
@@ -13,6 +14,9 @@
 @property WKWebView *webView;
 @property struct tty *tty;
 @property NSMutableData *pendingData;
+
+@property DelayedUITask *refreshTask;
+@property DelayedUITask *scrollToBottomTask;
 
 @end
 
@@ -25,6 +29,9 @@ static Terminal *terminal = nil;
         return terminal;
     if (self = [super init]) {
         self.pendingData = [NSMutableData new];
+        self.refreshTask = [[DelayedUITask alloc] initWithTarget:self action:@selector(refresh)];
+        self.scrollToBottomTask = [[DelayedUITask alloc] initWithTarget:self action:@selector(scrollToBottom)];
+        
         WKWebViewConfiguration *config = [WKWebViewConfiguration new];
         [config.userContentController addScriptMessageHandler:self name:@"log"];
         self.webView = [[WKWebView alloc] initWithFrame:CGRectZero configuration:config];
@@ -45,36 +52,40 @@ static Terminal *terminal = nil;
 - (size_t)write:(const void *)buf length:(size_t)len {
     @synchronized (self) {
         [self.pendingData appendData:[NSData dataWithBytes:buf length:len]];
-        [self performSelectorOnMainThread:@selector(sendPendingOutput) withObject:nil waitUntilDone:NO];
+        [self.refreshTask schedule];
     }
     return len;
 }
 
 - (void)sendInput:(const char *)buf length:(size_t)len {
     tty_input(self.tty, buf, len);
+    [self.scrollToBottomTask schedule];
+}
+
+- (void)scrollToBottom {
+    [self.webView evaluateJavaScript:@"term.scrollToBottom()" completionHandler:nil];
 }
 
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context {
     if (object == self.webView && [keyPath isEqualToString:@"loading"] && !self.webView.loading) {
-        [self sendPendingOutput];
+        [self.refreshTask schedule];
         [self.webView removeObserver:self forKeyPath:@"loading"];
     }
 }
 
-- (void)sendPendingOutput {
+- (void)refresh {
+    if (self.webView.loading)
+        return;
+    
     NSString *str;
     @synchronized (self) {
-        if (self.webView.loading)
-            return;
-        if (self.pendingData.length == 0)
-            return;
         str = [[NSString alloc] initWithData:self.pendingData encoding:NSUTF8StringEncoding];
         self.pendingData = [NSMutableData new];
     }
-    NSError *err;
+    
+    NSError *err = nil;
     NSData *jsonData = [NSJSONSerialization dataWithJSONObject:@[str] options:0 error:&err];
-    if (err != nil)
-        NSLog(@"%@", err);
+    NSAssert(err == nil, @"JSON serialization failed, wtf");
     NSString *jsToEvaluate = [NSString stringWithFormat:@"term.write(%@[0])", [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding]];
     [self.webView evaluateJavaScript:jsToEvaluate completionHandler:nil];
 }
