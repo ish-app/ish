@@ -47,10 +47,7 @@
 }
 
 - (void)keyboardDidSomething:(NSNotification *)notification {
-    if (self.termView.needsUpdateConstraints) {
-        // initial layout hasn't happened yet, so animation is going to look really bad
-        return;
-    }
+    BOOL initialLayout = self.termView.needsUpdateConstraints;
     
     CGFloat pad = 0;
     if ([notification.name isEqualToString:UIKeyboardWillShowNotification]) {
@@ -60,15 +57,19 @@
     NSLog(@"pad = %f", pad);
     self.bottomConstraint.constant = -pad;
     [self.view setNeedsUpdateConstraints];
-    NSNumber *interval = notification.userInfo[UIKeyboardAnimationDurationUserInfoKey];
-    NSNumber *curve = notification.userInfo[UIKeyboardAnimationCurveUserInfoKey];
-    [UIView animateWithDuration:interval.doubleValue
-                          delay:0
-                        options:curve.integerValue << 16
-                     animations:^{
-                         [self.view layoutIfNeeded];
+    
+    if (!initialLayout) {
+        // if initial layout hasn't happened yet, the terminal view is going to be at a really weird place, so animating it is going to look really bad
+        NSNumber *interval = notification.userInfo[UIKeyboardAnimationDurationUserInfoKey];
+        NSNumber *curve = notification.userInfo[UIKeyboardAnimationCurveUserInfoKey];
+        [UIView animateWithDuration:interval.doubleValue
+                              delay:0
+                            options:curve.integerValue << 16
+                         animations:^{
+                             [self.view layoutIfNeeded];
+                         }
+                         completion:nil];
     }
-                     completion:nil];
 }
 
 - (void)ishExited:(NSNotification *)notification {

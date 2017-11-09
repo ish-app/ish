@@ -48,10 +48,8 @@
 }
 
 - (BOOL)resignFirstResponder {
-    if (![super resignFirstResponder])
-        return NO;
     [self.terminal.webView evaluateJavaScript:@"term.blur()" completionHandler:nil];
-    return YES;
+    return [super resignFirstResponder];
 }
 
 // most of the logic here is about getting input

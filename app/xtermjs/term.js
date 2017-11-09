@@ -20,3 +20,11 @@ term.fit();
 window.addEventListener('resize', function() {
     term.fit();
 });
+
+// allow touches to scroll the div that exists to display a scrollbar
+term.element.addEventListener('touchstart', function(event) {
+    event.stopPropagation();
+}, {capture: true});
+term.element.addEventListener('touchmove', function(event) {
+    event.stopPropagation();
+}, {capture: true});

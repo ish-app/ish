@@ -10,7 +10,7 @@ body {
 }
 
 #terminal {
-    padding: 0 5px;
+    padding: 2px 5px;
 }
 
 .terminal {
@@ -19,7 +19,6 @@ body {
     font-family: "Menlo";
     font-size: 12px;
     
-    user-select: text;
     -webkit-user-select: text;
     -webkit-tap-highlight-color: transparent;
 }
@@ -30,6 +29,7 @@ body {
 
 .terminal .xterm-viewport {
     background: transparent;
+    -webkit-overflow-scrolling: touch;
 }
 
 .terminal.focus:not(.xterm-cursor-style-underline):not(.xterm-cursor-style-bar) .terminal-cursor {

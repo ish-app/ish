@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		BB0FC5921F980A6C00803272 /* Terminal.m in Sources */ = {isa = PBXBuildFile; fileRef = BB0FC5911F980A6B00803272 /* Terminal.m */; };
 		BB18B2871F97F6D00059FCD8 /* libsoftfloat.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BB18B2741F97F1C40059FCD8 /* libsoftfloat.a */; };
+		BB455E111FB37F6600AFB48B /* DelayedUITask.m in Sources */ = {isa = PBXBuildFile; fileRef = BB455E101FB37F6600AFB48B /* DelayedUITask.m */; };
 		BB4A53AA1FAA496700A72ACE /* bundle.js in Resources */ = {isa = PBXBuildFile; fileRef = BB4A53A81FAA496700A72ACE /* bundle.js */; };
 		BB4A53AB1FAA496700A72ACE /* term.html in Resources */ = {isa = PBXBuildFile; fileRef = BB4A53A91FAA496700A72ACE /* term.html */; };
 		BB4A53B01FAA787A00A72ACE /* term.css in Resources */ = {isa = PBXBuildFile; fileRef = BB4A53AF1FAA787900A72ACE /* term.css */; };
@@ -113,6 +114,8 @@
 		BB0FC5911F980A6B00803272 /* Terminal.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Terminal.m; sourceTree = "<group>"; };
 		BB18B2741F97F1C40059FCD8 /* libsoftfloat.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libsoftfloat.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		BB18B27E1F97F24D0059FCD8 /* xcode-meson.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "xcode-meson.sh"; sourceTree = "<group>"; };
+		BB455E0F1FB37F6600AFB48B /* DelayedUITask.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DelayedUITask.h; sourceTree = "<group>"; };
+		BB455E101FB37F6600AFB48B /* DelayedUITask.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = DelayedUITask.m; sourceTree = "<group>"; };
 		BB4A539A1FAA411D00A72ACE /* package.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = package.json; sourceTree = "<group>"; };
 		BB4A539C1FAA490C00A72ACE /* term.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; path = term.js; sourceTree = "<group>"; };
 		BB4A539D1FAA490C00A72ACE /* webpack.config.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; path = webpack.config.js; sourceTree = "<group>"; };
@@ -283,7 +286,6 @@
 			isa = PBXGroup;
 			children = (
 				BB792B521F96D90D00FFB7A4 /* app */,
-				BB4A53991FAA40FD00A72ACE /* xtermjs */,
 				BB4A53931FAA393B00A72ACE /* most of the code */,
 				BB18B27F1F97F2590059FCD8 /* Scripts */,
 				BB792B511F96D90D00FFB7A4 /* Products */,
@@ -313,7 +315,10 @@
 				BB78AB2A1FAD22440013E782 /* TerminalView.m */,
 				BB0FC5901F980A6B00803272 /* Terminal.h */,
 				BB0FC5911F980A6B00803272 /* Terminal.m */,
+				BB4A53991FAA40FD00A72ACE /* xtermjs */,
 				BB792B591F96D90D00FFB7A4 /* Main.storyboard */,
+				BB455E0F1FB37F6600AFB48B /* DelayedUITask.h */,
+				BB455E101FB37F6600AFB48B /* DelayedUITask.m */,
 				BB792B5C1F96D90D00FFB7A4 /* Assets.xcassets */,
 				BB792B5E1F96D90D00FFB7A4 /* LaunchScreen.storyboard */,
 				BB792B611F96D90D00FFB7A4 /* Info.plist */,
@@ -472,15 +477,15 @@
 			files = (
 			);
 			inputPaths = (
-				"$(SRCROOT)/xtermjs",
+				"$(SRCROOT)/app/xtermjs",
 			);
 			name = "Run Webpack";
 			outputPaths = (
-				"$(SRCROOT)/xtermjs/bundle.js",
+				"$(SRCROOT)/app/xtermjs/bundle.js",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = "/bin/sh -e";
-			shellScript = "cd $SRCROOT/xtermjs\nwebpack";
+			shellScript = "cd $SRCROOT/app/xtermjs\nwebpack";
 		};
 		BB792B7F1F96E35800FFB7A4 /* Build using Meson */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -506,7 +511,7 @@
 			);
 			inputPaths = (
 				"$(SRCROOT)/tools/fakefsify.py",
-				"$(DERIVED_FILE_DIR)/alpine.tar.gz",
+				"$(SRCROOT)/alpine.tar.gz",
 			);
 			name = "Create Alpine Filesystem";
 			outputPaths = (
@@ -514,7 +519,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "rm -rf $SRCROOT/alpine\n$SRCROOT/tools/fakefsify.py $DERIVED_FILE_DIR/alpine.tar.gz $SRCROOT/alpine";
+			shellScript = "rm -rf $SRCROOT/alpine\n$SRCROOT/tools/fakefsify.py $SRCROOT/alpine.tar.gz $SRCROOT/alpine";
 			showEnvVarsInLog = 0;
 		};
 		BBF1248B1FA7BF530088FB50 /* Download Alpine */ = {
@@ -526,11 +531,11 @@
 			);
 			name = "Download Alpine";
 			outputPaths = (
-				"$(DERIVED_FILE_DIR)/alpine.tar.gz",
+				"$(SRCROOT)/alpine.tar.gz",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "curl -L http://dl-cdn.alpinelinux.org/alpine/v3.6/releases/x86/alpine-minirootfs-3.6.2-x86.tar.gz -o $DERIVED_FILE_DIR/alpine.tar.gz";
+			shellScript = "curl -L http://dl-cdn.alpinelinux.org/alpine/v3.6/releases/x86/alpine-minirootfs-3.6.2-x86.tar.gz -o $SRCROOT/alpine.tar.gz";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
@@ -542,6 +547,7 @@
 			files = (
 				BB792B581F96D90D00FFB7A4 /* TerminalViewController.m in Sources */,
 				BB78AB2B1FAD22440013E782 /* TerminalView.m in Sources */,
+				BB455E111FB37F6600AFB48B /* DelayedUITask.m in Sources */,
 				BB0FC5921F980A6C00803272 /* Terminal.m in Sources */,
 				BB792B631F96D90D00FFB7A4 /* main.m in Sources */,
 				BB792B551F96D90D00FFB7A4 /* AppDelegate.m in Sources */,
@@ -639,7 +645,6 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_LDFLAGS = "-ObjC";
@@ -695,7 +700,6 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = softfloat;
@@ -827,7 +831,6 @@
 					"$(SRCROOT)/subprojects/softfloat/source/include",
 				);
 				INFOPLIST_FILE = "$(SRCROOT)/app/Info.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -891,7 +894,6 @@
 					"$(SRCROOT)/subprojects/softfloat/source/include",
 				);
 				INFOPLIST_FILE = "$(SRCROOT)/app/Info.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				MTL_ENABLE_DEBUG_INFO = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = com.tbodt.iSH;
@@ -953,7 +955,6 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_LDFLAGS = "-ObjC";
@@ -1009,7 +1010,6 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = ish;
