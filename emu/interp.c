@@ -417,10 +417,15 @@
 
 // bits
 
+#define get_bit(bit, val,z) \
+    ((is_memory(val) ? \
+      mem_read_(addr + get(bit,z) / sz(z) * (sz(z)/8), sz(z)) : \
+      get(val,z)) & (1 << (get(bit,z) % sz(z)))) ? 1 : 0
+
 #define msk(bit,z) (1 << (get(bit,z) % sz(z)))
 
 #define BT(bit, val,z) \
-    cpu->cf = (get(val,z) & msk(bit,z)) ? 1 : 0;
+    cpu->cf = get_bit(bit, val,z);
 
 #define BTC(bit, val,z) \
     BT(bit, val,z); \
