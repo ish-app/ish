@@ -17,14 +17,14 @@
 
 #define READMODRM modrm_decode32(cpu, &addr, &modrm)
 #define READIMM_(name,size) \
-    name = mem_read(cpu->eip, size); \
+    name = mem_read_(cpu->eip, size); \
     cpu->eip += size/8; \
     TRACE("imm %lx ", (uint64_t) name)
 #define READIMM READIMM_(imm, OP_SIZE)
 #define READIMM8 READIMM_(imm, 8)
 #define READIMM16 READIMM_(imm, 16)
 #define READINSN \
-    insn = mem_read(cpu->eip, 8); \
+    insn = mem_read_(cpu->eip, 8); \
     cpu->eip++; \
     TRACE("%02x ", insn);
 
@@ -45,20 +45,25 @@
 #define ty_64 uint64_t
 #define ty_128 union xmm_reg
 
-#define mem_ptr(addr, type) ({ \
-    void *ptr = mem_##type##_ptr(cpu->mem, addr); \
-    if (ptr == NULL) { \
+#define mem_read_type(addr, type) ({ \
+    type val; \
+    if (!mem_read(cpu->mem, addr, &val)) { \
         cpu->eip = saved_ip; \
         cpu->segfault_addr = addr; \
         return INT_GPF; \
     } \
-    ptr; \
+    val; \
 })
-
-#define mem_read_type(addr, type) (*(type *) mem_ptr(addr, read))
-#define mem_read(addr, size) mem_read_type(addr, ty(size))
-#define mem_write_type(addr, val, type) *(type *) mem_ptr(addr, write) = val
-#define mem_write(addr, val, size) mem_write_type(addr, val, ty(size))
+#define mem_write_type(addr, val, type) ({ \
+    type _val = val; \
+    if (!mem_write(cpu->mem, addr, &_val)) { \
+        cpu->eip = saved_ip; \
+        cpu->segfault_addr = addr; \
+        return INT_GPF; \
+    } \
+})
+#define mem_read_(addr, size) mem_read_type(addr, ty(size))
+#define mem_write_(addr, val, size) mem_write_type(addr, val, ty(size))
 
 #define get(what, size) get_##what(sz(size))
 #define set(what, to, size) set_##what(to, sz(size))
@@ -74,25 +79,25 @@
 #define get_modrm_val(size) \
     (modrm.type == mod_reg ? \
      REGISTER(modrm.modrm_regid, size) : \
-     mem_read(addr, size))
+     mem_read_(addr, size))
 
 #define set_modrm_val(to, size) \
     if (modrm.type == mod_reg) { \
         REGISTER(modrm.modrm_regid, size) = to; \
     } else { \
-        mem_write(addr, to, size); \
+        mem_write_(addr, to, size); \
     }(void)0
 
 #define get_imm(size) ((uint(size)) imm)
 #define get_imm8(size) ((int8_t) (uint8_t) imm)
 
-#define get_mem_addr(size) mem_read(addr, size)
-#define set_mem_addr(to, size) mem_write(addr, to, size)
+#define get_mem_addr(size) mem_read_(addr, size)
+#define set_mem_addr(to, size) mem_write_(addr, to, size)
 
-#define get_mem_si(size) mem_read(cpu->osi, size)
-#define set_mem_si(size) mem_write(cpu->osi, size)
-#define get_mem_di(size) mem_read(cpu->odi, size)
-#define set_mem_di(size) mem_write(cpu->osi, size)
+#define get_mem_si(size) mem_read_(cpu->osi, size)
+#define set_mem_si(size) mem_write_(cpu->osi, size)
+#define get_mem_di(size) mem_read_(cpu->odi, size)
+#define set_mem_di(size) mem_write_(cpu->osi, size)
 
 // DEFINE ALL THE MACROS
 #define get_oax(size) cpu->oax
@@ -199,10 +204,10 @@
 } while (0)
 
 #define PUSH(thing) \
-    mem_write(cpu->osp - OP_SIZE/8, get(thing, OP_SIZE), OP_SIZE); \
+    mem_write_(cpu->osp - OP_SIZE/8, get(thing, OP_SIZE), OP_SIZE); \
     cpu->osp -= OP_SIZE/8
 #define POP(thing) \
-    set(thing, mem_read(cpu->osp, OP_SIZE),); \
+    set(thing, mem_read_(cpu->osp, OP_SIZE),); \
     cpu->osp += OP_SIZE/8
 
 #define INT(code) \
@@ -450,15 +455,15 @@
     BUMP_SI(size); BUMP_DI(size)
 
 #define MOVS(z) \
-    mem_write(cpu->edi, mem_read(cpu->esi, sz(z)), sz(z)); \
+    mem_write_(cpu->edi, mem_read_(cpu->esi, sz(z)), sz(z)); \
     BUMP_SI_DI(z)
 
 #define STOS(z) \
-    mem_write(cpu->edi, REG_VAL(cpu, REG_ID(eax), sz(z)), sz(z)); \
+    mem_write_(cpu->edi, REG_VAL(cpu, REG_ID(eax), sz(z)), sz(z)); \
     BUMP_DI(z)
 
 #define LODS(z) \
-    REG_VAL(cpu, REG_ID(eax), sz(z)) = mem_read(cpu->esi, sz(z)); \
+    REG_VAL(cpu, REG_ID(eax), sz(z)) = mem_read_(cpu->esi, sz(z)); \
     BUMP_SI(z)
 
 // found an alternative to al, see above, needs polishing

@@ -82,8 +82,10 @@ extern inline struct modrm_info modrm_get_info(byte_t byte);
 // Decodes ModR/M and SIB byte pointed to by cpu->eip, increments cpu->eip past
 // them, and returns everything in out parameters.
 // TODO currently only does 32-bit
+// FIXME doesn't check for segfaults
 void modrm_decode32(struct cpu_state *cpu, addr_t *addr_out, struct modrm_info *info_out) {
-    byte_t modrm = *(byte_t *) mem_read_ptr(cpu->mem, cpu->eip);
+    byte_t modrm;
+    mem_read(cpu->mem, cpu->eip, &modrm);
     struct modrm_info info = modrm_get_info(modrm);
     cpu->eip++;
     *info_out = info;
@@ -95,7 +97,8 @@ void modrm_decode32(struct cpu_state *cpu, addr_t *addr_out, struct modrm_info *
         }
     } else {
         // sib is simple enough to not use a table for
-        byte_t sib = *(byte_t *) mem_read_ptr(cpu->mem, cpu->eip);
+        byte_t sib;
+        mem_read(cpu->mem, cpu->eip, &sib);
         TRACE("sib %x ", sib);
         cpu->eip++;
         dword_t reg = 0;
@@ -133,17 +136,18 @@ void modrm_decode32(struct cpu_state *cpu, addr_t *addr_out, struct modrm_info *
         *addr_out += reg;
     }
 
-    int disp;
     switch (info.type) {
         case mod_disp8: {
-            disp = *(int8_t *) mem_read_ptr(cpu->mem, cpu->eip);
+            int8_t disp;
+            mem_read(cpu->mem, cpu->eip, &disp);
             TRACE("disp %s0x%x ", (disp < 0 ? "-" : ""), (disp < 0 ? -disp : disp));
             *addr_out += disp;
             cpu->eip++;
             break;
         }
         case mod_disp32: {
-            disp = *(int32_t *) mem_read_ptr(cpu->mem, cpu->eip);
+            int32_t disp;
+            mem_read(cpu->mem, cpu->eip, &disp);
             TRACE("disp %s0x%x ", (disp < 0 ? "-" : ""), (disp < 0 ? -disp : disp));
             *addr_out += disp;
             cpu->eip += 4;

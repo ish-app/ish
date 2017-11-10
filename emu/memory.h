@@ -3,6 +3,7 @@
 
 #include "misc.h"
 #include <unistd.h>
+#include <string.h>
 
 // top 20 bits of an address, i.e. address >> 12
 typedef dword_t page_t;
@@ -82,7 +83,7 @@ struct tlb_entry {
 #define TLB_PAGE_EMPTY 1
 void *tlb_handle_miss(struct mem *mem, addr_t addr, int type);
 
-forceinline void *mem_read_ptr(struct mem *mem, addr_t addr) {
+forceinline void *__mem_read_ptr(struct mem *mem, addr_t addr) {
     struct tlb_entry entry = mem->tlb[TLB_INDEX(addr)];
     if (entry.page == TLB_PAGE(addr)) {
         void *address = (void *) (entry.data_minus_addr + addr);
@@ -91,8 +92,19 @@ forceinline void *mem_read_ptr(struct mem *mem, addr_t addr) {
     }
     return tlb_handle_miss(mem, addr, TLB_READ);
 }
+bool __mem_read_cross_page(struct mem *mem, addr_t addr, char *value, unsigned size);
+forceinline bool __mem_read(struct mem *mem, addr_t addr, void *out, unsigned size) {
+    if (OFFSET(addr) > PAGE_SIZE - size)
+        return __mem_read_cross_page(mem, addr, out, size);
+    void *ptr = __mem_read_ptr(mem, addr);
+    if (ptr == NULL)
+        return false;
+    memcpy(out, ptr, size);
+    return true;
+}
+#define mem_read(mem, addr, value) __mem_read(mem, addr, (value), sizeof(*(value)))
 
-forceinline void *mem_write_ptr(struct mem *mem, addr_t addr) {
+forceinline void *__mem_write_ptr(struct mem *mem, addr_t addr) {
     struct tlb_entry entry = mem->tlb[TLB_INDEX(addr)];
     if (entry.page_if_writable == TLB_PAGE(addr)) {
         mem->dirty_page = TLB_PAGE(addr);
@@ -102,5 +114,16 @@ forceinline void *mem_write_ptr(struct mem *mem, addr_t addr) {
     }
     return tlb_handle_miss(mem, addr, TLB_WRITE);
 }
+bool __mem_write_cross_page(struct mem *mem, addr_t addr, const char *value, unsigned size);
+forceinline bool __mem_write(struct mem *mem, addr_t addr, const void *value, unsigned size) {
+    if (OFFSET(addr) > PAGE_SIZE - size)
+        return __mem_write_cross_page(mem, addr, value, size);
+    void *ptr = __mem_write_ptr(mem, addr);
+    if (ptr == NULL)
+        return false;
+    memcpy(ptr, value, size);
+    return true;
+}
+#define mem_write(mem, addr, value) __mem_write(mem, addr, (value), sizeof(*(value)))
 
 #endif

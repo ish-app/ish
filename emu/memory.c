@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <errno.h>
 
+#include "debug.h"
 #include "kernel/errno.h"
 #include "emu/memory.h"
 
@@ -149,6 +150,30 @@ static void tlb_flush(struct mem *mem) {
     for (unsigned i = 0; i < TLB_SIZE; i++) {
         mem->tlb[i].page = mem->tlb[i].page_if_writable = TLB_PAGE_EMPTY;
     }
+}
+
+bool __mem_read_cross_page(struct mem *mem, addr_t addr, char *value, unsigned size) {
+    char *ptr1 = __mem_read_ptr(mem, addr);
+    char *ptr2 = __mem_read_ptr(mem, (PAGE(addr) + 1) << PAGE_BITS);
+    if (ptr1 == NULL || ptr2 == NULL)
+        return false;
+    size_t part1 = PAGE_SIZE - OFFSET(addr);
+    assert(part1 < size);
+    memcpy(value, ptr1, part1);
+    memcpy(value + part1, ptr2, size - part1);
+    return true;
+}
+
+bool __mem_write_cross_page(struct mem *mem, addr_t addr, const char *value, unsigned size) {
+    char *ptr1 = __mem_write_ptr(mem, addr);
+    char *ptr2 = __mem_write_ptr(mem, (PAGE(addr) + 1) << PAGE_BITS);
+    if (ptr1 == NULL || ptr2 == NULL)
+        return false;
+    size_t part1 = PAGE_SIZE - OFFSET(addr);
+    assert(part1 < size);
+    memcpy(ptr1, value, part1);
+    memcpy(ptr2, value + part1, size - part1);
+    return true;
 }
 
 void *tlb_handle_miss(struct mem *mem, addr_t addr, int type) {
