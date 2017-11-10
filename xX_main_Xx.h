@@ -28,10 +28,24 @@ static inline int xX_main_Xx(int argc, char *const argv[]) {
         perror(root);
         exit(1);
     }
-    mount_root(&fakefs, root_realpath);
+    const struct fs_ops *fs;
+    if (strcmp(strrchr(root_realpath, '/') + 1, "data") == 0)
+        fs = &fakefs;
+    else
+        fs = &realfs;
+    mount_root(fs, root_realpath);
+
+    create_first_process();
+    if (!has_root) {
+        char cwd[MAX_PATH + 1];
+        getcwd(cwd, sizeof(cwd));
+        struct fd *pwd = generic_open(cwd, O_RDONLY_, 0);
+        fd_close(current->pwd);
+        current->pwd = pwd;
+    }
 
     char *envp[] = {NULL};
-    int err = create_init_process(argv[optind], argv + optind, envp);
+    int err = sys_execve(argv[optind], argv + optind, envp);
     if (err < 0)
         return err;
     err = create_stdio(real_tty_driver);

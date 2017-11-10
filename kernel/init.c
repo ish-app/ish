@@ -20,10 +20,7 @@ int mount_root(const struct fs_ops *fs, const char *source) {
 
 static void nop_handler() {}
 
-// this function parses command line arguments and initializes global
-// data structures. thanks programming discussions discord server for the name.
-// https://discord.gg/9zT7NHP
-int create_init_process(const char *program, char *const argv[], char *const envp[]) {
+void create_first_process() {
     signal(SIGUSR1, nop_handler);
 
     current = process_create();
@@ -36,8 +33,6 @@ int create_init_process(const char *program, char *const argv[], char *const env
     current->umask = 0022;
     current->thread = pthread_self();
     sys_setsid();
-
-    return sys_execve(program, argv, envp);
 }
 
 int create_stdio(struct tty_driver driver) {

@@ -42,7 +42,7 @@ static void ios_handle_exit(int code) {
     char *program = "/bin/login";
     char *argv[] = {program, NULL};
     char *envp[] = {NULL};
-    err = create_init_process(program, argv, envp);
+    err = sys_execve(program, argv, envp);
     if (err < 0)
         return err;
     err = create_stdio(ios_tty_driver);
