@@ -46,8 +46,14 @@
 #define TRACE_strace TRACE__NOP
 #endif
 
+#ifdef LOG_OVERRIDE
+extern int log_override;
+#define TRACE__NOP(msg, ...) if (log_override) { TRACE__(msg, ##__VA_ARGS__); }
+#else
 #define TRACE__NOP(msg, ...) do {} while(0)
+#endif
 #define TRACE__(msg, ...) printf(msg, ##__VA_ARGS__)
+
 #define TRACE_(chan, msg, ...) CONCAT(TRACE_, chan)(msg, ##__VA_ARGS__)
 #define TRACE(msg, ...) TRACE_(DEFAULT_CHANNEL, msg, ##__VA_ARGS__)
 #define TRACELN_(chan, msg, ...) TRACE_(chan, msg "\r\n", ##__VA_ARGS__)
