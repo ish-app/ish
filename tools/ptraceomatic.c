@@ -304,6 +304,23 @@ static void step_tracing(struct cpu_state *cpu, int pid, int sender, int receive
             }
             case 85: // readlink
                 pt_copy(pid, regs.rcx, regs.rdx); break;
+            case 102: { // socketcall
+                dword_t args[6];
+                (void) user_get(regs.rcx, args);
+                dword_t len;
+                switch (cpu->ebx) {
+                    case 6: // getsockname
+                        (void) user_get(args[2], len);
+                        pt_copy(pid, args[1], len);
+                        break;
+                    case 12: // recvfrom
+                        pt_copy(pid, args[1], args[2]);
+                        (void) user_get(args[5], len);
+                        pt_copy(pid, args[4], len);
+                        break;
+                }
+                break;
+            }
             case 104: // setitimer
                 pt_copy(pid, regs.rdx, sizeof(struct itimerval_)); break;
             case 116: // sysinfo
