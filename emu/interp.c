@@ -36,6 +36,10 @@
 #define sz_32 32
 #define sz_64 64
 #define sz_128 128
+#define twice(x) CONCAT(twice_, x)
+#define twice_8 16
+#define twice_16 32
+#define twice_32 64
 
 // types for different sizes
 #define ty(x) ty_##x
@@ -318,13 +322,19 @@
     else \
         modrm_reg = val * modrm_val
 
-#define DIV(reg, val, rem,z) \
+#define DIV(reg, val, rem,z) do { \
     if (get(val,z) == 0) return INT_DIV; \
-    set(rem, get(reg,z) % get(val,z),z); set(reg, get(reg,z) / get(val,z),z)
+    uint(twice(sz(z))) dividend = get(reg,z) | ((uint(twice(sz(z)))) get(rem,z) << sz(z)); \
+    set(rem, dividend % get(val,z),z); \
+    set(reg, dividend / get(val,z),z); \
+} while (0)
 
-#define IDIV(reg, val, rem,z) \
+#define IDIV(reg, val, rem,z) do { \
     if (get(val,z) == 0) return INT_DIV; \
-    set(rem, (int32_t) get(reg,z) % get(val,z),z); set(reg, (int32_t) get(reg,z) / get(val,z),z)
+    sint(twice(sz(z))) dividend = get(reg,z) | ((sint(twice(sz(z)))) get(rem,z) << sz(z)); \
+    set(rem, dividend % get(val,z),z); \
+    set(reg, dividend / get(val,z),z); \
+} while (0)
 
 // TODO this is probably wrong in some subtle way
 #define HALF_OP_SIZE CONCAT(HALF_, OP_SIZE)
