@@ -371,7 +371,7 @@
     if (get(count,z) % sz(z) != 0) { \
         int cnt = get(count,z) % sz(z); \
         cpu->cf = (get(val,z) >> (cnt - 1)) & 1; cpu->of = 0; \
-        set(val, ((int32_t) get(val,z)) >> cnt,z); SETRES(get(val,z),z); ZEROAF; \
+        set(val, ((sint(sz(z))) get(val,z)) >> cnt,z); SETRES(get(val,z),z); ZEROAF; \
     }
 
 #define SHRD(count, extra, dst,z) \
