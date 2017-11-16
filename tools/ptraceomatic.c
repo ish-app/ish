@@ -442,12 +442,9 @@ int main(int argc, char *const argv[]) {
         fprintf(stderr, "enametoolong\n"); exit(1);
     }
     struct mount *mount = find_mount_and_trim_path(exec_path);
-    if (strnprepend(exec_path, mount->source, MAX_PATH) == NULL) {
-        fprintf(stderr, "enametoolong\n"); exit(1);
-    }
     int fds[2];
     trycall(socketpair(AF_UNIX, SOCK_DGRAM, 0, fds), "socketpair");
-    int pid = start_tracee(exec_path, argv + optind, (char *[]) {NULL});
+    int pid = start_tracee(mount->root_fd, exec_path, argv + optind, (char *[]) {NULL});
     int sender = fds[0], receiver = fds[1];
     /* close(receiver); // only needed in the child */
     prepare_tracee(pid);

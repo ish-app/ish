@@ -65,6 +65,8 @@ struct mount {
     const char *source;
     const struct fs_ops *fs;
     struct mount *next;
+
+    int root_fd;
     void *data;
 };
 extern struct mount *mounts;
@@ -76,6 +78,7 @@ extern struct mount *mounts;
 #define O_CREAT_ (1 << 6)
 
 struct fs_ops {
+    int (*mount)(struct mount *mount);
     int (*statfs)(struct mount *mount, struct statfsbuf *stat);
     // the path parameter points to MAX_PATH bytes of allocated memory, which
     // you can do whatever you want with (but make sure to return _ENAMETOOLONG
@@ -127,6 +130,7 @@ struct fd_ops {
 
 struct mount *find_mount(char *path);
 struct mount *find_mount_and_trim_path(char *path);
+const char *fix_path(const char *path); // TODO reconsider
 
 struct pollable {
     struct list fds;
@@ -172,7 +176,7 @@ void poll_destroy(struct poll *poll);
 //  - resolving . and ..
 //  - resolving symlinks, skipping the last path component if the follow_links
 //    argument is true
-// The result will always begin with a slash.
+// The result will always begin with a slash or be empty.
 //
 // If the normalized path plus the null terminator would be longer than
 // MAX_PATH, _ENAMETOOLONG is returned. The out buffer is expected to be at
@@ -183,12 +187,9 @@ bool path_is_normalized(const char *path);
 // real fs
 extern const struct fs_ops realfs;
 
-struct fd *realfs_open(struct mount *mount, char *path, int flags, int mode);
 int realfs_stat(struct mount *mount, char *path, struct statbuf *fake_stat, bool follow_links);
 int realfs_fstat(struct fd *fd, struct statbuf *fake_stat);
-int realfs_unlink(struct mount *mount, char *path);
 int realfs_access(struct mount *mount, char *path, int mode);
-ssize_t realfs_readlink(struct mount *mount, char *path, char *buf, size_t bufsize);
 int realfs_statfs(struct mount *mount, struct statfsbuf *stat);
 int realfs_flock(struct fd *fd, int operation);
 extern const struct fd_ops realfs_fdops;
@@ -201,8 +202,5 @@ struct fd *adhoc_fd_create(void);
 
 // fake fs
 extern const struct fs_ops fakefs;
-
-// TODO put this somewhere else
-char *strnprepend(char *str, const char *prefix, size_t max);
 
 #endif

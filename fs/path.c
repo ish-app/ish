@@ -21,9 +21,11 @@ int path_normalize(struct fd *at, const char *path, char *out, bool follow_links
             if (err < 0)
                 return err;
             assert(path_is_normalized(at_path));
-            strcpy(o, at_path);
-            n -= strlen(at_path);
-            o += strlen(at_path);
+            if (strcmp(at_path, "/") != 0) {
+                strcpy(o, at_path);
+                n -= strlen(at_path);
+                o += strlen(at_path);
+            }
         }
     }
 

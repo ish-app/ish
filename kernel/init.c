@@ -15,6 +15,11 @@ int mount_root(const struct fs_ops *fs, const char *source) {
     mounts->fs = fs;
     mounts->next = NULL;
     mounts->data = NULL;
+    if (fs->mount) {
+        int err = fs->mount(mounts);
+        if (err < 0)
+            return err;
+    }
     return 0;
 }
 

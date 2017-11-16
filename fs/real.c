@@ -28,28 +28,19 @@ static int getpath(int fd, char *buf) {
 #endif
 }
 
-char *strnprepend(char *str, const char *prefix, size_t max) {
-    if (strlen(str) + strlen(prefix) + 1 > max)
-        return NULL;
-    const char *src = str + strlen(str) + 1;
-    char *dst = (char *) src + strlen(prefix);
-    while (src != str)
-        *dst-- = *src--;
-    *dst = *src;
-    src = prefix;
-    dst = str;
-    while (*src != '\0')
-        *dst++ = *src++;
-    return str;
+const char *fix_path(const char *path) {
+    if (strcmp(path, "/") == 0)
+        return ".";
+    if (path[0] == '/')
+        path++;
+    return path;
 }
 
 // TODO translate goddamn flags
 
-struct fd *realfs_open(struct mount *mount, char *path, int flags, int mode) {
-    if (strnprepend(path, mount->source, MAX_PATH) == NULL)
-        return ERR_PTR(_ENAMETOOLONG);
-
-    int fd_no = open(path, flags, mode);
+static struct fd *realfs_open(struct mount *mount, char *path, int flags, int mode) {
+    if (*path == '\0') path = ".";
+    int fd_no = openat(mount->root_fd, fix_path(path), flags, mode);
     if (fd_no < 0)
         return ERR_PTR(err_map(errno));
     struct fd *fd = fd_create();
@@ -93,16 +84,9 @@ static void copy_stat(struct statbuf *fake_stat, struct stat *real_stat) {
 }
 
 int realfs_stat(struct mount *mount, char *path, struct statbuf *fake_stat, bool follow_links) {
-    if (strnprepend(path, mount->source, MAX_PATH) == NULL)
-        return _ENAMETOOLONG;
-
     struct stat real_stat;
-    int (*stat_fn)(const char *path, struct stat *buf);
-    if (follow_links)
-        stat_fn = stat;
-    else
-        stat_fn = lstat;
-    if (stat_fn(path, &real_stat) < 0)
+    if (*path == '\0') path = ".";
+    if (fstatat(mount->root_fd, fix_path(path), &real_stat, follow_links ? 0 : AT_SYMLINK_NOFOLLOW) < 0)
         return err_map(errno);
     copy_stat(fake_stat, &real_stat);
     return 0;
@@ -116,26 +100,22 @@ int realfs_fstat(struct fd *fd, struct statbuf *fake_stat) {
     return 0;
 }
 
-int realfs_unlink(struct mount *mount, char *path) {
-    if (strnprepend(path, mount->source, MAX_PATH) == NULL)
-        return _ENAMETOOLONG;
-
-    int res = unlink(path);
+static int realfs_unlink(struct mount *mount, char *path) {
+    if (*path == '\0') path = ".";
+    int res = unlinkat(mount->root_fd, fix_path(path), 0);
     if (res < 0)
         return err_map(errno);
     return res;
 }
 
 int realfs_access(struct mount *mount, char *path, int mode) {
-    if (strnprepend(path, mount->source, MAX_PATH) == NULL)
-        return _ENAMETOOLONG;
-
     int real_mode = 0;
     if (mode & AC_F) real_mode |= F_OK;
     if (mode & AC_R) real_mode |= R_OK;
     if (mode & AC_W) real_mode |= W_OK;
     if (mode & AC_X) real_mode |= X_OK;
-    int res = access(path, real_mode);
+    if (*path == '\0') path = ".";
+    int res = faccessat(mount->root_fd, fix_path(path), real_mode, 0);
     if (res < 0)
         return err_map(errno);
     return res;
@@ -201,11 +181,9 @@ int realfs_mmap(struct fd *fd, off_t offset, size_t len, int prot, int flags, vo
     return 0;
 }
 
-ssize_t realfs_readlink(struct mount *mount, char *path, char *buf, size_t bufsize) {
-    if (strnprepend(path, mount->source, MAX_PATH) == NULL)
-        return _ENAMETOOLONG;
-
-    ssize_t size = readlink(path, buf, bufsize);
+static ssize_t realfs_readlink(struct mount *mount, char *path, char *buf, size_t bufsize) {
+    if (*path == '\0') path = ".";
+    ssize_t size = readlinkat(mount->root_fd, fix_path(path), buf, bufsize);
     if (size < 0)
         return err_map(errno);
     return size;
@@ -215,15 +193,10 @@ int realfs_getpath(struct fd *fd, char *buf) {
     int err = getpath(fd->real_fd, buf);
     if (err < 0)
         return err;
-    size_t source_len = strlen(fd->mount->source);
-    memmove(buf, buf + source_len, MAX_PATH - source_len);
-    return 0;
-}
-
-int realfs_statfs(struct mount *mount, struct statfsbuf *stat) {
-    stat->type = 0x7265616c;
-    stat->namelen = NAME_MAX;
-    stat->bsize = PAGE_SIZE;
+    if (strcmp(fd->mount->source, "/") != 0) {
+        size_t source_len = strlen(fd->mount->source);
+        memmove(buf, buf + source_len, MAX_PATH - source_len);
+    }
     return 0;
 }
 
@@ -236,14 +209,29 @@ int realfs_flock(struct fd *fd, int operation) {
     return flock(fd->real_fd, real_op);
 }
 
+int realfs_statfs(struct mount *mount, struct statfsbuf *stat) {
+    stat->type = 0x7265616c;
+    stat->namelen = NAME_MAX;
+    stat->bsize = PAGE_SIZE;
+    return 0;
+}
+
+int realfs_mount(struct mount *mount) {
+    mount->root_fd = open(mount->source, O_DIRECTORY);
+    if (mount->root_fd < 0)
+        return err_map(errno);
+    return 0;
+}
+
 const struct fs_ops realfs = {
+    .mount = realfs_mount,
+    .statfs = realfs_statfs,
     .open = realfs_open,
     .unlink = realfs_unlink,
     .stat = realfs_stat,
     .access = realfs_access,
     .readlink = realfs_readlink,
     .fstat = realfs_fstat,
-    .statfs = realfs_statfs,
     .flock = realfs_flock,
 };
 

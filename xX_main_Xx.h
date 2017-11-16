@@ -44,8 +44,7 @@ static inline int xX_main_Xx(int argc, char *const argv[]) {
         current->pwd = pwd;
     }
 
-    char *envp[] = {NULL};
-    int err = sys_execve(argv[optind], argv + optind, envp);
+    int err = sys_execve(argv[optind], argv + optind, (char *[]) {NULL});
     if (err < 0)
         return err;
     err = create_stdio(real_tty_driver);

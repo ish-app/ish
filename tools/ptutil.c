@@ -25,7 +25,7 @@ static int arch_prctl(int code, unsigned long arg) {
     return syscall(SYS_arch_prctl, code, arg);
 }
 
-int start_tracee(const char *path, char *const argv[], char *const envp[]) {
+int start_tracee(int at, const char *path, char *const argv[], char *const envp[]) {
     // shut off aslr
     int persona = personality(0xffffffff);
     persona |= ADDR_NO_RANDOMIZE;
@@ -42,7 +42,7 @@ int start_tracee(const char *path, char *const argv[], char *const envp[]) {
         trycall(prctl(PR_SET_TSC, PR_TSC_SIGSEGV), "rdtsc faulting");
         /* trycall(arch_prctl(ARCH_SET_CPUID, 0), "cpuid faulting"); */
         trycall(ptrace(PTRACE_TRACEME, 0, NULL, NULL), "ptrace traceme");
-        trycall(execve(path, argv, envp), "fexecve");
+        trycall(syscall(SYS_execveat, at, path, argv, envp, 0), "fexecve");
     } else {
         // parent, wait for child to stop after exec
         int status;

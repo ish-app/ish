@@ -18,7 +18,7 @@
 
 int main(int argc, char *const argv[]) {
     char *const envp[] = {NULL};
-    int pid = start_tracee(argv[2], argv + 2, envp);
+    int pid = start_tracee(AT_FDCWD, argv[2], argv + 2, envp);
 
     int vdso_fd = trycall(open(argv[1], O_RDONLY), "open vdso");
     struct stat statbuf;
