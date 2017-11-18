@@ -80,7 +80,7 @@ static int delete_stat(struct mount *mount, const char *path) {
     return delete_meta(mount, path, "meta");
 }
 
-static struct fd *fakefs_open(struct mount *mount, char *path, int flags, int mode) {
+static struct fd *fakefs_open(struct mount *mount, const char *path, int flags, int mode) {
     struct fd *fd = realfs.open(mount, path, flags, mode);
     if (IS_ERR(fd))
         return fd;
@@ -95,7 +95,7 @@ static struct fd *fakefs_open(struct mount *mount, char *path, int flags, int mo
     return fd;
 }
 
-static int fakefs_unlink(struct mount *mount, char *path) {
+static int fakefs_unlink(struct mount *mount, const char *path) {
     int err = realfs.unlink(mount, path);
     if (err < 0)
         return err;
@@ -103,7 +103,7 @@ static int fakefs_unlink(struct mount *mount, char *path) {
     return 0;
 }
 
-static int fakefs_stat(struct mount *mount, char *path, struct statbuf *fake_stat, bool follow_links) {
+static int fakefs_stat(struct mount *mount, const char *path, struct statbuf *fake_stat, bool follow_links) {
     struct ish_stat ishstat;
     if (!read_stat(mount, path, &ishstat))
         return _ENOENT;
@@ -126,7 +126,7 @@ static int fakefs_fstat(struct fd *fd, struct statbuf *fake_stat) {
     return fakefs_stat(fd->mount, path, fake_stat, false);
 }
 
-static ssize_t fakefs_readlink(struct mount *mount, char *path, char *buf, size_t bufsize) {
+static ssize_t fakefs_readlink(struct mount *mount, const char *path, char *buf, size_t bufsize) {
     struct ish_stat ishstat;
     if (!read_stat(mount, path, &ishstat))
         return _ENOENT;

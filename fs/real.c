@@ -38,7 +38,7 @@ const char *fix_path(const char *path) {
 
 // TODO translate goddamn flags
 
-static struct fd *realfs_open(struct mount *mount, char *path, int flags, int mode) {
+static struct fd *realfs_open(struct mount *mount, const char *path, int flags, int mode) {
     if (*path == '\0') path = ".";
     int fd_no = openat(mount->root_fd, fix_path(path), flags, mode);
     if (fd_no < 0)
@@ -83,7 +83,7 @@ static void copy_stat(struct statbuf *fake_stat, struct stat *real_stat) {
     /* fake_stat->ctime_nsec = real_stat->st_ctim.tv_nsec; */
 }
 
-int realfs_stat(struct mount *mount, char *path, struct statbuf *fake_stat, bool follow_links) {
+int realfs_stat(struct mount *mount, const char *path, struct statbuf *fake_stat, bool follow_links) {
     struct stat real_stat;
     if (*path == '\0') path = ".";
     if (fstatat(mount->root_fd, fix_path(path), &real_stat, follow_links ? 0 : AT_SYMLINK_NOFOLLOW) < 0)
@@ -100,7 +100,7 @@ int realfs_fstat(struct fd *fd, struct statbuf *fake_stat) {
     return 0;
 }
 
-static int realfs_unlink(struct mount *mount, char *path) {
+static int realfs_unlink(struct mount *mount, const char *path) {
     if (*path == '\0') path = ".";
     int res = unlinkat(mount->root_fd, fix_path(path), 0);
     if (res < 0)
@@ -108,7 +108,7 @@ static int realfs_unlink(struct mount *mount, char *path) {
     return res;
 }
 
-int realfs_access(struct mount *mount, char *path, int mode) {
+int realfs_access(struct mount *mount, const char *path, int mode) {
     int real_mode = 0;
     if (mode & AC_F) real_mode |= F_OK;
     if (mode & AC_R) real_mode |= R_OK;
@@ -181,7 +181,7 @@ int realfs_mmap(struct fd *fd, off_t offset, size_t len, int prot, int flags, vo
     return 0;
 }
 
-static ssize_t realfs_readlink(struct mount *mount, char *path, char *buf, size_t bufsize) {
+static ssize_t realfs_readlink(struct mount *mount, const char *path, char *buf, size_t bufsize) {
     if (*path == '\0') path = ".";
     ssize_t size = readlinkat(mount->root_fd, fix_path(path), buf, bufsize);
     if (size < 0)

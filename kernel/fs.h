@@ -83,16 +83,16 @@ struct fs_ops {
     // the path parameter points to MAX_PATH bytes of allocated memory, which
     // you can do whatever you want with (but make sure to return _ENAMETOOLONG
     // instead of overflowing the buffer)
-    struct fd *(*open)(struct mount *mount, char *path, int flags, int mode);
-    ssize_t (*readlink)(struct mount *mount, char *path, char *buf, size_t bufsize);
-    int (*access)(struct mount *mount, char *path, int mode);
-    int (*unlink)(struct mount *mount, char *path);
-    int (*stat)(struct mount *mount, char *path, struct statbuf *stat, bool follow_links);
+    struct fd *(*open)(struct mount *mount, const char *path, int flags, int mode);
+    ssize_t (*readlink)(struct mount *mount, const char *path, char *buf, size_t bufsize);
+    int (*access)(struct mount *mount, const char *path, int mode);
+    int (*unlink)(struct mount *mount, const char *path);
+    int (*stat)(struct mount *mount, const char *path, struct statbuf *stat, bool follow_links);
     int (*fstat)(struct fd *fd, struct statbuf *stat);
     int (*fchmod)(struct fd *fd, mode_t_ mode);
     int (*fchown)(struct fd *fd, uid_t_ owner, uid_t_ group);
     int (*flock)(struct fd *fd, int operation);
-    int (*utime)(struct mount *mount, char *path, struct timespec atime, struct timespec mtime);
+    int (*utime)(struct mount *mount, const char *path, struct timespec atime, struct timespec mtime);
 };
 
 #define NAME_MAX 255
@@ -187,9 +187,9 @@ bool path_is_normalized(const char *path);
 // real fs
 extern const struct fs_ops realfs;
 
-int realfs_stat(struct mount *mount, char *path, struct statbuf *fake_stat, bool follow_links);
+int realfs_stat(struct mount *mount, const char *path, struct statbuf *fake_stat, bool follow_links);
 int realfs_fstat(struct fd *fd, struct statbuf *fake_stat);
-int realfs_access(struct mount *mount, char *path, int mode);
+int realfs_access(struct mount *mount, const char *path, int mode);
 int realfs_statfs(struct mount *mount, struct statfsbuf *stat);
 int realfs_flock(struct fd *fd, int operation);
 extern const struct fd_ops realfs_fdops;
