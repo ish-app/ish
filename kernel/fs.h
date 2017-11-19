@@ -49,6 +49,7 @@ struct fd *generic_openat(struct fd *at, const char *path, int flags, int mode);
 struct fd *generic_dup(struct fd *fd);
 int fd_close(struct fd *fd);
 int generic_unlinkat(struct fd *at, const char *path);
+int generic_renameat(struct fd *src_at, const char *src, struct fd *dst_at, const char *dst);
 #define AC_R 4
 #define AC_W 2
 #define AC_X 1
@@ -87,6 +88,7 @@ struct fs_ops {
     ssize_t (*readlink)(struct mount *mount, const char *path, char *buf, size_t bufsize);
     int (*access)(struct mount *mount, const char *path, int mode);
     int (*unlink)(struct mount *mount, const char *path);
+    int (*rename)(struct mount *mount, const char *src, const char *dst);
     int (*stat)(struct mount *mount, const char *path, struct statbuf *stat, bool follow_links);
     int (*fstat)(struct fd *fd, struct statbuf *stat);
     int (*fchmod)(struct fd *fd, mode_t_ mode);

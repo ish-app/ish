@@ -80,6 +80,26 @@ dword_t sys_unlink(addr_t path_addr) {
     return sys_unlinkat(AT_FDCWD_, path_addr);
 }
 
+dword_t sys_renameat(fd_t src_at_f, addr_t src_addr, fd_t dst_at_f, addr_t dst_addr) {
+    char src[MAX_PATH];
+    if (user_read_string(src_addr, src, sizeof(src)))
+        return _EFAULT;
+    char dst[MAX_PATH];
+    if (user_read_string(dst_addr, dst, sizeof(dst)))
+        return _EFAULT;
+    struct fd *src_at = at_fd(src_at_f);
+    if (src_at == NULL)
+        return _EBADF;
+    struct fd *dst_at = at_fd(dst_at_f);
+    if (dst_at == NULL)
+        return _EBADF;
+    return generic_renameat(src_at, src, dst_at, dst);
+}
+
+dword_t sys_rename(addr_t src_addr, addr_t dst_addr) {
+    return sys_renameat(AT_FDCWD_, src_addr, AT_FDCWD_, dst_addr);
+}
+
 dword_t sys_close(fd_t f) {
     STRACE("close(%d)", f);
     struct fd *fd = current->files[f];

@@ -30,6 +30,7 @@ syscall_t syscall_table[] = {
     [47]  = (syscall_t) sys_getgid,
     [33]  = (syscall_t) sys_access,
     [37]  = (syscall_t) sys_kill,
+    [38]  = (syscall_t) sys_rename,
     [41]  = (syscall_t) sys_dup,
     [45]  = (syscall_t) sys_brk,
     [49]  = (syscall_t) sys_geteuid,
@@ -87,6 +88,7 @@ syscall_t syscall_table[] = {
     [295] = (syscall_t) sys_openat,
     [300] = (syscall_t) sys_fstatat64,
     [301] = (syscall_t) sys_unlinkat,
+    [302] = (syscall_t) sys_renameat,
     [320] = (syscall_t) sys_utimensat,
 };
 

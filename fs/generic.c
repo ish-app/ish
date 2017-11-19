@@ -5,6 +5,7 @@
 #include "kernel/fs.h"
 #include "fs/dev.h"
 #include "kernel/process.h"
+#include "kernel/errno.h"
 
 struct fd *fd_create() {
     struct fd *fd = malloc(sizeof(struct fd));
@@ -104,6 +105,22 @@ int generic_unlinkat(struct fd *at, const char *path_raw) {
         return err;
     struct mount *mount = find_mount_and_trim_path(path);
     return mount->fs->unlink(mount, path);
+}
+
+int generic_renameat(struct fd *src_at, const char *src_raw, struct fd *dst_at, const char *dst_raw) {
+    char src[MAX_PATH];
+    int err = path_normalize(src_at, src_raw, src, false);
+    if (err < 0)
+        return err;
+    char dst[MAX_PATH];
+    err = path_normalize(dst_at, dst_raw, dst, false);
+    if (err < 0)
+        return err;
+    struct mount *mount = find_mount_and_trim_path(src);
+    struct mount *dst_mount = find_mount_and_trim_path(dst);
+    if (mount != dst_mount)
+        return _EXDEV;
+    return mount->fs->rename(mount, src, dst);
 }
 
 ssize_t generic_readlink(const char *path_raw, char *buf, size_t bufsize) {

@@ -48,10 +48,10 @@ static datum read_meta(struct mount *mount, const char *path, const char *type) 
     return dbm_fetch(get_db(mount), key);
 }
 
-static void write_meta(struct mount *mount, const char *path, const char *type, datum data, int flags) {
+static void write_meta(struct mount *mount, const char *path, const char *type, datum data) {
     char keydata[MAX_PATH+strlen(type)+1];
     datum key = build_key(keydata, path, type);
-    dbm_store(get_db(mount), key, data, flags);
+    dbm_store(get_db(mount), key, data, DBM_REPLACE);
 }
 
 static int delete_meta(struct mount *mount, const char *path, const char *type) {
@@ -69,11 +69,11 @@ static int read_stat(struct mount *mount, const char *path, struct ish_stat *sta
     return 1;
 }
 
-static void write_stat(struct mount *mount, const char *path, struct ish_stat *stat, int flags) {
+static void write_stat(struct mount *mount, const char *path, struct ish_stat *stat) {
     datum data;
     data.dptr = (void *) stat;
     data.dsize = sizeof(struct ish_stat);
-    write_meta(mount, path, "meta", data, flags);
+    write_meta(mount, path, "meta", data);
 }
 
 static int delete_stat(struct mount *mount, const char *path) {
@@ -90,7 +90,7 @@ static struct fd *fakefs_open(struct mount *mount, const char *path, int flags, 
         ishstat.uid = current->uid;
         ishstat.gid = current->gid;
         ishstat.rdev = 0;
-        write_stat(mount, path, &ishstat, DBM_INSERT);
+        write_stat(mount, path, &ishstat);
     }
     return fd;
 }
@@ -100,6 +100,18 @@ static int fakefs_unlink(struct mount *mount, const char *path) {
     if (err < 0)
         return err;
     delete_stat(mount, path);
+    return 0;
+}
+
+static int fakefs_rename(struct mount *mount, const char *src, const char *dst) {
+    int err = realfs.rename(mount, src, dst);
+    if (err < 0)
+        return err;
+    struct ish_stat stat;
+    if (!read_stat(mount, src, &stat))
+        return _ENOENT;
+    delete_stat(mount, src);
+    write_stat(mount, dst, &stat);
     return 0;
 }
 
@@ -156,6 +168,7 @@ static int fakefs_mount(struct mount *mount) {
 const struct fs_ops fakefs = {
     .open = fakefs_open,
     .unlink = fakefs_unlink,
+    .rename = fakefs_rename,
     .stat = fakefs_stat,
     .access = realfs_access,
     .readlink = fakefs_readlink,
