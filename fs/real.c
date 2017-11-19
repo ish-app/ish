@@ -29,7 +29,7 @@ static int getpath(int fd, char *buf) {
 }
 
 const char *fix_path(const char *path) {
-    if (strcmp(path, "/") == 0)
+    if (strcmp(path, "") == 0)
         return ".";
     if (path[0] == '/')
         path++;
@@ -39,7 +39,6 @@ const char *fix_path(const char *path) {
 // TODO translate goddamn flags
 
 static struct fd *realfs_open(struct mount *mount, const char *path, int flags, int mode) {
-    if (*path == '\0') path = ".";
     int fd_no = openat(mount->root_fd, fix_path(path), flags, mode);
     if (fd_no < 0)
         return ERR_PTR(err_map(errno));
@@ -85,7 +84,6 @@ static void copy_stat(struct statbuf *fake_stat, struct stat *real_stat) {
 
 int realfs_stat(struct mount *mount, const char *path, struct statbuf *fake_stat, bool follow_links) {
     struct stat real_stat;
-    if (*path == '\0') path = ".";
     if (fstatat(mount->root_fd, fix_path(path), &real_stat, follow_links ? 0 : AT_SYMLINK_NOFOLLOW) < 0)
         return err_map(errno);
     copy_stat(fake_stat, &real_stat);
@@ -101,7 +99,6 @@ int realfs_fstat(struct fd *fd, struct statbuf *fake_stat) {
 }
 
 static int realfs_unlink(struct mount *mount, const char *path) {
-    if (*path == '\0') path = ".";
     int res = unlinkat(mount->root_fd, fix_path(path), 0);
     if (res < 0)
         return err_map(errno);
@@ -114,7 +111,6 @@ int realfs_access(struct mount *mount, const char *path, int mode) {
     if (mode & AC_R) real_mode |= R_OK;
     if (mode & AC_W) real_mode |= W_OK;
     if (mode & AC_X) real_mode |= X_OK;
-    if (*path == '\0') path = ".";
     int res = faccessat(mount->root_fd, fix_path(path), real_mode, 0);
     if (res < 0)
         return err_map(errno);
