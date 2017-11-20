@@ -100,7 +100,7 @@ int generic_access(const char *path_raw, int mode) {
 
 int generic_unlinkat(struct fd *at, const char *path_raw) {
     char path[MAX_PATH];
-    int err = path_normalize(at, path_raw, path, true);
+    int err = path_normalize(at, path_raw, path, false);
     if (err < 0)
         return err;
     struct mount *mount = find_mount_and_trim_path(path);
