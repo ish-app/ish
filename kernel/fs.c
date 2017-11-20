@@ -100,6 +100,23 @@ dword_t sys_rename(addr_t src_addr, addr_t dst_addr) {
     return sys_renameat(AT_FDCWD_, src_addr, AT_FDCWD_, dst_addr);
 }
 
+dword_t sys_symlinkat(addr_t target_addr, fd_t at_f, addr_t link_addr) {
+    char target[MAX_PATH];
+    if (user_read_string(target_addr, target, sizeof(target)))
+        return _EFAULT;
+    char link[MAX_PATH];
+    if (user_read_string(link_addr, link, sizeof(link)))
+        return _EFAULT;
+    struct fd *at = at_fd(at_f);
+    if (at == NULL)
+        return _EBADF;
+    return generic_symlinkat(target, at, link);
+}
+
+dword_t sys_symlink(addr_t target_addr, addr_t link_addr) {
+    return sys_symlinkat(target_addr, AT_FDCWD_, link_addr);
+}
+
 dword_t sys_close(fd_t f) {
     STRACE("close(%d)", f);
     struct fd *fd = current->files[f];

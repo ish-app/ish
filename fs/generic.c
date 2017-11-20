@@ -123,6 +123,15 @@ int generic_renameat(struct fd *src_at, const char *src_raw, struct fd *dst_at, 
     return mount->fs->rename(mount, src, dst);
 }
 
+int generic_symlinkat(const char *target, struct fd *at, const char *link_raw) {
+    char link[MAX_PATH];
+    int err = path_normalize(at, link_raw, link, false);
+    if (err < 0)
+        return err;
+    struct mount *mount = find_mount_and_trim_path(link);
+    return mount->fs->symlink(mount, target, link);
+}
+
 ssize_t generic_readlink(const char *path_raw, char *buf, size_t bufsize) {
     char path[MAX_PATH];
     int err = path_normalize(NULL, path_raw, path, false);

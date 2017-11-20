@@ -40,6 +40,7 @@ syscall_t syscall_table[] = {
     [63]  = (syscall_t) sys_dup2,
     [64]  = (syscall_t) sys_getppid,
     [65]  = (syscall_t) sys_getpgrp,
+    [83]  = (syscall_t) sys_symlink,
     [85]  = (syscall_t) sys_readlink,
     [90]  = (syscall_t) sys_mmap,
     [91]  = (syscall_t) sys_munmap,
@@ -89,6 +90,7 @@ syscall_t syscall_table[] = {
     [300] = (syscall_t) sys_fstatat64,
     [301] = (syscall_t) sys_unlinkat,
     [302] = (syscall_t) sys_renameat,
+    [304] = (syscall_t) sys_symlinkat,
     [320] = (syscall_t) sys_utimensat,
 };
 

@@ -112,6 +112,13 @@ static int realfs_rename(struct mount *mount, const char *src, const char *dst) 
     return err;
 }
 
+static int realfs_symlink(struct mount *mount, const char *target, const char *link) {
+    int err = symlinkat(target, mount->root_fd, link);
+    if (err < 0)
+        return err_map(errno);
+    return err;
+}
+
 int realfs_access(struct mount *mount, const char *path, int mode) {
     int real_mode = 0;
     if (mode & AC_F) real_mode |= F_OK;
@@ -231,6 +238,7 @@ const struct fs_ops realfs = {
     .open = realfs_open,
     .unlink = realfs_unlink,
     .rename = realfs_rename,
+    .symlink = realfs_symlink,
     .stat = realfs_stat,
     .access = realfs_access,
     .readlink = realfs_readlink,

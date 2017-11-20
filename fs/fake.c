@@ -115,6 +115,29 @@ static int fakefs_rename(struct mount *mount, const char *src, const char *dst) 
     return 0;
 }
 
+// fun fact: this is the only fakefs operation that doesn't call the realfs operation (so far)
+static int fakefs_symlink(struct mount *mount, const char *target, const char *link) {
+    // create a file containing the target
+    int fd = openat(mount->root_fd, fix_path(link), O_WRONLY | O_CREAT | O_EXCL, 0600);
+    if (fd < 0)
+        return err_map(errno);
+    ssize_t res = write(fd, target, strlen(target));
+    close(fd);
+    if (res < 0) {
+        unlinkat(mount->root_fd, fix_path(link), 0);
+        return err_map(errno);
+    }
+
+    // customize the stat info so it looks like a link
+    struct ish_stat ishstat;
+    ishstat.mode = S_IFLNK | 0777; // symlinks always have full permissions
+    ishstat.uid = current->uid;
+    ishstat.gid = current->gid;
+    ishstat.rdev = 0;
+    write_stat(mount, link, &ishstat);
+    return 0;
+}
+
 static int fakefs_stat(struct mount *mount, const char *path, struct statbuf *fake_stat, bool follow_links) {
     struct ish_stat ishstat;
     if (!read_stat(mount, path, &ishstat))
@@ -169,6 +192,7 @@ const struct fs_ops fakefs = {
     .open = fakefs_open,
     .unlink = fakefs_unlink,
     .rename = fakefs_rename,
+    .symlink = fakefs_symlink,
     .stat = fakefs_stat,
     .access = realfs_access,
     .readlink = fakefs_readlink,
