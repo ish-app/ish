@@ -19,7 +19,7 @@ static int adhoc_fstat(struct fd *fd, struct statbuf *stat) {
 }
 
 static int adhoc_fchmod(struct fd *fd, mode_t_ mode) {
-    fd->stat->mode = (fd->stat->mode & S_IFMT) | mode;
+    fd->stat->mode = (fd->stat->mode & S_IFMT) | (mode & ~S_IFMT);
     return 0;
 }
 

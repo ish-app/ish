@@ -44,6 +44,8 @@ fd_t fd_next(void);
 #define AT_FDCWD_ -100
 #define FD_CLOEXEC_ 1
 
+#define AT_SYMLINK_NOFOLLOW_ 0x100
+
 struct fd *generic_open(const char *path, int flags, int mode);
 struct fd *generic_openat(struct fd *at, const char *path, int flags, int mode);
 struct fd *generic_dup(struct fd *fd);
@@ -56,6 +58,7 @@ int generic_symlinkat(const char *target, struct fd *at, const char *link);
 #define AC_X 1
 #define AC_F 0
 int generic_access(const char *path, int mode);
+int generic_chownat(struct fd *at, const char *path, uid_t_ user, uid_t_ group, int flags);
 int generic_statat(struct fd *at, const char *path, struct statbuf *stat, bool follow_links);
 ssize_t generic_readlink(const char *path, char *buf, size_t bufsize);
 
@@ -82,21 +85,23 @@ extern struct mount *mounts;
 struct fs_ops {
     int (*mount)(struct mount *mount);
     int (*statfs)(struct mount *mount, struct statfsbuf *stat);
-    // the path parameter points to MAX_PATH bytes of allocated memory, which
-    // you can do whatever you want with (but make sure to return _ENAMETOOLONG
-    // instead of overflowing the buffer)
+
     struct fd *(*open)(struct mount *mount, const char *path, int flags, int mode);
     ssize_t (*readlink)(struct mount *mount, const char *path, char *buf, size_t bufsize);
     int (*access)(struct mount *mount, const char *path, int mode);
     int (*unlink)(struct mount *mount, const char *path);
     int (*rename)(struct mount *mount, const char *src, const char *dst);
     int (*symlink)(struct mount *mount, const char *target, const char *link);
+
     int (*stat)(struct mount *mount, const char *path, struct statbuf *stat, bool follow_links);
     int (*fstat)(struct fd *fd, struct statbuf *stat);
+    int (*chmod)(struct mount *mount, const char *path, mode_t_ mode);
     int (*fchmod)(struct fd *fd, mode_t_ mode);
+    int (*chown)(struct mount *mount, const char *path, uid_t_ user, uid_t_ group);
     int (*fchown)(struct fd *fd, uid_t_ owner, uid_t_ group);
-    int (*flock)(struct fd *fd, int operation);
     int (*utime)(struct mount *mount, const char *path, struct timespec atime, struct timespec mtime);
+
+    int (*flock)(struct fd *fd, int operation);
 };
 
 #define NAME_MAX 255

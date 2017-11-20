@@ -183,21 +183,63 @@ static ssize_t fakefs_readlink(struct mount *mount, const char *path, char *buf,
     return err;
 }
 
+static int fakefs_chmod(struct mount *mount, const char *path, mode_t_ mode) {
+    struct ish_stat ishstat;
+    if (!read_stat(mount, path, &ishstat))
+        return _ENOENT;
+    ishstat.mode = (ishstat.mode & S_IFMT) | (mode & ~S_IFMT);
+    write_stat(mount, path, &ishstat);
+    return 0;
+}
+
+static int fakefs_chown(struct mount *mount, const char *path, uid_t_ user, uid_t_ group) {
+    struct ish_stat ishstat;
+    if (!read_stat(mount, path, &ishstat))
+        return _ENOENT;
+    ishstat.uid = user;
+    ishstat.gid = group;
+    write_stat(mount, path, &ishstat);
+    return 0;
+}
+
+// I don't like this
+
+static int fakefs_fchmod(struct fd *fd, mode_t_ mode) {
+    char path[MAX_PATH];
+    int err = fd->ops->getpath(fd, path);
+    if (err < 0)
+        return err;
+    return fakefs_chmod(fd->mount, path, mode);
+}
+
+static int fakefs_fchown(struct fd *fd, uid_t_ user, uid_t_ group) {
+    char path[MAX_PATH];
+    int err = fd->ops->getpath(fd, path);
+    if (err < 0)
+        return err;
+    return fakefs_chown(fd->mount, path, user, group);
+}
+
 static int fakefs_mount(struct mount *mount) {
     // TODO maybe open the database here
     return realfs.mount(mount);
 }
 
 const struct fs_ops fakefs = {
+    .mount = fakefs_mount,
+    .statfs = realfs_statfs,
     .open = fakefs_open,
+    .readlink = fakefs_readlink,
+    .access = realfs_access,
     .unlink = fakefs_unlink,
     .rename = fakefs_rename,
     .symlink = fakefs_symlink,
+    
     .stat = fakefs_stat,
-    .access = realfs_access,
-    .readlink = fakefs_readlink,
     .fstat = fakefs_fstat,
     .flock = realfs_flock,
-    .statfs = realfs_statfs,
-    .mount = fakefs_mount,
+    .chmod = fakefs_chmod,
+    .fchmod = fakefs_fchmod,
+    .chown = fakefs_chown,
+    .fchown = fakefs_fchown,
 };

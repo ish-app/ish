@@ -62,8 +62,6 @@ dword_t sys_lstat64(addr_t path_addr, addr_t statbuf_addr) {
     return sys_stat_path(AT_FDCWD_, path_addr, statbuf_addr, false);
 }
 
-#define AT_SYMLINK_NOFOLLOW_ 0x100
-
 dword_t sys_fstatat64(fd_t at, addr_t path_addr, addr_t statbuf_addr, dword_t flags) {
     return sys_stat_path(at, path_addr, statbuf_addr, !(flags & AT_SYMLINK_NOFOLLOW_));
 }

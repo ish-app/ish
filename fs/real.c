@@ -98,39 +98,6 @@ int realfs_fstat(struct fd *fd, struct statbuf *fake_stat) {
     return 0;
 }
 
-static int realfs_unlink(struct mount *mount, const char *path) {
-    int res = unlinkat(mount->root_fd, fix_path(path), 0);
-    if (res < 0)
-        return err_map(errno);
-    return res;
-}
-
-static int realfs_rename(struct mount *mount, const char *src, const char *dst) {
-    int err = renameat(mount->root_fd, fix_path(src), mount->root_fd, fix_path(dst));
-    if (err < 0)
-        return err_map(errno);
-    return err;
-}
-
-static int realfs_symlink(struct mount *mount, const char *target, const char *link) {
-    int err = symlinkat(target, mount->root_fd, link);
-    if (err < 0)
-        return err_map(errno);
-    return err;
-}
-
-int realfs_access(struct mount *mount, const char *path, int mode) {
-    int real_mode = 0;
-    if (mode & AC_F) real_mode |= F_OK;
-    if (mode & AC_R) real_mode |= R_OK;
-    if (mode & AC_W) real_mode |= W_OK;
-    if (mode & AC_X) real_mode |= X_OK;
-    int res = faccessat(mount->root_fd, fix_path(path), real_mode, 0);
-    if (res < 0)
-        return err_map(errno);
-    return res;
-}
-
 ssize_t realfs_read(struct fd *fd, void *buf, size_t bufsize) {
     ssize_t res = read(fd->real_fd, buf, bufsize);
     if (res < 0)
@@ -209,6 +176,67 @@ int realfs_getpath(struct fd *fd, char *buf) {
     return 0;
 }
 
+int realfs_access(struct mount *mount, const char *path, int mode) {
+    int real_mode = 0;
+    if (mode & AC_F) real_mode |= F_OK;
+    if (mode & AC_R) real_mode |= R_OK;
+    if (mode & AC_W) real_mode |= W_OK;
+    if (mode & AC_X) real_mode |= X_OK;
+    int res = faccessat(mount->root_fd, fix_path(path), real_mode, 0);
+    if (res < 0)
+        return err_map(errno);
+    return res;
+}
+
+static int realfs_unlink(struct mount *mount, const char *path) {
+    int res = unlinkat(mount->root_fd, fix_path(path), 0);
+    if (res < 0)
+        return err_map(errno);
+    return res;
+}
+
+static int realfs_rename(struct mount *mount, const char *src, const char *dst) {
+    int err = renameat(mount->root_fd, fix_path(src), mount->root_fd, fix_path(dst));
+    if (err < 0)
+        return err_map(errno);
+    return err;
+}
+
+static int realfs_symlink(struct mount *mount, const char *target, const char *link) {
+    int err = symlinkat(target, mount->root_fd, link);
+    if (err < 0)
+        return err_map(errno);
+    return err;
+}
+
+static int realfs_chmod(struct mount *mount, const char *path, mode_t_ mode) {
+    int err = fchmodat(mount->root_fd, fix_path(path), mode, 0);
+    if (err < 0)
+        return err_map(errno);
+    return err;
+}
+
+static int realfs_fchmod(struct fd *fd, mode_t_ mode) {
+    int err = fchmod(fd->real_fd, mode);
+    if (err < 0)
+        return err_map(errno);
+    return err;
+}
+
+static int realfs_chown(struct mount *mount, const char *path, uid_t_ user, uid_t_ group) {
+    int err = fchownat(mount->root_fd, fix_path(path), user, group, 0);
+    if (err < 0)
+        return err_map(errno);
+    return err;
+}
+
+static int realfs_fchown(struct fd *fd, uid_t_ user, uid_t_ group) {
+    int err = fchown(fd->real_fd, user, group);
+    if (err < 0)
+        return err_map(errno);
+    return err;
+}
+
 int realfs_flock(struct fd *fd, int operation) {
     int real_op = 0;
     if (operation & LOCK_SH_) real_op |= LOCK_SH;
@@ -236,13 +264,18 @@ const struct fs_ops realfs = {
     .mount = realfs_mount,
     .statfs = realfs_statfs,
     .open = realfs_open,
+    .readlink = realfs_readlink,
+    .access = realfs_access,
     .unlink = realfs_unlink,
     .rename = realfs_rename,
     .symlink = realfs_symlink,
+    
     .stat = realfs_stat,
-    .access = realfs_access,
-    .readlink = realfs_readlink,
     .fstat = realfs_fstat,
+    .chmod = realfs_chmod,
+    .fchmod = realfs_fchmod,
+    .chown = realfs_chown,
+    .fchown = realfs_fchown,
     .flock = realfs_flock,
 };
 

@@ -87,6 +87,7 @@ syscall_t syscall_table[] = {
     [268] = (syscall_t) sys_statfs64,
     [269] = (syscall_t) sys_fstatfs64,
     [295] = (syscall_t) sys_openat,
+    [298] = (syscall_t) sys_fchownat,
     [300] = (syscall_t) sys_fstatat64,
     [301] = (syscall_t) sys_unlinkat,
     [302] = (syscall_t) sys_renameat,

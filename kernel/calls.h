@@ -73,6 +73,7 @@ dword_t sys_close(fd_t fd);
 dword_t sys_flock(fd_t fd, dword_t operation);
 dword_t sys_fchmod(fd_t f, dword_t mode);
 dword_t sys_fchown32(fd_t f, dword_t owner, dword_t group);
+dword_t sys_fchownat(fd_t at_f, addr_t path_addr, dword_t owner, dword_t group, int flags);
 
 // file management
 fd_t sys_open(addr_t path_addr, dword_t flags, dword_t mode);
