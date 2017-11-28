@@ -132,13 +132,13 @@ int generic_symlinkat(const char *target, struct fd *at, const char *link_raw) {
     return mount->fs->symlink(mount, target, link);
 }
 
-int generic_chownat(struct fd *at, const char *path_raw, uid_t_ user, uid_t_ group, int flags) {
+int generic_setattrat(struct fd *at, const char *path_raw, struct attr attr, bool follow_links) {
     char path[MAX_PATH];
-    int err = path_normalize(at, path_raw, path, flags & AT_SYMLINK_NOFOLLOW_ ? false : true);
+    int err = path_normalize(at, path_raw, path, follow_links);
     if (err < 0)
         return err;
     struct mount *mount = find_mount_and_trim_path(path);
-    return mount->fs->chown(mount, path, user, group);
+    return mount->fs->setattr(mount, path, attr);
 }
 
 ssize_t generic_readlink(const char *path_raw, char *buf, size_t bufsize) {

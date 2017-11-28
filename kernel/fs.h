@@ -44,6 +44,23 @@ fd_t fd_next(void);
 #define AT_FDCWD_ -100
 #define FD_CLOEXEC_ 1
 
+struct attr {
+    enum attr_type {
+        attr_uid,
+        attr_gid,
+        attr_mode,
+        attr_size,
+    } type;
+    union {
+        uid_t_ uid;
+        uid_t_ gid;
+        mode_t_ mode;
+        off_t_ size;
+    };
+};
+#define make_attr(_type, thing) \
+    ((struct attr) {.type = attr_##_type, ._type = thing})
+
 #define AT_SYMLINK_NOFOLLOW_ 0x100
 
 struct fd *generic_open(const char *path, int flags, int mode);
@@ -58,8 +75,8 @@ int generic_symlinkat(const char *target, struct fd *at, const char *link);
 #define AC_X 1
 #define AC_F 0
 int generic_access(const char *path, int mode);
-int generic_chownat(struct fd *at, const char *path, uid_t_ user, uid_t_ group, int flags);
 int generic_statat(struct fd *at, const char *path, struct statbuf *stat, bool follow_links);
+int generic_setattrat(struct fd *at, const char *path, struct attr attr, bool follow_links);
 ssize_t generic_readlink(const char *path, char *buf, size_t bufsize);
 
 // Converts an at argument to a system call to a struct fd *, returns NULL if you pass a bad fd
@@ -95,10 +112,8 @@ struct fs_ops {
 
     int (*stat)(struct mount *mount, const char *path, struct statbuf *stat, bool follow_links);
     int (*fstat)(struct fd *fd, struct statbuf *stat);
-    int (*chmod)(struct mount *mount, const char *path, mode_t_ mode);
-    int (*fchmod)(struct fd *fd, mode_t_ mode);
-    int (*chown)(struct mount *mount, const char *path, uid_t_ user, uid_t_ group);
-    int (*fchown)(struct fd *fd, uid_t_ owner, uid_t_ group);
+    int (*setattr)(struct mount *mount, const char *path, struct attr attr);
+    int (*fsetattr)(struct fd *fd, struct attr attr);
     int (*utime)(struct mount *mount, const char *path, struct timespec atime, struct timespec mtime);
 
     int (*flock)(struct fd *fd, int operation);
@@ -114,13 +129,13 @@ struct dir_entry {
 struct fd_ops {
     ssize_t (*read)(struct fd *fd, void *buf, size_t bufsize);
     ssize_t (*write)(struct fd *fd, const void *buf, size_t bufsize);
-    off_t (*lseek)(struct fd *fd, off_t off, int whence);
+    off_t_ (*lseek)(struct fd *fd, off_t_ off, int whence);
 
     // Reads a directory entry from the stream
     int (*readdir)(struct fd *fd, struct dir_entry *entry);
 
     // memory returned must be allocated with mmap, as it is freed with munmap
-    int (*mmap)(struct fd *fd, off_t offset, size_t len, int prot, int flags, void **mem_out);
+    int (*mmap)(struct fd *fd, off_t_ offset, size_t len, int prot, int flags, void **mem_out);
 
     // returns a bitmask of operations that won't block
     int (*poll)(struct fd *fd);

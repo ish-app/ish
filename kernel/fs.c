@@ -190,13 +190,12 @@ dword_t sys_writev(fd_t fd_no, addr_t iovec_addr, dword_t iovec_count) {
     return count;
 }
 
-// TODO doesn't work very well if off_t isn't 64 bits
 dword_t sys__llseek(fd_t f, dword_t off_high, dword_t off_low, addr_t res_addr, dword_t whence) {
     struct fd *fd = current->files[f];
     if (fd == NULL)
         return _EBADF;
-    off_t off = ((off_t) off_high << 32) | off_low;
-    off_t res = fd->ops->lseek(fd, off, whence);
+    off_t_ off = ((off_t_) off_high << 32) | off_low;
+    off_t_ res = fd->ops->lseek(fd, off, whence);
     if (res < 0)
         return res;
     if (user_put(res_addr, res))
@@ -390,14 +389,25 @@ dword_t sys_fchmod(fd_t f, dword_t mode) {
     if (fd == NULL)
         return _EBADF;
     mode &= ~S_IFMT;
-    return fd->mount->fs->fchmod(fd, mode);
+    return fd->mount->fs->fsetattr(fd, make_attr(mode, mode));
 }
 
 dword_t sys_fchown32(fd_t f, dword_t owner, dword_t group) {
     struct fd *fd = current->files[f];
     if (fd == NULL)
         return _EBADF;
-    return fd->mount->fs->fchown(fd, owner, group);
+    int err;
+    if (owner != -1) {
+        err = fd->mount->fs->fsetattr(fd, make_attr(uid, owner));
+        if (err < 0)
+            return err;
+    }
+    if (group != -1) {
+        err = fd->mount->fs->fsetattr(fd, make_attr(gid, group));
+        if (err < 0)
+            return err;
+    }
+    return 0;
 }
 
 dword_t sys_fchownat(fd_t at_f, addr_t path_addr, dword_t owner, dword_t group, int flags) {
@@ -405,7 +415,19 @@ dword_t sys_fchownat(fd_t at_f, addr_t path_addr, dword_t owner, dword_t group, 
     if (user_read_string(path_addr, path, sizeof(path)))
         return _EFAULT;
     struct fd *at = at_fd(at_f);
-    return generic_chownat(at, path, owner, group, flags);
+    int err;
+    bool follow_links = flags & AT_SYMLINK_NOFOLLOW_ ? false : true;
+    if (owner != -1) {
+        err = generic_setattrat(at, path, make_attr(uid, owner), follow_links);
+        if (err < 0)
+            return err;
+    }
+    if (group != -1) {
+        err = generic_setattrat(at, path, make_attr(gid, group), follow_links);
+        if (err < 0)
+            return err;
+    }
+    return 0;
 }
 
 // a few stubs

@@ -1,4 +1,5 @@
 #include <sys/stat.h>
+#include "debug.h"
 #include "kernel/fs.h"
 
 static struct mount adhoc_mount;
@@ -18,21 +19,26 @@ static int adhoc_fstat(struct fd *fd, struct statbuf *stat) {
     return 0;
 }
 
-static int adhoc_fchmod(struct fd *fd, mode_t_ mode) {
-    fd->stat->mode = (fd->stat->mode & S_IFMT) | (mode & ~S_IFMT);
-    return 0;
-}
-
-static int adhoc_fchown(struct fd *fd, uid_t_ owner, uid_t_ group) {
-    fd->stat->uid = owner;
-    fd->stat->gid = group;
+static int adhoc_fsetattr(struct fd *fd, struct attr attr) {
+    switch (attr.type) {
+        case attr_uid:
+            fd->stat->uid = attr.uid;
+            break;
+        case attr_gid:
+            fd->stat->gid = attr.gid;
+            break;
+        case attr_mode:
+            fd->stat->mode = (fd->stat->mode & S_IFMT) | (attr.mode & ~S_IFMT);
+            break;
+        default:
+            TODO("other attrs");
+    }
     return 0;
 }
 
 static const struct fs_ops adhoc_fs = {
     .fstat = adhoc_fstat,
-    .fchmod = adhoc_fchmod,
-    .fchown = adhoc_fchown,
+    .fsetattr = adhoc_fsetattr
 };
 
 static struct mount adhoc_mount = {

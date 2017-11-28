@@ -209,29 +209,44 @@ static int realfs_symlink(struct mount *mount, const char *target, const char *l
     return err;
 }
 
-static int realfs_chmod(struct mount *mount, const char *path, mode_t_ mode) {
-    int err = fchmodat(mount->root_fd, fix_path(path), mode, 0);
+static int realfs_setattr(struct mount *mount, const char *path, struct attr attr) {
+    path = fix_path(path);
+    int root = mount->root_fd;
+    int err;
+    switch (attr.type) {
+        case attr_uid:
+            err = fchownat(root, path, attr.uid, -1, 0);
+            break;
+        case attr_gid:
+            err = fchownat(root, path, attr.gid, -1, 0);
+            break;
+        case attr_mode:
+            err = fchmodat(root, path, attr.mode, 0);
+            break;
+        default:
+            TODO("other attrs");
+    }
     if (err < 0)
         return err_map(errno);
     return err;
 }
 
-static int realfs_fchmod(struct fd *fd, mode_t_ mode) {
-    int err = fchmod(fd->real_fd, mode);
-    if (err < 0)
-        return err_map(errno);
-    return err;
-}
-
-static int realfs_chown(struct mount *mount, const char *path, uid_t_ user, uid_t_ group) {
-    int err = fchownat(mount->root_fd, fix_path(path), user, group, 0);
-    if (err < 0)
-        return err_map(errno);
-    return err;
-}
-
-static int realfs_fchown(struct fd *fd, uid_t_ user, uid_t_ group) {
-    int err = fchown(fd->real_fd, user, group);
+static int realfs_fsetattr(struct fd *fd, struct attr attr) {
+    int real_fd = fd->real_fd;
+    int err;
+    switch (attr.type) {
+        case attr_uid:
+            err = fchown(real_fd, attr.uid, -1);
+            break;
+        case attr_gid:
+            err = fchown(real_fd, attr.gid, -1);
+            break;
+        case attr_mode:
+            err = fchmod(real_fd, attr.mode);
+            break;
+        default:
+            TODO("other attrs");
+    }
     if (err < 0)
         return err_map(errno);
     return err;
@@ -272,10 +287,8 @@ const struct fs_ops realfs = {
     
     .stat = realfs_stat,
     .fstat = realfs_fstat,
-    .chmod = realfs_chmod,
-    .fchmod = realfs_fchmod,
-    .chown = realfs_chown,
-    .fchown = realfs_fchown,
+    .setattr = realfs_setattr,
+    .fsetattr = realfs_fsetattr,
     .flock = realfs_flock,
 };
 

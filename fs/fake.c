@@ -8,6 +8,7 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 
+#include "debug.h"
 #include "kernel/errno.h"
 #include "kernel/process.h"
 #include "kernel/fs.h"
@@ -161,6 +162,34 @@ static int fakefs_fstat(struct fd *fd, struct statbuf *fake_stat) {
     return fakefs_stat(fd->mount, path, fake_stat, false);
 }
 
+static int fakefs_setattr(struct mount *mount, const char *path, struct attr attr) {
+    struct ish_stat ishstat;
+    if (!read_stat(mount, path, &ishstat))
+        return _ENOENT;
+    switch (attr.type) {
+        case attr_uid:
+            ishstat.uid = attr.uid;
+            break;
+        case attr_gid:
+            ishstat.gid = attr.gid;
+            break;
+        case attr_mode:
+            ishstat.mode = (ishstat.mode & S_IFMT) | (attr.mode & ~S_IFMT);
+            break;
+        default:
+            TODO("other attrs");
+    }
+    return 0;
+}
+
+static int fakefs_fsetattr(struct fd *fd, struct attr attr) {
+    char path[MAX_PATH];
+    int err = fd->ops->getpath(fd, path);
+    if (err < 0)
+        return err;
+    return fakefs_setattr(fd->mount, path, attr);
+}
+
 static ssize_t fakefs_readlink(struct mount *mount, const char *path, char *buf, size_t bufsize) {
     struct ish_stat ishstat;
     if (!read_stat(mount, path, &ishstat))
@@ -183,43 +212,6 @@ static ssize_t fakefs_readlink(struct mount *mount, const char *path, char *buf,
     return err;
 }
 
-static int fakefs_chmod(struct mount *mount, const char *path, mode_t_ mode) {
-    struct ish_stat ishstat;
-    if (!read_stat(mount, path, &ishstat))
-        return _ENOENT;
-    ishstat.mode = (ishstat.mode & S_IFMT) | (mode & ~S_IFMT);
-    write_stat(mount, path, &ishstat);
-    return 0;
-}
-
-static int fakefs_chown(struct mount *mount, const char *path, uid_t_ user, uid_t_ group) {
-    struct ish_stat ishstat;
-    if (!read_stat(mount, path, &ishstat))
-        return _ENOENT;
-    ishstat.uid = user;
-    ishstat.gid = group;
-    write_stat(mount, path, &ishstat);
-    return 0;
-}
-
-// I don't like this
-
-static int fakefs_fchmod(struct fd *fd, mode_t_ mode) {
-    char path[MAX_PATH];
-    int err = fd->ops->getpath(fd, path);
-    if (err < 0)
-        return err;
-    return fakefs_chmod(fd->mount, path, mode);
-}
-
-static int fakefs_fchown(struct fd *fd, uid_t_ user, uid_t_ group) {
-    char path[MAX_PATH];
-    int err = fd->ops->getpath(fd, path);
-    if (err < 0)
-        return err;
-    return fakefs_chown(fd->mount, path, user, group);
-}
-
 static int fakefs_mount(struct mount *mount) {
     // TODO maybe open the database here
     return realfs.mount(mount);
@@ -238,8 +230,6 @@ const struct fs_ops fakefs = {
     .stat = fakefs_stat,
     .fstat = fakefs_fstat,
     .flock = realfs_flock,
-    .chmod = fakefs_chmod,
-    .fchmod = fakefs_fchmod,
-    .chown = fakefs_chown,
-    .fchown = fakefs_fchown,
+    .setattr = fakefs_setattr,
+    .fsetattr = fakefs_fsetattr,
 };
