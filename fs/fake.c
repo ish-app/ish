@@ -194,6 +194,19 @@ static int fakefs_fsetattr(struct fd *fd, struct attr attr) {
     return fakefs_setattr(fd->mount, path, attr);
 }
 
+static int fakefs_mkdir(struct mount *mount, const char *path, mode_t_ mode) {
+    int err = realfs.mkdir(mount, path, 0600);
+    if (err < 0)
+        return err;
+    struct ish_stat ishstat;
+    ishstat.mode = mode | S_IFDIR;
+    ishstat.uid = current->uid;
+    ishstat.gid = current->gid;
+    ishstat.rdev = 0;
+    write_stat(mount, path, &ishstat);
+    return 0;
+}
+
 static ssize_t fakefs_readlink(struct mount *mount, const char *path, char *buf, size_t bufsize) {
     struct ish_stat ishstat;
     if (!read_stat(mount, path, &ishstat))
@@ -236,4 +249,6 @@ const struct fs_ops fakefs = {
     .flock = realfs_flock,
     .setattr = fakefs_setattr,
     .fsetattr = fakefs_fsetattr,
+
+    .mkdir = fakefs_mkdir,
 };

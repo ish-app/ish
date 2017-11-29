@@ -256,6 +256,13 @@ static int realfs_fsetattr(struct fd *fd, struct attr attr) {
     return err;
 }
 
+static int realfs_mkdir(struct mount *mount, const char *path, mode_t_ mode) {
+    int err = mkdirat(mount->root_fd, fix_path(path), mode);
+    if (err < 0)
+        return err_map(errno);
+    return 0;
+}
+
 int realfs_flock(struct fd *fd, int operation) {
     int real_op = 0;
     if (operation & LOCK_SH_) real_op |= LOCK_SH;
@@ -294,6 +301,8 @@ const struct fs_ops realfs = {
     .setattr = realfs_setattr,
     .fsetattr = realfs_fsetattr,
     .flock = realfs_flock,
+
+    .mkdir = realfs_mkdir,
 };
 
 const struct fd_ops realfs_fdops = {

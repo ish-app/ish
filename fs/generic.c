@@ -149,3 +149,12 @@ ssize_t generic_readlink(const char *path_raw, char *buf, size_t bufsize) {
     struct mount *mount = find_mount_and_trim_path(path);
     return mount->fs->readlink(mount, path, buf, bufsize);
 }
+
+int generic_mkdirat(struct fd *at, const char *path_raw, mode_t_ mode) {
+    char path[MAX_PATH];
+    int err = path_normalize(at, path_raw, path, true);
+    if (err < 0)
+        return err;
+    struct mount *mount = find_mount_and_trim_path(path);
+    return mount->fs->mkdir(mount, path, mode);
+}

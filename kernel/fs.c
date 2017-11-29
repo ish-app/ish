@@ -455,6 +455,20 @@ dword_t sys_fallocate(fd_t f, dword_t mode, dword_t offset_low, dword_t offset_h
     return fd->mount->fs->fsetattr(fd, make_attr(size, offset + len));
 }
 
+dword_t sys_mkdirat(fd_t at_f, addr_t path_addr, mode_t_ mode) {
+    char path[MAX_PATH];
+    if (user_read_string(path_addr, path, sizeof(path)))
+        return _EFAULT;
+    struct fd *at = at_fd(at_f);
+    if (at == NULL)
+        return _EBADF;
+    return generic_mkdirat(at, path, mode);
+}
+
+dword_t sys_mkdir(addr_t path_addr, mode_t_ mode) {
+    return sys_mkdirat(AT_FDCWD_, path_addr, mode);
+}
+
 // a few stubs
 dword_t sys_sendfile(fd_t out_fd, fd_t in_fd, addr_t offset_addr, dword_t count) {
     return _EINVAL;

@@ -78,6 +78,7 @@ int generic_access(const char *path, int mode);
 int generic_statat(struct fd *at, const char *path, struct statbuf *stat, bool follow_links);
 int generic_setattrat(struct fd *at, const char *path, struct attr attr, bool follow_links);
 ssize_t generic_readlink(const char *path, char *buf, size_t bufsize);
+int generic_mkdirat(struct fd *at, const char *path, mode_t_ mode);
 
 // Converts an at argument to a system call to a struct fd *, returns NULL if you pass a bad fd
 struct fd *at_fd(fd_t fd);
@@ -115,6 +116,8 @@ struct fs_ops {
     int (*setattr)(struct mount *mount, const char *path, struct attr attr);
     int (*fsetattr)(struct fd *fd, struct attr attr);
     int (*utime)(struct mount *mount, const char *path, struct timespec atime, struct timespec mtime);
+
+    int (*mkdir)(struct mount *mount, const char *path, mode_t_ mode);
 
     int (*flock)(struct fd *fd, int operation);
 };
