@@ -446,6 +446,15 @@ dword_t sys_ftruncate64(fd_t f, dword_t size_low, dword_t size_high) {
     return fd->mount->fs->fsetattr(fd, make_attr(size, size));
 }
 
+dword_t sys_fallocate(fd_t f, dword_t mode, dword_t offset_low, dword_t offset_high, dword_t len_low, dword_t len_high) {
+    off_t_ offset = ((off_t_) offset_high << 32) | offset_low;
+    off_t_ len = ((off_t_) len_high << 32) | len_low;
+    struct fd *fd = current->files[f];
+    if (fd == NULL)
+        return _EBADF;
+    return fd->mount->fs->fsetattr(fd, make_attr(size, offset + len));
+}
+
 // a few stubs
 dword_t sys_sendfile(fd_t out_fd, fd_t in_fd, addr_t offset_addr, dword_t count) {
     return _EINVAL;

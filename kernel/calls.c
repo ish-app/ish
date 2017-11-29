@@ -95,6 +95,7 @@ syscall_t syscall_table[] = {
     [302] = (syscall_t) sys_renameat,
     [304] = (syscall_t) sys_symlinkat,
     [320] = (syscall_t) sys_utimensat,
+    [324] = (syscall_t) sys_fallocate,
 };
 
 void handle_interrupt(struct cpu_state *cpu, int interrupt) {
