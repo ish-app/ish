@@ -96,6 +96,7 @@ syscall_t syscall_table[] = {
     [301] = (syscall_t) sys_unlinkat,
     [302] = (syscall_t) sys_renameat,
     [304] = (syscall_t) sys_symlinkat,
+    [306] = (syscall_t) sys_fchmodat,
     [320] = (syscall_t) sys_utimensat,
     [324] = (syscall_t) sys_fallocate,
 };
