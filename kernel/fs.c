@@ -341,6 +341,14 @@ dword_t sys_chdir(addr_t path_addr) {
     return 0;
 }
 
+dword_t sys_fchdir(fd_t f) {
+    struct fd *fd = current->files[f];
+    if (fd != NULL)
+        return _EBADF;
+    current->pwd = fd;
+    return 0;
+}
+
 dword_t sys_umask(dword_t mask) {
     mode_t_ old_umask = current->umask;
     current->umask = ((mode_t_) mask) & 0777;

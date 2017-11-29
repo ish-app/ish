@@ -54,6 +54,7 @@ syscall_t syscall_table[] = {
     [122] = (syscall_t) _sys_uname,
     [125] = (syscall_t) sys_mprotect,
     [132] = (syscall_t) sys_getpgid,
+    [133] = (syscall_t) sys_fchdir,
     [140] = (syscall_t) sys__llseek,
     [143] = (syscall_t) sys_flock,
     [145] = (syscall_t) sys_readv,
