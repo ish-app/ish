@@ -1,6 +1,7 @@
 #include <sys/stat.h>
 #include "debug.h"
 #include "kernel/fs.h"
+#include "kernel/errno.h"
 
 static struct mount adhoc_mount;
 
@@ -30,8 +31,8 @@ static int adhoc_fsetattr(struct fd *fd, struct attr attr) {
         case attr_mode:
             fd->stat->mode = (fd->stat->mode & S_IFMT) | (attr.mode & ~S_IFMT);
             break;
-        default:
-            TODO("other attrs");
+        case attr_size:
+            return _EINVAL;
     }
     return 0;
 }

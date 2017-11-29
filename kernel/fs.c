@@ -430,6 +430,22 @@ dword_t sys_fchownat(fd_t at_f, addr_t path_addr, dword_t owner, dword_t group, 
     return 0;
 }
 
+dword_t sys_truncate64(addr_t path_addr, dword_t size_low, dword_t size_high) {
+    off_t_ size = ((off_t_) size_high << 32) | size_low;
+    char path[MAX_PATH];
+    if (user_read_string(path_addr, path, sizeof(path)))
+        return _EFAULT;
+    return generic_setattrat(current->pwd, path, make_attr(size, size), true);
+}
+
+dword_t sys_ftruncate64(fd_t f, dword_t size_low, dword_t size_high) {
+    off_t_ size = ((off_t_) size_high << 32) | size_low;
+    struct fd *fd = current->files[f];
+    if (fd == NULL)
+        return _EBADF;
+    return fd->mount->fs->fsetattr(fd, make_attr(size, size));
+}
+
 // a few stubs
 dword_t sys_sendfile(fd_t out_fd, fd_t in_fd, addr_t offset_addr, dword_t count) {
     return _EINVAL;

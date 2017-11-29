@@ -223,6 +223,9 @@ static int realfs_setattr(struct mount *mount, const char *path, struct attr att
         case attr_mode:
             err = fchmodat(root, path, attr.mode, 0);
             break;
+        case attr_size:
+            err = truncate(fix_path(path), attr.size);
+            break;
         default:
             TODO("other attrs");
     }
@@ -244,8 +247,9 @@ static int realfs_fsetattr(struct fd *fd, struct attr attr) {
         case attr_mode:
             err = fchmod(real_fd, attr.mode);
             break;
-        default:
-            TODO("other attrs");
+        case attr_size:
+            err = ftruncate(real_fd, attr.size);
+            break;
     }
     if (err < 0)
         return err_map(errno);
