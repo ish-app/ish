@@ -473,7 +473,13 @@ dword_t sys_fallocate(fd_t f, dword_t mode, dword_t offset_low, dword_t offset_h
     struct fd *fd = current->files[f];
     if (fd == NULL)
         return _EBADF;
-    return fd->mount->fs->fsetattr(fd, make_attr(size, offset + len));
+    struct statbuf statbuf;
+    int err = fd->mount->fs->fstat(fd, &statbuf);
+    if (err < 0)
+        return err;
+    if (offset + len > statbuf.size)
+        return fd->mount->fs->fsetattr(fd, make_attr(size, offset + len));
+    return 0;
 }
 
 dword_t sys_mkdirat(fd_t at_f, addr_t path_addr, mode_t_ mode) {
