@@ -35,6 +35,7 @@ syscall_t syscall_table[] = {
     [41]  = (syscall_t) sys_dup,
     [45]  = (syscall_t) sys_brk,
     [49]  = (syscall_t) sys_geteuid,
+    [52]  = (syscall_t) sys_umount2,
     [54]  = (syscall_t) sys_ioctl,
     [57]  = (syscall_t) sys_setpgid,
     [60]  = (syscall_t) sys_umask,

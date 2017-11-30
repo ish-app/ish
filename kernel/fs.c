@@ -506,5 +506,8 @@ dword_t sys_sendfile64(fd_t out_fd, fd_t in_fd, addr_t offset_addr, dword_t coun
 dword_t sys_mount(addr_t source_addr, addr_t target_addr, addr_t type_addr, dword_t flags, addr_t data_addr) {
     return _EINVAL; // I'm sorry, we do not support this action at this time.
 }
+dword_t sys_umount2(addr_t target_addr, dword_t flags) {
+    return _EINVAL; // I'm sorry, we do not support this action at this time.
+}
 
 struct mount *mounts;
