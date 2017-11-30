@@ -343,7 +343,7 @@ dword_t sys_chdir(addr_t path_addr) {
 dword_t sys_fchdir(fd_t f) {
     STRACE("fchdir(%d)", f);
     struct fd *fd = current->files[f];
-    if (fd != NULL)
+    if (fd == NULL)
         return _EBADF;
     current->pwd = fd;
     return 0;
