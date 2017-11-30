@@ -75,7 +75,7 @@ fail_free_proc:
 // ecx = stack
 // edx, esi, edi = unimplemented garbage
 dword_t sys_clone(dword_t flags, addr_t stack, addr_t ptid, addr_t tls, addr_t ctid) {
-    STRACE("clone()");
+    STRACE("clone(%x, 0x%x, blah, blah, blah)", flags, stack);
     if (ptid != 0 || tls != 0) {
         FIXME("clone with ptid or ts not null");
         return _EINVAL;
@@ -86,7 +86,8 @@ dword_t sys_clone(dword_t flags, addr_t stack, addr_t ptid, addr_t tls, addr_t c
     }
 
     if (stack == 0)
-        stack = current->cpu.esp;
+        TODO("clone with nonzero stack");
+        // stack = current->cpu.esp;
 
     struct process *proc = process_create();
     if (proc == NULL)
