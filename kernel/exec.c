@@ -25,6 +25,8 @@ static unsigned count_args(char *const args[]);
 
 static int read_header(struct fd *fd, struct elf_header *header) {
     int err;
+    if (fd->ops->lseek(fd, 0, SEEK_SET))
+        return _EIO;
     if ((err = fd->ops->read(fd, header, sizeof(*header))) != sizeof(*header)) {
         if (err != 0)
             return _EIO;
@@ -103,19 +105,17 @@ static int load_entry(struct prg_header ph, addr_t bias, struct fd *fd) {
     }
     return 0;
 }
-int sys_execve(const char *file, char *const argv[], char *const envp[]) {
+
+static int elf_exec(struct fd *fd, const char *file, char *const argv[], char *const envp[]) {
     int err = 0;
 
-    // open the file and read the headers
-    struct fd *fd = generic_open(file, O_RDONLY, 0);
-    if (IS_ERR(fd))
-        return PTR_ERR(fd);
+    // read the headers
     struct elf_header header;
     if ((err = read_header(fd, &header)) < 0)
-        goto out_free_fd;
+        return err;
     struct prg_header *ph;
     if ((err = read_prg_headers(fd, header, &ph)) < 0)
-        goto out_free_fd;
+        return err;
 
     // look for an interpreter
     char *interp_name = NULL;
@@ -359,8 +359,6 @@ out_free_interp:
         interp_fd->ops->close(interp_fd);
 out_free_ph:
     free(ph);
-out_free_fd:
-    fd->ops->close(fd);
     return err;
 
 beyond_hope:
@@ -410,6 +408,80 @@ static inline int user_memset(addr_t start, dword_t len, byte_t val) {
     while (len--)
         if (user_put(start++, val))
             return 1;
+    return 0;
+}
+
+static int shebang_exec(struct fd *fd, const char *file, char *const argv[], char *const envp[]) {
+    // read the first 128 bytes to get the shebang line out of
+    if (fd->ops->lseek(fd, 0, SEEK_SET))
+        return _EIO;
+    char header[128];
+    int size = fd->ops->read(fd, header, sizeof(header) - 1);
+    if (size < 0)
+        return _EIO;
+    header[size] = '\0';
+
+    // only look at the first line
+    char *newline = strchr(header, '\n');
+    if (newline == NULL)
+        return _ENOEXEC;
+    *newline = '\0';
+
+    // format: #![spaces]interpreter[spaces]argument[spaces]
+    char *p = header;
+    if (p[0] != '#' || p[1] != '!')
+        return _ENOEXEC;
+    p += 2;
+    while (*p == ' ')
+        p++;
+    if (*p == '\0')
+        return _ENOEXEC;
+
+    char *interpreter = p;
+    while (*p != ' ' && *p != '\0')
+        p++;
+    if (*p != '\0') {
+        *p++ = '\0';
+        while (*p == ' ')
+            p++;
+    }
+
+    char *argument = p;
+    // strip trailing whitespace
+    p = strchr(p, '\0') - 1;
+    while (*p == ' ')
+        *p-- = '\0';
+    if (*argument == '\0')
+        argument = NULL;
+
+    int args_extra = 2;
+    if (argument)
+        args_extra++;
+    char *real_argv[count_args(argv) + args_extra];
+    real_argv[0] = interpreter;
+    if (argument)
+        real_argv[1] = argument;
+    real_argv[args_extra - 1] = (char *) file; // maybe you'll have better luck getting rid of this cast
+    memcpy(real_argv + args_extra, argv + 1, (count_args(argv)) * sizeof(argv[0]));
+    return sys_execve(interpreter, real_argv, envp);
+}
+
+int sys_execve(const char *file, char *const argv[], char *const envp[]) {
+    struct fd *fd = generic_open(file, O_RDONLY, 0);
+    if (IS_ERR(fd))
+        return PTR_ERR(fd);
+
+    int err = elf_exec(fd, file, argv, envp);
+    if (err != _ENOEXEC) {
+        fd_close(fd);
+        return err;
+    }
+    err = shebang_exec(fd, file, argv, envp);
+    if (err != _ENOEXEC) {
+        fd_close(fd);
+        return err;
+    }
+    fd_close(fd);
     return 0;
 }
 
