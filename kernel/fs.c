@@ -35,7 +35,7 @@ fd_t sys_openat(fd_t at_f, addr_t path_addr, dword_t flags, dword_t mode) {
     STRACE("openat(%d, \"%s\", 0x%x, 0x%x)", at_f, path, flags, mode);
 
     if (flags & O_CREAT_)
-        mode &= ~current->umask;
+        mode &= ~(current->umask & 0777);
 
     fd_t fd_no = fd_next();
     if (fd_no == -1)
@@ -489,6 +489,7 @@ dword_t sys_mkdirat(fd_t at_f, addr_t path_addr, mode_t_ mode) {
     struct fd *at = at_fd(at_f);
     if (at == NULL)
         return _EBADF;
+    mode &= ~(current->umask & 0777);
     return generic_mkdirat(at, path, mode);
 }
 
