@@ -133,13 +133,12 @@ dword_t sys_close(fd_t f) {
 }
 
 dword_t sys_read(fd_t fd_no, addr_t buf_addr, dword_t size) {
+    STRACE("read(%d, 0x%x, %d)", fd_no, buf_addr, size);
     char buf[size+1];
     struct fd *fd = current->files[fd_no];
     if (fd == NULL)
         return _EBADF;
     int res = fd->ops->read(fd, buf, size);
-    buf[size] = 0; // null termination for nice debug output
-    STRACE("read(%d, \"%s\", %d)", fd_no, buf, size);
     if (res >= 0)
         if (user_write(buf_addr, buf, res))
             return _EFAULT;
@@ -164,11 +163,10 @@ dword_t sys_readv(fd_t fd_no, addr_t iovec_addr, dword_t iovec_count) {
 }
 
 dword_t sys_write(fd_t fd_no, addr_t buf_addr, dword_t size) {
+    STRACE("write(%d, 0x%x, %d)", fd_no, buf_addr, size);
     char buf[size+1];
     if (user_read(buf_addr, buf, size))
         return _EFAULT;
-    buf[size] = 0; // null termination for nice debug output
-    STRACE("write(%d, \"%s\", %d)", fd_no, buf, size);
     struct fd *fd = current->files[fd_no];
     if (fd == NULL)
         return _EBADF;
@@ -324,6 +322,7 @@ dword_t sys_chdir(addr_t path_addr) {
     char path[MAX_PATH];
     if (user_read_string(path_addr, path, sizeof(path)))
         return _EFAULT;
+    STRACE("chdir(\"%s\")", path);
 
     // TODO only normalize the path once
 
@@ -342,6 +341,7 @@ dword_t sys_chdir(addr_t path_addr) {
 }
 
 dword_t sys_fchdir(fd_t f) {
+    STRACE("fchdir(%d)", f);
     struct fd *fd = current->files[f];
     if (fd != NULL)
         return _EBADF;
