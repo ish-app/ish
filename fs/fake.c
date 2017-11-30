@@ -82,7 +82,7 @@ static int delete_stat(struct mount *mount, const char *path) {
 }
 
 static struct fd *fakefs_open(struct mount *mount, const char *path, int flags, int mode) {
-    struct fd *fd = realfs.open(mount, path, flags, mode);
+    struct fd *fd = realfs.open(mount, path, flags, 0644);
     if (IS_ERR(fd))
         return fd;
     if (flags & O_CREAT_) {
@@ -116,10 +116,9 @@ static int fakefs_rename(struct mount *mount, const char *src, const char *dst) 
     return 0;
 }
 
-// fun fact: this is the only fakefs operation that doesn't call the realfs operation (so far)
 static int fakefs_symlink(struct mount *mount, const char *target, const char *link) {
     // create a file containing the target
-    int fd = openat(mount->root_fd, fix_path(link), O_WRONLY | O_CREAT | O_EXCL, 0600);
+    int fd = openat(mount->root_fd, fix_path(link), O_WRONLY | O_CREAT | O_EXCL, 0644);
     if (fd < 0)
         return err_map(errno);
     ssize_t res = write(fd, target, strlen(target));
@@ -195,7 +194,7 @@ static int fakefs_fsetattr(struct fd *fd, struct attr attr) {
 }
 
 static int fakefs_mkdir(struct mount *mount, const char *path, mode_t_ mode) {
-    int err = realfs.mkdir(mount, path, 0600);
+    int err = realfs.mkdir(mount, path, 0755);
     if (err < 0)
         return err;
     struct ish_stat ishstat;
