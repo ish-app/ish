@@ -318,25 +318,40 @@ dword_t sys_getcwd(addr_t buf_addr, dword_t size) {
     return size;
 }
 
+static struct fd *open_dir(const char *path) {
+    struct statbuf stat;
+    int err = generic_statat(NULL, path, &stat, true);
+    if (err < 0)
+        return ERR_PTR(err);
+    if (!(stat.mode & S_IFDIR))
+        return ERR_PTR(_ENOTDIR);
+
+    return generic_open(path, O_RDONLY_, 0);
+}
+
 dword_t sys_chdir(addr_t path_addr) {
     char path[MAX_PATH];
     if (user_read_string(path_addr, path, sizeof(path)))
         return _EFAULT;
     STRACE("chdir(\"%s\")", path);
 
-    // TODO only normalize the path once
-
-    struct statbuf stat;
-    int err = generic_statat(NULL, path, &stat, true);
-    if (err < 0)
-        return err;
-    if (!(stat.mode & S_IFDIR))
-        return _ENOTDIR;
-
-    struct fd *dir = generic_open(path, O_RDONLY_, 0);
+    struct fd *dir = open_dir(path);
     if (IS_ERR(dir))
         return PTR_ERR(dir);
     current->pwd = dir;
+    return 0;
+}
+
+dword_t sys_chroot(addr_t path_addr) {
+    char path[MAX_PATH];
+    if (user_read_string(path_addr, path, sizeof(path)))
+        return _EFAULT;
+    STRACE("chroot(\"%s\")", path);
+
+    struct fd *dir = open_dir(path);
+    if (IS_ERR(dir))
+        return PTR_ERR(dir);
+    current->root = dir;
     return 0;
 }
 

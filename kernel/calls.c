@@ -39,6 +39,7 @@ syscall_t syscall_table[] = {
     [54]  = (syscall_t) sys_ioctl,
     [57]  = (syscall_t) sys_setpgid,
     [60]  = (syscall_t) sys_umask,
+    [61]  = (syscall_t) sys_chroot,
     [63]  = (syscall_t) sys_dup2,
     [64]  = (syscall_t) sys_getppid,
     [65]  = (syscall_t) sys_getpgrp,
