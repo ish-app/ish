@@ -26,6 +26,7 @@ You'll need these things to build the project:
  - Python 3
  - Ninja
  - Meson
+ - Docker (required to build the VDSO)
 
 To set up your environment, cd to the project and run `meson build`. Then run `ninja` in the build directory to build.
 
