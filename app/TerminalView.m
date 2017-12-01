@@ -80,6 +80,9 @@
 - (UITextAutocapitalizationType)autocapitalizationType {
     return UITextAutocapitalizationTypeNone;
 }
+- (UITextAutocorrectionType)autocorrectionType {
+    return UITextAutocorrectionTypeNo;
+}
 
 /*
 This code is the hacks that will be needed to remap caps lock to control. They're commented out for now.
