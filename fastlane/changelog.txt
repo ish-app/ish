@@ -1,0 +1,6 @@
+Give it a whirl, let me know if it crashes spectacularly. You can log in as root with no password. (Someday I'm going to get rid of that username prompt...)
+
+The best place to send bug reports or feedback of any kind is the GitHub issues page: https://github.com/tbodt/ish/issues
+
+Changes since last build:
+
