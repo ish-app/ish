@@ -1,0 +1,12 @@
+fastlane_version "2.68.0"
+
+default_platform :ios
+
+platform :ios do
+    lane :testflight do
+        increment_build_number(build_number: latest_testflight_build_number + 1)
+        add_git_tag
+        build_app(scheme: "iSH")
+        upload_to_testflight
+    end
+end

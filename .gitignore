@@ -9,3 +9,4 @@ cross-*.txt
 
 bundle.js
 node_modules
+fastlane/screenshots
