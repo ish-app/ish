@@ -24,8 +24,8 @@ int must_check user_write_string(addr_t addr, const char *buf);
 
 // process lifecycle
 dword_t sys_clone(dword_t flags, addr_t stack, addr_t ptid, addr_t tls, addr_t ctid);
-dword_t sys_fork();
-dword_t sys_vfork();
+dword_t sys_fork(void);
+dword_t sys_vfork(void);
 int sys_execve(const char *file, char *const argv[], char *const envp[]);
 dword_t _sys_execve(addr_t file, addr_t argv, addr_t envp);
 dword_t sys_exit(dword_t status);
@@ -111,26 +111,26 @@ dword_t sys_mount(addr_t source_addr, addr_t target_addr, addr_t type_addr, dwor
 dword_t sys_umount2(addr_t target_addr, dword_t flags);
 
 // process information
-dword_t sys_getpid();
-dword_t sys_gettid();
-dword_t sys_getppid();
+dword_t sys_getpid(void);
+dword_t sys_gettid(void);
+dword_t sys_getppid(void);
 dword_t sys_getpgid(dword_t pid);
 dword_t sys_setpgid(dword_t pid, dword_t pgid);
-dword_t sys_getpgrp();
-dword_t sys_setpgrp();
-dword_t sys_getuid32();
-dword_t sys_getuid();
-dword_t sys_geteuid32();
-dword_t sys_geteuid();
-dword_t sys_getgid32();
-dword_t sys_getgid();
+dword_t sys_getpgrp(void);
+dword_t sys_setpgrp(void);
+dword_t sys_getuid32(void);
+dword_t sys_getuid(void);
+dword_t sys_geteuid32(void);
+dword_t sys_geteuid(void);
+dword_t sys_getgid32(void);
+dword_t sys_getgid(void);
 dword_t sys_getcwd(addr_t buf_addr, dword_t size);
 dword_t sys_chdir(addr_t path_addr);
 dword_t sys_chroot(addr_t path_addr);
 dword_t sys_fchdir(fd_t f);
 int sys_set_thread_area(addr_t u_info);
 int sys_set_tid_address(addr_t blahblahblah);
-dword_t sys_setsid();
+dword_t sys_setsid(void);
 
 // system information
 #define UNAME_LENGTH 65

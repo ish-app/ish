@@ -8,7 +8,7 @@
 #import "AppDelegate.h"
 #import "TerminalViewController.h"
 #include "kernel/init.h"
-#include "kernel/process.h"
+#include "kernel/calls.h"
 
 @interface AppDelegate ()
 
@@ -39,6 +39,7 @@ static void ios_handle_exit(int code) {
     if (err < 0)
         return err;
     
+    create_first_process();
     char *program = "/bin/login";
     char *argv[] = {program, NULL};
     char *envp[] = {NULL};

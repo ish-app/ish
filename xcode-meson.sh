@@ -23,7 +23,17 @@ c_args = ['-arch', '$first_arch']
 needs_exe_wrapper = true
 EOF
 
-export CC="$SRCROOT/no-clang-env.sh clang"
-if ! meson introspect --projectinfo; then
-    meson $TARGET_BUILD_DIR --cross-file $crossfile
+if meson introspect --projectinfo $TARGET_BUILD_DIR; then
+    exit
 fi
+
+export CC="$SRCROOT/no-clang-env.sh clang"
+case $CONFIGURATION in
+    Release)
+        buildtype=release
+        ;;
+    *)
+        buildtype=debug
+        ;;
+esac
+meson $TARGET_BUILD_DIR -Dbuildtype=$buildtype --cross-file $crossfile

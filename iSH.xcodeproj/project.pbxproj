@@ -465,11 +465,11 @@
 			name = "Build using Meson";
 			outputPaths = (
 				"$(BUILT_PRODUCTS_DIR)/libsoftfloat.a",
+				"$(BUILT_PRODUCTS_DIR)/include/platform.h",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = "/bin/bash -ex";
-			shellScript = "cd $TARGET_BUILD_DIR\n$SRCROOT/xcode-meson.sh\nninja subprojects/softfloat/libsoftfloat.a\ncp subprojects/softfloat/libsoftfloat.a .";
-			showEnvVarsInLog = 0;
+			shellScript = "mkdir -p $TARGET_BUILD_DIR\ncd $TARGET_BUILD_DIR\n$SRCROOT/xcode-meson.sh\nninja subprojects/softfloat/libsoftfloat.a\ncp subprojects/softfloat/libsoftfloat.a .\nmkdir -p $BUILT_PRODUCTS_DIR/include\ncp subprojects/softfloat/source/include/platform.h $BUILT_PRODUCTS_DIR/include";
 		};
 		BB4A53AC1FAA49CA00A72ACE /* Run Webpack */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -502,7 +502,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = "/bin/bash -ex";
 			shellScript = "cd $TARGET_BUILD_DIR\n$SRCROOT/xcode-meson.sh\nninja libish.a";
-			showEnvVarsInLog = 0;
 		};
 		BBF1248A1FA7BDBA0088FB50 /* Create Alpine Filesystem */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -827,14 +826,13 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = (
 					"$(SRCROOT)",
-					"$(BUILT_PRODUCTS_DIR)/subprojects/softfloat/source/include",
 					"$(SRCROOT)/subprojects/softfloat/source/include",
 				);
 				INFOPLIST_FILE = "$(SRCROOT)/app/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = com.tbodt.iSH;
+				PRODUCT_BUNDLE_IDENTIFIER = com.tbodt.ish;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -890,13 +888,12 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = (
 					"$(SRCROOT)",
-					"$(BUILT_PRODUCTS_DIR)/subprojects/softfloat/source/include",
 					"$(SRCROOT)/subprojects/softfloat/source/include",
 				);
 				INFOPLIST_FILE = "$(SRCROOT)/app/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				MTL_ENABLE_DEBUG_INFO = NO;
-				PRODUCT_BUNDLE_IDENTIFIER = com.tbodt.iSH;
+				PRODUCT_BUNDLE_IDENTIFIER = com.tbodt.ish;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
