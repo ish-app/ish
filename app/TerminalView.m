@@ -77,6 +77,9 @@
 - (UITextSmartInsertDeleteType)smartInsertDeleteType API_AVAILABLE(ios(11)) {
     return UITextSmartInsertDeleteTypeNo;
 }
+- (UITextAutocapitalizationType)autocapitalizationType {
+    return UITextAutocapitalizationTypeNone;
+}
 
 /*
 This code is the hacks that will be needed to remap caps lock to control. They're commented out for now.
