@@ -102,6 +102,7 @@ extern struct mount *mounts;
 
 struct fs_ops {
     int (*mount)(struct mount *mount);
+    int (*umount)(struct mount *mount);
     int (*statfs)(struct mount *mount, struct statfsbuf *stat);
 
     struct fd *(*open)(struct mount *mount, const char *path, int flags, int mode);

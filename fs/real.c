@@ -36,10 +36,13 @@ const char *fix_path(const char *path) {
     return path;
 }
 
-// TODO translate goddamn flags
-
 static struct fd *realfs_open(struct mount *mount, const char *path, int flags, int mode) {
-    int fd_no = openat(mount->root_fd, fix_path(path), flags, mode);
+    int real_flags = 0;
+    if (flags & O_RDONLY_) real_flags |= O_RDONLY;
+    if (flags & O_WRONLY_) real_flags |= O_WRONLY;
+    if (flags & O_RDWR_) real_flags |= O_RDWR;
+    if (flags & O_CREAT_) real_flags |= O_CREAT;
+    int fd_no = openat(mount->root_fd, fix_path(path), real_flags, mode);
     if (fd_no < 0)
         return ERR_PTR(err_map(errno));
     struct fd *fd = fd_create();

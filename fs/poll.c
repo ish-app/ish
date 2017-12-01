@@ -63,6 +63,7 @@ void poll_wake_pollable(struct pollable *pollable) {
         lock(fd);
         list_for_each_entry(&fd->poll_fds, poll_fd, polls) {
             struct poll *poll = poll_fd->poll;
+            // TODO this kinda needs to lock the poll but then there are lock ordering problems
             if (poll->notify_pipe[1] != -1)
                 write(poll->notify_pipe[1], "", 1);
         }

@@ -233,8 +233,16 @@ static int fakefs_mount(struct mount *mount) {
     return realfs.mount(mount);
 }
 
+static int fakefs_umount(struct mount *mount) {
+    if (mount->data)
+        dbm_close(mount->data);
+    /* return realfs.umount(mount); */
+    return 0;
+}
+
 const struct fs_ops fakefs = {
     .mount = fakefs_mount,
+    .umount = fakefs_umount,
     .statfs = realfs_statfs,
     .open = fakefs_open,
     .readlink = fakefs_readlink,

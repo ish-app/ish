@@ -26,6 +26,13 @@ noreturn void do_exit(int status) {
         }
         big_unlock(pids);
 
+        // unmount all filesystems
+        struct mount *mount = mounts;
+        while (mount) {
+            mount->fs->umount(mount);
+            mount = mount->next;
+        }
+
         if (exit_hook != NULL)
             exit_hook(status);
     }
