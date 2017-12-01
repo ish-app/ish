@@ -5,6 +5,7 @@
 //  Created by Theodore Dubois on 10/17/17.
 //
 
+#include <ndbm.h>
 #import "AppDelegate.h"
 #import "TerminalViewController.h"
 #include "kernel/init.h"
@@ -67,10 +68,16 @@ static void ios_handle_exit(int code) {
     // Use this method to pause ongoing tasks, disable timers, and invalidate graphics rendering callbacks. Games should use this method to pause the game.
 }
 
-
 - (void)applicationDidEnterBackground:(UIApplication *)application {
-    // Use this method to release shared resources, save user data, invalidate timers, and store enough application state information to restore your application to its current state in case it is terminated later.
-    // If your application supports background execution, this method is called instead of applicationWillTerminate: when the user quits.
+    // sync filesystem database
+    struct mount *mount = mounts;
+    while (mount) {
+        if (mount->fs == &fakefs) {
+            dbm_close(mount->data);
+            mount->data = NULL;
+        }
+        mount = mount->next;
+    }
 }
 
 
