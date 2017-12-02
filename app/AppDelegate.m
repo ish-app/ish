@@ -73,8 +73,10 @@ static void ios_handle_exit(int code) {
     struct mount *mount = mounts;
     while (mount) {
         if (mount->fs == &fakefs) {
-            dbm_close(mount->data);
-            mount->data = NULL;
+            if (mount->data != NULL) {
+                dbm_close(mount->data);
+                mount->data = NULL;
+            }
         }
         mount = mount->next;
     }
