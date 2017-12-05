@@ -48,45 +48,66 @@ static struct fd *sock_getfd(fd_t sock_fd) {
     return sock;
 }
 
-static struct sockaddr *sockaddr_read(addr_t sockaddr_addr, dword_t fake_sockaddr_len, size_t *sockaddr_len_out) {
-    char fake_sockaddr[fake_sockaddr_len];
-    if (user_read(sockaddr_addr, fake_sockaddr, fake_sockaddr_len))
-        return ERR_PTR(_EFAULT);
-    size_t sockaddr_len = sockaddr_size(fake_sockaddr);
-    if (sockaddr_len == 0)
-        return ERR_PTR(_EINVAL);
-    *sockaddr_len_out = sockaddr_len;
-    return sockaddr_to_real(fake_sockaddr);
+static int sockaddr_read(addr_t sockaddr_addr, void *sockaddr, size_t sockaddr_len) {
+    if (user_read(sockaddr_addr, sockaddr, sockaddr_len))
+        return _EFAULT;
+    struct sockaddr *real_addr = sockaddr;
+    struct sockaddr_ *fake_addr = sockaddr;
+    switch (((struct sockaddr_ *) sockaddr)->family) {
+        case PF_INET_:
+        case PF_INET6_:
+            real_addr->sa_family = fake_addr->family;
+            break;
+        case PF_LOCAL_:
+            return _ENOENT; // lol
+        default:
+            return _EINVAL;
+    }
+    return 0;
 }
 
-dword_t sys_bind(fd_t sock_fd, addr_t sockaddr_addr, dword_t fake_sockaddr_len) {
-    STRACE("bind(%d, 0x%x, %d)", sock_fd, sockaddr_addr, fake_sockaddr_len);
+static int sockaddr_write(addr_t sockaddr_addr, void *sockaddr, size_t sockaddr_len) {
+    struct sockaddr *real_addr = sockaddr;
+    struct sockaddr_ *fake_addr = sockaddr;
+    switch (((struct sockaddr_ *) sockaddr)->family) {
+        case PF_INET_:
+        case PF_INET6_:
+            fake_addr->family = real_addr->sa_family;
+            break;
+        case PF_LOCAL_:
+            return _ENOENT; // lol
+        default:
+            return _EINVAL;
+    }
+    if (user_write(sockaddr_addr, sockaddr, sockaddr_len))
+        return _EFAULT;
+    return 0;
+}
+
+dword_t sys_bind(fd_t sock_fd, addr_t sockaddr_addr, dword_t sockaddr_len) {
+    STRACE("bind(%d, 0x%x, %d)", sock_fd, sockaddr_addr, sockaddr_len);
     struct fd *sock = sock_getfd(sock_fd);
     if (sock == NULL)
         return _EBADF;
-    size_t sockaddr_len;
-    struct sockaddr *addr = sockaddr_read(sockaddr_addr, fake_sockaddr_len, &sockaddr_len);
-    if (IS_ERR(addr))
-        return PTR_ERR(addr);
+    char sockaddr[sockaddr_len];
+    int err = sockaddr_read(sockaddr_addr, sockaddr, sockaddr_len);
+    if (err < 0)
+        return err;
 
-    int err = bind(sock->real_fd, addr, sockaddr_len);
-    free(addr);
-    return err;
+    return bind(sock->real_fd, (void *) sockaddr, sockaddr_len);
 }
 
-dword_t sys_connect(fd_t sock_fd, addr_t sockaddr_addr, dword_t fake_sockaddr_len) {
-    STRACE("connect(%d, 0x%x, %d)", sock_fd, sockaddr_addr, fake_sockaddr_len);
+dword_t sys_connect(fd_t sock_fd, addr_t sockaddr_addr, dword_t sockaddr_len) {
+    STRACE("connect(%d, 0x%x, %d)", sock_fd, sockaddr_addr, sockaddr_len);
     struct fd *sock = sock_getfd(sock_fd);
     if (sock == NULL)
         return _EBADF;
-    size_t sockaddr_len;
-    struct sockaddr *addr = sockaddr_read(sockaddr_addr, fake_sockaddr_len, &sockaddr_len);
-    if (IS_ERR(addr))
-        return PTR_ERR(addr);
+    char sockaddr[sockaddr_len];
+    int err = sockaddr_read(sockaddr_addr, sockaddr, sockaddr_len);
+    if (err < 0)
+        return err;
 
-    int err = connect(sock->real_fd, addr, sockaddr_len);
-    free(addr);
-    return err;
+    return connect(sock->real_fd, (void *) sockaddr, sockaddr_len);
 }
 
 dword_t sys_getsockname(fd_t sock_fd, addr_t sockaddr_addr, addr_t sockaddr_len_addr) {
@@ -101,8 +122,9 @@ dword_t sys_getsockname(fd_t sock_fd, addr_t sockaddr_addr, addr_t sockaddr_len_
     char sockaddr[sockaddr_len];
     int res = getsockname(sock->real_fd, (void *) sockaddr, &sockaddr_len);
     if (res >= 0) {
-        if (user_write(sockaddr_addr, sockaddr, sockaddr_len))
-            return _EFAULT;
+        int err = sockaddr_write(sockaddr_addr, sockaddr, sockaddr_len);
+        if (err < 0)
+            return err;
         if (user_put(sockaddr_len_addr, sockaddr_len))
             return _EFAULT;
     }
@@ -122,13 +144,14 @@ dword_t sys_sendto(fd_t sock_fd, addr_t buffer_addr, dword_t len, dword_t flags,
         return _EINVAL;
     char sockaddr[sockaddr_len];
     if (sockaddr_addr) {
-        if (user_read(sockaddr_addr, sockaddr, sockaddr_len))
-            return _EFAULT;
-        if (sockaddr_to_real(sockaddr) < 0)
-            return _EINVAL;
+        int err = sockaddr_read(sockaddr_addr, sockaddr, sockaddr_len);
+        if (err < 0)
+            return err;
     }
 
-    return sendto(sock->real_fd, buffer, len, real_flags, sockaddr_addr ? (void *) sockaddr : NULL, sockaddr_len);
+
+    return sendto(sock->real_fd, buffer, len, real_flags,
+            sockaddr_addr ? (void *) sockaddr : NULL, sockaddr_len);
 }
 
 dword_t sys_recvfrom(fd_t sock_fd, addr_t buffer_addr, dword_t len, dword_t flags, addr_t sockaddr_addr, addr_t sockaddr_len_addr) {
@@ -149,8 +172,9 @@ dword_t sys_recvfrom(fd_t sock_fd, addr_t buffer_addr, dword_t len, dword_t flag
     if (res >= 0) {
         if (user_write(buffer_addr, buffer, len))
             return _EFAULT;
-        if (user_write(sockaddr_addr, sockaddr, sockaddr_len))
-            return _EFAULT;
+        int err = sockaddr_write(sockaddr_addr, sockaddr, sockaddr_len);
+        if (err < 0)
+            return err;
         if (user_put(sockaddr_len_addr, sockaddr_len))
             return _EFAULT;
     }

@@ -64,7 +64,6 @@ src = [
     'kernel/getset.c',
     'kernel/signal.c',
     'kernel/sock.c',
-    'kernel/sockaddr.c',
 
     'kernel/fs.c',
     'fs/stat.c',
