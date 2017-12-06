@@ -1,7 +1,5 @@
 #!/bin/bash -ex
-cd $SRCROOT
-
-crossfile=cross-$(basename $TARGET_BUILD_DIR).txt
+crossfile=$SRCROOT/cross-$(basename $TARGET_BUILD_DIR).txt
 arch_args=
 for arch in $ARCHS; do
     arch_args="'-arch', '$arch', $arch_args"
@@ -23,17 +21,22 @@ c_args = ['-arch', '$first_arch']
 needs_exe_wrapper = true
 EOF
 
-if meson introspect --projectinfo $TARGET_BUILD_DIR; then
-    exit
+cd $TARGET_BUILD_DIR
+if ! meson introspect --projectinfo; then
+    export CC="$SRCROOT/no-clang-env.sh clang"
+    meson $SRCROOT --cross-file $crossfile
 fi
 
-export CC="$SRCROOT/no-clang-env.sh clang"
-case $CONFIGURATION in
-    Release)
-        buildtype=release
-        ;;
-    *)
-        buildtype=debug
-        ;;
-esac
-meson $TARGET_BUILD_DIR -Dbuildtype=$buildtype --cross-file $crossfile
+buildtype=debug
+if [[ $CONFIGURATION == Release ]]; then
+    buildtype=release
+fi
+log=$ISH_LOG
+config=$(meson introspect --buildoptions)
+for var in buildtype log; do
+    old_value=$(jq -r ".[] | select(.name==\"$var\") | .value" <<< $config)
+    new_value=${!var}
+    if [[ $old_value != $new_value ]]; then
+        meson configure -D$var=$new_value
+    fi
+done
