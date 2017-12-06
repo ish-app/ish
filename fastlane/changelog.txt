@@ -1,6 +1,7 @@
-Give it a whirl, let me know if it crashes spectacularly. You can log in as root with no password. (Someday I'm going to get rid of that username prompt...)
+New in this build: Internet support! wget should work out of the box, and you should be able to run apk update and then install packages from the Alpine package database.
 
-The best place to send bug reports or feedback of any kind is the GitHub issues page: https://github.com/tbodt/ish/issues
+You can log in as root with no password. (Someday I'm going to get rid of that username prompt...)
 
-Changes since last build:
+As always, let me know if it crashes spectacularly. The best place to send bug reports or feedback of any kind is the GitHub issues page: https://github.com/tbodt/ish/issues
 
+Commits since last build:
