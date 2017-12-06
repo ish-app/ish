@@ -1,29 +1,23 @@
-fastlane_version "2.68.0"
+lane :build do
+    build_app(scheme: "iSH")
+end
 
-default_platform :ios
-
-platform :ios do
-    lane :build do
-        build_app(scheme: "iSH")
-    end
-
-    lane :testflight do
-        changelog = File.read('changelog.txt') + changelog_from_git_commits
-        increment_build_number(build_number: latest_testflight_build_number + 1)
-        build_app(scheme: "iSH")
-        upload_to_testflight(
-            changelog: changelog, 
-            wait_for_uploaded_build: true,
-            distribute_external: true, 
-            groups: ["People"]
-        )
-        add_git_tag
-        slack(
-            message: "New build available!",
-            default_payloads: [],
-            payload: {
-                "Changelog" => changelog
-            },
-         )
-    end
+lane :beta do
+    changelog = File.read('changelog.txt') + changelog_from_git_commits
+    increment_build_number(build_number: latest_testflight_build_number + 1)
+    build_app(scheme: "iSH")
+    upload_to_testflight(
+        changelog: changelog, 
+        wait_for_uploaded_build: true,
+        distribute_external: true, 
+        groups: ["People"]
+    )
+    add_git_tag
+    slack(
+        message: "New build available!",
+        default_payloads: [],
+        payload: {
+            "Changelog" => changelog
+        },
+     )
 end
