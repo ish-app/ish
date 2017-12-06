@@ -11,7 +11,12 @@ platform :ios do
         changelog = File.read('changelog.txt') + changelog_from_git_commits
         increment_build_number(build_number: latest_testflight_build_number + 1)
         build_app(scheme: "iSH")
-        upload_to_testflight(changelog: changelog, distribute_external: true, groups: ["People"])
+        upload_to_testflight(
+            changelog: changelog, 
+            wait_for_uploaded_build: true,
+            distribute_external: true, 
+            groups: ["People"]
+        )
         add_git_tag
         slack(
             message: "New build available!",
