@@ -9,8 +9,6 @@
 #include "kernel/errno.h"
 #include "emu/memory.h"
 
-static size_t real_page_size;
-
 static void tlb_flush(struct mem *mem);
 
 // this code currently assumes the system page size is 4k
@@ -55,9 +53,9 @@ page_t pt_find_hole(struct mem *mem, pages_t size) {
 }
 
 int pt_map(struct mem *mem, page_t start, pages_t pages, void *memory, unsigned flags) {
-    if (memory == MAP_FAILED) {
+    if (memory == MAP_FAILED)
         return err_map(errno);
-    }
+
     for (page_t page = start; page < start + pages; page++) {
         if (mem->pt[page] != NULL) {
             // FIXME this is probably wrong
@@ -101,17 +99,6 @@ int pt_map_nothing(struct mem *mem, page_t start, pages_t pages, unsigned flags)
     if (pages == 0) return 0;
     void *memory = mmap(NULL, pages * PAGE_SIZE,
             PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
-    return pt_map(mem, start, pages, memory, flags);
-}
-
-
-int pt_map_file(struct mem *mem, page_t start, pages_t pages, int fd, off_t off, unsigned flags) {
-    if (pages == 0) return 0;
-    off_t real_off = (off / real_page_size) * real_page_size;
-    char *memory = mmap(NULL, pages * PAGE_SIZE,
-            PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, real_off);
-    if (memory != MAP_FAILED)
-        memory += off - real_off;
     return pt_map(mem, start, pages, memory, flags);
 }
 
@@ -221,8 +208,4 @@ void *tlb_handle_miss(struct mem *mem, addr_t addr, int type) {
     tlb->data_minus_addr = (uintptr_t) pt->data - TLB_PAGE(addr);
     mem->dirty_page = TLB_PAGE(addr);
     return (void *) (tlb->data_minus_addr + addr);
-}
-
-__attribute__((constructor)) static void get_real_page_size() {
-    real_page_size = sysconf(_SC_PAGESIZE);
 }

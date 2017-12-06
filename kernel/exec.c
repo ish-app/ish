@@ -74,10 +74,9 @@ static int load_entry(struct prg_header ph, addr_t bias, struct fd *fd) {
     int flags = 0;
     if (ph.flags & PH_W) flags |= P_WRITE;
 
-    // TODO stop using fd->real_fd here
-    if ((err = pt_map_file(current->cpu.mem, PAGE(addr),
-                    PAGE_ROUND_UP(filesize + OFFSET(addr)), fd->real_fd,
-                    offset - OFFSET(addr), flags)) < 0)
+    if ((err = fd->ops->mmap(fd, current->cpu.mem, PAGE(addr),
+                    PAGE_ROUND_UP(filesize + OFFSET(addr)),
+                    offset - OFFSET(addr), flags, MMAP_PRIVATE)) < 0)
         return err;
 
     if (memsize > filesize) {

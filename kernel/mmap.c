@@ -42,10 +42,7 @@ addr_t sys_mmap(addr_t addr, dword_t len, dword_t prot, dword_t flags, fd_t fd_n
             return _EBADF;
         if (fd->ops->mmap == NULL)
             return _ENODEV;
-        void *memory;
-        if ((err = fd->ops->mmap(fd, offset, len, prot, flags, &memory)) < 0)
-            return err;
-        if ((err = pt_map(current->cpu.mem, page, pages, memory, flags)) < 0)
+        if ((err = fd->ops->mmap(fd, current->cpu.mem, page, pages, offset, prot, flags)) < 0)
             return err;
     }
     return page << PAGE_BITS;
