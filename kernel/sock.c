@@ -53,7 +53,7 @@ static int sockaddr_read(addr_t sockaddr_addr, void *sockaddr, size_t sockaddr_l
         return _EFAULT;
     struct sockaddr *real_addr = sockaddr;
     struct sockaddr_ *fake_addr = sockaddr;
-    switch (((struct sockaddr_ *) sockaddr)->family) {
+    switch (fake_addr->family) {
         case PF_INET_:
         case PF_INET6_:
             real_addr->sa_family = fake_addr->family;
@@ -69,7 +69,7 @@ static int sockaddr_read(addr_t sockaddr_addr, void *sockaddr, size_t sockaddr_l
 static int sockaddr_write(addr_t sockaddr_addr, void *sockaddr, size_t sockaddr_len) {
     struct sockaddr *real_addr = sockaddr;
     struct sockaddr_ *fake_addr = sockaddr;
-    switch (((struct sockaddr_ *) sockaddr)->family) {
+    switch (real_addr->sa_family) {
         case PF_INET_:
         case PF_INET6_:
             fake_addr->family = real_addr->sa_family;
