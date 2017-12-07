@@ -1,8 +1,4 @@
-This build fixes apk crashing dramatically on actual iOS devices but not in the simulator. Also, I forgot to tell you that to get Internet working, you have to configure DNS, which means creating an /etc/resolv.conf with "nameserver 8.8.8.8" or whatever DNS server you want to use. The easiest way to do that is run this command: 
-
-echo "nameserver 8.8.8.8" > /etc/resolv.conf
-
-At some point I'm going to make this be automatically created.
+<TALK ABOUT WHAT CHANGED>
 
 You can log in as root with no password. (Someday I'm going to get rid of that username prompt...)
 
