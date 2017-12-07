@@ -38,6 +38,15 @@ static int copy_memory(struct process *proc, int flags) {
     return 0;
 }
 
+static int copy_files(struct process *proc, int flags) {
+    for (fd_t f = 0; f < MAX_FD; f++) {
+        if (proc->files[f]) {
+            proc->files[f] = generic_dup(proc->files[f]);
+        }
+    }
+    return 0;
+}
+
 static int init_process(struct process *proc, dword_t flags, addr_t ctid_addr) {
     dword_t pid = proc->pid;
     *proc = *current;
@@ -46,6 +55,8 @@ static int init_process(struct process *proc, dword_t flags, addr_t ctid_addr) {
 
     int err = 0;
     if ((err = copy_memory(proc, flags)) < 0)
+        goto fail_free_proc;
+    if ((err = copy_files(proc, flags)) < 0)
         goto fail_free_proc;
 
     proc->parent = current;

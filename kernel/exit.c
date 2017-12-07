@@ -5,6 +5,17 @@
 void (*exit_hook)(int code) = NULL;
 
 noreturn void do_exit(int status) {
+    // this is the part where we release all our resources
+    lock(current);
+    mem_release(current->cpu.mem);
+    for (fd_t f = 0; f < MAX_FD; f++) {
+        if (current->files[f]) {
+            fd_close(current->files[f]);
+            current->files[f] = NULL;
+        }
+    }
+    unlock(current);
+
     lock(current->parent);
     current->exit_code = status;
     current->zombie = true;
