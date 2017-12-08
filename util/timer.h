@@ -4,10 +4,13 @@
 #include <stdbool.h>
 #include <time.h>
 #include <pthread.h>
+#ifdef __MACH__
+#include <mach/mach_time.h>
+#endif
 
 static inline struct timespec timespec_now() {
     struct timespec now;
-    clock_gettime(CLOCK_REALTIME, &now); // can't fail, according to posix spec
+    clock_gettime(CLOCK_MONOTONIC, &now); // can't fail, according to posix spec
     return now;
 }
 
