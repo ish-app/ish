@@ -32,12 +32,6 @@
 #define must_check __attribute__((warn_unused_result))
 #define typecheck(type, x) ({type _x = x; x;})
 
-#if defined(__i386__) || defined(__x86_64__)
-#define debugger __asm__("int3")
-#elif defined(__arm__)
-#define debugger __asm__("trap")
-#endif
-
 // types
 typedef int64_t sqword_t;
 typedef uint64_t qword_t;

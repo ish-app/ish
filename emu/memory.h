@@ -126,4 +126,6 @@ forceinline bool __mem_write(struct mem *mem, addr_t addr, const void *value, un
 }
 #define mem_write(mem, addr, value) __mem_write(mem, addr, (value), sizeof(*(value)))
 
+extern size_t real_page_size;
+
 #endif

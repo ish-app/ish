@@ -149,11 +149,6 @@ off_t realfs_lseek(struct fd *fd, off_t offset, int whence) {
     return res;
 }
 
-static size_t real_page_size;
-__attribute__((constructor)) static void get_real_page_size() {
-    real_page_size = sysconf(_SC_PAGESIZE);
-}
-
 int realfs_mmap(struct fd *fd, struct mem *mem, page_t start, pages_t pages, off_t offset, int prot, int flags) {
     if (pages == 0)
         return 0;

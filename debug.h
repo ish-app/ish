@@ -24,6 +24,9 @@
 #ifndef DEBUG_strace
 #define DEBUG_strace DEBUG_all
 #endif
+#ifndef DEBUG_memory
+#define DEBUG_memory DEBUG_all
+#endif
 
 #if DEBUG_default
 #define TRACE_default TRACE__
@@ -44,6 +47,11 @@
 #define TRACE_strace TRACE__
 #else
 #define TRACE_strace TRACE__NOP
+#endif
+#if DEBUG_memory
+#define TRACE_memory TRACE__
+#else
+#define TRACE_memory TRACE__NOP
 #endif
 
 #ifdef LOG_OVERRIDE
@@ -68,3 +76,10 @@ extern int log_override;
 
 #define STRACE(msg, ...) TRACE_(strace, msg, ##__VA_ARGS__)
 #define STRACELN(msg, ...) TRACELN_(strace, msg, ##__VA_ARGS__)
+
+#if defined(__i386__) || defined(__x86_64__)
+#define debugger __asm__("int3")
+#else
+#include <signal.h>
+#define debugger raise(SIGTRAP)
+#endif

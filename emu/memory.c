@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <errno.h>
 
+#define DEFAULT_CHANNEL memory
 #include "debug.h"
 #include "kernel/errno.h"
 #include "emu/memory.h"
@@ -208,4 +209,9 @@ void *tlb_handle_miss(struct mem *mem, addr_t addr, int type) {
     tlb->data_minus_addr = (uintptr_t) pt->data - TLB_PAGE(addr);
     mem->dirty_page = TLB_PAGE(addr);
     return (void *) (tlb->data_minus_addr + addr);
+}
+
+size_t real_page_size;
+__attribute__((constructor)) static void get_real_page_size() {
+    real_page_size = sysconf(_SC_PAGESIZE);
 }
