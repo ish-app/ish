@@ -31,6 +31,19 @@
 #define unlikely(x) __builtin_expect((x), 0)
 #define must_check __attribute__((warn_unused_result))
 #define typecheck(type, x) ({type _x = x; x;})
+#if defined(__x86_64__)
+#define rdtsc() ({ \
+        uint32_t low, high; \
+        __asm__ volatile("rdtsc" : "=a" (high), "=d" (low)); \
+        ((uint64_t) high) << 32 | low; \
+    })
+#elif defined(__arm64__)
+#define rdtsc() ({ \
+        uint64_t tsc; \
+        __asm__ volatile("mrs %0, PMCCNTR_EL0" : "=r" (tsc)); \
+        tsc; \
+    })
+#endif
 
 // types
 typedef int64_t sqword_t;

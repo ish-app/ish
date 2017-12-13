@@ -575,7 +575,7 @@
     cpu->cf_ops = cpu->pf_res = cpu->af_ops = cpu->zf_res = cpu->sf_res = 0
 
 #define RDTSC \
-    imm = __builtin_readcyclecounter(); \
+    imm = rdtsc(); \
     cpu->eax = imm & 0xffffffff; \
     cpu->edx = imm >> 32
 
