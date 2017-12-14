@@ -17,7 +17,7 @@ static void tlb_flush(struct mem *mem);
 struct mem *mem_new() {
     struct mem *mem = malloc(sizeof(struct mem));
     mem->refcount = 1;
-    mem->pt = calloc(PT_SIZE, sizeof(struct pt_entry *));
+    mem->pt = calloc(MEM_PAGES, sizeof(struct pt_entry));
     mem->tlb = malloc(TLB_SIZE * sizeof(struct tlb_entry));
     tlb_flush(mem);
     return mem;
@@ -29,7 +29,7 @@ void mem_retain(struct mem *mem) {
 
 void mem_release(struct mem *mem) {
     if (mem->refcount-- == 0) {
-        pt_unmap(mem, 0, PT_SIZE, PT_FORCE);
+        pt_unmap(mem, 0, MEM_PAGES, PT_FORCE);
         free(mem->pt);
         free(mem->tlb);
         free(mem);
@@ -41,11 +41,11 @@ page_t pt_find_hole(struct mem *mem, pages_t size) {
     bool in_hole = false;
     for (page_t page = 0xf7ffd; page > 0x40000; page--) {
         // I don't know how this works but it does
-        if (!in_hole && mem->pt[page] == NULL) {
+        if (!in_hole && mem->pt[page].data == NULL) {
             in_hole = true;
             hole_end = page + 1;
         }
-        if (mem->pt[page] != NULL)
+        if (mem->pt[page].data != NULL)
             in_hole = false;
         else if (hole_end - page == size)
             return page;
@@ -57,19 +57,19 @@ int pt_map(struct mem *mem, page_t start, pages_t pages, void *memory, unsigned 
     if (memory == MAP_FAILED)
         return err_map(errno);
 
+    struct data *data = malloc(sizeof(struct data));
+    if (data == NULL)
+        return _ENOMEM;
+    data->data = memory;
+    data->refcount = 0;
+
     for (page_t page = start; page < start + pages; page++) {
-        if (mem->pt[page] != NULL) {
-            // FIXME this is probably wrong
+        if (mem->pt[page].data != NULL)
             pt_unmap(mem, page, 1, 0);
-        }
-        struct pt_entry *entry = malloc(sizeof(struct pt_entry));
-        // FIXME this could allocate some of the memory and then abort
-        if (entry == NULL) return _ENOMEM;
-        entry->data = memory;
-        entry->refcount = 1;
-        entry->flags = flags;
-        mem->pt[page] = entry;
-        memory = (char *) memory + PAGE_SIZE;
+        data->refcount++;
+        mem->pt[page].data = data;
+        mem->pt[page].offset = (page - start) << PAGE_BITS;
+        mem->pt[page].flags = flags;
     }
     tlb_flush(mem);
     return 0;
@@ -78,17 +78,17 @@ int pt_map(struct mem *mem, page_t start, pages_t pages, void *memory, unsigned 
 int pt_unmap(struct mem *mem, page_t start, pages_t pages, int force) {
     if (!force)
         for (page_t page = start; page < start + pages; page++)
-            if (mem->pt[page] == NULL)
+            if (mem->pt[page].data == NULL)
                 return -1;
 
     for (page_t page = start; page < start + pages; page++) {
-        if (mem->pt[page] != NULL) {
-            struct pt_entry *entry = mem->pt[page];
-            mem->pt[page] = NULL;
-            entry->refcount--;
-            if (entry->refcount == 0) {
-                munmap(entry->data, PAGE_SIZE);
-                free(entry);
+        if (mem->pt[page].data != NULL) {
+            struct data *data = mem->pt[page].data;
+            mem->pt[page].data = NULL;
+            data->refcount--;
+            if (data->refcount == 0) {
+                munmap(data->data, PAGE_SIZE);
+                free(data);
             }
         }
     }
@@ -103,14 +103,12 @@ int pt_map_nothing(struct mem *mem, page_t start, pages_t pages, unsigned flags)
     return pt_map(mem, start, pages, memory, flags);
 }
 
-// FIXME this can overwrite P_GROWSDOWN or P_GUARD
 int pt_set_flags(struct mem *mem, page_t start, pages_t pages, int flags) {
     for (page_t page = start; page < start + pages; page++)
-        if (mem->pt[page] == NULL)
+        if (mem->pt[page].data == NULL)
             return _ENOMEM;
-    for (page_t page = start; page < start + pages; page++) {
-        mem->pt[page]->flags = flags;
-    }
+    for (page_t page = start; page < start + pages; page++)
+        mem->pt[page].flags = flags;
     tlb_flush(mem);
     return 0;
 }
@@ -119,13 +117,14 @@ int pt_copy_on_write(struct mem *src, page_t src_start, struct mem *dst, page_t 
     for (page_t src_page = src_start, dst_page = dst_start;
             src_page < src_start + pages;
             src_page++, dst_page++) {
-        if (src->pt[src_page] != NULL) {
+        if (src->pt[src_page].data != NULL) {
             if (pt_unmap(dst, dst_page, 1, PT_FORCE) < 0)
                 return -1;
-            struct pt_entry *entry = src->pt[src_page];
+            // TODO skip shared mappings
+            struct pt_entry *entry = &src->pt[src_page];
             entry->flags |= P_COW;
-            entry->refcount++;
-            dst->pt[dst_page] = entry;
+            entry->data->refcount++;
+            dst->pt[dst_page] = *entry;
         }
     }
     tlb_flush(src);
@@ -164,33 +163,33 @@ bool __mem_write_cross_page(struct mem *mem, addr_t addr, const char *value, uns
     return true;
 }
 
+int sys_getpid();
 void *tlb_handle_miss(struct mem *mem, addr_t addr, int type) {
-    struct pt_entry *pt = mem->pt[PAGE(addr)];
+    page_t page = PAGE(addr);
+    struct pt_entry *entry = &mem->pt[page];
 
-    if (pt == NULL) {
+    if (entry->data == NULL) {
         // page does not exist
         // look to see if the next VM region is willing to grow down
-        page_t page = PAGE(addr) + 1;
-        while (page < PT_SIZE && mem->pt[page] == NULL)
-            page++;
-        if (page >= PT_SIZE)
+        page_t p = page + 1;
+        while (p < MEM_PAGES && mem->pt[p].data == NULL)
+            p++;
+        if (p >= MEM_PAGES)
             return NULL;
-        if (!(mem->pt[page]->flags & P_GROWSDOWN))
+        if (!(mem->pt[p].flags & P_GROWSDOWN))
             return NULL;
-        pt_map_nothing(mem, PAGE(addr), 1, P_WRITE | P_GROWSDOWN);
-        pt = mem->pt[PAGE(addr)];
+        pt_map_nothing(mem, page, 1, P_WRITE | P_GROWSDOWN);
     }
 
-    if (type == TLB_WRITE && !P_WRITABLE(pt->flags)) {
+    if (type == TLB_WRITE && !P_WRITABLE(entry->flags)) {
         // page is unwritable or cow
         // if page is cow, ~~milk~~ copy it
-        if (pt->flags & P_COW) {
-            void *data = pt->data;
+        if (entry->flags & P_COW) {
+            void *data = (char *) entry->data->data + entry->offset;
             void *copy = mmap(NULL, PAGE_SIZE, PROT_READ | PROT_WRITE, 
                     MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
             memcpy(copy, data, PAGE_SIZE);
-            pt_map(mem, PAGE(addr), 1, copy, pt->flags &~ P_COW);
-            pt = mem->pt[PAGE(addr)];
+            pt_map(mem, page, 1, copy, entry->flags &~ P_COW);
         } else {
             return NULL;
         }
@@ -201,14 +200,18 @@ void *tlb_handle_miss(struct mem *mem, addr_t addr, int type) {
 
     struct tlb_entry *tlb = &mem->tlb[TLB_INDEX(addr)];
     tlb->page = TLB_PAGE(addr);
-    if (P_WRITABLE(pt->flags))
+    if (P_WRITABLE(entry->flags))
         tlb->page_if_writable = tlb->page;
     else
         // 1 is not a valid page so this won't look like a hit
         tlb->page_if_writable = TLB_PAGE_EMPTY;
-    tlb->data_minus_addr = (uintptr_t) pt->data - TLB_PAGE(addr);
+    tlb->data_minus_addr = (uintptr_t) entry->data->data + entry->offset - TLB_PAGE(addr);
     mem->dirty_page = TLB_PAGE(addr);
     return (void *) (tlb->data_minus_addr + addr);
+}
+
+char *mem_ptr(struct mem *mem, addr_t addr) {
+    return __mem_read_ptr(mem, addr);
 }
 
 size_t real_page_size;

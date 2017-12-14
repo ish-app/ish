@@ -34,7 +34,7 @@ static int copy_memory(struct process *proc, int flags) {
         return 0;
     }
     proc->cpu.mem = mem_new();
-    pt_copy_on_write(mem, 0, proc->cpu.mem, 0, PT_SIZE);
+    pt_copy_on_write(mem, 0, proc->cpu.mem, 0, MEM_PAGES);
     return 0;
 }
 

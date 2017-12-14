@@ -11,10 +11,11 @@ typedef dword_t page_t;
 
 struct mem {
     unsigned refcount;
-    struct pt_entry **pt;
+    struct pt_entry *pt; // TODO replace with red-black tree
     struct tlb_entry *tlb;
     page_t dirty_page;
 };
+#define MEM_PAGES (1 << 20) // at least on 32-bit
 
 // Create a new address space
 struct mem *mem_new(void);
@@ -34,18 +35,20 @@ typedef dword_t pages_t;
 #define BYTES_ROUND_DOWN(bytes) (PAGE(bytes) << PAGE_BITS)
 #define BYTES_ROUND_UP(bytes) (PAGE_ROUND_UP(bytes) << PAGE_BITS)
 
-struct pt_entry {
+struct data {
     void *data;
     unsigned refcount;
-    unsigned flags;
-    bits dirty:1;
 };
-#define PT_SIZE (1 << 20) // at least on 32-bit
+struct pt_entry {
+    struct data *data;
+    size_t offset;
+    unsigned flags;
+};
 // page flags
 // P_READ and P_EXEC are ignored for now
 #define P_READ (1 << 0)
 #define P_WRITE (1 << 1)
-#undef P_EXEC
+#undef P_EXEC // defined in sys/proc.h on darwin
 #define P_EXEC (1 << 2)
 #define P_GROWSDOWN (1 << 3)
 #define P_COW (1 << 4)
