@@ -149,7 +149,7 @@ static inline void collapse_flags(struct cpu_state *cpu) {
 typedef uint8_t reg_id_t;
 #define REG_ID(reg) offsetof(struct cpu_state, reg)
 #define REG_VAL(cpu, reg_id, size) (*((uint(size) *) (((char *) (cpu)) + reg_id)))
-inline const char *reg8_name(uint8_t reg_id) {
+static inline const char *reg8_name(uint8_t reg_id) {
     switch (reg_id) {
         case REG_ID(al): return "al";
         case REG_ID(bl): return "bl";
@@ -162,7 +162,7 @@ inline const char *reg8_name(uint8_t reg_id) {
     }
     return "??";
 }
-inline const char *reg16_name(uint8_t reg_id) {
+static inline const char *reg16_name(uint8_t reg_id) {
     switch (reg_id) {
         case REG_ID(ax): return "ax";
         case REG_ID(bx): return "bx";
@@ -175,7 +175,7 @@ inline const char *reg16_name(uint8_t reg_id) {
     }
     return "??";
 }
-inline const char *reg32_name(uint8_t reg_id) {
+static inline const char *reg32_name(uint8_t reg_id) {
     switch (reg_id) {
         case REG_ID(eax): return "eax";
         case REG_ID(ebx): return "ebx";

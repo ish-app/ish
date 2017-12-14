@@ -15,7 +15,7 @@ struct regptr {
     reg_id_t reg32_id;
     reg_id_t reg128_id;
 };
-#if DEBUG_instr
+#if defined(DEBUG_instr) || defined(LOG_OVERRIDE)
 static const char *regptr_name(struct regptr regptr) {
     static char buf[15];
     sprintf(buf, "%s/%s/%s",
