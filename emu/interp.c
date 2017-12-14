@@ -19,7 +19,7 @@
 #define READIMM_(name,size) \
     name = mem_read_(cpu->eip, size); \
     cpu->eip += size/8; \
-    TRACE("imm %lx ", (uint64_t) name)
+    TRACE("imm %llx ", (long long) name)
 #define READIMM READIMM_(imm, OP_SIZE)
 #define READIMM8 READIMM_(imm, 8)
 #define READIMM16 READIMM_(imm, 16)

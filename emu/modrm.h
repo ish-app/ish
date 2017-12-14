@@ -15,6 +15,7 @@ struct regptr {
     reg_id_t reg32_id;
     reg_id_t reg128_id;
 };
+#if DEBUG_instr
 static const char *regptr_name(struct regptr regptr) {
     static char buf[15];
     sprintf(buf, "%s/%s/%s",
@@ -23,6 +24,7 @@ static const char *regptr_name(struct regptr regptr) {
             reg32_name(regptr.reg32_id));
     return buf;
 }
+#endif
 
 struct modrm_info {
     // MOD/RM BITS
