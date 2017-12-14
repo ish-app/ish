@@ -28,12 +28,14 @@ if ! meson introspect --projectinfo; then
 fi
 
 buildtype=debug
+b_ndebug=false
 if [[ $CONFIGURATION == Release ]]; then
-    buildtype=release
+    buildtype=debugoptimized
+    b_ndebug=true
 fi
 log=$ISH_LOG
 config=$(meson introspect --buildoptions)
-for var in buildtype log; do
+for var in buildtype log b_ndebug; do
     old_value=$(jq -r ".[] | select(.name==\"$var\") | .value" <<< $config)
     new_value=${!var}
     if [[ $old_value != $new_value ]]; then
