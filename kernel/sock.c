@@ -181,6 +181,13 @@ dword_t sys_recvfrom(fd_t sock_fd, addr_t buffer_addr, dword_t len, dword_t flag
     return res;
 }
 
+dword_t sys_shutdown(fd_t sock_fd, dword_t how) {
+    struct fd *sock = sock_getfd(sock_fd);
+    if (sock == NULL)
+        return _EBADF;
+    return shutdown(sock->real_fd, how);
+}
+
 dword_t sys_setsockopt(fd_t sock_fd, dword_t level, dword_t option, addr_t value_addr, dword_t value_len) {
     STRACE("setsockopt(%d, %d, %d, 0x%x, %d)", sock_fd, level, option, value_addr, value_len);
     struct fd *sock = sock_getfd(sock_fd);
@@ -219,7 +226,7 @@ static struct socket_call {
     {NULL, 0}, // recv
     {(syscall_t) sys_sendto, 6}, // sendto
     {(syscall_t) sys_recvfrom, 6}, // recvfrom
-    {NULL, 0}, // shutdown
+    {(syscall_t) sys_shutdown, 2}, // shutdown
     {(syscall_t) sys_setsockopt, 5}, // setsockopt
     {NULL, 0}, // getsockopt
     {NULL, 0}, // sendmsg
