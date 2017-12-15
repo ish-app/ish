@@ -192,6 +192,8 @@ dword_t sys__llseek(fd_t f, dword_t off_high, dword_t off_low, addr_t res_addr, 
     struct fd *fd = current->files[f];
     if (fd == NULL)
         return _EBADF;
+    if (!fd->ops->lseek)
+        return _ESPIPE;
     off_t_ off = ((off_t_) off_high << 32) | off_low;
     off_t_ res = fd->ops->lseek(fd, off, whence);
     if (res < 0)
