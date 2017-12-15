@@ -216,6 +216,8 @@ dword_t sys_ioctl(fd_t f, dword_t cmd, dword_t arg) {
     struct fd *fd = current->files[f];
     if (fd == NULL)
         return _EBADF;
+    if (!fd->ops->ioctl_size)
+        return _EINVAL;
     ssize_t size = fd->ops->ioctl_size(fd, cmd);
     if (size < 0) {
         println("unknown ioctl %x", cmd);
