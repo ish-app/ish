@@ -123,9 +123,11 @@ dword_t sys_close(fd_t f) {
     if (fd == NULL)
         return _EBADF;
     if (--fd->refcount == 0) {
-        int err = fd->ops->close(fd);
-        if (err < 0)
-            return err;
+        if (fd->ops->close) {
+            int err = fd->ops->close(fd);
+            if (err < 0)
+                return err;
+        }
         free(fd);
     }
     current->files[f] = NULL;

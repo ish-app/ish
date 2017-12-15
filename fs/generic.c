@@ -54,7 +54,7 @@ struct fd *generic_openat(struct fd *at, const char *path_raw, int flags, int mo
         assert(!S_ISLNK(stat.mode));
         if (S_ISBLK(stat.mode) || S_ISCHR(stat.mode)) {
             int type;
-            if (stat.mode & S_IFBLK)
+            if (S_ISBLK(stat.mode))
                 type = DEV_BLOCK;
             else
                 type = DEV_CHAR;

@@ -43,4 +43,6 @@ extern struct dev_ops *char_devs[];
 
 int dev_open(int major, int minor, int type, struct fd *fd);
 
+extern struct dev_ops null_dev;
+
 #endif
