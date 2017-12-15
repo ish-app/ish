@@ -11,11 +11,6 @@
 #include "kernel/elf.h"
 #include "libvdso.so.h"
 
-#define ERRNO_FAIL(label) { \
-    err = err_map(errno); \
-    goto label; \
-}
-
 static inline dword_t align_stack(dword_t sp);
 static inline ssize_t user_strlen(dword_t p);
 static inline int user_memset(addr_t start, dword_t len, byte_t val);

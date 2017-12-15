@@ -65,7 +65,7 @@ static struct termios old_termios;
 int real_tty_open(struct tty *tty) {
     struct winsize winsz;
     if (ioctl(STDIN_FILENO, TIOCGWINSZ, &winsz) < 0)
-        return err_map(errno);
+        return errno_map();
     tty->winsize.col = winsz.ws_col;
     tty->winsize.row = winsz.ws_row;
     tty->winsize.xpixel = winsz.ws_xpixel;
@@ -73,7 +73,7 @@ int real_tty_open(struct tty *tty) {
 
     struct termios termios;
     if (tcgetattr(STDIN_FILENO, &termios) < 0)
-        return err_map(errno);
+        return errno_map();
     tty->termios = termios_from_real(termios);
 
     old_termios = termios;

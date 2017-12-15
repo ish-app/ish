@@ -8,7 +8,7 @@
 int mount_root(const struct fs_ops *fs, const char *source) {
     char source_realpath[MAX_PATH + 1];
     if (realpath(source, source_realpath) == NULL)
-        return err_map(errno);
+        return errno_map();
     mounts = malloc(sizeof(struct mount));
     mounts->point = "";
     mounts->source = strdup(source_realpath);
@@ -27,6 +27,7 @@ static void nop_handler() {}
 
 void create_first_process() {
     signal(SIGUSR1, nop_handler);
+    signal(SIGPIPE, SIG_IGN);
 
     current = process_create();
     current->cpu.mem = mem_new();

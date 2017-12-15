@@ -120,12 +120,12 @@ static int fakefs_symlink(struct mount *mount, const char *target, const char *l
     // create a file containing the target
     int fd = openat(mount->root_fd, fix_path(link), O_WRONLY | O_CREAT | O_EXCL, 0644);
     if (fd < 0)
-        return err_map(errno);
+        return errno_map();
     ssize_t res = write(fd, target, strlen(target));
     close(fd);
     if (res < 0) {
         unlinkat(mount->root_fd, fix_path(link), 0);
-        return err_map(errno);
+        return errno_map();
     }
 
     // customize the stat info so it looks like a link
@@ -218,10 +218,10 @@ static ssize_t fakefs_readlink(struct mount *mount, const char *path, char *buf,
         // broken symlinks can't be included in an iOS app or else Xcode craps out
         int fd = openat(mount->root_fd, fix_path(path), O_RDONLY);
         if (fd < 0)
-            return err_map(errno);
+            return errno_map();
         int err = read(fd, buf, bufsize);
         if (err < 0)
-            return err_map(errno);
+            return errno_map();
         close(fd);
         return err;
     }

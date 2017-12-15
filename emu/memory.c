@@ -55,7 +55,7 @@ page_t pt_find_hole(struct mem *mem, pages_t size) {
 
 int pt_map(struct mem *mem, page_t start, pages_t pages, void *memory, unsigned flags) {
     if (memory == MAP_FAILED)
-        return err_map(errno);
+        return errno_map();
 
     struct data *data = malloc(sizeof(struct data));
     if (data == NULL)

@@ -91,7 +91,7 @@ int poll_wait(struct poll *poll_, struct poll_event *event, int timeout) {
 
         // wait for a ready notification
         if (pipe(poll_->notify_pipe) < 0) {
-            res = err_map(errno);
+            res = errno_map();
             break;
         }
         size_t pollfd_count = list_size(&poll_->real_poll_fds) + 1;
@@ -111,7 +111,7 @@ int poll_wait(struct poll *poll_, struct poll_event *event, int timeout) {
         res = poll(pollfds, pollfd_count, timeout);
         lock(poll_);
         if (res < 0) {
-            res = err_map(errno);
+            res = errno_map();
             break;
         }
         if (res == 0)
@@ -120,7 +120,7 @@ int poll_wait(struct poll *poll_, struct poll_event *event, int timeout) {
         if (pollfds[0].revents & POLLIN) {
             char fuck;
             if (read(poll_->notify_pipe[0], &fuck, 1) != 1) {
-                res = err_map(errno);
+                res = errno_map();
                 break;
             }
         } else {

@@ -29,7 +29,7 @@ dword_t sys_socket(dword_t domain, dword_t type, dword_t protocol) {
 
     int sock = socket(real_domain, real_type, protocol);
     if (sock < 0)
-        return err_map(errno);
+        return errno_map();
     return sock_fd_create(sock, type);
 }
 
@@ -88,7 +88,7 @@ dword_t sys_bind(fd_t sock_fd, addr_t sockaddr_addr, dword_t sockaddr_len) {
 
     err = bind(sock->real_fd, (void *) sockaddr, sockaddr_len);
     if (err < 0)
-        return err_map(errno);
+        return errno_map();
     return 0;
 }
 
@@ -104,7 +104,7 @@ dword_t sys_connect(fd_t sock_fd, addr_t sockaddr_addr, dword_t sockaddr_len) {
 
     err = connect(sock->real_fd, (void *) sockaddr, sockaddr_len);
     if (err < 0)
-        return err_map(errno);
+        return errno_map();
     return err;
 }
 
@@ -120,7 +120,7 @@ dword_t sys_getsockname(fd_t sock_fd, addr_t sockaddr_addr, addr_t sockaddr_len_
     char sockaddr[sockaddr_len];
     int res = getsockname(sock->real_fd, (void *) sockaddr, &sockaddr_len);
     if (res < 0)
-        return err_map(errno);
+        return errno_map();
 
     int err = sockaddr_write(sockaddr_addr, sockaddr, sockaddr_len);
     if (err < 0)
@@ -142,7 +142,7 @@ dword_t sys_socketpair(dword_t domain, dword_t type, dword_t protocol, addr_t so
     int sockets[2];
     int err = socketpair(domain, type, protocol, sockets);
     if (err < 0)
-        return err_map(errno);
+        return errno_map();
     sockets[0] = sock_fd_create(sockets[0], type);
     if (sockets[0] < 0)
         return sockets[0];
@@ -151,6 +151,7 @@ dword_t sys_socketpair(dword_t domain, dword_t type, dword_t protocol, addr_t so
         return sockets[1];
     if (user_put(sockets_addr, sockets))
         return _EFAULT;
+    STRACE(" [%d, %d]", sockets[0], sockets[1]);
     return 0;
 }
 
@@ -176,7 +177,7 @@ dword_t sys_sendto(fd_t sock_fd, addr_t buffer_addr, dword_t len, dword_t flags,
     int err = sendto(sock->real_fd, buffer, len, real_flags,
             sockaddr_addr ? (void *) sockaddr : NULL, sockaddr_len);
     if (err < 0)
-        return err_map(errno);
+        return errno_map();
     return 0;
 }
 
@@ -196,7 +197,7 @@ dword_t sys_recvfrom(fd_t sock_fd, addr_t buffer_addr, dword_t len, dword_t flag
     char sockaddr[sockaddr_len];
     ssize_t res = recvfrom(sock->real_fd, buffer, len, real_flags, (void *) sockaddr, &sockaddr_len);
     if (res < 0)
-        return err_map(errno);
+        return errno_map();
 
     if (user_write(buffer_addr, buffer, len))
         return _EFAULT;
@@ -215,7 +216,7 @@ dword_t sys_shutdown(fd_t sock_fd, dword_t how) {
         return _EBADF;
     int err = shutdown(sock->real_fd, how);
     if (err < 0)
-        return err_map(errno);
+        return errno_map();
     return 0;
 }
 
@@ -233,7 +234,7 @@ dword_t sys_setsockopt(fd_t sock_fd, dword_t level, dword_t option, addr_t value
 
     int err = setsockopt(sock->real_fd, level, real_opt, value, value_len);
     if (err < 0)
-        return err_map(errno);
+        return errno_map();
     return 0;
 }
 

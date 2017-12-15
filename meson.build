@@ -46,6 +46,7 @@ cified_vdso = custom_target('cify-vdso',
 
 src = [
     'kernel/init.c',
+    'kernel/errno.c',
 
     'kernel/calls.c',
     'kernel/user.c',

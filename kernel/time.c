@@ -23,7 +23,7 @@ dword_t sys_clock_gettime(dword_t clock, addr_t tp) {
     struct timespec ts;
     int err = clock_gettime(clock_id, &ts);
     if (err < 0)
-        return err_map(errno);
+        return errno_map();
     struct time_spec t;
     t.sec = ts.tv_sec;
     t.nsec = ts.tv_nsec;
@@ -59,7 +59,7 @@ dword_t sys_setitimer(dword_t which, addr_t new_val_addr, addr_t old_val_addr) {
     spec.value.tv_nsec = val.value.usec * 1000;
     struct timer_spec old_spec;
     if (timer_set(current->timer, spec, &old_spec) < 0)
-        return err_map(errno);
+        return errno_map();
 
     if (old_val_addr != 0) {
         struct itimerval_ old_val;
@@ -83,7 +83,7 @@ dword_t sys_nanosleep(addr_t req_addr, addr_t rem_addr) {
     req.tv_nsec = req_ts.nsec;
     struct timespec rem;
     if (nanosleep(&req, &rem) < 0)
-        return err_map(errno);
+        return errno_map();
     if (rem_addr != 0) {
         struct timespec_ rem_ts;
         rem_ts.sec = rem.tv_sec;
