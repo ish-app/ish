@@ -131,6 +131,7 @@ dword_t sys_getsockname(fd_t sock_fd, addr_t sockaddr_addr, addr_t sockaddr_len_
 }
 
 dword_t sys_socketpair(dword_t domain, dword_t type, dword_t protocol, addr_t sockets_addr) {
+    STRACE("socketpair(%d, %d, %d, 0x%x)", domain, type, protocol, sockets_addr);
     int real_domain = sock_family_to_real(domain);
     if (real_domain < 0)
         return _EINVAL;
@@ -208,6 +209,7 @@ dword_t sys_recvfrom(fd_t sock_fd, addr_t buffer_addr, dword_t len, dword_t flag
 }
 
 dword_t sys_shutdown(fd_t sock_fd, dword_t how) {
+    STRACE("shutdown(%d, %d)", sock_fd, how);
     struct fd *sock = sock_getfd(sock_fd);
     if (sock == NULL)
         return _EBADF;

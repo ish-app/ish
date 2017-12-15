@@ -289,6 +289,7 @@ dword_t sys_dup(fd_t fd) {
 }
 
 dword_t sys_dup2(fd_t fd, fd_t new_fd) {
+    STRACE("dup2(%d, %d)\n", fd, new_fd);
     int res;
     if (fd == new_fd)
         return fd;
