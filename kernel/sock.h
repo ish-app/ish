@@ -38,6 +38,20 @@ static inline int sock_family_to_real(int fake) {
 #define SOCK_NONBLOCK_ 0x800
 #define SOCK_CLOEXEC_ 0x80000
 
+static inline int sock_type_to_real(int type, int protocol) {
+    switch (type & 0xff) {
+        case SOCK_STREAM_:
+            if (protocol != 0 && protocol != 6)
+                return -1;
+            return SOCK_STREAM;
+        case SOCK_DGRAM_:
+            if (protocol != 0 && protocol != 17)
+                return -1;
+            return SOCK_DGRAM;
+    }
+    return -1;
+}
+
 #define MSG_OOB_ 0x1
 #define MSG_PEEK_ 0x2
 #define MSG_WAITALL_ 0x100

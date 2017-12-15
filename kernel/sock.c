@@ -5,40 +5,32 @@
 
 static struct fd_ops socket_fdops;
 
+fd_t sock_fd_create(int sock_fd, int flags) {
+    fd_t fd_no = fd_next();
+    if (fd_no == -1)
+        return _EMFILE;
+    struct fd *fd = fd_create();
+    fd->real_fd = sock_fd;
+    fd->ops = &socket_fdops;
+    if (flags & SOCK_CLOEXEC_)
+        fd->flags = FD_CLOEXEC_;
+    current->files[fd_no] = fd;
+    return fd_no;
+}
+
 dword_t sys_socket(dword_t domain, dword_t type, dword_t protocol) {
     STRACE("socket(%d, %d, %d)", domain, type, protocol);
     int real_domain = sock_family_to_real(domain);
     if (real_domain < 0)
         return _EINVAL;
-    int real_type;
-    switch (type & 0xff) {
-        case SOCK_STREAM_:
-            real_type = SOCK_STREAM;
-            if (protocol != 0 && protocol != 6)
-                return _EINVAL;
-            break;
-        case SOCK_DGRAM_:
-            real_type = SOCK_DGRAM;
-            if (protocol != 0 && protocol != 17)
-                return _EINVAL;
-            break;
-        default:
-            return _EINVAL;
-    }
+    int real_type = sock_type_to_real(type, protocol);
+    if (real_type < 0)
+        return _EINVAL;
 
-    fd_t fd_no = fd_next();
-    if (fd_no == -1)
-        return _EMFILE;
     int sock = socket(real_domain, real_type, protocol);
     if (sock < 0)
         return err_map(errno);
-    struct fd *fd = fd_create();
-    fd->real_fd = sock;
-    fd->ops = &socket_fdops;
-    if (type & SOCK_CLOEXEC_)
-        fd->flags = FD_CLOEXEC_;
-    current->files[fd_no] = fd;
-    return fd_no;
+    return sock_fd_create(sock, type);
 }
 
 static struct fd *sock_getfd(fd_t sock_fd) {
@@ -94,7 +86,10 @@ dword_t sys_bind(fd_t sock_fd, addr_t sockaddr_addr, dword_t sockaddr_len) {
     if (err < 0)
         return err;
 
-    return bind(sock->real_fd, (void *) sockaddr, sockaddr_len);
+    err = bind(sock->real_fd, (void *) sockaddr, sockaddr_len);
+    if (err < 0)
+        return err_map(errno);
+    return 0;
 }
 
 dword_t sys_connect(fd_t sock_fd, addr_t sockaddr_addr, dword_t sockaddr_len) {
@@ -107,7 +102,10 @@ dword_t sys_connect(fd_t sock_fd, addr_t sockaddr_addr, dword_t sockaddr_len) {
     if (err < 0)
         return err;
 
-    return connect(sock->real_fd, (void *) sockaddr, sockaddr_len);
+    err = connect(sock->real_fd, (void *) sockaddr, sockaddr_len);
+    if (err < 0)
+        return err_map(errno);
+    return err;
 }
 
 dword_t sys_getsockname(fd_t sock_fd, addr_t sockaddr_addr, addr_t sockaddr_len_addr) {
@@ -121,14 +119,38 @@ dword_t sys_getsockname(fd_t sock_fd, addr_t sockaddr_addr, addr_t sockaddr_len_
 
     char sockaddr[sockaddr_len];
     int res = getsockname(sock->real_fd, (void *) sockaddr, &sockaddr_len);
-    if (res >= 0) {
-        int err = sockaddr_write(sockaddr_addr, sockaddr, sockaddr_len);
-        if (err < 0)
-            return err;
-        if (user_put(sockaddr_len_addr, sockaddr_len))
-            return _EFAULT;
-    }
+    if (res < 0)
+        return err_map(errno);
+
+    int err = sockaddr_write(sockaddr_addr, sockaddr, sockaddr_len);
+    if (err < 0)
+        return err;
+    if (user_put(sockaddr_len_addr, sockaddr_len))
+        return _EFAULT;
     return res;
+}
+
+dword_t sys_socketpair(dword_t domain, dword_t type, dword_t protocol, addr_t sockets_addr) {
+    int real_domain = sock_family_to_real(domain);
+    if (real_domain < 0)
+        return _EINVAL;
+    int real_type = sock_type_to_real(type, protocol);
+    if (real_type < 0)
+        return _EINVAL;
+
+    int sockets[2];
+    int err = socketpair(domain, type, protocol, sockets);
+    if (err < 0)
+        return err_map(errno);
+    sockets[0] = sock_fd_create(sockets[0], type);
+    if (sockets[0] < 0)
+        return sockets[0];
+    sockets[1] = sock_fd_create(sockets[1], type);
+    if (sockets[1] < 0)
+        return sockets[1];
+    if (user_put(sockets_addr, sockets))
+        return _EFAULT;
+    return 0;
 }
 
 dword_t sys_sendto(fd_t sock_fd, addr_t buffer_addr, dword_t len, dword_t flags, addr_t sockaddr_addr, dword_t sockaddr_len) {
@@ -150,8 +172,11 @@ dword_t sys_sendto(fd_t sock_fd, addr_t buffer_addr, dword_t len, dword_t flags,
     }
 
 
-    return sendto(sock->real_fd, buffer, len, real_flags,
+    int err = sendto(sock->real_fd, buffer, len, real_flags,
             sockaddr_addr ? (void *) sockaddr : NULL, sockaddr_len);
+    if (err < 0)
+        return err_map(errno);
+    return 0;
 }
 
 dword_t sys_recvfrom(fd_t sock_fd, addr_t buffer_addr, dword_t len, dword_t flags, addr_t sockaddr_addr, addr_t sockaddr_len_addr) {
@@ -169,15 +194,16 @@ dword_t sys_recvfrom(fd_t sock_fd, addr_t buffer_addr, dword_t len, dword_t flag
     char buffer[len];
     char sockaddr[sockaddr_len];
     ssize_t res = recvfrom(sock->real_fd, buffer, len, real_flags, (void *) sockaddr, &sockaddr_len);
-    if (res >= 0) {
-        if (user_write(buffer_addr, buffer, len))
-            return _EFAULT;
-        int err = sockaddr_write(sockaddr_addr, sockaddr, sockaddr_len);
-        if (err < 0)
-            return err;
-        if (user_put(sockaddr_len_addr, sockaddr_len))
-            return _EFAULT;
-    }
+    if (res < 0)
+        return err_map(errno);
+
+    if (user_write(buffer_addr, buffer, len))
+        return _EFAULT;
+    int err = sockaddr_write(sockaddr_addr, sockaddr, sockaddr_len);
+    if (err < 0)
+        return err;
+    if (user_put(sockaddr_len_addr, sockaddr_len))
+        return _EFAULT;
     return res;
 }
 
@@ -185,7 +211,10 @@ dword_t sys_shutdown(fd_t sock_fd, dword_t how) {
     struct fd *sock = sock_getfd(sock_fd);
     if (sock == NULL)
         return _EBADF;
-    return shutdown(sock->real_fd, how);
+    int err = shutdown(sock->real_fd, how);
+    if (err < 0)
+        return err_map(errno);
+    return 0;
 }
 
 dword_t sys_setsockopt(fd_t sock_fd, dword_t level, dword_t option, addr_t value_addr, dword_t value_len) {
@@ -200,7 +229,10 @@ dword_t sys_setsockopt(fd_t sock_fd, dword_t level, dword_t option, addr_t value
     if (real_opt < 0)
         return _EINVAL;
 
-    return setsockopt(sock->real_fd, level, real_opt, value, value_len);
+    int err = setsockopt(sock->real_fd, level, real_opt, value, value_len);
+    if (err < 0)
+        return err_map(errno);
+    return 0;
 }
 
 static struct fd_ops socket_fdops = {
@@ -221,7 +253,7 @@ static struct socket_call {
     {NULL, 0}, // accept
     {(syscall_t) sys_getsockname, 3}, // getsockname
     {NULL, 0}, // getpeername
-    {NULL, 0}, // socketpair
+    {(syscall_t) sys_socketpair, 4}, // socketpair
     {NULL, 0}, // send
     {NULL, 0}, // recv
     {(syscall_t) sys_sendto, 6}, // sendto
