@@ -114,9 +114,9 @@ dword_t sys_clone(dword_t flags, addr_t stack, addr_t ptid, addr_t tls, addr_t c
 }
 
 dword_t sys_fork() {
-    return sys_clone(SIGCHLD_, current->cpu.esp, 0, 0, 0);
+    return sys_clone(SIGCHLD_, 0, 0, 0, 0);
 }
 
 dword_t sys_vfork() {
-    return sys_clone(CLONE_VFORK_ | CLONE_VM_ | SIGCHLD_, current->cpu.esp, 0, 0, 0);
+    return sys_clone(CLONE_VFORK_ | CLONE_VM_ | SIGCHLD_, 0, 0, 0, 0);
 }
