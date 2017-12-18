@@ -122,14 +122,9 @@ dword_t sys_close(fd_t f) {
     struct fd *fd = current->files[f];
     if (fd == NULL)
         return _EBADF;
-    if (--fd->refcount == 0) {
-        if (fd->ops->close) {
-            int err = fd->ops->close(fd);
-            if (err < 0)
-                return err;
-        }
-        free(fd);
-    }
+    int err = fd_close(fd);
+    if (err < 0)
+        return err;
     current->files[f] = NULL;
     return 0;
 }

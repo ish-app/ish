@@ -76,9 +76,11 @@ struct fd *generic_open(const char *path, int flags, int mode) {
 
 int fd_close(struct fd *fd) {
     if (--fd->refcount == 0) {
-        int err = fd->ops->close(fd);
-        if (err < 0)
-            return err;
+        if (fd->ops->close) {
+            int err = fd->ops->close(fd);
+            if (err < 0)
+                return err;
+        }
         free(fd);
     }
     return 0;
