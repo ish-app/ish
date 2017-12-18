@@ -55,12 +55,13 @@ dword_t sys_setpgrp() {
 }
 
 dword_t sys_setsid() {
+    big_lock(pids);
     lock(current);
     if (current->pgid == current->pid || current->sid == current->pid) {
+        big_unlock(pids);
         unlock(current);
         return _EPERM;
     }
-    big_lock(pids);
 
     struct pid *pid = pid_get(current->pid);
     list_add(&pid->session, &current->session);
