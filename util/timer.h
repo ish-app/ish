@@ -53,6 +53,7 @@ struct timer {
     pthread_t thread;
     timer_callback_t callback;
     void *data;
+    pthread_mutex_t lock;
 };
 
 struct timer *timer_new(timer_callback_t callback, void *data);
