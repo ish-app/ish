@@ -52,6 +52,7 @@ int timer_set(struct timer *timer, struct timer_spec spec, struct timer_spec *ol
     if (!timespec_is_zero(spec.value)) {
         if (!timer->running) {
             pthread_create(&timer->thread, NULL, timer_thread, timer);
+            pthread_detach(timer->thread);
             timer->running = true;
         }
     } else {

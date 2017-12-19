@@ -83,6 +83,7 @@ static void *process_run(void *proc) {
 void start_thread(struct process *proc) {
     if (pthread_create(&proc->thread, NULL, process_run, proc) < 0)
         abort();
+    pthread_detach(proc->thread);
 }
 
 // dumps out a tree of the processes, useful for running from a debugger

@@ -165,5 +165,6 @@ void poll_destroy(struct poll *poll) {
         free(poll_fd);
     }
 
+    unlock(poll);
     free(poll);
 }
