@@ -69,7 +69,6 @@ extern struct tty_driver real_tty_driver;
 
 struct tty {
     unsigned refcount;
-    struct pollable pl;
     struct tty_driver *driver;
 
     char buf[4096];
@@ -85,6 +84,10 @@ struct tty {
 
     dword_t session;
     dword_t fg_group;
+
+    struct list fds;
+    // only locks fds, to keep the lock order
+    pthread_mutex_t fds_lock;
 
     pthread_mutex_t lock;
 

@@ -4,6 +4,8 @@
 #include "kernel/errno.h"
 #include "kernel/fs.h"
 
+// lock order: fd, then poll
+
 struct poll *poll_create() {
     struct poll *poll = malloc(sizeof(struct poll));
     if (poll == NULL)
@@ -18,58 +20,56 @@ int poll_add_fd(struct poll *poll, struct fd *fd, int types) {
     struct poll_fd *poll_fd = malloc(sizeof(struct poll_fd));
     if (fd == NULL)
         return _ENOMEM;
-
     poll_fd->fd = fd;
     poll_fd->poll = poll;
     poll_fd->types = types;
 
+    lock(fd);
     lock(poll);
+    list_add(&fd->poll_fds, &poll_fd->polls);
     if (fd->ops->poll) {
         list_add(&poll->poll_fds, &poll_fd->fds);
     } else {
         list_add(&poll->real_poll_fds, &poll_fd->fds);
     }
     unlock(poll);
-    lock(fd);
-    list_add(&fd->poll_fds, &poll_fd->polls);
     unlock(fd);
 
     return 0;
 }
 
 int poll_del_fd(struct poll *poll, struct fd *fd) {
+    struct poll_fd *poll_fd, *tmp;
+    int ret = _EINVAL;
+
+    lock(fd);
     lock(poll);
-    struct poll_fd *poll_fd;
-    struct poll_fd *tmp;
     list_for_each_entry_safe(&poll->poll_fds, poll_fd, tmp, fds) {
         if (poll_fd->fd == fd) {
-            lock(fd);
             list_remove(&poll_fd->polls);
-            unlock(fd);
             list_remove(&poll_fd->fds);
             free(poll_fd);
-            unlock(poll);
-            return 0;
+            ret = 0;
+            break;
         }
     }
+    unlock(poll);
+    unlock(fd);
+
     return _EINVAL;
 }
 
-void poll_wake_pollable(struct pollable *pollable) {
-    lock(pollable);
-    struct fd *fd;
-    list_for_each_entry(&pollable->fds, fd, pollable_other_fds) {
-        struct poll_fd *poll_fd;
-        lock(fd);
-        list_for_each_entry(&fd->poll_fds, poll_fd, polls) {
-            struct poll *poll = poll_fd->poll;
-            // TODO this kinda needs to lock the poll but then there are lock ordering problems
-            if (poll->notify_pipe[1] != -1)
-                write(poll->notify_pipe[1], "", 1);
-        }
-        unlock(fd);
+void poll_wake(struct fd *fd) {
+    struct poll_fd *poll_fd;
+    lock(fd);
+    list_for_each_entry(&fd->poll_fds, poll_fd, polls) {
+        struct poll *poll = poll_fd->poll;
+        lock(poll);
+        if (poll->notify_pipe[1] != -1)
+            write(poll->notify_pipe[1], "", 1);
+        unlock(poll);
     }
-    unlock(pollable);
+    unlock(fd);
 }
 
 int poll_wait(struct poll *poll_, struct poll_event *event, int timeout) {
@@ -127,6 +127,7 @@ int poll_wait(struct poll *poll_, struct poll_event *event, int timeout) {
             i = 1;
             // FIXME real_poll_fds could change since pollfds array was created,
             // this is probably a race condition
+            // epoll will reflect modifications to the list immediately
             list_for_each_entry(&poll_->real_poll_fds, poll_fd, fds) {
                 if (pollfds[i].revents) {
                     event->fd = poll_fd->fd;
@@ -153,8 +154,6 @@ int poll_wait(struct poll *poll_, struct poll_event *event, int timeout) {
 }
 
 void poll_destroy(struct poll *poll) {
-    lock(poll);
-
     struct poll_fd *poll_fd;
     struct poll_fd *tmp;
     list_for_each_entry_safe(&poll->poll_fds, poll_fd, tmp, fds) {
@@ -165,6 +164,5 @@ void poll_destroy(struct poll *poll) {
         free(poll_fd);
     }
 
-    unlock(poll);
     free(poll);
 }

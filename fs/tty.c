@@ -24,8 +24,7 @@ static int tty_get(int type, int num, struct tty **tty_out) {
         tty->refcount = 0;
         tty->type = type;
         tty->num = num;
-        list_init(&tty->pl.fds);
-        lock_init(&tty->pl);
+        list_init(&tty->fds);
         // TODO default termios
         memset(&tty->winsize, sizeof(tty->winsize), 0);
         lock_init(tty);
@@ -86,12 +85,9 @@ static int tty_open(int major, int minor, int type, struct fd *fd) {
         return err;
     fd->tty = tty;
 
-    lock(&tty->pl);
-    lock(fd);
-    list_add(&tty->pl.fds, &fd->pollable_other_fds);
-    fd->pollable = &tty->pl;
-    unlock(fd);
-    unlock(&tty->pl);
+    pthread_mutex_lock(&tty->fds_lock);
+    list_add(&tty->fds, &fd->other_fds);
+    pthread_mutex_unlock(&tty->fds_lock);
 
     lock(current);
     if (current->sid == current->pid) {
@@ -107,13 +103,23 @@ static int tty_open(int major, int minor, int type, struct fd *fd) {
 }
 
 static int tty_close(struct fd *fd) {
-    lock(fd->pollable);
-    lock(fd);
-    list_remove(&fd->pollable_other_fds);
-    unlock(fd);
-    unlock(fd->pollable);
+    pthread_mutex_lock(&fd->tty->fds_lock);
+    list_remove(&fd->other_fds);
+    pthread_mutex_unlock(&fd->tty->fds_lock);
     tty_release(fd->tty);
     return 0;
+}
+
+static void tty_wake(struct tty *tty) {
+    notify(tty, produced);
+    unlock(tty);
+    struct fd *fd;
+    pthread_mutex_lock(&tty->fds_lock);
+    list_for_each_entry(&tty->fds, fd, other_fds) {
+        poll_wake(fd);
+    }
+    pthread_mutex_unlock(&tty->fds_lock);
+    lock(tty);
 }
 
 int tty_input(struct tty *tty, const char *input, size_t size) {
@@ -170,8 +176,7 @@ int tty_input(struct tty *tty, const char *input, size_t size) {
                 }
 
                 tty->canon_ready = true;
-                notify(tty, produced);
-                poll_wake_pollable(&tty->pl);
+                tty_wake(tty);
                 while (tty->canon_ready)
                     wait_for(tty, consumed);
             } else {
@@ -187,8 +192,7 @@ int tty_input(struct tty *tty, const char *input, size_t size) {
             size = sizeof(tty->buf) - 1 - tty->bufsize;
         memcpy(tty->buf + tty->bufsize, input, size);
         tty->bufsize += size;
-        notify(tty, produced);
-        poll_wake_pollable(&tty->pl);
+        tty_wake(tty);
     }
 
     unlock(tty);

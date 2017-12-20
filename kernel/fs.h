@@ -16,17 +16,19 @@ struct fd {
     unsigned refcount;
     unsigned flags;
     const struct fd_ops *ops;
-
     struct list poll_fds;
-    struct pollable *pollable;
-    struct list pollable_other_fds;
 
     // fd data
     union {
         struct {
             DIR *dir;
         };
-        struct tty *tty;
+        struct {
+            struct tty *tty;
+            // links together fds pointing to the same tty
+            // locked by the tty
+            struct list other_fds;
+        };
     };
 
     // fs/inode data
@@ -161,11 +163,6 @@ struct mount *find_mount(char *path);
 struct mount *find_mount_and_trim_path(char *path);
 const char *fix_path(const char *path); // TODO reconsider
 
-struct pollable {
-    struct list fds;
-    pthread_mutex_t lock;
-};
-
 struct poll {
     struct list poll_fds;
     struct list real_poll_fds;
@@ -193,8 +190,11 @@ struct poll_event {
 struct poll *poll_create(void);
 int poll_add_fd(struct poll *poll, struct fd *fd, int types);
 int poll_del_fd(struct poll *poll, struct fd *fd);
-void poll_wake_pollable(struct pollable *pollable);
+// please do not call this while holding any locks you would acquire in your poll operation
+void poll_wake(struct fd *fd);
 int poll_wait(struct poll *poll, struct poll_event *event, int timeout);
+// does not lock the poll because lock ordering, you must ensure no other
+// thread will add or remove fds from this poll
 void poll_destroy(struct poll *poll);
 
 // Normalizes the path specified and writes the result into the out buffer.
