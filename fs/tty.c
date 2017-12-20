@@ -54,20 +54,18 @@ static int tty_get(int type, int num, struct tty **tty_out) {
 }
 
 static void tty_release(struct tty *tty) {
+    big_lock(ttys);
     lock(tty);
     if (--tty->refcount == 0) {
         if (tty->driver->close)
             tty->driver->close(tty);
-        // dance necessary to prevent deadlock
-        unlock(tty);
-        big_lock(ttys);
-        lock(tty);
         ttys[tty->type][tty->num] = NULL;
+        unlock(tty);
         free(tty);
-        big_unlock(ttys);
     } else {
         unlock(tty);
     }
+    big_unlock(ttys);
 }
 
 static int tty_open(int major, int minor, int type, struct fd *fd) {
