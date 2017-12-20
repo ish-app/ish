@@ -19,12 +19,13 @@ void send_signal(struct process *proc, int sig) {
     if (proc->sigactions[sig].handler != SIG_IGN_) {
         if (proc->blocked & (1 << sig)) {
             proc->queued |= (1 << sig);
-            unlock(proc->lock);
         } else {
             unlock(proc->lock);
             deliver_signal(proc, sig);
+            return;
         }
     }
+    unlock(proc->lock);
 }
 
 void send_group_signal(dword_t pgid, int sig) {
