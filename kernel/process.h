@@ -29,6 +29,7 @@ struct process {
     sigset_t_ blocked;
     sigset_t_ queued; // where blocked signals go when they're sent
     sigset_t_ pending;
+    lock_t signal_lock;
 
     struct process *parent;
     struct list children;
@@ -48,10 +49,9 @@ struct process {
     dword_t exit_code;
     bool zombie;
     pthread_cond_t child_exit;
+    lock_t exit_lock;
 
     pthread_cond_t vfork_done;
-
-    lock_t lock;
 };
 
 // current will always give the process that is currently executing

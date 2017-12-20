@@ -87,7 +87,7 @@ static int tty_open(int major, int minor, int type, struct fd *fd) {
     list_add(&tty->fds, &fd->other_fds);
     pthread_mutex_unlock(&tty->fds_lock);
 
-    lock(current->lock);
+    lock(pids_lock);
     if (current->sid == current->pid) {
         if (current->tty == NULL) {
             current->tty = tty;
@@ -95,7 +95,7 @@ static int tty_open(int major, int minor, int type, struct fd *fd) {
             tty->fg_group = current->pgid;
         }
     }
-    unlock(current->lock);
+    unlock(pids_lock);
 
     return 0;
 }

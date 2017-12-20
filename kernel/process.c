@@ -50,7 +50,8 @@ struct process *process_create() {
 
     list_init(&proc->children);
     list_init(&proc->siblings);
-    lock_init(proc->lock);
+    lock_init(proc->signal_lock);
+    lock_init(proc->exit_lock);
     pthread_cond_init(&proc->child_exit, NULL);
     pthread_cond_init(&proc->vfork_done, NULL);
     proc->has_timer = false;
@@ -58,14 +59,12 @@ struct process *process_create() {
 }
 
 void process_destroy(struct process *proc) {
-    list_remove(&proc->siblings);
     lock(pids_lock);
-    struct pid *pid = pid_get(proc->pid);
+    list_remove(&proc->siblings);
     list_remove(&proc->group);
     list_remove(&proc->session);
-    pid->proc = NULL;
+    pid_get(proc->pid)->proc = NULL;
     unlock(pids_lock);
-    mem_release(proc->cpu.mem);
     free(proc);
 }
 

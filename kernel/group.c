@@ -15,24 +15,22 @@ dword_t sys_setpgid(dword_t id, dword_t pgid) {
     // TODO or a child in the same session
     err = _EPERM;
     if (list_empty(&pid->group) && id != pgid)
-        goto unlock_pids;
+        goto out;
     // TODO you can only join a process group in the same session
 
     struct process *proc = pid->proc;
     err = _ESRCH;
     if (proc == NULL)
-        goto unlock_pids;
-
-    lock(proc->lock);
+        goto out;
 
     // you can only change the process group of yourself or a child
     err = _ESRCH;
     if (proc != current && proc->parent != current)
-        goto unlock_proc;
+        goto out;
     // a session leader cannot create a process group
     err = _EPERM;
     if (proc->sid == proc->pid)
-        goto unlock_proc;
+        goto out;
 
     // TODO cannot set process group of a child that has done exec
 
@@ -43,9 +41,7 @@ dword_t sys_setpgid(dword_t id, dword_t pgid) {
     }
 
     err = 0;
-unlock_proc:
-    unlock(proc->lock);
-unlock_pids:
+out:
     unlock(pids_lock);
     return err;
 }
@@ -56,10 +52,8 @@ dword_t sys_setpgrp() {
 
 dword_t sys_setsid() {
     lock(pids_lock);
-    lock(current->lock);
     if (current->pgid == current->pid || current->sid == current->pid) {
         unlock(pids_lock);
-        unlock(current->lock);
         return _EPERM;
     }
 
@@ -70,6 +64,5 @@ dword_t sys_setsid() {
     current->pgid = current->pid;
 
     unlock(pids_lock);
-    unlock(current->lock);
     return 0;
 }

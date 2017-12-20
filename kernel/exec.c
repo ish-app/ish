@@ -343,7 +343,7 @@ static int elf_exec(struct fd *fd, const char *file, char *const argv[], char *c
     current->cpu.esp = sp;
     current->cpu.eip = entry;
     current->cpu.fcw = 0x37f;
-    pthread_cond_broadcast(&current->vfork_done);
+    notify(current->vfork_done);
 
     err = 0;
 out_free_interp:
