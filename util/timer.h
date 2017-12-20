@@ -7,6 +7,7 @@
 #ifdef __MACH__
 #include <mach/mach_time.h>
 #endif
+#include "misc.h"
 
 static inline struct timespec timespec_now() {
     struct timespec now;
@@ -53,7 +54,7 @@ struct timer {
     pthread_t thread;
     timer_callback_t callback;
     void *data;
-    pthread_mutex_t lock;
+    lock_t lock;
 };
 
 struct timer *timer_new(timer_callback_t callback, void *data);

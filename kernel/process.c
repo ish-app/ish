@@ -8,7 +8,7 @@
 __thread struct process *current;
 
 static struct pid pids[MAX_PID + 1] = {};
-pthread_mutex_t pids_lock = PTHREAD_MUTEX_INITIALIZER;
+lock_t pids_lock = LOCK_INITIALIZER;
 
 static bool pid_empty(struct pid *pid) {
     return pid->proc == NULL && list_empty(&pid->session) && list_empty(&pid->group);
@@ -29,7 +29,7 @@ struct process *pid_get_proc(dword_t id) {
 }
 
 struct process *process_create() {
-    big_lock(pids);
+    lock(pids_lock);
     static int cur_pid = 1;
     while (!pid_empty(&pids[cur_pid])) {
         cur_pid++;
@@ -46,11 +46,11 @@ struct process *process_create() {
     *proc = (struct process) {};
     proc->pid = pid->id;
     pid->proc = proc;
-    big_unlock(pids);
+    unlock(pids_lock);
 
     list_init(&proc->children);
     list_init(&proc->siblings);
-    lock_init(proc);
+    lock_init(proc->lock);
     pthread_cond_init(&proc->child_exit, NULL);
     pthread_cond_init(&proc->vfork_done, NULL);
     proc->has_timer = false;
@@ -59,12 +59,12 @@ struct process *process_create() {
 
 void process_destroy(struct process *proc) {
     list_remove(&proc->siblings);
-    big_lock(pids);
+    lock(pids_lock);
     struct pid *pid = pid_get(proc->pid);
     list_remove(&proc->group);
     list_remove(&proc->session);
     pid->proc = NULL;
-    big_unlock(pids);
+    unlock(pids_lock);
     mem_release(proc->cpu.mem);
     free(proc);
 }
@@ -85,6 +85,3 @@ void start_thread(struct process *proc) {
         abort();
     pthread_detach(proc->thread);
 }
-
-// dumps out a tree of the processes, useful for running from a debugger
-/* static void pstree( */

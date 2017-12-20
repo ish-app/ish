@@ -11,7 +11,7 @@ struct buffer {
     size_t start; // first byte of data
     size_t unread;
 
-    pthread_mutex_t lock;
+    lock_t lock;
     pthread_cond_t changed;
 };
 

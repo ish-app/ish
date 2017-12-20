@@ -8,7 +8,7 @@ dword_t sys_setpgid(dword_t id, dword_t pgid) {
         id = current->pid;
     if (pgid == 0)
         pgid = id;
-    big_lock(pids);
+    lock(pids_lock);
     struct pid *pid = pid_get(id);
 
     // when creating a process group, you need to specify your own pid
@@ -23,7 +23,7 @@ dword_t sys_setpgid(dword_t id, dword_t pgid) {
     if (proc == NULL)
         goto unlock_pids;
 
-    lock(proc);
+    lock(proc->lock);
 
     // you can only change the process group of yourself or a child
     err = _ESRCH;
@@ -44,9 +44,9 @@ dword_t sys_setpgid(dword_t id, dword_t pgid) {
 
     err = 0;
 unlock_proc:
-    unlock(proc);
+    unlock(proc->lock);
 unlock_pids:
-    big_unlock(pids);
+    unlock(pids_lock);
     return err;
 }
 
@@ -55,11 +55,11 @@ dword_t sys_setpgrp() {
 }
 
 dword_t sys_setsid() {
-    big_lock(pids);
-    lock(current);
+    lock(pids_lock);
+    lock(current->lock);
     if (current->pgid == current->pid || current->sid == current->pid) {
-        big_unlock(pids);
-        unlock(current);
+        unlock(pids_lock);
+        unlock(current->lock);
         return _EPERM;
     }
 
@@ -69,7 +69,7 @@ dword_t sys_setsid() {
     list_add(&pid->group, &current->group);
     current->pgid = current->pid;
 
-    big_unlock(pids);
-    unlock(current);
+    unlock(pids_lock);
+    unlock(current->lock);
     return 0;
 }

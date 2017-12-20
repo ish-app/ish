@@ -38,7 +38,7 @@ struct fd {
         struct statbuf *stat;
     };
 
-    pthread_mutex_t lock;
+    lock_t lock;
 };
 typedef sdword_t fd_t;
 struct fd *fd_create(void);
@@ -167,7 +167,7 @@ struct poll {
     struct list poll_fds;
     struct list real_poll_fds;
     int notify_pipe[2];
-    pthread_mutex_t lock;
+    lock_t lock;
 };
 
 struct poll_fd {

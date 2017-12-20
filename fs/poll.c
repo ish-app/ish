@@ -12,7 +12,7 @@ struct poll *poll_create() {
         return NULL;
     list_init(&poll->poll_fds);
     list_init(&poll->real_poll_fds);
-    lock_init(poll);
+    lock_init(poll->lock);
     return poll;
 }
 
@@ -24,16 +24,16 @@ int poll_add_fd(struct poll *poll, struct fd *fd, int types) {
     poll_fd->poll = poll;
     poll_fd->types = types;
 
-    lock(fd);
-    lock(poll);
+    lock(fd->lock);
+    lock(poll->lock);
     list_add(&fd->poll_fds, &poll_fd->polls);
     if (fd->ops->poll) {
         list_add(&poll->poll_fds, &poll_fd->fds);
     } else {
         list_add(&poll->real_poll_fds, &poll_fd->fds);
     }
-    unlock(poll);
-    unlock(fd);
+    unlock(poll->lock);
+    unlock(fd->lock);
 
     return 0;
 }
@@ -42,8 +42,8 @@ int poll_del_fd(struct poll *poll, struct fd *fd) {
     struct poll_fd *poll_fd, *tmp;
     int ret = _EINVAL;
 
-    lock(fd);
-    lock(poll);
+    lock(fd->lock);
+    lock(poll->lock);
     list_for_each_entry_safe(&poll->poll_fds, poll_fd, tmp, fds) {
         if (poll_fd->fd == fd) {
             list_remove(&poll_fd->polls);
@@ -53,29 +53,29 @@ int poll_del_fd(struct poll *poll, struct fd *fd) {
             break;
         }
     }
-    unlock(poll);
-    unlock(fd);
+    unlock(poll->lock);
+    unlock(fd->lock);
 
     return _EINVAL;
 }
 
 void poll_wake(struct fd *fd) {
     struct poll_fd *poll_fd;
-    lock(fd);
+    lock(fd->lock);
     list_for_each_entry(&fd->poll_fds, poll_fd, polls) {
         struct poll *poll = poll_fd->poll;
-        lock(poll);
+        lock(poll->lock);
         if (poll->notify_pipe[1] != -1)
             write(poll->notify_pipe[1], "", 1);
-        unlock(poll);
+        unlock(poll->lock);
     }
-    unlock(fd);
+    unlock(fd->lock);
 }
 
 int poll_wait(struct poll *poll_, struct poll_event *event, int timeout) {
     int res;
     // TODO this is pretty broken with regards to timeouts
-    lock(poll_);
+    lock(poll_->lock);
     while (true) {
         // check if any fds are ready
         struct poll_fd *poll_fd;
@@ -84,7 +84,7 @@ int poll_wait(struct poll *poll_, struct poll_event *event, int timeout) {
             if (fd->ops->poll(fd) & poll_fd->types) {
                 event->fd = fd;
                 event->types = poll_fd->types;
-                unlock(poll_);
+                unlock(poll_->lock);
                 return 1;
             }
         }
@@ -107,9 +107,9 @@ int poll_wait(struct poll *poll_, struct poll_event *event, int timeout) {
             i++;
         }
 
-        unlock(poll_);
+        unlock(poll_->lock);
         res = poll(pollfds, pollfd_count, timeout);
-        lock(poll_);
+        lock(poll_->lock);
         if (res < 0) {
             res = errno_map();
             break;
@@ -133,7 +133,7 @@ int poll_wait(struct poll *poll_, struct poll_event *event, int timeout) {
                     event->fd = poll_fd->fd;
                     // TODO translate flags
                     event->types = pollfds[i].revents;
-                    unlock(poll_);
+                    unlock(poll_->lock);
                     return 1;
                 }
             }
@@ -149,7 +149,7 @@ int poll_wait(struct poll *poll_, struct poll_event *event, int timeout) {
         close(poll_->notify_pipe[0]);
     if (poll_->notify_pipe[1] != -1)
         close(poll_->notify_pipe[1]);
-    unlock(poll_);
+    unlock(poll_->lock);
     return res;
 }
 
@@ -157,9 +157,9 @@ void poll_destroy(struct poll *poll) {
     struct poll_fd *poll_fd;
     struct poll_fd *tmp;
     list_for_each_entry_safe(&poll->poll_fds, poll_fd, tmp, fds) {
-        lock(poll_fd->fd);
+        lock(poll_fd->fd->lock);
         list_remove(&poll_fd->polls);
-        unlock(poll_fd->fd);
+        unlock(poll_fd->fd->lock);
         list_remove(&poll_fd->fds);
         free(poll_fd);
     }

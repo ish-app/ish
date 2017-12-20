@@ -65,15 +65,14 @@ typedef sqword_t off_t_;
 #define uint(size) CONCAT3(uint,size,_t)
 #define sint(size) CONCAT3(int,size,_t)
 
-#define lock_init(thing) pthread_mutex_init(&(thing)->lock, NULL)
+typedef pthread_mutex_t lock_t;
+#define lock_init(lock) pthread_mutex_init(&(lock), NULL)
+#define LOCK_INITIALIZER PTHREAD_MUTEX_INITIALIZER
+#define lock(lock) pthread_mutex_lock(&(lock))
+#define unlock(lock) pthread_mutex_unlock(&(lock))
 
-#define lock(thing) pthread_mutex_lock(&(thing)->lock)
-#define unlock(thing) pthread_mutex_unlock(&(thing)->lock)
-#define big_lock(thing) pthread_mutex_lock(&thing##_lock)
-#define big_unlock(thing) pthread_mutex_unlock(&thing##_lock)
-
-#define wait_for(thing, what) pthread_cond_wait(&(thing)->what, &(thing)->lock)
-#define notify(thing, what) pthread_cond_broadcast(&(thing)->what)
+#define wait_for(cond, lock) pthread_cond_wait(&(cond), &(lock))
+#define notify(cond) pthread_cond_broadcast(&(cond))
 
 #define ERR_PTR(err) (void *) (intptr_t) (err)
 #define PTR_ERR(ptr) (intptr_t) (ptr)

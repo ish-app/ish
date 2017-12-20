@@ -87,9 +87,9 @@ struct tty {
 
     struct list fds;
     // only locks fds, to keep the lock order
-    pthread_mutex_t fds_lock;
+    lock_t fds_lock;
 
-    pthread_mutex_t lock;
+    lock_t lock;
 
     union {
         // for real tty driver

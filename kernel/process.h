@@ -51,7 +51,7 @@ struct process {
 
     pthread_cond_t vfork_done;
 
-    pthread_mutex_t lock;
+    lock_t lock;
 };
 
 // current will always give the process that is currently executing
@@ -73,7 +73,7 @@ struct pid {
 // these functions must be called with pids_lock
 struct pid *pid_get(dword_t pid);
 struct process *pid_get_proc(dword_t pid);
-extern pthread_mutex_t pids_lock;
+extern lock_t pids_lock;
 
 #define MAX_PID (1 << 10) // oughta be enough
 
