@@ -618,11 +618,16 @@
 #undef OP_SIZE
 
 flatten void cpu_run(struct cpu_state *cpu) {
+    int i = 0;
     while (true) {
         int interrupt = cpu_step32(cpu);
         if (interrupt != INT_NONE) {
             cpu->trapno = interrupt;
             handle_interrupt(cpu, interrupt);
+        }
+        if (i++ >= 100000) {
+            i = 0;
+            receive_signals();
         }
     }
 }
