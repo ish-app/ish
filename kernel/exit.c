@@ -40,7 +40,8 @@ noreturn void do_exit(int status) {
         // unmount all filesystems
         struct mount *mount = mounts;
         while (mount) {
-            mount->fs->umount(mount);
+            if (mount->fs->umount)
+                mount->fs->umount(mount);
             mount = mount->next;
         }
 
