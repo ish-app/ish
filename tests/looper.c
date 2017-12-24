@@ -1,7 +1,7 @@
 #include <unistd.h>
 #include <stdio.h>
 
-void nop();
+#define nop() __asm__ volatile("")
 
 int main() {
     int loops = 100000000;

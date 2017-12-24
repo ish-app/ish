@@ -8,7 +8,7 @@ executable('hello-libc-static', ['hello-clib.c'], link_args: ['-static'])
 executable('hello-libc', ['hello-clib.c'])
 
 # simple benchmark
-executable('looper', ['looper.c', 'nothing.c'])
+executable('looper', ['looper.c'])
 executable('fibbonaci', ['fibbonaci.c'])
 
 # filesystem
