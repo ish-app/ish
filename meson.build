@@ -5,14 +5,14 @@ log_on = get_option('log').split()
 log_off = get_option('nolog').split()
 foreach channel : log_on + log_off
     if log_on.contains(channel)
-        add_global_arguments('-DDEBUG_' + channel + '=1', language: 'c')
+        add_project_arguments('-DDEBUG_' + channel + '=1', language: 'c')
     else
-        add_global_arguments('-DDEBUG_' + channel + '=0', language: 'c')
+        add_project_arguments('-DDEBUG_' + channel + '=0', language: 'c')
     endif
 endforeach
 
 if get_option('no_crlf')
-    add_global_arguments('-DNO_CRLF', language: 'c')
+    add_project_arguments('-DNO_CRLF', language: 'c')
 endif
 
 includes = [include_directories('.')]
@@ -30,7 +30,7 @@ elif host_machine.system() == 'linux'
     dbm = [cc.find_library('gdbm'), cc.find_library('gdbm_compat')]
     if not cc.has_header('ndbm.h') and cc.has_header('gdbm-ndbm.h')
         # slight problem: on debian the header is called gdbm-ndbm.h for some reason
-        add_global_arguments('-DGDBM_NDBM=1', language: 'c')
+        add_project_arguments('-DGDBM_NDBM=1', language: 'c')
     endif
 endif
 
