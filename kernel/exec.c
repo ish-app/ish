@@ -69,7 +69,7 @@ static int load_entry(struct prg_header ph, addr_t bias, struct fd *fd) {
     int flags = 0;
     if (ph.flags & PH_W) flags |= P_WRITE;
 
-    if ((err = fd->ops->mmap(fd, current->cpu.mem, PAGE(addr),
+    if ((err = fd->ops->mmap(fd, curmem, PAGE(addr),
                     PAGE_ROUND_UP(filesize + OFFSET(addr)),
                     offset - OFFSET(addr), flags, MMAP_PRIVATE)) < 0)
         return err;
@@ -93,7 +93,7 @@ static int load_entry(struct prg_header ph, addr_t bias, struct fd *fd) {
 
         // then map the pages from after the file mapping up to and including the end of bss
         if (bss_size - tail_size != 0)
-            if ((err = pt_map_nothing(current->cpu.mem, PAGE_ROUND_UP(addr + filesize),
+            if ((err = pt_map_nothing(curmem, PAGE_ROUND_UP(addr + filesize),
                     PAGE_ROUND_UP(bss_size - tail_size), flags)) < 0)
                 return err;
     }
@@ -157,8 +157,9 @@ static int elf_exec(struct fd *fd, const char *file, char *const argv[], char *c
     // from this point on, if any error occurs the process will have to be
     // killed before it even starts. please don't be too sad about it, it's
     // just a process.
-    mem_release(current->cpu.mem);
+    mem_release(curmem);
     current->cpu.mem = mem_new();
+    write_wrlock(&curmem->lock);
 
     addr_t load_addr; // used for AX_PHDR
     bool load_addr_set = false;
@@ -207,7 +208,7 @@ static int elf_exec(struct fd *fd, const char *file, char *const argv[], char *c
             pages_t b = PAGE(interp_first->vaddr);
             interp_size = a - b;
         }
-        interp_addr = pt_find_hole(current->cpu.mem, interp_size) << PAGE_BITS;
+        interp_addr = pt_find_hole(curmem, interp_size) << PAGE_BITS;
         // now back to map dat shit! interpreter edition
         for (int i = interp_header.phent_count - 1; i >= 0; i--) {
             if (interp_ph[i].type != PT_LOAD)
@@ -221,27 +222,28 @@ static int elf_exec(struct fd *fd, const char *file, char *const argv[], char *c
     // map vdso
     err = _ENOMEM;
     pages_t vdso_pages = sizeof(vdso_data) >> PAGE_BITS;
-    page_t vdso_page = pt_find_hole(current->cpu.mem, vdso_pages);
+    page_t vdso_page = pt_find_hole(curmem, vdso_pages);
     if (vdso_page == BAD_PAGE)
         goto beyond_hope;
-    if ((err = pt_map(current->cpu.mem, vdso_page, vdso_pages, (void *) vdso_data, 0)) < 0)
+    if ((err = pt_map(curmem, vdso_page, vdso_pages, (void *) vdso_data, 0)) < 0)
         goto beyond_hope;
     current->vdso = vdso_page << PAGE_BITS;
     addr_t vdso_entry = current->vdso + ((struct elf_header *) vdso_data)->entry_point;
 
     // map 3 empty "vvar" pages to satisfy ptraceomatic
-    page_t vvar_page = pt_find_hole(current->cpu.mem, 3);
+    page_t vvar_page = pt_find_hole(curmem, 3);
     if (vvar_page == BAD_PAGE)
         goto beyond_hope;
-    if ((err = pt_map_nothing(current->cpu.mem, vvar_page, 3, 0)) < 0)
+    if ((err = pt_map_nothing(curmem, vvar_page, 3, 0)) < 0)
         goto beyond_hope;
 
     // STACK TIME!
 
     // allocate 1 page of stack at 0xffffd, and let it grow down
-    if ((err = pt_map_nothing(current->cpu.mem, 0xffffd, 1, P_WRITE | P_GROWSDOWN)) < 0) {
+    if ((err = pt_map_nothing(curmem, 0xffffd, 1, P_WRITE | P_GROWSDOWN)) < 0)
         goto beyond_hope;
-    }
+    // that was the last memory mapping
+    write_wrunlock(&curmem->lock);
     dword_t sp = 0xffffe000;
     // on 32-bit linux, there's 4 empty bytes at the very bottom of the stack.
     // on 64-bit linux, there's 8. make ptraceomatic happy. (a major theme in this file)
@@ -357,6 +359,7 @@ out_free_ph:
 
 beyond_hope:
     // TODO force sigsegv
+    write_wrunlock(&curmem->lock);
     goto out_free_interp;
 }
 

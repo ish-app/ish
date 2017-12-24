@@ -48,6 +48,7 @@ noreturn void do_exit(int status) {
         if (exit_hook != NULL)
             exit_hook(status);
     }
+    sleep(1000000000);
     pthread_exit(NULL);
 }
 
