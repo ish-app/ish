@@ -10,16 +10,14 @@
 #include "kernel/errno.h"
 #include "emu/memory.h"
 
-static void tlb_flush(struct mem *mem);
-
-// this code currently assumes the system page size is 4k
+// increment the change count
+static void mem_changed(struct mem *mem);
 
 struct mem *mem_new() {
     struct mem *mem = malloc(sizeof(struct mem));
     mem->refcount = 1;
     mem->pt = calloc(MEM_PAGES, sizeof(struct pt_entry));
-    mem->tlb = malloc(TLB_SIZE * sizeof(struct tlb_entry));
-    tlb_flush(mem);
+    mem->changes = 0;
     return mem;
 }
 
@@ -31,7 +29,6 @@ void mem_release(struct mem *mem) {
     if (mem->refcount-- == 0) {
         pt_unmap(mem, 0, MEM_PAGES, PT_FORCE);
         free(mem->pt);
-        free(mem->tlb);
         free(mem);
     }
 }
@@ -71,7 +68,7 @@ int pt_map(struct mem *mem, page_t start, pages_t pages, void *memory, unsigned 
         mem->pt[page].offset = (page - start) << PAGE_BITS;
         mem->pt[page].flags = flags;
     }
-    tlb_flush(mem);
+    mem_changed(mem);
     return 0;
 }
 
@@ -92,7 +89,7 @@ int pt_unmap(struct mem *mem, page_t start, pages_t pages, int force) {
             }
         }
     }
-    tlb_flush(mem);
+    mem_changed(mem);
     return 0;
 }
 
@@ -109,7 +106,7 @@ int pt_set_flags(struct mem *mem, page_t start, pages_t pages, int flags) {
             return _ENOMEM;
     for (page_t page = start; page < start + pages; page++)
         mem->pt[page].flags = flags;
-    tlb_flush(mem);
+    mem_changed(mem);
     return 0;
 }
 
@@ -127,44 +124,16 @@ int pt_copy_on_write(struct mem *src, page_t src_start, struct mem *dst, page_t 
             dst->pt[dst_page] = *entry;
         }
     }
-    tlb_flush(src);
-    tlb_flush(dst);
+    mem_changed(src);
+    mem_changed(dst);
     return 0;
 }
 
-static void tlb_flush(struct mem *mem) {
-    memset(mem->tlb, 0, TLB_SIZE * sizeof(struct tlb_entry));
-    for (unsigned i = 0; i < TLB_SIZE; i++) {
-        mem->tlb[i].page = mem->tlb[i].page_if_writable = TLB_PAGE_EMPTY;
-    }
+static void mem_changed(struct mem *mem) {
+    mem->changes++;
 }
 
-bool __mem_read_cross_page(struct mem *mem, addr_t addr, char *value, unsigned size) {
-    char *ptr1 = __mem_read_ptr(mem, addr);
-    char *ptr2 = __mem_read_ptr(mem, (PAGE(addr) + 1) << PAGE_BITS);
-    if (ptr1 == NULL || ptr2 == NULL)
-        return false;
-    size_t part1 = PAGE_SIZE - OFFSET(addr);
-    assert(part1 < size);
-    memcpy(value, ptr1, part1);
-    memcpy(value + part1, ptr2, size - part1);
-    return true;
-}
-
-bool __mem_write_cross_page(struct mem *mem, addr_t addr, const char *value, unsigned size) {
-    char *ptr1 = __mem_write_ptr(mem, addr);
-    char *ptr2 = __mem_write_ptr(mem, (PAGE(addr) + 1) << PAGE_BITS);
-    if (ptr1 == NULL || ptr2 == NULL)
-        return false;
-    size_t part1 = PAGE_SIZE - OFFSET(addr);
-    assert(part1 < size);
-    memcpy(ptr1, value, part1);
-    memcpy(ptr2, value + part1, size - part1);
-    return true;
-}
-
-int sys_getpid();
-void *tlb_handle_miss(struct mem *mem, addr_t addr, int type) {
+char *mem_ptr(struct mem *mem, addr_t addr, int type) {
     page_t page = PAGE(addr);
     struct pt_entry *entry = &mem->pt[page];
 
@@ -181,7 +150,7 @@ void *tlb_handle_miss(struct mem *mem, addr_t addr, int type) {
         pt_map_nothing(mem, page, 1, P_WRITE | P_GROWSDOWN);
     }
 
-    if (type == TLB_WRITE && !P_WRITABLE(entry->flags)) {
+    if (type == MEM_WRITE && !P_WRITABLE(entry->flags)) {
         // page is unwritable or cow
         // if page is cow, ~~milk~~ copy it
         if (entry->flags & P_COW) {
@@ -195,23 +164,10 @@ void *tlb_handle_miss(struct mem *mem, addr_t addr, int type) {
         }
     }
 
-    // TODO if page is unwritable maybe we shouldn't bail and still add an
-    // entry to the TLB
-
-    struct tlb_entry *tlb = &mem->tlb[TLB_INDEX(addr)];
-    tlb->page = TLB_PAGE(addr);
-    if (P_WRITABLE(entry->flags))
-        tlb->page_if_writable = tlb->page;
-    else
-        // 1 is not a valid page so this won't look like a hit
-        tlb->page_if_writable = TLB_PAGE_EMPTY;
-    tlb->data_minus_addr = (uintptr_t) entry->data->data + entry->offset - TLB_PAGE(addr);
-    mem->dirty_page = TLB_PAGE(addr);
-    return (void *) (tlb->data_minus_addr + addr);
-}
-
-char *mem_ptr(struct mem *mem, addr_t addr) {
-    return __mem_read_ptr(mem, addr);
+    if (entry->data == NULL)
+        return NULL;
+    mem->dirty_page = addr & 0xfffff000;
+    return entry->data->data + entry->offset + OFFSET(addr);
 }
 
 size_t real_page_size;

@@ -80,6 +80,6 @@ static inline struct modrm_info modrm_get_info(byte_t byte) {
 #define REG(byte) ((byte & 0b00111000) >> 3)
 #define RM(byte)  ((byte & 0b00000111) >> 0)
 
-void modrm_decode32(struct cpu_state *cpu, addr_t *addr_out, struct modrm_info *info_out);
+void modrm_decode32(struct cpu_state *cpu, struct tlb *tlb, addr_t *addr_out, struct modrm_info *info_out);
 
 #endif

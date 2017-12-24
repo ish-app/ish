@@ -15,7 +15,7 @@
     union xmm_reg xmm_src; \
     union xmm_reg xmm_dst
 
-#define READMODRM modrm_decode32(cpu, &addr, &modrm)
+#define READMODRM modrm_decode32(cpu, tlb, &addr, &modrm)
 #define READIMM_(name,size) \
     name = mem_read_(cpu->eip, size); \
     cpu->eip += size/8; \
@@ -51,7 +51,7 @@
 
 #define mem_read_type(addr, type) ({ \
     type val; \
-    if (!mem_read(cpu->mem, addr, &val)) { \
+    if (!tlb_read(tlb, addr, &val)) { \
         cpu->eip = saved_ip; \
         cpu->segfault_addr = addr; \
         return INT_GPF; \
@@ -60,7 +60,7 @@
 })
 #define mem_write_type(addr, val, type) ({ \
     type _val = val; \
-    if (!mem_write(cpu->mem, addr, &_val)) { \
+    if (!tlb_write(tlb, addr, &_val)) { \
         cpu->eip = saved_ip; \
         cpu->segfault_addr = addr; \
         return INT_GPF; \
@@ -619,15 +619,23 @@
 
 flatten void cpu_run(struct cpu_state *cpu) {
     int i = 0;
+    struct tlb *tlb = tlb_new(cpu->mem);
+    int changes = cpu->mem->changes;
     while (true) {
-        int interrupt = cpu_step32(cpu);
+        int interrupt = cpu_step32(cpu, tlb);
+        if (interrupt == INT_NONE && i++ >= 100000) {
+            i = 0;
+            interrupt = INT_TIMER;
+        }
         if (interrupt != INT_NONE) {
             cpu->trapno = interrupt;
             handle_interrupt(interrupt);
-        }
-        if (i++ >= 100000) {
-            i = 0;
-            receive_signals();
+            if (tlb->mem != cpu->mem)
+                tlb->mem = cpu->mem;
+            if (cpu->mem->changes != changes) {
+                tlb_flush(tlb);
+                changes = cpu->mem->changes;
+            }
         }
     }
 }

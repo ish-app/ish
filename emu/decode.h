@@ -9,7 +9,7 @@
 #define TRACEI(msg, ...) TRACE(msg "\t", ##__VA_ARGS__)
 
 // this will be the next PyEval_EvalFrameEx.
-int CONCAT(decoder_name, OP_SIZE)(struct cpu_state *cpu) {
+int CONCAT(decoder_name, OP_SIZE)(struct cpu_state *cpu, struct tlb *tlb) {
     DECLARE_LOCALS;
 
     dword_t addr_offset = 0;
@@ -372,10 +372,10 @@ restart:
         case 0x66:
 #if OP_SIZE == 32
             TRACELN("entering 16 bit mode");
-            return cpu_step16(cpu);
+            return cpu_step16(cpu, tlb);
 #else
             TRACELN("entering 32 bit mode");
-            return cpu_step32(cpu);
+            return cpu_step32(cpu, tlb);
 #endif
 
         case 0x67: TRACEI("address size prefix (ignored)"); goto restart;

@@ -1,6 +1,7 @@
 // compile with cc -m32 -nostdlib
+char hello[] = "Hello, world!\n";
+
 void _start() {
-    char hello[] = "Hello, world!\n";
     long result;
     __asm__ volatile("int $0x80"
             : "=a" (result)

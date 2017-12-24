@@ -125,7 +125,7 @@ void handle_interrupt(int interrupt) {
     } else if (interrupt == INT_UNDEFINED) {
         println("illegal instruction");
         deliver_signal(current, SIGILL_);
-    } else {
+    } else if (interrupt != INT_TIMER) {
         println("exiting");
         sys_exit(interrupt);
     }

@@ -12,7 +12,7 @@ typedef dword_t page_t;
 struct mem {
     unsigned refcount;
     struct pt_entry *pt; // TODO replace with red-black tree
-    struct tlb_entry *tlb;
+    unsigned changes; // increment whenever a tlb flush is needed
     page_t dirty_page;
 };
 #define MEM_PAGES (1 << 20) // at least on 32-bit
@@ -72,62 +72,9 @@ int pt_set_flags(struct mem *mem, page_t start, pages_t pages, int flags);
 // Copy pages from src memory to dst memory using copy-on-write
 int pt_copy_on_write(struct mem *src, page_t src_start, struct mem *dst, page_t dst_start, page_t pages);
 
-struct tlb_entry {
-    page_t page;
-    page_t page_if_writable;
-    uintptr_t data_minus_addr;
-};
-#define TLB_BITS 10
-#define TLB_SIZE (1 << TLB_BITS)
-#define TLB_INDEX(addr) ((addr >> PAGE_BITS) & (TLB_SIZE - 1))
-#define TLB_READ 0
-#define TLB_WRITE 1
-#define TLB_PAGE(addr) (addr & 0xfffff000)
-#define TLB_PAGE_EMPTY 1
-void *tlb_handle_miss(struct mem *mem, addr_t addr, int type);
-
-forceinline void *__mem_read_ptr(struct mem *mem, addr_t addr) {
-    struct tlb_entry entry = mem->tlb[TLB_INDEX(addr)];
-    if (entry.page == TLB_PAGE(addr)) {
-        void *address = (void *) (entry.data_minus_addr + addr);
-        postulate(address != NULL);
-        return address;
-    }
-    return tlb_handle_miss(mem, addr, TLB_READ);
-}
-bool __mem_read_cross_page(struct mem *mem, addr_t addr, char *value, unsigned size);
-forceinline bool __mem_read(struct mem *mem, addr_t addr, void *out, unsigned size) {
-    if (OFFSET(addr) > PAGE_SIZE - size)
-        return __mem_read_cross_page(mem, addr, out, size);
-    void *ptr = __mem_read_ptr(mem, addr);
-    if (ptr == NULL)
-        return false;
-    memcpy(out, ptr, size);
-    return true;
-}
-#define mem_read(mem, addr, value) __mem_read(mem, addr, (value), sizeof(*(value)))
-
-forceinline void *__mem_write_ptr(struct mem *mem, addr_t addr) {
-    struct tlb_entry entry = mem->tlb[TLB_INDEX(addr)];
-    if (entry.page_if_writable == TLB_PAGE(addr)) {
-        mem->dirty_page = TLB_PAGE(addr);
-        void *address = (void *) (entry.data_minus_addr + addr);
-        postulate(address != NULL);
-        return address;
-    }
-    return tlb_handle_miss(mem, addr, TLB_WRITE);
-}
-bool __mem_write_cross_page(struct mem *mem, addr_t addr, const char *value, unsigned size);
-forceinline bool __mem_write(struct mem *mem, addr_t addr, const void *value, unsigned size) {
-    if (OFFSET(addr) > PAGE_SIZE - size)
-        return __mem_write_cross_page(mem, addr, value, size);
-    void *ptr = __mem_write_ptr(mem, addr);
-    if (ptr == NULL)
-        return false;
-    memcpy(ptr, value, size);
-    return true;
-}
-#define mem_write(mem, addr, value) __mem_write(mem, addr, (value), sizeof(*(value)))
+#define MEM_READ 0
+#define MEM_WRITE 1
+char *mem_ptr(struct mem *mem, addr_t addr, int type);
 
 extern size_t real_page_size;
 

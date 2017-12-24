@@ -4,9 +4,10 @@ int user_read_proc(struct process *proc, addr_t addr, void *buf, size_t count) {
     char *cbuf = (char *) buf;
     size_t i = 0;
     while (i < count) {
-        if (!mem_read(proc->cpu.mem, addr + i, &cbuf[i]))
+        char *ptr = mem_ptr(proc->cpu.mem, addr + i, MEM_READ);
+        if (ptr == NULL)
             return 1;
-        i++;
+        cbuf[i++] = *ptr;
     }
     return 0;
 }
@@ -19,9 +20,10 @@ int user_write_proc(struct process *proc, addr_t addr, const void *buf, size_t c
     const char *cbuf = (const char *) buf;
     size_t i = 0;
     while (i < count) {
-        if (!mem_write(proc->cpu.mem, addr + i, &cbuf[i]))
+        char *ptr = mem_ptr(proc->cpu.mem, addr + i, MEM_WRITE);
+        if (ptr == NULL)
             return 1;
-        i++;
+        *ptr = cbuf[i++];
     }
     return 0;
 }

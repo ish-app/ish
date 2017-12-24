@@ -3,7 +3,7 @@ add_project_arguments(['-m32', '-fno-stack-protector'], language: 'c')
 add_project_link_arguments('-m32', language: 'c')
 
 # hello world
-executable('hello', ['hello.c'], link_args: ['-nostdlib'])
+executable('hello', ['hello.c'], link_args: ['-static', '-nostdlib'])
 executable('hello-libc-static', ['hello-clib.c'], link_args: ['-static'])
 executable('hello-libc', ['hello-clib.c'])
 

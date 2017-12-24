@@ -242,11 +242,10 @@ static void pt_copy_to_real(int pid, addr_t start, size_t size) {
     }
 }
 
-static void step_tracing(struct cpu_state *cpu, int pid, int sender, int receiver) {
+static void step_tracing(struct cpu_state *cpu, struct tlb *tlb, int pid, int sender, int receiver) {
     // step fake cpu
-    int interrupt;
     cpu->tf = 1;
-    interrupt = cpu_step32(cpu);
+    int interrupt = cpu_step32(cpu, tlb);
     if (interrupt != INT_NONE) {
         cpu->trapno = interrupt;
         // hack to clean up before the exit syscall
@@ -451,6 +450,7 @@ int main(int argc, char *const argv[]) {
     prepare_tracee(pid);
 
     struct cpu_state *cpu = &current->cpu;
+    struct tlb *tlb = tlb_new(cpu->mem);
     int undefined_flags = 2;
     struct cpu_state old_cpu = *cpu;
     while (true) {
@@ -458,12 +458,12 @@ int main(int argc, char *const argv[]) {
             println("failure: resetting cpu");
             *cpu = old_cpu;
             __asm__("int3");
-            cpu_step32(cpu);
+            cpu_step32(cpu, tlb);
             return -1;
         }
         undefined_flags = undefined_flags_mask(pid, cpu);
         old_cpu = *cpu;
-        step_tracing(cpu, pid, sender, receiver);
+        step_tracing(cpu, tlb, pid, sender, receiver);
     }
 }
 
