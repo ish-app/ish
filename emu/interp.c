@@ -623,7 +623,7 @@ flatten void cpu_run(struct cpu_state *cpu) {
         int interrupt = cpu_step32(cpu);
         if (interrupt != INT_NONE) {
             cpu->trapno = interrupt;
-            handle_interrupt(cpu, interrupt);
+            handle_interrupt(interrupt);
         }
         if (i++ >= 100000) {
             i = 0;

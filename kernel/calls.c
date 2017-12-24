@@ -104,9 +104,10 @@ syscall_t syscall_table[] = {
     [324] = (syscall_t) sys_fallocate,
 };
 
-void handle_interrupt(struct cpu_state *cpu, int interrupt) {
+void handle_interrupt(int interrupt) {
     TRACELN_(instr, "\n");
     TRACE("int %d ", interrupt);
+    struct cpu_state *cpu = &current->cpu;
     if (interrupt == INT_SYSCALL) {
         int syscall_num = cpu->eax;
         if (syscall_num >= NUM_SYSCALLS || syscall_table[syscall_num] == NULL) {
@@ -119,8 +120,6 @@ void handle_interrupt(struct cpu_state *cpu, int interrupt) {
             cpu->eax = result;
         }
     } else if (interrupt == INT_GPF) {
-        // page fault handling is a thing
-        // TODO SIGSEGV
         println("page fault at %x", cpu->segfault_addr);
         deliver_signal(current, SIGSEGV_);
     } else if (interrupt == INT_UNDEFINED) {

@@ -76,10 +76,10 @@ static void *process_run(void *proc) {
         process_run_hook();
     else
         cpu_run(&current->cpu);
-    assert(false);
+    abort(); // above function call should never return
 }
 
-void start_thread(struct process *proc) {
+void process_start(struct process *proc) {
     if (pthread_create(&proc->thread, NULL, process_run, proc) < 0)
         abort();
     pthread_detach(proc->thread);

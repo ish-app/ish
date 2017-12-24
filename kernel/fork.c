@@ -69,7 +69,7 @@ static int init_process(struct process *proc, dword_t flags, addr_t ctid_addr) {
             err = _EFAULT;
             goto fail_free_proc;
         }
-    start_thread(proc);
+    process_start(proc);
 
     if (flags & CLONE_VFORK_) {
         // jeez why does every wait need a lock

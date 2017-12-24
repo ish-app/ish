@@ -9,7 +9,7 @@
 #include "kernel/signal.h"
 #include "kernel/sock.h"
 
-void handle_interrupt(struct cpu_state *cpu, int interrupt);
+void handle_interrupt(int interrupt);
 
 int must_check user_read(addr_t addr, void *buf, size_t count);
 int must_check user_write(addr_t addr, const void *buf, size_t count);

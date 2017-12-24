@@ -80,7 +80,7 @@ extern lock_t pids_lock;
 // When a thread is created to run a new process, this function is used.
 extern void (*process_run_hook)(void);
 // TODO document
-void start_thread(struct process *proc);
+void process_start(struct process *proc);
 
 extern void (*exit_hook)(int code);
 

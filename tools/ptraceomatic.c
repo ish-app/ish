@@ -256,7 +256,7 @@ static void step_tracing(struct cpu_state *cpu, int pid, int sender, int receive
                 exit(1);
             }
         }
-        handle_interrupt(cpu, interrupt);
+        handle_interrupt(interrupt);
     }
 
     // step real cpu
