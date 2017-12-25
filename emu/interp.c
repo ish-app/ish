@@ -620,6 +620,7 @@
 flatten void cpu_run(struct cpu_state *cpu) {
     int i = 0;
     struct tlb *tlb = tlb_new(cpu->mem);
+    read_wrlock(&cpu->mem->lock);
     int changes = cpu->mem->changes;
     while (true) {
         int interrupt = cpu_step32(cpu, tlb);
@@ -629,7 +630,9 @@ flatten void cpu_run(struct cpu_state *cpu) {
         }
         if (interrupt != INT_NONE) {
             cpu->trapno = interrupt;
+            read_wrunlock(&cpu->mem->lock);
             handle_interrupt(interrupt);
+            read_wrlock(&cpu->mem->lock);
             if (tlb->mem != cpu->mem)
                 tlb->mem = cpu->mem;
             if (cpu->mem->changes != changes) {
