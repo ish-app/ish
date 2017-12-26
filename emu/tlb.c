@@ -2,7 +2,7 @@
 #include "emu/tlb.h"
 
 struct tlb *tlb_new(struct mem *mem) {
-    struct tlb *tlb = malloc(TLB_SIZE * sizeof(struct tlb_entry));
+    struct tlb *tlb = malloc(sizeof(struct tlb));
     tlb->mem = mem;
     tlb_flush(tlb);
     return tlb;
