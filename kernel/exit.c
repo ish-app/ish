@@ -111,7 +111,7 @@ retry:
         }
     } else {
         // check if this child is a zombie
-        struct process *proc = pid_get_proc(id);
+        struct process *proc = pid_get_proc_zombie(id);
         if (proc == NULL || proc->parent != current) {
             unlock(current->exit_lock);
             return _ECHILD;

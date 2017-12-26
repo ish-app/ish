@@ -21,10 +21,18 @@ struct pid *pid_get(dword_t id) {
     return pid;
 }
 
-struct process *pid_get_proc(dword_t id) {
+struct process *pid_get_proc_zombie(dword_t id) {
     struct pid *pid = pid_get(id);
-    if (pid == NULL) return NULL;
+    if (pid == NULL)
+        return NULL;
     struct process *proc = pid->proc;
+    return proc;
+}
+
+struct process *pid_get_proc(dword_t id) {
+    struct process *proc = pid_get_proc_zombie(id);
+    if (proc != NULL && proc->zombie)
+        return NULL;
     return proc;
 }
 

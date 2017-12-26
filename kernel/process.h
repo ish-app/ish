@@ -75,6 +75,7 @@ struct pid {
 // these functions must be called with pids_lock
 struct pid *pid_get(dword_t pid);
 struct process *pid_get_proc(dword_t pid);
+struct process *pid_get_proc_zombie(dword_t id); // don't return null if the process exists as a zombie
 extern lock_t pids_lock;
 
 #define MAX_PID (1 << 10) // oughta be enough
