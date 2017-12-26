@@ -38,8 +38,8 @@ typedef dword_t pages_t;
 #define BYTES_ROUND_UP(bytes) (PAGE_ROUND_UP(bytes) << PAGE_BITS)
 
 struct data {
-    void *data;
-    unsigned refcount;
+    void *data; // immutable
+    atomic_uint refcount;
 };
 struct pt_entry {
     struct data *data;

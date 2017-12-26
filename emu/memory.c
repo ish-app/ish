@@ -18,6 +18,7 @@ struct mem *mem_new() {
     mem->refcount = 1;
     mem->pt = calloc(MEM_PAGES, sizeof(struct pt_entry));
     mem->changes = 0;
+    wrlock_init(&mem->lock);
     return mem;
 }
 
@@ -84,8 +85,7 @@ int pt_unmap(struct mem *mem, page_t start, pages_t pages, int force) {
         if (mem->pt[page].data != NULL) {
             struct data *data = mem->pt[page].data;
             mem->pt[page].data = NULL;
-            data->refcount--;
-            if (data->refcount == 0) {
+            if (--data->refcount == 0) {
                 munmap(data->data, PAGE_SIZE);
                 free(data);
             }
