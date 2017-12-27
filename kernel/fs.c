@@ -256,8 +256,8 @@ dword_t sys_fcntl64(fd_t f, dword_t cmd, dword_t arg) {
                     break;
             if (new_fd == MAX_FD)
                 return _EMFILE;
+            current->files[f]->refcount++;
             current->files[new_fd] = current->files[f];
-            current->files[new_fd]->refcount++;
             return new_fd;
         }
 
@@ -280,8 +280,8 @@ dword_t sys_dup(fd_t fd) {
     fd_t new_fd = fd_next();
     if (new_fd < 0)
         return _EMFILE;
+    current->files[fd]->refcount++;
     current->files[new_fd] = current->files[fd];
-    current->files[new_fd]->refcount++;
     return new_fd;
 }
 
@@ -300,8 +300,8 @@ dword_t sys_dup2(fd_t fd, fd_t new_fd) {
             return res;
     }
 
+    current->files[fd]->refcount++;
     current->files[new_fd] = current->files[fd];
-    current->files[new_fd]->refcount++;
     return new_fd;
 }
 

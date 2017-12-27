@@ -13,7 +13,7 @@
 struct poll;
 
 struct fd {
-    unsigned refcount;
+    atomic_uint refcount;
     unsigned flags;
     const struct fd_ops *ops;
     struct list poll_fds;
