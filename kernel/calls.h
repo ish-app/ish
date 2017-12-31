@@ -124,6 +124,8 @@ dword_t sys_geteuid32(void);
 dword_t sys_geteuid(void);
 dword_t sys_getgid32(void);
 dword_t sys_getgid(void);
+dword_t sys_getegid32(void);
+dword_t sys_getegid(void);
 dword_t sys_getcwd(addr_t buf_addr, dword_t size);
 dword_t sys_chdir(addr_t path_addr);
 dword_t sys_chroot(addr_t path_addr);

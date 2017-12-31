@@ -49,3 +49,13 @@ dword_t sys_getgid() {
     STRACE("getgid()");
     return current->gid & 0xffff;
 }
+
+dword_t sys_getegid32() {
+    STRACE("getegid32()");
+    return current->egid;
+}
+dword_t sys_getegid() {
+    STRACE("getegid()");
+    return current->egid & 0xffff;
+}
+
