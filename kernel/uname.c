@@ -1,4 +1,4 @@
-#include <strings.h>
+#include <sys/utsname.h>
 #include <string.h>
 #if __APPLE__
 #include <sys/sysctl.h>
@@ -7,23 +7,21 @@
 #endif
 #include "kernel/calls.h"
 
-int sys_uname(struct uname *uts) {
-    bzero(uts, sizeof(struct uname));
-    strcpy(uts->system, "Linux");
-    strcpy(uts->hostname, "compotar");
-    strcpy(uts->release, "3.2.0-ish");
-    strcpy(uts->version, "SUPER AWESOME");
-    strcpy(uts->arch, "i686");
-    strcpy(uts->domain, "compotar.me");
-    return 0;
-}
+dword_t sys_uname(addr_t uts_addr) {
+    struct utsname real_uname;
+    uname(&real_uname);
 
-dword_t _sys_uname(addr_t uts_addr) {
     struct uname uts;
-    int res = sys_uname(&uts);
+    memset(&uts, sizeof(struct uname), 0);
+    strcpy(uts.system, "Linux");
+    strcpy(uts.hostname, real_uname.nodename);
+    strcpy(uts.release, "3.2.0-ish");
+    strcpy(uts.version, "SUPER AWESOME");
+    strcpy(uts.arch, "i686");
+    strcpy(uts.domain, "compotar.me");
     if (user_put(uts_addr, uts))
         return _EFAULT;
-    return res;
+    return 0;
 }
 
 #if __APPLE__

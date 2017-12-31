@@ -144,8 +144,7 @@ struct uname {
     char arch[UNAME_LENGTH];     // i686
     char domain[UNAME_LENGTH];   // lol
 };
-int sys_uname(struct uname *uts);
-dword_t _sys_uname(addr_t uts_addr);
+dword_t sys_uname(addr_t uts_addr);
 
 struct sys_info {
     dword_t uptime;
