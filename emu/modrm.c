@@ -1,9 +1,5 @@
 #include "emu/modrm.h"
 
-#define MOD(byte) ((byte & 0b11000000) >> 6)
-#define REG(byte) ((byte & 0b00111000) >> 3)
-#define RM(byte)  ((byte & 0b00000111) >> 0)
-
 #define MAKE_REGPTR(r32, r16, r8, xmm) ((struct regptr) { \
         .reg32_id = REG_ID(r32), \
         .reg16_id = REG_ID(r16), \
@@ -85,7 +81,7 @@ extern inline struct modrm_info modrm_get_info(byte_t byte);
 // FIXME doesn't check for segfaults
 void modrm_decode32(struct cpu_state *cpu, struct tlb *tlb, addr_t *addr_out, struct modrm_info *info_out) {
     byte_t modrm;
-    tlb_read(tlb, cpu->eip, &modrm);
+    tlb_read(tlb, cpu->eip, &modrm, sizeof(modrm));
     struct modrm_info info = modrm_get_info(modrm);
     cpu->eip++;
     *info_out = info;
@@ -98,7 +94,7 @@ void modrm_decode32(struct cpu_state *cpu, struct tlb *tlb, addr_t *addr_out, st
     } else {
         // sib is simple enough to not use a table for
         byte_t sib;
-        tlb_read(tlb, cpu->eip, &sib);
+        tlb_read(tlb, cpu->eip, &sib, sizeof(sib));
         TRACE("sib %x ", sib);
         cpu->eip++;
         dword_t reg = 0;
@@ -139,7 +135,7 @@ void modrm_decode32(struct cpu_state *cpu, struct tlb *tlb, addr_t *addr_out, st
     switch (info.type) {
         case mod_disp8: {
             int8_t disp;
-            tlb_read(tlb, cpu->eip, &disp);
+            tlb_read(tlb, cpu->eip, &disp, sizeof(disp));
             TRACE("disp %s0x%x ", (disp < 0 ? "-" : ""), (disp < 0 ? -disp : disp));
             *addr_out += disp;
             cpu->eip++;
@@ -147,7 +143,7 @@ void modrm_decode32(struct cpu_state *cpu, struct tlb *tlb, addr_t *addr_out, st
         }
         case mod_disp32: {
             int32_t disp;
-            tlb_read(tlb, cpu->eip, &disp);
+            tlb_read(tlb, cpu->eip, &disp, sizeof(disp));
             TRACE("disp %s0x%x ", (disp < 0 ? "-" : ""), (disp < 0 ? -disp : disp));
             *addr_out += disp;
             cpu->eip += 4;

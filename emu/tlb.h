@@ -33,7 +33,7 @@ forceinline void *__tlb_read_ptr(struct tlb *tlb, addr_t addr) {
     return tlb_handle_miss(tlb, addr, MEM_READ);
 }
 bool __tlb_read_cross_page(struct tlb *tlb, addr_t addr, char *out, unsigned size);
-forceinline bool __tlb_read(struct tlb *tlb, addr_t addr, void *out, unsigned size) {
+forceinline bool tlb_read(struct tlb *tlb, addr_t addr, void *out, unsigned size) {
     if (OFFSET(addr) > PAGE_SIZE - size)
         return __tlb_read_cross_page(tlb, addr, out, size);
     void *ptr = __tlb_read_ptr(tlb, addr);
@@ -42,7 +42,6 @@ forceinline bool __tlb_read(struct tlb *tlb, addr_t addr, void *out, unsigned si
     memcpy(out, ptr, size);
     return true;
 }
-#define tlb_read(tlb, addr, value) __tlb_read(tlb, addr, (value), sizeof(*(value)))
 
 forceinline void *__tlb_write_ptr(struct tlb *tlb, addr_t addr) {
     struct tlb_entry entry = tlb->entries[TLB_INDEX(addr)];
@@ -55,7 +54,7 @@ forceinline void *__tlb_write_ptr(struct tlb *tlb, addr_t addr) {
     return tlb_handle_miss(tlb, addr, MEM_WRITE);
 }
 bool __tlb_write_cross_page(struct tlb *tlb, addr_t addr, const char *value, unsigned size);
-forceinline bool __tlb_write(struct tlb *tlb, addr_t addr, const void *value, unsigned size) {
+forceinline bool tlb_write(struct tlb *tlb, addr_t addr, const void *value, unsigned size) {
     if (OFFSET(addr) > PAGE_SIZE - size)
         return __tlb_write_cross_page(tlb, addr, value, size);
     void *ptr = __tlb_write_ptr(tlb, addr);
@@ -64,6 +63,5 @@ forceinline bool __tlb_write(struct tlb *tlb, addr_t addr, const void *value, un
     memcpy(ptr, value, size);
     return true;
 }
-#define tlb_write(tlb, addr, value) __tlb_write(tlb, addr, (value), sizeof(*(value)))
 
 #endif
