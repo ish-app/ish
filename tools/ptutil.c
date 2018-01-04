@@ -42,6 +42,9 @@ int start_tracee(int at, const char *path, char *const argv[], char *const envp[
         trycall(prctl(PR_SET_TSC, PR_TSC_SIGSEGV), "rdtsc faulting");
         /* trycall(arch_prctl(ARCH_SET_CPUID, 0), "cpuid faulting"); */
         trycall(ptrace(PTRACE_TRACEME, 0, NULL, NULL), "ptrace traceme");
+        // get rid of signal handlers
+        for (int sig = 0; sig < SIGRTMIN - 1; sig++)
+            signal(sig, SIG_DFL);
         trycall(fexecve(openat(at, path, O_RDONLY), argv, envp), "execve");
     } else {
         // parent, wait for child to stop after exec
