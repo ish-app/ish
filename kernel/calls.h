@@ -202,6 +202,7 @@ struct pollfd_ {
     word_t revents;
 };
 dword_t sys_poll(addr_t fds, dword_t nfds, dword_t timeout);
+dword_t sys_select(fd_t nfds, addr_t readfds_addr, addr_t writefds_addr, addr_t exceptfds_addr, addr_t timeout_addr);
 
 typedef int (*syscall_t)(dword_t,dword_t,dword_t,dword_t,dword_t,dword_t);
 

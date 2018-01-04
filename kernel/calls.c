@@ -59,6 +59,7 @@ syscall_t syscall_table[] = {
     [132] = (syscall_t) sys_getpgid,
     [133] = (syscall_t) sys_fchdir,
     [140] = (syscall_t) sys__llseek,
+    [142] = (syscall_t) sys_select,
     [143] = (syscall_t) sys_flock,
     [145] = (syscall_t) sys_readv,
     [146] = (syscall_t) sys_writev,
