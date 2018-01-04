@@ -1,3 +1,4 @@
+#include "debug.h"
 #include "kernel/process.h"
 #include "kernel/signal.h"
 #include "kernel/errno.h"
@@ -44,12 +45,76 @@ int err_map(int err) {
         ERRCASE(ENAMETOOLONG)
         ERRCASE(ENOLCK)
         ERRCASE(ENOSYS)
+        ERRCASE(EBFONT)
+        ERRCASE(ENOSTR)
+        ERRCASE(ENODATA)
+        ERRCASE(ETIME)
+        ERRCASE(ENOSR)
+        ERRCASE(ENONET)
+        ERRCASE(ENOPKG)
+        ERRCASE(EREMOTE)
+        ERRCASE(ENOLINK)
+        ERRCASE(EADV)
+        ERRCASE(ESRMNT)
+        ERRCASE(ECOMM)
+        ERRCASE(EPROTO)
+        ERRCASE(EMULTIHOP)
+        ERRCASE(EDOTDOT)
+        ERRCASE(EBADMSG)
+        ERRCASE(EOVERFLOW)
+        ERRCASE(ENOTUNIQ)
+        ERRCASE(EBADFD)
+        ERRCASE(EREMCHG)
+        ERRCASE(ELIBACC)
 #ifdef ELIBBAD
         ERRCASE(ELIBBAD)
 #endif
+        ERRCASE(ELIBSCN)
+        ERRCASE(ELIBMAX)
+        ERRCASE(ELIBEXEC)
+        ERRCASE(EILSEQ)
+        ERRCASE(ERESTART)
+        ERRCASE(ESTRPIPE)
+        ERRCASE(EUSERS)
+        ERRCASE(ENOTSOCK)
+        ERRCASE(EDESTADDRREQ)
+        ERRCASE(EMSGSIZE)
+        ERRCASE(EPROTOTYPE)
+        ERRCASE(ENOPROTOOPT)
+        ERRCASE(EPROTONOSUPPORT)
+        ERRCASE(ESOCKTNOSUPPORT)
+        ERRCASE(EOPNOTSUPP)
+        ERRCASE(EPFNOSUPPORT)
+        ERRCASE(EAFNOSUPPORT)
+        ERRCASE(EADDRINUSE)
+        ERRCASE(EADDRNOTAVAIL)
+        ERRCASE(ENETDOWN)
+        ERRCASE(ENETUNREACH)
+        ERRCASE(ENETRESET)
+        ERRCASE(ECONNABORTED)
+        ERRCASE(ECONNRESET)
+        ERRCASE(ENOBUFS)
+        ERRCASE(EISCONN)
+        ERRCASE(ENOTCONN)
+        ERRCASE(ESHUTDOWN)
+        ERRCASE(ETOOMANYREFS)
+        ERRCASE(ETIMEDOUT)
+        ERRCASE(ECONNREFUSED)
+        ERRCASE(EHOSTDOWN)
+        ERRCASE(EHOSTUNREACH)
+        ERRCASE(EALREADY)
+        ERRCASE(EINPROGRESS)
+        ERRCASE(ESTALE)
+        ERRCASE(EUCLEAN)
+        ERRCASE(ENOTNAM)
+        ERRCASE(ENAVAIL)
+        ERRCASE(EISNAM)
+        ERRCASE(EREMOTEIO)
+        ERRCASE(EDQUOT)
     }
 #undef ERRCASE
-    return 1337; // TODO FIXME XXX
+    debugger;
+    return -1337; // TODO FIXME XXX
 }
 
 int errno_map() {
@@ -57,4 +122,3 @@ int errno_map() {
         send_signal(current, SIGPIPE_);
     return err_map(errno);
 }
-

@@ -2,6 +2,7 @@
 #define TLB_H
 
 #include "emu/memory.h"
+#include "debug.h"
 
 struct tlb_entry {
     page_t page;
