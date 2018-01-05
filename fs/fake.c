@@ -44,9 +44,8 @@ static GDBM_FILE get_db(struct mount *mount) {
 
 static datum build_key(char *keydata, const char *path, const char *type) {
     strcpy(keydata, type);
-    strcat(keydata, ":");
-    strcat(keydata, path);
-    datum key = {.dptr = keydata, .dsize = strlen(keydata)};
+    strcpy(keydata + strlen(type) + 1, path);
+    datum key = {.dptr = keydata, .dsize = strlen(type) + 1 + strlen(path)};
     return key;
 }
 
