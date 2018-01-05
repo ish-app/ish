@@ -26,7 +26,7 @@ static int tty_get(int type, int num, struct tty **tty_out) {
         tty->num = num;
         list_init(&tty->fds);
         // TODO default termios
-        memset(&tty->winsize, sizeof(tty->winsize), 0);
+        memset(&tty->winsize, 0, sizeof(tty->winsize));
         lock_init(tty->lock);
         pthread_cond_init(&tty->produced, NULL);
         pthread_cond_init(&tty->consumed, NULL);

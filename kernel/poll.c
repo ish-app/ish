@@ -14,7 +14,7 @@ static void bit_set(int index, void *mem) {
 
 static int user_read_or_zero(addr_t addr, void *data, size_t size) {
     if (addr == 0)
-        memset(data, size, 0);
+        memset(data, 0, size);
     else if (user_read(addr, data, size))
         return _EFAULT;
     return 0;
@@ -60,9 +60,9 @@ dword_t sys_select(fd_t nfds, addr_t readfds_addr, addr_t writefds_addr, addr_t 
         return err;
     }
 
-    memset(readfds, fdset_size, 0);
-    memset(writefds, fdset_size, 0);
-    memset(exceptfds, fdset_size, 0);
+    memset(readfds, 0, fdset_size);
+    memset(writefds, 0, fdset_size);
+    memset(exceptfds, 0, fdset_size);
     if (event.types & POLL_READ)
         bit_set(fd, readfds);
     if (event.types & POLL_WRITE)

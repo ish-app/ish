@@ -13,7 +13,7 @@
 
 static inline dword_t align_stack(dword_t sp);
 static inline ssize_t user_strlen(dword_t p);
-static inline int user_memset(addr_t start, dword_t len, byte_t val);
+static inline int user_memset(addr_t start, byte_t val, dword_t len);
 static inline dword_t copy_string(dword_t sp, const char *string);
 static inline dword_t copy_strings(dword_t sp, char *const strings[]);
 static unsigned count_args(char *const args[]);
@@ -87,7 +87,7 @@ static int load_entry(struct prg_header ph, addr_t bias, struct fd *fd) {
             tail_size = 0;
 
         if (tail_size != 0)
-            user_memset(file_end, tail_size, 0);
+            user_memset(file_end, 0, tail_size);
         if (tail_size > bss_size)
             tail_size = bss_size;
 
@@ -401,7 +401,7 @@ static inline ssize_t user_strlen(addr_t p) {
     return i - 1;
 }
 
-static inline int user_memset(addr_t start, dword_t len, byte_t val) {
+static inline int user_memset(addr_t start, byte_t val, dword_t len) {
     while (len--)
         if (user_put(start++, val))
             return 1;

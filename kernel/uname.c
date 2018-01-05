@@ -12,7 +12,7 @@ dword_t sys_uname(addr_t uts_addr) {
     uname(&real_uname);
 
     struct uname uts;
-    memset(&uts, sizeof(struct uname), 0);
+    memset(&uts, 0, sizeof(struct uname));
     strcpy(uts.system, "Linux");
     strcpy(uts.hostname, real_uname.nodename);
     strcpy(uts.release, "3.2.0-ish");
