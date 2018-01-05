@@ -56,7 +56,7 @@ int poll_del_fd(struct poll *poll, struct fd *fd) {
     unlock(poll->lock);
     unlock(fd->lock);
 
-    return _EINVAL;
+    return ret;
 }
 
 void poll_wake(struct fd *fd) {
