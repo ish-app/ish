@@ -1,12 +1,8 @@
 #include <limits.h>
-#ifndef GDBM_NDBM
-#include <ndbm.h>
-#else
-#include <gdbm-ndbm.h>
-#endif
 #include <string.h>
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <gdbm.h>
 
 #include "debug.h"
 #include "kernel/errno.h"
@@ -20,16 +16,27 @@ struct ish_stat {
     dword_t rdev;
 };
 
-static DBM *get_db(struct mount *mount) {
-    DBM *db = mount->data;
+static void gdbm_fatal(const char *thingy) {
+    println("fatal gdbm error: %s", thingy);
+    abort();
+}
+
+static noreturn void gdbm_err(GDBM_FILE db) {
+    println("gdbm error: %s", gdbm_db_strerror(db));
+    abort();
+}
+
+static GDBM_FILE get_db(struct mount *mount) {
+    GDBM_FILE db = mount->data;
     if (db == NULL) {
         char db_path[PATH_MAX];
         strcpy(db_path, mount->source);
         char *basename = strrchr(db_path, '/') + 1;
         assert(strcmp(basename, "data") == 0);
-        strncpy(basename, "meta", 4);
-        db = dbm_open(db_path, O_RDWR, 0666);
-        assert(db != NULL);
+        strncpy(basename, "meta.db", 7);
+        db = gdbm_open(db_path, 0, GDBM_WRITER, 0, gdbm_fatal);
+        if (db == NULL)
+            gdbm_err(db);
         mount->data = db;
     }
     return db;
@@ -46,19 +53,26 @@ static datum build_key(char *keydata, const char *path, const char *type) {
 static datum read_meta(struct mount *mount, const char *path, const char *type) {
     char keydata[MAX_PATH+strlen(type)+1];
     datum key = build_key(keydata, path, type);
-    return dbm_fetch(get_db(mount), key);
+    GDBM_FILE db = get_db(mount);
+    datum value = gdbm_fetch(db, key);
+    if (value.dptr == NULL && gdbm_last_errno(db) != GDBM_ITEM_NOT_FOUND)
+        gdbm_err(db);
+    return value;
 }
 
 static void write_meta(struct mount *mount, const char *path, const char *type, datum data) {
     char keydata[MAX_PATH+strlen(type)+1];
     datum key = build_key(keydata, path, type);
-    dbm_store(get_db(mount), key, data, DBM_REPLACE);
+    if (gdbm_store(get_db(mount), key, data, GDBM_REPLACE) == -1)
+        gdbm_err(get_db(mount));
 }
 
-static int delete_meta(struct mount *mount, const char *path, const char *type) {
+static void delete_meta(struct mount *mount, const char *path, const char *type) {
     char keydata[MAX_PATH+strlen(type)+1];
     datum key = build_key(keydata, path, type);
-    return !dbm_delete(get_db(mount), key);
+    GDBM_FILE db = get_db(mount);
+    if (gdbm_delete(db, key) == -1 && gdbm_last_errno(db) != GDBM_ITEM_NOT_FOUND)
+        gdbm_err(db);
 }
 
 static int read_stat(struct mount *mount, const char *path, struct ish_stat *stat) {
@@ -77,8 +91,8 @@ static void write_stat(struct mount *mount, const char *path, struct ish_stat *s
     write_meta(mount, path, "meta", data);
 }
 
-static int delete_stat(struct mount *mount, const char *path) {
-    return delete_meta(mount, path, "meta");
+static void delete_stat(struct mount *mount, const char *path) {
+    delete_meta(mount, path, "meta");
 }
 
 static struct fd *fakefs_open(struct mount *mount, const char *path, int flags, int mode) {
@@ -235,7 +249,7 @@ static int fakefs_mount(struct mount *mount) {
 
 static int fakefs_umount(struct mount *mount) {
     if (mount->data)
-        dbm_close(mount->data);
+        gdbm_close(mount->data);
     /* return realfs.umount(mount); */
     return 0;
 }

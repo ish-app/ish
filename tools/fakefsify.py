@@ -4,7 +4,7 @@ from pathlib import Path
 import struct
 import urllib.request
 import tarfile
-import dbm
+import dbm.gnu
 
 def extract_archive(archive, db):
     for member in archive.getmembers():
@@ -59,5 +59,5 @@ data = fs/'data'
 
 with open(archive_path, 'rb') as archive:
     with tarfile.open(fileobj=archive) as archive:
-        with dbm.ndbm.open(str(fs/'meta'), 'c') as db:
+        with dbm.gnu.open(str(fs/'meta.db'), 'c') as db:
             extract_archive(archive, db)

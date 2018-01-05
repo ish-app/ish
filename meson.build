@@ -21,19 +21,7 @@ cc = meson.get_compiler('c')
 threads = dependency('threads')
 librt = cc.find_library('rt', required: false)
 
-# this is annoying af
-if host_machine.system() == 'darwin'
-    # no need to link to anything, berkeley db and its ndbm shim is part of the C library
-    dbm = []
-elif host_machine.system() == 'linux'
-    # we're going to use gdbm
-    dbm = [cc.find_library('gdbm'), cc.find_library('gdbm_compat')]
-    if not cc.has_header('ndbm.h') and cc.has_header('gdbm-ndbm.h')
-        # slight problem: on debian the header is called gdbm-ndbm.h for some reason
-        add_project_arguments('-DGDBM_NDBM=1', language: 'c')
-    endif
-endif
-
+gdbm = subproject('gdbm').get_variable('gdbm')
 softfloat = subproject('softfloat').get_variable('softfloat_dep')
 
 subdir('vdso') # ish depends on the vdso
@@ -93,15 +81,16 @@ src = [
 
 libish = library('ish', src,
     include_directories: includes,
-    dependencies: [librt, threads, softfloat, dbm])
+    dependencies: [librt, threads, softfloat, gdbm])
 ish = declare_dependency(
     link_with: libish,
+    dependencies: [librt, threads, softfloat, gdbm],
     include_directories: includes)
 
 # ptraceomatic et al
 subdir('tools')
 
-executable('ish', ['main.c'], dependencies: [ish, softfloat, threads, dbm])
+executable('ish', ['main.c'], dependencies: ish)
 
 gdb_scripts = ['ish-gdb.gdb']
 foreach script : gdb_scripts
