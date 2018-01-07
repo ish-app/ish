@@ -18,7 +18,6 @@ struct ish_stat {
 
 static void gdbm_fatal(const char *thingy) {
     println("fatal gdbm error: %s", thingy);
-    abort();
 }
 
 static noreturn void gdbm_err(GDBM_FILE db) {
@@ -35,8 +34,10 @@ static GDBM_FILE get_db(struct mount *mount) {
         assert(strcmp(basename, "data") == 0);
         strncpy(basename, "meta.db", 7);
         db = gdbm_open(db_path, 0, GDBM_WRITER, 0, gdbm_fatal);
-        if (db == NULL)
-            gdbm_err(db);
+        if (db == NULL) {
+            println("gdbm error: %s", gdbm_strerror(gdbm_errno));
+            abort();
+        }
         mount->data = db;
     }
     return db;
