@@ -22,17 +22,18 @@
 		BB792B601F96D90D00FFB7A4 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = BB792B5E1F96D90D00FFB7A4 /* LaunchScreen.storyboard */; };
 		BB792B631F96D90D00FFB7A4 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = BB792B621F96D90D00FFB7A4 /* main.m */; };
 		BB792B7E1F96E32B00FFB7A4 /* libish.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BB792B721F96E2C000FFB7A4 /* libish.a */; };
+		BB9FA41420006CB80072C8F2 /* libgdbm.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BB0E0D2A20005E2700C5040C /* libgdbm.a */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		BB0FC54B1F97FB7E00803272 /* PBXContainerItemProxy */ = {
+		BB0E0D2B20005E5B00C5040C /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = BB792B461F96D8E000FFB7A4 /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = BB18B2731F97F1C40059FCD8;
-			remoteInfo = libsoftfloat;
+			remoteGlobalIDString = BB0E0D2520005E2700C5040C;
+			remoteInfo = libgdbm;
 		};
-		BB18B2811F97F4A90059FCD8 /* PBXContainerItemProxy */ = {
+		BB0FC54B1F97FB7E00803272 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = BB792B461F96D8E000FFB7A4 /* Project object */;
 			proxyType = 1;
@@ -49,6 +50,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		BB0E0D2A20005E2700C5040C /* libgdbm.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libgdbm.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		BB0FC54E1F98026600803272 /* cpu.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = cpu.h; sourceTree = "<group>"; };
 		BB0FC54F1F98026600803272 /* cpuid.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = cpuid.h; sourceTree = "<group>"; };
 		BB0FC5501F98026600803272 /* debug.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = debug.c; sourceTree = "<group>"; };
@@ -144,6 +146,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BB9FA41420006CB80072C8F2 /* libgdbm.a in Frameworks */,
 				BB18B2871F97F6D00059FCD8 /* libsoftfloat.a in Frameworks */,
 				BB792B7E1F96E32B00FFB7A4 /* libish.a in Frameworks */,
 			);
@@ -299,6 +302,7 @@
 				BB792B501F96D90D00FFB7A4 /* iSH.app */,
 				BB792B721F96E2C000FFB7A4 /* libish.a */,
 				BB18B2741F97F1C40059FCD8 /* libsoftfloat.a */,
+				BB0E0D2A20005E2700C5040C /* libgdbm.a */,
 				BBF124901FA7C3100088FB50 /* alpine */,
 			);
 			name = Products;
@@ -337,6 +341,21 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		BB0E0D2520005E2700C5040C /* libgdbm */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = BB0E0D2720005E2700C5040C /* Build configuration list for PBXNativeTarget "libgdbm" */;
+			buildPhases = (
+				BB0E0D2620005E2700C5040C /* Build using Meson */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = libgdbm;
+			productName = softfloat;
+			productReference = BB0E0D2A20005E2700C5040C /* libgdbm.a */;
+			productType = "com.apple.product-type.library.static";
+		};
 		BB18B2731F97F1C40059FCD8 /* libsoftfloat */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = BB18B27C1F97F1C40059FCD8 /* Build configuration list for PBXNativeTarget "libsoftfloat" */;
@@ -366,7 +385,6 @@
 			buildRules = (
 			);
 			dependencies = (
-				BB18B2821F97F4A90059FCD8 /* PBXTargetDependency */,
 				BB792B7C1F96E31200FFB7A4 /* PBXTargetDependency */,
 			);
 			name = iSH;
@@ -383,6 +401,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				BB0E0D2C20005E5B00C5040C /* PBXTargetDependency */,
 				BB0FC54C1F97FB7E00803272 /* PBXTargetDependency */,
 			);
 			name = libish;
@@ -399,6 +418,10 @@
 				CLASSPREFIX = "";
 				LastUpgradeCheck = 0910;
 				TargetAttributes = {
+					BB0E0D2520005E2700C5040C = {
+						DevelopmentTeam = W2NF7BNM62;
+						ProvisioningStyle = Automatic;
+					};
 					BB18B2731F97F1C40059FCD8 = {
 						CreatedOnToolsVersion = 9.0;
 						DevelopmentTeam = W2NF7BNM62;
@@ -432,6 +455,7 @@
 				BB792B4F1F96D90D00FFB7A4 /* iSH */,
 				BB792B711F96E2C000FFB7A4 /* libish */,
 				BB18B2731F97F1C40059FCD8 /* libsoftfloat */,
+				BB0E0D2520005E2700C5040C /* libgdbm */,
 			);
 		};
 /* End PBXProject section */
@@ -454,6 +478,23 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
+		BB0E0D2620005E2700C5040C /* Build using Meson */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/subprojects/gdbm-1.14.1",
+			);
+			name = "Build using Meson";
+			outputPaths = (
+				"$(BUILT_PRODUCTS_DIR)/libgdbm.a",
+				"$(BUILT_PRODUCTS_DIR)/include/gdbm.h",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = "/bin/bash -ex";
+			shellScript = "mkdir -p $TARGET_BUILD_DIR\ncd $TARGET_BUILD_DIR\n$SRCROOT/xcode-meson.sh\nls\nninja subprojects/gdbm-1.14.1/src/libgdbm.a\ncp subprojects/gdbm-1.14.1/src/libgdbm.a .\nmkdir -p $BUILT_PRODUCTS_DIR/include\ncp subprojects/gdbm-1.14.1/src/gdbm.h $BUILT_PRODUCTS_DIR/include";
+		};
 		BB18B27D1F97F1F70059FCD8 /* Build using Meson */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -556,15 +597,15 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		BB0E0D2C20005E5B00C5040C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = BB0E0D2520005E2700C5040C /* libgdbm */;
+			targetProxy = BB0E0D2B20005E5B00C5040C /* PBXContainerItemProxy */;
+		};
 		BB0FC54C1F97FB7E00803272 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = BB18B2731F97F1C40059FCD8 /* libsoftfloat */;
 			targetProxy = BB0FC54B1F97FB7E00803272 /* PBXContainerItemProxy */;
-		};
-		BB18B2821F97F4A90059FCD8 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = BB18B2731F97F1C40059FCD8 /* libsoftfloat */;
-			targetProxy = BB18B2811F97F4A90059FCD8 /* PBXContainerItemProxy */;
 		};
 		BB792B7C1F96E31200FFB7A4 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -593,6 +634,122 @@
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
+		BB0E0D2820005E2700C5040C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = W2NF7BNM62;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_LDFLAGS = "-ObjC";
+				PRODUCT_NAME = gdbm;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		BB0E0D2920005E2700C5040C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = W2NF7BNM62;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				OTHER_LDFLAGS = "-ObjC";
+				PRODUCT_NAME = gdbm;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
 		BB18B27A1F97F1C40059FCD8 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -727,7 +884,7 @@
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 14;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -738,7 +895,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
-				ISH_LOG = "";
+				ISH_LOG = memory;
 				ONLY_ACTIVE_ARCH = YES;
 				VERSIONING_SYSTEM = "apple-generic";
 			};
@@ -762,7 +919,7 @@
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 14;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -772,7 +929,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
-				ISH_LOG = "";
+				ISH_LOG = memory;
 				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = Release;
@@ -1026,6 +1183,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		BB0E0D2720005E2700C5040C /* Build configuration list for PBXNativeTarget "libgdbm" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BB0E0D2820005E2700C5040C /* Debug */,
+				BB0E0D2920005E2700C5040C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		BB18B27C1F97F1C40059FCD8 /* Build configuration list for PBXNativeTarget "libsoftfloat" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
