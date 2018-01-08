@@ -54,7 +54,6 @@
         NSValue *frame = notification.userInfo[UIKeyboardFrameEndUserInfoKey];
         pad = frame.CGRectValue.size.height;
     }
-    NSLog(@"pad = %f", pad);
     self.bottomConstraint.constant = -pad;
     [self.view setNeedsUpdateConstraints];
     
