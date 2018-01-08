@@ -6,6 +6,7 @@
 #include "fs/stat.h"
 #include "emu/memory.h"
 #include <dirent.h>
+#include <gdbm.h>
 
 #define MAX_PATH 4096
 #define MAX_NAME 256
@@ -93,7 +94,10 @@ struct mount {
     struct mount *next;
 
     int root_fd;
-    void *data;
+    union {
+        void *data;
+        GDBM_FILE db;
+    };
 };
 extern struct mount *mounts;
 
@@ -219,6 +223,7 @@ extern const struct fs_ops realfs;
 int realfs_stat(struct mount *mount, const char *path, struct statbuf *fake_stat, bool follow_links);
 int realfs_fstat(struct fd *fd, struct statbuf *fake_stat);
 int realfs_access(struct mount *mount, const char *path, int mode);
+int realfs_rename(struct mount *mount, const char *src, const char *dst);
 int realfs_statfs(struct mount *mount, struct statfsbuf *stat);
 int realfs_flock(struct fd *fd, int operation);
 extern const struct fd_ops realfs_fdops;

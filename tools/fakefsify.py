@@ -15,7 +15,7 @@ def extract_archive(archive, db):
         path = data/(member.name)
         major = member.devmajor
         minor = member.devminor
-        rdev = ((minor & 0xfff00) << 12) | (major << 8) | (minor & 0xff) # copied from fs/dev.h
+        rdev = ((minor & 0xfff00) << 12) | (major << 8) | (minor & 0xff)
         mode = member.mode
         if member.isfile():
             mode |= 0o100000	
@@ -32,17 +32,6 @@ def extract_archive(archive, db):
         else:
             raise ValueError('unrecognized tar entry type')
 
-        metadata = struct.pack(
-            '=iiii',
-            mode,
-            member.uid,
-            member.gid,
-            rdev,
-        )
-        meta_path = path.relative_to(data)
-        meta_path = b'/' + bytes(meta_path) if meta_path.parts else b''
-        db[b'meta\0' + meta_path] = metadata
-
         if member.isdir():
             path.mkdir(parents=True, exist_ok=True)
         elif member.issym():
@@ -51,6 +40,18 @@ def extract_archive(archive, db):
             archive.extract(member, data)
         else:
             path.touch()
+
+        inode = bytes(str(path.stat().st_ino), 'ascii')
+        meta_path = path.relative_to(data)
+        meta_path = b'/' + bytes(meta_path) if meta_path.parts else b''
+        db[b'inode ' + meta_path] = inode
+        db[b'stat ' + inode] = struct.pack(
+            '=iiii',
+            mode,
+            member.uid,
+            member.gid,
+            rdev,
+        )
 
 _, archive_path, fs = sys.argv
 fs = Path(fs)

@@ -14,12 +14,19 @@ static inline int xX_main_Xx(int argc, char *const argv[]) {
     int opt;
     const char *root = "";
     bool has_root = false;
-    while ((opt = getopt(argc, argv, "+r:")) != -1) {
+    const struct fs_ops *fs;
+    while ((opt = getopt(argc, argv, "+r:f:")) != -1) {
         switch (opt) {
             case 'r':
+            case 'f':
                 root = optarg;
                 has_root = true;
+                if (opt == 'r')
+                    fs = &realfs;
+                else
+                    fs = &fakefs;
                 break;
+
         }
     }
 
@@ -28,12 +35,11 @@ static inline int xX_main_Xx(int argc, char *const argv[]) {
         perror(root);
         exit(1);
     }
-    const struct fs_ops *fs;
-    if (strcmp(strrchr(root_realpath, '/') + 1, "data") == 0)
-        fs = &fakefs;
-    else
-        fs = &realfs;
-    mount_root(fs, root_realpath);
+    if (fs == &fakefs)
+        strcat(root_realpath, "/data");
+    int err = mount_root(fs, root_realpath);
+    if (err < 0)
+        return err;
 
     create_first_process();
     if (!has_root) {
@@ -44,7 +50,7 @@ static inline int xX_main_Xx(int argc, char *const argv[]) {
         current->pwd = pwd;
     }
 
-    int err = sys_execve(argv[optind], argv + optind, (char *[]) {NULL});
+    err = sys_execve(argv[optind], argv + optind, (char *[]) {NULL});
     if (err < 0)
         return err;
     err = create_stdio(real_tty_driver);

@@ -9,6 +9,8 @@
 #include "kernel/process.h"
 #include "kernel/fs.h"
 
+// TODO document database
+
 struct ish_stat {
     dword_t mode;
     dword_t uid;
@@ -25,74 +27,65 @@ static noreturn void gdbm_err(GDBM_FILE db) {
     abort();
 }
 
-static GDBM_FILE get_db(struct mount *mount) {
-    GDBM_FILE db = mount->data;
-    if (db == NULL) {
-        char db_path[PATH_MAX];
-        strcpy(db_path, mount->source);
-        char *basename = strrchr(db_path, '/') + 1;
-        assert(strcmp(basename, "data") == 0);
-        strncpy(basename, "meta.db", 7);
-        db = gdbm_open(db_path, 0, GDBM_WRITER, 0, gdbm_fatal);
-        if (db == NULL) {
-            println("gdbm error: %s", gdbm_strerror(gdbm_errno));
-            abort();
-        }
-        mount->data = db;
-    }
-    return db;
+static datum make_datum(char *data, const char *format, ...) {
+    va_list args;
+    va_start(args, format);
+    int n = vsprintf(data, format, args);
+    va_end(args);
+    return (datum) {.dptr = data, .dsize = n};
 }
 
-static datum build_key(char *keydata, const char *path, const char *type) {
-    strcpy(keydata, type);
-    strcpy(keydata + strlen(type) + 1, path);
-    datum key = {.dptr = keydata, .dsize = strlen(type) + 1 + strlen(path)};
-    return key;
-}
-
-static datum read_meta(struct mount *mount, const char *path, const char *type) {
-    char keydata[MAX_PATH+strlen(type)+1];
-    datum key = build_key(keydata, path, type);
-    GDBM_FILE db = get_db(mount);
-    datum value = gdbm_fetch(db, key);
-    if (value.dptr == NULL && gdbm_last_errno(db) != GDBM_ITEM_NOT_FOUND)
-        gdbm_err(db);
+static datum read_meta(struct mount *mount, datum key) {
+    datum value = gdbm_fetch(mount->db, key);
+    if (value.dptr == NULL && gdbm_last_errno(mount->db) != GDBM_ITEM_NOT_FOUND)
+        gdbm_err(mount->db);
     return value;
 }
 
-static void write_meta(struct mount *mount, const char *path, const char *type, datum data) {
-    char keydata[MAX_PATH+strlen(type)+1];
-    datum key = build_key(keydata, path, type);
-    if (gdbm_store(get_db(mount), key, data, GDBM_REPLACE) == -1)
-        gdbm_err(get_db(mount));
+static void write_meta(struct mount *mount, datum key, datum data) {
+    if (gdbm_store(mount->db, key, data, GDBM_REPLACE) == -1)
+        gdbm_err(mount->db);
 }
 
-static void delete_meta(struct mount *mount, const char *path, const char *type) {
-    char keydata[MAX_PATH+strlen(type)+1];
-    datum key = build_key(keydata, path, type);
-    GDBM_FILE db = get_db(mount);
-    if (gdbm_delete(db, key) == -1 && gdbm_last_errno(db) != GDBM_ITEM_NOT_FOUND)
-        gdbm_err(db);
+static void delete_meta(struct mount *mount, datum key) {
+    if (gdbm_delete(mount->db, key) == -1 && gdbm_last_errno(mount->db) != GDBM_ITEM_NOT_FOUND)
+        gdbm_err(mount->db);
 }
 
-static int read_stat(struct mount *mount, const char *path, struct ish_stat *stat) {
-    datum d = read_meta(mount, path, "meta");
+static datum stat_key(char *data, struct mount *mount, const char *path) {
+    struct stat stat;
+    if (fstatat(mount->root_fd, fix_path(path), &stat, AT_SYMLINK_NOFOLLOW) < 0)
+        return (datum) {.dptr = NULL, .dsize = 0};
+
+    // remember that this path has this inode in case of tarball
+    char keydata[MAX_PATH+strlen("path")+1];
+    char valuedata[30];
+    write_meta(mount, 
+            make_datum(keydata, "inode %s", path), 
+            make_datum(valuedata, "%lu", stat.st_ino));
+
+    return make_datum(data, "stat %lu", stat.st_ino);
+}
+
+static bool read_stat(struct mount *mount, const char *path, struct ish_stat *stat) {
+    char keydata[30];
+    datum d = read_meta(mount, stat_key(keydata, mount, path));
     if (d.dptr == NULL)
-        return 0;
+        return false;
     assert(d.dsize == sizeof(struct ish_stat));
     *stat = *(struct ish_stat *) d.dptr;
-    return 1;
+    free(d.dptr);
+    return true;
 }
 
 static void write_stat(struct mount *mount, const char *path, struct ish_stat *stat) {
+    char keydata[30];
+    datum key = stat_key(keydata, mount, path);
+    assert(key.dptr != NULL);
     datum data;
     data.dptr = (void *) stat;
     data.dsize = sizeof(struct ish_stat);
-    write_meta(mount, path, "meta", data);
-}
-
-static void delete_stat(struct mount *mount, const char *path) {
-    delete_meta(mount, path, "meta");
+    write_meta(mount, key, data);
 }
 
 static struct fd *fakefs_open(struct mount *mount, const char *path, int flags, int mode) {
@@ -111,22 +104,12 @@ static struct fd *fakefs_open(struct mount *mount, const char *path, int flags, 
 }
 
 static int fakefs_unlink(struct mount *mount, const char *path) {
+    char keydata[30];
+    datum key = stat_key(keydata, mount, path);
     int err = realfs.unlink(mount, path);
     if (err < 0)
         return err;
-    delete_stat(mount, path);
-    return 0;
-}
-
-static int fakefs_rename(struct mount *mount, const char *src, const char *dst) {
-    int err = realfs.rename(mount, src, dst);
-    if (err < 0)
-        return err;
-    struct ish_stat stat;
-    if (!read_stat(mount, src, &stat))
-        return _ENOENT;
-    delete_stat(mount, src);
-    write_stat(mount, dst, &stat);
+    delete_meta(mount, key);
     return 0;
 }
 
@@ -243,7 +226,35 @@ static ssize_t fakefs_readlink(struct mount *mount, const char *path, char *buf,
 }
 
 static int fakefs_mount(struct mount *mount) {
-    // TODO maybe open the database here
+    char db_path[PATH_MAX];
+    strcpy(db_path, mount->source);
+    char *basename = strrchr(db_path, '/') + 1;
+    assert(strcmp(basename, "data") == 0);
+    strncpy(basename, "meta.db", 7);
+    mount->db = gdbm_open(db_path, 0, GDBM_WRITER, 0, gdbm_fatal);
+    if (mount->db == NULL) {
+        println("gdbm error: %s", gdbm_strerror(gdbm_errno));
+        return _EINVAL;
+    }
+
+    // after the filesystem is compressed, transmitted, and uncompressed, the
+    // inode numbers will be different. to detect this, the inode of the
+    // database file is stored inside the database and compared with the actual
+    // database file inode, and if they're different we rebuild the database.
+    struct stat stat;
+    if (fstat(gdbm_fdesc(mount->db), &stat) < 0) DIE("fstat database");
+    datum key = {.dptr = "db inode", .dsize = strlen("db inode")};
+    datum value = gdbm_fetch(mount->db, key);
+    if (value.dptr != NULL && atol(value.dptr) != stat.st_ino) {
+        free(value.dptr);
+        TODO("rebuild database");
+    }
+
+    char keydata[30];
+    value = make_datum(keydata, "%lu", (unsigned long) stat.st_ino);
+    value.dsize++; // make sure to null terminate
+    gdbm_store(mount->db, key, value, GDBM_REPLACE);
+
     return realfs.mount(mount);
 }
 
@@ -262,7 +273,7 @@ const struct fs_ops fakefs = {
     .readlink = fakefs_readlink,
     .access = realfs_access,
     .unlink = fakefs_unlink,
-    .rename = fakefs_rename,
+    .rename = realfs_rename,
     .symlink = fakefs_symlink,
     
     .stat = fakefs_stat,
