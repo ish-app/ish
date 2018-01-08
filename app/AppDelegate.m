@@ -41,7 +41,7 @@ static void ios_handle_exit(int code) {
     
     create_first_process();
     char *program = "/bin/login";
-    char *argv[] = {program, NULL};
+    char *argv[] = {program, "root", NULL};
     char *envp[] = {NULL};
     err = sys_execve(program, argv, envp);
     if (err < 0)
