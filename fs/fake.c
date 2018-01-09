@@ -52,19 +52,40 @@ static void delete_meta(struct mount *mount, datum key) {
         gdbm_err(mount->db);
 }
 
-static datum stat_key(char *data, struct mount *mount, const char *path) {
+static ino_t inode_for_path(struct mount *mount, const char *path) {
     struct stat stat;
     if (fstatat(mount->root_fd, fix_path(path), &stat, AT_SYMLINK_NOFOLLOW) < 0)
-        return (datum) {.dptr = NULL, .dsize = 0};
+        // interestingly, both linux and darwin reserve inode number 0. linux
+        // uses it for an error return and darwin uses it to mark deleted
+        // directory entries (and maybe also for error returns, I don't know).
+        return 0;
+    return stat.st_ino;
+}
 
-    // remember that this path has this inode in case of tarball
-    char keydata[MAX_PATH+strlen("path")+1];
-    char valuedata[30];
-    write_meta(mount, 
-            make_datum(keydata, "inode %s", path), 
-            make_datum(valuedata, "%lu", stat.st_ino));
+static ino_t write_path(struct mount *mount, const char *path) {
+    ino_t inode = inode_for_path(mount, path);
+    if (inode != 0) {
+        char keydata[MAX_PATH+strlen("inode")+1];
+        char valuedata[30];
+        write_meta(mount, 
+                make_datum(keydata, "inode %s", path), 
+                make_datum(valuedata, "%lu", inode));
+    }
+    return inode;
+}
 
-    return make_datum(data, "stat %lu", stat.st_ino);
+static void delete_path(struct mount *mount, const char *path) {
+    char keydata[MAX_PATH+strlen("inode")+1];
+    delete_meta(mount, make_datum(keydata, "inode %s", path));
+}
+
+static datum stat_key(char *data, struct mount *mount, const char *path) {
+    // record the path-inode correspondence, in case there was a crash before
+    // this could be recorded when the file was created
+    ino_t inode = write_path(mount, path);
+    if (inode == 0)
+        return (datum) {};
+    return make_datum(data, "stat %lu", inode);
 }
 
 static bool read_stat(struct mount *mount, const char *path, struct ish_stat *stat) {
@@ -103,13 +124,39 @@ static struct fd *fakefs_open(struct mount *mount, const char *path, int flags, 
     return fd;
 }
 
+static int fakefs_link(struct mount *mount, const char *src, const char *dst) {
+    int err = realfs.link(mount, src, dst);
+    if (err < 0)
+        return err;
+    write_path(mount, dst);
+    return 0;
+}
+
 static int fakefs_unlink(struct mount *mount, const char *path) {
+    // find out if this is the last link
+    bool gone = false;
+    int fd = openat(mount->root_fd, fix_path(path), O_RDONLY);
+    struct stat stat;
+    if (fd >= 0 && fstat(fd, &stat) >= 0 && stat.st_nlink == 1)
+        gone = true;
+
     char keydata[30];
     datum key = stat_key(keydata, mount, path);
     int err = realfs.unlink(mount, path);
     if (err < 0)
         return err;
-    delete_meta(mount, key);
+    delete_path(mount, path);
+    if (gone)
+        delete_meta(mount, key);
+    return 0;
+}
+
+static int fakefs_rename(struct mount *mount, const char *src, const char *dst) {
+    int err = realfs.rename(mount, src, dst);
+    if (err < 0)
+        return err;
+    write_path(mount, dst);
+    delete_path(mount, src);
     return 0;
 }
 
@@ -272,8 +319,9 @@ const struct fs_ops fakefs = {
     .open = fakefs_open,
     .readlink = fakefs_readlink,
     .access = realfs_access,
+    .link = fakefs_link,
     .unlink = fakefs_unlink,
-    .rename = realfs_rename,
+    .rename = fakefs_rename,
     .symlink = fakefs_symlink,
     
     .stat = fakefs_stat,

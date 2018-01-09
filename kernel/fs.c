@@ -66,6 +66,26 @@ dword_t sys_readlink(addr_t path_addr, addr_t buf_addr, dword_t bufsize) {
     return err;
 }
 
+dword_t sys_linkat(fd_t src_at_f, addr_t src_addr, fd_t dst_at_f, addr_t dst_addr) {
+    char src[MAX_PATH];
+    if (user_read_string(src_addr, src, sizeof(src)))
+        return _EFAULT;
+    char dst[MAX_PATH];
+    if (user_read_string(dst_addr, dst, sizeof(dst)))
+        return _EFAULT;
+    struct fd *src_at = at_fd(src_at_f);
+    if (src_at == NULL)
+        return _EBADF;
+    struct fd *dst_at = at_fd(dst_at_f);
+    if (dst_at == NULL)
+        return _EBADF;
+    return generic_linkat(src_at, src, dst_at, dst);
+}
+
+dword_t sys_link(addr_t src_addr, addr_t dst_addr) {
+    return sys_linkat(AT_FDCWD_, src_addr, AT_FDCWD_, dst_addr);
+}
+
 dword_t sys_unlinkat(fd_t at_f, addr_t path_addr) {
     char path[MAX_PATH];
     if (user_read_string(path_addr, path, sizeof(path)))

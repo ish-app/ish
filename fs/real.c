@@ -194,6 +194,13 @@ int realfs_access(struct mount *mount, const char *path, int mode) {
     return res;
 }
 
+static int realfs_link(struct mount *mount, const char *src, const char *dst) {
+    int res = linkat(mount->root_fd, fix_path(src), mount->root_fd, fix_path(dst), 0);
+    if (res < 0)
+        return errno_map();
+    return res;
+}
+
 static int realfs_unlink(struct mount *mount, const char *path) {
     int res = unlinkat(mount->root_fd, fix_path(path), 0);
     if (res < 0)
@@ -201,7 +208,7 @@ static int realfs_unlink(struct mount *mount, const char *path) {
     return res;
 }
 
-int realfs_rename(struct mount *mount, const char *src, const char *dst) {
+static int realfs_rename(struct mount *mount, const char *src, const char *dst) {
     int err = renameat(mount->root_fd, fix_path(src), mount->root_fd, fix_path(dst));
     if (err < 0)
         return errno_map();
@@ -298,6 +305,7 @@ const struct fs_ops realfs = {
     .open = realfs_open,
     .readlink = realfs_readlink,
     .access = realfs_access,
+    .link = realfs_link,
     .unlink = realfs_unlink,
     .rename = realfs_rename,
     .symlink = realfs_symlink,

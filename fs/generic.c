@@ -101,6 +101,22 @@ int generic_access(const char *path_raw, int mode) {
     return mount->fs->access(mount, path, mode);
 }
 
+int generic_linkat(struct fd *src_at, const char *src_raw, struct fd *dst_at, const char *dst_raw) {
+    char src[MAX_PATH];
+    int err = path_normalize(src_at, src_raw, src, false);
+    if (err < 0)
+        return err;
+    char dst[MAX_PATH];
+    err = path_normalize(dst_at, dst_raw, dst, false);
+    if (err < 0)
+        return err;
+    struct mount *mount = find_mount_and_trim_path(src);
+    struct mount *dst_mount = find_mount_and_trim_path(dst);
+    if (mount != dst_mount)
+        return _EXDEV;
+    return mount->fs->link(mount, src, dst);
+}
+
 int generic_unlinkat(struct fd *at, const char *path_raw) {
     char path[MAX_PATH];
     int err = path_normalize(at, path_raw, path, false);

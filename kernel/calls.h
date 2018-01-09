@@ -76,6 +76,8 @@ dword_t sys_flock(fd_t fd, dword_t operation);
 fd_t sys_open(addr_t path_addr, dword_t flags, dword_t mode);
 fd_t sys_openat(fd_t at, addr_t path_addr, dword_t flags, dword_t mode);
 dword_t sys_close(fd_t fd);
+dword_t sys_link(addr_t src_addr, addr_t dst_addr);
+dword_t sys_linkat(fd_t src_at_f, addr_t src_addr, fd_t dst_at_f, addr_t dst_addr);
 dword_t sys_unlink(addr_t path_addr);
 dword_t sys_unlinkat(fd_t at_f, addr_t path_addr);
 dword_t sys_rename(addr_t src_addr, addr_t dst_addr);
