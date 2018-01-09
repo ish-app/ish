@@ -81,6 +81,7 @@
 #define _EPROTONOSUPPORT    93 /* Protocol not supported */
 #define _ESOCKTNOSUPPORT    94 /* Socket type not supported */
 #define _EOPNOTSUPP    -95 /* Operation not supported on transport endpoint */
+#define _ENOTSUP _EOPNOTSUPP
 #define _EPFNOSUPPORT  -96 /* Protocol family not supported */
 #define _EAFNOSUPPORT  -97 /* Address family not supported by protocol */
 #define _EADDRINUSE    -98 /* Address already in use */

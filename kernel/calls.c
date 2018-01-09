@@ -88,6 +88,7 @@ syscall_t syscall_table[] = {
     [220] = (syscall_t) sys_getdents64,
     [221] = (syscall_t) sys_fcntl64,
     [224] = (syscall_t) sys_gettid,
+    [228] = (syscall_t) sys_fsetxattr,
     [238] = (syscall_t) sys_tkill,
     [239] = (syscall_t) sys_sendfile64,
     [243] = (syscall_t) sys_set_thread_area,

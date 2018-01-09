@@ -111,6 +111,7 @@ dword_t sys_fstatfs64(fd_t f, addr_t buf_addr);
 
 dword_t sys_mount(addr_t source_addr, addr_t target_addr, addr_t type_addr, dword_t flags, addr_t data_addr);
 dword_t sys_umount2(addr_t target_addr, dword_t flags);
+dword_t sys_fsetxattr(addr_t path_addr, addr_t name_addr, addr_t value_addr, dword_t size, dword_t flags);
 
 // process information
 dword_t sys_getpid(void);
