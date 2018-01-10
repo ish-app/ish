@@ -1,3 +1,4 @@
+#include <stdarg.h>
 #include <limits.h>
 #include <string.h>
 #include <fcntl.h>
