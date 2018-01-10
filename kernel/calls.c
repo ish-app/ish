@@ -24,6 +24,7 @@ syscall_t syscall_table[] = {
     [11]  = (syscall_t) _sys_execve,
     [12]  = (syscall_t) sys_chdir,
     [13]  = (syscall_t) sys_time,
+    [15]  = (syscall_t) sys_chmod,
     [19]  = (syscall_t) sys_lseek,
     [20]  = (syscall_t) sys_getpid,
     [21]  = (syscall_t) sys_mount,

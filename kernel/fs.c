@@ -448,6 +448,10 @@ dword_t sys_fchmodat(fd_t at_f, addr_t path_addr, dword_t mode, int flags) {
     return generic_setattrat(at, path, make_attr(mode, mode), follow_links);
 }
 
+dword_t sys_chmod(addr_t path_addr, dword_t mode) {
+    return sys_fchmodat(AT_FDCWD_, path_addr, mode, 0);
+}
+
 dword_t sys_fchown32(fd_t f, dword_t owner, dword_t group) {
     struct fd *fd = current->files[f];
     if (fd == NULL)
