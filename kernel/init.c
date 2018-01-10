@@ -29,7 +29,7 @@ void create_first_process() {
     signal(SIGUSR1, nop_handler);
     signal(SIGPIPE, SIG_IGN);
 
-    current = process_create();
+    current = process_create(NULL);
     current->cpu.mem = mem_new();
     current->parent = current;
     current->ppid = 1;

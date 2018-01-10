@@ -48,20 +48,11 @@ static int copy_files(struct process *proc, int flags) {
 }
 
 static int init_process(struct process *proc, dword_t flags, addr_t ctid_addr) {
-    dword_t pid = proc->pid;
-    *proc = *current;
-    proc->pid = pid;
-    proc->ppid = current->pid;
-
     int err = 0;
     if ((err = copy_memory(proc, flags)) < 0)
         goto fail_free_proc;
     if ((err = copy_files(proc, flags)) < 0)
         goto fail_free_proc;
-
-    proc->parent = current;
-    list_add(&current->children, &proc->siblings);
-    list_init(&proc->children);
 
     proc->cpu.eax = 0;
     if (flags & CLONE_CHILD_SETTID_)
@@ -104,7 +95,7 @@ dword_t sys_clone(dword_t flags, addr_t stack, addr_t ptid, addr_t tls, addr_t c
         TODO("clone with nonzero stack");
         // stack = current->cpu.esp;
 
-    struct process *proc = process_create();
+    struct process *proc = process_create(current);
     if (proc == NULL)
         return _ENOMEM;
     int err = init_process(proc, flags, ctid);

@@ -8,6 +8,8 @@
 
 #include "kernel/signal.h"
 #include "kernel/sock.h"
+#include "kernel/time.h"
+#include "kernel/resource.h"
 
 void handle_interrupt(int interrupt);
 
@@ -136,9 +138,6 @@ dword_t sys_fchdir(fd_t f);
 int sys_set_thread_area(addr_t u_info);
 int sys_set_tid_address(addr_t blahblahblah);
 dword_t sys_setsid(void);
-dword_t sys_getrlimit(dword_t resource, addr_t rlim_addr);
-dword_t sys_setrlimit(dword_t resource, addr_t rlim_addr);
-dword_t sys_prlimit(pid_t_ pid, dword_t resource, addr_t new_limit_addr, addr_t old_limit_addr);
 
 // system information
 #define UNAME_LENGTH 65
@@ -170,36 +169,6 @@ struct sys_info {
 dword_t sys_sysinfo(addr_t info_addr);
 
 // time
-struct time_spec {
-    dword_t sec;
-    dword_t nsec;
-};
-
-dword_t sys_time(addr_t time_out);
-#define CLOCK_REALTIME_ 0
-#define CLOCK_MONOTONIC_ 1
-dword_t sys_clock_gettime(dword_t clock, addr_t tp);
-
-struct timeval_ {
-    dword_t sec;
-    dword_t usec;
-};
-struct timespec_ {
-    dword_t sec;
-    dword_t nsec;
-};
-
-#define ITIMER_REAL_ 0
-#define ITIMER_VIRTUAL_ 1
-#define ITIMER_PROF_ 2
-struct itimerval_ {
-    struct timeval_ interval;
-    struct timeval_ value;
-};
-dword_t sys_getitimer(dword_t which, addr_t val);
-dword_t sys_setitimer(dword_t which, addr_t new_val, addr_t old_val);
-
-dword_t sys_nanosleep(addr_t req, addr_t rem);
 
 // crap that ideally shouldn't exist
 struct pollfd_ {
@@ -210,6 +179,6 @@ struct pollfd_ {
 dword_t sys_poll(addr_t fds, dword_t nfds, dword_t timeout);
 dword_t sys_select(fd_t nfds, addr_t readfds_addr, addr_t writefds_addr, addr_t exceptfds_addr, addr_t timeout_addr);
 
-typedef int (*syscall_t)(dword_t,dword_t,dword_t,dword_t,dword_t,dword_t);
+typedef int (*syscall_t)(dword_t, dword_t, dword_t, dword_t, dword_t, dword_t);
 
 #endif

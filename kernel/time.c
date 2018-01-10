@@ -24,7 +24,7 @@ dword_t sys_clock_gettime(dword_t clock, addr_t tp) {
     int err = clock_gettime(clock_id, &ts);
     if (err < 0)
         return errno_map();
-    struct time_spec t;
+    struct timespec_ t;
     t.sec = ts.tv_sec;
     t.nsec = ts.tv_nsec;
     if (user_put(tp, t))

@@ -20,8 +20,12 @@ noreturn void do_exit(int status) {
     struct process *parent = current->parent;
     unlock(pids_lock);
     lock(parent->exit_lock);
+
     current->exit_code = status;
     current->zombie = true;
+    current->rusage = rusage_get_current();
+    rusage_add(&parent->children_rusage, &current->rusage);
+
     notify(parent->child_exit);
     unlock(parent->exit_lock);
     notify(current->vfork_done);
@@ -59,35 +63,14 @@ dword_t sys_exit_group(dword_t status) {
     do_exit(status << 8);
 }
 
-struct rusage_ {
-    struct timeval_ utime;
-    struct timeval_ stime;
-    dword_t maxrss;
-    dword_t ixrss;
-    dword_t idrss;
-    dword_t isrss;
-    dword_t minflt;
-    dword_t majflt;
-    dword_t nswap;
-    dword_t inblock;
-    dword_t oublock;
-    dword_t msgsnd;
-    dword_t msgrcv;
-    dword_t nsignals;
-    dword_t nvcsw;
-    dword_t nivcsw;
-};
-
 static int reap_if_zombie(struct process *proc, addr_t status_addr, addr_t rusage_addr) {
     if (proc->zombie) {
         if (status_addr != 0)
             if (user_put(status_addr, proc->exit_code))
                 return _EFAULT;
-        if (rusage_addr != 0) {
-            struct rusage_ rusage = {};
-            if (user_put(rusage_addr, rusage))
+        if (rusage_addr != 0)
+            if (user_put(rusage_addr, proc->rusage))
                 return _EFAULT;
-        }
         process_destroy(proc);
         return 1;
     }

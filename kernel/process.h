@@ -7,7 +7,7 @@
 #include "emu/cpu.h"
 #include "kernel/fs.h"
 #include "kernel/signal.h"
-#include "kernel/rlimit.h"
+#include "kernel/resource.h"
 
 struct process {
     struct cpu_state cpu; // do not access this field except on the current process
@@ -46,25 +46,28 @@ struct process {
 
     struct rlimit_ limits[RLIMIT_NLIMITS_];
 
-    // the next two fields are protected by the lock on the parent process, not
-    // the lock on the process. this is because waitpid locks the parent
-    // process to wait for any of its children to exit.
+    // the next two fields are protected by the exit_lock on the parent
+    // process. this is because waitpid locks the parent process to wait for
+    // any of its children to exit.
     dword_t exit_code;
+    struct rusage_ rusage;
     bool zombie;
+
+    struct rusage_ children_rusage;
     pthread_cond_t child_exit;
     lock_t exit_lock;
 
     pthread_cond_t vfork_done;
 };
 
-
 // current will always give the process that is currently executing
 // if I have to stop using __thread, current will become a macro
 extern __thread struct process *current;
 #define curmem current->cpu.mem
 
-// Creates a new process, returns NULL in case of failure
-struct process *process_create(void);
+// Creates a new process, initializes most fields from the parent. Specify
+// parent as NULL to create the init process. Returns NULL if out of memory.
+struct process *process_create(struct process *parent);
 // Removes the process from the process table and frees it.
 void process_destroy(struct process *proc);
 
