@@ -319,7 +319,6 @@ const struct fs_ops fakefs = {
     .statfs = realfs_statfs,
     .open = fakefs_open,
     .readlink = fakefs_readlink,
-    .access = realfs_access,
     .link = fakefs_link,
     .unlink = fakefs_unlink,
     .rename = fakefs_rename,

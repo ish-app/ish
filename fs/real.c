@@ -182,18 +182,6 @@ int realfs_getpath(struct fd *fd, char *buf) {
     return 0;
 }
 
-int realfs_access(struct mount *mount, const char *path, int mode) {
-    int real_mode = 0;
-    if (mode & AC_F) real_mode |= F_OK;
-    if (mode & AC_R) real_mode |= R_OK;
-    if (mode & AC_W) real_mode |= W_OK;
-    if (mode & AC_X) real_mode |= X_OK;
-    int res = faccessat(mount->root_fd, fix_path(path), real_mode, 0);
-    if (res < 0)
-        return errno_map();
-    return res;
-}
-
 static int realfs_link(struct mount *mount, const char *src, const char *dst) {
     int res = linkat(mount->root_fd, fix_path(src), mount->root_fd, fix_path(dst), 0);
     if (res < 0)
@@ -304,7 +292,6 @@ const struct fs_ops realfs = {
     .statfs = realfs_statfs,
     .open = realfs_open,
     .readlink = realfs_readlink,
-    .access = realfs_access,
     .link = realfs_link,
     .unlink = realfs_unlink,
     .rename = realfs_rename,

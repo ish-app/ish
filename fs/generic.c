@@ -97,8 +97,14 @@ int generic_access(const char *path_raw, int mode) {
     int err = path_normalize(NULL, path_raw, path, true);
     if (err < 0)
         return err;
+
     struct mount *mount = find_mount_and_trim_path(path);
-    return mount->fs->access(mount, path, mode);
+    struct statbuf stat;
+    err = mount->fs->stat(mount, path, &stat, true);
+    if (err < 0)
+        return err;
+    // TODO do an actual permissions check
+    return 0;
 }
 
 int generic_linkat(struct fd *src_at, const char *src_raw, struct fd *dst_at, const char *dst_raw) {

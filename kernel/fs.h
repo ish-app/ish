@@ -115,7 +115,6 @@ struct fs_ops {
 
     struct fd *(*open)(struct mount *mount, const char *path, int flags, int mode);
     ssize_t (*readlink)(struct mount *mount, const char *path, char *buf, size_t bufsize);
-    int (*access)(struct mount *mount, const char *path, int mode);
     int (*link)(struct mount *mount, const char *src, const char *dst);
     int (*unlink)(struct mount *mount, const char *path);
     int (*rename)(struct mount *mount, const char *src, const char *dst);
@@ -224,7 +223,6 @@ extern const struct fs_ops realfs;
 
 int realfs_stat(struct mount *mount, const char *path, struct statbuf *fake_stat, bool follow_links);
 int realfs_fstat(struct fd *fd, struct statbuf *fake_stat);
-int realfs_access(struct mount *mount, const char *path, int mode);
 int realfs_statfs(struct mount *mount, struct statfsbuf *stat);
 int realfs_flock(struct fd *fd, int operation);
 extern const struct fd_ops realfs_fdops;
