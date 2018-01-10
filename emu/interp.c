@@ -457,6 +457,11 @@
     cpu->zf_res = 0; \
     if (!cpu->zf) set(dst, __builtin_ctz(get(src,z)),z)
 
+#define BSR(src, dst,z) \
+    cpu->zf = get(src,z) == 0; \
+    cpu->zf_res = 0; \
+    if (!cpu->zf) set(dst, sz(z) - __builtin_clz(get(src,z)),z)
+
 // string instructions
 
 #define BUMP_SI(size) \

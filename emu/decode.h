@@ -229,6 +229,8 @@ restart:
                            READMODRM; BTC(modrm_reg, modrm_val,); break;
                 case 0xbc: TRACEI("bsf modrm, reg");
                            READMODRM; BSF(modrm_val, modrm_reg,); break;
+                case 0xbd: TRACEI("bsr modrm, reg");
+                           READMODRM; BSR(modrm_val, modrm_reg,); break;
 
                 case 0xbe: TRACEI("movs modrm8, reg");
                            READMODRM; MOVSX(modrm_val, modrm_reg,8,); break;
@@ -317,6 +319,8 @@ restart:
                    READMODRM; XOR(modrm_val, modrm_reg,8); break;
         case 0x33: TRACEI("xor modrm, reg");
                    READMODRM; XOR(modrm_val, modrm_reg,); break;
+        case 0x34: TRACEI("xor imm8, al\t");
+                   READIMM8; XOR(imm8, al,8); break;
         case 0x35: TRACEI("xor imm, oax");
                    READIMM; XOR(imm, oax,); break;
 
@@ -605,11 +609,13 @@ restart:
                 switch (insn << 4 | modrm.opcode) {
                     case 0xd80: TRACE("fadd mem32"); FADDM(mem_addr_real,32); break;
                     case 0xd81: TRACE("fmul mem32"); FMULM(mem_addr_real,32); break;
+                    case 0xd86: TRACE("fdiv mem32"); FDIVM(mem_addr_real,32); break;
                     case 0xd90: TRACE("fld mem32"); FLDM(mem_addr_real,32); break;
                     case 0xd95: TRACE("fldcw mem16"); FLDCW(mem_addr); break;
                     case 0xd97: TRACE("fnstcw mem16"); FSTCW(mem_addr); break;
                     case 0xda1: TRACE("fimul mem32"); FIMUL(mem_addr,32); break;
                     case 0xda4: TRACE("fisub mem32"); FISUB(mem_addr,32); break;
+                    case 0xda6: TRACE("fidiv mem32"); FIDIV(mem_addr,32); break;
                     case 0xdb0: TRACE("fild mem32"); FILD(mem_addr,32); break;
                     case 0xdb2: TRACE("fist mem32"); FIST(mem_addr,32); break;
                     case 0xdb3: TRACE("fistp mem32"); FIST(mem_addr,32); FPOP; break;
