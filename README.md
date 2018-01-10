@@ -32,7 +32,7 @@ To set up your environment, cd to the project and run `meson build`. Then run `n
 
 Run programs with `./ish program`. If you're not sure what to run, there are some test programs in (you guessed it) `tests`. Run `ninja busybox` to download and build busybox.
 
-To set up a self-contained Alpine linux filesystem, download the Alpine minirootfs tarball for i386 from the alpine website and run the `tools/fakefsify.py` script. Specify the minirootfs tarball as the first argument and the name of the output directory as the second argument. Then you can run things inside the Alpine filesystem with `./ish -r alpine/data /bin/login`, assuming the output directory is called `alpine`.
+To set up a self-contained Alpine linux filesystem, download the Alpine minirootfs tarball for i386 from the alpine website and run the `tools/fakefsify.py` script. Specify the minirootfs tarball as the first argument and the name of the output directory as the second argument. Then you can run things inside the Alpine filesystem with `./ish -f alpine/data /bin/login`, assuming the output directory is called `alpine`.
 
 You can replace `ish` with `tools/ptraceomatic` to run the program in a real process and single step and compare the registers at each step. I use it for debugging. Requires 64-bit Linux 4.11 or later.
 
