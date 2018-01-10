@@ -39,6 +39,9 @@ void create_first_process() {
     current->umask = 0022;
     current->thread = pthread_self();
     sys_setsid();
+    for (int i = 0; i < RLIMIT_NLIMITS_; i++) {
+        current->limits[i].cur = current->limits[i].max = RLIM_INFINITY_;
+    }
 }
 
 int create_stdio(struct tty_driver driver) {

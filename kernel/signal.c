@@ -209,7 +209,7 @@ dword_t sys_rt_sigprocmask(dword_t how, addr_t set_addr, addr_t oldset_addr, dwo
 }
 
 dword_t sys_kill(dword_t pid, dword_t sig) {
-    // TODO permission checks
+    // TODO check permissions
     // TODO process groups
     struct process *proc = pid_get_proc(pid);
     if (proc == NULL)

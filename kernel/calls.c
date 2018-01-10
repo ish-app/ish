@@ -45,6 +45,8 @@ syscall_t syscall_table[] = {
     [63]  = (syscall_t) sys_dup2,
     [64]  = (syscall_t) sys_getppid,
     [65]  = (syscall_t) sys_getpgrp,
+    [75]  = (syscall_t) sys_setrlimit,
+    [76]  = (syscall_t) sys_getrlimit,
     [83]  = (syscall_t) sys_symlink,
     [85]  = (syscall_t) sys_readlink,
     [90]  = (syscall_t) sys_mmap,
@@ -108,6 +110,7 @@ syscall_t syscall_table[] = {
     [306] = (syscall_t) sys_fchmodat,
     [320] = (syscall_t) sys_utimensat,
     [324] = (syscall_t) sys_fallocate,
+    [340] = (syscall_t) sys_prlimit,
 };
 
 void handle_interrupt(int interrupt) {

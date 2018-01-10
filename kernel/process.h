@@ -7,6 +7,7 @@
 #include "emu/cpu.h"
 #include "kernel/fs.h"
 #include "kernel/signal.h"
+#include "kernel/rlimit.h"
 
 struct process {
     struct cpu_state cpu; // do not access this field except on the current process
@@ -42,6 +43,8 @@ struct process {
 
     bool has_timer;
     struct timer *timer;
+
+    struct rlimit_ limits[RLIMIT_NLIMITS_];
 
     // the next two fields are protected by the lock on the parent process, not
     // the lock on the process. this is because waitpid locks the parent

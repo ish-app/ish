@@ -136,6 +136,9 @@ dword_t sys_fchdir(fd_t f);
 int sys_set_thread_area(addr_t u_info);
 int sys_set_tid_address(addr_t blahblahblah);
 dword_t sys_setsid(void);
+dword_t sys_getrlimit(dword_t resource, addr_t rlim_addr);
+dword_t sys_setrlimit(dword_t resource, addr_t rlim_addr);
+dword_t sys_prlimit(pid_t_ pid, dword_t resource, addr_t new_limit_addr, addr_t old_limit_addr);
 
 // system information
 #define UNAME_LENGTH 65
