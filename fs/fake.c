@@ -264,7 +264,7 @@ static ssize_t fakefs_readlink(struct mount *mount, const char *path, char *buf,
         int fd = openat(mount->root_fd, fix_path(path), O_RDONLY);
         if (fd < 0)
             return errno_map();
-        int err = read(fd, buf, bufsize);
+        err = read(fd, buf, bufsize);
         if (err < 0)
             return errno_map();
         close(fd);
