@@ -58,7 +58,9 @@ fs = Path(fs)
 fs.mkdir(parents=True, exist_ok=True)
 data = fs/'data'
 
+db_path = fs/'meta.db'
 with open(archive_path, 'rb') as archive:
     with tarfile.open(fileobj=archive) as archive:
-        with dbm.gnu.open(str(fs/'meta.db'), 'c') as db:
+        with dbm.gnu.open(str(db_path), 'c') as db:
             extract_archive(archive, db)
+            db[b'db inode'] = str(db_path.stat().st_ino)
