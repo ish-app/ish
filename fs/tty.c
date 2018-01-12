@@ -128,6 +128,11 @@ int tty_input(struct tty *tty, const char *input, size_t size) {
     dword_t iflags = tty->termios.iflags;
     unsigned char *cc = tty->termios.cc;
 
+#define SHOULD_ECHOCTL(ch) \
+    (lflags & ECHOCTL_ && \
+     (ch < ' ' || ch == '\x7f') && \
+     !(ch == '\t' || ch == '\n' || ch == cc[VSTART_] || ch == cc[VSTOP_]))
+
     if (lflags & ISIG_) {
         for (size_t i = 0; i < size; i++) {
             char ch = input[i];
@@ -153,28 +158,30 @@ int tty_input(struct tty *tty, const char *input, size_t size) {
                 continue;
 
             if (ch == cc[VERASE_] || ch == cc[VKILL_]) {
-                int count = 0;
-                if (ch == cc[VERASE_] && tty->bufsize > 0)
+                echo = lflags & ECHOK_;
+                int count = tty->bufsize;
+                if (ch == cc[VERASE_] && tty->bufsize > 0) {
+                    echo = lflags & ECHOE_;
                     count = 1;
-                else
-                    count = tty->bufsize;
+                }
                 for (int i = 0; i < count; i++) {
                     tty->bufsize--;
                     if (lflags & ECHOE_) {
                         tty->driver->write(tty, "\b \b", 3);
-                        echo = false;
+                        if (SHOULD_ECHOCTL(tty->buf[tty->bufsize]))
+                            tty->driver->write(tty, "\b \b", 3);
                     }
                 }
+                echo = false;
             } else if (ch == '\n' || ch == cc[VEOF_]) {
                 if (ch == '\n') {
                     tty->buf[tty->bufsize++] = ch;
                     // echo it now, before the read call goes through
-                    if (echo) {
+                    if (echo)
                         tty->driver->write(tty, "\r\n", 2);
-                        echo = false;
-                    }
                 }
 
+                echo = false;
                 tty->canon_ready = true;
                 tty_wake(tty);
                 while (tty->canon_ready)
@@ -184,8 +191,13 @@ int tty_input(struct tty *tty, const char *input, size_t size) {
                     tty->buf[tty->bufsize++] = ch;
             }
 
-            if (echo)
+            if (echo) {
+                if (SHOULD_ECHOCTL(ch)) {
+                    tty->driver->write(tty, "^", 1);
+                    ch ^= '\100';
+                }
                 tty->driver->write(tty, &ch, 1);
+            }
         }
     } else {
         if (size > sizeof(tty->buf) - 1 - tty->bufsize)

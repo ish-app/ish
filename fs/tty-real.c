@@ -37,6 +37,8 @@ static struct termios_ termios_from_real(struct termios real) {
     FLAG(l, ICANON);
     FLAG(l, ECHO);
     FLAG(l, ECHOE);
+    FLAG(l, ECHOK);
+    FLAG(l, ECHOCTL);
 #undef FLAG
 
 #define CC(x) \
