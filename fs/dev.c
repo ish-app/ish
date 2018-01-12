@@ -37,8 +37,6 @@ static ssize_t null_write(struct fd *fd, const void *buf, size_t bufsize) {
 }
 struct dev_ops null_dev = {
     .open = null_open,
-    .fd = {
-        .read = null_read,
-        .write = null_write,
-    },
+    .fd.read = null_read,
+    .fd.write = null_write,
 };

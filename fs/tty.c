@@ -368,13 +368,11 @@ static int tty_ioctl(struct fd *fd, int cmd, void *arg) {
 
 struct dev_ops tty_dev = {
     .open = tty_open,
-    .fd = {
-        .close = tty_close,
-        .read = tty_read,
-        .write = tty_write,
-        .poll = tty_poll,
-        .ioctl_size = tty_ioctl_size,
-        .ioctl = tty_ioctl,
-    },
+    .fd.close = tty_close,
+    .fd.read = tty_read,
+    .fd.write = tty_write,
+    .fd.poll = tty_poll,
+    .fd.ioctl_size = tty_ioctl_size,
+    .fd.ioctl = tty_ioctl,
 };
 /* struct dev_ops ptmx_dev = {.open = ptmx_open}; */
