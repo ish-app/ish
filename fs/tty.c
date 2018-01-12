@@ -28,8 +28,10 @@ static int tty_get(int type, int num, struct tty **tty_out) {
         // TODO default termios
         memset(&tty->winsize, 0, sizeof(tty->winsize));
         lock_init(tty->lock);
+        lock_init(tty->fds_lock);
         pthread_cond_init(&tty->produced, NULL);
         pthread_cond_init(&tty->consumed, NULL);
+        tty->bufsize = 0;
 
         tty->driver = &tty_drivers[type];
         if (tty->driver->open) {

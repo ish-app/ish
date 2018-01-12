@@ -111,7 +111,7 @@ static void write_stat(struct mount *mount, const char *path, struct ish_stat *s
 }
 
 static struct fd *fakefs_open(struct mount *mount, const char *path, int flags, int mode) {
-    struct fd *fd = realfs.open(mount, path, flags, 0644);
+    struct fd *fd = realfs.open(mount, path, flags, 0666);
     if (IS_ERR(fd))
         return fd;
     if (flags & O_CREAT_) {
@@ -163,7 +163,7 @@ static int fakefs_rename(struct mount *mount, const char *src, const char *dst) 
 
 static int fakefs_symlink(struct mount *mount, const char *target, const char *link) {
     // create a file containing the target
-    int fd = openat(mount->root_fd, fix_path(link), O_WRONLY | O_CREAT | O_EXCL, 0644);
+    int fd = openat(mount->root_fd, fix_path(link), O_WRONLY | O_CREAT | O_EXCL, 0666);
     if (fd < 0)
         return errno_map();
     ssize_t res = write(fd, target, strlen(target));
@@ -239,7 +239,7 @@ static int fakefs_fsetattr(struct fd *fd, struct attr attr) {
 }
 
 static int fakefs_mkdir(struct mount *mount, const char *path, mode_t_ mode) {
-    int err = realfs.mkdir(mount, path, 0755);
+    int err = realfs.mkdir(mount, path, 0777);
     if (err < 0)
         return err;
     struct ish_stat ishstat;
@@ -273,6 +273,8 @@ static ssize_t fakefs_readlink(struct mount *mount, const char *path, char *buf,
     return err;
 }
 
+int fakefs_rebuild(struct mount *mount, const char *db_path);
+
 static int fakefs_mount(struct mount *mount) {
     char db_path[PATH_MAX];
     strcpy(db_path, mount->source);
@@ -285,6 +287,11 @@ static int fakefs_mount(struct mount *mount) {
         return _EINVAL;
     }
 
+    // do this now so fakefs_rebuild can use mount->root_fd
+    int err = realfs.mount(mount);
+    if (err < 0)
+        return err;
+
     // after the filesystem is compressed, transmitted, and uncompressed, the
     // inode numbers will be different. to detect this, the inode of the
     // database file is stored inside the database and compared with the actual
@@ -295,7 +302,11 @@ static int fakefs_mount(struct mount *mount) {
     datum value = gdbm_fetch(mount->db, key);
     if (value.dptr != NULL && atol(value.dptr) != stat.st_ino) {
         free(value.dptr);
-        TODO("rebuild database");
+        int err = fakefs_rebuild(mount, db_path);
+        if (err < 0) {
+            close(mount->root_fd);
+            return err;
+        }
     }
 
     char keydata[30];
@@ -303,7 +314,7 @@ static int fakefs_mount(struct mount *mount) {
     value.dsize++; // make sure to null terminate
     gdbm_store(mount->db, key, value, GDBM_REPLACE);
 
-    return realfs.mount(mount);
+    return 0;
 }
 
 static int fakefs_umount(struct mount *mount) {

@@ -26,7 +26,6 @@ static inline int xX_main_Xx(int argc, char *const argv[]) {
                 else
                     fs = &fakefs;
                 break;
-
         }
     }
 

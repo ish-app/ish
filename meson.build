@@ -61,6 +61,7 @@ src = [
     'fs/path.c',
     'fs/real.c',
     'fs/fake.c',
+    'fs/fake-rebuild.c',
     'fs/poll.c',
     'fs/adhoc.c',
 
