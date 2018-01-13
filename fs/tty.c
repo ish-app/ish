@@ -37,7 +37,7 @@ static int tty_get(int type, int num, struct tty **tty_out) {
         if (tty->driver->open) {
             int err = tty->driver->open(tty);
             if (err < 0) {
-                pthread_mutex_unlock(&ttys_lock);
+                unlock(ttys_lock);
                 return err;
             }
         }
@@ -85,9 +85,9 @@ static int tty_open(int major, int minor, int type, struct fd *fd) {
         return err;
     fd->tty = tty;
 
-    pthread_mutex_lock(&tty->fds_lock);
+    lock(tty->fds_lock);
     list_add(&tty->fds, &fd->other_fds);
-    pthread_mutex_unlock(&tty->fds_lock);
+    unlock(tty->fds_lock);
 
     lock(pids_lock);
     if (current->sid == current->pid) {
@@ -103,9 +103,9 @@ static int tty_open(int major, int minor, int type, struct fd *fd) {
 }
 
 static int tty_close(struct fd *fd) {
-    pthread_mutex_lock(&fd->tty->fds_lock);
+    lock(fd->tty->fds_lock);
     list_remove(&fd->other_fds);
-    pthread_mutex_unlock(&fd->tty->fds_lock);
+    unlock(fd->tty->fds_lock);
     tty_release(fd->tty);
     return 0;
 }
@@ -114,11 +114,11 @@ static void tty_wake(struct tty *tty) {
     notify(tty->produced);
     unlock(tty->lock);
     struct fd *fd;
-    pthread_mutex_lock(&tty->fds_lock);
+    lock(tty->fds_lock);
     list_for_each_entry(&tty->fds, fd, other_fds) {
         poll_wake(fd);
     }
-    pthread_mutex_unlock(&tty->fds_lock);
+    unlock(tty->fds_lock);
     lock(tty->lock);
 }
 
