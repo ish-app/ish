@@ -57,6 +57,11 @@ static void ios_handle_exit(int code) {
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     int err = [self startThings];
     if (err < 0) {
+        NSString *message = [NSString stringWithFormat:@"could not initialize"];
+        NSString *subtitle = [NSString stringWithFormat:@"error code %d", err];
+        if (err == _EINVAL)
+            subtitle = [subtitle stringByAppendingString:@"\n(try reinstalling the app, see release notes for details)"];
+        [self fatal:message subtitle:subtitle];
         NSLog(@"failed with code %d", err);
     }
     return YES;
@@ -81,6 +86,15 @@ static void ios_handle_exit(int code) {
     // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
 }
 
+- (void)fatal:(NSString *)message subtitle:(NSString *)subtitle {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        UIAlertController *alert = [UIAlertController alertControllerWithTitle:message message:subtitle preferredStyle:UIAlertControllerStyleAlert];
+        [alert addAction:[UIAlertAction actionWithTitle:@"goodbye" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+            exit(0);
+        }]];
+        [self.window.rootViewController presentViewController:alert animated:YES completion:nil];
+    });
+}
 
 @end
 
