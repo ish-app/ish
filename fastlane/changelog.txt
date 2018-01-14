@@ -1,6 +1,6 @@
-<TALK ABOUT WHAT CHANGED>
+At last! Hardlinks! I was able to successfully compile and run a hello world program with gcc on this build.
 
-You can log in as root with no password. (Someday I'm going to get rid of that username prompt...)
+(Last build had a whole thing about reinstalling that nobody read, so here's an in-app prompt.)
 
 As always, let me know if it crashes spectacularly. The best place to send bug reports or feedback of any kind is the GitHub issues page: https://github.com/tbodt/ish/issues
 
