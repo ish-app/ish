@@ -1,11 +1,18 @@
-#!/bin/bash -ex
-crossfile=$SRCROOT/cross-$(basename $TARGET_BUILD_DIR).txt
-arch_args=
-for arch in $ARCHS; do
-    arch_args="'-arch', '$arch', $arch_args"
-done
-first_arch=${ARCHS%% *}
-cat > $crossfile <<EOF
+#!/bin/bash -x
+export
+mkdir -p $MESON_BUILD_DIR
+cd $MESON_BUILD_DIR
+
+config=$(meson introspect --buildoptions)
+if [[ $? -ne 0 ]]; then
+    export CC="env -u SDKROOT -u IPHONEOS_DEPLOYMENT_TARGET clang"
+    crossfile=cross.txt
+    arch_args=
+    for arch in $ARCHS; do
+        arch_args="'-arch', '$arch', $arch_args"
+    done
+    first_arch=${ARCHS%% *}
+    cat > $crossfile <<EOF
 [binaries]
 c = 'clang'
 ar = 'ar'
@@ -20,10 +27,6 @@ endian = 'little'
 c_args = ['-arch', '$first_arch']
 needs_exe_wrapper = true
 EOF
-
-cd $TARGET_BUILD_DIR
-if ! meson introspect --projectinfo; then
-    export CC="$SRCROOT/no-clang-env.sh clang"
     meson $SRCROOT --cross-file $crossfile
 fi
 
@@ -34,7 +37,6 @@ if [[ $CONFIGURATION == Release ]]; then
     b_ndebug=true
 fi
 log=$ISH_LOG
-config=$(meson introspect --buildoptions)
 for var in buildtype log b_ndebug; do
     old_value=$(jq -r ".[] | select(.name==\"$var\") | .value" <<< $config)
     new_value=${!var}

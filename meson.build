@@ -91,7 +91,9 @@ ish = declare_dependency(
 # ptraceomatic et al
 subdir('tools')
 
-executable('ish', ['main.c'], dependencies: ish)
+if not meson.is_cross_build()
+    executable('ish', ['main.c'], dependencies: ish)
+endif
 
 gdb_scripts = ['ish-gdb.gdb']
 foreach script : gdb_scripts
