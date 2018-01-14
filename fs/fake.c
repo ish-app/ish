@@ -152,6 +152,17 @@ static int fakefs_unlink(struct mount *mount, const char *path) {
     return 0;
 }
 
+static int fakefs_rmdir(struct mount *mount, const char *path) {
+    char keydata[30];
+    datum key = stat_key(keydata, mount, path);
+    int err = realfs.rmdir(mount, path);
+    if (err < 0)
+        return err;
+    delete_path(mount, path);
+    delete_meta(mount, key);
+    return 0;
+}
+
 static int fakefs_rename(struct mount *mount, const char *src, const char *dst) {
     int err = realfs.rename(mount, src, dst);
     if (err < 0)
@@ -342,4 +353,5 @@ const struct fs_ops fakefs = {
     .fsetattr = fakefs_fsetattr,
 
     .mkdir = fakefs_mkdir,
+    .rmdir = fakefs_rmdir,
 };

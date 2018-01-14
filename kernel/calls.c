@@ -34,6 +34,7 @@ syscall_t syscall_table[] = {
     [37]  = (syscall_t) sys_kill,
     [38]  = (syscall_t) sys_rename,
     [39]  = (syscall_t) sys_mkdir,
+    [40]  = (syscall_t) sys_rmdir,
     [41]  = (syscall_t) sys_dup,
     [42]  = (syscall_t) sys_pipe,
     [45]  = (syscall_t) sys_brk,

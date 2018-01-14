@@ -538,6 +538,13 @@ dword_t sys_mkdir(addr_t path_addr, mode_t_ mode) {
     return sys_mkdirat(AT_FDCWD_, path_addr, mode);
 }
 
+dword_t sys_rmdir(addr_t path_addr) {
+    char path[MAX_PATH];
+    if (user_read_string(path_addr, path, sizeof(path)))
+        return _EFAULT;
+    return generic_rmdirat(current->pwd, path);
+}
+
 // a few stubs
 dword_t sys_sendfile(fd_t out_fd, fd_t in_fd, addr_t offset_addr, dword_t count) {
     return _EINVAL;

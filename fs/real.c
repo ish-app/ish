@@ -196,6 +196,13 @@ static int realfs_unlink(struct mount *mount, const char *path) {
     return res;
 }
 
+static int realfs_rmdir(struct mount *mount, const char *path) {
+    int err = unlinkat(mount->root_fd, fix_path(path), AT_REMOVEDIR);
+    if (err < 0)
+        return errno_map();
+    return 0;
+}
+
 static int realfs_rename(struct mount *mount, const char *src, const char *dst) {
     int err = renameat(mount->root_fd, fix_path(src), mount->root_fd, fix_path(dst));
     if (err < 0)
@@ -294,6 +301,7 @@ const struct fs_ops realfs = {
     .readlink = realfs_readlink,
     .link = realfs_link,
     .unlink = realfs_unlink,
+    .rmdir = realfs_rmdir,
     .rename = realfs_rename,
     .symlink = realfs_symlink,
     

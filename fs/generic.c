@@ -183,3 +183,12 @@ int generic_mkdirat(struct fd *at, const char *path_raw, mode_t_ mode) {
     struct mount *mount = find_mount_and_trim_path(path);
     return mount->fs->mkdir(mount, path, mode);
 }
+
+int generic_rmdirat(struct fd *at, const char *path_raw) {
+    char path[MAX_PATH];
+    int err = path_normalize(at, path_raw, path, true);
+    if (err < 0)
+        return err;
+    struct mount *mount = find_mount_and_trim_path(path);
+    return mount->fs->rmdir(mount, path);
+}

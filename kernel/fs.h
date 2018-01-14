@@ -73,6 +73,7 @@ struct fd *generic_dup(struct fd *fd);
 int fd_close(struct fd *fd);
 int generic_linkat(struct fd *src_at, const char *src_raw, struct fd *dst_at, const char *dst_raw);
 int generic_unlinkat(struct fd *at, const char *path);
+int generic_rmdirat(struct fd *at, const char *path);
 int generic_renameat(struct fd *src_at, const char *src, struct fd *dst_at, const char *dst);
 int generic_symlinkat(const char *target, struct fd *at, const char *link);
 #define AC_R 4
@@ -117,6 +118,7 @@ struct fs_ops {
     ssize_t (*readlink)(struct mount *mount, const char *path, char *buf, size_t bufsize);
     int (*link)(struct mount *mount, const char *src, const char *dst);
     int (*unlink)(struct mount *mount, const char *path);
+    int (*rmdir)(struct mount *mount, const char *path);
     int (*rename)(struct mount *mount, const char *src, const char *dst);
     int (*symlink)(struct mount *mount, const char *target, const char *link);
 
