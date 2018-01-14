@@ -51,7 +51,6 @@ src = [
     'kernel/tls.c',
     'kernel/getset.c',
     'kernel/signal.c',
-    'kernel/sock.c',
     'kernel/resource.c',
 
     'kernel/fs.c',
@@ -62,13 +61,16 @@ src = [
     'fs/real.c',
     'fs/fake.c',
     'fs/fake-rebuild.c',
-    'fs/poll.c',
+
     'fs/adhoc.c',
+    'fs/sock.c',
+    'fs/pipe.c',
 
     'fs/dev.c',
     'fs/tty.c',
     'fs/tty-real.c',
 
+    'fs/poll.c',
     'kernel/poll.c',
 
     'util/timer.c',

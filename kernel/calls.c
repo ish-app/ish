@@ -35,6 +35,7 @@ syscall_t syscall_table[] = {
     [38]  = (syscall_t) sys_rename,
     [39]  = (syscall_t) sys_mkdir,
     [41]  = (syscall_t) sys_dup,
+    [42]  = (syscall_t) sys_pipe,
     [45]  = (syscall_t) sys_brk,
     [49]  = (syscall_t) sys_geteuid,
     [50]  = (syscall_t) sys_getegid,

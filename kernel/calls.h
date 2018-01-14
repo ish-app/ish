@@ -7,7 +7,7 @@
 #include "misc.h"
 
 #include "kernel/signal.h"
-#include "kernel/sock.h"
+#include "fs/sock.h"
 #include "kernel/time.h"
 #include "kernel/resource.h"
 
@@ -73,6 +73,7 @@ dword_t sys_dup(fd_t fd);
 dword_t sys_dup2(fd_t fd, fd_t new_fd);
 dword_t sys_close(fd_t fd);
 dword_t sys_flock(fd_t fd, dword_t operation);
+dword_t sys_pipe(addr_t pipe_addr);
 
 // file management
 fd_t sys_open(addr_t path_addr, dword_t flags, dword_t mode);

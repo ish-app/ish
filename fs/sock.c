@@ -1,15 +1,17 @@
 #include <sys/socket.h>
 #include "kernel/calls.h"
-#include "kernel/sock.h"
+#include "fs/sock.h"
 #include "debug.h"
 
 static struct fd_ops socket_fdops;
 
-fd_t sock_fd_create(int sock_fd, int flags) {
+static fd_t sock_fd_create(int sock_fd, int flags) {
     fd_t fd_no = fd_next();
     if (fd_no == -1)
         return _EMFILE;
-    struct fd *fd = fd_create();
+    struct fd *fd = adhoc_fd_create();
+    if (fd == NULL)
+        return _ENOMEM;
     fd->real_fd = sock_fd;
     fd->ops = &socket_fdops;
     if (flags & SOCK_CLOEXEC_)
@@ -30,7 +32,10 @@ dword_t sys_socket(dword_t domain, dword_t type, dword_t protocol) {
     int sock = socket(real_domain, real_type, protocol);
     if (sock < 0)
         return errno_map();
-    return sock_fd_create(sock, type);
+    fd_t f = sock_fd_create(sock, type);
+    if (f < 0)
+        close(sock);
+    return f;
 }
 
 static struct fd *sock_getfd(fd_t sock_fd) {
@@ -143,16 +148,30 @@ dword_t sys_socketpair(dword_t domain, dword_t type, dword_t protocol, addr_t so
     int err = socketpair(domain, type, protocol, sockets);
     if (err < 0)
         return errno_map();
-    sockets[0] = sock_fd_create(sockets[0], type);
-    if (sockets[0] < 0)
-        return sockets[0];
-    sockets[1] = sock_fd_create(sockets[1], type);
-    if (sockets[1] < 0)
-        return sockets[1];
+
+    int fake_sockets[2];
+    err = fake_sockets[0] = sock_fd_create(sockets[0], type);
+    if (fake_sockets[0] < 0)
+        goto close_sockets;
+    err = fake_sockets[1] = sock_fd_create(sockets[1], type);
+    if (fake_sockets[1] < 0)
+        goto close_fake_0;
+
+    err = _EFAULT;
     if (user_put(sockets_addr, sockets))
-        return _EFAULT;
-    STRACE(" [%d, %d]", sockets[0], sockets[1]);
+        goto close_fake_1;
+
+    STRACE(" [%d, %d]", fake_sockets[0], fake_sockets[1]);
     return 0;
+
+close_fake_1:
+    sys_close(fake_sockets[1]);
+close_fake_0:
+    sys_close(fake_sockets[0]);
+close_sockets:
+    close(sockets[0]);
+    close(sockets[1]);
+    return err;
 }
 
 dword_t sys_sendto(fd_t sock_fd, addr_t buffer_addr, dword_t len, dword_t flags, addr_t sockaddr_addr, dword_t sockaddr_len) {
