@@ -64,9 +64,9 @@ static int init_process(struct process *proc, dword_t flags, addr_t ctid_addr) {
 
     if (flags & CLONE_VFORK_) {
         // jeez why does every wait need a lock
-        lock(proc->exit_lock);
-        wait_for(proc->vfork_done, proc->exit_lock);
-        unlock(proc->exit_lock);
+        lock(&proc->exit_lock);
+        wait_for(&proc->vfork_done, &proc->exit_lock);
+        unlock(&proc->exit_lock);
     }
 
     return 0;

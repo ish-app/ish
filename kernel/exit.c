@@ -16,30 +16,30 @@ noreturn void do_exit(int status) {
 
     // notify everyone we died
     bool init_died = current->pid == 1;
-    lock(pids_lock);
+    lock(&pids_lock);
     struct process *parent = current->parent;
-    unlock(pids_lock);
-    lock(parent->exit_lock);
+    unlock(&pids_lock);
+    lock(&parent->exit_lock);
 
     current->exit_code = status;
     current->zombie = true;
     current->rusage = rusage_get_current();
     rusage_add(&parent->children_rusage, &current->rusage);
 
-    notify(parent->child_exit);
-    unlock(parent->exit_lock);
-    notify(current->vfork_done);
+    notify(&parent->child_exit);
+    unlock(&parent->exit_lock);
+    notify(&current->vfork_done);
 
     if (init_died) {
         // brutally murder everything
         // which will leave everything in an inconsistent state. I will solve this problem later.
-        lock(pids_lock);
+        lock(&pids_lock);
         for (int i = 2; i < MAX_PID; i++) {
             struct process *proc = pid_get_proc(i);
             if (proc != NULL)
                 pthread_kill(proc->thread, SIGKILL);
         }
-        unlock(pids_lock);
+        unlock(&pids_lock);
 
         // unmount all filesystems
         struct mount *mount = mounts;
@@ -81,7 +81,7 @@ static int reap_if_zombie(struct process *proc, addr_t status_addr, addr_t rusag
 
 dword_t sys_wait4(dword_t id, addr_t status_addr, dword_t options, addr_t rusage_addr) {
     STRACE("wait(%d, 0x%x, 0x%x, 0x%x)", id, status_addr, options, rusage_addr);
-    lock(current->exit_lock);
+    lock(&current->exit_lock);
 
 retry:
     if (id == (dword_t) -1) {
@@ -96,7 +96,7 @@ retry:
         // check if this child is a zombie
         struct process *proc = pid_get_proc_zombie(id);
         if (proc == NULL || proc->parent != current) {
-            unlock(current->exit_lock);
+            unlock(&current->exit_lock);
             return _ECHILD;
         }
         if (reap_if_zombie(proc, status_addr, rusage_addr))
@@ -104,16 +104,16 @@ retry:
     }
 
     if (options & WNOHANG_) {
-        unlock(current->exit_lock);
+        unlock(&current->exit_lock);
         return _ECHILD;
     }
 
     // no matching zombie found, wait for one
-    wait_for(current->child_exit, current->exit_lock);
+    wait_for(&current->child_exit, &current->exit_lock);
     goto retry;
 
 found_zombie:
-    unlock(current->exit_lock);
+    unlock(&current->exit_lock);
     return id;
 }
 

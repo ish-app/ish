@@ -8,39 +8,39 @@ int xsave_extra = 0;
 int fxsave_extra = 0;
 
 void deliver_signal(struct process *proc, int sig) {
-    lock(proc->signal_lock);
+    lock(&proc->signal_lock);
     proc->pending |= (1 << sig);
-    unlock(proc->signal_lock); // must do this before pthread_kill because the signal handler will lock proc
+    unlock(&proc->signal_lock); // must do this before pthread_kill because the signal handler will lock proc
     pthread_kill(proc->thread, SIGUSR1);
 }
 
 void send_signal(struct process *proc, int sig) {
-    lock(proc->signal_lock);
+    lock(&proc->signal_lock);
     if (proc->sigactions[sig].handler != SIG_IGN_) {
         if (proc->blocked & (1 << sig)) {
             proc->queued |= (1 << sig);
         } else {
-            unlock(proc->signal_lock);
+            unlock(&proc->signal_lock);
             deliver_signal(proc, sig);
             return;
         }
     }
-    unlock(proc->signal_lock);
+    unlock(&proc->signal_lock);
 }
 
 void send_group_signal(dword_t pgid, int sig) {
-    lock(pids_lock);
+    lock(&pids_lock);
     struct pid *pid = pid_get(pgid);
     struct process *proc;
     list_for_each_entry(&pid->group, proc, group) {
         send_signal(proc, sig);
     }
-    unlock(pids_lock);
+    unlock(&pids_lock);
 }
 
 static void receive_signal(int sig) {
     if (current->sigactions[sig].handler == SIG_DFL_) {
-        unlock(current->signal_lock); // do_exit must be called without this lock
+        unlock(&current->signal_lock); // do_exit must be called without this lock
         do_exit(sig);
     }
 
@@ -101,13 +101,13 @@ static void receive_signal(int sig) {
 }
 
 void receive_signals() {
-    lock(current->signal_lock);
+    lock(&current->signal_lock);
     if (current->pending) {
         for (int sig = 0; sig < NUM_SIGS; sig++)
             if (current->pending & (1 << sig))
                 receive_signal(sig);
     }
-    unlock(current->signal_lock);
+    unlock(&current->signal_lock);
 }
 
 dword_t sys_rt_sigreturn(dword_t sig) {
@@ -138,12 +138,12 @@ static int do_sigaction(int sig, const struct sigaction_ *action, struct sigacti
     if (sig == SIGKILL_ || sig == SIGSTOP_)
         return _EINVAL;
 
-    lock(current->signal_lock);
+    lock(&current->signal_lock);
     if (oldaction)
         *oldaction = current->sigactions[sig];
     if (action)
         current->sigactions[sig] = *action;
-    unlock(current->signal_lock);
+    unlock(&current->signal_lock);
     return 0;
 }
 
@@ -184,7 +184,7 @@ dword_t sys_rt_sigprocmask(dword_t how, addr_t set_addr, addr_t oldset_addr, dwo
         return _EFAULT;
     sigset_t_ oldset = current->blocked;
 
-    lock(current->signal_lock);
+    lock(&current->signal_lock);
     if (how == SIG_BLOCK_)
         current->blocked |= set;
     else if (how == SIG_UNBLOCK_)
@@ -192,7 +192,7 @@ dword_t sys_rt_sigprocmask(dword_t how, addr_t set_addr, addr_t oldset_addr, dwo
     else if (how == SIG_SETMASK_)
         current->blocked = set;
     else {
-        unlock(current->signal_lock);
+        unlock(&current->signal_lock);
         return _EINVAL;
     }
 
@@ -200,7 +200,7 @@ dword_t sys_rt_sigprocmask(dword_t how, addr_t set_addr, addr_t oldset_addr, dwo
     sigset_t_ unblocked = oldset & ~current->blocked;
     current->pending |= current->queued & unblocked;
     current->queued &= ~unblocked;
-    unlock(current->signal_lock);
+    unlock(&current->signal_lock);
 
     if (oldset_addr != 0)
         if (user_put(oldset_addr, oldset))

@@ -66,10 +66,10 @@ typedef sqword_t off_t_;
 #define sint(size) CONCAT3(int,size,_t)
 
 typedef pthread_mutex_t lock_t;
-#define lock_init(lock) pthread_mutex_init(&(lock), NULL)
+#define lock_init(lock) pthread_mutex_init(lock, NULL)
 #define LOCK_INITIALIZER PTHREAD_MUTEX_INITIALIZER
-#define lock(lock) pthread_mutex_lock(&(lock))
-#define unlock(lock) pthread_mutex_unlock(&(lock))
+#define lock(lock) pthread_mutex_lock(lock)
+#define unlock(lock) pthread_mutex_unlock(lock)
 
 // this is a read-write lock that prefers writers, i.e. if there are any
 // writers waiting a read lock will block.
@@ -91,8 +91,8 @@ static inline void wrlock_init(wrlock_t *lock) {
 #define write_wrlock(lock) pthread_rwlock_wrlock(lock)
 #define write_wrunlock(lock) pthread_rwlock_unlock(lock)
 
-#define wait_for(cond, lock) pthread_cond_wait(&(cond), &(lock))
-#define notify(cond) pthread_cond_broadcast(&(cond))
+#define wait_for(cond, lock) pthread_cond_wait(cond, lock)
+#define notify(cond) pthread_cond_broadcast(cond)
 
 #define ERR_PTR(err) (void *) (intptr_t) (err)
 #define PTR_ERR(ptr) (intptr_t) (ptr)

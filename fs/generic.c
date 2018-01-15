@@ -14,7 +14,7 @@ struct fd *fd_create() {
     fd->flags = 0;
     fd->mount = NULL;
     list_init(&fd->poll_fds);
-    lock_init(fd->lock);
+    lock_init(&fd->lock);
     return fd;
 }
 

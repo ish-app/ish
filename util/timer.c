@@ -8,7 +8,7 @@ struct timer *timer_new(timer_callback_t callback, void *data) {
     timer->callback = callback;
     timer->data = data;
     timer->running = false;
-    lock_init(timer->lock);
+    lock_init(&timer->lock);
     return timer;
 }
 
@@ -18,13 +18,13 @@ void timer_free(struct timer *timer) {
 
 static void *timer_thread(void *param) {
     struct timer *timer = param;
-    lock(timer->lock);
+    lock(&timer->lock);
     while (true) {
         struct timespec remaining = timespec_subtract(timer->end, timespec_now());
         while (timespec_positive(remaining)) {
-            unlock(timer->lock);
+            unlock(&timer->lock);
             nanosleep(&remaining, NULL);
-            lock(timer->lock);
+            lock(&timer->lock);
             remaining = timespec_subtract(timer->end, timespec_now());
         }
         timer->callback(timer->data);
@@ -32,14 +32,14 @@ static void *timer_thread(void *param) {
             timer->start = timespec_now();
             timer->end = timespec_add(timer->start, timer->interval);
         } else {
-            unlock(timer->lock);
+            unlock(&timer->lock);
             return NULL;
         }
     }
 }
 
 int timer_set(struct timer *timer, struct timer_spec spec, struct timer_spec *oldspec) {
-    lock(timer->lock);
+    lock(&timer->lock);
     struct timespec now = timespec_now();
     if (oldspec != NULL) {
         oldspec->value = timespec_subtract(timer->end, now);
@@ -61,6 +61,6 @@ int timer_set(struct timer *timer, struct timer_spec spec, struct timer_spec *ol
             timer->running = false;
         }
     }
-    unlock(timer->lock);
+    unlock(&timer->lock);
     return 0;
 }

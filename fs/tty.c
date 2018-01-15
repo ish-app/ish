@@ -15,7 +15,7 @@ static struct tty *ttys[2][64];
 static lock_t ttys_lock = LOCK_INITIALIZER;
 
 static int tty_get(int type, int num, struct tty **tty_out) {
-    lock(ttys_lock);
+    lock(&ttys_lock);
     struct tty *tty = ttys[type][num];
     if (tty == NULL) {
         tty = malloc(sizeof(struct tty));
@@ -27,8 +27,8 @@ static int tty_get(int type, int num, struct tty **tty_out) {
         list_init(&tty->fds);
         // TODO default termios
         memset(&tty->winsize, 0, sizeof(tty->winsize));
-        lock_init(tty->lock);
-        lock_init(tty->fds_lock);
+        lock_init(&tty->lock);
+        lock_init(&tty->fds_lock);
         pthread_cond_init(&tty->produced, NULL);
         pthread_cond_init(&tty->consumed, NULL);
         tty->bufsize = 0;
@@ -37,7 +37,7 @@ static int tty_get(int type, int num, struct tty **tty_out) {
         if (tty->driver->open) {
             int err = tty->driver->open(tty);
             if (err < 0) {
-                unlock(ttys_lock);
+                unlock(&ttys_lock);
                 return err;
             }
         }
@@ -47,27 +47,27 @@ static int tty_get(int type, int num, struct tty **tty_out) {
 
         ttys[type][num] = tty;
     }
-    lock(tty->lock);
+    lock(&tty->lock);
     tty->refcount++;
-    unlock(tty->lock);
-    unlock(ttys_lock);
+    unlock(&tty->lock);
+    unlock(&ttys_lock);
     *tty_out = tty;
     return 0;
 }
 
 static void tty_release(struct tty *tty) {
-    lock(ttys_lock);
-    lock(tty->lock);
+    lock(&ttys_lock);
+    lock(&tty->lock);
     if (--tty->refcount == 0) {
         if (tty->driver->close)
             tty->driver->close(tty);
         ttys[tty->type][tty->num] = NULL;
-        unlock(tty->lock);
+        unlock(&tty->lock);
         free(tty);
     } else {
-        unlock(tty->lock);
+        unlock(&tty->lock);
     }
-    unlock(ttys_lock);
+    unlock(&ttys_lock);
 }
 
 static int tty_open(int major, int minor, int type, struct fd *fd) {
@@ -85,11 +85,11 @@ static int tty_open(int major, int minor, int type, struct fd *fd) {
         return err;
     fd->tty = tty;
 
-    lock(tty->fds_lock);
+    lock(&tty->fds_lock);
     list_add(&tty->fds, &fd->other_fds);
-    unlock(tty->fds_lock);
+    unlock(&tty->fds_lock);
 
-    lock(pids_lock);
+    lock(&pids_lock);
     if (current->sid == current->pid) {
         if (current->tty == NULL) {
             current->tty = tty;
@@ -97,33 +97,33 @@ static int tty_open(int major, int minor, int type, struct fd *fd) {
             tty->fg_group = current->pgid;
         }
     }
-    unlock(pids_lock);
+    unlock(&pids_lock);
 
     return 0;
 }
 
 static int tty_close(struct fd *fd) {
-    lock(fd->tty->fds_lock);
+    lock(&fd->tty->fds_lock);
     list_remove(&fd->other_fds);
-    unlock(fd->tty->fds_lock);
+    unlock(&fd->tty->fds_lock);
     tty_release(fd->tty);
     return 0;
 }
 
 static void tty_wake(struct tty *tty) {
-    notify(tty->produced);
-    unlock(tty->lock);
+    notify(&tty->produced);
+    unlock(&tty->lock);
     struct fd *fd;
-    lock(tty->fds_lock);
+    lock(&tty->fds_lock);
     list_for_each_entry(&tty->fds, fd, other_fds) {
         poll_wake(fd);
     }
-    unlock(tty->fds_lock);
-    lock(tty->lock);
+    unlock(&tty->fds_lock);
+    lock(&tty->lock);
 }
 
 int tty_input(struct tty *tty, const char *input, size_t size) {
-    lock(tty->lock);
+    lock(&tty->lock);
     dword_t lflags = tty->termios.lflags;
     dword_t iflags = tty->termios.iflags;
     unsigned char *cc = tty->termios.cc;
@@ -185,7 +185,7 @@ int tty_input(struct tty *tty, const char *input, size_t size) {
                 tty->canon_ready = true;
                 tty_wake(tty);
                 while (tty->canon_ready)
-                    wait_for(tty->consumed, tty->lock);
+                    wait_for(&tty->consumed, &tty->lock);
             } else {
                 if (tty->bufsize < sizeof(tty->buf))
                     tty->buf[tty->bufsize++] = ch;
@@ -207,16 +207,16 @@ int tty_input(struct tty *tty, const char *input, size_t size) {
         tty_wake(tty);
     }
 
-    unlock(tty->lock);
+    unlock(&tty->lock);
     return 0;
 }
 
 static ssize_t tty_read(struct fd *fd, void *buf, size_t bufsize) {
     struct tty *tty = fd->tty;
-    lock(tty->lock);
+    lock(&tty->lock);
     if (tty->termios.lflags & ICANON_) {
         while (!tty->canon_ready)
-            wait_for(tty->produced, tty->lock);
+            wait_for(&tty->produced, &tty->lock);
     } else {
         dword_t min = tty->termios.cc[VMIN_];
         dword_t time = tty->termios.cc[VTIME_];
@@ -224,7 +224,7 @@ static ssize_t tty_read(struct fd *fd, void *buf, size_t bufsize) {
             // no need to wait for anything
         } else if (min > 0 && time == 0) {
             while (tty->bufsize < min)
-                wait_for(tty->produced, tty->lock);
+                wait_for(&tty->produced, &tty->lock);
         } else {
             TODO("VTIME != 0");
         }
@@ -237,16 +237,16 @@ static ssize_t tty_read(struct fd *fd, void *buf, size_t bufsize) {
     memmove(tty->buf, tty->buf + bufsize, tty->bufsize); // magic!
     if (tty->bufsize == 0) {
         tty->canon_ready = false;
-        notify(tty->consumed);
+        notify(&tty->consumed);
     }
 
-    unlock(tty->lock);
+    unlock(&tty->lock);
     return bufsize;
 }
 
 static ssize_t tty_write(struct fd *fd, const void *buf, size_t bufsize) {
     struct tty *tty = fd->tty;
-    lock(tty->lock);
+    lock(&tty->lock);
     dword_t oflags = tty->termios.oflags;
     if (oflags & OPOST_) {
         const char *cbuf = buf;
@@ -263,22 +263,22 @@ static ssize_t tty_write(struct fd *fd, const void *buf, size_t bufsize) {
     } else {
         tty->driver->write(tty, buf, bufsize);
     }
-    unlock(tty->lock);
+    unlock(&tty->lock);
     return bufsize;
 }
 
 static int tty_flush(struct tty *tty) {
-    lock(tty->lock);
+    lock(&tty->lock);
     tty->bufsize = 0;
     tty->canon_ready = false;
-    notify(tty->consumed);
-    unlock(tty->lock);
+    notify(&tty->consumed);
+    unlock(&tty->lock);
     return 0;
 }
 
 static int tty_poll(struct fd *fd) {
     struct tty *tty = fd->tty;
-    lock(tty->lock);
+    lock(&tty->lock);
     int types = POLL_WRITE;
     if (tty->termios.lflags & ICANON_) {
         if (tty->canon_ready)
@@ -287,7 +287,7 @@ static int tty_poll(struct fd *fd) {
         if (tty->bufsize > 0)
             types |= POLL_READ;
     }
-    unlock(tty->lock);
+    unlock(&tty->lock);
     return types;
 }
 
@@ -315,7 +315,7 @@ static ssize_t tty_ioctl_size(struct fd *fd, int cmd) {
 static int tty_ioctl(struct fd *fd, int cmd, void *arg) {
     int err = 0;
     struct tty *tty = fd->tty;
-    lock(tty->lock);
+    lock(&tty->lock);
 
     switch (cmd) {
         case TCGETS_:
@@ -362,7 +362,7 @@ static int tty_ioctl(struct fd *fd, int cmd, void *arg) {
             break;
     }
 
-    unlock(tty->lock);
+    unlock(&tty->lock);
     return err;
 }
 

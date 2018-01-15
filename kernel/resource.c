@@ -88,9 +88,9 @@ dword_t sys_getrusage(dword_t who, addr_t rusage_addr) {
             rusage = rusage_get_current();
             break;
         case RUSAGE_CHILDREN_:
-            lock(current->exit_lock);
+            lock(&current->exit_lock);
             rusage = current->children_rusage;
-            unlock(current->exit_lock);
+            unlock(&current->exit_lock);
             break;
         default:
             return _EINVAL;

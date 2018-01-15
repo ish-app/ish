@@ -37,7 +37,7 @@ struct process *pid_get_proc(dword_t id) {
 }
 
 struct process *process_create(struct process *parent) {
-    lock(pids_lock);
+    lock(&pids_lock);
     static int cur_pid = 1;
     while (!pid_empty(&pids[cur_pid])) {
         cur_pid++;
@@ -56,7 +56,7 @@ struct process *process_create(struct process *parent) {
         *proc = *parent;
     proc->pid = pid->id;
     pid->proc = proc;
-    unlock(pids_lock);
+    unlock(&pids_lock);
 
     list_init(&proc->children);
     list_init(&proc->siblings);
@@ -69,20 +69,20 @@ struct process *process_create(struct process *parent) {
     proc->has_timer = false;
     proc->children_rusage = (struct rusage_) {};
 
-    lock_init(proc->signal_lock);
-    lock_init(proc->exit_lock);
+    lock_init(&proc->signal_lock);
+    lock_init(&proc->exit_lock);
     pthread_cond_init(&proc->child_exit, NULL);
     pthread_cond_init(&proc->vfork_done, NULL);
     return proc;
 }
 
 void process_destroy(struct process *proc) {
-    lock(pids_lock);
+    lock(&pids_lock);
     list_remove(&proc->siblings);
     list_remove(&proc->group);
     list_remove(&proc->session);
     pid_get(proc->pid)->proc = NULL;
-    unlock(pids_lock);
+    unlock(&pids_lock);
     free(proc);
 }
 
