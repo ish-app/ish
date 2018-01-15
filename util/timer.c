@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <signal.h>
 #include <time.h>
 #include "util/timer.h"
 #include "misc.h"
@@ -21,21 +22,22 @@ static void *timer_thread(void *param) {
     lock(&timer->lock);
     while (true) {
         struct timespec remaining = timespec_subtract(timer->end, timespec_now());
-        while (timespec_positive(remaining)) {
+        while (timer->running && timespec_positive(remaining)) {
             unlock(&timer->lock);
             nanosleep(&remaining, NULL);
             lock(&timer->lock);
             remaining = timespec_subtract(timer->end, timespec_now());
         }
-        timer->callback(timer->data);
         if (timespec_positive(timer->interval)) {
             timer->start = timespec_now();
             timer->end = timespec_add(timer->start, timer->interval);
         } else {
-            unlock(&timer->lock);
-            return NULL;
+            break;
         }
+        timer->callback(timer->data);
     }
+    unlock(&timer->lock);
+    return NULL;
 }
 
 int timer_set(struct timer *timer, struct timer_spec spec, struct timer_spec *oldspec) {
@@ -51,14 +53,14 @@ int timer_set(struct timer *timer, struct timer_spec spec, struct timer_spec *ol
     timer->interval = spec.interval;
     if (!timespec_is_zero(spec.value)) {
         if (!timer->running) {
+            timer->running = true;
             pthread_create(&timer->thread, NULL, timer_thread, timer);
             pthread_detach(timer->thread);
-            timer->running = true;
         }
     } else {
         if (timer->running) {
-            pthread_cancel(timer->thread);
             timer->running = false;
+            pthread_kill(timer->thread, SIGUSR1);
         }
     }
     unlock(&timer->lock);
