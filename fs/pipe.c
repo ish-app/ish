@@ -33,6 +33,7 @@ dword_t sys_pipe(addr_t pipe_addr) {
     err = _EFAULT;
     if (user_put(pipe_addr, fp))
         goto close_fake_1;
+    STRACE(" [%d %d]", fp[0], fp[1]);
     return 0;
 
 close_fake_1:

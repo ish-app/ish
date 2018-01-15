@@ -488,10 +488,10 @@ dword_t _sys_execve(addr_t filename_addr, addr_t argv_addr, addr_t envp_addr) {
     char filename[MAX_PATH];
     if (user_read_string(filename_addr, filename, sizeof(filename)))
         return _EFAULT;
-    STRACE("execve(\"%s\", some args, some env)", filename);
     char *argv[MAX_ARGS];
     int i;
     addr_t arg;
+    STRACE("execve(\"%s\", {", filename);
     for (i = 0; ; i++) {
         if (user_get(argv_addr + i * 4, arg))
             return _EFAULT;
@@ -502,9 +502,11 @@ dword_t _sys_execve(addr_t filename_addr, addr_t argv_addr, addr_t envp_addr) {
         argv[i] = malloc(MAX_PATH);
         if (user_read_string(arg, argv[i], MAX_PATH))
             return _EFAULT;
+        STRACE("\"%s\", ", argv[i]);
     }
     argv[i] = NULL;
     char *envp[MAX_ARGS];
+    STRACE("}, {");
     for (i = 0; ; i++) {
         if (user_get(envp_addr + i * 4, arg))
             return _EFAULT;
@@ -515,8 +517,10 @@ dword_t _sys_execve(addr_t filename_addr, addr_t argv_addr, addr_t envp_addr) {
         envp[i] = malloc(MAX_PATH);
         if (user_read_string(arg, envp[i], MAX_PATH))
             return _EFAULT;
+        STRACE("\"%s\", ", envp[i]);
     }
     envp[i] = NULL;
+    STRACE("})");
     int res = sys_execve(filename, argv, envp);
     for (i = 0; argv[i] != NULL; i++)
         free(argv[i]);
