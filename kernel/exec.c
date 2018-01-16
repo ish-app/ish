@@ -8,6 +8,7 @@
 #include "misc.h"
 #include "kernel/calls.h"
 #include "kernel/errno.h"
+#include "fs/fdtable.h"
 #include "kernel/elf.h"
 #include "libvdso.so.h"
 
@@ -469,16 +470,17 @@ int sys_execve(const char *file, char *const argv[], char *const envp[]) {
         return PTR_ERR(fd);
 
     int err = elf_exec(fd, file, argv, envp);
-    if (err != _ENOEXEC) {
-        fd_close(fd);
-        return err;
-    }
+    if (err != _ENOEXEC)
+        goto found;
     err = shebang_exec(fd, file, argv, envp);
-    if (err != _ENOEXEC) {
-        fd_close(fd);
-        return err;
-    }
+    if (err != _ENOEXEC)
+        goto found;
+
+found:
     fd_close(fd);
+    for (fd_t f = 0; f < current->files->size; f++)
+        if (f_is_cloexec(f))
+            f_close(f);
     return 0;
 }
 
