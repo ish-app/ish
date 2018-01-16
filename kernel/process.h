@@ -3,11 +3,11 @@
 
 #include <pthread.h>
 #include "util/list.h"
-#include "util/timer.h"
 #include "emu/cpu.h"
 #include "kernel/fs.h"
 #include "kernel/signal.h"
 #include "kernel/resource.h"
+#include "util/timer.h"
 
 struct process {
     struct cpu_state cpu; // do not access this field except on the current process
@@ -23,7 +23,7 @@ struct process {
 
     struct fd *pwd;
     struct fd *root;
-    struct fd *files[MAX_FD];
+    struct fdtable *files;
     mode_t_ umask;
 
     struct sigaction_ sigactions[NUM_SIGS];

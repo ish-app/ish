@@ -2,6 +2,7 @@
 #include "debug.h"
 #include <string.h>
 #include "kernel/calls.h"
+#include "fs/poll.h"
 #include "fs/tty.h"
 
 // TODO remove magic number

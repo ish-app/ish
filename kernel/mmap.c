@@ -2,6 +2,7 @@
 #include "kernel/calls.h"
 #include "kernel/errno.h"
 #include "kernel/process.h"
+#include "fs/fdtable.h"
 #include "emu/memory.h"
 
 addr_t sys_mmap2(addr_t addr, dword_t len, dword_t prot, dword_t flags, fd_t fd_no, dword_t offset) {
@@ -30,7 +31,7 @@ static addr_t do_mmap(addr_t addr, dword_t len, dword_t prot, dword_t flags, fd_
             return err;
     } else {
         // fd must be valid
-        struct fd *fd = current->files[fd_no];
+        struct fd *fd = f_get(fd_no);
         if (fd == NULL)
             return _EBADF;
         if (fd->ops->mmap == NULL)

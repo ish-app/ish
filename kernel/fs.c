@@ -5,18 +5,12 @@
 #include "kernel/errno.h"
 #include "kernel/process.h"
 #include "kernel/fs.h"
-
-fd_t fd_next() {
-    for (fd_t fd = 0; fd < MAX_FD; fd++)
-        if (current->files[fd] == NULL)
-            return fd;
-    return -1;
-}
+#include "fs/fdtable.h"
 
 struct fd *at_fd(fd_t f) {
     if (f == AT_FDCWD_)
         return current->pwd;
-    return current->files[f];
+    return f_get(f);
 }
 
 // TODO ENAMETOOLONG
@@ -37,17 +31,13 @@ fd_t sys_openat(fd_t at_f, addr_t path_addr, dword_t flags, dword_t mode) {
     if (flags & O_CREAT_)
         mode &= ~(current->umask & 0777);
 
-    fd_t fd_no = fd_next();
-    if (fd_no == -1)
-        return _EMFILE;
     struct fd *at = at_fd(at_f);
     if (at == NULL)
         return _EBADF;
     struct fd *fd = generic_openat(at, path, flags, mode);
     if (IS_ERR(fd))
         return PTR_ERR(fd);
-    current->files[fd_no] = fd;
-    return fd_no;
+    return f_install(fd);
 }
 
 fd_t sys_open(addr_t path_addr, dword_t flags, dword_t mode) {
@@ -137,22 +127,10 @@ dword_t sys_symlink(addr_t target_addr, addr_t link_addr) {
     return sys_symlinkat(target_addr, AT_FDCWD_, link_addr);
 }
 
-dword_t sys_close(fd_t f) {
-    STRACE("close(%d)", f);
-    struct fd *fd = current->files[f];
-    if (fd == NULL)
-        return _EBADF;
-    int err = fd_close(fd);
-    if (err < 0)
-        return err;
-    current->files[f] = NULL;
-    return 0;
-}
-
 dword_t sys_read(fd_t fd_no, addr_t buf_addr, dword_t size) {
     STRACE("read(%d, 0x%x, %d)", fd_no, buf_addr, size);
     char buf[size+1];
-    struct fd *fd = current->files[fd_no];
+    struct fd *fd = f_get(fd_no);
     if (fd == NULL)
         return _EBADF;
     int res = fd->ops->read(fd, buf, size);
@@ -184,7 +162,7 @@ dword_t sys_write(fd_t fd_no, addr_t buf_addr, dword_t size) {
     char buf[size+1];
     if (user_read(buf_addr, buf, size))
         return _EFAULT;
-    struct fd *fd = current->files[fd_no];
+    struct fd *fd = f_get(fd_no);
     if (fd == NULL)
         return _EBADF;
     return fd->ops->write(fd, buf, size);
@@ -206,7 +184,7 @@ dword_t sys_writev(fd_t fd_no, addr_t iovec_addr, dword_t iovec_count) {
 }
 
 dword_t sys__llseek(fd_t f, dword_t off_high, dword_t off_low, addr_t res_addr, dword_t whence) {
-    struct fd *fd = current->files[f];
+    struct fd *fd = f_get(f);
     if (fd == NULL)
         return _EBADF;
     if (!fd->ops->lseek)
@@ -221,7 +199,7 @@ dword_t sys__llseek(fd_t f, dword_t off_high, dword_t off_low, addr_t res_addr, 
 }
 
 dword_t sys_lseek(fd_t f, dword_t off, dword_t whence) {
-    struct fd *fd = current->files[f];
+    struct fd *fd = f_get(f);
     if (fd == NULL)
         return _EBADF;
     off_t res = fd->ops->lseek(fd, off, whence);
@@ -232,7 +210,7 @@ dword_t sys_lseek(fd_t f, dword_t off, dword_t whence) {
 
 dword_t sys_ioctl(fd_t f, dword_t cmd, dword_t arg) {
     STRACE("ioctl(%d, 0x%x, 0x%x)", f, cmd, arg);
-    struct fd *fd = current->files[f];
+    struct fd *fd = f_get(f);
     if (fd == NULL)
         return _EBADF;
     if (!fd->ops->ioctl_size)
@@ -255,74 +233,6 @@ dword_t sys_ioctl(fd_t f, dword_t cmd, dword_t arg) {
     if (user_write(arg, buf, size))
         return _EFAULT;
     return res;
-}
-
-#define F_DUPFD_ 0
-#define F_GETFD_ 1
-#define F_SETFD_ 2
-#define F_GETFL_ 3
-#define F_SETFL_ 4
-
-dword_t sys_fcntl64(fd_t f, dword_t cmd, dword_t arg) {
-    struct fd *fd = current->files[f];
-    if (fd == NULL)
-        return _EBADF;
-    switch (cmd) {
-        case F_DUPFD_: {
-            STRACE("fcntl(%d, F_DUPFD, %d)", f, arg);
-            fd_t new_fd;
-            for (new_fd = arg; new_fd < MAX_FD; new_fd++)
-                if (current->files[new_fd] == NULL)
-                    break;
-            if (new_fd == MAX_FD)
-                return _EMFILE;
-            current->files[f]->refcount++;
-            current->files[new_fd] = current->files[f];
-            return new_fd;
-        }
-
-        case F_GETFD_:
-            STRACE("fcntl(%d, F_GETFD)", f);
-            return fd->flags;
-        case F_SETFD_:
-            STRACE("fcntl(%d, F_SETFD, 0x%x)", f, arg);
-            fd->flags = arg;
-            return 0;
-
-        default:
-            return _EINVAL;
-    }
-}
-
-dword_t sys_dup(fd_t fd) {
-    if (current->files[fd] == NULL)
-        return _EBADF;
-    fd_t new_fd = fd_next();
-    if (new_fd < 0)
-        return _EMFILE;
-    current->files[fd]->refcount++;
-    current->files[new_fd] = current->files[fd];
-    return new_fd;
-}
-
-dword_t sys_dup2(fd_t fd, fd_t new_fd) {
-    STRACE("dup2(%d, %d)\n", fd, new_fd);
-    int res;
-    if (fd == new_fd)
-        return fd;
-    if (current->files[fd] == NULL)
-        return _EBADF;
-    if (new_fd >= MAX_FD)
-        return _EBADF;
-    if (current->files[new_fd] != NULL) {
-        res = sys_close(new_fd);
-        if (res < 0)
-            return res;
-    }
-
-    current->files[fd]->refcount++;
-    current->files[new_fd] = current->files[fd];
-    return new_fd;
 }
 
 dword_t sys_getcwd(addr_t buf_addr, dword_t size) {
@@ -379,7 +289,7 @@ dword_t sys_chroot(addr_t path_addr) {
 
 dword_t sys_fchdir(fd_t f) {
     STRACE("fchdir(%d)", f);
-    struct fd *fd = current->files[f];
+    struct fd *fd = f_get(f);
     if (fd == NULL)
         return _EBADF;
     current->pwd = fd;
@@ -409,11 +319,11 @@ dword_t sys_statfs64(addr_t path_addr, addr_t buf_addr) {
 }
 
 dword_t sys_fstatfs64(fd_t f, addr_t buf_addr) {
-    return statfs_mount(current->files[f]->mount, buf_addr);
+    return statfs_mount(f_get(f)->mount, buf_addr);
 }
 
 dword_t sys_flock(fd_t f, dword_t operation) {
-    struct fd *fd = current->files[f];
+    struct fd *fd = f_get(f);
     if (fd == NULL)
         return _EBADF;
     return fd->mount->fs->flock(fd, operation);
@@ -430,7 +340,7 @@ dword_t sys_utimensat(fd_t at_f, addr_t path_addr, addr_t times_addr, dword_t fl
 }
 
 dword_t sys_fchmod(fd_t f, dword_t mode) {
-    struct fd *fd = current->files[f];
+    struct fd *fd = f_get(f);
     if (fd == NULL)
         return _EBADF;
     mode &= ~S_IFMT;
@@ -453,7 +363,7 @@ dword_t sys_chmod(addr_t path_addr, dword_t mode) {
 }
 
 dword_t sys_fchown32(fd_t f, dword_t owner, dword_t group) {
-    struct fd *fd = current->files[f];
+    struct fd *fd = f_get(f);
     if (fd == NULL)
         return _EBADF;
     int err;
@@ -502,7 +412,7 @@ dword_t sys_truncate64(addr_t path_addr, dword_t size_low, dword_t size_high) {
 
 dword_t sys_ftruncate64(fd_t f, dword_t size_low, dword_t size_high) {
     off_t_ size = ((off_t_) size_high << 32) | size_low;
-    struct fd *fd = current->files[f];
+    struct fd *fd = f_get(f);
     if (fd == NULL)
         return _EBADF;
     return fd->mount->fs->fsetattr(fd, make_attr(size, size));
@@ -511,7 +421,7 @@ dword_t sys_ftruncate64(fd_t f, dword_t size_low, dword_t size_high) {
 dword_t sys_fallocate(fd_t f, dword_t mode, dword_t offset_low, dword_t offset_high, dword_t len_low, dword_t len_high) {
     off_t_ offset = ((off_t_) offset_high << 32) | offset_low;
     off_t_ len = ((off_t_) len_high << 32) | len_low;
-    struct fd *fd = current->files[f];
+    struct fd *fd = f_get(f);
     if (fd == NULL)
         return _EBADF;
     struct statbuf statbuf;

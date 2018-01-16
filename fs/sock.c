@@ -1,14 +1,12 @@
 #include <sys/socket.h>
 #include "kernel/calls.h"
+#include "fs/fdtable.h"
 #include "fs/sock.h"
 #include "debug.h"
 
 static struct fd_ops socket_fdops;
 
 static fd_t sock_fd_create(int sock_fd, int flags) {
-    fd_t fd_no = fd_next();
-    if (fd_no == -1)
-        return _EMFILE;
     struct fd *fd = adhoc_fd_create();
     if (fd == NULL)
         return _ENOMEM;
@@ -16,8 +14,7 @@ static fd_t sock_fd_create(int sock_fd, int flags) {
     fd->ops = &socket_fdops;
     if (flags & SOCK_CLOEXEC_)
         fd->flags = FD_CLOEXEC_;
-    current->files[fd_no] = fd;
-    return fd_no;
+    return f_install(fd);
 }
 
 dword_t sys_socket(dword_t domain, dword_t type, dword_t protocol) {
@@ -39,7 +36,7 @@ dword_t sys_socket(dword_t domain, dword_t type, dword_t protocol) {
 }
 
 static struct fd *sock_getfd(fd_t sock_fd) {
-    struct fd *sock = current->files[sock_fd];
+    struct fd *sock = f_get(sock_fd);
     if (sock->ops != &socket_fdops)
         return NULL;
     return sock;

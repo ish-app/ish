@@ -17,6 +17,7 @@
 
 #include "debug.h"
 #include "kernel/calls.h"
+#include "fs/fdtable.h"
 #include "emu/interrupt.h"
 #include "emu/cpuid.h"
 
@@ -139,7 +140,7 @@ static int transmit_fd(int pid, int sender, int receiver, int fake_fd) {
     // this sends the fd over a unix domain socket. yes, I'm crazy
 
     // sending part
-    int real_fd = current->files[fake_fd]->real_fd;
+    int real_fd = f_get(fake_fd)->real_fd;
     struct msghdr msg = {};
     char cmsg[CMSG_SPACE(sizeof(int))];
     memset(cmsg, 0, sizeof(cmsg));
@@ -294,7 +295,7 @@ static void step_tracing(struct cpu_state *cpu, struct tlb *tlb, int pid, int se
                     pt_copy(pid, regs.rbx, sizeof(dword_t));
                 break;
             case 54: { // ioctl (god help us)
-                struct fd *fd = current->files[cpu->ebx];
+                struct fd *fd = f_get(cpu->ebx);
                 if (fd) {
                     ssize_t ioctl_size = fd->ops->ioctl_size(fd, cpu->ecx);
                     if (ioctl_size >= 0)

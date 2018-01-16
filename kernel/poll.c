@@ -1,16 +1,8 @@
 #include "debug.h"
 #include "kernel/fs.h"
+#include "fs/fdtable.h"
+#include "fs/poll.h"
 #include "kernel/calls.h"
-
-static int bit(int index, void *mem) {
-    char *c = mem;
-    return c[index >> 3] & (1 << (index & 7)) ? 1 : 0;
-}
-
-static void bit_set(int index, void *mem) {
-    char *c = mem;
-    c[index >> 3] |= 1 << (index & 7);
-}
 
 static int user_read_or_zero(addr_t addr, void *data, size_t size) {
     if (addr == 0)
@@ -21,7 +13,7 @@ static int user_read_or_zero(addr_t addr, void *data, size_t size) {
 }
 
 dword_t sys_select(fd_t nfds, addr_t readfds_addr, addr_t writefds_addr, addr_t exceptfds_addr, addr_t timeout_addr) {
-    size_t fdset_size = ((nfds - 1) / 8) + 1;
+    size_t fdset_size = BITS_SIZE(nfds);
     char readfds[fdset_size];
     if (user_read_or_zero(readfds_addr, readfds, fdset_size))
         return _EFAULT;
@@ -36,15 +28,15 @@ dword_t sys_select(fd_t nfds, addr_t readfds_addr, addr_t writefds_addr, addr_t 
     fd_t fd = -1;
     int types = 0;
     for (fd_t i = 0; i < nfds; i++) {
-        if (bit(i, readfds) || bit(i, writefds) || bit(i, exceptfds)) {
+        if (bit_test(i, readfds) || bit_test(i, writefds) || bit_test(i, exceptfds)) {
             if (fd != -1)
                 TODO("select with multiple fds");
             fd = i;
-            if (bit(i, readfds))
+            if (bit_test(i, readfds))
                 types |= POLL_READ;
-            if (bit(i, writefds))
+            if (bit_test(i, writefds))
                 types |= POLL_WRITE;
-            if (bit(i, exceptfds))
+            if (bit_test(i, exceptfds))
                 TODO("poll exceptfds");
         }
     }
@@ -52,7 +44,7 @@ dword_t sys_select(fd_t nfds, addr_t readfds_addr, addr_t writefds_addr, addr_t 
     struct poll *poll = poll_create();
     if (poll == NULL)
         return _ENOMEM;
-    poll_add_fd(poll, current->files[fd], types);
+    poll_add_fd(poll, f_get(fd), types);
     struct poll_event event;
     int err = poll_wait(poll, &event, -1);
     if (err < 0) {
@@ -87,7 +79,7 @@ dword_t sys_poll(addr_t fds, dword_t nfds, dword_t timeout) {
     struct poll *poll = poll_create();
     if (poll == NULL)
         return _ENOMEM;
-    poll_add_fd(poll, current->files[fake_poll.fd], fake_poll.events);
+    poll_add_fd(poll, f_get(fake_poll.fd), fake_poll.events);
     struct poll_event event;
     int err = poll_wait(poll, &event, timeout);
     if (err < 0) {

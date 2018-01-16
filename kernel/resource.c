@@ -10,6 +10,10 @@
 #endif
 #include "kernel/calls.h"
 
+rlim_t_ rlimit(int resource) {
+    return current->limits[resource].cur;
+}
+
 dword_t sys_getrlimit(dword_t resource, addr_t rlim_addr) {
     struct rlimit_ rlimit = current->limits[resource];
     if (user_put(rlim_addr, rlimit))

@@ -32,6 +32,8 @@ dword_t sys_getrlimit(dword_t resource, addr_t rlim_addr);
 dword_t sys_setrlimit(dword_t resource, addr_t rlim_addr);
 dword_t sys_prlimit(pid_t_ pid, dword_t resource, addr_t new_limit_addr, addr_t old_limit_addr);
 
+rlim_t_ rlimit(int resource);
+
 struct rusage_ {
     struct timeval_ utime;
     struct timeval_ stime;

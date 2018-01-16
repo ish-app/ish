@@ -1,18 +1,14 @@
 #include <pthread.h>
 #include <signal.h>
 #include "kernel/calls.h"
+#include "fs/fdtable.h"
 
 void (*exit_hook)(int code) = NULL;
 
 noreturn void do_exit(int status) {
     // this is the part where we release all our resources
     mem_release(current->cpu.mem);
-    for (fd_t f = 0; f < MAX_FD; f++) {
-        if (current->files[f]) {
-            fd_close(current->files[f]);
-            current->files[f] = NULL;
-        }
-    }
+    fdtable_release(current->files);
 
     // notify everyone we died
     bool init_died = current->pid == 1;

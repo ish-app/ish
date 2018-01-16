@@ -41,12 +41,13 @@ struct fd {
 
     lock_t lock;
 };
+
 typedef sdword_t fd_t;
-struct fd *fd_create(void);
-fd_t fd_next(void);
-#define MAX_FD 1024 // dynamically expanding fd table coming soon:tm:
-#define AT_FDCWD_ -100
 #define FD_CLOEXEC_ 1
+#define AT_FDCWD_ -100
+
+struct fd *fd_create(void);
+struct fd *fd_dup(struct fd *fd);
 
 struct attr {
     enum attr_type {
@@ -69,7 +70,6 @@ struct attr {
 
 struct fd *generic_open(const char *path, int flags, int mode);
 struct fd *generic_openat(struct fd *at, const char *path, int flags, int mode);
-struct fd *generic_dup(struct fd *fd);
 int fd_close(struct fd *fd);
 int generic_linkat(struct fd *src_at, const char *src_raw, struct fd *dst_at, const char *dst_raw);
 int generic_unlinkat(struct fd *at, const char *path);
@@ -169,40 +169,6 @@ struct fd_ops {
 struct mount *find_mount(char *path);
 struct mount *find_mount_and_trim_path(char *path);
 const char *fix_path(const char *path); // TODO reconsider
-
-struct poll {
-    struct list poll_fds;
-    struct list real_poll_fds;
-    int notify_pipe[2];
-    lock_t lock;
-};
-
-struct poll_fd {
-    // locked by containing struct poll
-    struct fd *fd;
-    struct list fds;
-    int types;
-
-    // locked by containing struct fd
-    struct poll *poll;
-    struct list polls;
-};
-
-#define POLL_READ 1
-#define POLL_WRITE 4
-struct poll_event {
-    struct fd *fd;
-    int types;
-};
-struct poll *poll_create(void);
-int poll_add_fd(struct poll *poll, struct fd *fd, int types);
-int poll_del_fd(struct poll *poll, struct fd *fd);
-// please do not call this while holding any locks you would acquire in your poll operation
-void poll_wake(struct fd *fd);
-int poll_wait(struct poll *poll, struct poll_event *event, int timeout);
-// does not lock the poll because lock ordering, you must ensure no other
-// thread will add or remove fds from this poll
-void poll_destroy(struct poll *poll);
 
 // Normalizes the path specified and writes the result into the out buffer.
 //

@@ -3,6 +3,7 @@
 #include <sys/stat.h>
 #include "kernel/init.h"
 #include "kernel/calls.h"
+#include "fs/fdtable.h"
 #include "fs/tty.h"
 
 int mount_root(const struct fs_ops *fs, const char *source) {
@@ -35,7 +36,8 @@ void create_first_process() {
     current->ppid = 1;
     current->uid = current->gid = 0;
     current->root = generic_open("/", O_RDONLY_, 0);
-    current->pwd = generic_dup(current->root);
+    current->pwd = fd_dup(current->root);
+    current->files = fdtable_alloc(3);
     current->umask = 0022;
     current->thread = pthread_self();
     sys_setsid();
@@ -55,9 +57,11 @@ int create_stdio(struct tty_driver driver) {
     int err = dev_open(4, 0, DEV_CHAR, fd);
     if (err < 0)
         return err;
-    current->files[0] = fd;
-    current->files[1] = generic_dup(fd);
-    current->files[2] = generic_dup(fd);
+
+    fd->refcount = 3;
+    current->files->files[0] = fd;
+    current->files->files[1] = fd;
+    current->files->files[2] = fd;
     return 0;
 }
 

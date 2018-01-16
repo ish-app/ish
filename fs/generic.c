@@ -87,7 +87,7 @@ int fd_close(struct fd *fd) {
     return 0;
 }
 
-struct fd *generic_dup(struct fd *fd) {
+struct fd *fd_dup(struct fd *fd) {
     fd->refcount++;
     return fd;
 }

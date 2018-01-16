@@ -3,6 +3,8 @@
 #include "util/list.h"
 #include "kernel/errno.h"
 #include "kernel/fs.h"
+#include "fs/fdtable.h"
+#include "fs/poll.h"
 
 // lock order: fd, then poll
 

@@ -3,6 +3,7 @@
 #include "kernel/calls.h"
 #include "kernel/errno.h"
 #include "kernel/fs.h"
+#include "fs/fdtable.h"
 
 struct linux_dirent64 {
     qword_t inode;
@@ -13,7 +14,7 @@ struct linux_dirent64 {
 } __attribute__((packed));
 
 int_t sys_getdents64(fd_t f, addr_t dirents, dword_t count) {
-    struct fd *fd = current->files[f];
+    struct fd *fd = f_get(f);
     if (fd == NULL)
         return _EBADF;
     if (fd->ops->readdir == NULL)

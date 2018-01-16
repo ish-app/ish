@@ -1,18 +1,15 @@
 #include <unistd.h>
 #include "kernel/calls.h"
+#include "fs/fdtable.h"
 #include "debug.h"
 
 static fd_t pipe_f_create(int pipe_fd) {
-    fd_t f = fd_next();
-    if (f == -1)
-        return _EMFILE;
     struct fd *fd = adhoc_fd_create();
     if (fd == NULL)
         return _ENOMEM;
     fd->real_fd = pipe_fd;
     fd->ops = &realfs_fdops;
-    current->files[f] = fd;
-    return f;
+    return f_install(fd);
 }
 
 dword_t sys_pipe(addr_t pipe_addr) {

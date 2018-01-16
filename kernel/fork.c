@@ -1,5 +1,6 @@
 #include "debug.h"
 #include "kernel/process.h"
+#include "fs/fdtable.h"
 #include "kernel/calls.h"
 
 #define CSIGNAL_ 0x000000ff
@@ -39,11 +40,13 @@ static int copy_memory(struct process *proc, int flags) {
 }
 
 static int copy_files(struct process *proc, int flags) {
-    for (fd_t f = 0; f < MAX_FD; f++) {
-        if (proc->files[f]) {
-            proc->files[f] = generic_dup(proc->files[f]);
-        }
+    if (flags & CLONE_FILES_) {
+        proc->files->refcount++;
+        return 0;
     }
+    proc->files = fdtable_copy(proc->files);
+    if (IS_ERR(proc->files))
+        return PTR_ERR(proc->files);
     return 0;
 }
 
