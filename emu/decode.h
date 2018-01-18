@@ -483,14 +483,16 @@ restart:
                    if (modrm.type == mod_reg)
                        UNDEFINED;
                    MOV(addr, modrm_reg,); break;
-        case 0x8e:
-            TRACEI("mov modrm, seg\t");
-            // only gs is supported, and it does nothing
-            // see comment in sys/tls.c
-            READMODRM;
-            if (modrm.reg.reg32_id != REG_ID(ebp))
-                UNDEFINED;
-            break;
+
+        // only gs is supported, and it does nothing
+        // see comment in sys/tls.c
+        case 0x8c: TRACEI("mov seg, modrm\t"); READMODRM;
+            if (modrm.reg.reg32_id != REG_ID(ebp)) UNDEFINED;
+            MOV(gs, modrm_val,16); break;
+        case 0x8e: TRACEI("mov modrm, seg\t"); READMODRM;
+            if (modrm.reg.reg32_id != REG_ID(ebp)) UNDEFINED;
+            println("set gs %x", get_modrm_val(OP_SIZE));
+            MOV(modrm_val, gs,16); break;
 
         case 0x8f: TRACEI("pop modrm");
                    READMODRM; POP(modrm_val); break;

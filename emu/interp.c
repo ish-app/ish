@@ -141,6 +141,7 @@
 #define get_bh(size) cpu->bh
 #define get_ch(size) cpu->ch
 #define get_dh(size) cpu->dh
+#define get_gs(size) cpu->gs
 #define set_oax(to, size) cpu->oax = to
 #define set_obx(to, size) cpu->obx = to
 #define set_ocx(to, size) cpu->ocx = to
@@ -175,6 +176,7 @@
 #define set_bh(to, size) cpu->bh = to
 #define set_ch(to, size) cpu->ch = to
 #define set_dh(to, size) cpu->dh = to
+#define set_gs(to, size) cpu->gs = to
 
 #define get_0(size) 0
 #define get_1(size) 1

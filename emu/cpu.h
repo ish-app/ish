@@ -118,7 +118,8 @@ struct cpu_state {
         };
     };
 
-    // See comment in sys/tls.c
+    // TLS bullshit
+    word_t gs;
     addr_t tls_ptr;
 
     // for the page fault handler
