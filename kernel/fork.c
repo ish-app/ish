@@ -28,49 +28,26 @@
 #define CLONE_NEWNET_ 0x40000000
 #define CLONE_IO_ 0x80000000
 
-static int copy_memory(struct task *task, int flags) {
+static int copy_task(struct task *task, dword_t flags, addr_t ctid_addr) {
     struct mem *mem = task->cpu.mem;
     if (flags & CLONE_VM_) {
         mem_retain(mem);
-        return 0;
+    } else {
+        task->cpu.mem = mem_new();
+        pt_copy_on_write(mem, 0, task->cpu.mem, 0, MEM_PAGES);
     }
-    task->cpu.mem = mem_new();
-    pt_copy_on_write(mem, 0, task->cpu.mem, 0, MEM_PAGES);
-    return 0;
-}
 
-static int copy_files(struct task *task, int flags) {
     if (flags & CLONE_FILES_) {
         task->files->refcount++;
-        return 0;
+    } else {
+        task->files = fdtable_copy(task->files);
+        if (IS_ERR(task->files))
+            return PTR_ERR(task->files);
     }
-    task->files = fdtable_copy(task->files);
-    if (IS_ERR(task->files))
-        return PTR_ERR(task->files);
-    return 0;
-}
 
-static int copy_task(struct task *task, dword_t flags, addr_t ctid_addr) {
-    int err = copy_memory(task, flags);
-    if (err < 0)
-        return err;
-    err = copy_files(task, flags);
-    if (err < 0)
-        return err;
-
-    task->cpu.eax = 0;
     if (flags & CLONE_CHILD_SETTID_)
         if (user_put_task(task, ctid_addr, task->pid))
             return _EFAULT;
-    task_start(task);
-
-    if (flags & CLONE_VFORK_) {
-        // jeez why does every wait need a lock
-        lock(&task->exit_lock);
-        wait_for(&task->vfork_done, &task->exit_lock);
-        unlock(&task->exit_lock);
-    }
-
     return 0;
 }
 
@@ -79,7 +56,7 @@ static int copy_task(struct task *task, dword_t flags, addr_t ctid_addr) {
 // ecx = stack
 // edx, esi, edi = unimplemented garbage
 dword_t sys_clone(dword_t flags, addr_t stack, addr_t ptid, addr_t tls, addr_t ctid) {
-    STRACE("clone(%x, 0x%x, blah, blah, blah)", flags, stack);
+    STRACE("clone(%x, 0x%x, 0x%x, 0x%x, 0x%x)", flags, stack, ptid, tls, ctid);
     if (ptid != 0 || tls != 0) {
         FIXME("clone with ptid or ts not null");
         return _EINVAL;
@@ -100,6 +77,15 @@ dword_t sys_clone(dword_t flags, addr_t stack, addr_t ptid, addr_t tls, addr_t c
     if (err < 0) {
         task_destroy(task);
         return err;
+    }
+    task->cpu.eax = 0;
+    task_start(task);
+
+    if (flags & CLONE_VFORK_) {
+        // FIXME this doesn't loop, it must be wrong
+        lock(&task->exit_lock);
+        wait_for(&task->vfork_done, &task->exit_lock);
+        unlock(&task->exit_lock);
     }
     return task->pid;
 }
