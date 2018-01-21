@@ -1,5 +1,5 @@
-#ifndef PROCESS_H
-#define PROCESS_H
+#ifndef task_H
+#define task_H
 
 #include <pthread.h>
 #include "util/list.h"
@@ -9,7 +9,7 @@
 #include "kernel/resource.h"
 #include "util/timer.h"
 
-struct process {
+struct task {
     struct cpu_state cpu; // do not access this field except on the current process
     pthread_t thread;
 
@@ -32,7 +32,7 @@ struct process {
     sigset_t_ pending;
     lock_t signal_lock;
 
-    struct process *parent;
+    struct task *parent;
     struct list children;
     struct list siblings;
 
@@ -62,34 +62,34 @@ struct process {
 
 // current will always give the process that is currently executing
 // if I have to stop using __thread, current will become a macro
-extern __thread struct process *current;
+extern __thread struct task *current;
 #define curmem current->cpu.mem
 
 // Creates a new process, initializes most fields from the parent. Specify
 // parent as NULL to create the init process. Returns NULL if out of memory.
-struct process *process_create(struct process *parent);
+struct task *task_create(struct task *parent);
 // Removes the process from the process table and frees it.
-void process_destroy(struct process *proc);
+void task_destroy(struct task *task);
 
 struct pid {
     dword_t id;
-    struct process *proc;
+    struct task *task;
     struct list session;
     struct list group;
 };
 
 // these functions must be called with pids_lock
 struct pid *pid_get(dword_t pid);
-struct process *pid_get_proc(dword_t pid);
-struct process *pid_get_proc_zombie(dword_t id); // don't return null if the process exists as a zombie
+struct task *pid_get_task(dword_t pid);
+struct task *pid_get_proc_zombie(dword_t id); // don't return null if the task exists as a zombie
 extern lock_t pids_lock;
 
 #define MAX_PID (1 << 10) // oughta be enough
 
 // When a thread is created to run a new process, this function is used.
-extern void (*process_run_hook)(void);
+extern void (*task_run_hook)(void);
 // TODO document
-void process_start(struct process *proc);
+void task_start(struct task *task);
 
 extern void (*exit_hook)(int code);
 

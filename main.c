@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include "kernel/calls.h"
-#include "kernel/process.h"
+#include "kernel/task.h"
 #include "xX_main_Xx.h"
 
 int main(int argc, char *const argv[]) {

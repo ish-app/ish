@@ -7,33 +7,33 @@
 int xsave_extra = 0;
 int fxsave_extra = 0;
 
-void deliver_signal(struct process *proc, int sig) {
-    lock(&proc->signal_lock);
-    proc->pending |= (1 << sig);
-    unlock(&proc->signal_lock); // must do this before pthread_kill because the signal handler will lock proc
-    pthread_kill(proc->thread, SIGUSR1);
+void deliver_signal(struct task *task, int sig) {
+    lock(&task->signal_lock);
+    task->pending |= (1 << sig);
+    unlock(&task->signal_lock); // must do this before pthread_kill because the signal handler will lock task
+    pthread_kill(task->thread, SIGUSR1);
 }
 
-void send_signal(struct process *proc, int sig) {
-    lock(&proc->signal_lock);
-    if (proc->sigactions[sig].handler != SIG_IGN_) {
-        if (proc->blocked & (1 << sig)) {
-            proc->queued |= (1 << sig);
+void send_signal(struct task *task, int sig) {
+    lock(&task->signal_lock);
+    if (task->sigactions[sig].handler != SIG_IGN_) {
+        if (task->blocked & (1 << sig)) {
+            task->queued |= (1 << sig);
         } else {
-            unlock(&proc->signal_lock);
-            deliver_signal(proc, sig);
+            unlock(&task->signal_lock);
+            deliver_signal(task, sig);
             return;
         }
     }
-    unlock(&proc->signal_lock);
+    unlock(&task->signal_lock);
 }
 
 void send_group_signal(dword_t pgid, int sig) {
     lock(&pids_lock);
     struct pid *pid = pid_get(pgid);
-    struct process *proc;
-    list_for_each_entry(&pid->group, proc, group) {
-        send_signal(proc, sig);
+    struct task *task;
+    list_for_each_entry(&pid->group, task, group) {
+        send_signal(task, sig);
     }
     unlock(&pids_lock);
 }
@@ -211,10 +211,10 @@ dword_t sys_rt_sigprocmask(dword_t how, addr_t set_addr, addr_t oldset_addr, dwo
 dword_t sys_kill(dword_t pid, dword_t sig) {
     // TODO check permissions
     // TODO process groups
-    struct process *proc = pid_get_proc(pid);
-    if (proc == NULL)
+    struct task *task = pid_get_task(pid);
+    if (task == NULL)
         return _ESRCH;
-    send_signal(proc, sig);
+    send_signal(task, sig);
     return 0;
 }
 

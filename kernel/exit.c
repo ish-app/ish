@@ -13,7 +13,7 @@ noreturn void do_exit(int status) {
     // notify everyone we died
     bool init_died = current->pid == 1;
     lock(&pids_lock);
-    struct process *parent = current->parent;
+    struct task *parent = current->parent;
     unlock(&pids_lock);
     lock(&parent->exit_lock);
 
@@ -31,9 +31,9 @@ noreturn void do_exit(int status) {
         // which will leave everything in an inconsistent state. I will solve this problem later.
         lock(&pids_lock);
         for (int i = 2; i < MAX_PID; i++) {
-            struct process *proc = pid_get_proc(i);
-            if (proc != NULL)
-                pthread_kill(proc->thread, SIGKILL);
+            struct task *task = pid_get_task(i);
+            if (task != NULL)
+                pthread_kill(task->thread, SIGKILL);
         }
         unlock(&pids_lock);
 
@@ -59,15 +59,15 @@ dword_t sys_exit_group(dword_t status) {
     do_exit(status << 8);
 }
 
-static int reap_if_zombie(struct process *proc, addr_t status_addr, addr_t rusage_addr) {
-    if (proc->zombie) {
+static int reap_if_zombie(struct task *task, addr_t status_addr, addr_t rusage_addr) {
+    if (task->zombie) {
         if (status_addr != 0)
-            if (user_put(status_addr, proc->exit_code))
+            if (user_put(status_addr, task->exit_code))
                 return _EFAULT;
         if (rusage_addr != 0)
-            if (user_put(rusage_addr, proc->rusage))
+            if (user_put(rusage_addr, task->rusage))
                 return _EFAULT;
-        process_destroy(proc);
+        task_destroy(task);
         return 1;
     }
     return 0;
@@ -82,20 +82,20 @@ dword_t sys_wait4(dword_t id, addr_t status_addr, dword_t options, addr_t rusage
 retry:
     if (id == (dword_t) -1) {
         // look for a zombie child
-        struct process *proc;
-        list_for_each_entry(&current->children, proc, siblings) {
-            id = proc->pid;
-            if (reap_if_zombie(proc, status_addr, rusage_addr))
+        struct task *task;
+        list_for_each_entry(&current->children, task, siblings) {
+            id = task->pid;
+            if (reap_if_zombie(task, status_addr, rusage_addr))
                 goto found_zombie;
         }
     } else {
         // check if this child is a zombie
-        struct process *proc = pid_get_proc_zombie(id);
-        if (proc == NULL || proc->parent != current) {
+        struct task *task = pid_get_proc_zombie(id);
+        if (task == NULL || task->parent != current) {
             unlock(&current->exit_lock);
             return _ECHILD;
         }
-        if (reap_if_zombie(proc, status_addr, rusage_addr))
+        if (reap_if_zombie(task, status_addr, rusage_addr))
             goto found_zombie;
     }
 

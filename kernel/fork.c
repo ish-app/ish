@@ -1,5 +1,5 @@
 #include "debug.h"
-#include "kernel/process.h"
+#include "kernel/task.h"
 #include "fs/fdtable.h"
 #include "kernel/calls.h"
 
@@ -28,55 +28,50 @@
 #define CLONE_NEWNET_ 0x40000000
 #define CLONE_IO_ 0x80000000
 
-static int copy_memory(struct process *proc, int flags) {
-    struct mem *mem = proc->cpu.mem;
+static int copy_memory(struct task *task, int flags) {
+    struct mem *mem = task->cpu.mem;
     if (flags & CLONE_VM_) {
         mem_retain(mem);
         return 0;
     }
-    proc->cpu.mem = mem_new();
-    pt_copy_on_write(mem, 0, proc->cpu.mem, 0, MEM_PAGES);
+    task->cpu.mem = mem_new();
+    pt_copy_on_write(mem, 0, task->cpu.mem, 0, MEM_PAGES);
     return 0;
 }
 
-static int copy_files(struct process *proc, int flags) {
+static int copy_files(struct task *task, int flags) {
     if (flags & CLONE_FILES_) {
-        proc->files->refcount++;
+        task->files->refcount++;
         return 0;
     }
-    proc->files = fdtable_copy(proc->files);
-    if (IS_ERR(proc->files))
-        return PTR_ERR(proc->files);
+    task->files = fdtable_copy(task->files);
+    if (IS_ERR(task->files))
+        return PTR_ERR(task->files);
     return 0;
 }
 
-static int init_process(struct process *proc, dword_t flags, addr_t ctid_addr) {
-    int err = 0;
-    if ((err = copy_memory(proc, flags)) < 0)
-        goto fail_free_proc;
-    if ((err = copy_files(proc, flags)) < 0)
-        goto fail_free_proc;
+static int copy_task(struct task *task, dword_t flags, addr_t ctid_addr) {
+    int err = copy_memory(task, flags);
+    if (err < 0)
+        return err;
+    err = copy_files(task, flags);
+    if (err < 0)
+        return err;
 
-    proc->cpu.eax = 0;
+    task->cpu.eax = 0;
     if (flags & CLONE_CHILD_SETTID_)
-        if (user_put_proc(proc, ctid_addr, proc->pid)) {
-            err = _EFAULT;
-            goto fail_free_proc;
-        }
-    process_start(proc);
+        if (user_put_task(task, ctid_addr, task->pid))
+            return _EFAULT;
+    task_start(task);
 
     if (flags & CLONE_VFORK_) {
         // jeez why does every wait need a lock
-        lock(&proc->exit_lock);
-        wait_for(&proc->vfork_done, &proc->exit_lock);
-        unlock(&proc->exit_lock);
+        lock(&task->exit_lock);
+        wait_for(&task->vfork_done, &task->exit_lock);
+        unlock(&task->exit_lock);
     }
 
     return 0;
-
-fail_free_proc:
-    free(proc);
-    return err;
 }
 
 // eax = syscall number
@@ -98,15 +93,15 @@ dword_t sys_clone(dword_t flags, addr_t stack, addr_t ptid, addr_t tls, addr_t c
         TODO("clone with nonzero stack");
         // stack = current->cpu.esp;
 
-    struct process *proc = process_create(current);
-    if (proc == NULL)
+    struct task *task = task_create(current);
+    if (task == NULL)
         return _ENOMEM;
-    int err = init_process(proc, flags, ctid);
+    int err = copy_task(task, flags, ctid);
     if (err < 0) {
-        process_destroy(proc);
+        task_destroy(task);
         return err;
     }
-    return proc->pid;
+    return task->pid;
 }
 
 dword_t sys_fork() {

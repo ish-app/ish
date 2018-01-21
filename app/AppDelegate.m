@@ -50,7 +50,7 @@ static void ios_handle_exit(int code) {
     if (err < 0)
         return err;
     exit_hook = ios_handle_exit;
-    process_start(current);
+    task_start(current);
     return 0;
 }
 

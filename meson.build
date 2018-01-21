@@ -39,7 +39,7 @@ src = [
     'kernel/calls.c',
     'kernel/user.c',
     'kernel/vdso.c',
-    'kernel/process.c',
+    'kernel/task.c',
     'kernel/group.c',
 
     'kernel/fork.c',

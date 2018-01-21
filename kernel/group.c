@@ -1,6 +1,6 @@
 #include "util/list.h"
 #include "kernel/calls.h"
-#include "kernel/process.h"
+#include "kernel/task.h"
 
 dword_t sys_setpgid(dword_t id, dword_t pgid) {
     int err;
@@ -18,26 +18,26 @@ dword_t sys_setpgid(dword_t id, dword_t pgid) {
         goto out;
     // TODO you can only join a process group in the same session
 
-    struct process *proc = pid->proc;
+    struct task *task = pid->task;
     err = _ESRCH;
-    if (proc == NULL)
+    if (task == NULL)
         goto out;
 
     // you can only change the process group of yourself or a child
     err = _ESRCH;
-    if (proc != current && proc->parent != current)
+    if (task != current && task->parent != current)
         goto out;
     // a session leader cannot create a process group
     err = _EPERM;
-    if (proc->sid == proc->pid)
+    if (task->sid == task->pid)
         goto out;
 
     // TODO cannot set process group of a child that has done exec
 
-    if (proc->pgid != pgid) {
-        list_remove(&proc->group);
-        proc->pgid = pgid;
-        list_add(&pid->group, &proc->group);
+    if (task->pgid != pgid) {
+        list_remove(&task->group);
+        task->pgid = pgid;
+        list_add(&pid->group, &task->group);
     }
 
     err = 0;

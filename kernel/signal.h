@@ -2,7 +2,7 @@
 #define SIGNAL_H
 
 #include "misc.h"
-struct process;
+struct task;
 
 typedef qword_t sigset_t_;
 
@@ -53,9 +53,9 @@ struct sigaction_ {
 #define SIGUNUSED_ 31
 
 // send a signal
-void send_signal(struct process *proc, int sig);
+void send_signal(struct task *task, int sig);
 // send a signal without regard for whether the signal is blocked or ignored
-void deliver_signal(struct process *proc, int sig);
+void deliver_signal(struct task *task, int sig);
 // send a signal to all processes in a group
 void send_group_signal(dword_t pgid, int sig);
 // check for and deliver pending signals on current, should be called from SIGUSR1 handler

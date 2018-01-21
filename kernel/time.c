@@ -32,8 +32,8 @@ dword_t sys_clock_gettime(dword_t clock, addr_t tp) {
     return 0;
 }
 
-static void itimer_notify(struct process *proc) {
-    send_signal(proc, SIGALRM_);
+static void itimer_notify(struct task *task) {
+    send_signal(task, SIGALRM_);
 }
 
 dword_t sys_setitimer(dword_t which, addr_t new_val_addr, addr_t old_val_addr) {
