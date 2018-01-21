@@ -25,7 +25,6 @@ int sys_set_thread_area(addr_t u_info) {
     if (info.entry_number == (unsigned) -1) {
         info.entry_number = 0xc;
     }
-    println("set_thread_area %x %x", info.entry_number, info.base_addr);
 
     if (user_put(u_info, info))
             return _EFAULT;

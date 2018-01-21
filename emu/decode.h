@@ -491,7 +491,6 @@ restart:
             MOV(gs, modrm_val,16); break;
         case 0x8e: TRACEI("mov modrm, seg\t"); READMODRM;
             if (modrm.reg.reg32_id != REG_ID(ebp)) UNDEFINED;
-            println("set gs %x", get_modrm_val(OP_SIZE));
             MOV(modrm_val, gs,16); break;
 
         case 0x8f: TRACEI("pop modrm");
