@@ -76,10 +76,10 @@ static int copy_task(struct task *task, dword_t flags, addr_t ptid_addr, addr_t 
     err = _EFAULT;
     if (flags & CLONE_CHILD_SETTID_)
         if (user_put_task(task, ctid_addr, task->pid))
-            goto fail_free_fs;
+            goto fail_free_sighand;
     if (flags & CLONE_PARENT_SETTID_)
         if (user_put(ptid_addr, task->pid))
-            goto fail_free_fs;
+            goto fail_free_sighand;
 
     // TODO for threads:
     // CLONE_THREAD
@@ -88,14 +88,14 @@ static int copy_task(struct task *task, dword_t flags, addr_t ptid_addr, addr_t 
     // remember to do CLONE_SYSVSEM
     return 0;
 
-fail_free_mem:
-    mem_release(task->cpu.mem);
-fail_free_files:
-    fdtable_release(task->files);
-fail_free_fs:
-    fs_info_release(task->fs);
 fail_free_sighand:
     sighand_release(task->sighand);
+fail_free_fs:
+    fs_info_release(task->fs);
+fail_free_files:
+    fdtable_release(task->files);
+fail_free_mem:
+    mem_release(task->cpu.mem);
     return err;
 }
 
