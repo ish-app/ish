@@ -2,7 +2,7 @@
 #include "kernel/calls.h"
 #include "kernel/errno.h"
 #include "kernel/task.h"
-#include "fs/fdtable.h"
+#include "fs/fd.h"
 #include "emu/memory.h"
 
 addr_t sys_mmap2(addr_t addr, dword_t len, dword_t prot, dword_t flags, fd_t fd_no, dword_t offset) {

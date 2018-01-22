@@ -1,7 +1,7 @@
 #include <pthread.h>
 #include <signal.h>
 #include "kernel/calls.h"
-#include "fs/fdtable.h"
+#include "fs/fd.h"
 
 void (*exit_hook)(int code) = NULL;
 
@@ -90,7 +90,7 @@ retry:
         }
     } else {
         // check if this child is a zombie
-        struct task *task = pid_get_proc_zombie(id);
+        struct task *task = pid_get_task_zombie(id);
         if (task == NULL || task->parent != current) {
             unlock(&current->exit_lock);
             return _ECHILD;

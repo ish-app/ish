@@ -45,8 +45,7 @@ static inline int xX_main_Xx(int argc, char *const argv[]) {
         char cwd[MAX_PATH + 1];
         getcwd(cwd, sizeof(cwd));
         struct fd *pwd = generic_open(cwd, O_RDONLY_, 0);
-        fd_close(current->pwd);
-        current->pwd = pwd;
+        fs_chdir(current->fs, pwd);
     }
 
     err = sys_execve(argv[optind], argv + optind, (char *[]) {NULL});

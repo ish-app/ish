@@ -17,7 +17,8 @@
 
 #include "debug.h"
 #include "kernel/calls.h"
-#include "fs/fdtable.h"
+#include "fs/path.h"
+#include "fs/fd.h"
 #include "emu/interrupt.h"
 #include "emu/cpuid.h"
 

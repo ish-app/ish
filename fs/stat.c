@@ -5,7 +5,8 @@
 #include "kernel/calls.h"
 #include "kernel/errno.h"
 #include "kernel/fs.h"
-#include "fs/fdtable.h"
+#include "fs/fd.h"
+#include "fs/path.h"
 
 struct newstat64 stat_convert_newstat64(struct statbuf stat) {
     struct newstat64 newstat;
@@ -36,6 +37,13 @@ int generic_statat(struct fd *at, const char *path_raw, struct statbuf *stat, bo
         return err;
     struct mount *mount = find_mount_and_trim_path(path);
     return mount->fs->stat(mount, path, stat, follow_links);
+}
+
+// TODO get rid of this and maybe everything else in the file
+static struct fd *at_fd(fd_t f) {
+    if (f == AT_FDCWD_)
+        return AT_PWD;
+    return f_get(f);
 }
 
 static dword_t sys_stat_path(fd_t at_f, addr_t path_addr, addr_t statbuf_addr, bool follow_links) {

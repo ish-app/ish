@@ -7,6 +7,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdnoreturn.h>
+#include <stdatomic.h>
 #include <sys/types.h>
 #include <pthread.h>
 

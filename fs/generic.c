@@ -3,20 +3,11 @@
 #include <sys/stat.h>
 
 #include "kernel/fs.h"
+#include "fs/fd.h"
+#include "fs/path.h"
 #include "fs/dev.h"
 #include "kernel/task.h"
 #include "kernel/errno.h"
-
-struct fd *fd_create() {
-    struct fd *fd = malloc(sizeof(struct fd));
-    *fd = (struct fd) {};
-    fd->refcount = 1;
-    fd->flags = 0;
-    fd->mount = NULL;
-    list_init(&fd->poll_fds);
-    lock_init(&fd->lock);
-    return fd;
-}
 
 struct mount *find_mount(char *path) {
     struct mount *mount;
@@ -72,24 +63,7 @@ struct fd *generic_openat(struct fd *at, const char *path_raw, int flags, int mo
 }
 
 struct fd *generic_open(const char *path, int flags, int mode) {
-    return generic_openat(current->pwd, path, flags, mode);
-}
-
-int fd_close(struct fd *fd) {
-    if (--fd->refcount == 0) {
-        if (fd->ops->close) {
-            int err = fd->ops->close(fd);
-            if (err < 0)
-                return err;
-        }
-        free(fd);
-    }
-    return 0;
-}
-
-struct fd *fd_dup(struct fd *fd) {
-    fd->refcount++;
-    return fd;
+    return generic_openat(NULL, path, flags, mode);
 }
 
 int generic_access(const char *path_raw, int mode) {

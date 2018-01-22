@@ -1,4 +1,5 @@
 #include "kernel/errno.h"
+#include "fs/fd.h"
 #include "fs/dev.h"
 #include "fs/tty.h"
 

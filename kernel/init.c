@@ -3,7 +3,7 @@
 #include <sys/stat.h>
 #include "kernel/init.h"
 #include "kernel/calls.h"
-#include "fs/fdtable.h"
+#include "fs/fd.h"
 #include "fs/tty.h"
 
 int mount_root(const struct fs_ops *fs, const char *source) {
@@ -35,10 +35,13 @@ void create_first_process() {
     current->parent = current;
     current->ppid = 1;
     current->uid = current->gid = 0;
-    current->root = generic_open("/", O_RDONLY_, 0);
-    current->pwd = fd_dup(current->root);
-    current->files = fdtable_alloc(3);
-    current->umask = 0022;
+    current->fs = fs_info_new();
+    struct fs_info *fs = fs_info_new();
+    fs->pwd = fs->root = generic_open("/", O_RDONLY_, 0);
+    fs->pwd->refcount = 2;
+    fs->umask = 0022;
+    current->fs = fs;
+    current->files = fdtable_new(3);
     current->thread = pthread_self();
     sys_setsid();
     for (int i = 0; i < RLIMIT_NLIMITS_; i++) {

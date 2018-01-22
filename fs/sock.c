@@ -1,6 +1,6 @@
 #include <sys/socket.h>
 #include "kernel/calls.h"
-#include "fs/fdtable.h"
+#include "fs/fd.h"
 #include "fs/sock.h"
 #include "debug.h"
 

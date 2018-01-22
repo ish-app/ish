@@ -1,6 +1,6 @@
 #include "debug.h"
 #include "kernel/task.h"
-#include "fs/fdtable.h"
+#include "fs/fd.h"
 #include "kernel/calls.h"
 
 #define CSIGNAL_ 0x000000ff

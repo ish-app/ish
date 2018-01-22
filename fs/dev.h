@@ -5,7 +5,7 @@
 #if __linux__
 #include <sys/sysmacros.h>
 #endif
-#include "kernel/fs.h"
+#include "fs/fd.h"
 
 // a dev_t is encoded like this in hex, where M is major and m is minor:
 // mmmMMMmm

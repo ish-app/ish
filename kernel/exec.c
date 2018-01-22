@@ -8,7 +8,7 @@
 #include "misc.h"
 #include "kernel/calls.h"
 #include "kernel/errno.h"
-#include "fs/fdtable.h"
+#include "fs/fd.h"
 #include "kernel/elf.h"
 #include "libvdso.so.h"
 

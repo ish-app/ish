@@ -5,12 +5,20 @@
 #include "kernel/errno.h"
 #include "kernel/task.h"
 #include "kernel/fs.h"
-#include "fs/fdtable.h"
+#include "fs/fd.h"
+#include "fs/path.h"
 
-struct fd *at_fd(fd_t f) {
+static struct fd *at_fd(fd_t f) {
     if (f == AT_FDCWD_)
-        return current->pwd;
+        return AT_PWD;
     return f_get(f);
+}
+
+static void apply_umask(mode_t_ *mode) {
+    struct fs_info *fs = current->fs;
+    lock(&fs->lock);
+    *mode &= ~fs->umask;
+    unlock(&fs->lock);
 }
 
 // TODO ENAMETOOLONG
@@ -22,14 +30,14 @@ dword_t sys_access(addr_t path_addr, dword_t mode) {
     return generic_access(path, mode);
 }
 
-fd_t sys_openat(fd_t at_f, addr_t path_addr, dword_t flags, dword_t mode) {
+fd_t sys_openat(fd_t at_f, addr_t path_addr, dword_t flags, mode_t_ mode) {
     char path[MAX_PATH];
     if (user_read_string(path_addr, path, sizeof(path)))
         return _EFAULT;
     STRACE("openat(%d, \"%s\", 0x%x, 0x%x)", at_f, path, flags, mode);
 
     if (flags & O_CREAT_)
-        mode &= ~(current->umask & 0777);
+        apply_umask(&mode);
 
     struct fd *at = at_fd(at_f);
     if (at == NULL)
@@ -40,7 +48,7 @@ fd_t sys_openat(fd_t at_f, addr_t path_addr, dword_t flags, dword_t mode) {
     return f_install(fd);
 }
 
-fd_t sys_open(addr_t path_addr, dword_t flags, dword_t mode) {
+fd_t sys_open(addr_t path_addr, dword_t flags, mode_t_ mode) {
     return sys_openat(AT_FDCWD_, path_addr, flags, mode);
 }
 
@@ -236,8 +244,11 @@ dword_t sys_ioctl(fd_t f, dword_t cmd, dword_t arg) {
 }
 
 dword_t sys_getcwd(addr_t buf_addr, dword_t size) {
+    lock(&current->fs->lock);
+    struct fd *wd = current->fs->pwd;
     char pwd[MAX_PATH];
-    int err = current->pwd->ops->getpath(current->pwd, pwd);
+    int err = wd->ops->getpath(wd, pwd);
+    unlock(&current->fs->lock);
     if (err < 0)
         return err;
 
@@ -261,6 +272,22 @@ static struct fd *open_dir(const char *path) {
     return generic_open(path, O_RDONLY_, 0);
 }
 
+void fs_chdir(struct fs_info *fs, struct fd *fd) {
+    lock(&fs->lock);
+    fd->refcount++;
+    fd_close(fs->pwd);
+    fs->pwd = fd;
+    unlock(&fs->lock);
+}
+
+static void fs_chroot(struct fs_info *fs, struct fd *fd) {
+    lock(&fs->lock);
+    fd->refcount++;
+    fd_close(fs->root);
+    fs->root = fd;
+    unlock(&fs->lock);
+}
+
 dword_t sys_chdir(addr_t path_addr) {
     char path[MAX_PATH];
     if (user_read_string(path_addr, path, sizeof(path)))
@@ -270,7 +297,16 @@ dword_t sys_chdir(addr_t path_addr) {
     struct fd *dir = open_dir(path);
     if (IS_ERR(dir))
         return PTR_ERR(dir);
-    current->pwd = dir;
+    fs_chdir(current->fs, dir);
+    return 0;
+}
+
+dword_t sys_fchdir(fd_t f) {
+    STRACE("fchdir(%d)", f);
+    struct fd *dir = f_get(f);
+    if (dir == NULL)
+        return _EBADF;
+    fs_chdir(current->fs, dir);
     return 0;
 }
 
@@ -283,22 +319,16 @@ dword_t sys_chroot(addr_t path_addr) {
     struct fd *dir = open_dir(path);
     if (IS_ERR(dir))
         return PTR_ERR(dir);
-    current->root = dir;
-    return 0;
-}
-
-dword_t sys_fchdir(fd_t f) {
-    STRACE("fchdir(%d)", f);
-    struct fd *fd = f_get(f);
-    if (fd == NULL)
-        return _EBADF;
-    current->pwd = fd;
+    fs_chroot(current->fs, dir);
     return 0;
 }
 
 dword_t sys_umask(dword_t mask) {
-    mode_t_ old_umask = current->umask;
-    current->umask = ((mode_t_) mask) & 0777;
+    struct fs_info *fs = current->fs;
+    lock(&fs->lock);
+    mode_t_ old_umask = fs->umask;
+    fs->umask = ((mode_t_) mask) & 0777;
+    unlock(&fs->lock);
     return old_umask;
 }
 
@@ -407,7 +437,7 @@ dword_t sys_truncate64(addr_t path_addr, dword_t size_low, dword_t size_high) {
     char path[MAX_PATH];
     if (user_read_string(path_addr, path, sizeof(path)))
         return _EFAULT;
-    return generic_setattrat(current->pwd, path, make_attr(size, size), true);
+    return generic_setattrat(NULL, path, make_attr(size, size), true);
 }
 
 dword_t sys_ftruncate64(fd_t f, dword_t size_low, dword_t size_high) {
@@ -440,7 +470,7 @@ dword_t sys_mkdirat(fd_t at_f, addr_t path_addr, mode_t_ mode) {
     struct fd *at = at_fd(at_f);
     if (at == NULL)
         return _EBADF;
-    mode &= ~(current->umask & 0777);
+    apply_umask(&mode);
     return generic_mkdirat(at, path, mode);
 }
 
@@ -452,7 +482,7 @@ dword_t sys_rmdir(addr_t path_addr) {
     char path[MAX_PATH];
     if (user_read_string(path_addr, path, sizeof(path)))
         return _EFAULT;
-    return generic_rmdirat(current->pwd, path);
+    return generic_rmdirat(NULL, path);
 }
 
 // a few stubs

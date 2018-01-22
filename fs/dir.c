@@ -3,7 +3,7 @@
 #include "kernel/calls.h"
 #include "kernel/errno.h"
 #include "kernel/fs.h"
-#include "fs/fdtable.h"
+#include "fs/fd.h"
 
 struct linux_dirent64 {
     qword_t inode;

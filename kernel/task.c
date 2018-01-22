@@ -21,7 +21,7 @@ struct pid *pid_get(dword_t id) {
     return pid;
 }
 
-struct task *pid_get_proc_zombie(dword_t id) {
+struct task *pid_get_task_zombie(dword_t id) {
     struct pid *pid = pid_get(id);
     if (pid == NULL)
         return NULL;
@@ -30,7 +30,7 @@ struct task *pid_get_proc_zombie(dword_t id) {
 }
 
 struct task *pid_get_task(dword_t id) {
-    struct task *task = pid_get_proc_zombie(id);
+    struct task *task = pid_get_task_zombie(id);
     if (task != NULL && task->zombie)
         return NULL;
     return task;

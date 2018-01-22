@@ -3,9 +3,37 @@
 #include "kernel/errno.h"
 #include "kernel/resource.h"
 #include "kernel/fs.h"
-#include "fs/fdtable.h"
+#include "fs/fd.h"
 
-struct fdtable *fdtable_alloc(unsigned size) {
+struct fd *fd_create() {
+    struct fd *fd = malloc(sizeof(struct fd));
+    *fd = (struct fd) {};
+    fd->refcount = 1;
+    fd->flags = 0;
+    fd->mount = NULL;
+    list_init(&fd->poll_fds);
+    lock_init(&fd->lock);
+    return fd;
+}
+
+struct fd *fd_retain(struct fd *fd) {
+    fd->refcount++;
+    return fd;
+}
+
+int fd_close(struct fd *fd) {
+    if (--fd->refcount == 0) {
+        if (fd->ops->close) {
+            int err = fd->ops->close(fd);
+            if (err < 0)
+                return err;
+        }
+        free(fd);
+    }
+    return 0;
+}
+
+struct fdtable *fdtable_new(unsigned size) {
     struct fdtable *fdt = malloc(sizeof(struct fdtable));
     if (fdt == NULL)
         return ERR_PTR(_ENOMEM);
@@ -57,7 +85,7 @@ int fdtable_resize(struct fdtable *table, unsigned size) {
 
 struct fdtable *fdtable_copy(struct fdtable *table) {
     unsigned size = table->size;
-    struct fdtable *new_table = fdtable_alloc(size);
+    struct fdtable *new_table = fdtable_new(size);
     if (IS_ERR(new_table))
         return new_table;
     memcpy(new_table->files, table->files, sizeof(struct fd *) * size);

@@ -54,6 +54,7 @@ src = [
     'kernel/resource.c',
 
     'kernel/fs.c',
+    'kernel/fs_info.c',
     'fs/fd.c',
     'fs/stat.c',
     'fs/dir.c',

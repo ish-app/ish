@@ -1,6 +1,7 @@
 #include <sys/stat.h>
 #include "debug.h"
 #include "kernel/fs.h"
+#include "fs/fd.h"
 #include "kernel/errno.h"
 
 static struct mount adhoc_mount;

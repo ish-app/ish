@@ -21,10 +21,8 @@ struct task {
     addr_t start_brk;
     addr_t brk;
 
-    struct fd *pwd;
-    struct fd *root;
     struct fdtable *files;
-    mode_t_ umask;
+    struct fs_info *fs;
 
     struct sigaction_ sigactions[NUM_SIGS];
     sigset_t_ blocked;
@@ -81,7 +79,7 @@ struct pid {
 // these functions must be called with pids_lock
 struct pid *pid_get(dword_t pid);
 struct task *pid_get_task(dword_t pid);
-struct task *pid_get_proc_zombie(dword_t id); // don't return null if the task exists as a zombie
+struct task *pid_get_task_zombie(dword_t id); // don't return null if the task exists as a zombie
 extern lock_t pids_lock;
 
 #define MAX_PID (1 << 10) // oughta be enough

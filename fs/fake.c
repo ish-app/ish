@@ -8,7 +8,7 @@
 #include "debug.h"
 #include "kernel/errno.h"
 #include "kernel/task.h"
-#include "kernel/fs.h"
+#include "fs/fd.h"
 
 // TODO document database
 

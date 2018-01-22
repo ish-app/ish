@@ -1,6 +1,6 @@
 #include <unistd.h>
 #include "kernel/calls.h"
-#include "fs/fdtable.h"
+#include "fs/fd.h"
 #include "debug.h"
 
 static fd_t pipe_f_create(int pipe_fd) {

@@ -85,7 +85,7 @@ static void copy_stat(struct statbuf *fake_stat, struct stat *real_stat) {
     /* fake_stat->ctime_nsec = real_stat->st_ctim.tv_nsec; */
 }
 
-int realfs_stat(struct mount *mount, const char *path, struct statbuf *fake_stat, bool follow_links) {
+static int realfs_stat(struct mount *mount, const char *path, struct statbuf *fake_stat, bool follow_links) {
     struct stat real_stat;
     if (fstatat(mount->root_fd, fix_path(path), &real_stat, follow_links ? 0 : AT_SYMLINK_NOFOLLOW) < 0)
         return errno_map();
@@ -93,7 +93,7 @@ int realfs_stat(struct mount *mount, const char *path, struct statbuf *fake_stat
     return 0;
 }
 
-int realfs_fstat(struct fd *fd, struct statbuf *fake_stat) {
+static int realfs_fstat(struct fd *fd, struct statbuf *fake_stat) {
     struct stat real_stat;
     if (fstat(fd->real_fd, &real_stat) < 0)
         return errno_map();

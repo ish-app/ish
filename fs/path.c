@@ -1,5 +1,6 @@
 #include <string.h>
 #include "kernel/calls.h"
+#include "fs/path.h"
 
 #define __NO_AT (struct fd *) 1
 
@@ -11,10 +12,12 @@ int path_normalize(struct fd *at, const char *path, char *out, bool follow_links
     
     if (at != __NO_AT) {
         // start with root or cwd, depending on whether it starts with a slash
+        lock(&current->fs->lock);
         if (*p == '/')
-            at = current->root;
-        else if (at == NULL)
-            at = current->pwd;
+            at = current->fs->root;
+        else if (at == AT_PWD)
+            at = current->fs->pwd;
+        unlock(&current->fs->lock);
         if (at != NULL) {
             char at_path[MAX_PATH];
             int err = at->ops->getpath(at, at_path);
