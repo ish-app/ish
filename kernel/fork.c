@@ -27,11 +27,10 @@
 #define CLONE_NEWPID_ 0x20000000
 #define CLONE_NEWNET_ 0x40000000
 #define CLONE_IO_ 0x80000000
-#define IMPLEMENTED_FLAGS (CLONE_VM_|CLONE_FILES_|CLONE_FS_|\
-        CLONE_VFORK_|CLONE_DETACHED_|\
-        CLONE_SETTLS_|CLONE_CHILD_SETTID_)
+#define IMPLEMENTED_FLAGS (CLONE_VM_|CLONE_FILES_|CLONE_FS_|CLONE_VFORK_|\
+        CLONE_SETTLS_|CLONE_CHILD_SETTID_|CLONE_PARENT_SETTID_|CLONE_DETACHED_)
 
-static int copy_task(struct task *task, dword_t flags, addr_t tls_addr, addr_t ctid_addr) {
+static int copy_task(struct task *task, dword_t flags, addr_t ptid_addr, addr_t tls_addr, addr_t ctid_addr) {
     int err;
     struct mem *mem = task->cpu.mem;
     if (flags & CLONE_VM_) {
@@ -69,6 +68,9 @@ static int copy_task(struct task *task, dword_t flags, addr_t tls_addr, addr_t c
     err = _EFAULT;
     if (flags & CLONE_CHILD_SETTID_)
         if (user_put_task(task, ctid_addr, task->pid))
+            goto fail_free_fs;
+    if (flags & CLONE_PARENT_SETTID_)
+        if (user_put(ptid_addr, task->pid))
             goto fail_free_fs;
 
     // TODO for threads:
@@ -115,7 +117,7 @@ dword_t sys_clone(dword_t flags, addr_t stack, addr_t ptid, addr_t tls, addr_t c
     struct task *task = task_create(current);
     if (task == NULL)
         return _ENOMEM;
-    int err = copy_task(task, flags, tls, ctid);
+    int err = copy_task(task, flags, ptid, tls, ctid);
     if (err < 0) {
         task_destroy(task);
         return err;
