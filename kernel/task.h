@@ -20,6 +20,7 @@ struct task {
     addr_t vdso;
     addr_t start_brk;
     addr_t brk;
+    addr_t clear_tid;
 
     struct fdtable *files;
     struct fs_info *fs;

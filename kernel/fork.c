@@ -28,7 +28,7 @@
 #define CLONE_NEWNET_ 0x40000000
 #define CLONE_IO_ 0x80000000
 #define IMPLEMENTED_FLAGS (CLONE_VM_|CLONE_FILES_|CLONE_FS_|CLONE_SIGHAND_|CLONE_SYSVSEM_|CLONE_VFORK_|\
-        CLONE_SETTLS_|CLONE_CHILD_SETTID_|CLONE_PARENT_SETTID_|CLONE_DETACHED_)
+        CLONE_SETTLS_|CLONE_CHILD_SETTID_|CLONE_PARENT_SETTID_|CLONE_CHILD_CLEARTID_|CLONE_DETACHED_)
 
 static int copy_task(struct task *task, dword_t flags, addr_t ptid_addr, addr_t tls_addr, addr_t ctid_addr) {
     int err;
@@ -80,6 +80,8 @@ static int copy_task(struct task *task, dword_t flags, addr_t ptid_addr, addr_t 
     if (flags & CLONE_PARENT_SETTID_)
         if (user_put(ptid_addr, task->pid))
             goto fail_free_sighand;
+    if (flags & CLONE_CHILD_CLEARTID_)
+        task->clear_tid = ctid_addr;
 
     // TODO for threads:
     // CLONE_THREAD

@@ -35,7 +35,7 @@ int sys_set_thread_area(addr_t u_info) {
     return task_set_thread_area(current, u_info);
 }
 
-int sys_set_tid_address(addr_t blahblahblah) {
-    // TODO this is supposed to actually do something...pthread_join someday
+int sys_set_tid_address(addr_t tid) {
+    current->clear_tid = tid;
     return sys_getpid();
 }

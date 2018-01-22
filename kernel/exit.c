@@ -27,6 +27,7 @@ noreturn void do_exit(int status) {
     notify(&parent->child_exit);
     unlock(&parent->exit_lock);
     notify(&current->vfork_done);
+    // TODO futex wake on current->clear_tid
 
     if (init_died) {
         // brutally murder everything
