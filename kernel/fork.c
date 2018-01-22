@@ -27,8 +27,10 @@
 #define CLONE_NEWPID_ 0x20000000
 #define CLONE_NEWNET_ 0x40000000
 #define CLONE_IO_ 0x80000000
+#define IMPLEMENTED_FLAGS (CLONE_VM_|CLONE_FILES_|CLONE_FS_|CLONE_VFORK_|CLONE_DETACHED_|CLONE_CHILD_SETTID_)
 
 static int copy_task(struct task *task, dword_t flags, addr_t ctid_addr) {
+    int err;
     struct mem *mem = task->cpu.mem;
     if (flags & CLONE_VM_) {
         mem_retain(mem);
@@ -41,14 +43,43 @@ static int copy_task(struct task *task, dword_t flags, addr_t ctid_addr) {
         task->files->refcount++;
     } else {
         task->files = fdtable_copy(task->files);
-        if (IS_ERR(task->files))
-            return PTR_ERR(task->files);
+        if (IS_ERR(task->files)) {
+            err = PTR_ERR(task->files);
+            goto fail_free_mem;
+        }
     }
 
+    if (flags & CLONE_FS_) {
+        task->fs->refcount++;
+    } else {
+        task->fs = fs_info_copy(task->fs);
+        err = _ENOMEM;
+        if (task->fs == NULL)
+            goto fail_free_files;
+    }
+
+    err = _EFAULT;
     if (flags & CLONE_CHILD_SETTID_)
         if (user_put_task(task, ctid_addr, task->pid))
-            return _EFAULT;
+            goto fail_free_fs;
+
+    // TODO for threads:
+    // CLONE_SIGHAND
+    // CLONE_THREAD
+    // CLONE_SYSVSEM
+    // CLONE_SETTLS
+    // CLONE_PARENT_SETTID
+    // CLONE_CHILD_CLEARTID
+
     return 0;
+
+fail_free_mem:
+    mem_release(task->cpu.mem);
+fail_free_files:
+    fdtable_release(task->files);
+fail_free_fs:
+    fs_info_release(task->fs);
+    return err;
 }
 
 // eax = syscall number
@@ -56,7 +87,11 @@ static int copy_task(struct task *task, dword_t flags, addr_t ctid_addr) {
 // ecx = stack
 // edx, esi, edi = unimplemented garbage
 dword_t sys_clone(dword_t flags, addr_t stack, addr_t ptid, addr_t tls, addr_t ctid) {
-    STRACE("clone(%x, 0x%x, 0x%x, 0x%x, 0x%x)", flags, stack, ptid, tls, ctid);
+    STRACE("clone(0x%x, 0x%x, 0x%x, 0x%x, 0x%x)", flags, stack, ptid, tls, ctid);
+    if (flags & ~CSIGNAL_ & ~IMPLEMENTED_FLAGS) {
+        FIXME("unimplemented clone flags 0x%x", flags & ~CSIGNAL_ & ~IMPLEMENTED_FLAGS);
+        return _EINVAL;
+    }
     if (ptid != 0 || tls != 0) {
         FIXME("clone with ptid or ts not null");
         return _EINVAL;
