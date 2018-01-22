@@ -9,6 +9,8 @@ noreturn void do_exit(int status) {
     // this is the part where we release all our resources
     mem_release(current->cpu.mem);
     fdtable_release(current->files);
+    fs_info_release(current->fs);
+    sighand_release(current->sighand);
 
     // notify everyone we died
     bool init_died = current->pid == 1;
