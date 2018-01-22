@@ -139,6 +139,7 @@ dword_t sys_getcwd(addr_t buf_addr, dword_t size);
 dword_t sys_chdir(addr_t path_addr);
 dword_t sys_chroot(addr_t path_addr);
 dword_t sys_fchdir(fd_t f);
+int task_set_thread_area(struct task *task, addr_t u_info);
 int sys_set_thread_area(addr_t u_info);
 int sys_set_tid_address(addr_t blahblahblah);
 dword_t sys_setsid(void);
