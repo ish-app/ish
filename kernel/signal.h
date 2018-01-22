@@ -11,9 +11,9 @@ typedef qword_t sigset_t_;
 #define SIG_IGN_ 1
 struct sigaction_ {
     addr_t handler;
-    sigset_t_ mask;
     dword_t flags;
     addr_t restorer;
+    sigset_t_ mask;
 } __attribute__((packed));
 
 #define NUM_SIGS 64
@@ -60,10 +60,19 @@ void deliver_signal(struct task *task, int sig);
 void send_group_signal(dword_t pgid, int sig);
 // check for and deliver pending signals on current, should be called from SIGUSR1 handler
 void receive_signals(void);
-dword_t sys_rt_sigreturn(dword_t sig);
+
+struct sighand {
+    atomic_uint refcount;
+    struct sigaction_ action[NUM_SIGS];
+    lock_t lock;
+};
+struct sighand *sighand_new();
+struct sighand *sighand_copy(struct sighand *sighand);
+void sighand_release(struct sighand *sighand);
 
 dword_t sys_rt_sigaction(dword_t signum, addr_t action_addr, addr_t oldaction_addr, dword_t sigset_size);
 dword_t sys_sigaction(dword_t signum, addr_t action_addr, addr_t oldaction_addr);
+dword_t sys_rt_sigreturn(dword_t sig);
 
 #define SIG_BLOCK_ 0
 #define SIG_UNBLOCK_ 1

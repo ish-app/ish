@@ -8,24 +8,25 @@ int xsave_extra = 0;
 int fxsave_extra = 0;
 
 void deliver_signal(struct task *task, int sig) {
-    lock(&task->signal_lock);
+    lock(&task->sighand->lock);
     task->pending |= (1 << sig);
-    unlock(&task->signal_lock); // must do this before pthread_kill because the signal handler will lock task
+    unlock(&task->sighand->lock); // must do this before pthread_kill because the signal handler will lock task
     pthread_kill(task->thread, SIGUSR1);
 }
 
 void send_signal(struct task *task, int sig) {
-    lock(&task->signal_lock);
-    if (task->sigactions[sig].handler != SIG_IGN_) {
+    struct sighand *sighand = task->sighand;
+    lock(&sighand->lock);
+    if (sighand->action[sig].handler != SIG_IGN_) {
         if (task->blocked & (1 << sig)) {
             task->queued |= (1 << sig);
         } else {
-            unlock(&task->signal_lock);
+            unlock(&sighand->lock);
             deliver_signal(task, sig);
             return;
         }
     }
-    unlock(&task->signal_lock);
+    unlock(&sighand->lock);
 }
 
 void send_group_signal(dword_t pgid, int sig) {
@@ -38,9 +39,9 @@ void send_group_signal(dword_t pgid, int sig) {
     unlock(&pids_lock);
 }
 
-static void receive_signal(int sig) {
-    if (current->sigactions[sig].handler == SIG_DFL_) {
-        unlock(&current->signal_lock); // do_exit must be called without this lock
+static void receive_signal(struct sighand *sighand, int sig) {
+    if (sighand->action[sig].handler == SIG_DFL_) {
+        unlock(&sighand->lock); // do_exit must be called without this lock
         do_exit(sig);
     }
 
@@ -76,7 +77,7 @@ static void receive_signal(int sig) {
 
     // set up registers for signal handler
     cpu->eax = sig;
-    cpu->eip = current->sigactions[sig].handler;
+    cpu->eip = sighand->action[sig].handler;
 
     dword_t sp = cpu->esp;
     if (xsave_extra) {
@@ -101,13 +102,38 @@ static void receive_signal(int sig) {
 }
 
 void receive_signals() {
-    lock(&current->signal_lock);
+    struct sighand *sighand = current->sighand;
+    lock(&sighand->lock);
     if (current->pending) {
         for (int sig = 0; sig < NUM_SIGS; sig++)
             if (current->pending & (1 << sig))
-                receive_signal(sig);
+                receive_signal(sighand, sig);
     }
-    unlock(&current->signal_lock);
+    unlock(&sighand->lock);
+}
+
+struct sighand *sighand_new() {
+    struct sighand *sighand = malloc(sizeof(struct sighand));
+    if (sighand == NULL)
+        return NULL;
+    memset(sighand, 0, sizeof(struct sighand));
+    sighand->refcount = 1;
+    lock_init(&sighand->lock);
+    return sighand;
+}
+
+struct sighand *sighand_copy(struct sighand *sighand) {
+    struct sighand *new_sighand = sighand_new();
+    if (new_sighand == NULL)
+        return NULL;
+    memcpy(new_sighand->action, sighand->action, sizeof(new_sighand->action));
+    return new_sighand;
+}
+
+void sighand_release(struct sighand *sighand) {
+    if (--sighand->refcount== 0) {
+        free(sighand);
+    }
 }
 
 dword_t sys_rt_sigreturn(dword_t sig) {
@@ -138,12 +164,13 @@ static int do_sigaction(int sig, const struct sigaction_ *action, struct sigacti
     if (sig == SIGKILL_ || sig == SIGSTOP_)
         return _EINVAL;
 
-    lock(&current->signal_lock);
+    struct sighand *sighand = current->sighand;
+    lock(&sighand->lock);
     if (oldaction)
-        *oldaction = current->sigactions[sig];
+        *oldaction = sighand->action[sig];
     if (action)
-        current->sigactions[sig] = *action;
-    unlock(&current->signal_lock);
+        sighand->action[sig] = *action;
+    unlock(&sighand->lock);
     return 0;
 }
 
@@ -153,9 +180,6 @@ dword_t sys_rt_sigaction(dword_t signum, addr_t action_addr, addr_t oldaction_ad
     struct sigaction_ action, oldaction;
     if (action_addr != 0)
         if (user_get(action_addr, action))
-            return _EFAULT;
-    if (oldaction_addr != 0)
-        if (user_get(oldaction_addr, oldaction))
             return _EFAULT;
 
     int err = do_sigaction(signum,
@@ -175,16 +199,21 @@ dword_t sys_sigaction(dword_t signum, addr_t action_addr, addr_t oldaction_addr)
 }
 
 dword_t sys_rt_sigprocmask(dword_t how, addr_t set_addr, addr_t oldset_addr, dword_t size) {
-    // only allow musl's funky thing it does in sigaction
     if (size != sizeof(sigset_t_))
         return _EINVAL;
 
     sigset_t_ set;
     if (user_get(set_addr, set))
         return _EFAULT;
+    STRACE("rt_sigprocmask(%s, 0x%llx, 0x%x, %d)",
+            how == SIG_BLOCK_ ? "SIG_BLOCK" :
+            how == SIG_UNBLOCK_ ? "SIG_UNBLOCK" :
+            how == SIG_SETMASK_ ? "SIG_SETMASK" : "??",
+            (long long) set, oldset_addr, size);
     sigset_t_ oldset = current->blocked;
 
-    lock(&current->signal_lock);
+    struct sighand *sighand = current->sighand;
+    lock(&sighand->lock);
     if (how == SIG_BLOCK_)
         current->blocked |= set;
     else if (how == SIG_UNBLOCK_)
@@ -192,7 +221,7 @@ dword_t sys_rt_sigprocmask(dword_t how, addr_t set_addr, addr_t oldset_addr, dwo
     else if (how == SIG_SETMASK_)
         current->blocked = set;
     else {
-        unlock(&current->signal_lock);
+        unlock(&sighand->lock);
         return _EINVAL;
     }
 
@@ -200,7 +229,7 @@ dword_t sys_rt_sigprocmask(dword_t how, addr_t set_addr, addr_t oldset_addr, dwo
     sigset_t_ unblocked = oldset & ~current->blocked;
     current->pending |= current->queued & unblocked;
     current->queued &= ~unblocked;
-    unlock(&current->signal_lock);
+    unlock(&sighand->lock);
 
     if (oldset_addr != 0)
         if (user_put(oldset_addr, oldset))

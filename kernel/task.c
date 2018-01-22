@@ -69,7 +69,6 @@ struct task *task_create(struct task *parent) {
     task->has_timer = false;
     task->children_rusage = (struct rusage_) {};
 
-    lock_init(&task->signal_lock);
     lock_init(&task->exit_lock);
     pthread_cond_init(&task->child_exit, NULL);
     pthread_cond_init(&task->vfork_done, NULL);

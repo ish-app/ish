@@ -24,11 +24,10 @@ struct task {
     struct fdtable *files;
     struct fs_info *fs;
 
-    struct sigaction_ sigactions[NUM_SIGS];
+    struct sighand *sighand;
     sigset_t_ blocked;
     sigset_t_ queued; // where blocked signals go when they're sent
     sigset_t_ pending;
-    lock_t signal_lock;
 
     struct task *parent;
     struct list children;

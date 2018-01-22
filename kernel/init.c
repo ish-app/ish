@@ -42,6 +42,7 @@ void create_first_process() {
     fs->umask = 0022;
     current->fs = fs;
     current->files = fdtable_new(3);
+    current->sighand = sighand_new();
     current->thread = pthread_self();
     sys_setsid();
     for (int i = 0; i < RLIMIT_NLIMITS_; i++) {

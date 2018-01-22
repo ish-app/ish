@@ -27,7 +27,7 @@
 #define CLONE_NEWPID_ 0x20000000
 #define CLONE_NEWNET_ 0x40000000
 #define CLONE_IO_ 0x80000000
-#define IMPLEMENTED_FLAGS (CLONE_VM_|CLONE_FILES_|CLONE_FS_|CLONE_SYSVSEM_|CLONE_VFORK_|\
+#define IMPLEMENTED_FLAGS (CLONE_VM_|CLONE_FILES_|CLONE_FS_|CLONE_SIGHAND_|CLONE_SYSVSEM_|CLONE_VFORK_|\
         CLONE_SETTLS_|CLONE_CHILD_SETTID_|CLONE_PARENT_SETTID_|CLONE_DETACHED_)
 
 static int copy_task(struct task *task, dword_t flags, addr_t ptid_addr, addr_t tls_addr, addr_t ctid_addr) {
@@ -50,19 +50,27 @@ static int copy_task(struct task *task, dword_t flags, addr_t ptid_addr, addr_t 
         }
     }
 
+    err = _ENOMEM;
     if (flags & CLONE_FS_) {
         task->fs->refcount++;
     } else {
         task->fs = fs_info_copy(task->fs);
-        err = _ENOMEM;
         if (task->fs == NULL)
             goto fail_free_files;
+    }
+
+    if (flags & CLONE_SIGHAND_) {
+        task->sighand->refcount++;
+    } else {
+        task->sighand = sighand_copy(task->sighand);
+        if (task->sighand == NULL)
+            goto fail_free_fs;
     }
 
     if (flags & CLONE_SETTLS_) {
         err = task_set_thread_area(task, tls_addr);
         if (err < 0)
-            goto fail_free_fs;
+            goto fail_free_sighand;
     }
 
     err = _EFAULT;
@@ -74,7 +82,6 @@ static int copy_task(struct task *task, dword_t flags, addr_t ptid_addr, addr_t 
             goto fail_free_fs;
 
     // TODO for threads:
-    // CLONE_SIGHAND
     // CLONE_THREAD
     // CLONE_CHILD_CLEARTID
 
@@ -87,6 +94,8 @@ fail_free_files:
     fdtable_release(task->files);
 fail_free_fs:
     fs_info_release(task->fs);
+fail_free_sighand:
+    sighand_release(task->sighand);
     return err;
 }
 

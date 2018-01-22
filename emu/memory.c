@@ -15,6 +15,8 @@ static void mem_changed(struct mem *mem);
 
 struct mem *mem_new() {
     struct mem *mem = malloc(sizeof(struct mem));
+    if (mem == NULL)
+        return NULL;
     mem->refcount = 1;
     mem->pt = calloc(MEM_PAGES, sizeof(struct pt_entry));
     mem->changes = 0;
