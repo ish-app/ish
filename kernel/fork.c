@@ -121,6 +121,11 @@ dword_t sys_clone(dword_t flags, addr_t stack, addr_t ptid, addr_t tls, addr_t c
     if (stack != 0)
         TODO("clone with nonzero stack");
         // stack = current->cpu.esp;
+    
+    if (flags & CLONE_SIGHAND_ && !(flags & CLONE_VM_))
+        return _EINVAL;
+    if (flags & CLONE_THREAD_ && !(flags & CLONE_SIGHAND_))
+        return _EINVAL;
 
     struct task *task = task_create(current);
     if (task == NULL)
