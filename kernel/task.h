@@ -9,14 +9,17 @@
 #include "kernel/resource.h"
 #include "util/timer.h"
 
+// everything here is private to the thread executing this task and needs no
+// locking, unless otherwise specified
 struct task {
-    struct cpu_state cpu; // do not access this field except on the current process
+    struct cpu_state cpu;
     pthread_t thread;
 
-    pid_t_ pid, ppid;
+    pid_t_ pid; // immutable
     uid_t_ uid, gid;
     uid_t_ euid, egid;
 
+    // TODO move into mem
     addr_t vdso;
     addr_t start_brk;
     addr_t brk;
@@ -30,13 +33,14 @@ struct task {
     sigset_t_ queued; // where blocked signals go when they're sent
     sigset_t_ pending;
 
+    // locked by pids_lock
     struct task *parent;
     struct list children;
     struct list siblings;
-
     pid_t_ sid, pgid;
     struct list session;
     struct list group;
+
     struct tty *tty;
 
     bool has_timer;

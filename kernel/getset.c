@@ -10,7 +10,14 @@ dword_t sys_gettid() {
 }
 dword_t sys_getppid() {
     STRACE("getppid()");
-    return current->ppid;
+    pid_t_ ppid;
+    lock(&pids_lock);
+    if (current->parent != NULL)
+        ppid = current->parent->pid;
+    else
+        ppid = 0;
+    unlock(&pids_lock);
+    return ppid;
 }
 dword_t sys_getpgid(dword_t pid) {
     STRACE("getpgid(%d)", pid);

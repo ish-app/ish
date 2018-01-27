@@ -33,7 +33,6 @@ void create_first_process() {
     current = task_create(NULL);
     current->cpu.mem = mem_new();
     current->parent = current;
-    current->ppid = 1;
     current->uid = current->gid = 0;
     current->fs = fs_info_new();
     struct fs_info *fs = fs_info_new();
