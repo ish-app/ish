@@ -13,9 +13,9 @@ struct task {
     struct cpu_state cpu; // do not access this field except on the current process
     pthread_t thread;
 
-    dword_t pid, ppid;
-    dword_t uid, gid;
-    dword_t euid, egid;
+    pid_t_ pid, ppid;
+    uid_t_ uid, gid;
+    uid_t_ euid, egid;
 
     addr_t vdso;
     addr_t start_brk;
@@ -34,7 +34,7 @@ struct task {
     struct list children;
     struct list siblings;
 
-    dword_t sid, pgid;
+    pid_t_ sid, pgid;
     struct list session;
     struct list group;
     struct tty *tty;
