@@ -45,11 +45,16 @@ dword_t sys_setitimer(dword_t which, addr_t new_val_addr, addr_t old_val_addr) {
     if (user_get(new_val_addr, val))
         return _EFAULT;
 
-    if (!current->has_timer) {
-        current->timer = timer_new((timer_callback_t) itimer_notify, current);
-        if (IS_ERR(current->timer))
-            return PTR_ERR(current->timer);
-        current->has_timer = true;
+    struct tgroup *group = current->group;
+    lock(&group->lock);
+    if (!group->has_timer) {
+        struct timer *timer = timer_new((timer_callback_t) itimer_notify, current);
+        if (IS_ERR(timer)) {
+            unlock(&group->lock);
+            return PTR_ERR(timer);
+        }
+        group->timer = timer;
+        group->has_timer = true;
     }
 
     struct timer_spec spec;
@@ -58,8 +63,10 @@ dword_t sys_setitimer(dword_t which, addr_t new_val_addr, addr_t old_val_addr) {
     spec.value.tv_sec = val.value.sec;
     spec.value.tv_nsec = val.value.usec * 1000;
     struct timer_spec old_spec;
-    if (timer_set(current->timer, spec, &old_spec) < 0)
-        return errno_map();
+    int err = timer_set(group->timer, spec, &old_spec);
+    unlock(&group->lock);
+    if (err < 0)
+        return err;
 
     if (old_val_addr != 0) {
         struct itimerval_ old_val;

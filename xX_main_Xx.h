@@ -14,16 +14,14 @@ static inline int xX_main_Xx(int argc, char *const argv[]) {
     int opt;
     const char *root = "";
     bool has_root = false;
-    const struct fs_ops *fs;
+    const struct fs_ops *fs = &realfs;
     while ((opt = getopt(argc, argv, "+r:f:")) != -1) {
         switch (opt) {
             case 'r':
             case 'f':
                 root = optarg;
                 has_root = true;
-                if (opt == 'r')
-                    fs = &realfs;
-                else
+                if (opt == 'f')
                     fs = &fakefs;
                 break;
         }

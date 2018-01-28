@@ -11,7 +11,7 @@ static struct pid pids[MAX_PID + 1] = {};
 lock_t pids_lock = LOCK_INITIALIZER;
 
 static bool pid_empty(struct pid *pid) {
-    return pid->task == NULL && list_empty(&pid->session) && list_empty(&pid->group);
+    return pid->task == NULL && list_empty(&pid->session) && list_empty(&pid->pgroup);
 }
 
 struct pid *pid_get(dword_t id) {
@@ -46,7 +46,7 @@ struct task *task_create(struct task *parent) {
     struct pid *pid = &pids[cur_pid];
     pid->id = cur_pid;
     list_init(&pid->session);
-    list_init(&pid->group);
+    list_init(&pid->pgroup);
 
     struct task *task = malloc(sizeof(struct task));
     if (task == NULL)
@@ -62,23 +62,18 @@ struct task *task_create(struct task *parent) {
     list_init(&task->siblings);
     if (parent != NULL) {
         task->parent = parent;
-        task->ppid = parent->pid;
         list_add(&parent->children, &task->siblings);
     }
 
-    task->has_timer = false;
-    task->children_rusage = (struct rusage_) {};
-
-    lock_init(&task->exit_lock);
-    pthread_cond_init(&task->child_exit, NULL);
-    pthread_cond_init(&task->vfork_done, NULL);
+    lock_init(&task->vfork_lock);
+    pthread_cond_init(&task->vfork_cond, NULL);
     return task;
 }
 
 void task_destroy(struct task *task) {
     lock(&pids_lock);
     list_remove(&task->siblings);
-    list_remove(&task->group);
+    list_remove(&task->pgroup);
     list_remove(&task->session);
     pid_get(task->pid)->task = NULL;
     unlock(&pids_lock);

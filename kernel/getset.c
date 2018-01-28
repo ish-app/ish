@@ -2,7 +2,7 @@
 
 dword_t sys_getpid() {
     STRACE("getpid()");
-    return current->pid;
+    return current->tgid;
 }
 dword_t sys_gettid() {
     STRACE("gettid()");

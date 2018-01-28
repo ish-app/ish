@@ -26,14 +26,28 @@ int mount_root(const struct fs_ops *fs, const char *source) {
 
 static void nop_handler() {}
 
+static struct tgroup *init_tgroup() {
+    struct tgroup *group = malloc(sizeof(struct tgroup));
+    if (group == NULL)
+        return NULL;
+    *group = (struct tgroup) {};
+    list_init(&group->threads);
+    lock_init(&group->lock);
+    pthread_cond_init(&group->child_exit, NULL);
+    return group;
+}
+
 void create_first_process() {
     signal(SIGUSR1, nop_handler);
     signal(SIGPIPE, SIG_IGN);
 
     current = task_create(NULL);
     current->cpu.mem = mem_new();
-    current->parent = current;
-    current->uid = current->gid = 0;
+    struct tgroup *group = init_tgroup();
+    list_add(&group->threads, &current->group_links);
+    group->leader = current;
+    current->group = group;
+
     current->fs = fs_info_new();
     struct fs_info *fs = fs_info_new();
     fs->pwd = fs->root = generic_open("/", O_RDONLY_, 0);
@@ -42,11 +56,10 @@ void create_first_process() {
     current->fs = fs;
     current->files = fdtable_new(3);
     current->sighand = sighand_new();
+    for (int i = 0; i < RLIMIT_NLIMITS_; i++)
+        current->group->limits[i].cur = current->group->limits[i].max = RLIM_INFINITY_;
     current->thread = pthread_self();
     sys_setsid();
-    for (int i = 0; i < RLIMIT_NLIMITS_; i++) {
-        current->limits[i].cur = current->limits[i].max = RLIM_INFINITY_;
-    }
 }
 
 int create_stdio(struct tty_driver driver) {

@@ -1,5 +1,5 @@
-#ifndef task_H
-#define task_H
+#ifndef TASK_H
+#define TASK_H
 
 #include <pthread.h>
 #include "util/list.h"
@@ -15,7 +15,9 @@ struct task {
     struct cpu_state cpu;
     pthread_t thread;
 
-    pid_t_ pid; // immutable
+    struct tgroup *group; // immutable
+    struct list group_links;
+    pid_t_ pid, tgid; // immutable
     uid_t_ uid, gid;
     uid_t_ euid, egid;
 
@@ -39,27 +41,16 @@ struct task {
     struct list siblings;
     pid_t_ sid, pgid;
     struct list session;
-    struct list group;
+    struct list pgroup;
 
-    struct tty *tty;
-
-    bool has_timer;
-    struct timer *timer;
-
-    struct rlimit_ limits[RLIMIT_NLIMITS_];
-
-    // the next two fields are protected by the exit_lock on the parent
-    // process. this is because waitpid locks the parent process to wait for
-    // any of its children to exit.
+    // locked by parent's thread group
     dword_t exit_code;
-    struct rusage_ rusage;
     bool zombie;
 
-    struct rusage_ children_rusage;
-    pthread_cond_t child_exit;
-    lock_t exit_lock;
-
-    pthread_cond_t vfork_done;
+    // I wish conditions variables were as reliable as wait queues. alas, they are not
+    bool vfork_done;
+    pthread_cond_t vfork_cond;
+    lock_t vfork_lock;
 };
 
 // current will always give the process that is currently executing
@@ -73,11 +64,41 @@ struct task *task_create(struct task *parent);
 // Removes the process from the process table and frees it.
 void task_destroy(struct task *task);
 
+void vfork_notify(struct task *task);
+
+// struct thread_group is way too long to type comfortably
+struct tgroup {
+    struct list threads;
+    struct task *leader; // immutable
+    struct rusage_ rusage;
+
+    struct tty *tty;
+
+    bool has_timer;
+    struct timer *timer;
+
+    struct rlimit_ limits[RLIMIT_NLIMITS_];
+
+    // https://twitter.com/tblodt/status/957706819236904960
+    // TODO locking
+    bool group_exit; // whether exit_group was called
+    dword_t group_exit_code;
+
+    struct rusage_ children_rusage;
+    pthread_cond_t child_exit;
+
+    lock_t lock;
+};
+
+static inline bool task_is_leader(struct task *task) {
+    return task->group->leader == task;
+}
+
 struct pid {
     dword_t id;
     struct task *task;
     struct list session;
-    struct list group;
+    struct list pgroup;
 };
 
 // these functions must be called with pids_lock

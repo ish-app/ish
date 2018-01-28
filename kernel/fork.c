@@ -2,6 +2,7 @@
 #include "kernel/task.h"
 #include "fs/fd.h"
 #include "kernel/calls.h"
+#include "fs/tty.h"
 
 #define CSIGNAL_ 0x000000ff
 #define CLONE_VM_ 0x00000100
@@ -29,6 +30,20 @@
 #define CLONE_IO_ 0x80000000
 #define IMPLEMENTED_FLAGS (CLONE_VM_|CLONE_FILES_|CLONE_FS_|CLONE_SIGHAND_|CLONE_SYSVSEM_|CLONE_VFORK_|\
         CLONE_SETTLS_|CLONE_CHILD_SETTID_|CLONE_PARENT_SETTID_|CLONE_CHILD_CLEARTID_|CLONE_DETACHED_)
+
+static struct tgroup *tgroup_copy(struct tgroup *old_group) {
+    struct tgroup *group = malloc(sizeof(struct tgroup));
+    *group = *old_group;
+    list_init(&group->threads);
+    group->tty->refcount++;
+    group->has_timer = false;
+    group->timer = NULL;
+    group->group_exit = false;
+    group->children_rusage = (struct rusage_) {};
+    pthread_cond_init(&group->child_exit, NULL);
+    lock_init(&group->lock);
+    return group;
+}
 
 static int copy_task(struct task *task, dword_t flags, addr_t ptid_addr, addr_t tls_addr, addr_t ctid_addr) {
     int err;
@@ -67,6 +82,17 @@ static int copy_task(struct task *task, dword_t flags, addr_t ptid_addr, addr_t 
             goto fail_free_fs;
     }
 
+    struct tgroup *group = task->group;
+    lock(&group->lock);
+    if (flags & CLONE_THREAD_) {
+        list_add(&group->threads, &task->group_links);
+    } else {
+        task->group = tgroup_copy(group);
+        task->group->leader = task;
+        list_add(&task->group->threads, &task->group_links);
+    }
+    unlock(&group->lock);
+
     if (flags & CLONE_SETTLS_) {
         err = task_set_thread_area(task, tls_addr);
         if (err < 0)
@@ -101,10 +127,6 @@ fail_free_mem:
     return err;
 }
 
-// eax = syscall number
-// ebx = flags
-// ecx = stack
-// edx, esi, edi = unimplemented garbage
 dword_t sys_clone(dword_t flags, addr_t stack, addr_t ptid, addr_t tls, addr_t ctid) {
     STRACE("clone(0x%x, 0x%x, 0x%x, 0x%x, 0x%x)", flags, stack, ptid, tls, ctid);
     if (flags & ~CSIGNAL_ & ~IMPLEMENTED_FLAGS) {
@@ -141,10 +163,10 @@ dword_t sys_clone(dword_t flags, addr_t stack, addr_t ptid, addr_t tls, addr_t c
     task_start(task);
 
     if (flags & CLONE_VFORK_) {
-        // FIXME this doesn't loop, it must be wrong
-        lock(&task->exit_lock);
-        wait_for(&task->vfork_done, &task->exit_lock);
-        unlock(&task->exit_lock);
+        lock(&task->vfork_lock);
+        while (!task->vfork_done)
+            wait_for(&task->vfork_cond, &task->vfork_lock);
+        unlock(&task->vfork_lock);
     }
     return task->pid;
 }
@@ -155,4 +177,11 @@ dword_t sys_fork() {
 
 dword_t sys_vfork() {
     return sys_clone(CLONE_VFORK_ | CLONE_VM_ | SIGCHLD_, 0, 0, 0, 0);
+}
+
+void vfork_notify(struct task *task) {
+    lock(&task->vfork_lock);
+    task->vfork_done = true;
+    notify(&task->vfork_cond);
+    unlock(&task->vfork_lock);
 }

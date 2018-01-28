@@ -10,12 +10,27 @@
 #endif
 #include "kernel/calls.h"
 
+struct rlimit_ rlimit_get(struct task *task, int resource) {
+    struct tgroup *group = current->group;
+    lock(&group->lock);
+    struct rlimit_ limit = group->limits[resource];
+    unlock(&group->lock);
+    return limit;
+}
+
+void rlimit_set(struct task *task, int resource, struct rlimit_ limit) {
+    struct tgroup *group = current->group;
+    lock(&group->lock);
+    group->limits[resource] = limit;
+    unlock(&group->lock);
+}
+
 rlim_t_ rlimit(int resource) {
-    return current->limits[resource].cur;
+    return rlimit_get(current, resource).cur;
 }
 
 dword_t sys_getrlimit(dword_t resource, addr_t rlim_addr) {
-    struct rlimit_ rlimit = current->limits[resource];
+    struct rlimit_ rlimit = rlimit_get(current, resource);
     if (user_put(rlim_addr, rlimit))
         return _EFAULT;
     return 0;
@@ -26,7 +41,7 @@ dword_t sys_setrlimit(dword_t resource, addr_t rlim_addr) {
     if (user_get(rlim_addr, rlimit))
         return _EFAULT;
     // TODO check permissions
-    current->limits[resource] = rlimit;
+    rlimit_set(current, resource, rlimit);
     return 0;
 }
 
@@ -92,9 +107,9 @@ dword_t sys_getrusage(dword_t who, addr_t rusage_addr) {
             rusage = rusage_get_current();
             break;
         case RUSAGE_CHILDREN_:
-            lock(&current->exit_lock);
-            rusage = current->children_rusage;
-            unlock(&current->exit_lock);
+            lock(&current->group->lock);
+            rusage = current->group->children_rusage;
+            unlock(&current->group->lock);
             break;
         default:
             return _EINVAL;

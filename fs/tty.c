@@ -56,7 +56,7 @@ static int tty_get(int type, int num, struct tty **tty_out) {
     return 0;
 }
 
-static void tty_release(struct tty *tty) {
+void tty_release(struct tty *tty) {
     lock(&ttys_lock);
     lock(&tty->lock);
     if (--tty->refcount == 0) {
@@ -92,8 +92,10 @@ static int tty_open(int major, int minor, int type, struct fd *fd) {
 
     lock(&pids_lock);
     if (current->sid == current->pid) {
-        if (current->tty == NULL) {
-            current->tty = tty;
+        lock(&current->group->lock);
+        if (current->group->tty == NULL) {
+            current->group->tty = tty;
+            unlock(&current->group->lock);
             tty->session = current->sid;
             tty->fg_group = current->pgid;
         }
@@ -313,6 +315,13 @@ static ssize_t tty_ioctl_size(struct fd *fd, int cmd) {
     return -1;
 }
 
+static bool tty_is_current(struct tty *tty) {
+    lock(&current->group->lock);
+    bool is_current = current->group->tty == tty;
+    unlock(&current->group->lock);
+    return is_current;
+}
+
 static int tty_ioctl(struct fd *fd, int cmd, void *arg) {
     int err = 0;
     struct tty *tty = fd->tty;
@@ -342,14 +351,15 @@ static int tty_ioctl(struct fd *fd, int cmd, void *arg) {
             break;
 
         case TIOCGPRGP_:
-            if (tty != current->tty || tty->fg_group == 0) {
+            if (tty_is_current(tty) || tty->fg_group == 0) {
                 err = _ENOTTY;
                 break;
             }
             TRACELN("tty group = %d", tty->fg_group);
             *(dword_t *) arg = tty->fg_group; break;
         case TIOCSPGRP_:
-            if (tty != current->tty || current->sid != tty->session) {
+            // FIXME I think current->sid needs to be locked
+            if (tty_is_current(tty) || current->sid != tty->session) {
                 err = _ENOTTY;
                 break;
             }

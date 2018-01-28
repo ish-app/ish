@@ -14,7 +14,7 @@ dword_t sys_setpgid(dword_t id, dword_t pgid) {
     // when creating a process group, you need to specify your own pid
     // TODO or a child in the same session
     err = _EPERM;
-    if (list_empty(&pid->group) && id != pgid)
+    if (list_empty(&pid->pgroup) && id != pgid)
         goto out;
     // TODO you can only join a process group in the same session
 
@@ -35,9 +35,9 @@ dword_t sys_setpgid(dword_t id, dword_t pgid) {
     // TODO cannot set process group of a child that has done exec
 
     if (task->pgid != pgid) {
-        list_remove(&task->group);
+        list_remove(&task->pgroup);
         task->pgid = pgid;
-        list_add(&pid->group, &task->group);
+        list_add(&pid->pgroup, &task->pgroup);
     }
 
     err = 0;
@@ -60,7 +60,7 @@ dword_t sys_setsid() {
     struct pid *pid = pid_get(current->pid);
     list_add(&pid->session, &current->session);
     current->sid = current->pid;
-    list_add(&pid->group, &current->group);
+    list_add(&pid->pgroup, &current->pgroup);
     current->pgid = current->pid;
 
     unlock(&pids_lock);
