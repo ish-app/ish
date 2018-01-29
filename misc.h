@@ -30,8 +30,14 @@
 #define postulate assert
 #endif
 #define unlikely(x) __builtin_expect((x), 0)
-#define must_check __attribute__((warn_unused_result))
 #define typecheck(type, x) ({type _x = x; x;})
+#define must_check __attribute__((warn_unused_result))
+#if defined(__has_attribute) && __has_attribute(no_sanitize)
+#define __no_instrument __attribute__((no_sanitize("address", "thread", "undefined", "leak", "memory")))
+#else
+#define __no_instrument
+#endif
+
 #if defined(__x86_64__)
 #define rdtsc() ({ \
         uint32_t low, high; \

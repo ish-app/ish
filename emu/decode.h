@@ -9,7 +9,7 @@
 #define TRACEI(msg, ...) TRACE(msg "\t", ##__VA_ARGS__)
 
 // this will be the next PyEval_EvalFrameEx.
-int CONCAT(decoder_name, OP_SIZE)(struct cpu_state *cpu, struct tlb *tlb) {
+__no_instrument int CONCAT(decoder_name, OP_SIZE)(struct cpu_state *cpu, struct tlb *tlb) {
     DECLARE_LOCALS;
 
     dword_t addr_offset = 0;

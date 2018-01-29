@@ -627,7 +627,7 @@
 #include "decode.h"
 #undef OP_SIZE
 
-flatten void cpu_run(struct cpu_state *cpu) {
+flatten __no_instrument void cpu_run(struct cpu_state *cpu) {
     int i = 0;
     struct tlb *tlb = tlb_new(cpu->mem);
     read_wrlock(&cpu->mem->lock);
