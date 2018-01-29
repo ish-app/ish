@@ -351,7 +351,7 @@ static int tty_ioctl(struct fd *fd, int cmd, void *arg) {
             break;
 
         case TIOCGPRGP_:
-            if (tty_is_current(tty) || tty->fg_group == 0) {
+            if (!tty_is_current(tty) || tty->fg_group == 0) {
                 err = _ENOTTY;
                 break;
             }
@@ -359,7 +359,7 @@ static int tty_ioctl(struct fd *fd, int cmd, void *arg) {
             *(dword_t *) arg = tty->fg_group; break;
         case TIOCSPGRP_:
             // FIXME I think current->sid needs to be locked
-            if (tty_is_current(tty) || current->sid != tty->session) {
+            if (!tty_is_current(tty) || current->sid != tty->session) {
                 err = _ENOTTY;
                 break;
             }
