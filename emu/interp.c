@@ -629,11 +629,12 @@
 
 flatten __no_instrument void cpu_run(struct cpu_state *cpu) {
     int i = 0;
-    struct tlb *tlb = tlb_new(cpu->mem);
+    struct tlb tlb = {.mem = cpu->mem};
+    tlb_flush(&tlb);
     read_wrlock(&cpu->mem->lock);
     int changes = cpu->mem->changes;
     while (true) {
-        int interrupt = cpu_step32(cpu, tlb);
+        int interrupt = cpu_step32(cpu, &tlb);
         if (interrupt == INT_NONE && i++ >= 100000) {
             i = 0;
             interrupt = INT_TIMER;
@@ -643,10 +644,10 @@ flatten __no_instrument void cpu_run(struct cpu_state *cpu) {
             read_wrunlock(&cpu->mem->lock);
             handle_interrupt(interrupt);
             read_wrlock(&cpu->mem->lock);
-            if (tlb->mem != cpu->mem)
-                tlb->mem = cpu->mem;
+            if (tlb.mem != cpu->mem)
+                tlb.mem = cpu->mem;
             if (cpu->mem->changes != changes) {
-                tlb_flush(tlb);
+                tlb_flush(&tlb);
                 changes = cpu->mem->changes;
             }
         }
