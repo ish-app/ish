@@ -71,12 +71,10 @@ struct task *task_create(struct task *parent) {
 }
 
 void task_destroy(struct task *task) {
-    lock(&pids_lock);
     list_remove(&task->siblings);
     list_remove(&task->pgroup);
     list_remove(&task->session);
     pid_get(task->pid)->task = NULL;
-    unlock(&pids_lock);
     free(task);
 }
 

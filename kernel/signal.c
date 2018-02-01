@@ -8,23 +8,19 @@ int xsave_extra = 0;
 int fxsave_extra = 0;
 
 void deliver_signal(struct task *task, int sig) {
-    lock(&task->sighand->lock);
     task->pending |= (1 << sig);
-    unlock(&task->sighand->lock); // must do this before pthread_kill because the signal handler will lock task
-    pthread_kill(task->thread, SIGUSR1);
+    if (task != current)
+        pthread_kill(task->thread, SIGUSR1);
 }
 
 void send_signal(struct task *task, int sig) {
     struct sighand *sighand = task->sighand;
     lock(&sighand->lock);
     if (sighand->action[sig].handler != SIG_IGN_) {
-        if (task->blocked & (1 << sig)) {
+        if (task->blocked & (1 << sig))
             task->queued |= (1 << sig);
-        } else {
-            unlock(&sighand->lock);
+        else
             deliver_signal(task, sig);
-            return;
-        }
     }
     unlock(&sighand->lock);
 }
@@ -240,10 +236,12 @@ dword_t sys_rt_sigprocmask(dword_t how, addr_t set_addr, addr_t oldset_addr, dwo
 dword_t sys_kill(dword_t pid, dword_t sig) {
     // TODO check permissions
     // TODO process groups
+    lock(&pids_lock);
     struct task *task = pid_get_task(pid);
     if (task == NULL)
         return _ESRCH;
     send_signal(task, sig);
+    unlock(&pids_lock);
     return 0;
 }
 

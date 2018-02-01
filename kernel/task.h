@@ -61,7 +61,7 @@ extern __thread struct task *current;
 // Creates a new process, initializes most fields from the parent. Specify
 // parent as NULL to create the init process. Returns NULL if out of memory.
 struct task *task_create(struct task *parent);
-// Removes the process from the process table and frees it.
+// Removes the process from the process table and frees it. Must be called with pids_lock.
 void task_destroy(struct task *task);
 
 void vfork_notify(struct task *task);
@@ -81,7 +81,7 @@ struct tgroup {
 
     // https://twitter.com/tblodt/status/957706819236904960
     // TODO locking
-    bool group_exit; // whether exit_group was called
+    bool doing_group_exit;
     dword_t group_exit_code;
 
     struct rusage_ children_rusage;
@@ -101,11 +101,12 @@ struct pid {
     struct list pgroup;
 };
 
+// synchronizes obtaining a pointer to a task and freeing that task
+extern lock_t pids_lock;
 // these functions must be called with pids_lock
 struct pid *pid_get(dword_t pid);
 struct task *pid_get_task(dword_t pid);
 struct task *pid_get_task_zombie(dword_t id); // don't return null if the task exists as a zombie
-extern lock_t pids_lock;
 
 #define MAX_PID (1 << 10) // oughta be enough
 

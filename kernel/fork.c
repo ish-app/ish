@@ -38,7 +38,7 @@ static struct tgroup *tgroup_copy(struct tgroup *old_group) {
     group->tty->refcount++;
     group->has_timer = false;
     group->timer = NULL;
-    group->group_exit = false;
+    group->doing_group_exit = false;
     group->children_rusage = (struct rusage_) {};
     pthread_cond_init(&group->child_exit, NULL);
     lock_init(&group->lock);
@@ -82,16 +82,14 @@ static int copy_task(struct task *task, dword_t flags, addr_t ptid_addr, addr_t 
             goto fail_free_fs;
     }
 
-    struct tgroup *group = task->group;
-    lock(&group->lock);
-    if (flags & CLONE_THREAD_) {
-        list_add(&group->threads, &task->group_links);
-    } else {
-        task->group = tgroup_copy(group);
+    struct tgroup *old_group = task->group;
+    lock(&old_group->lock);
+    if (!(flags & CLONE_THREAD_)) {
+        task->group = tgroup_copy(old_group);
         task->group->leader = task;
-        list_add(&task->group->threads, &task->group_links);
     }
-    unlock(&group->lock);
+    list_add(&task->group->threads, &task->group_links);
+    unlock(&old_group->lock);
 
     if (flags & CLONE_SETTLS_) {
         err = task_set_thread_area(task, tls_addr);
