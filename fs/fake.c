@@ -311,13 +311,15 @@ static int fakefs_mount(struct mount *mount) {
     if (fstat(gdbm_fdesc(mount->db), &stat) < 0) DIE("fstat database");
     datum key = {.dptr = "db inode", .dsize = strlen("db inode")};
     datum value = gdbm_fetch(mount->db, key);
-    if (value.dptr != NULL && atol(value.dptr) != stat.st_ino) {
-        free(value.dptr);
-        int err = fakefs_rebuild(mount, db_path);
-        if (err < 0) {
-            close(mount->root_fd);
-            return err;
+    if (value.dptr != NULL) {
+        if (atol(value.dptr) != stat.st_ino) {
+            int err = fakefs_rebuild(mount, db_path);
+            if (err < 0) {
+                close(mount->root_fd);
+                return err;
+            }
         }
+        free(value.dptr);
     }
 
     char keydata[30];
