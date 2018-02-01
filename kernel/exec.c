@@ -141,7 +141,7 @@ static int elf_exec(struct fd *fd, const char *file, char *const argv[], char *c
         // open interpreter and read headers
         interp_fd = generic_open(interp_name, O_RDONLY, 0);
         if (IS_ERR(interp_fd)) {
-            err = PTR_ERR(err);
+            err = PTR_ERR(interp_fd);
             goto out_free_interp;
         }
         if ((err = read_header(interp_fd, &interp_header)) < 0) {
@@ -355,6 +355,8 @@ out_free_interp:
         free(interp_name);
     if (interp_fd != NULL)
         interp_fd->ops->close(interp_fd);
+    if (interp_ph != NULL)
+        free(interp_ph);
 out_free_ph:
     free(ph);
     return err;
