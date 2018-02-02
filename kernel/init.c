@@ -48,12 +48,11 @@ void create_first_process() {
     group->leader = current;
     current->group = group;
 
-    current->fs = fs_info_new();
     struct fs_info *fs = fs_info_new();
+    current->fs = fs;
     fs->pwd = fs->root = generic_open("/", O_RDONLY_, 0);
     fs->pwd->refcount = 2;
     fs->umask = 0022;
-    current->fs = fs;
     current->files = fdtable_new(3);
     current->sighand = sighand_new();
     for (int i = 0; i < RLIMIT_NLIMITS_; i++)
