@@ -22,15 +22,13 @@ struct fd *fd_retain(struct fd *fd) {
 }
 
 int fd_close(struct fd *fd) {
+    int err = 0;
     if (--fd->refcount == 0) {
-        if (fd->ops->close) {
-            int err = fd->ops->close(fd);
-            if (err < 0)
-                return err;
-        }
+        if (fd->ops->close)
+            err = fd->ops->close(fd);
         free(fd);
     }
-    return 0;
+    return err;
 }
 
 struct fdtable *fdtable_new(unsigned size) {
