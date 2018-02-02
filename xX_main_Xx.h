@@ -1,9 +1,13 @@
+#include <signal.h>
 #include <unistd.h>
 #include "kernel/init.h"
 #include "kernel/fs.h"
 
 static void exit_handler(int code) {
-    exit(code >> 8);
+    if (code & 0xff)
+        raise(code & 0xff);
+    else
+        exit(code >> 8);
 }
 
 // this function parses command line arguments and initializes global
