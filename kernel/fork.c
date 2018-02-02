@@ -46,6 +46,8 @@ static struct tgroup *tgroup_copy(struct tgroup *old_group) {
 }
 
 static int copy_task(struct task *task, dword_t flags, addr_t ptid_addr, addr_t tls_addr, addr_t ctid_addr) {
+    task->vfork_done = false;
+
     int err;
     struct mem *mem = task->cpu.mem;
     if (flags & CLONE_VM_) {
