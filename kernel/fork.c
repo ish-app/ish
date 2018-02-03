@@ -45,8 +45,10 @@ static struct tgroup *tgroup_copy(struct tgroup *old_group) {
     return group;
 }
 
-static int copy_task(struct task *task, dword_t flags, addr_t ptid_addr, addr_t tls_addr, addr_t ctid_addr) {
+static int copy_task(struct task *task, dword_t flags, addr_t stack, addr_t ptid_addr, addr_t tls_addr, addr_t ctid_addr) {
     task->vfork_done = false;
+    if (stack != 0)
+        task->cpu.esp = stack;
 
     int err;
     struct mem *mem = task->cpu.mem;
@@ -129,19 +131,6 @@ dword_t sys_clone(dword_t flags, addr_t stack, addr_t ptid, addr_t tls, addr_t c
         FIXME("unimplemented clone flags 0x%x", flags & ~CSIGNAL_ & ~IMPLEMENTED_FLAGS);
         return _EINVAL;
     }
-    if (ptid != 0 || tls != 0) {
-        FIXME("clone with ptid or ts not null");
-        return _EINVAL;
-    }
-    if ((flags & CSIGNAL_) != SIGCHLD_) {
-        FIXME("clone non sigchld");
-        return _EINVAL;
-    }
-
-    if (stack != 0)
-        TODO("clone with nonzero stack");
-        // stack = current->cpu.esp;
-    
     if (flags & CLONE_SIGHAND_ && !(flags & CLONE_VM_))
         return _EINVAL;
     if (flags & CLONE_THREAD_ && !(flags & CLONE_SIGHAND_))
@@ -150,7 +139,7 @@ dword_t sys_clone(dword_t flags, addr_t stack, addr_t ptid, addr_t tls, addr_t c
     struct task *task = task_create(current);
     if (task == NULL)
         return _ENOMEM;
-    int err = copy_task(task, flags, ptid, tls, ctid);
+    int err = copy_task(task, flags, stack, ptid, tls, ctid);
     if (err < 0) {
         task_destroy(task);
         return err;
