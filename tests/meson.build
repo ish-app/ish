@@ -19,6 +19,8 @@ executable('getdents', ['getdents.c'])
 executable('signal', ['signal.c'], link_args: ['-static'])
 executable('forkexec', ['forkexec.c'])
 
+executable('thread', ['thread.c'], dependencies: dependency('threads'))
+
 # qemu test program
 executable('qemu-test', ['qemu-test.c'], link_args: ['-lm'])
 
