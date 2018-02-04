@@ -113,6 +113,8 @@ extern const struct fs_ops realfs;
 extern const struct fs_ops fakefs;
 extern const struct fd_ops realfs_fdops;
 
+int realfs_truncate(struct mount *mount, const char *path, off_t_ size);
+
 int realfs_statfs(struct mount *mount, struct statfsbuf *stat);
 int realfs_flock(struct fd *fd, int operation);
 ssize_t realfs_read(struct fd *fd, void *buf, size_t bufsize);

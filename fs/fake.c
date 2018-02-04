@@ -221,7 +221,6 @@ static int fakefs_setattr(struct mount *mount, const char *path, struct attr att
     struct ish_stat ishstat;
     if (!read_stat(mount, path, &ishstat))
         return _ENOENT;
-    int err;
     switch (attr.type) {
         case attr_uid:
             ishstat.uid = attr.uid;
@@ -233,10 +232,7 @@ static int fakefs_setattr(struct mount *mount, const char *path, struct attr att
             ishstat.mode = (ishstat.mode & S_IFMT) | (attr.mode & ~S_IFMT);
             break;
         case attr_size:
-            err = truncate(fix_path(path), attr.size);
-            if (err < 0)
-                return err;
-            break;
+            return realfs_truncate(mount, path, attr.size);
     }
     return 0;
 }

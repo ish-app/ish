@@ -217,6 +217,16 @@ static int realfs_symlink(struct mount *mount, const char *target, const char *l
     return err;
 }
 
+int realfs_truncate(struct mount *mount, const char *path, off_t_ size) {
+    int fd = openat(mount->root_fd, fix_path(path), O_RDWR);
+    if (fd < 0)
+        return errno_map();
+    if (ftruncate(fd, size) < 0)
+        return errno_map();
+    close(fd);
+    return 0;
+}
+
 static int realfs_setattr(struct mount *mount, const char *path, struct attr attr) {
     path = fix_path(path);
     int root = mount->root_fd;
@@ -232,8 +242,7 @@ static int realfs_setattr(struct mount *mount, const char *path, struct attr att
             err = fchmodat(root, path, attr.mode, 0);
             break;
         case attr_size:
-            err = truncate(fix_path(path), attr.size);
-            break;
+            return realfs_truncate(mount, path, attr.size);
         default:
             TODO("other attrs");
     }
