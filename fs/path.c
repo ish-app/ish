@@ -5,6 +5,7 @@
 #define __NO_AT (struct fd *) 1
 
 int path_normalize(struct fd *at, const char *path, char *out, bool follow_links) {
+    assert(at != NULL);
     const char *p = path;
     char *o = out;
     *o = '\0';

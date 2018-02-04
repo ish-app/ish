@@ -63,12 +63,12 @@ struct fd *generic_openat(struct fd *at, const char *path_raw, int flags, int mo
 }
 
 struct fd *generic_open(const char *path, int flags, int mode) {
-    return generic_openat(NULL, path, flags, mode);
+    return generic_openat(AT_PWD, path, flags, mode);
 }
 
 int generic_access(const char *path_raw, int mode) {
     char path[MAX_PATH];
-    int err = path_normalize(NULL, path_raw, path, true);
+    int err = path_normalize(AT_PWD, path_raw, path, true);
     if (err < 0)
         return err;
 
@@ -142,7 +142,7 @@ int generic_setattrat(struct fd *at, const char *path_raw, struct attr attr, boo
 
 ssize_t generic_readlink(const char *path_raw, char *buf, size_t bufsize) {
     char path[MAX_PATH];
-    int err = path_normalize(NULL, path_raw, path, false);
+    int err = path_normalize(AT_PWD, path_raw, path, false);
     if (err < 0)
         return err;
     struct mount *mount = find_mount_and_trim_path(path);
