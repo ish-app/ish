@@ -2,9 +2,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+// TODO turn this into function that outputs to a log buffer
+#define printk(msg, ...) dprintf(666, msg, ##__VA_ARGS__)
+
 // all line endings should use \r\n so it can work even with the terminal in raw mode
-// this is subject to change, so use this macro whenever you output a newline
-#define println(msg, ...) printf(msg "\r\n", ##__VA_ARGS__)
+// this is subject to change, so use NEWLINE or println whenever you output a newline
+#define NEWLINE "\r\n"
+#define println(msg, ...) printk(msg NEWLINE, ##__VA_ARGS__)
 
 // debug output utilities
 // save me
@@ -60,12 +64,12 @@ extern int log_override;
 #else
 #define TRACE__NOP(msg, ...) do {} while(0)
 #endif
-#define TRACE__(msg, ...) printf(msg, ##__VA_ARGS__)
+#define TRACE__(msg, ...) printk(msg, ##__VA_ARGS__)
 
 #define TRACE_(chan, msg, ...) CONCAT(TRACE_, chan)(msg, ##__VA_ARGS__)
 #define TRACE(msg, ...) TRACE_(DEFAULT_CHANNEL, msg, ##__VA_ARGS__)
 #define TRACELN_(chan, msg, ...) TRACE_(chan, msg "\r\n", ##__VA_ARGS__)
-#define TRACELN(msg, ...) TRACE(msg "\r\n", ##__VA_ARGS__)
+#define TRACELN(msg, ...) TRACE(msg NEWLINE, ##__VA_ARGS__)
 #ifndef DEFAULT_CHANNEL
 #define DEFAULT_CHANNEL default
 #endif
