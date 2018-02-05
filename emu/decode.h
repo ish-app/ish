@@ -708,6 +708,8 @@ restart:
                     }
                     break;
 
+                case 0x90: TRACEI("pause"); break;
+
                 case 0xa4: TRACEI("rep movsb"); REP(MOVS(8)); break;
                 case 0xa5: TRACEI("rep movs"); REP(MOVS(OP_SIZE)); break;
 
