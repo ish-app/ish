@@ -21,34 +21,22 @@ restart:
     TRACE("%d %08x\t", current->pid, cpu->eip);
     READINSN;
     switch (insn) {
-        // if any instruction handlers declare variables, they should create a
-        // new block for those variables.
-        // any subtraction that occurs probably needs to have a cast to a
-        // signed type, so sign extension happens.
+#define MAKE_OP(x, OP, op) \
+        case x+0x0: TRACEI(op " reg8, modrm8"); \
+                   READMODRM; OP(modrm_reg, modrm_val,8); break; \
+        case x+0x1: TRACEI(op " reg, modrm"); \
+                   READMODRM; OP(modrm_reg, modrm_val,); break; \
+        case x+0x2: TRACEI(op " modrm8, reg8"); \
+                   READMODRM; OP(modrm_val, modrm_reg,8); break; \
+        case x+0x3: TRACEI(op " modrm, reg"); \
+                   READMODRM; OP(modrm_val, modrm_reg,); break; \
+        case x+0x4: TRACEI(op " imm8, al\t"); \
+                   READIMM; OP(imm, al,8); break; \
+        case x+0x5: TRACEI(op " imm, oax\t"); \
+                   READIMM; OP(imm, oax,); break
 
-        case 0x00: TRACEI("add reg8, modrm8");
-                   READMODRM; ADD(modrm_reg, modrm_val,8); break;
-        case 0x01: TRACEI("add reg, modrm");
-                   READMODRM; ADD(modrm_reg, modrm_val,); break;
-        case 0x02: TRACEI("add modrm8, reg8");
-                   READMODRM; ADD(modrm_val, modrm_reg,8); break;
-        case 0x03: TRACEI("add modrm, reg");
-                   READMODRM; ADD(modrm_val, modrm_reg,); break;
-        case 0x05: TRACEI("add imm, oax\t");
-                   READIMM; ADD(imm, oax,); break;
-
-        case 0x08: TRACEI("or reg8, modrm8");
-                   READMODRM; OR(modrm_reg, modrm_val,8); break;
-        case 0x09: TRACEI("or reg, modrm");
-                   READMODRM; OR(modrm_reg, modrm_val,); break;
-        case 0x0a: TRACEI("or modrm8, reg8");
-                   READMODRM; OR(modrm_val, modrm_reg,8); break;
-        case 0x0b: TRACEI("or modrm, reg");
-                   READMODRM; OR(modrm_val, modrm_reg,); break;
-        case 0x0c: TRACEI("or imm8, al\t");
-                   READIMM8; OR(imm8, al,8); break;
-        case 0x0d: TRACEI("or imm, eax\t");
-                   READIMM; OR(imm, oax,); break;
+        MAKE_OP(0x00, ADD, "add");
+        MAKE_OP(0x08, OR, "or");
 
         case 0x0f:
             // 2-byte opcode prefix
@@ -273,69 +261,15 @@ restart:
             }
             break;
 
-        case 0x10: TRACEI("adc reg8, modrm8");
-                   READMODRM; ADC(modrm_reg, modrm_val,8); break;
-        case 0x11: TRACEI("adc reg, modrm");
-                   READMODRM; ADC(modrm_reg, modrm_val,); break;
-        case 0x13: TRACEI("adc modrm, reg");
-                   READMODRM; ADC(modrm_val, modrm_reg,); break;
-
-        case 0x19: TRACEI("sbb reg, modrm");
-                   READMODRM; SBB(modrm_reg, modrm_val,); break;
-        case 0x1b: TRACEI("sbb modrm, reg");
-                   READMODRM; SBB(modrm_val, modrm_reg,); break;
-
-        case 0x20: TRACEI("and reg8, modrm8");
-                   READMODRM; AND(modrm_reg, modrm_val,8); break;
-        case 0x21: TRACEI("and reg, modrm");
-                   READMODRM; AND(modrm_reg, modrm_val,); break;
-        case 0x22: TRACEI("and modrm8, reg8");
-                   READMODRM; AND(modrm_val, modrm_reg,8); break;
-        case 0x23: TRACEI("and modrm, reg");
-                   READMODRM; AND(modrm_val, modrm_reg,); break;
-        case 0x24: TRACEI("and imm8, al\t");
-                   READIMM8; AND(imm8, al,8); break;
-        case 0x25: TRACEI("and imm, oax\t");
-                   READIMM; AND(imm, oax,); break;
-
-        case 0x28: TRACEI("sub reg8, modrm8");
-                   READMODRM; SUB(modrm_reg, modrm_val,8); break;
-        case 0x29: TRACEI("sub reg, modrm");
-                   READMODRM; SUB(modrm_reg, modrm_val,); break;
-        case 0x2a: TRACEI("sub modrm8, reg8");
-                   READMODRM; SUB(modrm_val, modrm_reg,8); break;
-        case 0x2b: TRACEI("sub modrm, reg");
-                   READMODRM; SUB(modrm_val, modrm_reg,); break;
-        case 0x2d: TRACEI("sub imm, oax\t");
-                   READIMM; SUB(imm, oax,); break;
+        MAKE_OP(0x10, ADC, "adc");
+        MAKE_OP(0x18, SBB, "sbb");
+        MAKE_OP(0x20, AND, "and");
+        MAKE_OP(0x28, SUB, "sub");
 
         case 0x2e: TRACEI("segment cs (ignoring)"); goto restart;
 
-        case 0x30: TRACEI("xor reg8, modrm8");
-                   READMODRM; XOR(modrm_reg, modrm_val,8); break;
-        case 0x31: TRACEI("xor reg, modrm");
-                   READMODRM; XOR(modrm_reg, modrm_val,); break;
-        case 0x32: TRACEI("xor modrm8, reg8");
-                   READMODRM; XOR(modrm_val, modrm_reg,8); break;
-        case 0x33: TRACEI("xor modrm, reg");
-                   READMODRM; XOR(modrm_val, modrm_reg,); break;
-        case 0x34: TRACEI("xor imm8, al\t");
-                   READIMM8; XOR(imm8, al,8); break;
-        case 0x35: TRACEI("xor imm, oax");
-                   READIMM; XOR(imm, oax,); break;
-
-        case 0x38: TRACEI("cmp reg8, modrm8");
-                   READMODRM; CMP(modrm_reg, modrm_val,8); break;
-        case 0x39: TRACEI("cmp reg, modrm");
-                   READMODRM; CMP(modrm_reg, modrm_val,); break;
-        case 0x3a: TRACEI("cmp modrm8, reg8");
-                   READMODRM; CMP(modrm_val, modrm_reg,8); break;
-        case 0x3b: TRACEI("cmp modrm, reg");
-                   READMODRM; CMP(modrm_val, modrm_reg,); break;
-        case 0x3c: TRACEI("cmp imm8, al\t");
-                   READIMM8; CMP(imm8, al,8); break;
-        case 0x3d: TRACEI("cmp imm, oax\t");
-                   READIMM; CMP(imm, oax,); break;
+        MAKE_OP(0x30, XOR, "xor");
+        MAKE_OP(0x38, CMP, "cmp");
 
         case 0x40: TRACEI("inc oax"); INC(oax,); break;
         case 0x41: TRACEI("inc ocx"); INC(ocx,); break;
