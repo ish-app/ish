@@ -88,13 +88,13 @@ static void halt_system(int status) {
 }
 
 dword_t sys_exit(dword_t status) {
+    STRACE("exit(%d)", status);
     do_exit(status << 8);
 }
 
 dword_t sys_exit_group(dword_t status) {
+    STRACE("exit_group(%d)", status);
     do_exit_group(status << 8);
-    TODO("exit_group");
-    /* do_exit(status << 8); */
 }
 
 // returns 0 if the task cannot be reaped, returns 1 if the task was reaped
