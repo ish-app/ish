@@ -31,7 +31,7 @@ restart:
         case x+0x3: TRACEI(op " modrm, reg"); \
                    READMODRM; OP(modrm_val, modrm_reg,); break; \
         case x+0x4: TRACEI(op " imm8, al\t"); \
-                   READIMM; OP(imm, al,8); break; \
+                   READIMM8; OP(imm, al,8); break; \
         case x+0x5: TRACEI(op " imm, oax\t"); \
                    READIMM; OP(imm, oax,); break
 
