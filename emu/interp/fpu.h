@@ -44,6 +44,8 @@ static inline extFloat80_t extF80_abs(extFloat80_t f) {
 
 #define FADD(src, dst) \
     dst = extF80_add(dst, src)
+#define FIADD(val,z) \
+    ST(0) = extF80_add(ST(0), i64_to_extF80((sint(z)) get(val,z)))
 #define FADDM(val,z) \
     ST(0) = extF80_add(ST(0), f_to_extF80(get(val,z),z))
 #define FSUB(src, dst) \

@@ -50,7 +50,6 @@ restart:
                            READMODRM; MOV(modrm_reg, modrm_val,128); break;
 
                 case 0x31: TRACEI("rdtsc");
-                           // TODO there's a clang builtin for this
                            RDTSC; break;
 
                 case 0x40: TRACEI("cmovo modrm, reg");
@@ -548,6 +547,7 @@ restart:
                     case 0xd90: TRACE("fld mem32"); FLDM(mem_addr_real,32); break;
                     case 0xd95: TRACE("fldcw mem16"); FLDCW(mem_addr); break;
                     case 0xd97: TRACE("fnstcw mem16"); FSTCW(mem_addr); break;
+                    case 0xda0: TRACE("fiadd mem32"); FIADD(mem_addr,32); break;
                     case 0xda1: TRACE("fimul mem32"); FIMUL(mem_addr,32); break;
                     case 0xda4: TRACE("fisub mem32"); FISUB(mem_addr,32); break;
                     case 0xda6: TRACE("fidiv mem32"); FIDIV(mem_addr,32); break;
