@@ -32,6 +32,7 @@ int task_set_thread_area(struct task *task, addr_t u_info) {
 }
 
 int sys_set_thread_area(addr_t u_info) {
+    STRACE("set_thread_area(0x%x)", u_info);
     return task_set_thread_area(current, u_info);
 }
 

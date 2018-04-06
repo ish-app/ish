@@ -173,7 +173,8 @@ struct sys_info {
 };
 dword_t sys_sysinfo(addr_t info_addr);
 
-// time
+// futexes
+dword_t sys_futex(addr_t uaddr, dword_t op, dword_t val);
 
 // crap that ideally shouldn't exist
 struct pollfd_ {

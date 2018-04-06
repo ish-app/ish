@@ -141,7 +141,7 @@ static __no_instrument void set_dirty_page(struct mem *mem, page_t page) {
     mem->dirty_page = page;
 }
 
-char *mem_ptr(struct mem *mem, addr_t addr, int type) {
+void *mem_ptr(struct mem *mem, addr_t addr, int type) {
     page_t page = PAGE(addr);
     struct pt_entry *entry = &mem->pt[page];
 

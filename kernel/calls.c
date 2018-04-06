@@ -97,6 +97,7 @@ syscall_t syscall_table[] = {
     [228] = (syscall_t) sys_fsetxattr,
     [238] = (syscall_t) sys_tkill,
     [239] = (syscall_t) sys_sendfile64,
+    [240] = (syscall_t) sys_futex,
     [243] = (syscall_t) sys_set_thread_area,
     [252] = (syscall_t) sys_exit_group,
     [258] = (syscall_t) sys_set_tid_address,

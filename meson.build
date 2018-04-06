@@ -49,6 +49,7 @@ src = [
     'kernel/mmap.c',
     'kernel/uname.c',
     'kernel/tls.c',
+    'kernel/futex.c',
     'kernel/getset.c',
     'kernel/signal.c',
     'kernel/resource.c',
