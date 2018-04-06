@@ -1,7 +1,7 @@
 [wrap-file]
 directory = gdbm-1.14.1
 
-source_url = ftp://ftp.gnu.org/gnu/gdbm/gdbm-1.14.1.tar.gz
+source_url = https://mirrors.kernel.org/gnu/gdbm/gdbm-1.14.1.tar.gz
 source_filename = gdbm-1.14.1.tar.gz
 source_hash = cdceff00ffe014495bed3aed71c7910aa88bf29379f795abc0f46d4ee5f8bc5f
 
