@@ -432,7 +432,7 @@ static void prepare_tracee(int pid) {
 }
 
 int main(int argc, char *const argv[]) {
-    int err = xX_main_Xx(argc, argv);
+    int err = xX_main_Xx(argc, argv, NULL);
     if (err < 0) {
         fprintf(stderr, "%s\n", strerror(-err));
         return err;

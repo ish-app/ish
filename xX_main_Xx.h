@@ -13,7 +13,7 @@ static void exit_handler(int code) {
 // this function parses command line arguments and initializes global
 // data structures. thanks programming discussions discord server for the name.
 // https://discord.gg/9zT7NHP
-static inline int xX_main_Xx(int argc, char *const argv[]) {
+static inline int xX_main_Xx(int argc, char *const argv[], char *const *envp) {
     // parse cli options
     int opt;
     const char *root = "";
@@ -50,7 +50,9 @@ static inline int xX_main_Xx(int argc, char *const argv[]) {
         fs_chdir(current->fs, pwd);
     }
 
-    err = sys_execve(argv[optind], argv + optind, (char *[]) {NULL});
+    if (envp == NULL)
+        envp = (char *[]) {NULL};
+    err = sys_execve(argv[optind], argv + optind, envp);
     if (err < 0)
         return err;
     err = create_stdio(real_tty_driver);
