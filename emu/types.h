@@ -12,6 +12,6 @@ typedef uint8_t byte_t;
 typedef dword_t addr_t;
 typedef dword_t page_t;
 
-#define UINT(size) CONCAT3(uint,size,_t)
+#define UINT(size) glue3(uint,size,_t)
 
 #endif

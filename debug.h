@@ -66,7 +66,7 @@ extern int log_override;
 #endif
 #define TRACE__(msg, ...) printk(msg, ##__VA_ARGS__)
 
-#define TRACE_(chan, msg, ...) CONCAT(TRACE_, chan)(msg, ##__VA_ARGS__)
+#define TRACE_(chan, msg, ...) glue(TRACE_, chan)(msg, ##__VA_ARGS__)
 #define TRACE(msg, ...) TRACE_(DEFAULT_CHANNEL, msg, ##__VA_ARGS__)
 #define TRACELN_(chan, msg, ...) TRACE_(chan, msg "\r\n", ##__VA_ARGS__)
 #define TRACELN(msg, ...) TRACE(msg NEWLINE, ##__VA_ARGS__)

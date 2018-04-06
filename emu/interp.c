@@ -39,7 +39,7 @@
 #define sz_64 64
 #define sz_80 80
 #define sz_128 128
-#define twice(x) CONCAT(twice_, x)
+#define twice(x) glue(twice_, x)
 #define twice_8 16
 #define twice_16 32
 #define twice_32 64
@@ -228,7 +228,7 @@
 #define SETRES_RAW(result,z)
 #define SETRES(result,z) \
     cpu->res = (int32_t) (sint(sz(z))) (result); SETRESFLAGS
-    // sign extend result so SF is correct
+    // ^ sign extend result so SF is correct
 #define ZEROAF cpu->af = cpu->af_ops = 0
 #define SETAF(a, b,z) \
     cpu->op1 = get(a,z); cpu->op2 = get(b,z); cpu->af_ops = 1
@@ -342,7 +342,7 @@
 } while (0)
 
 // TODO this is probably wrong in some subtle way
-#define HALF_OP_SIZE CONCAT(HALF_, OP_SIZE)
+#define HALF_OP_SIZE glue(HALF_, OP_SIZE)
 #define HALF_16 8
 #define HALF_32 16
 #define CVT \

@@ -24,10 +24,10 @@ static inline extFloat80_t extF80_abs(extFloat80_t f) {
 #define get_mem_addr_real(size) mem_read_real(addr, size)
 #define set_mem_addr_real(to, size) mem_write_real(addr, to, size)
 
-#define extF80_to_f(f, z) CONCAT(extF80_to_f, sz(z))(f)
-#define f_to_extF80(f_, z) CONCAT3(f, sz(z), _to_extF80)(f_)
-#define extF80_to_i(i, round, exact, z) CONCAT(extF80_to_i, sz(z))(i, round, exact)
-#define i_to_extF80(i_, round, exact, z) CONCAT3(i, sz(z), _to_extF80)(i_, round, exact)
+#define extF80_to_f(f, z) glue(extF80_to_f, sz(z))(f)
+#define f_to_extF80(f_, z) glue3(f, sz(z), _to_extF80)(f_)
+#define extF80_to_i(i, round, exact, z) glue(extF80_to_i, sz(z))(i, round, exact)
+#define i_to_extF80(i_, round, exact, z) glue3(i, sz(z), _to_extF80)(i_, round, exact)
 
 #define ST(i) cpu->fp[cpu->top + i]
 #define ST_i ST(modrm.rm_opcode)

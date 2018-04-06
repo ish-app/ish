@@ -12,13 +12,13 @@
 #include <pthread.h>
 
 // utility macros
-#define CONCAT(a, b) _CONCAT(a, b)
-#define _CONCAT(a, b) a##b
-#define CONCAT3(a,b,c) CONCAT(a, CONCAT(b, c))
-#define CONCAT4(a,b,c,d) CONCAT(a, CONCAT3(b, c, d))
+#define glue(a, b) _glue(a, b)
+#define _glue(a, b) a##b
+#define glue3(a,b,c) glue(a, glue(b, c))
+#define glue4(a,b,c,d) glue(a, glue3(b, c, d))
 
-#define STR(x) _STR(x)
-#define _STR(x) #x
+#define str(x) _str(x)
+#define _str(x) #x
 
 // keywords
 #define bits unsigned int
@@ -69,8 +69,8 @@ typedef dword_t uid_t_;
 typedef word_t mode_t_;
 typedef sqword_t off_t_;
 
-#define uint(size) CONCAT3(uint,size,_t)
-#define sint(size) CONCAT3(int,size,_t)
+#define uint(size) glue3(uint,size,_t)
+#define sint(size) glue3(int,size,_t)
 
 typedef pthread_mutex_t lock_t;
 #define lock_init(lock) pthread_mutex_init(lock, NULL)
