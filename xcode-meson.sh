@@ -1,5 +1,4 @@
 #!/bin/bash -x
-export
 mkdir -p $MESON_BUILD_DIR
 cd $MESON_BUILD_DIR
 
@@ -37,7 +36,8 @@ if [[ $CONFIGURATION == Release ]]; then
     b_ndebug=true
 fi
 log=$ISH_LOG
-for var in buildtype log b_ndebug; do
+log_handler=nslog
+for var in buildtype log b_ndebug log_handler; do
     old_value=$(jq -r ".[] | select(.name==\"$var\") | .value" <<< $config)
     new_value=${!var}
     if [[ $old_value != $new_value ]]; then

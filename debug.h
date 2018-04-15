@@ -1,9 +1,25 @@
+#ifndef DEBUG_H
+#define DEBUG_H
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#if LOG_HANDLER_NSLOG
+#include <CoreFoundation/CoreFoundation.h>
+#endif
 
-// TODO turn this into function that outputs to a log buffer
-#define printk(msg, ...) dprintf(666, msg, ##__VA_ARGS__)
+static inline void printk(const char *msg, ...) {
+    va_list args;
+    va_start(args, msg);
+#if LOG_HANDLER_DPRINTF
+    vdprintf(666, msg, args);
+#elif LOG_HANDLER_NSLOG
+    extern void NSLogv(CFStringRef msg, va_list args);
+    CFStringRef cfmsg = CFStringCreateWithCStringNoCopy(NULL, msg, kCFStringEncodingUTF8, kCFAllocatorNull);
+    NSLogv(cfmsg, args);
+    CFRelease(cfmsg);
+#endif
+    va_end(args);
+}
 
 // all line endings should use \r\n so it can work even with the terminal in raw mode
 // this is subject to change, so use NEWLINE or println whenever you output a newline
@@ -86,4 +102,6 @@ extern int log_override;
 #else
 #include <signal.h>
 #define debugger raise(SIGTRAP)
+#endif
+
 #endif

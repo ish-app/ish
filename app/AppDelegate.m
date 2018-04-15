@@ -8,7 +8,10 @@
 #import "AppDelegate.h"
 #import "TerminalViewController.h"
 #include "kernel/init.h"
+// task_create in kernel/task.h conflicts with task_create in mach/task.h
+#define task_create fucking_task_create
 #include "kernel/calls.h"
+#undef task_create
 
 @interface AppDelegate ()
 

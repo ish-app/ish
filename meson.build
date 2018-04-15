@@ -10,6 +10,7 @@ foreach channel : log_on + log_off
         add_project_arguments('-DDEBUG_' + channel + '=0', language: 'c')
     endif
 endforeach
+add_project_arguments('-DLOG_HANDLER_' + get_option('log_handler').to_upper() + '=1', language: 'c')
 
 if get_option('no_crlf')
     add_project_arguments('-DNO_CRLF', language: 'c')

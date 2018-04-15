@@ -4,7 +4,11 @@
 #include <sys/resource.h>
 #elif __APPLE__
 // pull in thread_info and friends
+// this also pulls in something called task_create which is different from our
+// task_create so JUST SAY NO
+#define task_create fucking_task_create
 #include <mach/mach.h>
+#undef task_create
 #else
 #error
 #endif
