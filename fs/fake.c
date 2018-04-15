@@ -287,7 +287,7 @@ static int fakefs_mount(struct mount *mount) {
     strcpy(db_path, mount->source);
     char *basename = strrchr(db_path, '/') + 1;
     assert(strcmp(basename, "data") == 0);
-    strncpy(basename, "meta.db", 7);
+    strcpy(basename, "meta.db");
     mount->db = gdbm_open(db_path, 0, GDBM_WRITER, 0, gdbm_fatal);
     if (mount->db == NULL) {
         println("gdbm error: %s", gdbm_strerror(gdbm_errno));
