@@ -145,8 +145,6 @@
 		BB13F7DC200AD81D003D1C4D /* libish.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libish.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		BB13F7EF200ADD69003D1C4D /* libgdbm.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libgdbm.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		BB13F804200AE69D003D1C4D /* libsoftfloat.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libsoftfloat.a; sourceTree = BUILT_PRODUCTS_DIR; };
-		BB13F806200AE69D003D1C4D /* libsoftfloat.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = libsoftfloat.h; sourceTree = "<group>"; };
-		BB13F807200AE69D003D1C4D /* libsoftfloat.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = libsoftfloat.m; sourceTree = "<group>"; };
 		BB455E0F1FB37F6600AFB48B /* DelayedUITask.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DelayedUITask.h; sourceTree = "<group>"; };
 		BB455E101FB37F6600AFB48B /* DelayedUITask.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = DelayedUITask.m; sourceTree = "<group>"; };
 		BB4A539A1FAA411D00A72ACE /* package.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = package.json; sourceTree = "<group>"; };
@@ -281,15 +279,6 @@
 			path = fs;
 			sourceTree = SOURCE_ROOT;
 		};
-		BB13F805200AE69D003D1C4D /* libsoftfloat */ = {
-			isa = PBXGroup;
-			children = (
-				BB13F806200AE69D003D1C4D /* libsoftfloat.h */,
-				BB13F807200AE69D003D1C4D /* libsoftfloat.m */,
-			);
-			path = libsoftfloat;
-			sourceTree = "<group>";
-		};
 		BB18B27F1F97F2590059FCD8 /* Scripts */ = {
 			isa = PBXGroup;
 			children = (
@@ -328,7 +317,6 @@
 				BB792B521F96D90D00FFB7A4 /* app */,
 				BB4A53931FAA393B00A72ACE /* most of the code */,
 				BB18B27F1F97F2590059FCD8 /* Scripts */,
-				BB13F805200AE69D003D1C4D /* libsoftfloat */,
 				BB792B511F96D90D00FFB7A4 /* Products */,
 				BB792B7D1F96E32B00FFB7A4 /* Frameworks */,
 			);
