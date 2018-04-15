@@ -1,6 +1,8 @@
-At last! Hardlinks! I was able to successfully compile and run a hello world program with gcc on this build.
+Oh...the last build expired. It's been a long time. How have you been? I've been really busy doing homework. 
 
-(Last build had a whole thing about reinstalling that nobody read, so here's an in-app prompt.)
+This build has basic thread support, which doesn't really mean much since locks don't actually work. I was going to implement atomic operations for that but decided that would be much easier with the JIT, so I'm going to write the JIT first. That should be coming by the end of the year.
+
+Oh, and nano works. If you set $TERM to something. Except you can't actually use it since there's no control key. But it looks cool.
 
 As always, let me know if it crashes spectacularly. The best place to send bug reports or feedback of any kind is the GitHub issues page: https://github.com/tbodt/ish/issues
 
