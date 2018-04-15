@@ -1,5 +1,5 @@
 import Terminal from 'xterm';
-Terminal.loadAddon('fit');
+import 'xterm/lib/addons/fit/fit';
 import 'xterm/dist/xterm.css';
 import './term.css';
 

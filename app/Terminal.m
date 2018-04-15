@@ -38,7 +38,7 @@ static Terminal *terminal = nil;
         self.webView.scrollView.scrollEnabled = NO;
         [self.webView loadRequest:
          [NSURLRequest requestWithURL:
-          [NSBundle.mainBundle URLForResource:@"term" withExtension:@"html"]]];
+          [NSBundle.mainBundle URLForResource:@"xterm-dist/term" withExtension:@"html"]]];
         [self.webView addObserver:self forKeyPath:@"loading" options:0 context:NULL];
         terminal = self;
     }

@@ -1,14 +1,12 @@
 {
   "name": "xtermjs-glue",
+  "scripts": {
+    "build": "parcel build --out-dir xterm-dist --public-url . --no-source-maps term.html"
+  },
   "dependencies": {
     "xterm": "^2.9.2"
   },
   "devDependencies": {
-    "babel-core": "^6.26.0",
-    "babel-loader": "^7.1.2",
-    "babel-preset-env": "^1.6.1",
-    "css-loader": "^0.28.7",
-    "style-loader": "^0.19.0",
-    "webpack": "^3.8.1"
+    "parcel-bundler": "^1.7.1"
   }
 }

@@ -7,6 +7,8 @@ tags.log
 pdfs
 cross-*.txt
 
-bundle.js
+/app/xtermjs/xterm-dist
 node_modules
+alpine
 fastlane/screenshots
+subprojects/packagecache
