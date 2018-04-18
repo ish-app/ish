@@ -39,12 +39,14 @@ noreturn void do_exit(int status) {
     if (group_dead) {
         // notify parent that we died
         struct task *parent = leader->parent;
-        if (parent == NULL)
+        if (parent == NULL) {
             halt_system(status);
-        lock(&parent->group->lock);
-        leader->zombie = true;
-        notify(&parent->group->child_exit);
-        unlock(&parent->group->lock);
+        } else {
+            lock(&parent->group->lock);
+            leader->zombie = true;
+            notify(&parent->group->child_exit);
+            unlock(&parent->group->lock);
+        }
     }
     unlock(&pids_lock);
 
