@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #if LOG_HANDLER_NSLOG
 #include <CoreFoundation/CoreFoundation.h>
 #endif
@@ -23,7 +24,11 @@ static inline void printk(const char *msg, ...) {
 
 // all line endings should use \r\n so it can work even with the terminal in raw mode
 // this is subject to change, so use NEWLINE or println whenever you output a newline
+#if LOG_HANDLER_NSLOG
+#define NEWLINE
+#else
 #define NEWLINE "\r\n"
+#endif
 #define println(msg, ...) printk(msg NEWLINE, ##__VA_ARGS__)
 
 // debug output utilities
