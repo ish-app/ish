@@ -1,8 +1,4 @@
-Oh...the last build expired. It's been a long time. How have you been? I've been really busy doing homework. 
-
-This build has basic thread support, which doesn't really mean much since locks don't actually work. I was going to implement atomic operations for that but decided that would be much easier with the JIT, so I'm going to write the JIT first. That should be coming by the end of the year.
-
-Oh, and nano works. If you set $TERM to something. Except you can't actually use it since there's no control key. But it looks cool.
+I've been told the last build refuses to run at all, and after about 5 hours of debugging I found that the fix was deleting 3 lines of code I wasn't using anymore. Grr. Also fixed a crash when typing "exit", which was the reason the app crashed instead of saying "attempted to kill init".
 
 As always, let me know if it crashes spectacularly. The best place to send bug reports or feedback of any kind is the GitHub issues page: https://github.com/tbodt/ish/issues
 
