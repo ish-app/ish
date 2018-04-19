@@ -4,9 +4,6 @@
 #include <stdbool.h>
 #include <time.h>
 #include <pthread.h>
-#ifdef __MACH__
-#include <mach/mach_time.h>
-#endif
 #include "misc.h"
 
 static inline struct timespec timespec_now() {
