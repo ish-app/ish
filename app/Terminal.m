@@ -85,8 +85,9 @@ static Terminal *terminal = nil;
     
     NSError *err = nil;
     NSData *jsonData = [NSJSONSerialization dataWithJSONObject:@[str] options:0 error:&err];
+    NSString *json = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
     NSAssert(err == nil, @"JSON serialization failed, wtf");
-    NSString *jsToEvaluate = [NSString stringWithFormat:@"term.write(%@[0])", [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding]];
+    NSString *jsToEvaluate = [NSString stringWithFormat:@"term.write(%@[0])", json];
     [self.webView evaluateJavaScript:jsToEvaluate completionHandler:nil];
 }
 

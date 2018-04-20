@@ -45,7 +45,7 @@ static void ios_handle_exit(int code) {
     create_first_process();
     char *program = "/bin/login";
     char *argv[] = {program, "root", NULL};
-    char *envp[] = {NULL};
+    char *envp[] = {"TERM=xterm-256color", NULL};
     err = sys_execve(program, argv, envp);
     if (err < 0)
         return err;

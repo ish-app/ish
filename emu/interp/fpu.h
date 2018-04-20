@@ -66,6 +66,8 @@ static inline extFloat80_t extF80_abs(extFloat80_t f) {
     ST(0) = extF80_div(ST(0), i64_to_extF80((sint(z)) get(val,z)))
 #define FDIVM(val,z) \
     ST(0) = extF80_div(ST(0), f_to_extF80(get(val,z),z))
+#define FDIVRM(val,z) \
+    ST(0) = extF80_div(f_to_extF80(get(val,z),z), ST(0))
 
 #define FCHS() \
     ST(0) = extF80_neg(ST(0))

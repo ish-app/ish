@@ -134,10 +134,10 @@ void handle_interrupt(int interrupt) {
             cpu->eax = result;
         }
     } else if (interrupt == INT_GPF) {
-        println("page fault at %x", cpu->segfault_addr);
+        println("page fault at 0x%x", cpu->segfault_addr);
         deliver_signal(current, SIGSEGV_);
     } else if (interrupt == INT_UNDEFINED) {
-        println("illegal instruction");
+        println("illegal instruction at 0x%x", cpu->eip);
         deliver_signal(current, SIGILL_);
     } else if (interrupt != INT_TIMER) {
         println("exiting");
