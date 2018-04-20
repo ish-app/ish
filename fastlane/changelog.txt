@@ -1,4 +1,4 @@
-I've been told the last build refuses to run at all, and after about 5 hours of debugging I found that the fix was deleting 3 lines of code I wasn't using anymore. Grr. Also fixed a crash when typing "exit", which was the reason the app crashed instead of saying "attempted to kill init".
+ncdu's UI works. Mind blown. It errors trying to find the size of some things, but that's secondary.
 
 As always, let me know if it crashes spectacularly. The best place to send bug reports or feedback of any kind is the GitHub issues page: https://github.com/tbodt/ish/issues
 
