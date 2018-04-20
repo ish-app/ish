@@ -17,6 +17,7 @@ lane :beta do
     )
 
     add_git_tag
+    push_to_git_remote
     slack(
         message: "New build available!",
         default_payloads: [],
