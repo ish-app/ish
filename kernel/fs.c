@@ -275,7 +275,6 @@ static struct fd *open_dir(const char *path) {
 
 void fs_chdir(struct fs_info *fs, struct fd *fd) {
     lock(&fs->lock);
-    fd->refcount++;
     fd_close(fs->pwd);
     fs->pwd = fd;
     unlock(&fs->lock);
@@ -307,6 +306,7 @@ dword_t sys_fchdir(fd_t f) {
     struct fd *dir = f_get(f);
     if (dir == NULL)
         return _EBADF;
+    dir->refcount++;
     fs_chdir(current->fs, dir);
     return 0;
 }

@@ -53,15 +53,11 @@ static struct fd *realfs_open(struct mount *mount, const char *path, int flags, 
 }
 
 int realfs_close(struct fd *fd) {
-    int err;
-    err = close(fd->real_fd);
+    if (fd->dir != NULL)
+        closedir(fd->dir);
+    int err = close(fd->real_fd);
     if (err < 0)
-        return errno_map();
-    if (fd->dir != NULL) {
-        err = closedir(fd->dir);
-        if (err < 0)
-            return errno_map();
-    }
+        err = errno_map();
     return 0;
 }
 
@@ -221,8 +217,9 @@ int realfs_truncate(struct mount *mount, const char *path, off_t_ size) {
     int fd = openat(mount->root_fd, fix_path(path), O_RDWR);
     if (fd < 0)
         return errno_map();
+    int err = 0;
     if (ftruncate(fd, size) < 0)
-        return errno_map();
+        err = errno_map();
     close(fd);
     return 0;
 }

@@ -140,6 +140,8 @@ static int fakefs_unlink(struct mount *mount, const char *path) {
     struct stat stat;
     if (fd >= 0 && fstat(fd, &stat) >= 0 && stat.st_nlink == 1)
         gone = true;
+    if (fd >= 0)
+        close(fd);
 
     char keydata[30];
     datum key = stat_key(keydata, mount, path);
