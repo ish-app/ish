@@ -34,6 +34,7 @@ static Terminal *terminal = nil;
         
         WKWebViewConfiguration *config = [WKWebViewConfiguration new];
         [config.userContentController addScriptMessageHandler:self name:@"log"];
+        [config.userContentController addScriptMessageHandler:self name:@"resize"];
         self.webView = [[WKWebView alloc] initWithFrame:CGRectZero configuration:config];
         self.webView.scrollView.scrollEnabled = NO;
         [self.webView loadRequest:
@@ -46,7 +47,14 @@ static Terminal *terminal = nil;
 }
 
 - (void)userContentController:(WKUserContentController *)userContentController didReceiveScriptMessage:(WKScriptMessage *)message {
-    NSLog(@"%@", message.body);
+    if ([message.name isEqualToString:@"log"]) {
+        NSLog(@"%@", message.body);
+    } else if ([message.name isEqualToString:@"resize"]) {
+        NSLog(@"%@", message.body);
+        NSArray *parts = [message.body componentsSeparatedByString:@"x"];
+        self.tty->winsize.col = [parts[0] integerValue];
+        self.tty->winsize.row = [parts[1] integerValue];
+    }
 }
 
 - (size_t)write:(const void *)buf length:(size_t)len {

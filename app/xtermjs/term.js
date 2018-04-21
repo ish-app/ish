@@ -16,6 +16,9 @@ term.open(document.getElementById('terminal'), true);
 term.on('focus', function() {
     webkit.messageHandlers.focus.postMessage('focus');
 });
+term.on('resize', function(size) {
+    webkit.messageHandlers.resize.postMessage(size.cols + 'x' + size.rows);
+});
 term.fit();
 window.addEventListener('resize', function() {
     term.fit();
