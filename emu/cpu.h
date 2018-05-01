@@ -148,47 +148,23 @@ static inline void collapse_flags(struct cpu_state *cpu) {
     cpu->if_ = 1;
 }
 
-typedef uint8_t reg_id_t;
-#define REG_ID(reg) offsetof(struct cpu_state, reg)
-#define REG_VAL(cpu, reg_id, size) (*((uint(size) *) (((char *) (cpu)) + reg_id)))
-static inline const char *reg8_name(uint8_t reg_id) {
-    switch (reg_id) {
-        case REG_ID(al): return "al";
-        case REG_ID(bl): return "bl";
-        case REG_ID(cl): return "cl";
-        case REG_ID(dl): return "dl";
-        case REG_ID(ah): return "ah";
-        case REG_ID(bh): return "bh";
-        case REG_ID(ch): return "ch";
-        case REG_ID(dh): return "dh";
+enum reg32 {
+    reg_eax = 0, reg_ecx, reg_edx, reg_ebx, reg_esp, reg_ebp, reg_esi, reg_edi,
+    reg_none,
+};
+
+static inline const char *reg32_name(enum reg32 reg) {
+    switch (reg) {
+        case reg_eax: return "eax";
+        case reg_ecx: return "ecx";
+        case reg_edx: return "edx";
+        case reg_ebx: return "ebx";
+        case reg_esp: return "esp";
+        case reg_ebp: return "ebp";
+        case reg_esi: return "esi";
+        case reg_edi: return "edi";
+        case reg_none: return "?";
     }
-    return "??";
-}
-static inline const char *reg16_name(uint8_t reg_id) {
-    switch (reg_id) {
-        case REG_ID(ax): return "ax";
-        case REG_ID(bx): return "bx";
-        case REG_ID(cx): return "cx";
-        case REG_ID(dx): return "dx";
-        case REG_ID(si): return "si";
-        case REG_ID(di): return "di";
-        case REG_ID(bp): return "bp";
-        case REG_ID(sp): return "sp";
-    }
-    return "??";
-}
-static inline const char *reg32_name(uint8_t reg_id) {
-    switch (reg_id) {
-        case REG_ID(eax): return "eax";
-        case REG_ID(ebx): return "ebx";
-        case REG_ID(ecx): return "ecx";
-        case REG_ID(edx): return "edx";
-        case REG_ID(esi): return "esi";
-        case REG_ID(edi): return "edi";
-        case REG_ID(ebp): return "ebp";
-        case REG_ID(esp): return "esp";
-    }
-    return "???";
 }
 
 #endif

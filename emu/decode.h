@@ -8,14 +8,19 @@
 #define DEFAULT_CHANNEL instr
 #define TRACEI(msg, ...) TRACE(msg "\t", ##__VA_ARGS__)
 
-// this will be the next PyEval_EvalFrameEx.
-__no_instrument int glue(decoder_name, OP_SIZE)(struct cpu_state *cpu, struct tlb *tlb) {
+// this will be the next PyEval_EvalFrameEx
+__no_instrument DECODER_RET glue(DECODER_NAME, OP_SIZE)(DECODER_ARGS) {
     DECLARE_LOCALS;
 
     dword_t addr_offset = 0;
+    byte_t insn;
+    uint64_t imm;
+#define READIMM_(name, size) _READIMM(name, size); TRACE("imm %llx ", (long long) name)
 #define READADDR READIMM_(addr_offset, 32); addr += addr_offset
-
-#define UNDEFINED { cpu->eip = saved_ip; return INT_UNDEFINED; }
+#define READINSN _READIMM(insn, 8); TRACE("%02x ", insn)
+#define READIMM READIMM_(imm, OP_SIZE)
+#define READIMM8 READIMM_(imm, 8)
+#define READIMM16 READIMM_(imm, 16)
 
 restart:
     TRACE("%d %08x\t", current->pid, cpu->eip);
@@ -311,10 +316,10 @@ restart:
         case 0x66:
 #if OP_SIZE == 32
             TRACELN("entering 16 bit mode");
-            return cpu_step16(cpu, tlb);
+            return glue(DECODER_NAME, 16)(DECODER_PASS_ARGS);
 #else
             TRACELN("entering 32 bit mode");
-            return cpu_step32(cpu, tlb);
+            return glue(DECODER_NAME, 32)(DECODER_PASS_ARGS);
 #endif
 
         case 0x67: TRACEI("address size prefix (ignored)"); goto restart;
@@ -413,17 +418,17 @@ restart:
 
         case 0x8d: TRACEI("lea\t\t");
                    READMODRM;
-                   if (modrm.type == mod_reg)
+                   if (modrm.type == modrm_reg)
                        UNDEFINED;
                    MOV(addr, modrm_reg,); break;
 
         // only gs is supported, and it does nothing
         // see comment in sys/tls.c
         case 0x8c: TRACEI("mov seg, modrm\t"); READMODRM;
-            if (modrm.reg.reg32_id != REG_ID(ebp)) UNDEFINED;
+            if (modrm.reg != reg_ebp) UNDEFINED;
             MOV(gs, modrm_val,16); break;
         case 0x8e: TRACEI("mov modrm, seg\t"); READMODRM;
-            if (modrm.reg.reg32_id != REG_ID(ebp)) UNDEFINED;
+            if (modrm.reg != reg_ebp) UNDEFINED;
             MOV(modrm_val, gs,16); break;
 
         case 0x8f: TRACEI("pop modrm");
@@ -539,7 +544,7 @@ restart:
 
         case 0xd8: case 0xd9: case 0xda: case 0xdb: case 0xdc: case 0xdd: case 0xde: case 0xdf:
             TRACEI("fpu\t\t"); READMODRM;
-            if (modrm.type != mod_reg) {
+            if (modrm.type != modrm_reg) {
                 switch (insn << 4 | modrm.opcode) {
                     case 0xd80: TRACE("fadd mem32"); FADDM(mem_addr_real,32); break;
                     case 0xd81: TRACE("fmul mem32"); FMULM(mem_addr_real,32); break;
@@ -618,7 +623,7 @@ restart:
                     READINSN;
                     switch (insn) {
                         case 0x2c: TRACEI("cvttsd2si modrm64, reg32");
-                                   READMODRM; if (modrm.type == mod_reg) UNDEFINED; // TODO xmm
+                                   READMODRM; if (modrm.type == modrm_reg) UNDEFINED; // TODO xmm
                                    CVTTSD2SI(mem_addr_real, modrm_reg); break;
                         default: TRACE("undefined"); UNDEFINED;
                     }
@@ -720,5 +725,5 @@ restart:
             UNDEFINED;
     }
     TRACELN("");
-    return -1; // everything is ok.
+    FINISH;
 }

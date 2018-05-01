@@ -1,5 +1,7 @@
 #include "emu/cpu.h"
 #include "emu/cpuid.h"
+#include "emu/modrm.h"
+#include "emu/regid.h"
 
 // TODO get rid of these
 #pragma GCC diagnostic ignored "-Wsign-compare"
@@ -7,28 +9,32 @@
 
 #define DECLARE_LOCALS \
     dword_t saved_ip = cpu->eip; \
-    byte_t insn; \
-    struct modrm_info modrm; \
+    struct modrm modrm; \
+    struct regptr modrm_regptr, modrm_base; \
     dword_t addr = 0; \
     \
-    uint64_t imm; \
     union xmm_reg xmm_src; \
     union xmm_reg xmm_dst; \
     \
     extFloat80_t ftmp;
 
-#define READMODRM modrm_decode32(cpu, tlb, &addr, &modrm)
-#define READIMM_(name,size) \
+#define FINISH \
+    return -1 // everything is ok.
+
+#define UNDEFINED { cpu->eip = saved_ip; return INT_UNDEFINED; }
+
+static bool modrm_compute(struct cpu_state *cpu, struct tlb *tlb, addr_t *addr_out,
+        struct modrm *modrm, struct regptr *modrm_regptr, struct regptr *modrm_base);
+#define READMODRM \
+    if (!modrm_compute(cpu, tlb, &addr, &modrm, &modrm_regptr, &modrm_base)) { \
+        cpu->segfault_addr = cpu->eip; \
+        cpu->eip = saved_ip; \
+        return INT_GPF; \
+    }
+
+#define _READIMM(name,size) \
     name = mem_read(cpu->eip, size); \
-    cpu->eip += size/8; \
-    TRACE("imm %llx ", (long long) name)
-#define READIMM READIMM_(imm, OP_SIZE)
-#define READIMM8 READIMM_(imm, 8)
-#define READIMM16 READIMM_(imm, 16)
-#define READINSN \
-    insn = mem_read(cpu->eip, 8); \
-    cpu->eip++; \
-    TRACE("%02x ", insn);
+    cpu->eip += size/8
 
 // this is a completely insane way to turn empty into OP_SIZE and any other size into itself
 #define sz(x) sz_##x
@@ -76,21 +82,21 @@
 #define set(what, to, size) set_##what(to, sz(size))
 #define is_memory(what) is_memory_##what
 
-#define REGISTER(regptr, size) (*(ty(size) *) (((char *) cpu) + regptr.reg##size##_id))
+#define REGISTER(regptr, size) (*(ty(size) *) (((char *) cpu) + (regptr).reg##size##_id))
 
-#define get_modrm_reg(size) REGISTER(modrm.reg, size)
-#define set_modrm_reg(to, size) REGISTER(modrm.reg, size) = to
+#define get_modrm_reg(size) REGISTER(modrm_regptr, size)
+#define set_modrm_reg(to, size) REGISTER(modrm_regptr, size) = to
 #define is_memory_modrm_reg 0
 
-#define is_memory_modrm_val (modrm.type != mod_reg)
+#define is_memory_modrm_val (modrm.type != modrm_reg)
 #define get_modrm_val(size) \
-    (modrm.type == mod_reg ? \
-     REGISTER(modrm.modrm_regid, size) : \
+    (modrm.type == modrm_reg ? \
+     REGISTER(modrm_base, size) : \
      mem_read(addr, size))
 
 #define set_modrm_val(to, size) \
-    if (modrm.type == mod_reg) { \
-        REGISTER(modrm.modrm_regid, size) = to; \
+    if (modrm.type == modrm_reg) { \
+        REGISTER(modrm_base, size) = to; \
     } else { \
         mem_write(addr, to, size); \
     }(void)0
@@ -321,11 +327,6 @@
     cpu->cf = cpu->of = signed_overflow(mul, get(src,z), get(imm,z), cpu->res,z); \
     set(dst, cpu->res,z); \
     cpu->pf_res = 1; cpu->zf = cpu->sf = cpu->zf_res = cpu->sf_res = 0
-#define _MUL_MODRM(val) \
-    if (modrm.reg.reg32_id == modrm.modrm_regid.reg32_id) \
-        modrm_reg *= val; \
-    else \
-        modrm_reg = val * modrm_val
 
 #define DIV(reg, val, rem,z) do { \
     if (get(val,z) == 0) return INT_DIV; \
@@ -593,7 +594,10 @@
 #include "emu/interp/fpu.h"
 
 // ok now include the decoding function
-#define decoder_name cpu_step
+#define DECODER_RET int
+#define DECODER_NAME cpu_step
+#define DECODER_ARGS struct cpu_state *cpu, struct tlb *tlb
+#define DECODER_PASS_ARGS cpu, tlb
 
 #define OP_SIZE 32
 #define oax eax
@@ -604,7 +608,7 @@
 #define odi edi
 #define obp ebp
 #define osp esp
-#include "decode.h"
+#include "emu/decode.h"
 #undef OP_SIZE
 
 #define OP_SIZE 16
@@ -624,8 +628,29 @@
 #define obp bp
 #undef osp
 #define osp sp
-#include "decode.h"
+#include "emu/decode.h"
 #undef OP_SIZE
+
+// reads a modrm and maybe sib byte, computes the address, and adds it to
+// *addr_out, returns false if segfault while reading the bytes
+static bool modrm_compute(struct cpu_state *cpu, struct tlb *tlb, addr_t *addr_out,
+        struct modrm *modrm, struct regptr *modrm_regptr, struct regptr *modrm_base) {
+    if (!modrm_decode32(&cpu->eip, tlb, modrm))
+        return false;
+    *modrm_regptr = regptr_from_reg(modrm->reg);
+    *modrm_base = regptr_from_reg(modrm->base);
+    if (modrm->type == modrm_reg)
+        return true;
+
+    if (modrm->base != reg_none)
+        *addr_out += REGISTER(*modrm_base, 32);
+    *addr_out += modrm->offset;
+    if (modrm->type == modrm_mem_si) {
+        struct regptr index_reg = regptr_from_reg(modrm->index);
+        *addr_out += REGISTER(index_reg, 32) << modrm->shift;
+    }
+    return true;
+}
 
 flatten __no_instrument void cpu_run(struct cpu_state *cpu) {
     int i = 0;

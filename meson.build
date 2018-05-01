@@ -81,7 +81,6 @@ src = [
     'emu/memory.c',
     'emu/tlb.c',
     'emu/interp.c',
-    'emu/modrm.c',
     cified_vdso,
 ]
 
