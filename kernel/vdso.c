@@ -2,6 +2,11 @@
 #include "kernel/elf.h"
 #include "kernel/vdso.h"
 
+__asm__(".data\n"
+        ".global vdso_data\n"
+        "vdso_data:\n"
+        ".incbin \"vdso/libvdso.so\"");
+
 int vdso_symbol(const char *name) {
     struct elf_header *header = (void *) vdso_data;
     struct prg_header *ph = (void *) ((char *) header + header->prghead_off);

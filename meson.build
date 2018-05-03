@@ -27,12 +27,6 @@ softfloat = subproject('softfloat').get_variable('softfloat_dep')
 
 subdir('vdso') # ish depends on the vdso
 
-cify = executable('tools/cify', ['tools/cify.c'], native: true)
-cified_vdso = custom_target('cify-vdso',
-    output: ['libvdso.so.c', 'libvdso.so.h'],
-    depends: [vdso],
-    command: [cify, 'vdso_data', vdso.full_path(), '@OUTPUT@'])
-
 src = [
     'kernel/init.c',
     'kernel/errno.c',
@@ -83,7 +77,6 @@ src = [
     'emu/tlb.c',
     'emu/interp.c',
     'emu/modrm.c',
-    cified_vdso,
 ]
 
 libish = library('ish', src,
