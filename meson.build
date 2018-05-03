@@ -32,6 +32,10 @@ cified_vdso = custom_target('cify-vdso',
     depends: [vdso],
     command: [cify, 'vdso_data', vdso.full_path(), '@OUTPUT@'])
 
+offsets = custom_target('offsets',
+    output: 'cpu-offsets.h', input: 'emu/offsets.c', depfile: 'cpu-offsets.h.d',
+    command: [find_program('tools/staticdefine.sh'), 'compile_commands.json', '@INPUT@', '@OUTPUT@', '@DEPFILE@'])
+
 src = [
     'kernel/init.c',
     'kernel/errno.c',
@@ -80,9 +84,19 @@ src = [
 
     'emu/memory.c',
     'emu/tlb.c',
-    'emu/interp.c',
     cified_vdso,
 ]
+if get_option('jit')
+    src += [
+        'emu/jit.c',
+        'emu/gadgets-x86/gadgets.S',
+        offsets,
+    ]
+else
+    src += [
+        'emu/interp.c',
+    ]
+endif
 
 libish = library('ish', src,
     include_directories: includes,

@@ -35,7 +35,7 @@ forceinline __no_instrument void *__tlb_read_ptr(struct tlb *tlb, addr_t addr) {
 }
 bool __tlb_read_cross_page(struct tlb *tlb, addr_t addr, char *out, unsigned size);
 forceinline __no_instrument bool tlb_read(struct tlb *tlb, addr_t addr, void *out, unsigned size) {
-    if (OFFSET(addr) > PAGE_SIZE - size)
+    if (PGOFFSET(addr) > PAGE_SIZE - size)
         return __tlb_read_cross_page(tlb, addr, out, size);
     void *ptr = __tlb_read_ptr(tlb, addr);
     if (ptr == NULL)
@@ -56,7 +56,7 @@ forceinline __no_instrument void *__tlb_write_ptr(struct tlb *tlb, addr_t addr) 
 }
 bool __tlb_write_cross_page(struct tlb *tlb, addr_t addr, const char *value, unsigned size);
 forceinline __no_instrument bool tlb_write(struct tlb *tlb, addr_t addr, const void *value, unsigned size) {
-    if (OFFSET(addr) > PAGE_SIZE - size)
+    if (PGOFFSET(addr) > PAGE_SIZE - size)
         return __tlb_write_cross_page(tlb, addr, value, size);
     void *ptr = __tlb_write_ptr(tlb, addr);
     if (ptr == NULL)

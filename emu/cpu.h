@@ -20,6 +20,7 @@ union xmm_reg {
 
 struct cpu_state {
     struct mem *mem;
+    struct jit *jit;
 
     // assumes little endian (as does literally everything)
 #define _REG(n) \

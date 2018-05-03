@@ -71,8 +71,8 @@ static int load_entry(struct prg_header ph, addr_t bias, struct fd *fd) {
     if (ph.flags & PH_W) flags |= P_WRITE;
 
     if ((err = fd->ops->mmap(fd, curmem, PAGE(addr),
-                    PAGE_ROUND_UP(filesize + OFFSET(addr)),
-                    offset - OFFSET(addr), flags, MMAP_PRIVATE)) < 0)
+                    PAGE_ROUND_UP(filesize + PGOFFSET(addr)),
+                    offset - PGOFFSET(addr), flags, MMAP_PRIVATE)) < 0)
         return err;
 
     if (memsize > filesize) {
@@ -82,7 +82,7 @@ static int load_entry(struct prg_header ph, addr_t bias, struct fd *fd) {
         // first zero the tail from the end of the file mapping to the end
         // of the load entry or the end of the page, whichever comes first
         addr_t file_end = addr + filesize;
-        dword_t tail_size = PAGE_SIZE - OFFSET(file_end);
+        dword_t tail_size = PAGE_SIZE - PGOFFSET(file_end);
         if (tail_size == PAGE_SIZE)
             // if you can calculate tail_size better and not have to do this please let me know
             tail_size = 0;

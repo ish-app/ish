@@ -12,18 +12,17 @@
 __no_instrument DECODER_RET glue(DECODER_NAME, OP_SIZE)(DECODER_ARGS) {
     DECLARE_LOCALS;
 
-    dword_t addr_offset = 0;
     byte_t insn;
     uint64_t imm;
+    struct modrm modrm;
 #define READIMM_(name, size) _READIMM(name, size); TRACE("imm %llx ", (long long) name)
-#define READADDR READIMM_(addr_offset, 32); addr += addr_offset
 #define READINSN _READIMM(insn, 8); TRACE("%02x ", insn)
 #define READIMM READIMM_(imm, OP_SIZE)
 #define READIMM8 READIMM_(imm, 8)
 #define READIMM16 READIMM_(imm, 16)
 
 restart:
-    TRACE("%d %08x\t", current->pid, cpu->eip);
+    TRACEIP();
     READINSN;
     switch (insn) {
 #define MAKE_OP(x, OP, op) \
@@ -168,10 +167,7 @@ restart:
                 case 0x9f: TRACEI("setnle\t");
                            READMODRM; SET(!LE, modrm_val); break;
 
-                case 0xa2:
-                    TRACEI("cpuid");
-                    do_cpuid(&cpu->eax, &cpu->ebx, &cpu->ecx, &cpu->edx);
-                    break;
+                case 0xa2: TRACEI("cpuid"); CPUID(); break;
 
                 case 0xa3: TRACEI("bt reg, modrm");
                            READMODRM; BT(modrm_reg, modrm_val,); break;
@@ -310,16 +306,15 @@ restart:
         case 0x5e: TRACEI("pop osi"); POP(osi); break;
         case 0x5f: TRACEI("pop odi"); POP(odi); break;
 
-        case 0x65: TRACELN("segment gs");
-                   addr += cpu->tls_ptr; goto restart;
+        case 0x65: TRACELN("segment gs"); SEG_GS(); goto restart;
 
         case 0x66:
 #if OP_SIZE == 32
             TRACELN("entering 16 bit mode");
-            return glue(DECODER_NAME, 16)(DECODER_PASS_ARGS);
+            RETURN(glue(DECODER_NAME, 16)(DECODER_PASS_ARGS));
 #else
             TRACELN("entering 32 bit mode");
-            return glue(DECODER_NAME, 32)(DECODER_PASS_ARGS);
+            RETURN(glue(DECODER_NAME, 32)(DECODER_PASS_ARGS));
 #endif
 
         case 0x67: TRACEI("address size prefix (ignored)"); goto restart;
@@ -725,5 +720,5 @@ restart:
             UNDEFINED;
     }
     TRACELN("");
-    FINISH;
+    RETURN(-1); // everything is ok.
 }

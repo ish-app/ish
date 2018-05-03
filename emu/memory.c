@@ -175,7 +175,7 @@ void *mem_ptr(struct mem *mem, addr_t addr, int type) {
     if (entry->data == NULL)
         return NULL;
     set_dirty_page(mem, addr & 0xfffff000);
-    return entry->data->data + entry->offset + OFFSET(addr);
+    return entry->data->data + entry->offset + PGOFFSET(addr);
 }
 
 size_t real_page_size;

@@ -8,8 +8,8 @@
 #pragma GCC diagnostic ignored "-Wtautological-constant-out-of-range-compare"
 
 #define DECLARE_LOCALS \
+    dword_t addr_offset = 0; \
     dword_t saved_ip = cpu->eip; \
-    struct modrm modrm; \
     struct regptr modrm_regptr, modrm_base; \
     dword_t addr = 0; \
     \
@@ -18,8 +18,7 @@
     \
     extFloat80_t ftmp;
 
-#define FINISH \
-    return -1 // everything is ok.
+#define RETURN(thing) return (thing)
 
 #define UNDEFINED { cpu->eip = saved_ip; return INT_UNDEFINED; }
 
@@ -31,10 +30,15 @@ static bool modrm_compute(struct cpu_state *cpu, struct tlb *tlb, addr_t *addr_o
         cpu->eip = saved_ip; \
         return INT_GPF; \
     }
+#define READADDR READIMM_(addr_offset, 32); addr += addr_offset
 
 #define _READIMM(name,size) \
     name = mem_read(cpu->eip, size); \
     cpu->eip += size/8
+
+#define TRACEIP() TRACE("%d %08x\t", current->pid, cpu->eip);
+
+#define SEG_GS() addr += cpu->tls_ptr
 
 // this is a completely insane way to turn empty into OP_SIZE and any other size into itself
 #define sz(x) sz_##x
@@ -589,6 +593,9 @@ static bool modrm_compute(struct cpu_state *cpu, struct tlb *tlb, addr_t *addr_o
     imm = rdtsc(); \
     cpu->eax = imm & 0xffffffff; \
     cpu->edx = imm >> 32
+
+#define CPUID() \
+    do_cpuid(&cpu->eax, &cpu->ebx, &cpu->ecx, &cpu->edx)
 
 #include "emu/interp/sse.h"
 #include "emu/interp/fpu.h"

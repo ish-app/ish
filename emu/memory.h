@@ -30,7 +30,7 @@ void mem_release(struct mem *mem);
 #undef PAGE_SIZE // defined in system headers somewhere
 #define PAGE_SIZE (1 << PAGE_BITS)
 #define PAGE(addr) ((addr) >> PAGE_BITS)
-#define OFFSET(addr) ((addr) & (PAGE_SIZE - 1))
+#define PGOFFSET(addr) ((addr) & (PAGE_SIZE - 1))
 typedef dword_t pages_t;
 #define PAGE_ROUND_UP(bytes) (((bytes - 1) / PAGE_SIZE) + 1)
 
