@@ -1,5 +1,39 @@
-static void gen_step32(struct gen_state *state, addr_t ip, struct tlb *tlb);
-static void gen_step16(struct gen_state *state, addr_t ip, struct tlb *tlb);
+#include "emu/gen.h"
+#include "emu/interrupt.h"
+
+// This should stay in sync with the .irp in the definition of .gadget_array in gadgets.S
+enum arg {
+    arg_eax, arg_ecx, arg_edx, arg_ebx, arg_esp, arg_ebp, arg_esi, arg_edi,
+    arg_ax, arg_cx, arg_dx, arg_bx, arg_sp, arg_bp, arg_si, arg_di,
+    arg_mem32,
+    arg_cnt,
+    // the following should not be synced with the aforementioned .irp
+    arg_modrm_val, arg_modrm_reg, arg_imm, arg_imm8
+};
+
+// there are many
+typedef void (*gadget_t)();
+void gadget_interrupt();
+void gadget_exit();
+void gadget_push();
+extern gadget_t load_gadgets[arg_cnt];
+extern gadget_t store_gadgets[arg_cnt];
+
+#define GEN(thing) gen(state, (unsigned long) (thing))
+#define G(g) GEN(gadget_##g)
+#define GG(g, a) do { GEN(gadget_##g); GEN(a); } while(0)
+
+static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg arg) {
+    if (arg >= arg_eax && arg <= arg_edi)
+        GEN(gadgets[arg]);
+    else
+        GG(interrupt, INT_UNDEFINED);
+}
+#define GEN_OP(type, thing) gen_op(state, type##_gadgets, arg_##thing)
+
+#define load(thing) GEN_OP(load, thing)
+
+#define UNDEFINED GG(interrupt, INT_UNDEFINED); return;
 
 #define DECLARE_LOCALS \
     dword_t addr_offset = 0;
@@ -15,8 +49,6 @@ static void gen_step16(struct gen_state *state, addr_t ip, struct tlb *tlb);
 #define READADDR _READIMM(addr_offset, 32)
 #define SEG_GS() UNDEFINED
 
-#define UNDEFINED GG(interrupt, INT_UNDEFINED); return;
-
 #define ADD(src, dst,z) UNDEFINED
 #define OR(src, dst,z) UNDEFINED
 #define ADC(src, dst,z) UNDEFINED
@@ -28,6 +60,9 @@ static void gen_step16(struct gen_state *state, addr_t ip, struct tlb *tlb);
 #define TEST(src, dst,z) UNDEFINED
 #define NOT(val,z) UNDEFINED
 #define NEG(val,z) UNDEFINED
+
+#define POP(thing) UNDEFINED
+#define PUSH(thing) load(thing); G(push)
 
 #define INC(val,z) UNDEFINED
 #define DEC(val,z) UNDEFINED
@@ -54,9 +89,6 @@ static void gen_step16(struct gen_state *state, addr_t ip, struct tlb *tlb);
 #define MOVSX(src, dst,zs,zd) UNDEFINED
 #define XCHG(src, dst,z) UNDEFINED
 #define CMOV(cc, src, dst,z) UNDEFINED
-
-#define POP(thing) UNDEFINED
-#define PUSH(thing) UNDEFINED
 
 #define MUL18(val) UNDEFINED
 #define MUL1(val,z) UNDEFINED
@@ -145,10 +177,11 @@ static void gen_step16(struct gen_state *state, addr_t ip, struct tlb *tlb);
 #define FIDIV(val,z) UNDEFINED
 #define FDIVM(val,z) UNDEFINED
 
-#define DECODER_RET static void
+#define DECODER_RET void
 #define DECODER_NAME gen_step
 #define DECODER_ARGS struct gen_state *state, addr_t ip, struct tlb *tlb
 #define DECODER_PASS_ARGS state, ip, tlb
+
 #define OP_SIZE 32
 #include "emu/decode.h"
 #undef OP_SIZE

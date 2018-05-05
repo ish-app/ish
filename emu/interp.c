@@ -607,34 +607,9 @@ static bool modrm_compute(struct cpu_state *cpu, struct tlb *tlb, addr_t *addr_o
 #define DECODER_PASS_ARGS cpu, tlb
 
 #define OP_SIZE 32
-#define oax eax
-#define obx ebx
-#define ocx ecx
-#define odx edx
-#define osi esi
-#define odi edi
-#define obp ebp
-#define osp esp
 #include "emu/decode.h"
 #undef OP_SIZE
-
 #define OP_SIZE 16
-#undef oax
-#define oax ax
-#undef obx
-#define obx bx
-#undef ocx
-#define ocx cx
-#undef odx
-#define odx dx
-#undef osi
-#define osi si
-#undef odi
-#define odi di
-#undef obp
-#define obp bp
-#undef osp
-#define osp sp
 #include "emu/decode.h"
 #undef OP_SIZE
 

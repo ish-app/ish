@@ -150,8 +150,8 @@ static inline void collapse_flags(struct cpu_state *cpu) {
 }
 
 enum reg32 {
-    reg_eax = 0, reg_ecx, reg_edx, reg_ebx, reg_esp, reg_ebp, reg_esi, reg_edi,
-    reg_none,
+    reg_eax = 0, reg_ecx, reg_edx, reg_ebx, reg_esp, reg_ebp, reg_esi, reg_edi, reg_cnt,
+    reg_none = reg_cnt,
 };
 
 static inline const char *reg32_name(enum reg32 reg) {

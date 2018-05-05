@@ -2,17 +2,13 @@
 #include "emu/cpu.h"
 #include "emu/memory.h"
 #include "emu/jit.h"
-#include "emu/gadgets.h"
+#include "emu/interrupt.h"
+#include "emu/gen.h"
+#include "kernel/calls.h"
 
 static void jit_block_free(struct jit_block *block) {
     free(block);
 }
-
-struct gen_state {
-    struct jit_block *block;
-    unsigned size;
-    unsigned capacity;
-};
 
 void gen_start(addr_t addr, struct gen_state *state) {
     state->capacity = JIT_BLOCK_INITIAL_CAPACITY;
@@ -20,7 +16,7 @@ void gen_start(addr_t addr, struct gen_state *state) {
     state->block = malloc(sizeof(struct jit_block) + state->capacity * sizeof(unsigned long));
 }
 
-static void gen(struct gen_state *state, unsigned long thing) {
+void gen(struct gen_state *state, unsigned long thing) {
     assert(state->size <= state->capacity);
     if (state->size >= state->capacity) {
         state->capacity *= 2;
@@ -36,13 +32,9 @@ static void gen(struct gen_state *state, unsigned long thing) {
     state->block->code[state->size++] = thing;
 }
 
-#define GEN(thing) gen(state, (unsigned long) (thing))
-#define G(g) GEN(gadget_##g)
-#define GG(g, a) GEN(gadget_##g); GEN(a)
-
-#include "emu/gen.c"
-
 static struct jit_block *jit_compile_step(struct jit *jit, struct tlb *tlb, addr_t ip) {
+    extern void gadget_exit();
+
     struct gen_state state;
     gen_start(ip, &state);
     gen_step32(&state, ip, tlb);
@@ -52,10 +44,10 @@ static struct jit_block *jit_compile_step(struct jit *jit, struct tlb *tlb, addr
 
 int cpu_step32(struct cpu_state *cpu, struct tlb *tlb) {
     // assembler function
-    extern int jit_enter(struct cpu_state *cpu, struct jit_block *block);
+    extern int jit_enter(struct jit_block *block, struct cpu_state *cpu, struct tlb *tlb);
 
     struct jit_block *block = jit_compile_step(cpu->jit, tlb, cpu->eip);
-    int interrupt = jit_enter(cpu, block);
+    int interrupt = jit_enter(block, cpu, tlb);
     jit_block_free(block);
     return interrupt;
 }

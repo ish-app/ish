@@ -4,6 +4,34 @@
 #include "emu/interrupt.h"
 #include "kernel/calls.h"
 
+#undef oax
+#undef obx
+#undef ocx
+#undef odx
+#undef osi
+#undef odi
+#undef obp
+#undef osp
+#if OP_SIZE == 32
+#define osp esp
+#define obp ebp
+#define odi edi
+#define osi esi
+#define odx edx
+#define ocx ecx
+#define obx ebx
+#define oax eax
+#else
+#define osp sp
+#define obp bp
+#define odi di
+#define osi si
+#define odx dx
+#define ocx cx
+#define obx bx
+#define oax ax
+#endif
+
 #undef DEFAULT_CHANNEL
 #define DEFAULT_CHANNEL instr
 #define TRACEI(msg, ...) TRACE(msg "\t", ##__VA_ARGS__)
