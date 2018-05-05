@@ -1,3 +1,4 @@
+#include "emu/modrm.h"
 #include "emu/gen.h"
 #include "emu/interrupt.h"
 
@@ -7,8 +8,11 @@ enum arg {
     arg_ax, arg_cx, arg_dx, arg_bx, arg_sp, arg_bp, arg_si, arg_di,
     arg_mem32,
     arg_cnt,
-    // the following should not be synced with the aforementioned .irp
-    arg_modrm_val, arg_modrm_reg, arg_imm, arg_imm8
+    // the following should not be synced with the aforementioned .irp (no gadgets implement them)
+    arg_al, arg_cl, arg_dl, arg_bl, arg_ah, arg_ch, arg_dh, arg_bh,
+    arg_modrm_val, arg_modrm_reg, arg_mem_addr, arg_imm, arg_imm8, arg_addr, arg_gs,
+    // markers
+    arg_reg32 = arg_eax, arg_reg16 = arg_ax,
 };
 
 // there are many
@@ -22,18 +26,29 @@ extern gadget_t store_gadgets[arg_cnt];
 #define GEN(thing) gen(state, (unsigned long) (thing))
 #define G(g) GEN(gadget_##g)
 #define GG(g, a) do { GEN(gadget_##g); GEN(a); } while(0)
+#define UNDEFINED GG(interrupt, INT_UNDEFINED); return
 
-static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg arg) {
-    if (arg >= arg_eax && arg <= arg_edi)
-        GEN(gadgets[arg]);
-    else
-        GG(interrupt, INT_UNDEFINED);
+static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg arg, struct modrm *modrm) {
+    switch (arg) {
+        case arg_eax ... arg_edi:
+            GEN(gadgets[arg]); break;
+        case arg_modrm_reg:
+            // TODO find some way to assert that this won't overflow?
+            GEN(gadgets[modrm->reg + arg_reg32]); break;
+        case arg_modrm_val:
+            switch (modrm->type) {
+                case modrm_reg:
+                    GEN(gadgets[modrm->base + arg_reg32]); break;
+                default: UNDEFINED;
+            }
+            break;
+        default: UNDEFINED;
+    }
 }
-#define GEN_OP(type, thing) gen_op(state, type##_gadgets, arg_##thing)
+#define GEN_OP(type, thing) gen_op(state, type##_gadgets, arg_##thing, &modrm)
 
 #define load(thing) GEN_OP(load, thing)
-
-#define UNDEFINED GG(interrupt, INT_UNDEFINED); return;
+#define store(thing) GEN_OP(store, thing)
 
 #define DECLARE_LOCALS \
     dword_t addr_offset = 0;
@@ -48,6 +63,11 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define READMODRM modrm_decode32(&state->ip, tlb, &modrm)
 #define READADDR _READIMM(addr_offset, 32)
 #define SEG_GS() UNDEFINED
+
+#define MOV(src, dst,z) load(src); store(dst)
+#define MOVZX(src, dst,zs,zd) UNDEFINED
+#define MOVSX(src, dst,zs,zd) UNDEFINED
+#define XCHG(src, dst,z) UNDEFINED
 
 #define ADD(src, dst,z) UNDEFINED
 #define OR(src, dst,z) UNDEFINED
@@ -74,6 +94,7 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define CALL(loc) UNDEFINED
 #define CALL_REL(off) UNDEFINED
 #define SET(cc, dst) UNDEFINED
+#define CMOV(cc, src, dst,z) UNDEFINED
 #define RET_NEAR_IMM(imm) UNDEFINED
 #define RET_NEAR() UNDEFINED
 #define INT(code) UNDEFINED
@@ -83,12 +104,6 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define SAHF UNDEFINED
 #define CLD UNDEFINED
 #define STD UNDEFINED
-
-#define MOV(src, dst,z) UNDEFINED
-#define MOVZX(src, dst,zs,zd) UNDEFINED
-#define MOVSX(src, dst,zs,zd) UNDEFINED
-#define XCHG(src, dst,z) UNDEFINED
-#define CMOV(cc, src, dst,z) UNDEFINED
 
 #define MUL18(val) UNDEFINED
 #define MUL1(val,z) UNDEFINED
