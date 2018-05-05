@@ -14,6 +14,12 @@ void gen_start(addr_t addr, struct gen_state *state) {
     state->capacity = JIT_BLOCK_INITIAL_CAPACITY;
     state->size = 0;
     state->block = malloc(sizeof(struct jit_block) + state->capacity * sizeof(unsigned long));
+    state->block->addr = addr;
+    state->ip = addr;
+}
+
+void gen_end(struct gen_state *state) {
+    state->block->end_addr = state->ip;
 }
 
 void gen(struct gen_state *state, unsigned long thing) {
@@ -32,22 +38,20 @@ void gen(struct gen_state *state, unsigned long thing) {
     state->block->code[state->size++] = thing;
 }
 
-static struct jit_block *jit_compile_step(struct jit *jit, struct tlb *tlb, addr_t ip) {
-    extern void gadget_exit();
-
-    struct gen_state state;
-    gen_start(ip, &state);
-    gen_step32(&state, ip, tlb);
-    gen(&state, (unsigned long) gadget_exit); // in case the last instruction didn't end the block
-    return state.block;
-}
-
 int cpu_step32(struct cpu_state *cpu, struct tlb *tlb) {
     // assembler function
     extern int jit_enter(struct jit_block *block, struct cpu_state *cpu, struct tlb *tlb);
+    extern void gadget_exit();
 
-    struct jit_block *block = jit_compile_step(cpu->jit, tlb, cpu->eip);
+    struct gen_state state;
+    gen_start(cpu->eip, &state);
+    gen_step32(&state, tlb);
+    gen(&state, (unsigned long) gadget_exit); // in case the last instruction didn't end the block
+    gen_end(&state);
+
+    struct jit_block *block = state.block;
     int interrupt = jit_enter(block, cpu, tlb);
+    cpu->eip = block->end_addr;
     jit_block_free(block);
     return interrupt;
 }
@@ -76,6 +80,8 @@ void cpu_run(struct cpu_state *cpu) {
                 tlb_flush(&tlb);
                 changes = cpu->mem->changes;
             }
+            // if we try to move on now, there's no guarantee cpu->eip is correct
+            TODO("interrupt recovery");
         }
     }
 }

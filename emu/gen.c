@@ -39,13 +39,13 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
     dword_t addr_offset = 0;
 #define RETURN(thing) (void) (thing)
 
-#define TRACEIP() TRACE("%d %08x\t", current->pid, ip);
+#define TRACEIP() TRACE("%d %08x\t", current->pid, state->ip);
 
 #define _READIMM(name, size) \
-    tlb_read(tlb, ip, &name, size/8); \
-    ip += size/8
+    tlb_read(tlb, state->ip, &name, size/8); \
+    state->ip += size/8
 
-#define READMODRM modrm_decode32(&ip, tlb, &modrm)
+#define READMODRM modrm_decode32(&state->ip, tlb, &modrm)
 #define READADDR _READIMM(addr_offset, 32)
 #define SEG_GS() UNDEFINED
 
@@ -179,8 +179,8 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 
 #define DECODER_RET void
 #define DECODER_NAME gen_step
-#define DECODER_ARGS struct gen_state *state, addr_t ip, struct tlb *tlb
-#define DECODER_PASS_ARGS state, ip, tlb
+#define DECODER_ARGS struct gen_state *state, struct tlb *tlb
+#define DECODER_PASS_ARGS state, tlb
 
 #define OP_SIZE 32
 #include "emu/decode.h"

@@ -15,6 +15,7 @@ struct jit {
 
 struct jit_block {
     addr_t addr;
+    addr_t end_addr;
     unsigned long code[];
 };
 

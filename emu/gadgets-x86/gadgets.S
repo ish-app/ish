@@ -4,6 +4,7 @@
 
 .extern tlb_handle_miss
 
+.text
 .global jit_enter
 .type jit_enter,function
 jit_enter:
@@ -49,7 +50,9 @@ jit_exit:
     movl $-1, %tmp
     jmp jit_exit
 
-# Memory reading and writing
+# gadget support macros
+
+# memory reading and writing
 # TODO cross-page access handling (but it's going to be so slow :cry:)
 .irp type, read,write
 
@@ -101,17 +104,7 @@ segfault:
     movl $INT_GPF, %tmp
     jmp jit_exit
 
-.gadget push
-    movl %xsp, %addr
-    mem_write %tmp
-    sub $4, %xsp
-    gret
-.gadget pop
-    movl %xsp, %addr
-    mem_read %tmp
-    add $4, %xsp
-    gret
-
+# a gadget for each register
 .macro .reg_gadgets type
     .each_reg
         .gadget \type\()_\reg
@@ -123,15 +116,6 @@ segfault:
         gret
     .endr
 .endm
-
-.macro g_load reg
-    movl %\reg, %tmp
-.endm
-.reg_gadgets load
-.macro g_store reg
-    movl %tmp, %\reg
-.endm
-.reg_gadgets store
 
 .macro .gadget_array type
 .global \type\()_gadgets
@@ -145,6 +129,26 @@ segfault:
         .quad gadget_\type\()_\arg
     .endr
 .endm
+
+.gadget push
+    movl %xsp, %addr
+    mem_write %tmp
+    sub $4, %xsp
+    gret
+.gadget pop
+    movl %xsp, %addr
+    mem_read %tmp
+    add $4, %xsp
+    gret
+
+.macro g_load reg
+    movl %\reg, %tmp
+.endm
+.reg_gadgets load
+.macro g_store reg
+    movl %tmp, %\reg
+.endm
+.reg_gadgets store
 
 .data
 .gadget_array load
