@@ -46,7 +46,7 @@ __no_instrument DECODER_RET glue(DECODER_NAME, OP_SIZE)(DECODER_ARGS) {
 #define READIMM_(name, size) _READIMM(name, size); TRACE("imm %llx ", (long long) name)
 #define READINSN _READIMM(insn, 8); TRACE("%02x ", insn)
 #define READIMM READIMM_(imm, OP_SIZE)
-#define READIMM8 READIMM_(imm, 8)
+#define READIMM8 READIMM_(imm, 8); imm = (int8_t) (uint8_t) imm
 #define READIMM16 READIMM_(imm, 16)
 
 restart:
@@ -121,7 +121,7 @@ restart:
                            READMODRM; XORP(modrm_val, modrm_reg); break;
                 case 0x73: TRACEI("psrlq imm8, reg");
                            // TODO I think this is actually a group
-                           READMODRM; READIMM8; PSRLQ(imm8, modrm_val); break;
+                           READMODRM; READIMM8; PSRLQ(imm, modrm_val); break;
                 case 0x76: TRACEI("pcmpeqd reg, modrm");
                            READMODRM; PCMPEQD(modrm_reg, modrm_val); break;
 #if OP_SIZE == 16
@@ -201,7 +201,7 @@ restart:
                            READMODRM; BT(modrm_reg, modrm_val,); break;
 
                 case 0xa4: TRACEI("shld imm8, reg, modrm");
-                           READMODRM; READIMM8; SHLD(imm8, modrm_reg, modrm_val,); break;
+                           READMODRM; READIMM8; SHLD(imm, modrm_reg, modrm_val,); break;
                 case 0xa5: TRACEI("shld cl, reg, modrm");
                            READMODRM; SHLD(cl, modrm_reg, modrm_val,); break;
 
@@ -209,7 +209,7 @@ restart:
                            READMODRM; BTS(modrm_reg, modrm_val,); break;
 
                 case 0xac: TRACEI("shrd imm8, reg, modrm");
-                           READMODRM; READIMM8; SHRD(imm8, modrm_reg, modrm_val,); break;
+                           READMODRM; READIMM8; SHRD(imm, modrm_reg, modrm_val,); break;
                 case 0xad: TRACEI("shrd cl, reg, modrm");
                            READMODRM; SHRD(cl, modrm_reg, modrm_val,); break;
 
@@ -237,7 +237,7 @@ restart:
     }
 
                 case 0xba: TRACEI("grp8 imm8, modrm");
-                           READMODRM; READIMM8; GRP8(imm8, modrm_val,); break;
+                           READMODRM; READIMM8; GRP8(imm, modrm_val,); break;
 
 #undef GRP8
 
@@ -352,42 +352,42 @@ restart:
         case 0x69: TRACEI("imul imm\t");
                    READMODRM; READIMM; IMUL3(imm, modrm_val, modrm_reg,); break;
         case 0x6a: TRACEI("push imm8\t");
-                   READIMM8; PUSH(imm8); break;
+                   READIMM8; PUSH(imm); break;
         case 0x6b: TRACEI("imul imm8\t");
-                   READMODRM; READIMM8; IMUL3(imm8, modrm_val, modrm_reg,); break;
+                   READMODRM; READIMM8; IMUL3(imm, modrm_val, modrm_reg,); break;
 
         case 0x70: TRACEI("jo rel8\t");
-                   READIMM8; J_REL(O, imm8); break;
+                   READIMM8; J_REL(O, imm); break;
         case 0x71: TRACEI("jno rel8\t");
-                   READIMM8; J_REL(!O, imm8); break;
+                   READIMM8; J_REL(!O, imm); break;
         case 0x72: TRACEI("jb rel8\t");
-                   READIMM8; J_REL(B, imm8); break;
+                   READIMM8; J_REL(B, imm); break;
         case 0x73: TRACEI("jnb rel8\t");
-                   READIMM8; J_REL(!B, imm8); break;
+                   READIMM8; J_REL(!B, imm); break;
         case 0x74: TRACEI("je rel8\t");
-                   READIMM8; J_REL(E, imm8); break;
+                   READIMM8; J_REL(E, imm); break;
         case 0x75: TRACEI("jne rel8\t");
-                   READIMM8; J_REL(!E, imm8); break;
+                   READIMM8; J_REL(!E, imm); break;
         case 0x76: TRACEI("jbe rel8\t");
-                   READIMM8; J_REL(BE, imm8); break;
+                   READIMM8; J_REL(BE, imm); break;
         case 0x77: TRACEI("ja rel8\t");
-                   READIMM8; J_REL(!BE, imm8); break;
+                   READIMM8; J_REL(!BE, imm); break;
         case 0x78: TRACEI("js rel8\t");
-                   READIMM8; J_REL(S, imm8); break;
+                   READIMM8; J_REL(S, imm); break;
         case 0x79: TRACEI("jns rel8\t");
-                   READIMM8; J_REL(!S, imm8); break;
+                   READIMM8; J_REL(!S, imm); break;
         case 0x7a: TRACEI("jp rel8\t");
-                   READIMM8; J_REL(P, imm8); break;
+                   READIMM8; J_REL(P, imm); break;
         case 0x7b: TRACEI("jnp rel8\t");
-                   READIMM8; J_REL(!P, imm8); break;
+                   READIMM8; J_REL(!P, imm); break;
         case 0x7c: TRACEI("jl rel8\t");
-                   READIMM8; J_REL(L, imm8); break;
+                   READIMM8; J_REL(L, imm); break;
         case 0x7d: TRACEI("jnl rel8\t");
-                   READIMM8; J_REL(!L, imm8); break;
+                   READIMM8; J_REL(!L, imm); break;
         case 0x7e: TRACEI("jle rel8\t");
-                   READIMM8; J_REL(LE, imm8); break;
+                   READIMM8; J_REL(LE, imm); break;
         case 0x7f: TRACEI("jnle rel8\t");
-                   READIMM8; J_REL(!LE, imm8); break;
+                   READIMM8; J_REL(!LE, imm); break;
 
 #define GRP1(src, dst,z) \
     switch (modrm.opcode) { \
@@ -416,7 +416,7 @@ restart:
         case 0x81: TRACEI("grp1 imm, modrm");
                    READMODRM; READIMM; GRP1(imm, modrm_val,); break;
         case 0x83: TRACEI("grp1 imm8, modrm");
-                   READMODRM; READIMM8; GRP1(imm8, modrm_val,); break;
+                   READMODRM; READIMM8; GRP1(imm, modrm_val,); break;
 
 #undef GRP1
 
@@ -481,7 +481,7 @@ restart:
         case 0xa5: TRACEI("movs"); MOVS(OP_SIZE); break;
 
         case 0xa8: TRACEI("test imm8, al");
-                   READIMM8; TEST(imm8, al,8); break;
+                   READIMM8; TEST(imm, al,8); break;
         case 0xa9: TRACEI("test imm, oax");
                    READIMM; TEST(imm, oax,); break;
 
@@ -490,21 +490,21 @@ restart:
         case 0xac: TRACEI("lodsb"); LODS(8); break;
 
         case 0xb0: TRACEI("mov imm, al\t");
-                   READIMM8; MOV(imm8, al,); break;
+                   READIMM8; MOV(imm, al,8); break;
         case 0xb1: TRACEI("mov imm, cl\t");
-                   READIMM8; MOV(imm8, cl,); break;
+                   READIMM8; MOV(imm, cl,8); break;
         case 0xb2: TRACEI("mov imm, dl\t");
-                   READIMM8; MOV(imm8, dl,); break;
+                   READIMM8; MOV(imm, dl,8); break;
         case 0xb3: TRACEI("mov imm, bl\t");
-                   READIMM8; MOV(imm8, bl,); break;
+                   READIMM8; MOV(imm, bl,8); break;
         case 0xb4: TRACEI("mov imm, ah\t");
-                   READIMM8; MOV(imm8, ah,); break;
+                   READIMM8; MOV(imm, ah,8); break;
         case 0xb5: TRACEI("mov imm, ch\t");
-                   READIMM8; MOV(imm8, ch,); break;
+                   READIMM8; MOV(imm, ch,8); break;
         case 0xb6: TRACEI("mov imm, dh\t");
-                   READIMM8; MOV(imm8, dh,); break;
+                   READIMM8; MOV(imm, dh,8); break;
         case 0xb7: TRACEI("mov imm, bh\t");
-                   READIMM8; MOV(imm8, bh,); break;
+                   READIMM8; MOV(imm, bh,8); break;
 
         case 0xb8: TRACEI("mov imm, oax\t");
                    READIMM; MOV(imm, oax,); break;
@@ -536,9 +536,9 @@ restart:
     }
 
         case 0xc0: TRACEI("grp2 imm8, modrm8");
-                   READMODRM; READIMM8; GRP2(imm8, modrm_val,8); break;
+                   READMODRM; READIMM8; GRP2(imm, modrm_val,8); break;
         case 0xc1: TRACEI("grp2 imm8, modrm");
-                   READMODRM; READIMM8; GRP2(imm8, modrm_val,); break;
+                   READMODRM; READIMM8; GRP2(imm, modrm_val,); break;
 
         case 0xc2: TRACEI("ret near imm\t");
                    READIMM16; RET_NEAR_IMM(imm); break;
@@ -552,7 +552,7 @@ restart:
                    READIMM8; INT(imm); break;
 
         case 0xc6: TRACEI("mov imm8, modrm8");
-                   READMODRM; READIMM8; MOV(imm8, modrm_val,8); break;
+                   READMODRM; READIMM8; MOV(imm, modrm_val,8); break;
         case 0xc7: TRACEI("mov imm, modrm");
                    READMODRM; READIMM; MOV(imm, modrm_val,); break;
 
@@ -627,7 +627,7 @@ restart:
             break;
 
         case 0xe3: TRACEI("jcxz rel8\t");
-                   READIMM8; JCXZ_REL(imm8); break;
+                   READIMM8; JCXZ_REL(imm); break;
 
         case 0xe8: TRACEI("call near\t");
                    READIMM; CALL_REL(imm); break;
@@ -635,7 +635,7 @@ restart:
         case 0xe9: TRACEI("jmp rel\t");
                    READIMM; JMP_REL(imm); break;
         case 0xeb: TRACEI("jmp rel8\t");
-                   READIMM8; JMP_REL(imm8); break;
+                   READIMM8; JMP_REL(imm); break;
 
         case 0xf0: TRACELN("lock (ignored for now)"); goto restart;
 

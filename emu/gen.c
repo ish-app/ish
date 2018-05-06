@@ -10,7 +10,7 @@ enum arg {
     arg_cnt,
     // the following should not be synced with the aforementioned .irp (no gadgets implement them)
     arg_al, arg_cl, arg_dl, arg_bl, arg_ah, arg_ch, arg_dh, arg_bh,
-    arg_modrm_val, arg_modrm_reg, arg_mem_addr, arg_imm, arg_imm8, arg_addr, arg_gs,
+    arg_modrm_val, arg_modrm_reg, arg_mem_addr, arg_imm, arg_addr, arg_gs,
     // markers
     arg_reg32 = arg_eax, arg_reg16 = arg_ax,
 };
