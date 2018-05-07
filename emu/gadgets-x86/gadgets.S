@@ -43,7 +43,7 @@ jit_exit:
     ret
 
 .gadget interrupt
-    op %tmp
+    movl (%ip), %tmp
     jmp jit_exit
 
 .gadget exit
@@ -58,14 +58,14 @@ jit_exit:
 
 .macro mem_\type place
     movl %addr, %r14d
-    shll $8, %r14d
+    shrl $8, %r14d
     andl $0x3ff0, %r14d
-    movl %addr, %tmp
-    andl $0xfffff000, %tmp
+    movl %addr, %r15d
+    andl $0xfffff000, %r15d
     .ifc \type,read
-        cmpl TLB_ENTRY_page(%tlb,%r14), %tmp
+        cmpl TLB_ENTRY_page(%tlb,%r14), %r15d
     .else
-        cmpl TLB_ENTRY_page_if_writable(%tlb,%r14), %tmp
+        cmpl TLB_ENTRY_page_if_writable(%tlb,%r14), %r15d
     .endif
     je 1f
     call handle_\type\()_miss
@@ -122,7 +122,7 @@ segfault:
 .type \type\()_gadgets,@object
 \type\()_gadgets:
     # The following .irp should stay in sync with enum arg in emu/gen.c
-    .irp arg, eax,ecx,edx,ebx,esp,ebp,esi,edi,ax,cx,dx,bx,sp,bp,si,di,mem32
+    .irp arg, eax,ecx,edx,ebx,esp,ebp,esi,edi,ax,cx,dx,bx,sp,bp,si,di,imm,mem32
         .ifndef gadget_\type\()_\arg
             .set gadget_\type\()_\arg, 0
         .endif
@@ -131,9 +131,9 @@ segfault:
 .endm
 
 .gadget push
+    sub $4, %xsp
     movl %xsp, %addr
     mem_write %tmp
-    sub $4, %xsp
     gret
 .gadget pop
     movl %xsp, %addr
@@ -150,6 +150,11 @@ segfault:
 .endm
 .reg_gadgets store
 
+.gadget sub_imm
+    subl (%ip), %tmp
+    gret 1
+
 .data
 .gadget_array load
 .gadget_array store
+.gadget_array sub

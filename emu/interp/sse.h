@@ -14,8 +14,8 @@
     dst >>= count
 #define PSRLQ(count, dst) \
     xmm_dst = get(dst,128); \
-    SRL(get(count,z), xmm_dst.qw[0]); \
-    SRL(get(count,z), xmm_dst.qw[1]); \
+    SRL(get(count,), xmm_dst.qw[0]); \
+    SRL(get(count,), xmm_dst.qw[1]); \
     set(dst, xmm_dst,128)
 
 #define XORP(src, dst) \

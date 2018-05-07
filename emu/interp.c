@@ -106,7 +106,6 @@ static bool modrm_compute(struct cpu_state *cpu, struct tlb *tlb, addr_t *addr_o
     }(void)0
 
 #define get_imm(size) ((uint(size)) imm)
-#define get_imm8(size) ((int8_t) (uint8_t) imm)
 
 #define get_mem_addr(size) mem_read(addr, size)
 #define set_mem_addr(to, size) mem_write(addr, to, size)
@@ -423,7 +422,7 @@ static bool modrm_compute(struct cpu_state *cpu, struct tlb *tlb, addr_t *addr_o
     switch (modrm.opcode) { \
         case 0: \
         case 1: TRACE("test imm"); \
-                READIMM8; TEST(imm8, val); break; \
+                READIMM8; TEST(imm, val); break; \
         case 2: TRACE("not"); return INT_UNDEFINED; \
         case 3: TRACE("neg"); return INT_UNDEFINED; \
         case 4: TRACE("mul"); return INT_UNDEFINED; \

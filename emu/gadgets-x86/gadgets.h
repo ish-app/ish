@@ -11,14 +11,9 @@
     .global gadget_\()\name
     gadget_\()\name :
 .endm
-.macro gret
-    addq $8, %ip
+.macro gret pop=0
+    addq $((\pop+1)*8), %ip
     jmp *-8(%ip)
-.endm
-
-.macro op reg
-    mov (%ip), \reg
-    addq $8, %ip
 .endm
 
 # using a gas macro for this works fine on gcc but not on clang

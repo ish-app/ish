@@ -1,3 +1,4 @@
+#include <assert.h>
 #include "emu/modrm.h"
 #include "emu/gen.h"
 #include "emu/interrupt.h"
@@ -6,11 +7,11 @@
 enum arg {
     arg_eax, arg_ecx, arg_edx, arg_ebx, arg_esp, arg_ebp, arg_esi, arg_edi,
     arg_ax, arg_cx, arg_dx, arg_bx, arg_sp, arg_bp, arg_si, arg_di,
-    arg_mem32,
+    arg_imm, arg_mem32,
     arg_cnt,
     // the following should not be synced with the aforementioned .irp (no gadgets implement them)
     arg_al, arg_cl, arg_dl, arg_bl, arg_ah, arg_ch, arg_dh, arg_bh,
-    arg_modrm_val, arg_modrm_reg, arg_mem_addr, arg_imm, arg_addr, arg_gs,
+    arg_modrm_val, arg_modrm_reg, arg_mem_addr, arg_addr, arg_gs,
     // markers
     arg_reg32 = arg_eax, arg_reg16 = arg_ax,
 };
@@ -22,33 +23,39 @@ void gadget_exit();
 void gadget_push();
 extern gadget_t load_gadgets[arg_cnt];
 extern gadget_t store_gadgets[arg_cnt];
+extern gadget_t sub_gadgets[arg_cnt];
 
 #define GEN(thing) gen(state, (unsigned long) (thing))
-#define G(g) GEN(gadget_##g)
-#define GG(g, a) do { GEN(gadget_##g); GEN(a); } while(0)
-#define UNDEFINED GG(interrupt, INT_UNDEFINED); return
+#define g(g) GEN(gadget_##g)
+#define gg(g, a) do { GEN(gadget_##g); GEN(a); } while (0)
+#define UNDEFINED do { gg(interrupt, INT_UNDEFINED); return; } while (0)
 
-static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg arg, struct modrm *modrm) {
+static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg arg, struct modrm *modrm, uint64_t *imm) {
     switch (arg) {
-        case arg_eax ... arg_edi:
-            GEN(gadgets[arg]); break;
         case arg_modrm_reg:
             // TODO find some way to assert that this won't overflow?
-            GEN(gadgets[modrm->reg + arg_reg32]); break;
+            arg = modrm->reg + arg_reg32; break;
         case arg_modrm_val:
             switch (modrm->type) {
                 case modrm_reg:
-                    GEN(gadgets[modrm->base + arg_reg32]); break;
+                    arg = modrm->base + arg_reg32; break;
                 default: UNDEFINED;
             }
             break;
-        default: UNDEFINED;
+        default: break;
     }
+    if (arg >= arg_cnt || gadgets[arg] == NULL) {
+        debugger;
+        UNDEFINED;
+    }
+    GEN(gadgets[arg]);
+    if (arg == arg_imm)
+        GEN(*imm);
 }
-#define GEN_OP(type, thing) gen_op(state, type##_gadgets, arg_##thing, &modrm)
+#define op(type, thing) gen_op(state, type##_gadgets, arg_##thing, &modrm, &imm)
 
-#define load(thing) GEN_OP(load, thing)
-#define store(thing) GEN_OP(store, thing)
+#define load(thing) op(load, thing)
+#define store(thing) op(store, thing)
 
 #define DECLARE_LOCALS \
     dword_t addr_offset = 0;
@@ -74,7 +81,7 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define ADC(src, dst,z) UNDEFINED
 #define SBB(src, dst,z) UNDEFINED
 #define AND(src, dst,z) UNDEFINED
-#define SUB(src, dst,z) UNDEFINED
+#define SUB(src, dst,z) load(dst); op(sub, src); store(dst)
 #define XOR(src, dst,z) UNDEFINED
 #define CMP(src, dst,z) UNDEFINED
 #define TEST(src, dst,z) UNDEFINED
@@ -82,7 +89,7 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define NEG(val,z) UNDEFINED
 
 #define POP(thing) UNDEFINED
-#define PUSH(thing) load(thing); G(push)
+#define PUSH(thing) load(thing); g(push)
 
 #define INC(val,z) UNDEFINED
 #define DEC(val,z) UNDEFINED
