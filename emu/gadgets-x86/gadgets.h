@@ -25,7 +25,7 @@
 # TODO cross-page access handling (but it's going to be so slow :cry:)
 .irp type, read,write
 
-.macro mem_\type place
+.macro \type\()_prep
     movl %addr, %r14d
     shrl $8, %r14d
     andl $0x3ff0, %r14d
@@ -38,15 +38,8 @@
     .endif
     je 1f
     call handle_\type\()_miss
-    jmp 2f
 1:
     addq TLB_ENTRY_data_minus_addr(%tlb,%r14), %addrq
-2:
-    .ifc \type,read
-        movl (%addrq), \place
-    .else
-        movl \place, (%addrq)
-    .endif
 .endm
 
 .endr

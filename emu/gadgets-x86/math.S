@@ -3,11 +3,13 @@
 .gadget push
     sub $4, %xsp
     movl %xsp, %addr
-    mem_write %tmp
+    write_prep
+    movl %tmp, (%addrq)
     gret
 .gadget pop
     movl %xsp, %addr
-    mem_read %tmp
+    read_prep
+    movl (%addrq), %tmp
     add $4, %xsp
     gret
 

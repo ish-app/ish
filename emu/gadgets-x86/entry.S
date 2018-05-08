@@ -63,9 +63,9 @@ jit_exit:
             movq $1, %rdx
         .endif
         call tlb_handle_miss
-        movq %rax, %addrq
+        movq %rax, %r15
         restore_c
-        testq %addrq, %addrq
+        testq %r15, %r15
         jz segfault
         ret
 .endr
