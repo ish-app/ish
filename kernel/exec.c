@@ -10,7 +10,7 @@
 #include "kernel/errno.h"
 #include "fs/fd.h"
 #include "kernel/elf.h"
-#include "libvdso.so.h"
+#include "kernel/vdso.h"
 
 static inline dword_t align_stack(dword_t sp);
 static inline ssize_t user_strlen(dword_t p);
