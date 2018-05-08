@@ -90,7 +90,8 @@ if get_option('jit')
     src += [
         'emu/jit.c',
         'emu/gen.c',
-        'emu/gadgets-x86/gadgets.S',
+        'emu/gadgets-x86/entry.S',
+        'emu/gadgets-x86/math.S',
         offsets,
     ]
 else
