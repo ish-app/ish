@@ -3,6 +3,7 @@
 # register assignments
 #define xsp r8d
 #define ip r9
+#define xip r9d
 #define tmp r10d
 #define cpu r11
 #define tlb r12

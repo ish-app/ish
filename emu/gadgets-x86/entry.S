@@ -35,6 +35,7 @@ jit_exit:
     movl %ebp, CPU_ebp(%cpu)
     movl %xsp, CPU_esp(%cpu)
     # TODO more of those
+    movl %xip, CPU_eip(%cpu)
     pop %r12
     pop %rbx
     pop %rbp
@@ -43,13 +44,15 @@ jit_exit:
 
 .gadget interrupt
     movl (%ip), %tmp
+    movl 8(%ip), %xip
     jmp jit_exit
 
 .gadget exit
     movl $-1, %tmp
+    movl (%ip), %xip
     jmp jit_exit
 
-# memory stuff that can't go in a header
+# memory stuff that can't go in a header file
 .irp type, read,write
     .global handle_\type\()_miss
     handle_\type\()_miss:

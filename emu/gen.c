@@ -28,8 +28,12 @@ extern gadget_t sub_gadgets[arg_cnt];
 #define GEN(thing) gen(state, (unsigned long) (thing))
 #define g(g) GEN(gadget_##g)
 #define gg(g, a) do { GEN(gadget_##g); GEN(a); } while (0)
-#define UNDEFINED do { gg(interrupt, INT_UNDEFINED); return; } while (0)
+#define ggg(g, a, b) do { GEN(gadget_##g); GEN(a); GEN(b); } while (0)
+#define UNDEFINED do { ggg(interrupt, INT_UNDEFINED, state->ip); return; } while (0)
 
+// this really wants to use all the locals of the decoder, which we can do
+// really nicely in gcc using nested functions, but that won't work in clang,
+// so we explicitly pass 500 arguments. sorry for the mess
 static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg arg, struct modrm *modrm, uint64_t *imm) {
     switch (arg) {
         case arg_modrm_reg:

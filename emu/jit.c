@@ -19,7 +19,13 @@ void gen_start(addr_t addr, struct gen_state *state) {
 }
 
 void gen_end(struct gen_state *state) {
-    state->block->end_addr = state->ip;
+}
+
+void gen_exit(struct gen_state *state) {
+    extern void gadget_exit();
+    // in case the last instruction didn't end the block
+    gen(state, (unsigned long) gadget_exit);
+    gen(state, state->ip);
 }
 
 void gen(struct gen_state *state, unsigned long thing) {
@@ -41,17 +47,15 @@ void gen(struct gen_state *state, unsigned long thing) {
 int cpu_step32(struct cpu_state *cpu, struct tlb *tlb) {
     // assembler function
     extern int jit_enter(struct jit_block *block, struct cpu_state *cpu, struct tlb *tlb);
-    extern void gadget_exit();
 
     struct gen_state state;
     gen_start(cpu->eip, &state);
     gen_step32(&state, tlb);
-    gen(&state, (unsigned long) gadget_exit); // in case the last instruction didn't end the block
+    gen_exit(&state);
     gen_end(&state);
 
     struct jit_block *block = state.block;
     int interrupt = jit_enter(block, cpu, tlb);
-    cpu->eip = block->end_addr;
     jit_block_free(block);
     return interrupt;
 }

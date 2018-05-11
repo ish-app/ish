@@ -18,6 +18,7 @@ void cpu() {
     OFFSET(CPU_di, struct cpu_state, di);
     OFFSET(CPU_bp, struct cpu_state, bp);
     OFFSET(CPU_sp, struct cpu_state, sp);
+    OFFSET(CPU_eip, struct cpu_state, eip);
 
     OFFSET(JIT_BLOCK_code, struct jit_block, code);
 
