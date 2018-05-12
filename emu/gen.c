@@ -22,6 +22,7 @@ void gadget_interrupt();
 void gadget_exit();
 void gadget_push();
 void gadget_call();
+void gadget_ret();
 extern gadget_t load_gadgets[arg_cnt];
 extern gadget_t store_gadgets[arg_cnt];
 extern gadget_t sub_gadgets[arg_cnt];
@@ -116,7 +117,7 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define SET(cc, dst) UNDEFINED
 #define CMOV(cc, src, dst,z) UNDEFINED
 #define RET_NEAR_IMM(imm) UNDEFINED
-#define RET_NEAR() UNDEFINED
+#define RET_NEAR() g(ret)
 #define INT(code) UNDEFINED
 
 #define PUSHF() UNDEFINED
