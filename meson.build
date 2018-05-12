@@ -92,6 +92,7 @@ if get_option('jit')
         'emu/gen.c',
         'emu/gadgets-x86/entry.S',
         'emu/gadgets-x86/math.S',
+        'emu/gadgets-x86/control.S',
         offsets,
     ]
 else

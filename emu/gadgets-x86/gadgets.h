@@ -10,6 +10,8 @@
 #define addr r13d
 #define addrq r13
 
+.extern jit_exit
+
 .macro .gadget name
     .global gadget_\()\name
     gadget_\()\name :

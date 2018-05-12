@@ -21,6 +21,7 @@ typedef void (*gadget_t)();
 void gadget_interrupt();
 void gadget_exit();
 void gadget_push();
+void gadget_call();
 extern gadget_t load_gadgets[arg_cnt];
 extern gadget_t store_gadgets[arg_cnt];
 extern gadget_t sub_gadgets[arg_cnt];
@@ -63,6 +64,7 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 
 #define DECLARE_LOCALS \
     dword_t addr_offset = 0;
+
 #define RETURN(thing) (void) (thing)
 
 #define TRACEIP() TRACE("%d %08x\t", current->pid, state->ip);
@@ -103,7 +105,7 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define JCXZ_REL(off) UNDEFINED
 #define J_REL(cc, off) UNDEFINED
 #define CALL(loc) UNDEFINED
-#define CALL_REL(off) UNDEFINED
+#define CALL_REL(off) ggg(call, pre_ip + off, state->ip)
 #define SET(cc, dst) UNDEFINED
 #define CMOV(cc, src, dst,z) UNDEFINED
 #define RET_NEAR_IMM(imm) UNDEFINED
