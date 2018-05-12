@@ -137,10 +137,6 @@ static void mem_changed(struct mem *mem) {
     mem->changes++;
 }
 
-static __no_instrument void set_dirty_page(struct mem *mem, page_t page) {
-    mem->dirty_page = page;
-}
-
 void *mem_ptr(struct mem *mem, addr_t addr, int type) {
     page_t page = PAGE(addr);
     struct pt_entry *entry = &mem->pt[page];
@@ -174,7 +170,6 @@ void *mem_ptr(struct mem *mem, addr_t addr, int type) {
 
     if (entry->data == NULL)
         return NULL;
-    set_dirty_page(mem, addr & 0xfffff000);
     return entry->data->data + entry->offset + PGOFFSET(addr);
 }
 

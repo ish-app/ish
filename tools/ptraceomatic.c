@@ -55,7 +55,7 @@ static inline void setregs(int pid, struct user_regs_struct *regs) {
     trycall(ptrace(PTRACE_SETREGS, pid, NULL, regs), "ptrace setregs");
 }
 
-static int compare_cpus(struct cpu_state *cpu, int pid, int undefined_flags) {
+static int compare_cpus(struct cpu_state *cpu, struct tlb *tlb, int pid, int undefined_flags) {
     struct user_regs_struct regs;
     struct user_fpregs_struct fpregs;
     getregs(pid, &regs);
@@ -120,7 +120,7 @@ static int compare_cpus(struct cpu_state *cpu, int pid, int undefined_flags) {
 
     // compare pages marked dirty
     int fd = open_mem(pid);
-    page_t dirty_page = cpu->mem->dirty_page;
+    page_t dirty_page = tlb->dirty_page;
     char real_page[PAGE_SIZE];
     trycall(lseek(fd, dirty_page, SEEK_SET), "compare seek mem");
     trycall(read(fd, real_page, PAGE_SIZE), "compare read mem");
@@ -458,7 +458,7 @@ int main(int argc, char *const argv[]) {
     int undefined_flags = 2;
     struct cpu_state old_cpu = *cpu;
     while (true) {
-        if (compare_cpus(cpu, pid, undefined_flags) < 0) {
+        if (compare_cpus(cpu, tlb, pid, undefined_flags) < 0) {
             println("failure: resetting cpu");
             *cpu = old_cpu;
             __asm__("int3");

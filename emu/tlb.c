@@ -42,9 +42,10 @@ bool __tlb_write_cross_page(struct tlb *tlb, addr_t addr, const char *value, uns
 }
 
 __no_instrument void *tlb_handle_miss(struct tlb *tlb, addr_t addr, int type) {
-    char *ptr = mem_ptr(tlb->mem, addr & 0xfffff000, type);
+    char *ptr = mem_ptr(tlb->mem, TLB_PAGE(addr), type);
     if (ptr == NULL)
         return NULL;
+    tlb->dirty_page = TLB_PAGE(addr);
 
     struct tlb_entry *tlb_ent = &tlb->entries[TLB_INDEX(addr)];
     tlb_ent->page = TLB_PAGE(addr);

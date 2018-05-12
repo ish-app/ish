@@ -14,7 +14,6 @@ struct mem {
     atomic_uint refcount;
     struct pt_entry *pt; // TODO replace with red-black tree
     unsigned changes; // increment whenever a tlb flush is needed
-    page_t dirty_page;
     wrlock_t lock;
 };
 #define MEM_PAGES (1 << 20) // at least on 32-bit

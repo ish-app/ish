@@ -13,6 +13,7 @@ struct tlb_entry {
 #define TLB_SIZE (1 << TLB_BITS)
 struct tlb {
     struct mem *mem;
+    page_t dirty_page;
     struct tlb_entry entries[TLB_SIZE];
 };
 
@@ -47,7 +48,7 @@ forceinline __no_instrument bool tlb_read(struct tlb *tlb, addr_t addr, void *ou
 forceinline __no_instrument void *__tlb_write_ptr(struct tlb *tlb, addr_t addr) {
     struct tlb_entry entry = tlb->entries[TLB_INDEX(addr)];
     if (entry.page_if_writable == TLB_PAGE(addr)) {
-        tlb->mem->dirty_page = TLB_PAGE(addr);
+        tlb->dirty_page = TLB_PAGE(addr);
         void *address = (void *) (entry.data_minus_addr + addr);
         postulate(address != NULL);
         return address;
