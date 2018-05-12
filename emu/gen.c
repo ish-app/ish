@@ -3,15 +3,15 @@
 #include "emu/gen.h"
 #include "emu/interrupt.h"
 
-// This should stay in sync with the definition of .gadget_array in gadgets.S
+// This should stay in sync with the definition of .gadget_array in gadgets.h
 enum arg {
     arg_eax, arg_ecx, arg_edx, arg_ebx, arg_esp, arg_ebp, arg_esi, arg_edi,
     arg_ax, arg_cx, arg_dx, arg_bx, arg_sp, arg_bp, arg_si, arg_di,
-    arg_imm, arg_mem32,
+    arg_imm, arg_mem32, arg_addr,
     arg_cnt,
     // the following should not be synced with the list mentioned above (no gadgets implement them)
     arg_al, arg_cl, arg_dl, arg_bl, arg_ah, arg_ch, arg_dh, arg_bh,
-    arg_modrm_val, arg_modrm_reg, arg_mem_addr, arg_addr, arg_gs,
+    arg_modrm_val, arg_modrm_reg, arg_mem_addr, arg_gs,
     // markers
     arg_reg32 = arg_eax, arg_reg16 = arg_ax,
 };
@@ -58,7 +58,7 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
         debugger;
         UNDEFINED;
     }
-    if (arg == arg_mem32) {
+    if (arg == arg_mem32 || arg == arg_addr) {
         GEN(addr_gadgets[modrm->base]);
         GEN(modrm->offset);
     }

@@ -76,7 +76,7 @@
 
 .macro .gadget_array type
 # This should stay in sync with enum arg in emu/gen.c
-.gadget_array_list \type, eax,ecx,edx,ebx,esp,ebp,esi,edi,ax,cx,dx,bx,sp,bp,si,di,imm,mem32
+.gadget_array_list \type, eax,ecx,edx,ebx,esp,ebp,esi,edi,ax,cx,dx,bx,sp,bp,si,di,imm,mem32,addr
 .endm
 
 .macro save_c

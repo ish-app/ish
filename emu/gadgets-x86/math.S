@@ -10,6 +10,10 @@
     movl (%_addrq), %_tmp
     gret
 
+.gadget load_addr
+    movl %_addr, %_tmp
+    gret
+
 .macro g_store reg
     movl %_tmp, %\reg
 .endm
