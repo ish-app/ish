@@ -25,6 +25,7 @@ void gadget_call();
 void gadget_ret();
 extern gadget_t load_gadgets[arg_cnt];
 extern gadget_t store_gadgets[arg_cnt];
+extern gadget_t add_gadgets[arg_cnt];
 extern gadget_t sub_gadgets[arg_cnt];
 
 extern gadget_t addr_gadgets[reg_cnt];
@@ -90,7 +91,7 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define MOVSX(src, dst,zs,zd) UNDEFINED
 #define XCHG(src, dst,z) UNDEFINED
 
-#define ADD(src, dst,z) UNDEFINED
+#define ADD(src, dst,z) load(dst); op(add, src); store(dst)
 #define OR(src, dst,z) UNDEFINED
 #define ADC(src, dst,z) UNDEFINED
 #define SBB(src, dst,z) UNDEFINED
