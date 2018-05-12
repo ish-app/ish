@@ -4,6 +4,7 @@
 struct tlb *tlb_new(struct mem *mem) {
     struct tlb *tlb = malloc(sizeof(struct tlb));
     tlb->mem = mem;
+    tlb->dirty_page = TLB_PAGE_EMPTY;
     tlb_flush(tlb);
     return tlb;
 }

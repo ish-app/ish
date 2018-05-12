@@ -22,7 +22,7 @@
 .endm
 
 # using a gas macro for this works fine on gcc but not on clang
-#define each_reg irp reg, eax,ecx,edx,ebx,ebp,esp,esi,edi
+#define REG_LIST eax,ecx,edx,ebx,esp,ebp,esi,edi
 
 # memory reading and writing
 # TODO cross-page access handling (but it's going to be so slow :cry:)
@@ -39,6 +39,7 @@
     .else
         cmpl TLB_ENTRY_page_if_writable(%_tlb,%r14), %r15d
     .endif
+    movl %r15d, -TLB_entries+TLB_dirty_page(%_tlb)
     je 1f
     call handle_\type\()_miss
 1:
@@ -49,7 +50,7 @@
 
 # a gadget for each register
 .macro .reg_gadgets type
-    .each_reg
+    .irp reg, REG_LIST
         .gadget \type\()_\reg
         .ifnc \reg,esp
             g_\type \reg
@@ -61,17 +62,21 @@
 .endm
 
 # an array of gadgets
-.macro .gadget_array type
+.macro .gadget_array_list type, list:vararg
 .global \type\()_gadgets
 .type \type\()_gadgets,@object
 \type\()_gadgets:
-    # The following .irp should stay in sync with enum arg in emu/gen.c
-    .irp arg, eax,ecx,edx,ebx,esp,ebp,esi,edi,ax,cx,dx,bx,sp,bp,si,di,imm,mem32
+    .irp arg, \list 
         .ifndef gadget_\type\()_\arg
             .set gadget_\type\()_\arg, 0
         .endif
         .quad gadget_\type\()_\arg
     .endr
+.endm
+
+.macro .gadget_array type
+# This should stay in sync with enum arg in emu/gen.c
+.gadget_array_list \type, eax,ecx,edx,ebx,esp,ebp,esi,edi,ax,cx,dx,bx,sp,bp,si,di,imm,mem32
 .endm
 
 .macro save_c

@@ -119,21 +119,24 @@ static int compare_cpus(struct cpu_state *cpu, struct tlb *tlb, int pid, int und
     CHECK_FPREG(7);
 
     // compare pages marked dirty
-    int fd = open_mem(pid);
-    page_t dirty_page = tlb->dirty_page;
-    char real_page[PAGE_SIZE];
-    trycall(lseek(fd, dirty_page, SEEK_SET), "compare seek mem");
-    trycall(read(fd, real_page, PAGE_SIZE), "compare read mem");
-    struct pt_entry entry = cpu->mem->pt[PAGE(dirty_page)];
-    void *fake_page = entry.data->data + entry.offset;
+    if (tlb->dirty_page != TLB_PAGE_EMPTY) {
+        int fd = open_mem(pid);
+        page_t dirty_page = tlb->dirty_page;
+        char real_page[PAGE_SIZE];
+        trycall(lseek(fd, dirty_page, SEEK_SET), "compare seek mem");
+        trycall(read(fd, real_page, PAGE_SIZE), "compare read mem");
+        close(fd);
+        struct pt_entry entry = cpu->mem->pt[PAGE(dirty_page)];
+        void *fake_page = entry.data->data + entry.offset;
 
-    if (memcmp(real_page, fake_page, PAGE_SIZE) != 0) {
-        println("page %x doesn't match", dirty_page);
-        debugger;
-        return -1;
+        if (memcmp(real_page, fake_page, PAGE_SIZE) != 0) {
+            println("page %x doesn't match", dirty_page);
+            debugger;
+            return -1;
+        }
+        tlb->dirty_page = TLB_PAGE_EMPTY;
     }
 
-    close(fd);
     setregs(pid, &regs);
     return 0;
 }

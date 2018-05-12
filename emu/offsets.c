@@ -23,6 +23,7 @@ void cpu() {
     OFFSET(JIT_BLOCK_code, struct jit_block, code);
 
     OFFSET(TLB_entries, struct tlb, entries);
+    OFFSET(TLB_dirty_page, struct tlb, dirty_page);
     OFFSET(TLB_ENTRY_page, struct tlb_entry, page);
     OFFSET(TLB_ENTRY_page_if_writable, struct tlb_entry, page_if_writable);
     OFFSET(TLB_ENTRY_data_minus_addr, struct tlb_entry, data_minus_addr);

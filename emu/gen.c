@@ -3,13 +3,13 @@
 #include "emu/gen.h"
 #include "emu/interrupt.h"
 
-// This should stay in sync with the .irp in the definition of .gadget_array in gadgets.S
+// This should stay in sync with the definition of .gadget_array in gadgets.S
 enum arg {
     arg_eax, arg_ecx, arg_edx, arg_ebx, arg_esp, arg_ebp, arg_esi, arg_edi,
     arg_ax, arg_cx, arg_dx, arg_bx, arg_sp, arg_bp, arg_si, arg_di,
     arg_imm, arg_mem32,
     arg_cnt,
-    // the following should not be synced with the aforementioned .irp (no gadgets implement them)
+    // the following should not be synced with the list mentioned above (no gadgets implement them)
     arg_al, arg_cl, arg_dl, arg_bl, arg_ah, arg_ch, arg_dh, arg_bh,
     arg_modrm_val, arg_modrm_reg, arg_mem_addr, arg_addr, arg_gs,
     // markers
@@ -26,6 +26,8 @@ extern gadget_t load_gadgets[arg_cnt];
 extern gadget_t store_gadgets[arg_cnt];
 extern gadget_t sub_gadgets[arg_cnt];
 
+extern gadget_t addr_gadgets[reg_cnt];
+
 #define GEN(thing) gen(state, (unsigned long) (thing))
 #define g(g) GEN(gadget_##g)
 #define gg(g, a) do { GEN(gadget_##g); GEN(a); } while (0)
@@ -35,17 +37,18 @@ extern gadget_t sub_gadgets[arg_cnt];
 // this really wants to use all the locals of the decoder, which we can do
 // really nicely in gcc using nested functions, but that won't work in clang,
 // so we explicitly pass 500 arguments. sorry for the mess
-static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg arg, struct modrm *modrm, uint64_t *imm) {
+static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg arg, struct modrm *modrm, uint64_t *imm, int op_size) {
+    if (op_size != 32)
+        UNDEFINED;
     switch (arg) {
         case arg_modrm_reg:
             // TODO find some way to assert that this won't overflow?
             arg = modrm->reg + arg_reg32; break;
         case arg_modrm_val:
-            switch (modrm->type) {
-                case modrm_reg:
-                    arg = modrm->base + arg_reg32; break;
-                default: UNDEFINED;
-            }
+            if (modrm->type == modrm_reg)
+                arg = modrm->base + arg_reg32;
+            else
+                arg = arg_mem32;
             break;
         default: break;
     }
@@ -53,17 +56,20 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
         debugger;
         UNDEFINED;
     }
+    if (arg == arg_mem32) {
+        GEN(addr_gadgets[modrm->base]);
+        GEN(modrm->offset);
+    }
     GEN(gadgets[arg]);
     if (arg == arg_imm)
         GEN(*imm);
 }
-#define op(type, thing) gen_op(state, type##_gadgets, arg_##thing, &modrm, &imm)
+#define op(type, thing) gen_op(state, type##_gadgets, arg_##thing, &modrm, &imm, OP_SIZE)
 
 #define load(thing) op(load, thing)
 #define store(thing) op(store, thing)
 
 #define DECLARE_LOCALS \
-    dword_t pre_ip = state->ip; \
     dword_t addr_offset = 0;
 
 #define RETURN(thing) (void) (thing)
@@ -106,7 +112,7 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define JCXZ_REL(off) UNDEFINED
 #define J_REL(cc, off) UNDEFINED
 #define CALL(loc) UNDEFINED
-#define CALL_REL(off) ggg(call, pre_ip + off, state->ip)
+#define CALL_REL(off) ggg(call, state->ip + off, state->ip)
 #define SET(cc, dst) UNDEFINED
 #define CMOV(cc, src, dst,z) UNDEFINED
 #define RET_NEAR_IMM(imm) UNDEFINED
