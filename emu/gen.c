@@ -119,7 +119,7 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define CMOV(cc, src, dst,z) UNDEFINED
 #define RET_NEAR_IMM(imm) UNDEFINED
 #define RET_NEAR() g(ret)
-#define INT(code) UNDEFINED
+#define INT(code) gg(interrupt, code)
 
 #define PUSHF() UNDEFINED
 #define POPF() UNDEFINED
