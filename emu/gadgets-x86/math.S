@@ -1,29 +1,29 @@
 #include "gadgets.h"
 
 .gadget push
-    sub $4, %xsp
-    movl %xsp, %addr
+    sub $4, %_esp
+    movl %_esp, %_addr
     write_prep
-    movl %tmp, (%addrq)
+    movl %_tmp, (%_addrq)
     gret
 .gadget pop
-    movl %xsp, %addr
+    movl %_esp, %_addr
     read_prep
-    movl (%addrq), %tmp
-    add $4, %xsp
+    movl (%_addrq), %_tmp
+    add $4, %_esp
     gret
 
 .macro g_load reg
-    movl %\reg, %tmp
+    movl %\reg, %_tmp
 .endm
 .reg_gadgets load
 .macro g_store reg
-    movl %tmp, %\reg
+    movl %_tmp, %\reg
 .endm
 .reg_gadgets store
 
 .gadget sub_imm
-    subl (%ip), %tmp
+    subl (%_ip), %_tmp
     gret 1
 
 .data

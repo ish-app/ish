@@ -1,14 +1,14 @@
 #include "cpu-offsets.h"
 
 # register assignments
-#define xsp r8d
-#define ip r9
-#define xip r9d
-#define tmp r10d
-#define cpu r11
-#define tlb r12
-#define addr r13d
-#define addrq r13
+#define _esp r8d
+#define _ip r9
+#define _eip r9d
+#define _tmp r10d
+#define _cpu r11
+#define _tlb r12
+#define _addr r13d
+#define _addrq r13
 
 .extern jit_exit
 
@@ -17,8 +17,8 @@
     gadget_\()\name :
 .endm
 .macro gret pop=0
-    addq $((\pop+1)*8), %ip
-    jmp *-8(%ip)
+    addq $((\pop+1)*8), %_ip
+    jmp *-8(%_ip)
 .endm
 
 # using a gas macro for this works fine on gcc but not on clang
@@ -29,20 +29,20 @@
 .irp type, read,write
 
 .macro \type\()_prep
-    movl %addr, %r14d
+    movl %_addr, %r14d
     shrl $8, %r14d
     andl $0x3ff0, %r14d
-    movl %addr, %r15d
+    movl %_addr, %r15d
     andl $0xfffff000, %r15d
     .ifc \type,read
-        cmpl TLB_ENTRY_page(%tlb,%r14), %r15d
+        cmpl TLB_ENTRY_page(%_tlb,%r14), %r15d
     .else
-        cmpl TLB_ENTRY_page_if_writable(%tlb,%r14), %r15d
+        cmpl TLB_ENTRY_page_if_writable(%_tlb,%r14), %r15d
     .endif
     je 1f
     call handle_\type\()_miss
 1:
-    addq TLB_ENTRY_data_minus_addr(%tlb,%r14), %addrq
+    addq TLB_ENTRY_data_minus_addr(%_tlb,%r14), %_addrq
 .endm
 
 .endr
@@ -54,7 +54,7 @@
         .ifnc \reg,esp
             g_\type \reg
         .else
-            g_\type xsp
+            g_\type _esp
         .endif
         gret
     .endr

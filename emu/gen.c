@@ -63,6 +63,7 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define store(thing) op(store, thing)
 
 #define DECLARE_LOCALS \
+    dword_t pre_ip = state->ip; \
     dword_t addr_offset = 0;
 
 #define RETURN(thing) (void) (thing)
