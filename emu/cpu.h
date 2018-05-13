@@ -57,7 +57,7 @@ struct cpu_state {
     union {
         dword_t eflags;
         struct {
-            bits cf:1;
+            bits cf_bit:1;
             bits pad1_1:1;
             bits pf:1;
             bits pad2_0:1;
@@ -68,18 +68,19 @@ struct cpu_state {
             bits tf:1;
             bits if_:1;
             bits df:1;
-            bits of:1;
+            bits of_bit:1;
             bits iopl:2;
         };
     };
+    // for maximum efficiency these are stored in bytes
+    byte_t cf;
+    byte_t of;
     // whether the true flag values are in the above struct, or computed from
     // the stored result and operands
     dword_t res, op1, op2;
     bits pf_res:1;
     bits zf_res:1;
     bits sf_res:1;
-    bits cf_ops:1;
-    bits of_ops:1;
     bits af_ops:1;
 
     // fpu
@@ -142,11 +143,19 @@ static inline void collapse_flags(struct cpu_state *cpu) {
     cpu->sf = SF;
     cpu->pf = PF;
     cpu->zf_res = cpu->sf_res = cpu->pf_res = 0;
+    cpu->of_bit = cpu->of;
+    cpu->cf_bit = cpu->cf;
     cpu->af = AF;
     cpu->af_ops = 0;
     cpu->pad1_1 = 1;
     cpu->pad2_0 = cpu->pad3_0 = 0;
     cpu->if_ = 1;
+}
+
+static inline void expand_flags(struct cpu_state *cpu) {
+    cpu->of = cpu->of_bit;
+    cpu->cf = cpu->cf_bit;
+    cpu->zf_res = cpu->sf_res = cpu->pf_res = cpu->af_ops = 0;
 }
 
 enum reg32 {

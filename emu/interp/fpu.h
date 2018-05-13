@@ -80,8 +80,8 @@ static inline extFloat80_t extF80_abs(extFloat80_t f) {
     ST(0) = extF80_rem(ST(0), ST(1))
 
 #define FUCOMI() \
-    cpu->zf = extF80_eq(ST(0), ST_i); cpu->zf_res = 0; \
-    cpu->cf = extF80_lt(ST(0), ST_i); cpu->cf_ops = 0; \
+    cpu->zf = extF80_eq(ST(0), ST_i); \
+    cpu->cf = extF80_lt(ST(0), ST_i); \
     cpu->pf = 0; cpu->pf_res = 0
 // not worrying about nans and shit yet
 

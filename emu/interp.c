@@ -307,13 +307,13 @@ static bool modrm_compute(struct cpu_state *cpu, struct tlb *tlb, addr_t *addr_o
 #define MUL1(val,z) do { \
     uint64_t tmp = cpu->oax * (uint64_t) get(val,z); \
     cpu->oax = tmp; cpu->odx = tmp >> sz(z); \
-    cpu->cf = cpu->of = (tmp != (uint32_t) tmp); cpu->cf_ops = cpu->of_ops = 0; ZEROAF; \
+    cpu->cf = cpu->of = (tmp != (uint32_t) tmp); ZEROAF; \
     cpu->zf = cpu->sf = cpu->pf = cpu->zf_res = cpu->sf_res = cpu->pf_res = 0; \
 } while (0)
 #define IMUL1(val,z) do { \
     int64_t tmp = (int64_t) (sint(sz(z))) cpu->oax * (sint(sz(z))) get(val,z); \
     cpu->oax = tmp; cpu->odx = tmp >> sz(z); \
-    cpu->cf = cpu->of = (tmp != (int32_t) tmp); cpu->cf_ops = cpu->of_ops = 0; \
+    cpu->cf = cpu->of = (tmp != (int32_t) tmp); \
     cpu->zf = cpu->sf = cpu->pf = cpu->zf_res = cpu->sf_res = cpu->pf_res = 0; \
 } while (0)
 #define MUL2(val, reg) \
@@ -362,15 +362,15 @@ static bool modrm_compute(struct cpu_state *cpu, struct tlb *tlb, addr_t *addr_o
         int cnt = get(count,z) % sz(z); \
         /* the compiler miraculously turns this into a rol instruction with optimizations on */\
         set(val, get(val,z) << cnt | get(val,z) >> (sz(z) - cnt),z); \
-        cpu->cf = get(val,z) & 1; cpu->cf_ops = 0; \
-        if (cnt == 1) { cpu->of = cpu->cf ^ (get(val,z) >> (OP_SIZE - 1)); cpu->of_ops = 0; } \
+        cpu->cf = get(val,z) & 1; \
+        if (cnt == 1) { cpu->of = cpu->cf ^ (get(val,z) >> (OP_SIZE - 1)); } \
     }
 #define ROR(count, val,z) \
     if (get(count,z) % sz(z) != 0) { \
         int cnt = get(count,z) % sz(z); \
         set(val, get(val,z) >> cnt | get(val,z) << (sz(z) - cnt),z); \
-        cpu->cf = get(val,z) >> (OP_SIZE - 1); cpu->cf_ops = 0; \
-        if (cnt == 1) { cpu->of = cpu->cf ^ (get(val,z) & 1); cpu->of_ops = 0; } \
+        cpu->cf = get(val,z) >> (OP_SIZE - 1); \
+        if (cnt == 1) { cpu->of = cpu->cf ^ (get(val,z) & 1); } \
     }
 #define SHL(count, val,z) \
     if (get(count,z) % sz(z) != 0) { \
@@ -396,7 +396,7 @@ static bool modrm_compute(struct cpu_state *cpu, struct tlb *tlb, addr_t *addr_o
 #define SHRD(count, extra, dst,z) \
     if (get(count,z) % sz(z) != 0) { \
         int cnt = get(count,z) % sz(z); \
-        cpu->cf = (get(dst,z) >> (cnt - 1)) & 1; cpu->cf_ops = 0; \
+        cpu->cf = (get(dst,z) >> (cnt - 1)) & 1; \
         cpu->res = get(dst,z) >> cnt | get(extra,z) << (sz(z) - cnt); \
         set(dst, cpu->res,z); \
         SETRESFLAGS; \
@@ -573,7 +573,7 @@ static bool modrm_compute(struct cpu_state *cpu, struct tlb *tlb, addr_t *addr_o
 
 #define POPF() \
     POP(eflags); \
-    cpu->zf_res = cpu->sf_res = cpu->pf_res = cpu->af_ops = 0
+    expand_flags(cpu)
 
 #define PUSHF() \
     collapse_flags(cpu); \
@@ -586,7 +586,7 @@ static bool modrm_compute(struct cpu_state *cpu, struct tlb *tlb, addr_t *addr_o
 #define SAHF \
     cpu->eflags &= 0xffffff00 | ~AH_FLAG_MASK; \
     cpu->eflags |= cpu->ah & AH_FLAG_MASK; \
-    cpu->cf_ops = cpu->pf_res = cpu->af_ops = cpu->zf_res = cpu->sf_res = 0
+    expand_flags(cpu)
 
 #define RDTSC \
     imm = rdtsc(); \
@@ -660,4 +660,4 @@ flatten __no_instrument void cpu_run(struct cpu_state *cpu) {
     }
 }
 
-int log_override = 0;
+/* int log_override = 0; */
