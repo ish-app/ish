@@ -77,7 +77,6 @@ static int compare_cpus(struct cpu_state *cpu, struct tlb *tlb, int pid, int und
     CHECK_REG(rsp, esp);
     CHECK_REG(rbp, ebp);
     CHECK_REG(rip, eip);
-#if 0
     undefined_flags |= (1 << 8); // treat trap flag as undefined
     regs.eflags = (regs.eflags & ~undefined_flags) | (cpu->eflags & undefined_flags);
     // give a nice visual representation of the flags
@@ -91,7 +90,6 @@ static int compare_cpus(struct cpu_state *cpu, struct tlb *tlb, int pid, int und
         debugger;
         return -1;
     }
-#endif
 #define CHECK_XMMREG(i) \
     CHECK(*(uint64_t *) &fpregs.xmm_space[i * 2],   cpu->xmm[i].qw[0], "xmm" #i " low") \
     CHECK(*(uint64_t *) &fpregs.xmm_space[(i+1)*2], cpu->xmm[i].qw[1], "xmm" #i " high")

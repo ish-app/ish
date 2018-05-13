@@ -9,3 +9,12 @@ if subprocess.call('ninja') != 0:
     raise gdb.CommandError('compilation failed')
     end
 end
+
+define hook-stop
+    python
+if gdb.selected_frame().find_sal().symtab.filename.endswith('.S'):
+    gdb.execute('set disassemble-next-line on')
+else:
+    gdb.execute('set disassemble-next-line auto')
+    end
+end

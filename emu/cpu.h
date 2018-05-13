@@ -78,10 +78,20 @@ struct cpu_state {
     // whether the true flag values are in the above struct, or computed from
     // the stored result and operands
     dword_t res, op1, op2;
-    bits pf_res:1;
-    bits zf_res:1;
-    bits sf_res:1;
-    bits af_ops:1;
+    union {
+        struct {
+            bits pf_res:1;
+            bits zf_res:1;
+            bits sf_res:1;
+            bits af_ops:1;
+        };
+        // for asm
+#define PF_RES (1 << 0)
+#define ZF_RES (1 << 1)
+#define SF_RES (1 << 2)
+#define AF_OPS (1 << 3)
+        byte_t flags_res;
+    };
 
     // fpu
     extFloat80_t fp[8];

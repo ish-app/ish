@@ -14,7 +14,20 @@
         movl %_tmp, \arg
     .else
         \op\()l \arg, %_tmp
+        .irp da_op, add,sub; .ifc \op,\da_op
+            seto CPU_of(%_cpu)
+            setc CPU_cf(%_cpu)
+            movl \arg, %r14d
+            movl %r14d, CPU_op1(%_cpu)
+            movl %_tmp, CPU_op2(%_cpu)
+            orl $AF_OPS, CPU_flags_res(%_cpu)
+        .endif; .endr
+        movl %_tmp, CPU_res(%_cpu)
+        orl $(PF_RES|ZF_RES|SF_RES), CPU_flags_res(%_cpu)
     .endif; .endif
+.endm
+
+.macro oc_flags
 .endm
 
 .irp op, load,store,add,and,sub,xor
