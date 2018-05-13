@@ -1,45 +1,42 @@
 #include "gadgets.h"
 # asmsyntax=gas (for vim)
 
-.macro g_load reg
-    movl %\reg, %_tmp
-.endm
-.reg_gadgets load
-
-.gadget load_mem32
-    read_prep
-    movl (%_addrq), %_tmp
-    gret
-.gadget store_mem32
-    write_prep
-    movl %_tmp, (%_addrq)
-    gret
-
 .gadget load_addr
     movl %_addr, %_tmp
     gret
 
-.macro g_store reg
-    movl %_tmp, %\reg
+# cool thing where I just write a few nested loops and it generates all the gadgets automatically
+
+.macro do_op op arg
+    .ifc \op,load
+        movl \arg, %_tmp
+    .else; .ifc \op,store
+        movl %_tmp, \arg
+    .else
+        \op\()l \arg, %_tmp
+    .endif; .endif
 .endm
-.reg_gadgets store
 
 .irp op, load,store,add,sub
+    .macro x reg
+        do_op \op, %\reg
+    .endm
+    .reg_gadgets \op
 
-.gadget \op\()_imm
-    .ifc \op,load
-        movl (%_ip), %_tmp
-    .else; .ifc \op,store
-        movl %_tmp, (%_ip)
-    .else
-        \op\()l (%_ip), %_tmp
-    .endif; .endif
-    gret 1
+    .gadget \op\()_imm
+        do_op \op, (%_ip)
+        gret 1
 
+    .gadget \op\()_mem32
+        .ifc \op,store
+            write_prep
+        .else
+            read_prep
+        .endif
+        do_op \op, (%_addrq)
+        gret
+
+    .section .rodata
+    .gadget_array \op
+    .previous
 .endr
-
-.rodata
-.gadget_array load
-.gadget_array store
-.gadget_array add
-.gadget_array sub

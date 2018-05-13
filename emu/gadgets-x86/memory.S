@@ -14,7 +14,7 @@
     add $4, %_esp
     gret
 
-.macro g_addr reg
+.macro x reg
     movl %\reg, %_addr
     addl (%_ip), %_addr
     gret 1

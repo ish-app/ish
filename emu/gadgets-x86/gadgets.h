@@ -53,12 +53,13 @@
     .irp reg, REG_LIST
         .gadget \type\()_\reg
         .ifnc \reg,esp
-            g_\type \reg
+            x \reg
         .else
-            g_\type _esp
+            x _esp
         .endif
         gret
     .endr
+    .purgem x
 .endm
 
 # an array of gadgets
