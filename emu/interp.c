@@ -560,6 +560,10 @@ static bool modrm_compute(struct cpu_state *cpu, struct tlb *tlb, addr_t *addr_o
     if (cond) { \
         cpu->eip += get(offset,); FIX_EIP; \
     }
+#define JN_REL(cond, offset) \
+    if (!cond) { \
+        cpu->eip += get(offset,); FIX_EIP; \
+    }
 #define JCXZ_REL(offset) J_REL(cpu->ocx == 0, offset)
 
 #define RET_NEAR() POP(eip); FIX_EIP

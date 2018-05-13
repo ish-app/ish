@@ -16,13 +16,17 @@ enum arg {
     arg_reg32 = arg_eax, arg_reg16 = arg_ax,
 };
 
+// sync with COND_LIST in control.S
+enum cond {
+    cond_O, cond_B, cond_E, cond_BE, cond_S, cond_P, cond_L, cond_LE,
+    cond_cnt,
+};
+
 // there are many
 typedef void (*gadget_t)();
 void gadget_interrupt();
 void gadget_exit();
 void gadget_push();
-void gadget_call();
-void gadget_ret();
 void gadget_add_imm();
 void gadget_sub_imm();
 extern gadget_t load_gadgets[arg_cnt];
@@ -32,6 +36,10 @@ extern gadget_t and_gadgets[arg_cnt];
 extern gadget_t sub_gadgets[arg_cnt];
 extern gadget_t xor_gadgets[arg_cnt];
 
+void gadget_call();
+void gadget_ret();
+extern gadget_t jmp_gadgets[cond_cnt];
+
 extern gadget_t addr_gadgets[reg_cnt];
 extern gadget_t si_gadgets[reg_cnt * 3];
 
@@ -39,6 +47,8 @@ extern gadget_t si_gadgets[reg_cnt * 3];
 #define g(g) GEN(gadget_##g)
 #define gg(g, a) do { GEN(gadget_##g); GEN(a); } while (0)
 #define ggg(g, a, b) do { GEN(gadget_##g); GEN(a); GEN(b); } while (0)
+#define gag(g, i, a) do { GEN(g##_gadgets[i]); GEN(a); } while (0)
+#define gagg(g, i, a, b) do { GEN(g##_gadgets[i]); GEN(a); GEN(b); } while (0)
 #define gg_here(g, a) ggg(g, a, state->ip)
 #define UNDEFINED do { gg_here(interrupt, INT_UNDEFINED); return; } while (0)
 
@@ -123,7 +133,8 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define JMP(loc) UNDEFINED
 #define JMP_REL(off) UNDEFINED
 #define JCXZ_REL(off) UNDEFINED
-#define J_REL(cc, off) UNDEFINED
+#define J_REL(cc, off) gagg(jmp, cond_##cc, state->ip + off, state->ip)
+#define JN_REL(cc, off) gagg(jmp, cond_##cc, state->ip, state->ip + off)
 #define CALL(loc) UNDEFINED
 #define CALL_REL(off) gg_here(call, state->ip + off)
 #define SET(cc, dst) UNDEFINED

@@ -24,6 +24,11 @@ jit_enter:
     # TODO more of those
     gret
 
+.global jit_ret
+jit_ret:
+    movl $-1, %_tmp
+    jmp jit_exit
+
 .global jit_exit
 jit_exit:
     movl %eax, CPU_eax(%_cpu)
@@ -48,6 +53,5 @@ jit_exit:
     jmp jit_exit
 
 .gadget exit
-    movl $-1, %_tmp
     movl (%_ip), %_eip
-    jmp jit_exit
+    jmp jit_ret
