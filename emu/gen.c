@@ -33,6 +33,7 @@ extern gadget_t sub_gadgets[arg_cnt];
 extern gadget_t xor_gadgets[arg_cnt];
 
 extern gadget_t addr_gadgets[reg_cnt];
+extern gadget_t si_gadgets[reg_cnt * 3];
 
 #define GEN(thing) gen(state, (unsigned long) (thing))
 #define g(g) GEN(gadget_##g)
@@ -66,6 +67,8 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
     if (arg == arg_mem32 || arg == arg_addr) {
         GEN(addr_gadgets[modrm->base]);
         GEN(modrm->offset);
+        if (modrm->type == modrm_mem_si)
+            GEN(si_gadgets[modrm->index * 3 + modrm->shift]);
     }
     GEN(gadgets[arg]);
     if (arg == arg_imm)

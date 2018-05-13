@@ -21,6 +21,27 @@
 .endm
 .reg_gadgets addr
 
+.irp reg, REG_LIST
+    .irp times, 1,2,4
+        .gadget si_\reg\()_\times
+            .ifnc \reg,esp
+                leal (%_addr,%\reg,\times), %_addr
+            .else
+                leal (%_addr,%_esp,\times), %_addr
+            .endif
+            gret
+    .endr
+.endr
+.section .rodata
+.global si_gadgets
+si_gadgets:
+.irp reg, REG_LIST
+    .irp times, 1,2,4
+        .quad gadget_si_\reg\()_\times
+    .endr
+.endr
+.previous
+
 # memory stuff that can't go in a header file
 .irp type, read,write
     .global handle_\type\()_miss
@@ -47,5 +68,5 @@ segfault:
     movl $INT_GPF, %_tmp
     jmp jit_exit
 
-.rodata
+.section .rodata
 .gadget_array_list addr, REG_LIST
