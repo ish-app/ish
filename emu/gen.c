@@ -23,6 +23,8 @@ void gadget_exit();
 void gadget_push();
 void gadget_call();
 void gadget_ret();
+void gadget_add_imm();
+void gadget_sub_imm();
 extern gadget_t load_gadgets[arg_cnt];
 extern gadget_t store_gadgets[arg_cnt];
 extern gadget_t add_gadgets[arg_cnt];
@@ -110,8 +112,8 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define POP(thing) UNDEFINED
 #define PUSH(thing) load(thing); g(push)
 
-#define INC(val,z) UNDEFINED
-#define DEC(val,z) UNDEFINED
+#define INC(val,z) load(val); gg(add_imm, 1); store(val)
+#define DEC(val,z) load(val); gg(sub_imm, 1); store(val)
 
 #define JMP(loc) UNDEFINED
 #define JMP_REL(off) UNDEFINED
