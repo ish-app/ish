@@ -34,7 +34,8 @@ extern gadget_t addr_gadgets[reg_cnt];
 #define g(g) GEN(gadget_##g)
 #define gg(g, a) do { GEN(gadget_##g); GEN(a); } while (0)
 #define ggg(g, a, b) do { GEN(gadget_##g); GEN(a); GEN(b); } while (0)
-#define UNDEFINED do { ggg(interrupt, INT_UNDEFINED, state->ip); return; } while (0)
+#define gg_here(g, a) ggg(g, a, state->ip)
+#define UNDEFINED do { gg_here(interrupt, INT_UNDEFINED); return; } while (0)
 
 // this really wants to use all the locals of the decoder, which we can do
 // really nicely in gcc using nested functions, but that won't work in clang,
@@ -114,12 +115,12 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define JCXZ_REL(off) UNDEFINED
 #define J_REL(cc, off) UNDEFINED
 #define CALL(loc) UNDEFINED
-#define CALL_REL(off) ggg(call, state->ip + off, state->ip)
+#define CALL_REL(off) gg_here(call, state->ip + off)
 #define SET(cc, dst) UNDEFINED
 #define CMOV(cc, src, dst,z) UNDEFINED
 #define RET_NEAR_IMM(imm) UNDEFINED
 #define RET_NEAR() g(ret)
-#define INT(code) gg(interrupt, code)
+#define INT(code) gg_here(interrupt, (uint8_t) code)
 
 #define PUSHF() UNDEFINED
 #define POPF() UNDEFINED
