@@ -17,7 +17,7 @@
     .endif; .endif
 .endm
 
-.irp op, load,store,add,sub
+.irp op, load,store,add,and,sub,xor
     .macro x reg
         do_op \op, %\reg
     .endm

@@ -26,7 +26,9 @@ void gadget_ret();
 extern gadget_t load_gadgets[arg_cnt];
 extern gadget_t store_gadgets[arg_cnt];
 extern gadget_t add_gadgets[arg_cnt];
+extern gadget_t and_gadgets[arg_cnt];
 extern gadget_t sub_gadgets[arg_cnt];
+extern gadget_t xor_gadgets[arg_cnt];
 
 extern gadget_t addr_gadgets[reg_cnt];
 
@@ -71,6 +73,7 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 
 #define load(thing) op(load, thing)
 #define store(thing) op(store, thing)
+#define oop(o, src, dst) load(dst); op(o, src); store(dst)
 
 #define DECLARE_LOCALS \
     dword_t addr_offset = 0;
@@ -92,13 +95,13 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define MOVSX(src, dst,zs,zd) UNDEFINED
 #define XCHG(src, dst,z) UNDEFINED
 
-#define ADD(src, dst,z) load(dst); op(add, src); store(dst)
+#define ADD(src, dst,z) oop(add, src, dst)
 #define OR(src, dst,z) UNDEFINED
 #define ADC(src, dst,z) UNDEFINED
 #define SBB(src, dst,z) UNDEFINED
-#define AND(src, dst,z) UNDEFINED
-#define SUB(src, dst,z) load(dst); op(sub, src); store(dst)
-#define XOR(src, dst,z) UNDEFINED
+#define AND(src, dst,z) oop(and, src, dst)
+#define SUB(src, dst,z) oop(sub, src, dst)
+#define XOR(src, dst,z) oop(xor, src, dst)
 #define CMP(src, dst,z) UNDEFINED
 #define TEST(src, dst,z) UNDEFINED
 #define NOT(val,z) UNDEFINED
