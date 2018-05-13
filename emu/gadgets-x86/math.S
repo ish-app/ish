@@ -5,9 +5,14 @@
     movl %\reg, %_tmp
 .endm
 .reg_gadgets load
+
 .gadget load_mem32
     read_prep
     movl (%_addrq), %_tmp
+    gret
+.gadget store_mem32
+    write_prep
+    movl %_tmp, (%_addrq)
     gret
 
 .gadget load_addr
