@@ -47,8 +47,9 @@ extern gadget_t si_gadgets[reg_cnt * 3];
 #define g(g) GEN(gadget_##g)
 #define gg(g, a) do { GEN(gadget_##g); GEN(a); } while (0)
 #define ggg(g, a, b) do { GEN(gadget_##g); GEN(a); GEN(b); } while (0)
-#define gag(g, i, a) do { GEN(g##_gadgets[i]); GEN(a); } while (0)
-#define gagg(g, i, a, b) do { GEN(g##_gadgets[i]); GEN(a); GEN(b); } while (0)
+#define ga(g, i) do { if (g##_gadgets[i] == NULL) UNDEFINED; GEN(g##_gadgets[i]); } while (0)
+#define gag(g, i, a) do { ga(g, i); GEN(a); } while (0)
+#define gagg(g, i, a, b) do { ga(g, i); GEN(a); GEN(b); } while (0)
 #define gg_here(g, a) ggg(g, a, state->ip)
 #define UNDEFINED do { gg_here(interrupt, INT_UNDEFINED); return; } while (0)
 
@@ -75,10 +76,9 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
         UNDEFINED;
     }
     if (arg == arg_mem32 || arg == arg_addr) {
-        GEN(addr_gadgets[modrm->base]);
-        GEN(modrm->offset);
+        gag(addr, modrm->base, modrm->offset);
         if (modrm->type == modrm_mem_si)
-            GEN(si_gadgets[modrm->index * 3 + modrm->shift]);
+            ga(si, modrm->index * 3 + modrm->shift);
     }
     GEN(gadgets[arg]);
     if (arg == arg_imm)
