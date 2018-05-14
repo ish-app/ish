@@ -58,8 +58,8 @@ extern gadget_t si_gadgets[reg_cnt * 3];
 // this really wants to use all the locals of the decoder, which we can do
 // really nicely in gcc using nested functions, but that won't work in clang,
 // so we explicitly pass 500 arguments. sorry for the mess
-static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg arg, struct modrm *modrm, uint64_t *imm, int op_size) {
-    if (op_size != 32)
+static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg arg, struct modrm *modrm, uint64_t *imm, int size) {
+    if (size != 32)
         UNDEFINED;
     switch (arg) {
         case arg_modrm_reg:
@@ -86,13 +86,19 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
     if (arg == arg_imm)
         GEN(*imm);
 }
-#define op(type, thing) gen_op(state, type##_gadgets, arg_##thing, &modrm, &imm, OP_SIZE)
+#define op(type, thing, z) gen_op(state, type##_gadgets, arg_##thing, &modrm, &imm, sz(z))
 
-#define load(thing) op(load, thing)
-#define store(thing) op(store, thing)
+#define load(thing,z) op(load, thing,z)
+#define store(thing,z) op(store, thing,z)
 // load-op-store
-#define los(o, src, dst) load(dst); op(o, src); store(dst)
-#define lo(o, src, dst) load(dst); op(o, src)
+#define los(o, src, dst,z) load(dst,z); op(o, src,z); store(dst,z)
+#define lo(o, src, dst,z) load(dst,z); op(o, src,z)
+
+#define sz(x) sz_##x
+#define sz_ OP_SIZE
+#define sz_8 8
+#define sz_16 16
+#define sz_128 128
 
 #define DECLARE_LOCALS \
     dword_t addr_offset = 0;
@@ -109,30 +115,30 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define READADDR _READIMM(addr_offset, 32)
 #define SEG_GS() UNDEFINED
 
-#define MOV(src, dst,z) load(src); store(dst)
+#define MOV(src, dst,z) load(src,z); store(dst,z)
 #define MOVZX(src, dst,zs,zd) UNDEFINED
 #define MOVSX(src, dst,zs,zd) UNDEFINED
 #define XCHG(src, dst,z) UNDEFINED
 
-#define ADD(src, dst,z) los(add, src, dst)
+#define ADD(src, dst,z) los(add, src, dst,z)
 #define OR(src, dst,z) UNDEFINED
 #define ADC(src, dst,z) UNDEFINED
 #define SBB(src, dst,z) UNDEFINED
-#define AND(src, dst,z) los(and, src, dst)
-#define SUB(src, dst,z) los(sub, src, dst)
-#define XOR(src, dst,z) los(xor, src, dst)
-#define CMP(src, dst,z) lo(sub, src, dst)
-#define TEST(src, dst,z) lo(and, src, dst);
+#define AND(src, dst,z) los(and, src, dst,z)
+#define SUB(src, dst,z) los(sub, src, dst,z)
+#define XOR(src, dst,z) los(xor, src, dst,z)
+#define CMP(src, dst,z) lo(sub, src, dst,z)
+#define TEST(src, dst,z) lo(and, src, dst,z)
 #define NOT(val,z) UNDEFINED
 #define NEG(val,z) UNDEFINED
 
 #define POP(thing) UNDEFINED
-#define PUSH(thing) load(thing); g(push)
+#define PUSH(thing) load(thing,); g(push)
 
-#define INC(val,z) load(val); g(inc); store(val)
-#define DEC(val,z) load(val); g(dec); store(val)
+#define INC(val,z) load(val,z); g(inc); store(val,z)
+#define DEC(val,z) load(val,z); g(dec); store(val,z)
 
-#define JMP(loc) load(loc); g(jmp_indir)
+#define JMP(loc) load(loc,); g(jmp_indir)
 #define JMP_REL(off) gg(jmp, state->ip + off)
 #define JCXZ_REL(off) UNDEFINED
 #define J_REL(cc, off) gagg(jmp, cond_##cc, state->ip + off, state->ip)
