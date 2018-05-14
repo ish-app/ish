@@ -120,7 +120,7 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define SUB(src, dst,z) los(sub, src, dst)
 #define XOR(src, dst,z) los(xor, src, dst)
 #define CMP(src, dst,z) lo(sub, src, dst)
-#define TEST(src, dst,z) UNDEFINED
+#define TEST(src, dst,z) lo(and, src, dst);
 #define NOT(val,z) UNDEFINED
 #define NEG(val,z) UNDEFINED
 
