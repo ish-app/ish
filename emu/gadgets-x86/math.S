@@ -5,6 +5,20 @@
     movl %_addr, %_tmp
     gret
 
+.macro setf_oc
+    seto CPU_of(%_cpu)
+    setc CPU_cf(%_cpu)
+.endm
+.macro setf_a src, dst
+    movl \src, CPU_op1(%_cpu)
+    movl \dst, CPU_op2(%_cpu)
+    orl $AF_OPS, CPU_flags_res(%_cpu)
+.endm
+.macro setf_zsp res
+    movl \res, CPU_res(%_cpu)
+    orl $(ZF_RES|SF_RES|PF_RES), CPU_flags_res(%_cpu)
+.endm
+
 # cool thing where I just write a few nested loops and it generates all the gadgets automatically
 
 .macro do_op op arg
@@ -15,19 +29,12 @@
     .else
         \op\()l \arg, %_tmp
         .irp da_op, add,sub; .ifc \op,\da_op
-            seto CPU_of(%_cpu)
-            setc CPU_cf(%_cpu)
+            setf_oc
             movl \arg, %r14d
-            movl %r14d, CPU_op1(%_cpu)
-            movl %_tmp, CPU_op2(%_cpu)
-            orl $AF_OPS, CPU_flags_res(%_cpu)
+            setf_a src=%r14d, dst=%_tmp
         .endif; .endr
-        movl %_tmp, CPU_res(%_cpu)
-        orl $(PF_RES|ZF_RES|SF_RES), CPU_flags_res(%_cpu)
+        setf_zsp %_tmp
     .endif; .endif
-.endm
-
-.macro oc_flags
 .endm
 
 .irp op, load,store,add,and,sub,xor
@@ -52,4 +59,13 @@
     .section .rodata
     .gadget_array \op
     .previous
+.endr
+
+.irp op, inc,dec
+    .gadget \op
+        \op\()l %_tmp
+        seto CPU_of(%_cpu)
+        setf_zsp %_tmp
+        setf_a src=$1 dst=%_tmp
+        gret
 .endr
