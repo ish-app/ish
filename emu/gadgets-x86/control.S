@@ -16,6 +16,13 @@
     movl (%_addrq), %_eip
     jmp jit_ret
 
+.gadget jmp_indir
+    movl %_tmp, %_eip
+    jmp jit_ret
+.gadget jmp
+    movl (%_ip), %_eip
+    jmp jit_ret
+
 #define COND_LIST o,c,z,cz,s,p,sxo,sxoz
 .irp cond, z,cz
     .gadget jmp_\cond

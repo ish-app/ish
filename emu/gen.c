@@ -38,6 +38,8 @@ extern gadget_t xor_gadgets[arg_cnt];
 
 void gadget_call();
 void gadget_ret();
+void gadget_jmp();
+void gadget_jmp_indir();
 extern gadget_t jmp_gadgets[cond_cnt];
 
 extern gadget_t addr_gadgets[reg_cnt];
@@ -130,8 +132,8 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define INC(val,z) load(val); g(inc); store(val)
 #define DEC(val,z) load(val); g(dec); store(val)
 
-#define JMP(loc) UNDEFINED
-#define JMP_REL(off) UNDEFINED
+#define JMP(loc) load(loc); g(jmp_indir)
+#define JMP_REL(off) gg(jmp, state->ip + off)
 #define JCXZ_REL(off) UNDEFINED
 #define J_REL(cc, off) gagg(jmp, cond_##cc, state->ip + off, state->ip)
 #define JN_REL(cc, off) gagg(jmp, cond_##cc, state->ip, state->ip + off)
