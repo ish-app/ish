@@ -27,11 +27,13 @@
     .else; .ifc \op,store
         movl %_tmp, \arg
     .else
+        .irp da_op, add,sub; .ifc \op,\da_op
+            movl \arg, %r14d
+            setf_a src=%r14d, dst=%_tmp
+        .endif; .endr
         \op\()l \arg, %_tmp
         .irp da_op, add,sub; .ifc \op,\da_op
             setf_oc
-            movl \arg, %r14d
-            setf_a src=%r14d, dst=%_tmp
         .endif; .endr
         setf_zsp %_tmp
     .endif; .endif
@@ -63,9 +65,9 @@
 
 .irp op, inc,dec
     .gadget \op
+        setf_a src=$1 dst=%_tmp
         \op\()l %_tmp
         seto CPU_of(%_cpu)
         setf_zsp %_tmp
-        setf_a src=$1 dst=%_tmp
         gret
 .endr
