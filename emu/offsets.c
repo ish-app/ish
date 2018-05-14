@@ -20,6 +20,7 @@ void cpu() {
     OFFSET(CPU, cpu_state, sp);
     OFFSET(CPU, cpu_state, eip);
 
+    OFFSET(CPU, cpu_state, eflags);
     OFFSET(CPU, cpu_state, of);
     OFFSET(CPU, cpu_state, cf);
     OFFSET(CPU, cpu_state, res);
@@ -30,6 +31,7 @@ void cpu() {
     MACRO(ZF_RES);
     MACRO(SF_RES);
     MACRO(AF_OPS);
+    MACRO(AF_FLAG);
 
     OFFSET(JIT_BLOCK, jit_block, code);
 

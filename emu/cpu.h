@@ -71,6 +71,8 @@ struct cpu_state {
             bits of_bit:1;
             bits iopl:2;
         };
+        // for asm
+#define AF_FLAG (1 << 4)
     };
     // for maximum efficiency these are stored in bytes
     byte_t cf;

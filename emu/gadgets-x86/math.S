@@ -14,6 +14,10 @@
     movl \dst, CPU_op2(%_cpu)
     orl $AF_OPS, CPU_flags_res(%_cpu)
 .endm
+.macro clearf_a
+    andl $~AF_FLAG, CPU_eflags(%_cpu)
+    andl $~AF_OPS, CPU_flags_res(%_cpu)
+.endm
 .macro setf_zsp res
     movl \res, CPU_res(%_cpu)
     orl $(ZF_RES|SF_RES|PF_RES), CPU_flags_res(%_cpu)
@@ -21,20 +25,25 @@
 
 # cool thing where I just write a few nested loops and it generates all the gadgets automatically
 
+#define ifin(thing, ...) irp da_op, __VA_ARGS__; .ifc thing,\da_op
+#define endifin endif; .endr
 .macro do_op op arg
     .ifc \op,load
         movl \arg, %_tmp
     .else; .ifc \op,store
         movl %_tmp, \arg
     .else
-        .irp da_op, add,sub; .ifc \op,\da_op
+        .ifin(\op, add,sub)
             movl \arg, %r14d
             setf_a src=%r14d, dst=%_tmp
-        .endif; .endr
+        .endifin
+        .ifin(\op, and,xor)
+            clearf_a
+        .endifin
         \op\()l \arg, %_tmp
-        .irp da_op, add,sub; .ifc \op,\da_op
+        .ifin(\op, add,sub)
             setf_oc
-        .endif; .endr
+        .endifin
         setf_zsp %_tmp
     .endif; .endif
 .endm
