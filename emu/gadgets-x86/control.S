@@ -17,15 +17,19 @@
     jmp jit_ret
 
 #define COND_LIST o,c,z,cz,s,p,sxo,sxoz
-.irp cond, z
+.irp cond, z,cz
     .gadget jmp_\cond
         # please tell me if you know a better way
         .ifc \cond,o
         .else; .ifc \cond,c
         .else; .ifc \cond,z
-            testl $-1, CPU_res(%_cpu)
+            cmpl $0, CPU_res(%_cpu)
             jz 1f
         .else; .ifc \cond,cz
+            cmpl $0, CPU_res(%_cpu)
+            je 1f
+            cmpl $0, CPU_cf(%_cpu)
+            jne 1f
         .else; .ifc \cond,s
         .else; .ifc \cond,p
         .else; .ifc \cond,sxo
