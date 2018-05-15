@@ -144,11 +144,6 @@ static bool modrm_compute(struct cpu_state *cpu, struct tlb *tlb, addr_t *addr_o
 #define sz_mem_addr32 32
 #define sz_mem_addr64 64
 
-#define get_mem_si() mem_read(cpu->osi, OP_SIZE)
-#define get_mem_di() mem_read(cpu->odi, OP_SIZE)
-#define sz_mem_si OP_SIZE
-#define sz_mem_di OP_SIZE
-
 // DEFINE ALL THE MACROS
 #define get_oax() cpu->oax
 #define get_obx() cpu->obx
@@ -537,6 +532,15 @@ static bool modrm_compute(struct cpu_state *cpu, struct tlb *tlb, addr_t *addr_o
 
 // string instructions
 
+#define get_mem_si() mem_read(cpu->osi, OP_SIZE)
+#define get_mem_di() mem_read(cpu->odi, OP_SIZE)
+#define get_mem_si8() mem_read(cpu->osi, 8)
+#define get_mem_di8() mem_read(cpu->odi, 8)
+#define sz_mem_si OP_SIZE
+#define sz_mem_di OP_SIZE
+#define sz_mem_si8 8
+#define sz_mem_di8 8
+
 #define BUMP_SI(size) \
     if (!cpu->df) \
         cpu->esi += size/8; \
@@ -564,11 +568,11 @@ static bool modrm_compute(struct cpu_state *cpu, struct tlb *tlb, addr_t *addr_o
 
 // found an alternative to al, see above, needs polishing
 #define SCAS(z) \
-    CMP(al, mem_di); \
+    CMP(al, mem_di##z); \
     BUMP_DI(z)
 
 #define CMPS(z) \
-    CMP(mem_di, mem_si); \
+    CMP(mem_di##z, mem_si##z); \
     BUMP_SI_DI(z)
 
 #define REP(OP) \
