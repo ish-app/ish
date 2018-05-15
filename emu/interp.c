@@ -41,13 +41,6 @@ static bool modrm_compute(struct cpu_state *cpu, struct tlb *tlb, addr_t *addr_o
 #define SEG_GS() addr += cpu->tls_ptr
 
 #define sz(x) sz_##x
-/* #define sz_ OP_SIZE */
-/* #define sz_8 8 */
-/* #define sz_16 16 */
-/* #define sz_32 32 */
-/* #define sz_64 64 */
-/* #define sz_80 80 */
-/* #define sz_128 128 */
 #define twice(x) glue(twice_, x)
 #define twice_8 16
 #define twice_16 32
