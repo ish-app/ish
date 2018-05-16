@@ -64,20 +64,20 @@
 
 # an array of gadgets
 .macro .gadget_array_list type, list:vararg
-.global \type\()_gadgets
-.type \type\()_gadgets,@object
-\type\()_gadgets:
-    .irp arg, \list 
-        .ifndef gadget_\type\()_\arg
-            .set gadget_\type\()_\arg, 0
-        .endif
-        .quad gadget_\type\()_\arg
-    .endr
+    .global \type\()_gadgets
+    .type \type\()_gadgets,@object
+    \type\()_gadgets:
+        .irp arg, \list 
+            .ifndef gadget_\type\()_\arg
+                .set gadget_\type\()_\arg, 0
+            .endif
+            .quad gadget_\type\()_\arg
+        .endr
 .endm
 
 .macro .gadget_array type
-# This should stay in sync with enum arg in emu/gen.c
-.gadget_array_list \type, eax,ecx,edx,ebx,esp,ebp,esi,edi,ax,cx,dx,bx,sp,bp,si,di,imm,mem32,addr
+    # This should stay in sync with enum arg in emu/gen.c
+    .gadget_array_list \type, eax,ecx,edx,ebx,esp,ebp,esi,edi,ax,cx,dx,bx,sp,bp,si,di,imm,mem32,mem8,addr
 .endm
 
 .macro save_c

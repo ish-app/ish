@@ -7,8 +7,8 @@
 enum arg {
     arg_eax, arg_ecx, arg_edx, arg_ebx, arg_esp, arg_ebp, arg_esi, arg_edi,
     arg_ax, arg_cx, arg_dx, arg_bx, arg_sp, arg_bp, arg_si, arg_di,
-    arg_imm, arg_mem32, arg_addr,
-    arg_cnt,
+    arg_imm, arg_mem32, arg_mem8, arg_addr,
+    arg_count, arg_invalid,
     // the following should not be synced with the list mentioned above (no gadgets implement them)
     arg_al, arg_cl, arg_dl, arg_bl, arg_ah, arg_ch, arg_dh, arg_bh,
     arg_modrm_val, arg_modrm_val8, arg_modrm_val16, arg_modrm_reg, arg_modrm_reg8,
@@ -21,7 +21,7 @@ enum arg {
 // sync with COND_LIST in control.S
 enum cond {
     cond_O, cond_B, cond_E, cond_BE, cond_S, cond_P, cond_L, cond_LE,
-    cond_cnt,
+    cond_count,
 };
 
 // there are many
@@ -31,21 +31,21 @@ void gadget_exit();
 void gadget_push();
 void gadget_inc();
 void gadget_dec();
-extern gadget_t load_gadgets[arg_cnt];
-extern gadget_t store_gadgets[arg_cnt];
-extern gadget_t add_gadgets[arg_cnt];
-extern gadget_t and_gadgets[arg_cnt];
-extern gadget_t sub_gadgets[arg_cnt];
-extern gadget_t xor_gadgets[arg_cnt];
+extern gadget_t load_gadgets[arg_count];
+extern gadget_t store_gadgets[arg_count];
+extern gadget_t add_gadgets[arg_count];
+extern gadget_t and_gadgets[arg_count];
+extern gadget_t sub_gadgets[arg_count];
+extern gadget_t xor_gadgets[arg_count];
 
 void gadget_call();
 void gadget_ret();
 void gadget_jmp();
 void gadget_jmp_indir();
-extern gadget_t jmp_gadgets[cond_cnt];
+extern gadget_t jmp_gadgets[cond_count];
 
-extern gadget_t addr_gadgets[reg_cnt];
-extern gadget_t si_gadgets[reg_cnt * 3];
+extern gadget_t addr_gadgets[reg_count];
+extern gadget_t si_gadgets[reg_count * 3];
 
 #define GEN(thing) gen(state, (unsigned long) (thing))
 #define g(g) GEN(gadget_##g)
@@ -57,36 +57,66 @@ extern gadget_t si_gadgets[reg_cnt * 3];
 #define gg_here(g, a) ggg(g, a, state->ip)
 #define UNDEFINED do { gg_here(interrupt, INT_UNDEFINED); return; } while (0)
 
+static inline int arg_size(enum arg arg, int op_size) {
+    switch (arg) {
+        case arg_modrm_val8: return 8;
+        default: return op_size;
+    }
+}
+
+// return arg_count in default because it is guaranteed to be invalid
+static inline enum arg arg_reg(int size) {
+    switch (size) {
+        case 32: return arg_reg32;
+        case 16: return arg_reg16;
+        default: return arg_invalid;
+    }
+}
+static inline enum arg arg_mem(int size) {
+    switch (size) {
+        case 32: return arg_mem32;
+        case 8: return arg_mem8;
+        default: return arg_invalid;
+    }
+}
+
 // this really wants to use all the locals of the decoder, which we can do
 // really nicely in gcc using nested functions, but that won't work in clang,
 // so we explicitly pass 500 arguments. sorry for the mess
-static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg arg, struct modrm *modrm, uint64_t *imm) {
+static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg arg, struct modrm *modrm, uint64_t *imm, int op_size) {
+    int size = arg_size(arg, op_size);
+    if (size == 0)
+        size = op_size;
+
     switch (arg) {
         case arg_modrm_reg:
             // TODO find some way to assert that this won't overflow?
-            arg = modrm->reg + arg_reg32; break;
+            arg = modrm->reg + arg_reg(size); break;
         case arg_modrm_val:
+        case arg_modrm_val8:
             if (modrm->type == modrm_reg)
-                arg = modrm->base + arg_reg32;
+                arg = modrm->base + arg_reg(size);
             else
-                arg = arg_mem32;
+                arg = arg_mem(size);
             break;
-        default: break;
     }
-    if (arg >= arg_cnt || gadgets[arg] == NULL) {
+    if (arg >= arg_count || gadgets[arg] == NULL) {
         debugger;
         UNDEFINED;
     }
-    if (arg == arg_mem32 || arg == arg_addr) {
-        gag(addr, modrm->base, modrm->offset);
-        if (modrm->type == modrm_mem_si)
-            ga(si, modrm->index * 3 + modrm->shift);
+    switch (arg) {
+        case arg_mem32 ... arg_mem8:
+        case arg_addr:
+            gag(addr, modrm->base, modrm->offset);
+            if (modrm->type == modrm_mem_si)
+                ga(si, modrm->index * 3 + modrm->shift);
+            break;
     }
     GEN(gadgets[arg]);
     if (arg == arg_imm)
         GEN(*imm);
 }
-#define op(type, thing) gen_op(state, type##_gadgets, arg_##thing, &modrm, &imm)
+#define op(type, thing) gen_op(state, type##_gadgets, arg_##thing, &modrm, &imm, OP_SIZE)
 
 #define load(thing) op(load, thing)
 #define store(thing) op(store, thing)

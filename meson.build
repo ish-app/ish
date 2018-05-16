@@ -15,6 +15,8 @@ if get_option('no_crlf')
     add_project_arguments('-DNO_CRLF', language: 'c')
 endif
 
+add_project_arguments('-Wno-switch', language: 'c')
+
 includes = [include_directories('.')]
 
 cc = meson.get_compiler('c')
