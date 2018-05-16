@@ -29,6 +29,7 @@ typedef void (*gadget_t)();
 void gadget_interrupt();
 void gadget_exit();
 void gadget_push();
+void gadget_pop();
 void gadget_inc();
 void gadget_dec();
 extern gadget_t load_gadgets[arg_count];
@@ -162,7 +163,7 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define NOT(val) UNDEFINED
 #define NEG(val) UNDEFINED
 
-#define POP(thing) UNDEFINED
+#define POP(thing) g(pop); store(thing)
 #define PUSH(thing) load(thing); g(push)
 
 #define INC(val) load(val); g(inc); store(val)
