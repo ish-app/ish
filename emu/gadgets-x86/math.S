@@ -129,7 +129,7 @@
     .endr
 .endm
 
-.irp op, load,store,add,and,sub,xor
+.irp op, load,store,add,sub,and,or,xor
     .irp size, 8,16,32
         do_op_size \op, \size
     .endr

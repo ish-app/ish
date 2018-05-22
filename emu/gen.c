@@ -36,8 +36,9 @@ void gadget_dec();
 GADGET_ARRAY(load);
 GADGET_ARRAY(store);
 GADGET_ARRAY(add);
-GADGET_ARRAY(and);
 GADGET_ARRAY(sub);
+GADGET_ARRAY(and);
+GADGET_ARRAY(or);
 GADGET_ARRAY(xor);
 
 void gadget_call();
@@ -137,7 +138,7 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define XCHG(src, dst,z) UNDEFINED
 
 #define ADD(src, dst,z) los(add, src, dst, z)
-#define OR(src, dst,z) UNDEFINED
+#define OR(src, dst,z) los(or, src, dst, z)
 #define ADC(src, dst,z) UNDEFINED
 #define SBB(src, dst,z) UNDEFINED
 #define AND(src, dst,z) los(and, src, dst, z)
