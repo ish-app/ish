@@ -9,7 +9,7 @@ enum arg {
     arg_imm, arg_mem, arg_addr,
     arg_count, arg_invalid,
     // the following should not be synced with the list mentioned above (no gadgets implement them)
-    arg_modrm_val, arg_modrm_reg, arg_mem_addr, arg_gs,
+    arg_modrm_val, arg_modrm_reg, arg_mem_addr, arg_gs, arg_1,
 };
 
 enum size {
@@ -40,6 +40,7 @@ GADGET_ARRAY(sub);
 GADGET_ARRAY(and);
 GADGET_ARRAY(or);
 GADGET_ARRAY(xor);
+GADGET_ARRAY(shl);
 
 void gadget_call();
 void gadget_ret();
@@ -85,6 +86,10 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
                 arg = modrm->base + arg_reg_a;
             else
                 arg = arg_mem;
+            break;
+        case arg_1:
+            arg = arg_imm;
+            *imm = 1;
             break;
     }
     if (arg >= arg_count || gadgets[arg] == NULL) {
@@ -189,7 +194,7 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 
 #define ROL(count, val,z) UNDEFINED
 #define ROR(count, val,z) UNDEFINED
-#define SHL(count, val,z) UNDEFINED
+#define SHL(count, val,z) los(shl, count, val, z)
 #define SHR(count, val,z) UNDEFINED
 #define SAR(count, val,z) UNDEFINED
 

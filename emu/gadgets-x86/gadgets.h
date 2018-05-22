@@ -52,14 +52,8 @@
 #define GADGET_LIST REG_LIST,imm,mem,addr
 
 # an array of gadgets
-.macro .gadget_array type, list:vararg
+.macro _gadget_array_start name
     .pushsection .rodata
-    .gadget_array_start \type
-        gadgets \type, \list
-    .popsection
-.endm
-
-.macro .gadget_array_start name
     .global \name\()_gadgets
     .type \name\()_gadgets,@object
     \name\()_gadgets:
@@ -72,6 +66,46 @@
         .endif
         .quad gadget_\type\()_\arg
     .endr
+.endm
+
+.macro .gadget_list type, list:vararg
+    _gadget_array_start \type
+        gadgets \type, \list
+    .popsection
+.endm
+
+.macro .gadget_array type
+    _gadget_array_start \type
+        # sync with enum size
+        gadgets \type\()8, GADGET_LIST
+        gadgets \type\()16, GADGET_LIST
+        gadgets \type\()32, GADGET_LIST
+    .popsection
+.endm
+
+.macro setf_oc
+    seto CPU_of(%_cpu)
+    setc CPU_cf(%_cpu)
+.endm
+.macro setf_a src, dst, ss
+    mov\ss \src, CPU_op1(%_cpu)
+    mov\ss \dst, CPU_op2(%_cpu)
+    orl $AF_OPS, CPU_flags_res(%_cpu)
+.endm
+.macro clearf_a
+    andl $~AF_FLAG, CPU_eflags(%_cpu)
+    andl $~AF_OPS, CPU_flags_res(%_cpu)
+.endm
+.macro clearf_oc
+    movl $0, CPU_of(%_cpu)
+    movl $0, CPU_cf(%_cpu)
+.endm
+.macro setf_zsp res, ss
+    .ifnc \ss,l
+        movs\ss\()l \res, %_tmp
+    .endif
+    movl %_tmp, CPU_res(%_cpu)
+    orl $(ZF_RES|SF_RES|PF_RES), CPU_flags_res(%_cpu)
 .endm
 
 .macro save_c

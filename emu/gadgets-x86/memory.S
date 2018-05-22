@@ -35,7 +35,7 @@
 .endm
 .each_reg x
 .purgem x
-.gadget_array addr, REG_LIST
+.gadget_list addr, REG_LIST
 
 .macro x name, reg
     .irp times, 1,2,4
@@ -86,5 +86,3 @@ segfault:
     addq $8, %rsp # pop return address
     movl $INT_GPF, %_tmp
     jmp jit_exit
-
-.gadget_array, REG_LIST

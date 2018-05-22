@@ -51,4 +51,4 @@
         jmp jit_ret
 .endr
 
-.gadget_array jmp, COND_LIST
+.gadget_list jmp, COND_LIST
