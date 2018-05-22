@@ -2,6 +2,7 @@
 
 # register assignments
 #define _esp r8d
+#define _sp r8w
 #define _ip r9
 #define _eip r9d
 #define _tmp r10d
@@ -20,9 +21,6 @@
     addq $((\pop+1)*8), %_ip
     jmp *-8(%_ip)
 .endm
-
-# using a gas macro for this works fine on gcc but not on clang
-#define REG_LIST eax,ecx,edx,ebx,esp,ebp,esi,edi
 
 # memory reading and writing
 # TODO cross-page access handling (but it's going to be so slow :cry:)
@@ -48,36 +46,32 @@
 
 .endr
 
-# a gadget for each register
-.macro .reg_gadgets type
-    .irp reg, REG_LIST
-        .gadget \type\()_\reg
-        .ifnc \reg,esp
-            x \reg
-        .else
-            x _esp
-        .endif
-        gret
-    .endr
-    .purgem x
-.endm
+# sync with enum reg
+#define REG_LIST reg_a,reg_c,reg_d,reg_b,reg_sp,reg_bp,reg_si,reg_di
+# sync with enum arg
+#define GADGET_LIST REG_LIST,imm,mem,addr
 
 # an array of gadgets
-.macro .gadget_array_list type, list:vararg
-    .global \type\()_gadgets
-    .type \type\()_gadgets,@object
-    \type\()_gadgets:
-        .irp arg, \list 
-            .ifndef gadget_\type\()_\arg
-                .set gadget_\type\()_\arg, 0
-            .endif
-            .quad gadget_\type\()_\arg
-        .endr
+.macro .gadget_array type, list:vararg
+    .pushsection .rodata
+    .gadget_array_start \type
+        gadgets \type, \list
+    .popsection
 .endm
 
-.macro .gadget_array type
-    # This should stay in sync with enum arg in emu/gen.c
-    .gadget_array_list \type, eax,ecx,edx,ebx,esp,ebp,esi,edi,ax,cx,dx,bx,sp,bp,si,di,imm,mem32,mem8,addr
+.macro .gadget_array_start name
+    .global \name\()_gadgets
+    .type \name\()_gadgets,@object
+    \name\()_gadgets:
+.endm
+
+.macro gadgets type, list:vararg
+    .irp arg, \list
+        .ifndef gadget_\type\()_\arg
+            .set gadget_\type\()_\arg, 0
+        .endif
+        .quad gadget_\type\()_\arg
+    .endr
 .endm
 
 .macro save_c

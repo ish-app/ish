@@ -5,17 +5,16 @@
 
 // This should stay in sync with the definition of .gadget_array in gadgets.h
 enum arg {
-    arg_eax, arg_ecx, arg_edx, arg_ebx, arg_esp, arg_ebp, arg_esi, arg_edi,
-    arg_ax, arg_cx, arg_dx, arg_bx, arg_sp, arg_bp, arg_si, arg_di,
-    arg_imm, arg_mem32, arg_mem8, arg_addr,
+    arg_reg_a, arg_reg_c, arg_reg_d, arg_reg_b, arg_reg_sp, arg_reg_bp, arg_reg_si, arg_reg_di,
+    arg_imm, arg_mem, arg_addr,
     arg_count, arg_invalid,
     // the following should not be synced with the list mentioned above (no gadgets implement them)
-    arg_al, arg_cl, arg_dl, arg_bl, arg_ah, arg_ch, arg_dh, arg_bh,
-    arg_modrm_val, arg_modrm_val8, arg_modrm_val16, arg_modrm_reg, arg_modrm_reg8,
-    arg_mem_addr, arg_mem_addr8, arg_gs,
-    arg_modrm_val128, arg_modrm_reg128,
-    // markers
-    arg_reg32 = arg_eax, arg_reg16 = arg_ax,
+    arg_modrm_val, arg_modrm_reg, arg_mem_addr, arg_gs,
+};
+
+enum size {
+    size_8, size_16, size_32,
+    size_count,
 };
 
 // sync with COND_LIST in control.S
@@ -32,12 +31,14 @@ void gadget_push();
 void gadget_pop();
 void gadget_inc();
 void gadget_dec();
-extern gadget_t load_gadgets[arg_count];
-extern gadget_t store_gadgets[arg_count];
-extern gadget_t add_gadgets[arg_count];
-extern gadget_t and_gadgets[arg_count];
-extern gadget_t sub_gadgets[arg_count];
-extern gadget_t xor_gadgets[arg_count];
+#define GADGET_ARRAY(name) \
+    extern gadget_t name##_gadgets[arg_count * size_count]
+GADGET_ARRAY(load);
+GADGET_ARRAY(store);
+GADGET_ARRAY(add);
+GADGET_ARRAY(and);
+GADGET_ARRAY(sub);
+GADGET_ARRAY(xor);
 
 void gadget_call();
 void gadget_ret();
@@ -58,47 +59,31 @@ extern gadget_t si_gadgets[reg_count * 3];
 #define gg_here(g, a) ggg(g, a, state->ip)
 #define UNDEFINED do { gg_here(interrupt, INT_UNDEFINED); return; } while (0)
 
-static inline int arg_size(enum arg arg, int op_size) {
-    switch (arg) {
-        case arg_modrm_val8: return 8;
-        default: return op_size;
-    }
-}
-
-// return arg_count in default because it is guaranteed to be invalid
-static inline enum arg arg_reg(int size) {
+static inline int size_conv(int size) {
     switch (size) {
-        case 32: return arg_reg32;
-        case 16: return arg_reg16;
-        default: return arg_invalid;
-    }
-}
-static inline enum arg arg_mem(int size) {
-    switch (size) {
-        case 32: return arg_mem32;
-        case 8: return arg_mem8;
-        default: return arg_invalid;
+        case 8: return size_8;
+        case 16: return size_16;
+        case 32: return size_32;
+        default: return -1;
     }
 }
 
 // this really wants to use all the locals of the decoder, which we can do
 // really nicely in gcc using nested functions, but that won't work in clang,
 // so we explicitly pass 500 arguments. sorry for the mess
-static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg arg, struct modrm *modrm, uint64_t *imm, int op_size) {
-    int size = arg_size(arg, op_size);
-    if (size == 0)
-        size = op_size;
+static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg arg, struct modrm *modrm, uint64_t *imm, int size) {
+    size = size_conv(size);
+    gadgets = gadgets + size * arg_count;
 
     switch (arg) {
         case arg_modrm_reg:
             // TODO find some way to assert that this won't overflow?
-            arg = modrm->reg + arg_reg(size); break;
+            arg = modrm->reg + arg_reg_a; break;
         case arg_modrm_val:
-        case arg_modrm_val8:
             if (modrm->type == modrm_reg)
-                arg = modrm->base + arg_reg(size);
+                arg = modrm->base + arg_reg_a;
             else
-                arg = arg_mem(size);
+                arg = arg_mem;
             break;
     }
     if (arg >= arg_count || gadgets[arg] == NULL) {
@@ -106,7 +91,7 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
         UNDEFINED;
     }
     switch (arg) {
-        case arg_mem32 ... arg_mem8:
+        case arg_mem:
         case arg_addr:
             gag(addr, modrm->base, modrm->offset);
             if (modrm->type == modrm_mem_si)
@@ -117,13 +102,13 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
     if (arg == arg_imm)
         GEN(*imm);
 }
-#define op(type, thing) gen_op(state, type##_gadgets, arg_##thing, &modrm, &imm, OP_SIZE)
+#define op(type, thing, z) gen_op(state, type##_gadgets, arg_##thing, &modrm, &imm, z)
 
-#define load(thing) op(load, thing)
-#define store(thing) op(store, thing)
+#define load(thing, z) op(load, thing, z)
+#define store(thing, z) op(store, thing, z)
 // load-op-store
-#define los(o, src, dst) load(dst); op(o, src); store(dst)
-#define lo(o, src, dst) load(dst); op(o, src)
+#define los(o, src, dst, z) load(dst, z); op(o, src, z); store(dst, z)
+#define lo(o, src, dst, z) load(dst, z); op(o, src, z)
 
 #define sz(x) sz_##x
 #define sz_ OP_SIZE
@@ -146,30 +131,30 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define READADDR _READIMM(addr_offset, 32)
 #define SEG_GS() UNDEFINED
 
-#define MOV(src, dst) load(src); store(dst)
-#define MOVZX(src, dstsd) UNDEFINED
-#define MOVSX(src, dstsd) UNDEFINED
-#define XCHG(src, dst) UNDEFINED
+#define MOV(src, dst,z) load(src, z); store(dst, z)
+#define MOVZX(src, dst,zs,zd) UNDEFINED
+#define MOVSX(src, dst,zs,zd) UNDEFINED
+#define XCHG(src, dst,z) UNDEFINED
 
-#define ADD(src, dst) los(add, src, dst)
-#define OR(src, dst) UNDEFINED
-#define ADC(src, dst) UNDEFINED
-#define SBB(src, dst) UNDEFINED
-#define AND(src, dst) los(and, src, dst)
-#define SUB(src, dst) los(sub, src, dst)
-#define XOR(src, dst) los(xor, src, dst)
-#define CMP(src, dst) lo(sub, src, dst)
-#define TEST(src, dst) lo(and, src, dst)
-#define NOT(val) UNDEFINED
-#define NEG(val) UNDEFINED
+#define ADD(src, dst,z) los(add, src, dst, z)
+#define OR(src, dst,z) UNDEFINED
+#define ADC(src, dst,z) UNDEFINED
+#define SBB(src, dst,z) UNDEFINED
+#define AND(src, dst,z) los(and, src, dst, z)
+#define SUB(src, dst,z) los(sub, src, dst, z)
+#define XOR(src, dst,z) los(xor, src, dst, z)
+#define CMP(src, dst,z) lo(sub, src, dst, z)
+#define TEST(src, dst,z) lo(and, src, dst, z)
+#define NOT(val,z) UNDEFINED
+#define NEG(val,z) UNDEFINED
 
-#define POP(thing) g(pop); store(thing)
-#define PUSH(thing) load(thing); g(push)
+#define POP(thing,z) g(pop); store(thing, z)
+#define PUSH(thing,z) load(thing, z); g(push)
 
-#define INC(val) load(val); g(inc); store(val)
-#define DEC(val) load(val); g(dec); store(val)
+#define INC(val,z) load(val, z); g(inc); store(val, z)
+#define DEC(val,z) load(val, z); g(dec); store(val, z)
 
-#define JMP(loc) load(loc); g(jmp_indir)
+#define JMP(loc) load(loc, OP_SIZE); g(jmp_indir)
 #define JMP_REL(off) gg(jmp, state->ip + off)
 #define JCXZ_REL(off) UNDEFINED
 #define J_REL(cc, off) gagg(jmp, cond_##cc, state->ip + off, state->ip)
@@ -177,7 +162,7 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define CALL(loc) UNDEFINED
 #define CALL_REL(off) gg_here(call, state->ip + off)
 #define SET(cc, dst) UNDEFINED
-#define CMOV(cc, src, dst) UNDEFINED
+#define CMOV(cc, src, dst,z) UNDEFINED
 #define RET_NEAR_IMM(imm) UNDEFINED
 #define RET_NEAR() g(ret)
 #define INT(code) gg_here(interrupt, (uint8_t) code)
@@ -188,34 +173,34 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define CLD UNDEFINED
 #define STD UNDEFINED
 
-#define MUL18(val) UNDEFINED
-#define MUL1(val) UNDEFINED
-#define IMUL1(val) UNDEFINED
-#define MUL2(val, reg) UNDEFINED
-#define IMUL2(val, reg) UNDEFINED
-#define MUL3(imm, src, dst) UNDEFINED
-#define IMUL3(imm, src, dst) UNDEFINED
-#define DIV(reg, val, rem) UNDEFINED
-#define IDIV(reg, val, rem) UNDEFINED
+#define MUL18(val,z) UNDEFINED
+#define MUL1(val,z) UNDEFINED
+#define IMUL1(val,z) UNDEFINED
+#define MUL2(val, reg,z) UNDEFINED
+#define IMUL2(val, reg,z) UNDEFINED
+#define MUL3(imm, src, dst,z) UNDEFINED
+#define IMUL3(imm, src, dst,z) UNDEFINED
+#define DIV(reg, val, rem,z) UNDEFINED
+#define IDIV(reg, val, rem,z) UNDEFINED
 
 #define CVT UNDEFINED
 #define CVTE UNDEFINED
 
-#define ROL(count, val) UNDEFINED
-#define ROR(count, val) UNDEFINED
-#define SHL(count, val) UNDEFINED
-#define SHR(count, val) UNDEFINED
-#define SAR(count, val) UNDEFINED
+#define ROL(count, val,z) UNDEFINED
+#define ROR(count, val,z) UNDEFINED
+#define SHL(count, val,z) UNDEFINED
+#define SHR(count, val,z) UNDEFINED
+#define SAR(count, val,z) UNDEFINED
 
-#define SHLD(count, extra, dst) UNDEFINED
-#define SHRD(count, extra, dst) UNDEFINED
+#define SHLD(count, extra, dst,z) UNDEFINED
+#define SHRD(count, extra, dst,z) UNDEFINED
 
-#define BT(bit, val) UNDEFINED
-#define BTC(bit, val) UNDEFINED
-#define BTS(bit, val) UNDEFINED
-#define BTR(bit, val) UNDEFINED
-#define BSF(src, dst) UNDEFINED
-#define BSR(src, dst) UNDEFINED
+#define BT(bit, val,z) UNDEFINED
+#define BTC(bit, val,z) UNDEFINED
+#define BTS(bit, val,z) UNDEFINED
+#define BTR(bit, val,z) UNDEFINED
+#define BSF(src, dst,z) UNDEFINED
+#define BSR(src, dst,z) UNDEFINED
 
 #define BSWAP(dst) UNDEFINED
 
@@ -228,8 +213,8 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define REPZ(op) UNDEFINED
 #define REPNZ(op) UNDEFINED
 
-#define CMPXCHG(src, dst) UNDEFINED
-#define XADD(src, dst) UNDEFINED
+#define CMPXCHG(src, dst,z) UNDEFINED
+#define XADD(src, dst,z) UNDEFINED
 
 #define RDTSC UNDEFINED
 #define CPUID() UNDEFINED
@@ -246,10 +231,10 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 
 // fpu
 #define FLD() UNDEFINED
-#define FILD(val) UNDEFINED
-#define FLDM(val) UNDEFINED
-#define FSTM(dst) UNDEFINED
-#define FIST(dst) UNDEFINED
+#define FILD(val,z) UNDEFINED
+#define FLDM(val,z) UNDEFINED
+#define FSTM(dst,z) UNDEFINED
+#define FIST(dst,z) UNDEFINED
 #define FXCH() UNDEFINED
 #define FUCOM() UNDEFINED
 #define FUCOMI() UNDEFINED
@@ -263,17 +248,17 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define FLDCW(dst) UNDEFINED
 #define FPOP UNDEFINED
 #define FADD(src, dst) UNDEFINED
-#define FIADD(val) UNDEFINED
-#define FADDM(val) UNDEFINED
+#define FIADD(val,z) UNDEFINED
+#define FADDM(val,z) UNDEFINED
 #define FSUB(src, dst) UNDEFINED
-#define FSUBM(val) UNDEFINED
-#define FISUB(val) UNDEFINED
+#define FSUBM(val,z) UNDEFINED
+#define FISUB(val,z) UNDEFINED
 #define FMUL(src, dst) UNDEFINED
-#define FIMUL(val) UNDEFINED
-#define FMULM(val) UNDEFINED
+#define FIMUL(val,z) UNDEFINED
+#define FMULM(val,z) UNDEFINED
 #define FDIV(src, dst) UNDEFINED
-#define FIDIV(val) UNDEFINED
-#define FDIVM(val) UNDEFINED
+#define FIDIV(val,z) UNDEFINED
+#define FDIVM(val,z) UNDEFINED
 
 #define DECODER_RET void
 #define DECODER_NAME gen_step

@@ -49,5 +49,4 @@
         jmp jit_ret
 .endr
 
-.section .rodata
-.gadget_array_list jmp, COND_LIST
+.gadget_array jmp, COND_LIST

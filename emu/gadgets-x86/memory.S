@@ -14,16 +14,32 @@
     add $4, %_esp
     gret
 
-.macro x reg
-    movl %\reg, %_addr
-    addl (%_ip), %_addr
-    gret 1
+.macro _invoke macro, reg, post
+    \macro reg_\reg, e\reg\post
 .endm
-.reg_gadgets addr
+.macro .each_reg macro
+    .irp reg, a,b,c,d
+        _invoke \macro, \reg, x
+    .endr
+    .irp reg, si,di,bp
+        _invoke \macro, \reg,
+    .endr
+    \macro reg_sp, _esp
+.endm
 
-.irp reg, REG_LIST
+.macro x name, reg
+    .gadget addr_\name
+        movl %\reg, %_addr
+        addl (%_ip), %_addr
+        gret 1
+.endm
+.each_reg x
+.purgem x
+.gadget_array addr, REG_LIST
+
+.macro x name, reg
     .irp times, 1,2,4
-        .gadget si_\reg\()_\times
+        .gadget si_\name\()_\times
             .ifnc \reg,esp
                 leal (%_addr,%\reg,\times), %_addr
             .else
@@ -31,7 +47,10 @@
             .endif
             gret
     .endr
-.endr
+.endm
+.each_reg x
+.purgem x
+
 .section .rodata
 .global si_gadgets
 si_gadgets:
@@ -68,5 +87,4 @@ segfault:
     movl $INT_GPF, %_tmp
     jmp jit_exit
 
-.section .rodata
-.gadget_array_list addr, REG_LIST
+.gadget_array, REG_LIST

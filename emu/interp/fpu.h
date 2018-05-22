@@ -21,20 +21,13 @@ static inline extFloat80_t extF80_abs(extFloat80_t f) {
 
 #define mem_read_real(addr, size) mem_read_ts(addr, ty_real(size), size)
 #define mem_write_real(addr, val, size) mem_write_ts(addr, val, ty_real(size), size)
-#define get_mem_addr_real32() mem_read_real(addr, 32)
-#define set_mem_addr_real32(to) mem_write_real(addr, to, 32)
-#define get_mem_addr_real64() mem_read_real(addr, 64)
-#define set_mem_addr_real64(to) mem_write_real(addr, to, 64)
-#define get_mem_addr_real80() mem_read_real(addr, 80)
-#define set_mem_addr_real80(to) mem_write_real(addr, to, 80)
-#define sz_mem_addr_real32 32
-#define sz_mem_addr_real64 64
-#define sz_mem_addr_real80 80
+#define get_mem_addr_real(size) mem_read_real(addr, size)
+#define set_mem_addr_real(to, size) mem_write_real(addr, to, size)
 
-#define extF80_to_f(f, z) glue(extF80_to_f, z)(f)
-#define f_to_extF80(f_, z) glue3(f, z, _to_extF80)(f_)
-#define extF80_to_i(i, round, exact, z) glue(extF80_to_i, z)(i, round, exact)
-#define i_to_extF80(i_, round, exact, z) glue3(i, z, _to_extF80)(i_, round, exact)
+#define extF80_to_f(f, z) glue(extF80_to_f, sz(z))(f)
+#define f_to_extF80(f_, z) glue3(f, sz(z), _to_extF80)(f_)
+#define extF80_to_i(i, round, exact, z) glue(extF80_to_i, sz(z))(i, round, exact)
+#define i_to_extF80(i_, round, exact, z) glue3(i, sz(z), _to_extF80)(i_, round, exact)
 
 #define ST(i) cpu->fp[cpu->top + i]
 #define ST_i ST(modrm.rm_opcode)
@@ -51,28 +44,28 @@ static inline extFloat80_t extF80_abs(extFloat80_t f) {
 
 #define FADD(src, dst) \
     dst = extF80_add(dst, src)
-#define FIADD(val) \
-    ST(0) = extF80_add(ST(0), i64_to_extF80((sint(sz(val))) get(val)))
-#define FADDM(val) \
-    ST(0) = extF80_add(ST(0), f_to_extF80(get(val), sz(val)))
+#define FIADD(val,z) \
+    ST(0) = extF80_add(ST(0), i64_to_extF80((sint(z)) get(val,z)))
+#define FADDM(val,z) \
+    ST(0) = extF80_add(ST(0), f_to_extF80(get(val,z),z))
 #define FSUB(src, dst) \
     dst = extF80_sub(dst, src)
-#define FSUBM(val) \
-    ST(0) = extF80_sub(ST(0), f_to_extF80(get(val), sz(val)))
-#define FISUB(val) \
-    ST(0) = extF80_sub(ST(0), i64_to_extF80((sint(sz(val))) get(val)))
+#define FSUBM(val,z) \
+    ST(0) = extF80_sub(ST(0), f_to_extF80(get(val,z),z))
+#define FISUB(val,z) \
+    ST(0) = extF80_sub(ST(0), i64_to_extF80((sint(z)) get(val,z)))
 #define FMUL(src, dst) \
     dst = extF80_mul(dst, src)
-#define FIMUL(val) \
-    ST(0) = extF80_mul(ST(0), i64_to_extF80((sint(sz(val))) get(val)))
-#define FMULM(val) \
-    ST(0) = extF80_mul(ST(0), f_to_extF80(get(val), sz(val)))
+#define FIMUL(val,z) \
+    ST(0) = extF80_mul(ST(0), i64_to_extF80((sint(z)) get(val,z)))
+#define FMULM(val,z) \
+    ST(0) = extF80_mul(ST(0), f_to_extF80(get(val,z),z))
 #define FDIV(src, dst) \
     dst = extF80_div(dst, src)
-#define FIDIV(val) \
-    ST(0) = extF80_div(ST(0), i64_to_extF80((sint(sz(val))) get(val)))
-#define FDIVM(val) \
-    ST(0) = extF80_div(ST(0), f_to_extF80(get(val), sz(val)))
+#define FIDIV(val,z) \
+    ST(0) = extF80_div(ST(0), i64_to_extF80((sint(z)) get(val,z)))
+#define FDIVM(val,z) \
+    ST(0) = extF80_div(ST(0), f_to_extF80(get(val,z),z))
 
 #define FCHS() \
     ST(0) = extF80_neg(ST(0))
@@ -98,26 +91,26 @@ static inline extFloat80_t extF80_abs(extFloat80_t f) {
     cpu->c2 = 0; /* again, not worrying about nans */ \
     cpu->c3 = extF80_eq(ST(0), ST_i)
 
-#define FILD(val) \
-    FPUSH(i64_to_extF80((sint(sz(val))) get(val)))
+#define FILD(val,z) \
+    FPUSH(i64_to_extF80((sint(z)) get(val,z)))
 #define FLD() FPUSH(ST_i)
-#define FLDM(val) \
-    FPUSH(f_to_extF80(get(val), sz(val)))
+#define FLDM(val,z) \
+    FPUSH(f_to_extF80(get(val,z),z))
 
 #define FLDC(what) FPUSH(fconst_##what)
 #define fconst_one i64_to_extF80(1)
 #define fconst_zero i64_to_extF80(0)
 
-#define FSTM(dst) \
-    set(dst, extF80_to_f(ST(0), sz(dst)))
-#define FIST(dst) \
-    set(dst, extF80_to_i(ST(0), softfloat_roundingMode, false, sz(dst)))
+#define FSTM(dst,z) \
+    set(dst, extF80_to_f(ST(0),z),z)
+#define FIST(dst,z) \
+    set(dst, extF80_to_i(ST(0), softfloat_roundingMode, false, z),z)
 
 #define FST() ST_i = ST(0)
 
 #define FSTSW(dst) \
-    set(dst, cpu->fsw)
+    set(dst, cpu->fsw,16)
 #define FSTCW(dst) \
-    set(dst, cpu->fcw)
+    set(dst, cpu->fcw,16)
 #define FLDCW(dst) \
-    cpu->fcw = get(dst)
+    cpu->fcw = get(dst,16)
