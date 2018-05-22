@@ -132,7 +132,7 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define SEG_GS() UNDEFINED
 
 #define MOV(src, dst,z) load(src, z); store(dst, z)
-#define MOVZX(src, dst,zs,zd) UNDEFINED
+#define MOVZX(src, dst,zs,zd) load(src, zs); store(dst, zd)
 #define MOVSX(src, dst,zs,zd) UNDEFINED
 #define XCHG(src, dst,z) UNDEFINED
 
