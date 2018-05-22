@@ -19,10 +19,10 @@
     andl $~AF_OPS, CPU_flags_res(%_cpu)
 .endm
 .macro setf_zsp res, ss
-    .ifnc ss,l
-        movl $0, CPU_res(%_cpu)
+    .ifnc \ss,l
+        movs\ss\()l \res, %_tmp
     .endif
-    mov\ss \res, CPU_res(%_cpu)
+    movl %_tmp, CPU_res(%_cpu)
     orl $(ZF_RES|SF_RES|PF_RES), CPU_flags_res(%_cpu)
 .endm
 
