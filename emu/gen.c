@@ -23,39 +23,13 @@ enum cond {
     cond_count,
 };
 
-// there are many
 typedef void (*gadget_t)();
-void gadget_interrupt();
-void gadget_exit();
-void gadget_push();
-void gadget_pop();
-void gadget_inc();
-void gadget_dec();
-#define GADGET_ARRAY(name) \
-    extern gadget_t name##_gadgets[arg_count * size_count]
-GADGET_ARRAY(load);
-GADGET_ARRAY(store);
-GADGET_ARRAY(add);
-GADGET_ARRAY(sub);
-GADGET_ARRAY(and);
-GADGET_ARRAY(or);
-GADGET_ARRAY(xor);
-GADGET_ARRAY(shl);
-
-void gadget_call();
-void gadget_ret();
-void gadget_jmp();
-void gadget_jmp_indir();
-extern gadget_t jmp_gadgets[cond_count];
-
-extern gadget_t addr_gadgets[reg_count];
-extern gadget_t si_gadgets[reg_count * 3];
 
 #define GEN(thing) gen(state, (unsigned long) (thing))
-#define g(g) GEN(gadget_##g)
-#define gg(g, a) do { GEN(gadget_##g); GEN(a); } while (0)
-#define ggg(g, a, b) do { GEN(gadget_##g); GEN(a); GEN(b); } while (0)
-#define ga(g, i) do { if (g##_gadgets[i] == NULL) UNDEFINED; GEN(g##_gadgets[i]); } while (0)
+#define g(g) do { extern void gadget_##g(); GEN(gadget_##g); } while (0)
+#define gg(_g, a) do { g(_g); GEN(a); } while (0)
+#define ggg(_g, a, b) do { g(_g); GEN(a); GEN(b); } while (0)
+#define ga(g, i) do { extern gadget_t g##_gadgets[]; if (g##_gadgets[i] == NULL) UNDEFINED; GEN(g##_gadgets[i]); } while (0)
 #define gag(g, i, a) do { ga(g, i); GEN(a); } while (0)
 #define gagg(g, i, a, b) do { ga(g, i); GEN(a); GEN(b); } while (0)
 #define gg_here(g, a) ggg(g, a, state->ip)
@@ -108,7 +82,10 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
     if (arg == arg_imm)
         GEN(*imm);
 }
-#define op(type, thing, z) gen_op(state, type##_gadgets, arg_##thing, &modrm, &imm, z)
+#define op(type, thing, z) do { \
+    extern gadget_t type##_gadgets[]; \
+    gen_op(state, type##_gadgets, arg_##thing, &modrm, &imm, z); \
+} while (0)
 
 #define load(thing, z) op(load, thing, z)
 #define store(thing, z) op(store, thing, z)
@@ -167,7 +144,8 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define JN_REL(cc, off) gagg(jmp, cond_##cc, state->ip, state->ip + off)
 #define CALL(loc) UNDEFINED
 #define CALL_REL(off) gg_here(call, state->ip + off)
-#define SET(cc, dst) UNDEFINED
+#define SET(cc, dst) ga(set, cond_##cc); store(dst, 8)
+#define SETN(cc, dst) ga(setn, cond_##cc); store(dst, 8)
 #define CMOV(cc, src, dst,z) UNDEFINED
 #define RET_NEAR_IMM(imm) UNDEFINED
 #define RET_NEAR() g(ret)
@@ -201,7 +179,7 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define SHLD(count, extra, dst,z) UNDEFINED
 #define SHRD(count, extra, dst,z) UNDEFINED
 
-#define BT(bit, val,z) UNDEFINED
+#define BT(bit, val,z) lo(bt, bit, val, z)
 #define BTC(bit, val,z) UNDEFINED
 #define BTS(bit, val,z) UNDEFINED
 #define BTR(bit, val,z) UNDEFINED

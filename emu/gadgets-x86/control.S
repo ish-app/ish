@@ -24,31 +24,55 @@
     jmp jit_ret
 
 #define COND_LIST o,c,z,cz,s,p,sxo,sxoz
-.irp cond, c,z,cz
+#define IMPLEMENTED_CONDS c,z,cz
+
+.macro do_jump cond, target
+    # please tell me if you know a better way
+    .ifc \cond,o
+    .else; .ifc \cond,c
+        cmpl $0, CPU_cf(%_cpu)
+        jnz \target
+    .else; .ifc \cond,z
+        cmpl $0, CPU_res(%_cpu)
+        jz \target
+    .else; .ifc \cond,cz
+        cmpl $0, CPU_res(%_cpu)
+        je \target
+        cmpl $0, CPU_cf(%_cpu)
+        jnz \target
+    .else; .ifc \cond,s
+    .else; .ifc \cond,p
+    .else; .ifc \cond,sxo
+    .else; .ifc \cond,sxoz
+    .endif; .endif; .endif; .endif; .endif; .endif; .endif; .endif
+.endm
+
+.irp cond, IMPLEMENTED_CONDS
     .gadget jmp_\cond
-        # please tell me if you know a better way
-        .ifc \cond,o
-        .else; .ifc \cond,c
-            cmpl $0, CPU_cf(%_cpu)
-            jnz 1f
-        .else; .ifc \cond,z
-            cmpl $0, CPU_res(%_cpu)
-            jz 1f
-        .else; .ifc \cond,cz
-            cmpl $0, CPU_res(%_cpu)
-            je 1f
-            cmpl $0, CPU_cf(%_cpu)
-            jnz 1f
-        .else; .ifc \cond,s
-        .else; .ifc \cond,p
-        .else; .ifc \cond,sxo
-        .else; .ifc \cond,sxoz
-        .endif; .endif; .endif; .endif; .endif; .endif; .endif; .endif
+        do_jump \cond, 1f
         movl 8(%_ip), %_eip
         jmp jit_ret
     1:
         movl (%_ip), %_eip
         jmp jit_ret
 .endr
-
 .gadget_list jmp, COND_LIST
+
+.irp cond, IMPLEMENTED_CONDS
+    .gadget set_\cond
+        do_jump \cond, 1f
+        movl $0, %_tmp
+        gret
+    1:
+        movl $1, %_tmp
+        gret
+    .gadget setn_\cond
+        do_jump \cond, 1f
+        movl $1, %_tmp
+        gret
+    1:
+        movl $0, %_tmp
+        gret
+.endr
+.gadget_list set, COND_LIST
+.gadget_list setn, COND_LIST

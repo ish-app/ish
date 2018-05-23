@@ -14,19 +14,6 @@
     add $4, %_esp
     gret
 
-.macro _invoke macro, reg, post
-    \macro reg_\reg, e\reg\post
-.endm
-.macro .each_reg macro
-    .irp reg, a,b,c,d
-        _invoke \macro, \reg, x
-    .endr
-    .irp reg, si,di,bp
-        _invoke \macro, \reg,
-    .endr
-    \macro reg_sp, _esp
-.endm
-
 .macro x name, reg
     .gadget addr_\name
         movl %\reg, %_addr

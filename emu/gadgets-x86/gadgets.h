@@ -83,9 +83,25 @@
     .popsection
 .endm
 
+.macro _invoke macro, reg, post
+    \macro reg_\reg, e\reg\post
+.endm
+.macro .each_reg macro
+    .irp reg, a,b,c,d
+        _invoke \macro, \reg, x
+    .endr
+    .irp reg, si,di,bp
+        _invoke \macro, \reg,
+    .endr
+    \macro reg_sp, _esp
+.endm
+
+.macro setf_c
+    setc CPU_cf(%_cpu)
+.endm
 .macro setf_oc
     seto CPU_of(%_cpu)
-    setc CPU_cf(%_cpu)
+    setf_c
 .endm
 .macro setf_a src, dst, ss
     mov\ss \src, CPU_op1(%_cpu)
