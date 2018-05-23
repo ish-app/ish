@@ -22,6 +22,9 @@
 .endm
 .each_reg x
 .purgem x
+.gadget addr_none
+    movl (%_ip), %_addr
+    gret 1
 .gadget_list addr, REG_LIST
 
 .macro x name, reg

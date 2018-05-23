@@ -73,7 +73,10 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
     switch (arg) {
         case arg_mem:
         case arg_addr:
-            gag(addr, modrm->base, modrm->offset);
+            if (modrm->base == reg_none)
+                gg(addr_none, modrm->offset);
+            else
+                gag(addr, modrm->base, modrm->offset);
             if (modrm->type == modrm_mem_si)
                 ga(si, modrm->index * 3 + modrm->shift);
             break;
