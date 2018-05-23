@@ -30,10 +30,20 @@
 .endr
 
 
-.gadget bt32_imm
-    movl (%_ip), %r14d
+.macro do_bt arg
+    movl \arg, %r14d
     andl $~(-1<<5), %r14d
     btl %r14d, %_tmp
     setf_c
+.endm
+.gadget bt32_imm
+    do_bt (%_ip)
     gret 1
+.macro x name reg
+    .gadget bt32_\name
+        do_bt %\reg
+        gret
+.endm
+.each_reg x
+.purgem x
 .gadget_array bt
