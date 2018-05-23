@@ -176,7 +176,7 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define ROL(count, val,z) UNDEFINED
 #define ROR(count, val,z) UNDEFINED
 #define SHL(count, val,z) los(shl, count, val, z)
-#define SHR(count, val,z) UNDEFINED
+#define SHR(count, val,z) los(shr, count, val, z)
 #define SAR(count, val,z) UNDEFINED
 
 #define SHLD(count, extra, dst,z) UNDEFINED
