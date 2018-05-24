@@ -168,8 +168,15 @@
         not\ss %r10\s
         gret
 .endm
+.macro do_imul size, s, ss
+    .if \size != 8
+        .gadget imul_\size
+            imul\ss (%_ip), %r10\s
+            gret 1
+    .endif
+.endm
 
-.irp op, div,neg,not
+.irp op, div,neg,not,imul
     .irp size, SIZE_LIST
         ss \size, do_\op
     .endr
