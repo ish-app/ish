@@ -4,9 +4,18 @@
     subl $4, %_esp
     movl %_esp, %_addr
     write_prep
-    movl 8(%_ip), %_tmp
-    movl %_tmp, (%_addrq)
+    movl 8(%_ip), %r14d
+    movl %r14d, (%_addrq)
     movl (%_ip), %_eip
+    jmp jit_ret
+
+.gadget call_indir
+    subl $4, %_esp
+    movl %_esp, %_addr
+    write_prep
+    movl 8(%_ip), %r14d
+    movl %r14d, (%_addrq)
+    movl %_tmp, %_eip
     jmp jit_ret
 
 .gadget ret

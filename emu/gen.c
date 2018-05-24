@@ -145,7 +145,7 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define JCXZ_REL(off) UNDEFINED
 #define J_REL(cc, off) gagg(jmp, cond_##cc, state->ip + off, state->ip)
 #define JN_REL(cc, off) gagg(jmp, cond_##cc, state->ip, state->ip + off)
-#define CALL(loc) UNDEFINED
+#define CALL(loc) load(loc, OP_SIZE); g(call_indir)
 #define CALL_REL(off) gg_here(call, state->ip + off)
 #define SET(cc, dst) ga(set, cond_##cc); store(dst, 8)
 #define SETN(cc, dst) ga(setn, cond_##cc); store(dst, 8)
