@@ -35,7 +35,7 @@ typedef void (*gadget_t)();
 #define gg_here(g, a) ggg(g, a, state->ip)
 #define UNDEFINED do { gg_here(interrupt, INT_UNDEFINED); return; } while (0)
 
-static inline int size_conv(int size) {
+static inline int sz(int size) {
     switch (size) {
         case 8: return size_8;
         case 16: return size_16;
@@ -48,7 +48,7 @@ static inline int size_conv(int size) {
 // really nicely in gcc using nested functions, but that won't work in clang,
 // so we explicitly pass 500 arguments. sorry for the mess
 static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg arg, struct modrm *modrm, uint64_t *imm, int size) {
-    size = size_conv(size);
+    size = sz(size);
     gadgets = gadgets + size * arg_count;
 
     switch (arg) {
@@ -96,12 +96,6 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define los(o, src, dst, z) load(dst, z); op(o, src, z); store(dst, z)
 #define lo(o, src, dst, z) load(dst, z); op(o, src, z)
 
-#define sz(x) sz_##x
-#define sz_ OP_SIZE
-#define sz_8 8
-#define sz_16 16
-#define sz_128 128
-
 #define DECLARE_LOCALS \
     dword_t addr_offset = 0;
 
@@ -132,7 +126,7 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define CMP(src, dst,z) lo(sub, src, dst, z)
 #define TEST(src, dst,z) lo(and, src, dst, z)
 #define NOT(val,z) UNDEFINED
-#define NEG(val,z) UNDEFINED
+#define NEG(val,z) load(val,z); ga(neg, sz(z)); store(val,z)
 
 #define POP(thing,z) g(pop); store(thing, z)
 #define PUSH(thing,z) load(thing, z); g(push)
@@ -167,7 +161,7 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define IMUL2(val, reg,z) UNDEFINED
 #define MUL3(imm, src, dst,z) UNDEFINED
 #define IMUL3(imm, src, dst,z) UNDEFINED
-#define DIV(val, z) load(val, z); ga(div, size_conv(z)); store(val, z)
+#define DIV(val, z) load(val, z); ga(div, sz(z)); store(val, z)
 #define IDIV(val, z) UNDEFINED
 
 #define CVT UNDEFINED

@@ -6,14 +6,26 @@
     gret
 
 .macro ss size, macro, args:vararg
-    .if \size == 8
-        \macro \args, \size, b, b
-    .elseif \size == 16
-        \macro \args, \size, w, w
-    .elseif \size == 32
-        \macro \args, \size, d, l
+    .ifnb \args
+        .if \size == 8
+            \macro \args, \size, b, b
+        .elseif \size == 16
+            \macro \args, \size, w, w
+        .elseif \size == 32
+            \macro \args, \size, d, l
+        .else
+            .error "bad size"
+        .endif
     .else
-        .error "bad size"
+        .if \size == 8
+            \macro \size, b, b
+        .elseif \size == 16
+            \macro \size, w, w
+        .elseif \size == 32
+            \macro \size, d, l
+        .else
+            .error "bad size"
+        .endif
     .endif
 .endm
 
@@ -114,12 +126,13 @@
 .endm
 
 .irp op, load,store,add,sub,and,or,xor
-    .irp size, 8,16,32
+    .irp size, SIZE_LIST
         do_op_size \op, \size
     .endr
     .gadget_array \op
 .endr
 
+# unary operations (well, only one explicit operand)
 .irp op, inc,dec
     .gadget \op
         setf_a src=$1 dst=%_tmp, ss=l
@@ -129,15 +142,23 @@
         gret
 .endr
 
-.irp size, 8,16,32
+.macro do_div size, s, ss
     .gadget div_\size
-        .if \size == 32
-            divl %r10d
-        .elseif \size == 16
-            divw %r10w
-        .elseif \size == 8
-            divb %r10b
-        .endif
+        div\ss %r10\s
         gret
+.endm
+.macro do_neg size, s, ss
+    .gadget neg_\size
+        setf_a src=$0 dst=%r10\s ss=\ss
+        neg\ss %r10\s
+        setf_oc
+        setf_zsp %r10\s, \ss
+        gret
+.endm
+
+.irp size, SIZE_LIST
+    ss \size, do_div
+    ss \size, do_neg
 .endr
-.gadget_list div, 8,16,32
+.gadget_list div, SIZE_LIST
+.gadget_list neg, SIZE_LIST
