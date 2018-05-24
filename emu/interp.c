@@ -268,16 +268,9 @@ static bool modrm_compute(struct cpu_state *cpu, struct tlb *tlb, addr_t *addr_o
     cpu->cf = cpu->of = (tmp != (int32_t) tmp); \
     cpu->zf = cpu->sf = cpu->pf = cpu->zf_res = cpu->sf_res = cpu->pf_res = 0; \
 } while (0)
-#define MUL2(val, reg) \
-    cpu->cf = cpu->of = unsigned_overflow(mul, reg, val, cpu->res,z); \
-    set(reg, cpu->res,z); SETRESFLAGS
 #define IMUL2(val, reg,z) \
     cpu->cf = cpu->of = signed_overflow(mul, get(reg,z), get(val,z), cpu->res,z); \
     set(reg, cpu->res,z); SETRESFLAGS
-#define MUL3(imm, src, dst) \
-    cpu->cf = cpu->of = unsigned_overflow(mul, get(src,z), get(imm,z), cpu->res,z); \
-    set(dst, cpu->res,z); \
-    cpu->pf_res = 1; cpu->zf = cpu->sf = cpu->zf_res = cpu->sf_res = 0
 #define IMUL3(imm, src, dst,z) \
     cpu->cf = cpu->of = signed_overflow(mul, get(src,z), get(imm,z), cpu->res,z); \
     set(dst, cpu->res,z); \
