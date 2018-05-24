@@ -53,7 +53,7 @@ static inline int sz(int size) {
 // this really wants to use all the locals of the decoder, which we can do
 // really nicely in gcc using nested functions, but that won't work in clang,
 // so we explicitly pass 500 arguments. sorry for the mess
-static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg arg, struct modrm *modrm, uint64_t *imm, int size) {
+static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg arg, struct modrm *modrm, uint64_t *imm, int size, bool seg_gs, dword_t addr_offset) {
     size = sz(size);
     gadgets = gadgets + size * arg_count;
 
@@ -66,6 +66,12 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
                 arg = modrm->base + arg_reg_a;
             else
                 arg = arg_mem;
+            break;
+        case arg_mem_addr:
+            arg = arg_mem;
+            modrm->type = modrm_mem;
+            modrm->base = reg_none;
+            modrm->offset = addr_offset;
             break;
         case arg_1:
             arg = arg_imm;
@@ -85,6 +91,8 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
                 gag(addr, modrm->base, modrm->offset);
             if (modrm->type == modrm_mem_si)
                 ga(si, modrm->index * 4 + modrm->shift);
+            if (seg_gs)
+                g(seg_gs);
             break;
     }
     GEN(gadgets[arg]);
@@ -93,7 +101,7 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 }
 #define op(type, thing, z) do { \
     extern gadget_t type##_gadgets[]; \
-    gen_op(state, type##_gadgets, arg_##thing, &modrm, &imm, z); \
+    gen_op(state, type##_gadgets, arg_##thing, &modrm, &imm, z, seg_gs, addr_offset); \
 } while (0)
 
 #define load(thing, z) op(load, thing, z)
@@ -103,7 +111,8 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define lo(o, src, dst, z) load(dst, z); op(o, src, z)
 
 #define DECLARE_LOCALS \
-    dword_t addr_offset = 0;
+    dword_t addr_offset = 0; \
+    bool seg_gs = false
 
 #define RETURN(thing) (void) (thing); return
 
@@ -115,7 +124,7 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 
 #define READMODRM modrm_decode32(&state->ip, tlb, &modrm)
 #define READADDR _READIMM(addr_offset, 32)
-#define SEG_GS() UNDEFINED
+#define SEG_GS() seg_gs = true
 
 #define MOV(src, dst,z) load(src, z); store(dst, z)
 #define MOVZX(src, dst,zs,zd) load(src, zs); store(dst, zd)

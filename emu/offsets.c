@@ -20,6 +20,7 @@ void cpu() {
     OFFSET(CPU, cpu_state, sp);
     OFFSET(CPU, cpu_state, eip);
     OFFSET(CPU, cpu_state, gs);
+    OFFSET(CPU, cpu_state, tls_ptr);
 
     OFFSET(CPU, cpu_state, eflags);
     OFFSET(CPU, cpu_state, of);

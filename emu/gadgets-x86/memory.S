@@ -51,7 +51,10 @@ si_gadgets:
 .endr
 .previous
 
-# memory stuff that can't go in a header file
+.gadget seg_gs
+    addl CPU_tls_ptr(%_cpu), %_addr
+    gret
+
 .irp type, read,write
     .global handle_\type\()_miss
     handle_\type\()_miss:
