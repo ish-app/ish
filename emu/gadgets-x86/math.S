@@ -163,10 +163,15 @@
         setf_zsp %r10\s, \ss
         gret
 .endm
+.macro do_not size, s, ss
+    .gadget not_\size
+        not\ss %r10\s
+        gret
+.endm
 
-.irp size, SIZE_LIST
-    ss \size, do_div
-    ss \size, do_neg
+.irp op, div,neg,not
+    .irp size, SIZE_LIST
+        ss \size, do_\op
+    .endr
+    .gadget_list \op, SIZE_LIST
 .endr
-.gadget_list div, SIZE_LIST
-.gadget_list neg, SIZE_LIST
