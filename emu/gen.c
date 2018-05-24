@@ -172,7 +172,9 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define SAR(count, val,z) los(sar, count, val, z)
 
 #define SHLD(count, extra, dst,z) UNDEFINED
-#define SHRD(count, extra, dst,z) UNDEFINED
+#define SHRD(count, extra, dst,z) load(dst,z); \
+    if (arg_##count == arg_reg_c) op(shrd_cl, extra,z); \
+    else op(shrd_imm, extra,z); store(dst,z)
 
 #define BT(bit, val,z) lo(bt, bit, val, z)
 #define BTC(bit, val,z) UNDEFINED

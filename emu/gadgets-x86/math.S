@@ -13,30 +13,6 @@
     movw %r10w, CPU_gs(%_cpu)
     gret
 
-.macro ss size, macro, args:vararg
-    .ifnb \args
-        .if \size == 8
-            \macro \args, \size, b, b
-        .elseif \size == 16
-            \macro \args, \size, w, w
-        .elseif \size == 32
-            \macro \args, \size, d, l
-        .else
-            .error "bad size"
-        .endif
-    .else
-        .if \size == 8
-            \macro \size, b, b
-        .elseif \size == 16
-            \macro \size, w, w
-        .elseif \size == 32
-            \macro \size, d, l
-        .else
-            .error "bad size"
-        .endif
-    .endif
-.endm
-
 # this would have been just a few nice compact nested loops, but gas said "nuh uh"
 
 #define ifin(thing, ...) irp da_op, __VA_ARGS__; .ifc thing,\da_op

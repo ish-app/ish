@@ -6,6 +6,10 @@
 #define _ip r9
 #define _eip r9d
 #define _tmp r10d
+#define tmp r10
+#define tmpd r10d
+#define tmpw r10w
+#define tmpb r10b
 #define _cpu r11
 #define _tlb r12
 #define _addr r13d
@@ -85,17 +89,41 @@
     .popsection
 .endm
 
-.macro _invoke macro, reg, post
+.macro _invoke reg, post, macro:vararg
     \macro reg_\reg, e\reg\post
 .endm
-.macro .each_reg macro
+.macro .each_reg macro:vararg
     .irp reg, a,b,c,d
-        _invoke \macro, \reg, x
+        _invoke \reg, x, \macro
     .endr
     .irp reg, si,di,bp
-        _invoke \macro, \reg,
+        _invoke \reg, , \macro
     .endr
     \macro reg_sp, _esp
+.endm
+
+.macro ss size, macro, args:vararg
+    .ifnb \args
+        .if \size == 8
+            \macro \args, \size, b, b
+        .elseif \size == 16
+            \macro \args, \size, w, w
+        .elseif \size == 32
+            \macro \args, \size, d, l
+        .else
+            .error "bad size"
+        .endif
+    .else
+        .if \size == 8
+            \macro \size, b, b
+        .elseif \size == 16
+            \macro \size, w, w
+        .elseif \size == 32
+            \macro \size, d, l
+        .else
+            .error "bad size"
+        .endif
+    .endif
 .endm
 
 .macro setf_c

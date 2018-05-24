@@ -29,6 +29,29 @@
     .gadget_array \type
 .endr
 
+.irp arg, imm,cl
+    .macro x name, reg
+        .gadget shrd_\arg\()32_\name
+            .ifc \arg,imm
+                pushq %rcx
+                movb (%_ip), %cl
+            .endif
+            testb $(32 - 1), %cl
+            jz 1f
+            shrd %cl, %\reg, %tmpd
+            setf_zsp %tmpd, l
+        1:
+            .ifc \arg,imm
+                popq %rcx
+                gret 1
+            .else
+                gret
+            .endif
+    .endm
+    .each_reg x
+    .purgem x
+    .gadget_array shrd_\arg
+.endr
 
 .macro do_bt arg
     movl \arg, %r14d
