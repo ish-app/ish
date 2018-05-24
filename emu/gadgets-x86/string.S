@@ -6,7 +6,7 @@
     andl $~DF_FLAG, CPU_eflags(%_cpu)
     gret
 
-.macro do_strop op, size, rep
+.macro do_strop op, size, rep, s, ss, a
     # repnz is only a thing for cmps and scas
     .ifc \rep,repnz
         .ifnc \rep,cmps; .ifnc \rep,scas
@@ -19,15 +19,22 @@
         .ifc \op,stos
             movl %edi, %_addr
             write_prep
-            .if \size == 8
-                movb %al, (%_addrq)
-            .elseif \size == 16
-                movw %ax, (%_addrq)
-            .elseif \size == 32
-                movl %eax, (%_addrq)
-            .endif
+            mov\ss %\a, (%_addrq)
+
+        .else; .ifc \op,movs
+            movl %esi, %_addr
+            read_prep
+            mov\ss (%_addrq), %tmp\s
+            movl %edi, %_addr
+            write_prep
+            mov\ss %tmp\s, (%_addrq)
+        .endif; .endif
+        .ifin(\op, lods,movs,cmps,scas)
+            addl $(\size/8), %esi
+        .endifin
+        .ifin(\op, movs,stos,cmps)
             addl $(\size/8), %edi
-        .endif
+        .endifin
         .ifc \rep,rep
             decl %ecx
             jnz 1b
@@ -35,16 +42,21 @@
         gret
 .endm
 
-.irp op, stos
+.irp op, movs,stos
     .irp size, 8,16,32
         .irp rep, REP_LIST
-            do_strop \op, \size, \rep
+            .if \size == 8
+                do_strop \op, \size, \rep, b, b, al
+            .elseif \size == 16
+                do_strop \op, \size, \rep, w, w, ax
+            .elseif \size == 32
+                do_strop \op, \size, \rep, d, l, eax
+            .endif
         .endr
     .endr
     .gadget_list_size \op, REP_LIST
 .endr
 # temporary
-.gadget_list_size movs, REP_LIST
 .gadget_list_size lods, REP_LIST
 .gadget_list_size scas, REP_LIST
 .gadget_list_size cmps, REP_LIST

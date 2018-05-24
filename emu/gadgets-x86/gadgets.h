@@ -50,6 +50,9 @@
 
 .endr
 
+#define ifin(thing, ...) irp da_op, __VA_ARGS__; .ifc thing,\da_op
+#define endifin endif; .endr
+
 # sync with enum reg
 #define REG_LIST reg_a,reg_c,reg_d,reg_b,reg_sp,reg_bp,reg_si,reg_di
 # sync with enum arg

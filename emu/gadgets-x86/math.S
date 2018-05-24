@@ -15,36 +15,30 @@
 
 # this would have been just a few nice compact nested loops, but gas said "nuh uh"
 
-#define ifin(thing, ...) irp da_op, __VA_ARGS__; .ifc thing,\da_op
-#define endifin endif; .endr
-#undef _tmp
-#define _tmp r10
 .macro _do_op op, arg, size, s, ss
     .ifc \op,load
-        mov\ss \arg, %_tmp\s
+        mov\ss \arg, %tmp\s
     .else; .ifc \op,store
-        mov\ss %_tmp\s, \arg
+        mov\ss %tmp\s, \arg
     .else
         .ifin(\op, add,sub)
             mov\ss \arg, %r14\s
-            setf_a src=%r14\s, dst=%_tmp\s, ss=\ss
+            setf_a src=%r14\s, dst=%tmp\s, ss=\ss
         .endifin
         .ifin(\op, and,or,xor)
             clearf_a
             clearf_oc
         .endifin
-        \op\ss \arg, %_tmp\s
+        \op\ss \arg, %tmp\s
         .ifin(\op, add,sub)
             setf_oc
         .endifin
-        setf_zsp %_tmp\s, \ss
+        setf_zsp %tmp\s, \ss
     .endif; .endif
 .endm
 .macro do_op op, size, arg
     ss \size, _do_op, \op, \arg
 .endm
-#undef _tmp
-#define _tmp r10d
 
 .macro do_reg_op op, size, reg
     .gadget \op\size\()_reg_\reg
