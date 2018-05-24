@@ -428,42 +428,40 @@ static bool modrm_compute(struct cpu_state *cpu, struct tlb *tlb, addr_t *addr_o
 #define BUMP_SI_DI(size) \
     BUMP_SI(size); BUMP_DI(size)
 
-#define MOVS(z) \
+#define str_movs(z) \
     mem_write(cpu->edi, mem_read(cpu->esi, z), z); \
     BUMP_SI_DI(z)
-
-#define STOS(z) \
+#define str_stos(z) \
     mem_write(cpu->edi, get(reg_a,z),z); \
     BUMP_DI(z)
-
-#define LODS(z) \
+#define str_lods(z) \
     set(reg_a, mem_read(cpu->esi, z),z); \
     BUMP_SI(z)
-
-#define SCAS(z) \
+#define str_scas(z) \
     CMP(reg_a, mem_di,z); \
     BUMP_DI(z)
-
-#define CMPS(z) \
+#define str_cmps(z) \
     CMP(mem_di, mem_si,z); \
     BUMP_SI_DI(z)
 
-#define REP(OP) \
+#define STR(op, z) str_##op(z)
+
+#define REP(op, z) \
     while (cpu->ecx != 0) { \
-        OP; \
+        STR(op, z); \
         cpu->ecx--; \
     }
 
-#define REPNZ(OP) \
+#define REPNZ(op, z) \
     while (cpu->ecx != 0) { \
-        OP; \
+        STR(op, z); \
         cpu->ecx--; \
         if (ZF) break; \
     }
 
-#define REPZ(OP) \
+#define REPZ(op, z) \
     while (cpu->ecx != 0) { \
-        OP; \
+        STR(op, z); \
         cpu->ecx--; \
         if (!ZF) break; \
     }

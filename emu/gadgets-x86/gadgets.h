@@ -42,9 +42,9 @@
         cmpl TLB_ENTRY_page_if_writable(%_tlb,%r14), %r15d
     .endif
     movl %r15d, -TLB_entries+TLB_dirty_page(%_tlb)
-    je 1f
+    je 2f
     call handle_\type\()_miss
-1:
+2:
     addq TLB_ENTRY_data_minus_addr(%_tlb,%r14), %_addrq
 .endm
 
@@ -80,13 +80,17 @@
     .popsection
 .endm
 
-.macro .gadget_array type
+.macro .gadget_list_size type, list:vararg
     _gadget_array_start \type
         # sync with enum size
-        gadgets \type\()8, GADGET_LIST
-        gadgets \type\()16, GADGET_LIST
-        gadgets \type\()32, GADGET_LIST
+        gadgets \type\()8, \list
+        gadgets \type\()16, \list
+        gadgets \type\()32, \list
     .popsection
+.endm
+
+.macro .gadget_array type
+    .gadget_list_size \type, GADGET_LIST
 .endm
 
 .macro _invoke reg, post, macro:vararg

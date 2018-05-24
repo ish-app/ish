@@ -93,10 +93,11 @@ if get_option('jit')
         'emu/jit.c',
         'emu/gen.c',
         'emu/gadgets-x86/entry.S',
+        'emu/gadgets-x86/memory.S',
+        'emu/gadgets-x86/control.S',
         'emu/gadgets-x86/math.S',
         'emu/gadgets-x86/bits.S',
-        'emu/gadgets-x86/control.S',
-        'emu/gadgets-x86/memory.S',
+        'emu/gadgets-x86/string.S',
         'emu/gadgets-x86/misc.S',
         offsets,
     ]

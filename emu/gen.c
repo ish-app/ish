@@ -23,6 +23,12 @@ enum cond {
     cond_count,
 };
 
+enum repeat {
+    rep_once, rep_repz, rep_repnz,
+    rep_count,
+    rep_rep = rep_repz,
+};
+
 typedef void (*gadget_t)();
 
 #define GEN(thing) gen(state, (unsigned long) (thing))
@@ -151,7 +157,7 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define PUSHF() UNDEFINED
 #define POPF() UNDEFINED
 #define SAHF UNDEFINED
-#define CLD UNDEFINED
+#define CLD g(cld)
 #define STD UNDEFINED
 
 #define MUL18(val,z) UNDEFINED
@@ -185,14 +191,11 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 
 #define BSWAP(dst) UNDEFINED
 
-#define SCAS(z) UNDEFINED
-#define MOVS(z) UNDEFINED
-#define LODS(z) UNDEFINED
-#define STOS(z) UNDEFINED
-#define CMPS(z) UNDEFINED
-#define REP(op) UNDEFINED
-#define REPZ(op) UNDEFINED
-#define REPNZ(op) UNDEFINED
+#define strop(op, rep, z) ga(op, sz(z) * size_count + rep_##rep)
+#define STR(op, z) strop(op, once, z)
+#define REP(op, z) strop(op, rep, z)
+#define REPZ(op, z) strop(op, repz, z)
+#define REPNZ(op, z) strop(op, repnz, z)
 
 #define CMPXCHG(src, dst,z) UNDEFINED
 #define XADD(src, dst,z) UNDEFINED

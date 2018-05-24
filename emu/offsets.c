@@ -33,6 +33,7 @@ void cpu() {
     MACRO(SF_RES);
     MACRO(AF_OPS);
     MACRO(AF_FLAG);
+    MACRO(DF_FLAG);
 
     OFFSET(JIT_BLOCK, jit_block, code);
 

@@ -459,17 +459,17 @@ restart:
                    READADDR; MOV(reg_a, mem_addr,8); break;
         case 0xa3: TRACEI("mov oax, mem\t");
                    READADDR; MOV(reg_a, mem_addr,oz); break;
-        case 0xa4: TRACEI("movsb"); MOVS(8); break;
-        case 0xa5: TRACEI("movs"); MOVS(OP_SIZE); break;
+        case 0xa4: TRACEI("movsb"); STR(movs, 8); break;
+        case 0xa5: TRACEI("movs"); STR(movs, oz); break;
 
         case 0xa8: TRACEI("test imm8, al");
                    READIMM8; TEST(imm, reg_a,8); break;
         case 0xa9: TRACEI("test imm, oax");
                    READIMM; TEST(imm, reg_a,oz); break;
 
-        case 0xaa: TRACEI("stosb"); STOS(8); break;
-        case 0xab: TRACEI("stos"); STOS(OP_SIZE); break;
-        case 0xac: TRACEI("lodsb"); LODS(8); break;
+        case 0xaa: TRACEI("stosb"); STR(stos, 8); break;
+        case 0xab: TRACEI("stos"); STR(stos, oz); break;
+        case 0xac: TRACEI("lodsb"); STR(lods, 8); break;
 
         case 0xb0: TRACEI("mov imm, al\t");
                    READIMM8; MOV(imm, reg_a,8); break;
@@ -633,7 +633,7 @@ restart:
                         default: TRACE("undefined"); UNDEFINED;
                     }
                     break;
-                case 0xae: TRACEI("repnz scasb"); REPNZ(SCAS(8)); break;
+                case 0xae: TRACEI("repnz scasb"); REPNZ(scas, 8); break;
                 default: TRACE("undefined"); UNDEFINED;
             }
             break;
@@ -654,13 +654,13 @@ restart:
 
                 case 0x90: TRACEI("pause"); break;
 
-                case 0xa4: TRACEI("rep movsb"); REP(MOVS(8)); break;
-                case 0xa5: TRACEI("rep movs"); REP(MOVS(OP_SIZE)); break;
+                case 0xa4: TRACEI("rep movsb"); REP(movs, 8); break;
+                case 0xa5: TRACEI("rep movs"); REP(movs, oz); break;
 
-                case 0xa6: TRACEI("repz cmpsb"); REPZ(CMPS(8)); break;
+                case 0xa6: TRACEI("repz cmpsb"); REPZ(cmps, 8); break;
 
-                case 0xaa: TRACEI("rep stosb"); REP(STOS(8)); break;
-                case 0xab: TRACEI("rep stos"); REP(STOS(OP_SIZE)); break;
+                case 0xaa: TRACEI("rep stosb"); REP(stos, 8); break;
+                case 0xab: TRACEI("rep stos"); REP(stos, oz); break;
 
                 // repz ret is equivalent to ret but on some amd chips there's
                 // a branch prediction penalty if the target of a branch is a
