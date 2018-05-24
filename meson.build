@@ -97,6 +97,7 @@ if get_option('jit')
         'emu/gadgets-x86/bits.S',
         'emu/gadgets-x86/control.S',
         'emu/gadgets-x86/memory.S',
+        'emu/gadgets-x86/misc.S',
         offsets,
     ]
 else

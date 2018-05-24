@@ -171,7 +171,7 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define ROR(count, val,z) UNDEFINED
 #define SHL(count, val,z) los(shl, count, val, z)
 #define SHR(count, val,z) los(shr, count, val, z)
-#define SAR(count, val,z) UNDEFINED
+#define SAR(count, val,z) los(sar, count, val, z)
 
 #define SHLD(count, extra, dst,z) UNDEFINED
 #define SHRD(count, extra, dst,z) UNDEFINED
@@ -197,7 +197,7 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define CMPXCHG(src, dst,z) UNDEFINED
 #define XADD(src, dst,z) UNDEFINED
 
-#define RDTSC UNDEFINED
+#define RDTSC g(rdtsc)
 #define CPUID() UNDEFINED
 
 // sse
