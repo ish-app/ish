@@ -54,7 +54,7 @@ int undefined_flags_mask(int pid, struct cpu_state *cpu) {
                 shift_count = cpu->cl;
             else
                 pt_readn(pid, ip++, &shift_count, sizeof(shift_count));
-            if (shift_count == 32)
+            if (shift_count % 32 == 0)
                 return O|P; // please delete this as soon as you can
             if (shift_count > 1)
                 return O;

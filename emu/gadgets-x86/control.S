@@ -39,13 +39,13 @@
     # please tell me if you know a better way
     .ifc \cond,o
     .else; .ifc \cond,c
-        cmpl $0, CPU_cf(%_cpu)
+        cmpb $0, CPU_cf(%_cpu)
         jnz \target
     .else; .ifc \cond,z
         cmpl $0, CPU_res(%_cpu)
         jz \target
     .else; .ifc \cond,cz
-        cmpl $0, CPU_cf(%_cpu)
+        cmpb $0, CPU_cf(%_cpu)
         jnz \target
         cmpl $0, CPU_res(%_cpu)
         jz \target
