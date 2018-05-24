@@ -49,7 +49,7 @@
 # sync with enum reg
 #define REG_LIST reg_a,reg_c,reg_d,reg_b,reg_sp,reg_bp,reg_si,reg_di
 # sync with enum arg
-#define GADGET_LIST REG_LIST,imm,mem,addr
+#define GADGET_LIST REG_LIST,imm,mem,addr,gs
 # sync with enum size
 #define SIZE_LIST 8,16,32
 

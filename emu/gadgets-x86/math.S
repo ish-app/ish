@@ -5,6 +5,14 @@
     movl %_addr, %_tmp
     gret
 
+.gadget load16_gs
+    movw CPU_gs(%_cpu), %r10w
+    gret
+
+.gadget store16_gs
+    movw %r10w, CPU_gs(%_cpu)
+    gret
+
 .macro ss size, macro, args:vararg
     .ifnb \args
         .if \size == 8

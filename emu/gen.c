@@ -6,10 +6,10 @@
 // This should stay in sync with the definition of .gadget_array in gadgets.h
 enum arg {
     arg_reg_a, arg_reg_c, arg_reg_d, arg_reg_b, arg_reg_sp, arg_reg_bp, arg_reg_si, arg_reg_di,
-    arg_imm, arg_mem, arg_addr,
+    arg_imm, arg_mem, arg_addr, arg_gs,
     arg_count, arg_invalid,
     // the following should not be synced with the list mentioned above (no gadgets implement them)
-    arg_modrm_val, arg_modrm_reg, arg_mem_addr, arg_gs, arg_1,
+    arg_modrm_val, arg_modrm_reg, arg_mem_addr, arg_1,
 };
 
 enum size {
