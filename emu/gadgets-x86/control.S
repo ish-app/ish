@@ -24,7 +24,7 @@
     jmp jit_ret
 
 #define COND_LIST o,c,z,cz,s,p,sxo,sxoz
-#define IMPLEMENTED_CONDS c,z,cz
+#define IMPLEMENTED_CONDS c,z,cz,sxo,sxoz
 
 .macro do_jump cond, target
     # please tell me if you know a better way
@@ -36,14 +36,24 @@
         cmpl $0, CPU_res(%_cpu)
         jz \target
     .else; .ifc \cond,cz
-        cmpl $0, CPU_res(%_cpu)
-        je \target
         cmpl $0, CPU_cf(%_cpu)
         jnz \target
+        cmpl $0, CPU_res(%_cpu)
+        jz \target
     .else; .ifc \cond,s
     .else; .ifc \cond,p
     .else; .ifc \cond,sxo
+        cmpl $0, CPU_res(%_cpu)
+        sets %r14b
+        xorb CPU_of(%_cpu), %r14b
+        jnz \target
     .else; .ifc \cond,sxoz
+        cmpl $0, CPU_res(%_cpu)
+        sets %r14b
+        xorb CPU_of(%_cpu), %r14b
+        jnz \target
+        cmpl $0, CPU_res(%_cpu)
+        jz \target
     .endif; .endif; .endif; .endif; .endif; .endif; .endif; .endif
 .endm
 
