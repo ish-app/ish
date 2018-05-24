@@ -685,9 +685,9 @@ restart:
         case 5: TRACE("imul"); \
                 IMUL1(modrm_val,z); break; \
         case 6: TRACE("div"); \
-                DIV(reg_a, modrm_val, reg_d,z); break; \
+                DIV(modrm_val,z); break; \
         case 7: TRACE("idiv"); \
-                IDIV(reg_a, modrm_val, reg_d,z); break; \
+                IDIV(modrm_val,z); break; \
         default: TRACE("undefined"); UNDEFINED; \
     }
 

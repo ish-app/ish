@@ -5,6 +5,18 @@
     movl %_addr, %_tmp
     gret
 
+.macro ss size, macro, args:vararg
+    .if \size == 8
+        \macro \args, \size, b, b
+    .elseif \size == 16
+        \macro \args, \size, w, w
+    .elseif \size == 32
+        \macro \args, \size, d, l
+    .else
+        .error "bad size"
+    .endif
+.endm
+
 # this would have been just a few nice compact nested loops, but gas said "nuh uh"
 
 #define ifin(thing, ...) irp da_op, __VA_ARGS__; .ifc thing,\da_op
@@ -33,15 +45,7 @@
     .endif; .endif
 .endm
 .macro do_op op, size, arg
-    .ifc \size,8
-        _do_op \op, \arg, \size, b, b
-    .else; .ifc \size,16
-        _do_op \op, \arg, \size, w, w
-    .else; .ifc \size,32
-        _do_op \op, \arg, \size, d, l
-    .else
-        .error "bad size"
-    .endif; .endif; .endif
+    ss \size, _do_op, \op, \arg
 .endm
 #undef _tmp
 #define _tmp r10d
@@ -124,3 +128,16 @@
         setf_zsp %_tmp, l
         gret
 .endr
+
+.irp size, 8,16,32
+    .gadget div_\size
+        .if \size == 32
+            divl %r10d
+        .elseif \size == 16
+            divw %r10w
+        .elseif \size == 8
+            divb %r10b
+        .endif
+        gret
+.endr
+.gadget_list div, 8,16,32

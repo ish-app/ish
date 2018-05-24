@@ -283,18 +283,18 @@ static bool modrm_compute(struct cpu_state *cpu, struct tlb *tlb, addr_t *addr_o
     set(dst, cpu->res,z); \
     cpu->pf_res = 1; cpu->zf = cpu->sf = cpu->zf_res = cpu->sf_res = 0
 
-#define DIV(reg, val, rem,z) do { \
+#define DIV(val,z) do { \
     if (get(val,z) == 0) return INT_DIV; \
-    uint(twice(z)) dividend = get(reg,z) | ((uint(twice(z))) get(rem,z) << z); \
-    set(rem, dividend % get(val,z),z); \
-    set(reg, dividend / get(val,z),z); \
+    uint(twice(z)) dividend = get(reg_a,z) | ((uint(twice(z))) get(reg_d,z) << z); \
+    set(reg_d, dividend % get(val,z),z); \
+    set(reg_a, dividend / get(val,z),z); \
 } while (0)
 
-#define IDIV(reg, val, rem,z) do { \
+#define IDIV(val,z) do { \
     if (get(val,z) == 0) return INT_DIV; \
-    sint(twice(z)) dividend = get(reg,z) | ((sint(twice(z))) get(rem,z) << z); \
-    set(rem, dividend % get(val,z),z); \
-    set(reg, dividend / get(val,z),z); \
+    sint(twice(z)) dividend = get(reg_a,z) | ((sint(twice(z))) get(reg_d,z) << z); \
+    set(reg_d, dividend % get(val,z),z); \
+    set(reg_a, dividend / get(val,z),z); \
 } while (0)
 
 // TODO this is probably wrong in some subtle way
