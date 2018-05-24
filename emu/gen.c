@@ -105,7 +105,7 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define DECLARE_LOCALS \
     dword_t addr_offset = 0;
 
-#define RETURN(thing) (void) (thing)
+#define RETURN(thing) (void) (thing); return
 
 #define TRACEIP() TRACE("%d %08x\t", current->pid, state->ip);
 
