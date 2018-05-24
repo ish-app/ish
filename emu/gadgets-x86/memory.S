@@ -28,7 +28,7 @@
 .gadget_list addr, REG_LIST
 
 .macro x name, reg
-    .irp times, 1,2,4
+    .irp times, 1,2,4,8
         .gadget si_\name\()_\times
             .ifnc \reg,esp
                 leal (%_addr,%\reg,\times), %_addr
@@ -45,7 +45,7 @@
 .global si_gadgets
 si_gadgets:
 .irp reg, REG_LIST
-    .irp times, 1,2,4
+    .irp times, 1,2,4,8
         .quad gadget_si_\reg\()_\times
     .endr
 .endr

@@ -78,7 +78,7 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
             else
                 gag(addr, modrm->base, modrm->offset);
             if (modrm->type == modrm_mem_si)
-                ga(si, modrm->index * 3 + modrm->shift);
+                ga(si, modrm->index * 4 + modrm->shift);
             break;
     }
     GEN(gadgets[arg]);
