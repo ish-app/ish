@@ -36,7 +36,7 @@
         btw $0, CPU_cf(%_cpu)
     .endifin
     \op\ss \arg, %tmp\s
-    .ifin(\op, add,sub,adc,sbb)
+    .ifin(\op, add,sub,adc,sbb,imul)
         setf_oc
     .endifin
     .ifin(\op, add,sub,adc,sbb,and,or,xor)
@@ -147,6 +147,7 @@ do_op_size imul, 32
 .endm
 .macro do_imul1 size, s, ss
     imul\ss %tmp\s
+    setf_oc
 .endm
 .macro do_neg size, s, ss
     setf_a src=$0 dst=%tmp\s ss=\ss

@@ -7,7 +7,7 @@
                 pushq %rcx
                 movb (%_ip), %cl
             .endif
-            testb %cl, %cl
+            testb $(\size - 1), %cl
             jz 1f
             \type\()l %cl, %_tmp
             setf_oc
