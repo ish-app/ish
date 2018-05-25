@@ -186,13 +186,13 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define CLD g(cld)
 #define STD UNDEFINED
 
-#define MUL18(val,z) UNDEFINED
-#define MUL1(val,z) UNDEFINED
-#define IMUL1(val,z) UNDEFINED
-#define IMUL2(val, reg,z) los(imul, val, reg, z)
-#define IMUL3(imm, src, dst,z) load(src, z); op(imul, imm, z); store(dst, z)
-#define DIV(val, z) load(val, z); ga(div, sz(z)); store(val, z)
-#define IDIV(val, z) load(val, z); ga(idiv, sz(z)); store(val, z)
+#define MUL18(val,z) MUL1(val,z)
+#define MUL1(val,z) load(val, z); ga(mul, sz(z))
+#define IMUL1(val,z) load(val, z); ga(imul1, sz(z))
+#define DIV(val, z) load(val, z); ga(div, sz(z))
+#define IDIV(val, z) load(val, z); ga(idiv, sz(z))
+#define IMUL3(times, src, dst,z) load(src, z); op(imul, times, z); store(dst, z)
+#define IMUL2(val, reg,z) IMUL3(val, reg, reg, z)
 
 #define CVT ga(cvt, sz(oz))
 #define CVTE UNDEFINED

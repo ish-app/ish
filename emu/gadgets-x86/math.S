@@ -141,6 +141,13 @@ do_op_size imul, 32
 .macro do_idiv size, s, ss
     idiv\ss %tmp\s
 .endm
+.macro do_mul size, s, ss
+    mul\ss %tmp\s
+    setf_oc
+.endm
+.macro do_imul1 size, s, ss
+    imul\ss %tmp\s
+.endm
 .macro do_neg size, s, ss
     setf_a src=$0 dst=%tmp\s ss=\ss
     neg\ss %tmp\s
@@ -151,7 +158,7 @@ do_op_size imul, 32
     not\ss %tmp\s
 .endm
 
-.irp op, extend,idiv,div,neg,not
+.irp op, extend,div,idiv,mul,imul1,neg,not
     .irp size, SIZE_LIST
         .gadget \op\()_\size
             ss \size, do_\op
