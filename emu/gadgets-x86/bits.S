@@ -25,7 +25,7 @@
     .endr
 .endm
 
-.irp type, shl,shr,sar
+.irp type, shl,shr,sar,rol,ror
     .irp size, 8,16,32
         do_shift \type, \size
     .endr
