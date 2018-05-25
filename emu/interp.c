@@ -516,8 +516,8 @@ static bool modrm_compute(struct cpu_state *cpu, struct tlb *tlb, addr_t *addr_o
 #define SETN(cond, val) \
     set(val, (cond ? 0 : 1),8)
 
-#define CMOV(cond, dst, src,z) \
-    if (cond) MOV(dst, src,z)
+#define CMOV(cond, dst, src,z) if (cond) MOV(dst, src,z)
+#define CMOVN(cond, dst, src,z) if (!cond) MOV(dst, src,z)
 
 #define POPF() \
     POP(eflags,32); \

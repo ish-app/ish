@@ -162,7 +162,19 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define CALL_REL(off) gggg(call, saved_ip, state->ip + off, state->ip)
 #define SET(cc, dst) ga(set, cond_##cc); store(dst, 8)
 #define SETN(cc, dst) ga(setn, cond_##cc); store(dst, 8)
-#define CMOV(cc, src, dst,z) UNDEFINED
+// wins the prize for the most annoying instruction to generate
+#define CMOV(cc, src, dst,z) do { \
+    gag(skipn, cond_##cc, 0); \
+    int start = state->size; \
+    load(src, z); store(dst, z); \
+    state->block->code[start - 1] = (state->size - start) * sizeof(long); \
+} while (0)
+#define CMOVN(cc, src, dst,z) do { \
+    gag(skip, cond_##cc, 0); \
+    int start = state->size; \
+    load(src, z); store(dst, z); \
+    state->block->code[start - 1] = (state->size - start) * sizeof(long); \
+} while (0)
 #define RET_NEAR_IMM(imm) UNDEFINED
 #define RET_NEAR() gg(ret, saved_ip)
 #define INT(code) gg_here(interrupt, (uint8_t) code)

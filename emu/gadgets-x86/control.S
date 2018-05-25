@@ -76,10 +76,7 @@
     1:
         movl (%_ip), %_eip
         jmp jit_ret
-.endr
-.gadget_list jmp, COND_LIST
 
-.irp cond, IMPLEMENTED_CONDS
     .gadget set_\cond
         do_jump \cond, 1f
         movl $0, %_tmp
@@ -94,6 +91,21 @@
     1:
         movl $0, %_tmp
         gret
+
+    .gadget skip_\cond
+        do_jump \cond, 1f
+        gret 1
+    1:
+        addq (%_ip), %_ip
+        gret 1
+    .gadget skipn_\cond
+        do_jump \cond, 1f
+        addq (%_ip), %_ip
+    1:
+        gret 1
 .endr
+.gadget_list jmp, COND_LIST
 .gadget_list set, COND_LIST
 .gadget_list setn, COND_LIST
+.gadget_list skip, COND_LIST
+.gadget_list skipn, COND_LIST
