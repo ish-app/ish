@@ -1,6 +1,7 @@
 #include <assert.h>
 #include "emu/modrm.h"
 #include "emu/gen.h"
+#include "emu/cpuid.h"
 #include "emu/interrupt.h"
 
 // This should stay in sync with the definition of .gadget_array in gadgets.h
@@ -226,7 +227,7 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define XADD(src, dst,z) UNDEFINED
 
 #define RDTSC g(rdtsc)
-#define CPUID() UNDEFINED
+#define CPUID() g(cpuid)
 
 // sse
 #define XORP(src, dst) UNDEFINED
@@ -280,3 +281,7 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define OP_SIZE 16
 #include "emu/decode.h"
 #undef OP_SIZE
+
+void do_the_cpuid(dword_t *a, dword_t *b, dword_t *c, dword_t *d) {
+    do_cpuid(a, b, c, d);
+}
