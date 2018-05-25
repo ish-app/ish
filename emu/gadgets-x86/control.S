@@ -33,7 +33,7 @@
     jmp jit_ret
 
 #define COND_LIST o,c,z,cz,s,p,sxo,sxoz
-#define IMPLEMENTED_CONDS c,z,cz,s,sxo,sxoz
+#define IMPLEMENTED_CONDS c,z,cz,s,p,sxo,sxoz
 
 .macro do_jump cond, target
     # please tell me if you know a better way
@@ -53,6 +53,8 @@
         cmpl $0, CPU_res(%_cpu)
         js \target
     .else; .ifc \cond,p
+        cmpl $0, CPU_res(%_cpu)
+        jp \target
     .else; .ifc \cond,sxo
         cmpl $0, CPU_res(%_cpu)
         sets %r14b
