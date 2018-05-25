@@ -15,7 +15,11 @@
     .endif
 
     .gadget \op\size\()_\rep
+        .ifc \rep,rep
+            testl %ecx, %ecx
+            jz 2f
     1:
+        .endif
         .ifc \op,stos
             movl %edi, %_addr
             write_prep
@@ -38,6 +42,7 @@
         .ifc \rep,rep
             decl %ecx
             jnz 1b
+    2:
         .endif
         gret 1
 .endm
