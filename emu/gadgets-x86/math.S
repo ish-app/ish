@@ -21,7 +21,7 @@
     .else; .ifc \op,store
         mov\ss %tmp\s, \arg
     .else
-        .ifin(\op, add,sub)
+        .ifin(\op, add,sub,adc,sbb)
             mov\ss \arg, %r14\s
             setf_a src=%r14\s, dst=%tmp\s, ss=\ss
         .endifin
@@ -29,8 +29,11 @@
             clearf_a
             clearf_oc
         .endifin
+        .ifin(\op, adc,sbb)
+            btw $0, CPU_cf(%_cpu)
+        .endifin
         \op\ss \arg, %tmp\s
-        .ifin(\op, add,sub)
+        .ifin(\op, add,sub,adc,sbb)
             setf_oc
         .endifin
         setf_zsp %tmp\s, \ss
@@ -103,7 +106,7 @@
     .endr
 .endm
 
-.irp op, load,store,add,sub,and,or,xor
+.irp op, load,store,add,sub,adc,sbb,and,or,xor
     .irp size, SIZE_LIST
         do_op_size \op, \size
     .endr

@@ -137,8 +137,8 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 
 #define ADD(src, dst,z) los(add, src, dst, z)
 #define OR(src, dst,z) los(or, src, dst, z)
-#define ADC(src, dst,z) UNDEFINED
-#define SBB(src, dst,z) UNDEFINED
+#define ADC(src, dst,z) los(adc, src, dst, z)
+#define SBB(src, dst,z) los(sbb, src, dst, z)
 #define AND(src, dst,z) los(and, src, dst, z)
 #define SUB(src, dst,z) los(sub, src, dst, z)
 #define XOR(src, dst,z) los(xor, src, dst, z)
