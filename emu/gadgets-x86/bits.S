@@ -3,17 +3,20 @@
 .macro do_shift type, size
     .irp arg, reg_c,imm
         .gadget \type\size\()_\arg
-            .ifc \arg,reg_c
-                \type\()l %cl, %_tmp
-            .else; .ifc \arg,imm
+            .ifc \arg,imm
                 pushq %rcx
                 movb (%_ip), %cl
-                \type\()l %cl, %_tmp
-                popq %rcx
-            .endif; .endif
+            .endif
+            testb %cl, %cl
+            jz 1f
+            \type\()l %cl, %_tmp
             setf_oc
             setf_zsp %_tmp, l
             clearf_a
+        1:
+            .ifc \arg,imm
+                popq %rcx
+            .endif
             .ifc \arg,imm
                 gret 1
             .else
