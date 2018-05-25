@@ -18,26 +18,30 @@
 .macro _do_op op, arg, size, s, ss
     .ifc \op,load
         mov\ss \arg, %tmp\s
+        .exitm
     .else; .ifc \op,store
         mov\ss %tmp\s, \arg
-    .else
-        .ifin(\op, add,sub,adc,sbb)
-            mov\ss \arg, %r14\s
-            setf_a src=%r14\s, dst=%tmp\s, ss=\ss
-        .endifin
-        .ifin(\op, and,or,xor)
-            clearf_a
-            clearf_oc
-        .endifin
-        .ifin(\op, adc,sbb)
-            btw $0, CPU_cf(%_cpu)
-        .endifin
-        \op\ss \arg, %tmp\s
-        .ifin(\op, add,sub,adc,sbb)
-            setf_oc
-        .endifin
-        setf_zsp %tmp\s, \ss
+        .exitm
     .endif; .endif
+
+    .ifin(\op, add,sub,adc,sbb)
+        mov\ss \arg, %r14\s
+        setf_a src=%r14\s, dst=%tmp\s, ss=\ss
+    .endifin
+    .ifin(\op, and,or,xor)
+        clearf_a
+        clearf_oc
+    .endifin
+    .ifin(\op, adc,sbb)
+        btw $0, CPU_cf(%_cpu)
+    .endifin
+    \op\ss \arg, %tmp\s
+    .ifin(\op, add,sub,adc,sbb)
+        setf_oc
+    .endifin
+    .ifnc \op,imul
+        setf_zsp %tmp\s, \ss
+    .endif
 .endm
 .macro do_op op, size, arg
     ss \size, _do_op, \op, \arg
@@ -112,6 +116,9 @@
     .endr
     .gadget_array \op
 .endr
+do_op_size imul, 16
+do_op_size imul, 32
+.gadget_array imul
 
 # unary operations (well, only one explicit operand)
 .irp op, inc,dec
@@ -133,13 +140,6 @@
         idiv\ss %r10\s
         gret
 .endm
-.macro do_imul size, s, ss
-    .if \size != 8
-        .gadget imul_\size
-            imul\ss (%_ip), %r10\s
-            gret 1
-    .endif
-.endm
 .macro do_neg size, s, ss
     .gadget neg_\size
         setf_a src=$0 dst=%r10\s ss=\ss
@@ -154,7 +154,7 @@
         gret
 .endm
 
-.irp op, idiv,div,imul,neg,not
+.irp op, idiv,div,neg,not
     .irp size, SIZE_LIST
         ss \size, do_\op
     .endr
