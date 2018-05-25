@@ -130,33 +130,32 @@ do_op_size imul, 32
         gret
 .endr
 
+.macro do_extend size, s, ss
+    .if \size != 32
+        movs\ss\()l %tmp\s, %tmpd
+    .endif
+.endm
 .macro do_div size, s, ss
-    .gadget div_\size
-        div\ss %r10\s
-        gret
+    div\ss %tmp\s
 .endm
 .macro do_idiv size, s, ss
-    .gadget idiv_\size
-        idiv\ss %r10\s
-        gret
+    idiv\ss %tmp\s
 .endm
 .macro do_neg size, s, ss
-    .gadget neg_\size
-        setf_a src=$0 dst=%r10\s ss=\ss
-        neg\ss %r10\s
-        setf_oc
-        setf_zsp %r10\s, \ss
-        gret
+    setf_a src=$0 dst=%tmp\s ss=\ss
+    neg\ss %tmp\s
+    setf_oc
+    setf_zsp %tmp\s, \ss
 .endm
 .macro do_not size, s, ss
-    .gadget not_\size
-        not\ss %r10\s
-        gret
+    not\ss %tmp\s
 .endm
 
-.irp op, idiv,div,neg,not
+.irp op, extend,idiv,div,neg,not
     .irp size, SIZE_LIST
-        ss \size, do_\op
+        .gadget \op\()_\size
+            ss \size, do_\op
+            gret
     .endr
     .gadget_list \op, SIZE_LIST
 .endr
