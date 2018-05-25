@@ -175,9 +175,9 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define IMUL2(val, reg,z) UNDEFINED
 #define IMUL3(imm, src, dst,z) load(src,z); gag(imul, sz(z), imm); store(dst,z)
 #define DIV(val, z) load(val, z); ga(div, sz(z)); store(val, z)
-#define IDIV(val, z) UNDEFINED
+#define IDIV(val, z) load(val, z); ga(idiv, sz(z)); store(val, z)
 
-#define CVT UNDEFINED
+#define CVT ga(cvt, sz(oz))
 #define CVTE UNDEFINED
 
 #define ROL(count, val,z) UNDEFINED

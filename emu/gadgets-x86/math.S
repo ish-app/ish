@@ -125,6 +125,18 @@
         div\ss %r10\s
         gret
 .endm
+.macro do_idiv size, s, ss
+    .gadget idiv_\size
+        idiv\ss %r10\s
+        gret
+.endm
+.macro do_imul size, s, ss
+    .if \size != 8
+        .gadget imul_\size
+            imul\ss (%_ip), %r10\s
+            gret 1
+    .endif
+.endm
 .macro do_neg size, s, ss
     .gadget neg_\size
         setf_a src=$0 dst=%r10\s ss=\ss
@@ -138,17 +150,18 @@
         not\ss %r10\s
         gret
 .endm
-.macro do_imul size, s, ss
-    .if \size != 8
-        .gadget imul_\size
-            imul\ss (%_ip), %r10\s
-            gret 1
-    .endif
-.endm
 
-.irp op, div,neg,not,imul
+.irp op, idiv,div,imul,neg,not
     .irp size, SIZE_LIST
         ss \size, do_\op
     .endr
     .gadget_list \op, SIZE_LIST
 .endr
+
+.gadget cvt_16
+    cwd
+    gret
+.gadget cvt_32
+    cdq
+    gret
+.gadget_list cvt, SIZE_LIST
