@@ -39,9 +39,9 @@
     .ifin(\op, add,sub,adc,sbb)
         setf_oc
     .endifin
-    .ifnc \op,imul
+    .ifin(\op, add,sub,adc,sbb,and,or,xor)
         setf_zsp %tmp\s, \ss
-    .endif
+    .endifin
 .endm
 .macro do_op op, size, arg
     ss \size, _do_op, \op, \arg
@@ -110,7 +110,7 @@
     .endr
 .endm
 
-.irp op, load,store,add,sub,adc,sbb,and,or,xor
+.irp op, load,store,xchg,add,sub,adc,sbb,and,or,xor
     .irp size, SIZE_LIST
         do_op_size \op, \size
     .endr
