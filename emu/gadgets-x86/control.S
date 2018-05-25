@@ -31,6 +31,14 @@
 .gadget jmp
     movl (%_ip), %_eip
     jmp jit_ret
+.gadget jcxz
+    cmpl $0, %ecx
+    jne 1f
+    movl (%_ip), %_eip
+    jmp jit_ret
+1:
+    movl 8(%_ip), %_eip
+    jmp jit_ret
 
 #define COND_LIST o,c,z,cz,s,p,sxo,sxoz
 #define IMPLEMENTED_CONDS c,z,cz,s,p,sxo,sxoz
