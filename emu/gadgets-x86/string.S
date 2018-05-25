@@ -39,7 +39,7 @@
             decl %ecx
             jnz 1b
         .endif
-        gret
+        gret 1
 .endm
 
 .irp op, movs,stos

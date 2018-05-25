@@ -72,7 +72,7 @@
             read_prep
         .endif
         do_op \op, \size, (%_addrq)
-        gret
+        gret 1
 
     .irp reg, a,b,c,d
         do_reg_op \op, \size, \reg

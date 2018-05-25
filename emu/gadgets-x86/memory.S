@@ -6,13 +6,13 @@
     movl %_esp, %_addr
     write_prep
     movl %_tmp, (%_addrq)
-    gret
+    gret 1
 .gadget pop
     movl %_esp, %_addr
     read_prep
     movl (%_addrq), %_tmp
     add $4, %_esp
-    gret
+    gret 1
 
 .macro x name, reg
     .gadget addr_\name
@@ -77,5 +77,6 @@ si_gadgets:
 
 segfault:
     addq $8, %rsp # pop return address
+    movl (%_ip), %_eip
     movl $INT_GPF, %_tmp
     jmp jit_exit

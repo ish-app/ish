@@ -35,6 +35,7 @@ typedef void (*gadget_t)();
 #define g(g) do { extern void gadget_##g(); GEN(gadget_##g); } while (0)
 #define gg(_g, a) do { g(_g); GEN(a); } while (0)
 #define ggg(_g, a, b) do { g(_g); GEN(a); GEN(b); } while (0)
+#define gggg(_g, a, b, c) do { g(_g); GEN(a); GEN(b); GEN(c); } while (0)
 #define ga(g, i) do { extern gadget_t g##_gadgets[]; if (g##_gadgets[i] == NULL) UNDEFINED; GEN(g##_gadgets[i]); } while (0)
 #define gag(g, i, a) do { ga(g, i); GEN(a); } while (0)
 #define gagg(g, i, a, b) do { ga(g, i); GEN(a); GEN(b); } while (0)
@@ -53,7 +54,7 @@ static inline int sz(int size) {
 // this really wants to use all the locals of the decoder, which we can do
 // really nicely in gcc using nested functions, but that won't work in clang,
 // so we explicitly pass 500 arguments. sorry for the mess
-static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg arg, struct modrm *modrm, uint64_t *imm, int size, bool seg_gs, dword_t addr_offset) {
+static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg arg, struct modrm *modrm, uint64_t *imm, int size, dword_t saved_ip, bool seg_gs, dword_t addr_offset) {
     size = sz(size);
     gadgets = gadgets + size * arg_count;
 
@@ -98,10 +99,12 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
     GEN(gadgets[arg]);
     if (arg == arg_imm)
         GEN(*imm);
+    else if (arg == arg_mem)
+        GEN(saved_ip);
 }
 #define op(type, thing, z) do { \
     extern gadget_t type##_gadgets[]; \
-    gen_op(state, type##_gadgets, arg_##thing, &modrm, &imm, z, seg_gs, addr_offset); \
+    gen_op(state, type##_gadgets, arg_##thing, &modrm, &imm, z, saved_ip, seg_gs, addr_offset); \
 } while (0)
 
 #define load(thing, z) op(load, thing, z)
@@ -111,6 +114,7 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define lo(o, src, dst, z) load(dst, z); op(o, src, z)
 
 #define DECLARE_LOCALS \
+    dword_t saved_ip = state->ip; \
     dword_t addr_offset = 0; \
     bool seg_gs = false
 
@@ -143,8 +147,8 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define NOT(val,z) load(val,z); ga(not, sz(z)); store(val,z)
 #define NEG(val,z) load(val,z); ga(neg, sz(z)); store(val,z)
 
-#define POP(thing,z) g(pop); store(thing, z)
-#define PUSH(thing,z) load(thing, z); g(push)
+#define POP(thing,z) gg(pop, saved_ip); store(thing, z)
+#define PUSH(thing,z) load(thing, z); gg(push, saved_ip)
 
 #define INC(val,z) load(val, z); g(inc); store(val, z)
 #define DEC(val,z) load(val, z); g(dec); store(val, z)
@@ -154,13 +158,13 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define JCXZ_REL(off) UNDEFINED
 #define J_REL(cc, off) gagg(jmp, cond_##cc, state->ip + off, state->ip)
 #define JN_REL(cc, off) gagg(jmp, cond_##cc, state->ip, state->ip + off)
-#define CALL(loc) load(loc, OP_SIZE); g(call_indir)
-#define CALL_REL(off) gg_here(call, state->ip + off)
+#define CALL(loc) load(loc, OP_SIZE); ggg(call_indir, saved_ip, state->ip)
+#define CALL_REL(off) gggg(call, saved_ip, state->ip + off, state->ip)
 #define SET(cc, dst) ga(set, cond_##cc); store(dst, 8)
 #define SETN(cc, dst) ga(setn, cond_##cc); store(dst, 8)
 #define CMOV(cc, src, dst,z) UNDEFINED
 #define RET_NEAR_IMM(imm) UNDEFINED
-#define RET_NEAR() g(ret)
+#define RET_NEAR() gg(ret, saved_ip)
 #define INT(code) gg_here(interrupt, (uint8_t) code)
 
 #define PUSHF() UNDEFINED
@@ -200,7 +204,7 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 
 #define BSWAP(dst) UNDEFINED
 
-#define strop(op, rep, z) ga(op, sz(z) * size_count + rep_##rep)
+#define strop(op, rep, z) gag(op, sz(z) * size_count + rep_##rep, saved_ip)
 #define STR(op, z) strop(op, once, z)
 #define REP(op, z) strop(op, rep, z)
 #define REPZ(op, z) strop(op, repz, z)

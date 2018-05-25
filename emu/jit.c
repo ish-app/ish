@@ -84,8 +84,6 @@ void cpu_run(struct cpu_state *cpu) {
                 tlb_flush(&tlb);
                 changes = cpu->mem->changes;
             }
-            // if we try to move on now, there's no guarantee cpu->eip is correct
-            TODO("interrupt recovery");
         }
     }
 }
