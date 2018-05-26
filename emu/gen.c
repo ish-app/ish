@@ -176,8 +176,8 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
     load(src, z); store(dst, z); \
     state->block->code[start - 1] = (state->size - start) * sizeof(long); \
 } while (0)
-#define RET_NEAR_IMM(imm) UNDEFINED
-#define RET_NEAR() gg(ret, saved_ip)
+#define RET_NEAR_IMM(imm) ggg(ret, saved_ip, 4 + imm)
+#define RET_NEAR() RET_NEAR_IMM(0)
 #define INT(code) gg_here(interrupt, (uint8_t) code)
 
 #define PUSHF() UNDEFINED
