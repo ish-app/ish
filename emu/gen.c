@@ -40,6 +40,7 @@ typedef void (*gadget_t)();
 #define ga(g, i) do { extern gadget_t g##_gadgets[]; if (g##_gadgets[i] == NULL) UNDEFINED; GEN(g##_gadgets[i]); } while (0)
 #define gag(g, i, a) do { ga(g, i); GEN(a); } while (0)
 #define gagg(g, i, a, b) do { ga(g, i); GEN(a); GEN(b); } while (0)
+#define gz(g, z) ga(g, sz(z))
 #define gg_here(g, a) ggg(g, a, state->ip)
 #define UNDEFINED do { gg_here(interrupt, INT_UNDEFINED); return; } while (0)
 
@@ -132,8 +133,8 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define SEG_GS() seg_gs = true
 
 #define MOV(src, dst,z) load(src, z); store(dst, z)
-#define MOVZX(src, dst,zs,zd) load(src, zs); ga(zero_extend, sz(zs)); store(dst, zd)
-#define MOVSX(src, dst,zs,zd) load(src, zs); ga(sign_extend, sz(zs)); store(dst, zd)
+#define MOVZX(src, dst,zs,zd) load(src, zs); gz(zero_extend, zs); store(dst, zd)
+#define MOVSX(src, dst,zs,zd) load(src, zs); gz(sign_extend, zs); store(dst, zd)
 #define XCHG(src, dst,z) los(xchg, src, dst, z)
 
 #define ADD(src, dst,z) los(add, src, dst, z)
@@ -145,14 +146,14 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define XOR(src, dst,z) los(xor, src, dst, z)
 #define CMP(src, dst,z) lo(sub, src, dst, z)
 #define TEST(src, dst,z) lo(and, src, dst, z)
-#define NOT(val,z) load(val,z); ga(not, sz(z)); store(val,z)
-#define NEG(val,z) load(val,z); ga(neg, sz(z)); store(val,z)
+#define NOT(val,z) load(val,z); gz(not, z); store(val,z)
+#define NEG(val,z) load(val,z); gz(neg, z); store(val,z)
 
 #define POP(thing,z) gg(pop, saved_ip); store(thing, z)
 #define PUSH(thing,z) load(thing, z); gg(push, saved_ip)
 
-#define INC(val,z) load(val, z); g(inc); store(val, z)
-#define DEC(val,z) load(val, z); g(dec); store(val, z)
+#define INC(val,z) load(val, z); gz(inc, z); store(val, z)
+#define DEC(val,z) load(val, z); gz(dec, z); store(val, z)
 
 #define JMP(loc) load(loc, OP_SIZE); g(jmp_indir)
 #define JMP_REL(off) gg(jmp, state->ip + off)
@@ -187,10 +188,10 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define STD UNDEFINED
 
 #define MUL18(val,z) MUL1(val,z)
-#define MUL1(val,z) load(val, z); ga(mul, sz(z))
-#define IMUL1(val,z) load(val, z); ga(imul1, sz(z))
-#define DIV(val, z) load(val, z); ga(div, sz(z))
-#define IDIV(val, z) load(val, z); ga(idiv, sz(z))
+#define MUL1(val,z) load(val, z); gz(mul, z)
+#define IMUL1(val,z) load(val, z); gz(imul1, z)
+#define DIV(val, z) load(val, z); gz(div, z)
+#define IDIV(val, z) load(val, z); gz(idiv, z)
 #define IMUL3(times, src, dst,z) load(src, z); op(imul, times, z); store(dst, z)
 #define IMUL2(val, reg,z) IMUL3(val, reg, reg, z)
 

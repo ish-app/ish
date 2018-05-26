@@ -134,15 +134,15 @@
 .endr
 
 # unary operations (well, only one explicit operand)
-.irp op, inc,dec
-    .gadget \op
-        setf_a src=$1 dst=%_tmp, ss=l
-        \op\()l %_tmp
-        seto CPU_of(%_cpu)
-        setf_zsp %_tmp, l
-        gret
-.endr
 
+.irp op, inc,dec
+    .macro do_\op size, s, ss
+        setf_a src=$1 dst=%tmp\s, ss=\ss
+        \op\()\ss %tmp\s
+        seto CPU_of(%_cpu)
+        setf_zsp %tmp\s, \ss
+    .endm
+.endr
 .macro do_sign_extend size, s, ss
     .if \size != 32
         movs\ss\()l %tmp\s, %tmpd
@@ -177,7 +177,7 @@
     not\ss %tmp\s
 .endm
 
-.irp op, sign_extend,zero_extend,div,idiv,mul,imul1,neg,not
+.irp op, inc,dec,sign_extend,zero_extend,div,idiv,mul,imul1,neg,not
     .irp size, SIZE_LIST
         .gadget \op\()_\size
             ss \size, do_\op
