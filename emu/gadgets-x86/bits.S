@@ -44,6 +44,7 @@
             testb $(32 - 1), %cl
             jz 1f
             shrd %cl, %\reg, %tmpd
+            setf_oc
             setf_zsp %tmpd, l
         1:
             .ifc \arg,imm
