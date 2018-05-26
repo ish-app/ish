@@ -116,7 +116,7 @@ static int elf_exec(struct fd *fd, const char *file, char *const argv[], char *c
     char *interp_name = NULL;
     struct fd *interp_fd = NULL;
     struct elf_header interp_header;
-    struct prg_header *interp_ph;
+    struct prg_header *interp_ph = NULL;
     for (unsigned i = 0; i < header.phent_count; i++) {
         if (ph[i].type != PT_INTERP)
             continue;
