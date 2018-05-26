@@ -4,7 +4,7 @@
 #define nop() __asm__ volatile("")
 
 int main() {
-    int loops = 100000000;
+    int loops = 10000000;
     printf("looping %d times\n", loops);
     for (int i = 0; i < loops; i++)
         nop();

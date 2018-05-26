@@ -96,4 +96,3 @@ struct jit *jit_new(struct mem *mem) {
 void jit_free(struct jit *jit) {
     free(jit);
 }
-

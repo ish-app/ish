@@ -1,23 +1,23 @@
 #include "gadgets.h"
 
-.macro do_shift type, size
+.macro do_shift type, size, s, ss
     .irp arg, reg_c,imm
         .gadget \type\size\()_\arg
             .ifc \arg,imm
-                pushq %rcx
+                movl %ecx, %r14d
                 movb (%_ip), %cl
             .endif
             testb $(\size - 1), %cl
             jz 1f
-            \type\()l %cl, %_tmp
+            \type\()\ss %cl, %tmp\s
             setf_oc
             .ifin(\type, shl,shr,sar)
-                setf_zsp %_tmp, l
+                setf_zsp %tmp\s, \ss
+                clearf_a
             .endifin
-            clearf_a
         1:
             .ifc \arg,imm
-                popq %rcx
+                movl %r14d, %ecx
             .endif
             .ifc \arg,imm
                 gret 1
@@ -29,7 +29,7 @@
 
 .irp type, shl,shr,sar,rol,ror
     .irp size, 8,16,32
-        do_shift \type, \size
+        ss \size, do_shift, \type
     .endr
     .gadget_array \type
 .endr

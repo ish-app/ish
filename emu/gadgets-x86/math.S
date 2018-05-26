@@ -130,9 +130,14 @@ do_op_size imul, 32
         gret
 .endr
 
-.macro do_extend size, s, ss
+.macro do_sign_extend size, s, ss
     .if \size != 32
         movs\ss\()l %tmp\s, %tmpd
+    .endif
+.endm
+.macro do_zero_extend size, s, ss
+    .if \size != 32
+        movz\ss\()l %tmp\s, %tmpd
     .endif
 .endm
 .macro do_div size, s, ss
@@ -159,7 +164,7 @@ do_op_size imul, 32
     not\ss %tmp\s
 .endm
 
-.irp op, extend,div,idiv,mul,imul1,neg,not
+.irp op, sign_extend,zero_extend,div,idiv,mul,imul1,neg,not
     .irp size, SIZE_LIST
         .gadget \op\()_\size
             ss \size, do_\op

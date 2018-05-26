@@ -132,8 +132,8 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define SEG_GS() seg_gs = true
 
 #define MOV(src, dst,z) load(src, z); store(dst, z)
-#define MOVZX(src, dst,zs,zd) load(src, zs); store(dst, zd)
-#define MOVSX(src, dst,zs,zd) load(src, zs); ga(extend, sz(zs)); store(dst, zd)
+#define MOVZX(src, dst,zs,zd) load(src, zs); ga(zero_extend, sz(zs)); store(dst, zd)
+#define MOVSX(src, dst,zs,zd) load(src, zs); ga(sign_extend, sz(zs)); store(dst, zd)
 #define XCHG(src, dst,z) los(xchg, src, dst, z)
 
 #define ADD(src, dst,z) los(add, src, dst, z)
