@@ -223,7 +223,7 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define REPZ(op, z) strop(op, repz, z)
 #define REPNZ(op, z) strop(op, repnz, z)
 
-#define CMPXCHG(src, dst,z) UNDEFINED
+#define CMPXCHG(src, dst,z) load(src, z); op(cmpxchg, dst, z)
 #define XADD(src, dst,z) UNDEFINED
 
 #define RDTSC g(rdtsc)

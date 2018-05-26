@@ -33,3 +33,9 @@
     pop %rdi
     pop %rsi
     gret
+
+.gadget cmpxchg32_mem
+    write_prep
+    cmpxchg %tmpd, (%_addrq)
+    gret 1
+.gadget_array cmpxchg
