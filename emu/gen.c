@@ -127,7 +127,7 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
     tlb_read(tlb, state->ip, &name, size/8); \
     state->ip += size/8
 
-#define READMODRM modrm_decode32(&state->ip, tlb, &modrm)
+#define READMODRM if (!modrm_decode32(&state->ip, tlb, &modrm)) { gg_here(interrupt, INT_GPF); return; }
 #define READADDR _READIMM(addr_offset, 32)
 #define SEG_GS() seg_gs = true
 
