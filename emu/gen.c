@@ -212,8 +212,8 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define BTC(bit, val,z) UNDEFINED
 #define BTS(bit, val,z) UNDEFINED
 #define BTR(bit, val,z) UNDEFINED
-#define BSF(src, dst,z) UNDEFINED
-#define BSR(src, dst,z) UNDEFINED
+#define BSF(src, dst,z) los(bsf, src, dst, z)
+#define BSR(src, dst,z) los(bsr, src, dst, z)
 
 #define BSWAP(dst) UNDEFINED
 

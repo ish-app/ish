@@ -35,12 +35,22 @@
     .ifin(\op, adc,sbb)
         btw $0, CPU_cf(%_cpu)
     .endifin
+
     \op\ss \arg, %tmp\s
+
     .ifin(\op, add,sub,adc,sbb,imul)
         setf_oc
     .endifin
     .ifin(\op, add,sub,adc,sbb,and,or,xor)
         setf_zsp %tmp\s, \ss
+    .endifin
+    .ifin(\op, bsf,bsr)
+        # I sure hope this isn't too hot
+        setzb %r14b
+        andb $~(1<<6), CPU_eflags(%_cpu)
+        shlb $6, %r14b
+        orb %r14b, CPU_eflags(%_cpu)
+        andl $~ZF_RES, CPU_flags_res(%_cpu)
     .endifin
 .endm
 .macro do_op op, size, arg
@@ -116,9 +126,12 @@
     .endr
     .gadget_array \op
 .endr
-do_op_size imul, 16
-do_op_size imul, 32
-.gadget_array imul
+.irp op, imul,bsf,bsr
+    .irp size, 16,32
+        do_op_size \op, \size
+    .endr
+    .gadget_array \op
+.endr
 
 # unary operations (well, only one explicit operand)
 .irp op, inc,dec

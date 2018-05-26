@@ -43,38 +43,53 @@
 #define COND_LIST o,c,z,cz,s,p,sxo,sxoz
 #define IMPLEMENTED_CONDS c,z,cz,s,p,sxo,sxoz
 
+.macro check_res
+    cmpl $0, CPU_res(%_cpu)
+.endm
+.macro check_cf
+    cmpb $0, CPU_cf(%_cpu)
+.endm
+
+.macro res_or_flag type, resflag, flag, target
+    testl $\resflag, CPU_flags_res(%_cpu)
+    jz 2f
+    check_res
+    j\type \target
+    2:
+    testl $\flag, CPU_eflags(%_cpu)
+    jnz \target
+.endm
+
 .macro do_jump cond, target
     # please tell me if you know a better way
     .ifc \cond,o
     .else; .ifc \cond,c
-        cmpb $0, CPU_cf(%_cpu)
+        check_cf
         jnz \target
     .else; .ifc \cond,z
-        cmpl $0, CPU_res(%_cpu)
-        jz \target
+        res_or_flag z, ZF_RES, ZF_FLAG, \target
     .else; .ifc \cond,cz
-        cmpb $0, CPU_cf(%_cpu)
+        check_cf
         jnz \target
-        cmpl $0, CPU_res(%_cpu)
+        check_res
         jz \target
     .else; .ifc \cond,s
-        cmpl $0, CPU_res(%_cpu)
+        check_res
         js \target
     .else; .ifc \cond,p
-        cmpl $0, CPU_res(%_cpu)
+        check_res
         jp \target
     .else; .ifc \cond,sxo
-        cmpl $0, CPU_res(%_cpu)
+        check_res
         sets %r14b
         xorb CPU_of(%_cpu), %r14b
         jnz \target
     .else; .ifc \cond,sxoz
-        cmpl $0, CPU_res(%_cpu)
+        check_res
+        jz \target
         sets %r14b
         xorb CPU_of(%_cpu), %r14b
         jnz \target
-        cmpl $0, CPU_res(%_cpu)
-        jz \target
     .endif; .endif; .endif; .endif; .endif; .endif; .endif; .endif
 .endm
 

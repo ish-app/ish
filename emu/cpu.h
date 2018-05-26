@@ -73,6 +73,7 @@ struct cpu_state {
         };
         // for asm
 #define AF_FLAG (1 << 4)
+#define ZF_FLAG (1 << 6)
 #define DF_FLAG (1 << 10)
     };
     // for maximum efficiency these are stored in bytes
