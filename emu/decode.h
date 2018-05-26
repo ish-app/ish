@@ -20,7 +20,7 @@ __no_instrument DECODER_RET glue(DECODER_NAME, OP_SIZE)(DECODER_ARGS) {
     DECLARE_LOCALS;
 
     byte_t insn;
-    uint64_t imm;
+    uint64_t imm = 0;
     struct modrm modrm;
 #define READIMM_(name, size) _READIMM(name, size); TRACE("imm %llx ", (long long) name)
 #define READINSN _READIMM(insn, 8); TRACE("%02x ", insn)

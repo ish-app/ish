@@ -458,6 +458,7 @@ int main(int argc, char *const argv[]) {
     struct tlb *tlb = tlb_new(cpu->mem);
     int undefined_flags = 2;
     struct cpu_state old_cpu = *cpu;
+    int i = 0;
     while (true) {
         if (compare_cpus(cpu, tlb, pid, undefined_flags) < 0) {
             println("failure: resetting cpu");
@@ -469,6 +470,7 @@ int main(int argc, char *const argv[]) {
         undefined_flags = undefined_flags_mask(pid, cpu);
         old_cpu = *cpu;
         step_tracing(cpu, tlb, pid, sender, receiver);
+        i++;
     }
 }
 

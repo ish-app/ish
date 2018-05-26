@@ -11,7 +11,9 @@
             jz 1f
             \type\()l %cl, %_tmp
             setf_oc
-            setf_zsp %_tmp, l
+            .ifin(\type, shl,shr,sar)
+                setf_zsp %_tmp, l
+            .endifin
             clearf_a
         1:
             .ifc \arg,imm

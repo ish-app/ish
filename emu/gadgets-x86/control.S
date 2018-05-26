@@ -20,7 +20,7 @@
 
 .gadget ret
     movl %_esp, %_addr
-    addl $4, %_esp
+    addl 8(%_ip), %_esp
     read_prep
     movl (%_addrq), %_eip
     jmp jit_ret
