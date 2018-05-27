@@ -4,6 +4,25 @@
 #include "emu/cpuid.h"
 #include "emu/interrupt.h"
 
+#define DECLARE_LOCALS \
+    dword_t saved_ip = state->ip; \
+    dword_t addr_offset = 0; \
+    bool end_block = false; \
+    bool seg_gs = false
+
+#define FINISH \
+    return !end_block
+
+#define TRACEIP() TRACE("%d %08x\t", current->pid, state->ip);
+
+#define _READIMM(name, size) \
+    tlb_read(tlb, state->ip, &name, size/8); \
+    state->ip += size/8
+
+#define READMODRM if (!modrm_decode32(&state->ip, tlb, &modrm)) { gg_here(interrupt, INT_GPF); return false; }
+#define READADDR _READIMM(addr_offset, 32)
+#define SEG_GS() seg_gs = true
+
 // This should stay in sync with the definition of .gadget_array in gadgets.h
 enum arg {
     arg_reg_a, arg_reg_c, arg_reg_d, arg_reg_b, arg_reg_sp, arg_reg_bp, arg_reg_si, arg_reg_di,
@@ -42,7 +61,7 @@ typedef void (*gadget_t)();
 #define gagg(g, i, a, b) do { ga(g, i); GEN(a); GEN(b); } while (0)
 #define gz(g, z) ga(g, sz(z))
 #define gg_here(g, a) ggg(g, a, state->ip)
-#define UNDEFINED do { gg_here(interrupt, INT_UNDEFINED); return; } while (0)
+#define UNDEFINED do { gg_here(interrupt, INT_UNDEFINED); return false; } while (0)
 
 static inline int sz(int size) {
     switch (size) {
@@ -56,7 +75,7 @@ static inline int sz(int size) {
 // this really wants to use all the locals of the decoder, which we can do
 // really nicely in gcc using nested functions, but that won't work in clang,
 // so we explicitly pass 500 arguments. sorry for the mess
-static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg arg, struct modrm *modrm, uint64_t *imm, int size, dword_t saved_ip, bool seg_gs, dword_t addr_offset) {
+static inline bool gen_op(struct gen_state *state, gadget_t *gadgets, enum arg arg, struct modrm *modrm, uint64_t *imm, int size, dword_t saved_ip, bool seg_gs, dword_t addr_offset) {
     size = sz(size);
     gadgets = gadgets + size * arg_count;
 
@@ -103,10 +122,11 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
         GEN(*imm);
     else if (arg == arg_mem)
         GEN(saved_ip);
+    return true;
 }
 #define op(type, thing, z) do { \
     extern gadget_t type##_gadgets[]; \
-    gen_op(state, type##_gadgets, arg_##thing, &modrm, &imm, z, saved_ip, seg_gs, addr_offset); \
+    if (!gen_op(state, type##_gadgets, arg_##thing, &modrm, &imm, z, saved_ip, seg_gs, addr_offset)) return false; \
 } while (0)
 
 #define load(thing, z) op(load, thing, z)
@@ -114,23 +134,6 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 // load-op-store
 #define los(o, src, dst, z) load(dst, z); op(o, src, z); store(dst, z)
 #define lo(o, src, dst, z) load(dst, z); op(o, src, z)
-
-#define DECLARE_LOCALS \
-    dword_t saved_ip = state->ip; \
-    dword_t addr_offset = 0; \
-    bool seg_gs = false
-
-#define RETURN(thing) (void) (thing); return
-
-#define TRACEIP() TRACE("%d %08x\t", current->pid, state->ip);
-
-#define _READIMM(name, size) \
-    tlb_read(tlb, state->ip, &name, size/8); \
-    state->ip += size/8
-
-#define READMODRM if (!modrm_decode32(&state->ip, tlb, &modrm)) { gg_here(interrupt, INT_GPF); return; }
-#define READADDR _READIMM(addr_offset, 32)
-#define SEG_GS() seg_gs = true
 
 #define MOV(src, dst,z) load(src, z); store(dst, z)
 #define MOVZX(src, dst,zs,zd) load(src, zs); gz(zero_extend, zs); store(dst, zd)
@@ -155,13 +158,17 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define INC(val,z) load(val, z); gz(inc, z); store(val, z)
 #define DEC(val,z) load(val, z); gz(dec, z); store(val, z)
 
-#define JMP(loc) load(loc, OP_SIZE); g(jmp_indir)
-#define JMP_REL(off) gg(jmp, state->ip + off)
-#define JCXZ_REL(off) ggg(jcxz, state->ip + off, state->ip)
-#define J_REL(cc, off) gagg(jmp, cond_##cc, state->ip + off, state->ip)
-#define JN_REL(cc, off) gagg(jmp, cond_##cc, state->ip, state->ip + off)
-#define CALL(loc) load(loc, OP_SIZE); ggg(call_indir, saved_ip, state->ip)
-#define CALL_REL(off) gggg(call, saved_ip, state->ip + off, state->ip)
+#define JMP(loc) load(loc, OP_SIZE); g(jmp_indir); end_block = true
+#define JMP_REL(off) gg(jmp, state->ip + off); end_block = true
+#define JCXZ_REL(off) ggg(jcxz, state->ip + off, state->ip); end_block = true
+#define J_REL(cc, off) gagg(jmp, cond_##cc, state->ip + off, state->ip); end_block = true
+#define JN_REL(cc, off) gagg(jmp, cond_##cc, state->ip, state->ip + off); end_block = true
+#define CALL(loc) load(loc, OP_SIZE); ggg(call_indir, saved_ip, state->ip); end_block = true
+#define CALL_REL(off) gggg(call, saved_ip, state->ip + off, state->ip); end_block = true
+#define RET_NEAR_IMM(imm) ggg(ret, saved_ip, 4 + imm); end_block = true
+#define RET_NEAR() RET_NEAR_IMM(0); end_block = true
+#define INT(code) gg_here(interrupt, (uint8_t) code); end_block = true
+
 #define SET(cc, dst) ga(set, cond_##cc); store(dst, 8)
 #define SETN(cc, dst) ga(setn, cond_##cc); store(dst, 8)
 // wins the prize for the most annoying instruction to generate
@@ -177,9 +184,6 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
     load(src, z); store(dst, z); \
     state->block->code[start - 1] = (state->size - start) * sizeof(long); \
 } while (0)
-#define RET_NEAR_IMM(imm) ggg(ret, saved_ip, 4 + imm)
-#define RET_NEAR() RET_NEAR_IMM(0)
-#define INT(code) gg_here(interrupt, (uint8_t) code)
 
 #define PUSHF() UNDEFINED
 #define POPF() UNDEFINED
@@ -271,7 +275,7 @@ static inline void gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define FIDIV(val,z) UNDEFINED
 #define FDIVM(val,z) UNDEFINED
 
-#define DECODER_RET void
+#define DECODER_RET int
 #define DECODER_NAME gen_step
 #define DECODER_ARGS struct gen_state *state, struct tlb *tlb
 #define DECODER_PASS_ARGS state, tlb

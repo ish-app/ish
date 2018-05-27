@@ -18,7 +18,8 @@
     \
     extFloat80_t ftmp;
 
-#define RETURN(thing) return (thing)
+#define FINISH \
+    return -1 // everything is ok.
 
 #define UNDEFINED { cpu->eip = saved_ip; return INT_UNDEFINED; }
 

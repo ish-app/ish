@@ -12,7 +12,7 @@ struct gen_state {
 };
 
 void gen(struct gen_state *state, unsigned long thing);
-void gen_step32(struct gen_state *state, struct tlb *tlb);
-void gen_step16(struct gen_state *state, struct tlb *tlb);
+int gen_step32(struct gen_state *state, struct tlb *tlb);
+int gen_step16(struct gen_state *state, struct tlb *tlb);
 
 #endif

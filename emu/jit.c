@@ -44,10 +44,10 @@ void gen(struct gen_state *state, unsigned long thing) {
     state->block->code[state->size++] = thing;
 }
 
-int cpu_step32(struct cpu_state *cpu, struct tlb *tlb) {
-    // assembler function
-    extern int jit_enter(struct jit_block *block, struct cpu_state *cpu, struct tlb *tlb);
+// assembler function
+int jit_enter(struct jit_block *block, struct cpu_state *cpu, struct tlb *tlb);
 
+int cpu_step32(struct cpu_state *cpu, struct tlb *tlb) {
     struct gen_state state;
     gen_start(cpu->eip, &state);
     gen_step32(&state, tlb);
@@ -60,15 +60,24 @@ int cpu_step32(struct cpu_state *cpu, struct tlb *tlb) {
     return interrupt;
 }
 
-// TODO rewrite
 void cpu_run(struct cpu_state *cpu) {
     int i = 0;
     struct tlb tlb = {.mem = cpu->mem};
     tlb_flush(&tlb);
     read_wrlock(&cpu->mem->lock);
     int changes = cpu->mem->changes;
+
     while (true) {
-        int interrupt = cpu_step32(cpu, &tlb);
+        struct gen_state state;
+        gen_start(cpu->eip, &state);
+        bool in_block = true;
+        while (in_block)
+            in_block = gen_step32(&state, &tlb);
+        gen_end(&state);
+        struct jit_block *block = state.block;
+        int interrupt = jit_enter(block, cpu, &tlb);
+        jit_block_free(block);
+
         if (interrupt == INT_NONE && i++ >= 100000) {
             i = 0;
             interrupt = INT_TIMER;

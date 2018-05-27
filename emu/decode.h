@@ -321,10 +321,10 @@ restart:
         case 0x66:
 #if OP_SIZE == 32
             TRACELN("entering 16 bit mode");
-            RETURN(glue(DECODER_NAME, 16)(DECODER_PASS_ARGS));
+            return glue(DECODER_NAME, 16)(DECODER_PASS_ARGS);
 #else
             TRACELN("entering 32 bit mode");
-            RETURN(glue(DECODER_NAME, 32)(DECODER_PASS_ARGS));
+            return glue(DECODER_NAME, 32)(DECODER_PASS_ARGS);
 #endif
 
         case 0x67: TRACEI("address size prefix (ignored)"); goto restart;
@@ -730,5 +730,5 @@ restart:
             UNDEFINED;
     }
     TRACELN("");
-    RETURN(-1); // everything is ok.
+    FINISH;
 }
