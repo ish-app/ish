@@ -21,6 +21,9 @@ executable('forkexec', ['forkexec.c'])
 
 executable('thread', ['thread.c'], dependencies: dependency('threads'))
 
+# various tests for code that modifies itself
+executable('modify', ['modify.c'], link_args: ['-zexecstack'])
+
 # qemu test program
 executable('qemu-test', ['qemu-test.c'], link_args: ['-lm'])
 
