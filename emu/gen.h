@@ -11,7 +11,9 @@ struct gen_state {
     unsigned capacity;
 };
 
-void gen(struct gen_state *state, unsigned long thing);
+void gen_start(addr_t addr, struct gen_state *state);
+void gen_exit(struct gen_state *state);
+
 int gen_step32(struct gen_state *state, struct tlb *tlb);
 int gen_step16(struct gen_state *state, struct tlb *tlb);
 

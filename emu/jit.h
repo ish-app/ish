@@ -8,12 +8,15 @@
 struct jit {
     // there is one jit per address space
     struct mem *mem;
+    struct list hash[JIT_HASH_SIZE];
 };
 
 // this is roughly the average number of instructions in a basic block according to anonymous sources
-#define JIT_BLOCK_INITIAL_CAPACITY 8
+// times 4, roughly the average number of gadgets/parameters in an instruction
+#define JIT_BLOCK_INITIAL_CAPACITY 32
 
 struct jit_block {
+    struct list chain;
     addr_t addr;
     unsigned long code[];
 };

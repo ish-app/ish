@@ -4,6 +4,37 @@
 #include "emu/cpuid.h"
 #include "emu/interrupt.h"
 
+static void gen(struct gen_state *state, unsigned long thing) {
+    assert(state->size <= state->capacity);
+    if (state->size >= state->capacity) {
+        state->capacity *= 2;
+        struct jit_block *bigger_block = realloc(state->block,
+                sizeof(struct jit_block) + state->capacity * sizeof(unsigned long));
+        if (bigger_block == NULL) {
+            println("out of memory while jitting");
+            abort();
+        }
+        state->block = bigger_block;
+    }
+    assert(state->size < state->capacity);
+    state->block->code[state->size++] = thing;
+}
+
+void gen_start(addr_t addr, struct gen_state *state) {
+    state->capacity = JIT_BLOCK_INITIAL_CAPACITY;
+    state->size = 0;
+    state->block = malloc(sizeof(struct jit_block) + state->capacity * sizeof(unsigned long));
+    state->block->addr = addr;
+    state->ip = addr;
+}
+
+void gen_exit(struct gen_state *state) {
+    extern void gadget_exit();
+    // in case the last instruction didn't end the block
+    gen(state, (unsigned long) gadget_exit);
+    gen(state, state->ip);
+}
+
 #define DECLARE_LOCALS \
     dword_t saved_ip = state->ip; \
     dword_t addr_offset = 0; \
