@@ -10,6 +10,9 @@ jit_enter:
     push %rbp
     push %rbx
     push %r12
+    push %r13
+    push %r14
+    push %r15
     leaq JIT_BLOCK_code(%rdi), %_ip
     movq %rsi, %_cpu
     leaq TLB_entries(%rdx), %_tlb
@@ -41,6 +44,9 @@ jit_exit:
     movl %_esp, CPU_esp(%_cpu)
     # TODO more of those
     movl %_eip, CPU_eip(%_cpu)
+    pop %r15
+    pop %r14
+    pop %r13
     pop %r12
     pop %rbx
     pop %rbp
