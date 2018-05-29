@@ -9,6 +9,7 @@
 #include "debug.h"
 #include "kernel/errno.h"
 #include "emu/memory.h"
+#include "emu/jit.h"
 
 // increment the change count
 static void mem_changed(struct mem *mem);
@@ -20,6 +21,13 @@ struct mem *mem_new() {
     mem->refcount = 1;
     mem->pt = calloc(MEM_PAGES, sizeof(struct pt_entry));
     mem->changes = 0;
+#if JIT
+    mem->jit = jit_new(mem);
+    for (page_t page = 0; page < MEM_PAGES; page++) {
+        list_init(&mem->pt[page].blocks[0]);
+        list_init(&mem->pt[page].blocks[1]);
+    }
+#endif
     wrlock_init(&mem->lock);
     return mem;
 }
@@ -91,6 +99,9 @@ int pt_unmap(struct mem *mem, page_t start, pages_t pages, int force) {
                 munmap(data->data, PAGE_SIZE);
                 free(data);
             }
+#if JIT
+            jit_invalidate_page(mem->jit, page);
+#endif
         }
     }
     mem_changed(mem);
@@ -124,6 +135,7 @@ int pt_copy_on_write(struct mem *src, page_t src_start, struct mem *dst, page_t 
             // TODO skip shared mappings
             struct pt_entry *entry = &src->pt[src_page];
             entry->flags |= P_COW;
+            entry->flags &= ~P_COMPILED;
             entry->data->refcount++;
             dst->pt[dst_page] = *entry;
         }
@@ -154,18 +166,22 @@ void *mem_ptr(struct mem *mem, addr_t addr, int type) {
         pt_map_nothing(mem, page, 1, P_WRITE | P_GROWSDOWN);
     }
 
-    if (type == MEM_WRITE && !P_WRITABLE(entry->flags)) {
-        // page is unwritable or cow
+    if (type == MEM_WRITE) {
+        // if page is unwritable, well tough luck
+        if (!(entry->flags & P_WRITE))
+            return NULL;
         // if page is cow, ~~milk~~ copy it
         if (entry->flags & P_COW) {
             void *data = (char *) entry->data->data + entry->offset;
-            void *copy = mmap(NULL, PAGE_SIZE, PROT_READ | PROT_WRITE, 
+            void *copy = mmap(NULL, PAGE_SIZE, PROT_READ | PROT_WRITE,
                     MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
             memcpy(copy, data, PAGE_SIZE);
             pt_map(mem, page, 1, copy, entry->flags &~ P_COW);
-        } else {
-            return NULL;
         }
+        // get rid of any compiled blocks in this page
+#if JIT
+        jit_invalidate_page(mem->jit, page);
+#endif
     }
 
     if (entry->data == NULL)

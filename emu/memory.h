@@ -5,6 +5,10 @@
 #include <unistd.h>
 #include <string.h>
 #include "misc.h"
+#include "util/list.h"
+#if JIT
+struct jit;
+#endif
 
 // top 20 bits of an address, i.e. address >> 12
 typedef dword_t page_t;
@@ -12,8 +16,11 @@ typedef dword_t page_t;
 
 struct mem {
     atomic_uint refcount;
-    struct pt_entry *pt; // TODO replace with red-black tree
     unsigned changes; // increment whenever a tlb flush is needed
+    struct pt_entry *pt; // TODO replace with red-black tree
+#if JIT
+    struct jit *jit;
+#endif
     wrlock_t lock;
 };
 #define MEM_PAGES (1 << 20) // at least on 32-bit
@@ -42,6 +49,9 @@ struct data {
 };
 struct pt_entry {
     struct data *data;
+#if JIT
+    struct list blocks[2];
+#endif
     size_t offset;
     unsigned flags;
 };
@@ -53,6 +63,7 @@ struct pt_entry {
 #define P_EXEC (1 << 2)
 #define P_GROWSDOWN (1 << 3)
 #define P_COW (1 << 4)
+#define P_COMPILED (1 << 5)
 #define P_WRITABLE(flags) (flags & P_WRITE && !(flags & P_COW))
 
 page_t pt_find_hole(struct mem *mem, pages_t size);

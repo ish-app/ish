@@ -41,7 +41,7 @@
     .else
         cmpl TLB_ENTRY_page_if_writable(%_tlb,%r14), %r15d
     .endif
-    movl %r15d, -TLB_entries+TLB_dirty_page(%_tlb)
+    /* movl %r15d, -TLB_entries+TLB_dirty_page(%_tlb) */
     je 10f
     call handle_\type\()_miss
 10:
