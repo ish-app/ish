@@ -47,10 +47,10 @@ void gen_exit(struct gen_state *state) {
 #define TRACEIP() TRACE("%d %08x\t", current->pid, state->ip);
 
 #define _READIMM(name, size) \
-    tlb_read(tlb, state->ip, &name, size/8); \
+    if (!tlb_read(tlb, state->ip, &name, size/8)) SEGFAULT; \
     state->ip += size/8
 
-#define READMODRM if (!modrm_decode32(&state->ip, tlb, &modrm)) { gg_here(interrupt, INT_GPF); return false; }
+#define READMODRM if (!modrm_decode32(&state->ip, tlb, &modrm)) SEGFAULT
 #define READADDR _READIMM(addr_offset, 32)
 #define SEG_GS() seg_gs = true
 
@@ -93,6 +93,7 @@ typedef void (*gadget_t)();
 #define gz(g, z) ga(g, sz(z))
 #define gg_here(g, a) ggg(g, a, state->ip)
 #define UNDEFINED do { gg_here(interrupt, INT_UNDEFINED); return false; } while (0)
+#define SEGFAULT do { gg_here(interrupt, INT_GPF); return false; } while (0)
 
 static inline int sz(int size) {
     switch (size) {
