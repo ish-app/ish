@@ -55,9 +55,11 @@
     jz 2f
     check_res
     j\type \target
+    jmp 3f
     2:
     testl $\flag, CPU_eflags(%_cpu)
     jnz \target
+    3:
 .endm
 
 .macro do_jump cond, target
