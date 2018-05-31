@@ -20,10 +20,25 @@ struct jit {
 #define JIT_BLOCK_INITIAL_CAPACITY 32
 
 struct jit_block {
-    struct list chain;
-    struct list page[2]; // a block can span up to 2 pages
     addr_t addr;
     addr_t end_addr;
+
+    // blocks that this block jumps to
+    struct jit_block *jumps_to[2];
+    // pointers to the ip values in the last gadget
+    unsigned long *jump_ip[2];
+    // original values of *jump_ip[]
+    unsigned long old_jump_ip[2];
+    // blocks that jump to this block
+    struct list jumps_from[2];
+
+    // hashtable bucket links
+    struct list chain;
+    // list of blocks in a page
+    struct list page[2];
+    // links for jumps_from
+    struct list jumps_from_links[2];
+
     unsigned long code[];
 };
 

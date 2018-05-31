@@ -27,6 +27,12 @@ jit_enter:
     # TODO more of those
     gret
 
+.global jit_ret_chain
+jit_ret_chain:
+    btq $63, %_ip
+    jc 1f
+    gret
+1:
 .global jit_ret
 jit_ret:
     movl $-1, %_tmp

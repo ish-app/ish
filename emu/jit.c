@@ -68,6 +68,7 @@ static struct jit_block *jit_block_compile(addr_t ip, struct tlb *tlb) {
         if (state.ip - ip >= PAGE_SIZE - 15)
             break;
     }
+    gen_end(&state);
     assert(state.ip - ip <= PAGE_SIZE);
     return state.block;
 }
@@ -77,6 +78,15 @@ static void jit_block_free(struct jit_block *block) {
     list_remove(&block->page[0]);
     if (!list_empty(&block->page[1]))
         list_remove(&block->page[1]);
+    for (int i = 0; i <= 1; i++) {
+        if (!list_empty(&block->jumps_from_links[i]))
+            list_remove(&block->jumps_from_links[i]);
+        struct jit_block *last_block;
+        list_for_each_entry(&block->jumps_from[i], last_block, jumps_from_links[i]) {
+            if (block->jump_ip[i] != NULL)
+                *block->jump_ip[i] = block->old_jump_ip[i];
+        }
+    }
     free(block);
 }
 
@@ -91,7 +101,7 @@ void cpu_run(struct cpu_state *cpu) {
     read_wrlock(&cpu->mem->lock);
     int changes = cpu->mem->changes;
 
-    // TODO make a blockchain, raise $5M
+    struct jit_block *last_block = NULL;
 
     while (true) {
         lock(&jit->lock);
@@ -100,8 +110,19 @@ void cpu_run(struct cpu_state *cpu) {
             block = jit_block_compile(cpu->eip, tlb);
             jit_insert(jit, block);
         }
+        if (last_block != NULL) {
+            for (int i = 0; i <= 1; i++) {
+                if (last_block->jump_ip[i] != NULL &&
+                        (*last_block->jump_ip[i] & 0xffffffff) == block->addr) {
+                    *last_block->jump_ip[i] = block->code;
+                    last_block->jumps_to[i] = block;
+                    list_add(&block->jumps_from[i], &last_block->jumps_from_links[i]);
+                }
+            }
+        }
         unlock(&jit->lock);
         int interrupt = jit_enter(block, cpu, tlb);
+        last_block = block;
 
         if (interrupt == INT_NONE && i++ >= 100000) {
             i = 0;
@@ -128,6 +149,7 @@ int cpu_step32(struct cpu_state *cpu, struct tlb *tlb) {
     gen_start(cpu->eip, &state);
     gen_step32(&state, tlb);
     gen_exit(&state);
+    gen_end(&state);
 
     struct jit_block *block = state.block;
     int interrupt = jit_enter(block, cpu, tlb);

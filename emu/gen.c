@@ -26,6 +26,21 @@ void gen_start(addr_t addr, struct gen_state *state) {
     state->block = malloc(sizeof(struct jit_block) + state->capacity * sizeof(unsigned long));
     state->block->addr = addr;
     state->ip = addr;
+    for (int i = 0; i <= 1; i++)
+        state->jump_ip[i] = 0;
+}
+
+void gen_end(struct gen_state *state) {
+    struct jit_block *block = state->block;
+    for (int i = 0; i <= 1; i++) {
+        if (state->jump_ip[i] != 0) {
+            block->jump_ip[i] = &block->code[state->jump_ip[i]];
+            block->old_jump_ip[i] = *block->jump_ip[i];
+        } else {
+            block->jump_ip[i] = NULL;
+        }
+        list_init(&block->jumps_from[i]);
+    }
 }
 
 void gen_exit(struct gen_state *state) {
@@ -190,13 +205,24 @@ static inline bool gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define INC(val,z) load(val, z); gz(inc, z); store(val, z)
 #define DEC(val,z) load(val, z); gz(dec, z); store(val, z)
 
+#define fake_ip (state->ip | (1ul << 63))
+
+// jmp to
+// jcxz to else
+// jmp_cc to else
+// call here to from
 #define JMP(loc) load(loc, OP_SIZE); g(jmp_indir); end_block = true
-#define JMP_REL(off) gg(jmp, state->ip + off); end_block = true
-#define JCXZ_REL(off) ggg(jcxz, state->ip + off, state->ip); end_block = true
-#define J_REL(cc, off) gagg(jmp, cond_##cc, state->ip + off, state->ip); end_block = true
-#define JN_REL(cc, off) gagg(jmp, cond_##cc, state->ip, state->ip + off); end_block = true
-#define CALL(loc) load(loc, OP_SIZE); ggg(call_indir, saved_ip, state->ip); end_block = true
-#define CALL_REL(off) gggg(call, saved_ip, state->ip + off, state->ip); end_block = true
+#define JMP_REL(off) gg(jmp, fake_ip + off); end_block = true
+#define JCXZ_REL(off) ggg(jcxz, fake_ip + off, fake_ip); end_block = true
+#define jcc(cc, to, else) \
+    gagg(jmp, cond_##cc, to, else); \
+    state->jump_ip[0] = state->size - 2; /* to */\
+    state->jump_ip[1] = state->size - 1; /* else */\
+    end_block = true
+#define J_REL(cc, off)  jcc(cc, fake_ip + off, fake_ip)
+#define JN_REL(cc, off) jcc(cc, fake_ip, fake_ip + off)
+#define CALL(loc) load(loc, OP_SIZE); ggg(call_indir, saved_ip, fake_ip); end_block = true
+#define CALL_REL(off) gggg(call, saved_ip, fake_ip + off, fake_ip); end_block = true
 #define RET_NEAR(imm) ggg(ret, saved_ip, 4 + imm); end_block = true
 #define INT(code) gg_here(interrupt, (uint8_t) code); end_block = true
 

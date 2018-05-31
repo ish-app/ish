@@ -6,8 +6,8 @@
     write_prep
     movl 16(%_ip), %r14d
     movl %r14d, (%_addrq)
-    movl 8(%_ip), %_eip
-    jmp jit_ret
+    movq 8(%_ip), %_ip
+    jmp jit_ret_chain
 
 .gadget call_indir
     subl $4, %_esp
@@ -29,16 +29,16 @@
     movl %_tmp, %_eip
     jmp jit_ret
 .gadget jmp
-    movl (%_ip), %_eip
-    jmp jit_ret
+    movq (%_ip), %_ip
+    jmp jit_ret_chain
 .gadget jcxz
     cmpl $0, %ecx
     jne 1f
-    movl (%_ip), %_eip
-    jmp jit_ret
+    movq (%_ip), %_ip
+    jmp jit_ret_chain
 1:
-    movl 8(%_ip), %_eip
-    jmp jit_ret
+    movq 8(%_ip), %_ip
+    jmp jit_ret_chain
 
 #define COND_LIST o,c,z,cz,s,p,sxo,sxoz
 #define IMPLEMENTED_CONDS c,z,cz,s,p,sxo,sxoz
@@ -98,11 +98,11 @@
 .irp cond, IMPLEMENTED_CONDS
     .gadget jmp_\cond
         do_jump \cond, 1f
-        movl 8(%_ip), %_eip
-        jmp jit_ret
+        movq 8(%_ip), %_ip
+        jmp jit_ret_chain
     1:
-        movl (%_ip), %_eip
-        jmp jit_ret
+        movq (%_ip), %_ip
+        jmp jit_ret_chain
 
     .gadget set_\cond
         do_jump \cond, 1f
