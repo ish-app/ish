@@ -60,13 +60,15 @@ static struct jit_block *jit_block_compile(addr_t ip, struct tlb *tlb) {
     while (true) {
         if (!gen_step32(&state, tlb))
             break;
-        // no block should span more than 2 pages, guarantee this by stopping
-        // as soon as there's less space left than the maximum length of an
-        // x86 instruction
+        // no block should span more than 2 pages
+        // guarantee this by limiting total block size to 1 page
+        // guarantee that by stopping as soon as there's less space left than
+        // the maximum length of an x86 instruction
         // TODO refuse to decode instructions longer than 15 bytes
         if (state.ip - ip >= PAGE_SIZE - 15)
             break;
     }
+    assert(state.ip - ip <= PAGE_SIZE);
     return state.block;
 }
 
