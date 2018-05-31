@@ -523,9 +523,9 @@ restart:
                    READMODRM; READIMM8; GRP2(imm, modrm_val,oz); break;
 
         case 0xc2: TRACEI("ret near imm\t");
-                   READIMM16; RET_NEAR_IMM(imm); break;
+                   READIMM16; RET_NEAR(imm); break;
         case 0xc3: TRACEI("ret near");
-                   RET_NEAR(); break;
+                   RET_NEAR(0); break;
 
         case 0xc9: TRACEI("leave");
                    MOV(reg_bp, reg_sp,oz); POP(reg_bp,oz); break;
@@ -666,7 +666,7 @@ restart:
                 // a branch prediction penalty if the target of a branch is a
                 // ret. gcc used to use nop ret but repz ret is only one
                 // instruction
-                case 0xc3: TRACEI("repz ret\t"); RET_NEAR(); break;
+                case 0xc3: TRACEI("repz ret\t"); RET_NEAR(0); break;
                 default: TRACELN("undefined"); UNDEFINED;
             }
             break;

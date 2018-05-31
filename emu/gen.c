@@ -197,8 +197,7 @@ static inline bool gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define JN_REL(cc, off) gagg(jmp, cond_##cc, state->ip, state->ip + off); end_block = true
 #define CALL(loc) load(loc, OP_SIZE); ggg(call_indir, saved_ip, state->ip); end_block = true
 #define CALL_REL(off) gggg(call, saved_ip, state->ip + off, state->ip); end_block = true
-#define RET_NEAR_IMM(imm) ggg(ret, saved_ip, 4 + imm); end_block = true
-#define RET_NEAR() RET_NEAR_IMM(0); end_block = true
+#define RET_NEAR(imm) ggg(ret, saved_ip, 4 + imm); end_block = true
 #define INT(code) gg_here(interrupt, (uint8_t) code); end_block = true
 
 #define SET(cc, dst) ga(set, cond_##cc); store(dst, 8)

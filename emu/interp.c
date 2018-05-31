@@ -509,8 +509,7 @@ static bool modrm_compute(struct cpu_state *cpu, struct tlb *tlb, addr_t *addr_o
     }
 #define JCXZ_REL(offset) J_REL(get(reg_c,oz) == 0, offset)
 
-#define RET_NEAR() POP(eip,32); FIX_EIP
-#define RET_NEAR_IMM(imm) RET_NEAR(); cpu->esp += get(imm,16)
+#define RET_NEAR(imm) POP(eip,32); FIX_EIP; cpu->esp += get(imm,16)
 
 #define SET(cond, val) \
     set(val, (cond ? 1 : 0),8)
