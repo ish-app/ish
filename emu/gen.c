@@ -249,7 +249,7 @@ static inline bool gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define POPF() UNDEFINED
 #define SAHF UNDEFINED
 #define CLD g(cld)
-#define STD UNDEFINED
+#define STD g(std)
 
 #define MUL18(val,z) MUL1(val,z)
 #define MUL1(val,z) load(val, z); gz(mul, z)

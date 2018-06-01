@@ -6,6 +6,10 @@
     andl $~DF_FLAG, CPU_eflags(%_cpu)
     gret
 
+.gadget std
+    orl $DF_FLAG, CPU_eflags(%_cpu)
+    gret
+
 .macro do_strop op, size, rep, s, ss, a
     # repnz is only a thing for cmps and scas
     .ifc \rep,repnz
@@ -20,11 +24,15 @@
             jz 2f
     1:
         .endif
+        movl $-(\size/8), CPU_df_offset(%_cpu)
+        testl $DF_FLAG, CPU_eflags(%_cpu)
+        jnz 3f
+        negl CPU_df_offset(%_cpu)
+    3:
         .ifc \op,stos
             movl %edi, %_addr
             write_prep
             mov\ss %\a, (%_addrq)
-
         .else; .ifc \op,movs
             movl %esi, %_addr
             read_prep
@@ -34,10 +42,10 @@
             mov\ss %tmp\s, (%_addrq)
         .endif; .endif
         .ifin(\op, lods,movs,cmps,scas)
-            addl $(\size/8), %esi
+            addl CPU_df_offset(%_cpu), %esi
         .endifin
         .ifin(\op, movs,stos,cmps)
-            addl $(\size/8), %edi
+            addl CPU_df_offset(%_cpu), %edi
         .endifin
         .ifc \rep,rep
             decl %ecx

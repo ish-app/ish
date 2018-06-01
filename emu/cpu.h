@@ -76,6 +76,8 @@ struct cpu_state {
 #define ZF_FLAG (1 << 6)
 #define DF_FLAG (1 << 10)
     };
+    // please pretend this doesn't exist
+    dword_t df_offset;
     // for maximum efficiency these are stored in bytes
     byte_t cf;
     byte_t of;
