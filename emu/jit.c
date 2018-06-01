@@ -13,6 +13,7 @@ struct jit *jit_new(struct mem *mem) {
     jit->mem = mem;
     for (int i = 0; i < JIT_HASH_SIZE; i++)
         list_init(&jit->hash[i]);
+    lock_init(&jit->lock);
     return jit;
 }
 
@@ -26,23 +27,29 @@ void jit_free(struct jit *jit) {
     free(jit);
 }
 
+static inline struct list *blocks_list(struct jit *jit, page_t page, int i) {
+    return &jit->mem->pt[page].blocks[i];
+}
+
 void jit_invalidate_page(struct jit *jit, page_t page) {
     lock(&jit->lock);
     struct jit_block *block, *tmp;
-    list_for_each_entry_safe(&jit->mem->pt[page].blocks[0], block, tmp, page[0]) {
-        jit_block_free(block);
-    }
-    list_for_each_entry_safe(&jit->mem->pt[page].blocks[1], block, tmp, page[1]) {
-        jit_block_free(block);
+    for (int i = 0; i <= 1; i++) {
+        struct list *blocks = blocks_list(jit, page, i);
+        if (list_null(blocks))
+            continue;
+        list_for_each_entry_safe(blocks, block, tmp, page[i]) {
+            jit_block_free(block);
+        }
     }
     unlock(&jit->lock);
 }
 
 static void jit_insert(struct jit *jit, struct jit_block *block) {
     list_add(&jit->hash[block->addr % JIT_HASH_SIZE], &block->chain);
-    list_add(&jit->mem->pt[PAGE(block->addr)].blocks[0], &block->page[0]);
+    list_init_add(blocks_list(jit, PAGE(block->addr), 0), &block->page[0]);
     if (PAGE(block->addr) != PAGE(block->end_addr))
-        list_add(&jit->mem->pt[PAGE(block->end_addr)].blocks[0], &block->page[1]);
+        list_init_add(blocks_list(jit, PAGE(block->end_addr), 1), &block->page[1]);
 }
 
 static struct jit_block *jit_lookup(struct jit *jit, addr_t addr) {
@@ -75,16 +82,15 @@ static struct jit_block *jit_block_compile(addr_t ip, struct tlb *tlb) {
 
 static void jit_block_free(struct jit_block *block) {
     list_remove(&block->chain);
-    list_remove(&block->page[0]);
-    if (!list_empty(&block->page[1]))
-        list_remove(&block->page[1]);
     for (int i = 0; i <= 1; i++) {
-        if (!list_empty(&block->jumps_from_links[i]))
-            list_remove(&block->jumps_from_links[i]);
-        struct jit_block *last_block;
-        list_for_each_entry(&block->jumps_from[i], last_block, jumps_from_links[i]) {
-            if (block->jump_ip[i] != NULL)
-                *block->jump_ip[i] = block->old_jump_ip[i];
+        list_remove(&block->page[i]);
+        list_remove_safe(&block->jumps_from_links[i]);
+
+        struct jit_block *last_block, *tmp;
+        list_for_each_entry_safe(&block->jumps_from[i], last_block, tmp, jumps_from_links[i]) {
+            if (last_block->jump_ip[i] != NULL)
+                *last_block->jump_ip[i] = last_block->old_jump_ip[i];
+            list_remove(&last_block->jumps_from_links[i]);
         }
     }
     free(block);
@@ -114,8 +120,7 @@ void cpu_run(struct cpu_state *cpu) {
             for (int i = 0; i <= 1; i++) {
                 if (last_block->jump_ip[i] != NULL &&
                         (*last_block->jump_ip[i] & 0xffffffff) == block->addr) {
-                    *last_block->jump_ip[i] = block->code;
-                    last_block->jumps_to[i] = block;
+                    *last_block->jump_ip[i] = (unsigned long) block->code;
                     list_add(&block->jumps_from[i], &last_block->jumps_from_links[i]);
                 }
             }

@@ -14,6 +14,14 @@ static inline void list_init(struct list *list) {
     list->prev = list;
 }
 
+static inline bool list_null(struct list *list) {
+    return list->next == NULL && list->prev == NULL;
+}
+
+static inline bool list_empty(struct list *list) {
+    return list->next == list || list_null(list);
+}
+
 static inline void _list_add_between(struct list *prev, struct list *next, struct list *item) {
     prev->next = item;
     item->prev = prev;
@@ -25,14 +33,21 @@ static inline void list_add(struct list *list, struct list *item) {
     _list_add_between(list, list->next, item);
 }
 
+static inline void list_init_add(struct list *list, struct list *item) {
+    if (list_null(list))
+        list_init(list);
+    list_add(list, item);
+}
+
 static inline void list_remove(struct list *item) {
     item->prev->next = item->next;
     item->next->prev = item->prev;
     item->next = item->prev = NULL;
 }
 
-static inline bool list_empty(struct list *list) {
-    return list->next == list || (list->next == NULL && list->prev == NULL);
+static inline void list_remove_safe(struct list *item) {
+    if (!list_null(item))
+        list_remove(item);
 }
 
 #define list_entry(item, type, member) \

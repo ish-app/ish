@@ -23,10 +23,6 @@ struct mem *mem_new() {
     mem->changes = 0;
 #if JIT
     mem->jit = jit_new(mem);
-    for (page_t page = 0; page < MEM_PAGES; page++) {
-        list_init(&mem->pt[page].blocks[0]);
-        list_init(&mem->pt[page].blocks[1]);
-    }
 #endif
     wrlock_init(&mem->lock);
     return mem;

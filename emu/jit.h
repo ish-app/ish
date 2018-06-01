@@ -23,8 +23,6 @@ struct jit_block {
     addr_t addr;
     addr_t end_addr;
 
-    // blocks that this block jumps to
-    struct jit_block *jumps_to[2];
     // pointers to the ip values in the last gadget
     unsigned long *jump_ip[2];
     // original values of *jump_ip[]

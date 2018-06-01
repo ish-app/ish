@@ -26,8 +26,9 @@ void gen_start(addr_t addr, struct gen_state *state) {
     state->block = malloc(sizeof(struct jit_block) + state->capacity * sizeof(unsigned long));
     state->block->addr = addr;
     state->ip = addr;
-    for (int i = 0; i <= 1; i++)
+    for (int i = 0; i <= 1; i++) {
         state->jump_ip[i] = 0;
+    }
 }
 
 void gen_end(struct gen_state *state) {
@@ -39,7 +40,9 @@ void gen_end(struct gen_state *state) {
         } else {
             block->jump_ip[i] = NULL;
         }
+
         list_init(&block->jumps_from[i]);
+        list_init(&block->jumps_from_links[i]);
     }
 }
 
