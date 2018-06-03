@@ -13,13 +13,13 @@
 .macro do_strop op, size, rep, s, ss, a
     # repnz is only a thing for cmps and scas
     .ifc \rep,repnz
-        .ifnc \rep,cmps; .ifnc \rep,scas
+        .ifnc \op,cmps; .ifnc \op,scas
             .exitm
         .endif; .endif
     .endif
 
     .gadget \op\size\()_\rep
-        .ifc \rep,rep
+        .ifnc \rep,once
             testl %ecx, %ecx
             jz 2f
     1:
@@ -33,6 +33,7 @@
             movl %edi, %_addr
             write_prep
             mov\ss %\a, (%_addrq)
+
         .else; .ifc \op,movs
             movl %esi, %_addr
             read_prep
@@ -40,22 +41,43 @@
             movl %edi, %_addr
             write_prep
             mov\ss %tmp\s, (%_addrq)
-        .endif; .endif
-        .ifin(\op, lods,movs,cmps,scas)
+
+        .else; .ifc \op, scas
+            mov %edi, %_addr
+            read_prep
+            mov\ss (%_addrq), %tmp\s
+            setf_a src=%\a, dst=%tmp\s, ss=\ss
+            sub\ss %\a, %tmp\s
+            setf_oc
+            setf_zsp %tmp\s, \ss
+        .endif; .endif; .endif
+
+        .ifin(\op, lods,movs,cmps)
             addl CPU_df_offset(%_cpu), %esi
         .endifin
-        .ifin(\op, movs,stos,cmps)
+        .ifin(\op, movs,stos,cmps,scas)
             addl CPU_df_offset(%_cpu), %edi
         .endifin
-        .ifc \rep,rep
+
+        .ifnc \rep,once
             decl %ecx
+            .ifin(\op, scas)
+                .ifc \rep,rep
+                    test\ss %tmp\s, %tmp\s
+                    jnz 2f
+                .else; .ifc \rep,repnz
+                    test\ss %tmp\s, %tmp\s
+                    jz 2f
+                .endif; .endif
+            .endifin
+            testl %ecx, %ecx
             jnz 1b
     2:
         .endif
         gret 1
 .endm
 
-.irp op, movs,stos
+.irp op, movs,stos,scas
     .irp size, 8,16,32
         .irp rep, REP_LIST
             .if \size == 8
@@ -71,5 +93,4 @@
 .endr
 # temporary
 .gadget_list_size lods, REP_LIST
-.gadget_list_size scas, REP_LIST
 .gadget_list_size cmps, REP_LIST
