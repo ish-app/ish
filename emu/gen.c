@@ -286,7 +286,7 @@ static inline bool gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define BSF(src, dst,z) los(bsf, src, dst, z)
 #define BSR(src, dst,z) los(bsr, src, dst, z)
 
-#define BSWAP(dst) UNDEFINED
+#define BSWAP(dst) ga(bswap, arg_##dst)
 
 #define strop(op, rep, z) gag(op, sz(z) * size_count + rep_##rep, saved_ip)
 #define STR(op, z) strop(op, once, z)

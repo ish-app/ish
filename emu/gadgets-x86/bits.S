@@ -76,3 +76,12 @@
 .each_reg x
 .purgem x
 .gadget_array bt
+
+.macro x name reg
+    .gadget bswap_\name
+        bswap %\reg
+        gret
+.endm
+.each_reg x
+.purgem x
+.gadget_list bswap, REG_LIST
