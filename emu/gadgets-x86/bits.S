@@ -34,18 +34,17 @@
     .gadget_array \type
 .endr
 
-.irp arg, imm,cl
+.macro do_shiftd op, arg
     .macro x name, reg
-        .gadget shrd_\arg\()32_\name
+        .gadget \op\()_\arg\()32_\name
             .ifc \arg,imm
                 pushq %rcx
                 movb (%_ip), %cl
             .endif
             testb $(32 - 1), %cl
             jz 1f
-            shrd %cl, %\reg, %tmpd
+            \op %cl, %\reg, %tmpd
             setf_oc
-            setf_zsp %tmpd, l
         1:
             .ifc \arg,imm
                 popq %rcx
@@ -56,7 +55,12 @@
     .endm
     .each_reg x
     .purgem x
-    .gadget_array shrd_\arg
+    .gadget_array \op\()_\arg
+.endm
+.irp op, shrd,shld
+    .irp arg, imm,cl
+        do_shiftd \op, \arg
+    .endr
 .endr
 
 .macro do_bt arg
