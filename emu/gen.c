@@ -23,11 +23,17 @@ static void gen(struct gen_state *state, unsigned long thing) {
 void gen_start(addr_t addr, struct gen_state *state) {
     state->capacity = JIT_BLOCK_INITIAL_CAPACITY;
     state->size = 0;
-    state->block = malloc(sizeof(struct jit_block) + state->capacity * sizeof(unsigned long));
-    state->block->addr = addr;
     state->ip = addr;
     for (int i = 0; i <= 1; i++) {
         state->jump_ip[i] = 0;
+    }
+
+    struct jit_block *block = malloc(sizeof(struct jit_block) + state->capacity * sizeof(unsigned long));
+    state->block = block;
+    block->addr = addr;
+    list_init(&block->chain);
+    for (int i = 0; i <= 1; i++) {
+        list_init(&block->page[i]);
     }
 }
 
