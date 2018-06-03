@@ -29,7 +29,13 @@
         jnz 3f
         negl CPU_df_offset(%_cpu)
     3:
-        .ifc \op,stos
+
+        .ifc \op,lods
+            movl %esi, %_addr
+            read_prep
+            mov\ss (%_addrq), %\a
+
+        .else; .ifc \op,stos
             movl %edi, %_addr
             write_prep
             mov\ss %\a, (%_addrq)
@@ -50,7 +56,7 @@
             sub\ss %\a, %tmp\s
             setf_oc
             setf_zsp %tmp\s, \ss
-        .endif; .endif; .endif
+        .endif; .endif; .endif; .endif
 
         .ifin(\op, lods,movs,cmps)
             addl CPU_df_offset(%_cpu), %esi
@@ -77,7 +83,7 @@
         gret 1
 .endm
 
-.irp op, movs,stos,scas
+.irp op, lods,stos,movs,scas
     .irp size, 8,16,32
         .irp rep, REP_LIST
             .if \size == 8
@@ -92,5 +98,4 @@
     .gadget_list_size \op, REP_LIST
 .endr
 # temporary
-.gadget_list_size lods, REP_LIST
 .gadget_list_size cmps, REP_LIST
