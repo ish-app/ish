@@ -56,7 +56,19 @@
             sub\ss %\a, %tmp\s
             setf_oc
             setf_zsp %tmp\s, \ss
-        .endif; .endif; .endif; .endif
+
+        .else; .ifc \op, cmps
+            movl %esi, %_addr
+            read_prep
+            mov\ss (%_addrq), %tmp\s
+            mov %edi, %_addr
+            read_prep
+            mov\ss (%_addrq), %r14\s
+            setf_a src=%r14\s, dst=%tmp\s, ss=\ss
+            sub\ss %r14\s, %tmp\s
+            setf_oc
+            setf_zsp %tmp\s, \ss
+        .endif; .endif; .endif; .endif; .endif
 
         .ifin(\op, lods,movs,cmps)
             addl CPU_df_offset(%_cpu), %esi
@@ -67,7 +79,7 @@
 
         .ifnc \rep,once
             decl %ecx
-            .ifin(\op, scas)
+            .ifin(\op, scas,cmps)
                 .ifc \rep,rep
                     test\ss %tmp\s, %tmp\s
                     jnz 2f
@@ -83,7 +95,7 @@
         gret 1
 .endm
 
-.irp op, lods,stos,movs,scas
+.irp op, lods,stos,movs,scas,cmps
     .irp size, 8,16,32
         .irp rep, REP_LIST
             .if \size == 8
@@ -98,4 +110,3 @@
     .gadget_list_size \op, REP_LIST
 .endr
 # temporary
-.gadget_list_size cmps, REP_LIST
