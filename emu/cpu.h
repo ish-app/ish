@@ -72,8 +72,10 @@ struct cpu_state {
             bits iopl:2;
         };
         // for asm
+#define PF_FLAG (1 << 2)
 #define AF_FLAG (1 << 4)
 #define ZF_FLAG (1 << 6)
+#define SF_FLAG (1 << 7)
 #define DF_FLAG (1 << 10)
     };
     // please pretend this doesn't exist

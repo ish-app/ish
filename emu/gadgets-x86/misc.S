@@ -37,5 +37,20 @@
 .gadget cmpxchg32_mem
     write_prep
     cmpxchg %tmpd, (%_addrq)
+    setf_oc
+    # god help us
+    setp %r10b
+    seta %r13b
+    setz %r14b
+    sets %r15b
+    shlb $2, %r10b
+    shlb $4, %r13b
+    shlb $6, %r14b
+    shlb $7, %r15b
+    orb %r10b, %r15b
+    orb %r13b, %r15b
+    orb %r14b, %r15b
+    andl $~(PF_RES|ZF_RES|SF_RES|AF_OPS), CPU_flags_res(%_cpu)
+    movb %r15b, CPU_eflags(%_cpu)
     gret 1
 .gadget_array cmpxchg
