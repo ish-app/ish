@@ -45,6 +45,7 @@
             jz 1f
             \op %cl, %\reg, %tmpd
             setf_oc
+            setf_zsp %tmpd, l
         1:
             .ifc \arg,imm
                 popq %rcx
