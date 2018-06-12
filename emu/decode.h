@@ -242,11 +242,11 @@ restart:
                 case 0xc8: TRACEI("bswap eax");
                            BSWAP(reg_a); break;
                 case 0xc9: TRACEI("bswap ecx");
-                           BSWAP(reg_b); break;
-                case 0xca: TRACEI("bswap edx");
                            BSWAP(reg_c); break;
-                case 0xcb: TRACEI("bswap ebx");
+                case 0xca: TRACEI("bswap edx");
                            BSWAP(reg_d); break;
+                case 0xcb: TRACEI("bswap ebx");
+                           BSWAP(reg_b); break;
                 case 0xcc: TRACEI("bswap esp");
                            BSWAP(reg_sp); break;
                 case 0xcd: TRACEI("bswap ebp");
