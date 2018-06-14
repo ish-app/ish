@@ -136,3 +136,29 @@
 .gadget_list setn, COND_LIST
 .gadget_list skip, COND_LIST
 .gadget_list skipn, COND_LIST
+
+.gadget pushf
+    save_c
+    movq %_cpu, %rdi
+    call helper_collapse_flags
+    restore_c
+
+    sub $4, %_esp
+    movl %_esp, %_addr
+    write_prep
+    movl CPU_eflags(%_cpu), %tmpd
+    movl %tmpd, (%_addrq)
+    gret
+
+.gadget popf
+    movl %_esp, %_addr
+    read_prep
+    movl (%_addrq), %tmpd
+    movl %tmpd, CPU_eflags(%_cpu)
+    add $4, %_esp
+
+    save_c
+    movq %_cpu, %rdi
+    call helper_expand_flags
+    restore_c
+    gret

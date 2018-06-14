@@ -96,6 +96,7 @@ if get_option('jit')
     src += [
         'emu/jit.c',
         'emu/gen.c',
+        'emu/helpers.c',
         'emu/gadgets-x86/entry.S',
         'emu/gadgets-x86/memory.S',
         'emu/gadgets-x86/control.S',

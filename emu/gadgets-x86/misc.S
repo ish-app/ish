@@ -20,7 +20,7 @@
     leaq 0x8(%rsp), %rsi
     leaq 0x4(%rsp), %rdx
     leaq 0x0(%rsp), %rcx
-    call do_the_cpuid
+    call helper_cpuid
     movl 0xc(%rsp), %eax
     movl 0x8(%rsp), %ebx
     movl 0x4(%rsp), %ecx

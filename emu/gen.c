@@ -251,8 +251,8 @@ static inline bool gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
     state->block->code[start - 1] = (state->size - start) * sizeof(long); \
 } while (0)
 
-#define PUSHF() UNDEFINED
-#define POPF() UNDEFINED
+#define PUSHF() g(pushf)
+#define POPF() g(popf)
 #define SAHF UNDEFINED
 #define CLD g(cld)
 #define STD g(std)
