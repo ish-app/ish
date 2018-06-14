@@ -115,8 +115,15 @@ int pt_set_flags(struct mem *mem, page_t start, pages_t pages, int flags) {
     for (page_t page = start; page < start + pages; page++)
         if (mem->pt[page].data == NULL)
             return _ENOMEM;
-    for (page_t page = start; page < start + pages; page++)
-        mem->pt[page].flags = flags;
+    for (page_t page = start; page < start + pages; page++) {
+        struct pt_entry *entry = &mem->pt[page];
+        entry->flags = flags;
+        void *data = (char *) entry->data->data + entry->offset;
+        int prot = PROT_READ;
+        if (flags & P_WRITE) prot |= PROT_WRITE;
+        if (mprotect(data, PAGE_SIZE, prot) < 0)
+            return errno_map();
+    }
     mem_changed(mem);
     return 0;
 }

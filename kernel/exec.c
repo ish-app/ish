@@ -67,7 +67,7 @@ static int load_entry(struct prg_header ph, addr_t bias, struct fd *fd) {
     addr_t memsize = ph.memsize;
     addr_t filesize = ph.filesize;
 
-    int flags = 0;
+    int flags = P_READ;
     if (ph.flags & PH_W) flags |= P_WRITE;
 
     if ((err = fd->ops->mmap(fd, curmem, PAGE(addr),
