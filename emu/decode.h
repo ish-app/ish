@@ -542,6 +542,8 @@ restart:
                    READMODRM; GRP2(1, modrm_val,8); break;
         case 0xd1: TRACEI("grp2 1, modrm");
                    READMODRM; GRP2(1, modrm_val,oz); break;
+        case 0xd2: TRACEI("grp2 cl, modrm8");
+                   READMODRM; GRP2(reg_c, modrm_val,8); break;
         case 0xd3: TRACEI("grp2 cl, modrm");
                    READMODRM; GRP2(reg_c, modrm_val,oz); break;
 
