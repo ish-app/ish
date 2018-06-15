@@ -1,7 +1,7 @@
 #ifndef EMU_GEN_H
 #define EMU_GEN_H
 
-#include "emu/jit.h"
+#include "jit/jit.h"
 #include "emu/tlb.h"
 
 struct gen_state {

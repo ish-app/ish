@@ -65,14 +65,20 @@
 .endr
 
 .macro do_bt arg
-    movl \arg, %r14d
-    andl $~(-1<<5), %r14d
-    btl %r14d, %_tmp
+    andl $(32-1), %tmpd
+    btl %tmpd, \arg
     setf_c
 .endm
-.gadget bt32_imm
-    do_bt (%_ip)
+
+.gadget bt32_mem
+    movl %tmpd, %r14d
+    andl $~(32-1), %r14d
+    shrl $3, %r14d
+    addl %r14d, %_addr
+    read_prep
+    do_bt (%_addrq)
     gret 1
+
 .macro x name reg
     .gadget bt32_\name
         do_bt %\reg
@@ -80,6 +86,7 @@
 .endm
 .each_reg x
 .purgem x
+
 .gadget_array bt
 
 .macro x name reg

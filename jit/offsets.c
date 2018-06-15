@@ -1,5 +1,5 @@
 #include "emu/cpu.h"
-#include "emu/jit.h"
+#include "jit/jit.h"
 
 void cpu() {
     OFFSET(CPU, cpu_state, eax);

@@ -1,6 +1,6 @@
 #include <assert.h>
+#include "jit/gen.h"
 #include "emu/modrm.h"
-#include "emu/gen.h"
 #include "emu/cpuid.h"
 #include "emu/interrupt.h"
 
@@ -285,7 +285,7 @@ static inline bool gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
     else { op(shrd_imm, extra,z); GEN(imm); } \
     store(dst,z)
 
-#define BT(bit, val,z) lo(bt, bit, val, z)
+#define BT(bit, val,z) lo(bt, val, bit, z)
 #define BTC(bit, val,z) UNDEFINED
 #define BTS(bit, val,z) UNDEFINED
 #define BTR(bit, val,z) UNDEFINED

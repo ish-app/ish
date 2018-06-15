@@ -9,7 +9,7 @@
 #include "debug.h"
 #include "kernel/errno.h"
 #include "emu/memory.h"
-#include "emu/jit.h"
+#include "jit/jit.h"
 
 // increment the change count
 static void mem_changed(struct mem *mem);

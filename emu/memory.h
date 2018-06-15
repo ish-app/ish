@@ -49,11 +49,11 @@ struct data {
 };
 struct pt_entry {
     struct data *data;
+    size_t offset;
+    unsigned flags;
 #if JIT
     struct list blocks[2];
 #endif
-    size_t offset;
-    unsigned flags;
 };
 // page flags
 // P_READ and P_EXEC are ignored for now

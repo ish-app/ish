@@ -1,8 +1,9 @@
+#include "jit/jit.h"
+#include "jit/gen.h"
+#include "jit/frame.h"
 #include "emu/cpu.h"
 #include "emu/memory.h"
-#include "emu/jit.h"
 #include "emu/interrupt.h"
-#include "emu/gen.h"
 #include "util/list.h"
 #include "kernel/calls.h"
 
@@ -96,8 +97,16 @@ static void jit_block_free(struct jit_block *block) {
     free(block);
 }
 
-// assembler function
-int jit_enter(struct jit_block *block, struct cpu_state *cpu, struct tlb *tlb);
+static inline int jit_enter_cpu(struct jit_block *block, struct cpu_state *cpu, struct tlb *tlb) {
+    extern int jit_enter(struct jit_block *block, struct jit_frame *frame, struct tlb *tlb);
+
+    struct jit_frame frame = {
+        .cpu = *cpu,
+    };
+    int interrupt = jit_enter(block, &frame, tlb);
+    *cpu = frame.cpu;
+    return interrupt;
+}
 
 void cpu_run(struct cpu_state *cpu) {
     struct tlb *tlb = tlb_new(cpu->mem);
@@ -126,9 +135,9 @@ void cpu_run(struct cpu_state *cpu) {
             }
         }
         unlock(&jit->lock);
-        int interrupt = jit_enter(block, cpu, tlb);
         last_block = block;
 
+        int interrupt = jit_enter_cpu(block, cpu, tlb);
         if (interrupt == INT_NONE && i++ >= 100000) {
             i = 0;
             interrupt = INT_TIMER;
@@ -157,7 +166,7 @@ int cpu_step32(struct cpu_state *cpu, struct tlb *tlb) {
     gen_end(&state);
 
     struct jit_block *block = state.block;
-    int interrupt = jit_enter(block, cpu, tlb);
+    int interrupt = jit_enter_cpu(block, cpu, tlb);
     jit_block_free(block);
     return interrupt;
 }

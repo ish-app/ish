@@ -39,7 +39,7 @@ cified_vdso = custom_target('cify-vdso',
     command: [cify, 'vdso_data', vdso.full_path(), '@OUTPUT@'])
 
 offsets = custom_target('offsets',
-    output: 'cpu-offsets.h', input: 'emu/offsets.c', depfile: 'cpu-offsets.h.d',
+    output: 'cpu-offsets.h', input: 'jit/offsets.c', depfile: 'cpu-offsets.h.d',
     command: [find_program('tools/staticdefine.sh'), 'compile_commands.json', '@INPUT@', '@OUTPUT@', '@DEPFILE@'])
 
 src = [
@@ -94,16 +94,16 @@ src = [
 ]
 if get_option('jit')
     src += [
-        'emu/jit.c',
-        'emu/gen.c',
-        'emu/helpers.c',
-        'emu/gadgets-x86/entry.S',
-        'emu/gadgets-x86/memory.S',
-        'emu/gadgets-x86/control.S',
-        'emu/gadgets-x86/math.S',
-        'emu/gadgets-x86/bits.S',
-        'emu/gadgets-x86/string.S',
-        'emu/gadgets-x86/misc.S',
+        'jit/jit.c',
+        'jit/gen.c',
+        'jit/helpers.c',
+        'jit/gadgets-x86/entry.S',
+        'jit/gadgets-x86/memory.S',
+        'jit/gadgets-x86/control.S',
+        'jit/gadgets-x86/math.S',
+        'jit/gadgets-x86/bits.S',
+        'jit/gadgets-x86/string.S',
+        'jit/gadgets-x86/misc.S',
         offsets,
     ]
 else
