@@ -2,4 +2,5 @@
 
 struct jit_frame {
     struct cpu_state cpu;
+    void *bp;
 };

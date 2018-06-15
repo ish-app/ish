@@ -1,9 +1,6 @@
 #include "emu/interrupt.h"
 #include "gadgets.h"
 
-.extern tlb_handle_miss
-
-.text
 .global jit_enter
 .type jit_enter,function
 jit_enter:
@@ -15,6 +12,7 @@ jit_enter:
     push %r15
     leaq JIT_BLOCK_code(%rdi), %_ip
     movq %rsi, %_cpu
+    movq %rsp, LOCAL_bp(%_cpu)
     leaq TLB_entries(%rdx), %_tlb
     movl CPU_eax(%_cpu), %eax
     movl CPU_ebx(%_cpu), %ebx
@@ -24,7 +22,6 @@ jit_enter:
     movl CPU_edi(%_cpu), %edi
     movl CPU_ebp(%_cpu), %ebp
     movl CPU_esp(%_cpu), %_esp
-    # TODO more of those
     gret
 
 .global jit_ret_chain
@@ -48,8 +45,8 @@ jit_exit:
     movl %edi, CPU_edi(%_cpu)
     movl %ebp, CPU_ebp(%_cpu)
     movl %_esp, CPU_esp(%_cpu)
-    # TODO more of those
     movl %_eip, CPU_eip(%_cpu)
+    movq LOCAL_bp(%_cpu), %rsp
     pop %r15
     pop %r14
     pop %r13

@@ -76,7 +76,6 @@ si_gadgets:
 .endr
 
 segfault:
-    addq $8, %rsp # pop return address
     movl (%_ip), %_eip
     movl $INT_GPF, %_tmp
     jmp jit_exit

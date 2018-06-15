@@ -1,5 +1,6 @@
-#include "emu/cpu.h"
 #include "jit/jit.h"
+#include "jit/frame.h"
+#include "emu/cpu.h"
 
 void cpu() {
     OFFSET(CPU, cpu_state, eax);
@@ -39,6 +40,8 @@ void cpu() {
     MACRO(ZF_FLAG);
     MACRO(SF_FLAG);
     MACRO(DF_FLAG);
+
+    OFFSET(LOCAL, jit_frame, bp);
 
     OFFSET(JIT_BLOCK, jit_block, code);
 
