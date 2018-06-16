@@ -321,6 +321,9 @@ static void step_tracing(struct cpu_state *cpu, struct tlb *tlb, int pid, int se
                         (void) user_get(args[2], len);
                         pt_copy(pid, args[1], len);
                         break;
+                    case 8: // socketpair
+                        pt_copy(pid, args[3], sizeof(dword_t[2]));
+                        break;
                     case 12: // recvfrom
                         pt_copy(pid, args[1], args[2]);
                         (void) user_get(args[5], len);
@@ -355,6 +358,8 @@ static void step_tracing(struct cpu_state *cpu, struct tlb *tlb, int pid, int se
             case 196: // lstat64
             case 197: // fstat64
                 pt_copy(pid, regs.rcx, sizeof(struct newstat64)); break;
+            case 300: // fstatat64
+                pt_copy(pid, regs.rdx, sizeof(struct newstat64)); break;
             case 220: // getdents64
                 pt_copy(pid, regs.rcx, cpu->eax); break;
             case 265: // clock_gettime
