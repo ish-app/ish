@@ -37,7 +37,7 @@ dword_t sys_socket(dword_t domain, dword_t type, dword_t protocol) {
 
 static struct fd *sock_getfd(fd_t sock_fd) {
     struct fd *sock = f_get(sock_fd);
-    if (sock->ops != &socket_fdops)
+    if (sock == NULL || sock->ops != &socket_fdops)
         return NULL;
     return sock;
 }
