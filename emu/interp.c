@@ -607,5 +607,3 @@ flatten __no_instrument void cpu_run(struct cpu_state *cpu) {
         }
     }
 }
-
-/* int log_override = 0; */

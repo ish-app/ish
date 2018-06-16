@@ -145,3 +145,8 @@ void handle_interrupt(int interrupt) {
     }
     receive_signals();
 }
+
+// TODO find a home for this
+#ifdef LOG_OVERRIDE
+int log_override = 0;
+#endif
