@@ -157,11 +157,11 @@ dword_t sys_readv(fd_t fd_no, addr_t iovec_addr, dword_t iovec_count) {
     dword_t count = 0;
     for (unsigned i = 0; i < iovec_count; i++) {
         res = sys_read(fd_no, iovecs[i].base, iovecs[i].len);
-        if (iovecs[i].len != 0 && res == 0)
-            break;
         if (res < 0)
             return res;
         count += res;
+        if (res < iovecs[i].len)
+            break;
     }
     return count;
 }
@@ -188,6 +188,8 @@ dword_t sys_writev(fd_t fd_no, addr_t iovec_addr, dword_t iovec_count) {
         if (res < 0)
             return res;
         count += res;
+        if (res < iovecs[i].len)
+            break;
     }
     return count;
 }
