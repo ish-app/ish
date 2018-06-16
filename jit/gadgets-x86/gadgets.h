@@ -30,10 +30,16 @@
 # TODO cross-page access handling (but it's going to be so slow :cry:)
 .irp type, read,write
 
-.macro \type\()_prep
+.macro \type\()_prep size
     movl %_addr, %r14d
     shrl $8, %r14d
     andl $0x3ff0, %r14d
+    .ifc \type,read
+        movl %_addr, %r15d
+        andl $0xfff, %r15d
+        cmpl $(0x1000-(\size/8)), %r15d
+        ja 12f
+    .endif
     movl %_addr, %r15d
     andl $0xfffff000, %r15d
     .ifc \type,read
@@ -42,10 +48,21 @@
         cmpl TLB_ENTRY_page_if_writable(%_tlb,%r14), %r15d
     .endif
     movl %r15d, -TLB_entries+TLB_dirty_page(%_tlb)
-    je 10f
-    call handle_\type\()_miss
-10:
+    jne 11f
     addq TLB_ENTRY_data_minus_addr(%_tlb,%r14), %_addrq
+10:
+
+.pushsection .text.bullshit
+11:
+    call handle_\type\()_miss
+    jmp 10b
+    .ifc \type,read
+    12:
+        movq $(\size/8), %r14
+        call handle_crosspage_read
+        jmp 10b
+    .endif
+.popsection
 .endm
 
 .endr

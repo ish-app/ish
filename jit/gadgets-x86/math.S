@@ -1,5 +1,4 @@
 #include "gadgets.h"
-# asmsyntax=gas (for vim)
 
 .gadget load32_addr
     movl %_addr, %_tmp
@@ -84,9 +83,9 @@
 
     .gadget \op\size\()_mem
         .ifc \op,store
-            write_prep
+            write_prep \size
         .else
-            read_prep
+            read_prep \size
         .endif
         do_op \op, \size, (%_addrq)
         gret 1

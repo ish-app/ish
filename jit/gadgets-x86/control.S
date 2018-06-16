@@ -3,7 +3,7 @@
 .gadget call
     subl $4, %_esp
     movl %_esp, %_addr
-    write_prep
+    write_prep 32
     movl 16(%_ip), %r14d
     movl %r14d, (%_addrq)
     movq 8(%_ip), %_ip
@@ -12,7 +12,7 @@
 .gadget call_indir
     subl $4, %_esp
     movl %_esp, %_addr
-    write_prep
+    write_prep 32
     movl 8(%_ip), %r14d
     movl %r14d, (%_addrq)
     movl %_tmp, %_eip
@@ -21,7 +21,7 @@
 .gadget ret
     movl %_esp, %_addr
     addl 8(%_ip), %_esp
-    read_prep
+    read_prep 32
     movl (%_addrq), %_eip
     jmp jit_ret
 
@@ -145,14 +145,14 @@
 
     sub $4, %_esp
     movl %_esp, %_addr
-    write_prep
+    write_prep 32
     movl CPU_eflags(%_cpu), %tmpd
     movl %tmpd, (%_addrq)
     gret
 
 .gadget popf
     movl %_esp, %_addr
-    read_prep
+    read_prep 32
     movl (%_addrq), %tmpd
     movl %tmpd, CPU_eflags(%_cpu)
     add $4, %_esp

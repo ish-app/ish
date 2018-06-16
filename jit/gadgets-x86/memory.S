@@ -4,12 +4,12 @@
 .gadget push
     sub $4, %_esp
     movl %_esp, %_addr
-    write_prep
+    write_prep 32
     movl %_tmp, (%_addrq)
     gret 1
 .gadget pop
     movl %_esp, %_addr
-    read_prep
+    read_prep 32
     movl (%_addrq), %_tmp
     add $4, %_esp
     gret 1
@@ -72,6 +72,7 @@ si_gadgets:
         restore_c
         testq %r15, %r15
         jz segfault
+        movq %r15, %_addrq
         ret
 .endr
 
@@ -79,3 +80,18 @@ segfault:
     movl (%_ip), %_eip
     movl $INT_GPF, %_tmp
     jmp jit_exit
+
+.global handle_crosspage_read
+handle_crosspage_read:
+    save_c
+    leaq -TLB_entries(%_tlb), %rdi
+    movl %_addr, %esi
+    leaq LOCAL_value(%_cpu), %rdx
+    movq %r14, %rcx
+    call __tlb_read_cross_page
+    movq %rax, %r14
+    restore_c
+    testq %rax, %rax
+    jz segfault
+    leaq LOCAL_value(%_cpu), %_addrq
+    ret

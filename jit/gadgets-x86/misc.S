@@ -35,7 +35,7 @@
     gret
 
 .gadget cmpxchg32_mem
-    write_prep
+    write_prep 4
     cmpxchg %tmpd, (%_addrq)
     setf_oc
     # god help us

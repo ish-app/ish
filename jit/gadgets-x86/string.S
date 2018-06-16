@@ -32,25 +32,25 @@
 
         .ifc \op,lods
             movl %esi, %_addr
-            read_prep
+            read_prep \size
             mov\ss (%_addrq), %\a
 
         .else; .ifc \op,stos
             movl %edi, %_addr
-            write_prep
+            write_prep \size
             mov\ss %\a, (%_addrq)
 
         .else; .ifc \op,movs
             movl %esi, %_addr
-            read_prep
+            read_prep \size
             mov\ss (%_addrq), %tmp\s
             movl %edi, %_addr
-            write_prep
+            write_prep \size
             mov\ss %tmp\s, (%_addrq)
 
         .else; .ifc \op, scas
             mov %edi, %_addr
-            read_prep
+            read_prep \size
             mov\ss (%_addrq), %tmp\s
             setf_a src=%\a, dst=%tmp\s, ss=\ss
             sub\ss %\a, %tmp\s
@@ -59,10 +59,10 @@
 
         .else; .ifc \op, cmps
             movl %esi, %_addr
-            read_prep
+            read_prep \size
             mov\ss (%_addrq), %tmp\s
             mov %edi, %_addr
-            read_prep
+            read_prep \size
             mov\ss (%_addrq), %r14\s
             setf_a src=%r14\s, dst=%tmp\s, ss=\ss
             sub\ss %r14\s, %tmp\s

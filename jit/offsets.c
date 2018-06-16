@@ -42,6 +42,7 @@ void cpu() {
     MACRO(DF_FLAG);
 
     OFFSET(LOCAL, jit_frame, bp);
+    OFFSET(LOCAL, jit_frame, value);
 
     OFFSET(JIT_BLOCK, jit_block, code);
 
