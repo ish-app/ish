@@ -39,6 +39,7 @@
             movl %edi, %_addr
             write_prep \size
             mov\ss %\a, (%_addrq)
+            write_done \size
 
         .else; .ifc \op,movs
             movl %esi, %_addr
@@ -47,6 +48,7 @@
             movl %edi, %_addr
             write_prep \size
             mov\ss %tmp\s, (%_addrq)
+            write_done \size
 
         .else; .ifc \op, scas
             mov %edi, %_addr

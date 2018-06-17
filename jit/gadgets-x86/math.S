@@ -88,6 +88,9 @@
             read_prep \size
         .endif
         do_op \op, \size, (%_addrq)
+        .ifc \op,store
+            write_done \size
+        .endif
         gret 1
 
     .irp reg, a,b,c,d

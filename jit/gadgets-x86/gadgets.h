@@ -34,12 +34,10 @@
     movl %_addr, %r14d
     shrl $8, %r14d
     andl $0x3ff0, %r14d
-    .ifc \type,read
-        movl %_addr, %r15d
-        andl $0xfff, %r15d
-        cmpl $(0x1000-(\size/8)), %r15d
-        ja 12f
-    .endif
+    movl %_addr, %r15d
+    andl $0xfff, %r15d
+    cmpl $(0x1000-(\size/8)), %r15d
+    ja 12f
     movl %_addr, %r15d
     andl $0xfffff000, %r15d
     .ifc \type,read
@@ -56,16 +54,26 @@
 11:
     call handle_\type\()_miss
     jmp 10b
-    .ifc \type,read
-    12:
-        movq $(\size/8), %r14
-        call handle_crosspage_read
-        jmp 10b
-    .endif
+12:
+    movq $(\size/8), %r14
+    call crosspage_load
+    jmp 10b
 .popsection
 .endm
 
 .endr
+.macro write_done size
+    leaq LOCAL_value(%_cpu), %r14
+    cmpq %_addrq, %r14
+    je 11f
+10:
+.pushsection .text.bullshit
+11:
+    movq $(\size/8), %r14
+    call crosspage_store
+    jmp 10b
+.popsection
+.endm
 
 #define ifin(thing, ...) irp da_op, __VA_ARGS__; .ifc thing,\da_op
 #define endifin endif; .endr

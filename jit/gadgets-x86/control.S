@@ -6,6 +6,7 @@
     write_prep 32
     movl 16(%_ip), %r14d
     movl %r14d, (%_addrq)
+    write_done 32
     movq 8(%_ip), %_ip
     jmp jit_ret_chain
 
@@ -15,6 +16,7 @@
     write_prep 32
     movl 8(%_ip), %r14d
     movl %r14d, (%_addrq)
+    write_done 32
     movl %_tmp, %_eip
     jmp jit_ret
 
@@ -148,6 +150,7 @@
     write_prep 32
     movl CPU_eflags(%_cpu), %tmpd
     movl %tmpd, (%_addrq)
+    write_done 32
     gret
 
 .gadget popf

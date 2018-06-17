@@ -6,6 +6,7 @@
     movl %_esp, %_addr
     write_prep 32
     movl %_tmp, (%_addrq)
+    write_done 32
     gret 1
 .gadget pop
     movl %_esp, %_addr
@@ -81,8 +82,8 @@ segfault:
     movl $INT_GPF, %_tmp
     jmp jit_exit
 
-.global handle_crosspage_read
-handle_crosspage_read:
+.global crosspage_load
+crosspage_load:
     save_c
     leaq -TLB_entries(%_tlb), %rdi
     movl %_addr, %esi
@@ -93,5 +94,20 @@ handle_crosspage_read:
     restore_c
     testq %rax, %rax
     jz segfault
+    movl %_addr, LOCAL_value_addr(%_cpu)
     leaq LOCAL_value(%_cpu), %_addrq
+    ret
+
+.global crosspage_store
+crosspage_store:
+    save_c
+    leaq -TLB_entries(%_tlb), %rdi
+    movl LOCAL_value_addr(%_cpu), %esi
+    leaq LOCAL_value(%_cpu), %rdx
+    movq %r14, %rcx
+    call __tlb_write_cross_page
+    movq %rax, %r14
+    restore_c
+    testq %rax, %rax
+    jz segfault
     ret

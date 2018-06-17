@@ -43,6 +43,7 @@ void cpu() {
 
     OFFSET(LOCAL, jit_frame, bp);
     OFFSET(LOCAL, jit_frame, value);
+    OFFSET(LOCAL, jit_frame, value_addr);
 
     OFFSET(JIT_BLOCK, jit_block, code);
 
