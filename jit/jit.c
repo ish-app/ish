@@ -97,20 +97,14 @@ static void jit_block_free(struct jit_block *block) {
     free(block);
 }
 
-static inline int jit_enter_cpu(struct jit_block *block, struct cpu_state *cpu, struct tlb *tlb) {
-    extern int jit_enter(struct jit_block *block, struct jit_frame *frame, struct tlb *tlb);
+int jit_enter(struct jit_block *block, struct jit_frame *frame, struct tlb *tlb);
 
-    struct jit_frame frame = {
-        .cpu = *cpu,
-    };
-    int interrupt = jit_enter(block, &frame, tlb);
-    *cpu = frame.cpu;
-    return interrupt;
-}
+#if 1
 
 void cpu_run(struct cpu_state *cpu) {
     struct tlb *tlb = tlb_new(cpu->mem);
     struct jit *jit = cpu->mem->jit;
+    struct jit_frame frame = {.cpu = *cpu};
 
     int i = 0;
     read_wrlock(&cpu->mem->lock);
@@ -120,9 +114,10 @@ void cpu_run(struct cpu_state *cpu) {
 
     while (true) {
         lock(&jit->lock);
-        struct jit_block *block = jit_lookup(jit, cpu->eip);
+        addr_t ip = frame.cpu.eip;
+        struct jit_block *block = jit_lookup(jit, ip);
         if (block == NULL) {
-            block = jit_block_compile(cpu->eip, tlb);
+            block = jit_block_compile(ip, tlb);
             jit_insert(jit, block);
         }
         if (last_block != NULL) {
@@ -137,12 +132,13 @@ void cpu_run(struct cpu_state *cpu) {
         unlock(&jit->lock);
         last_block = block;
 
-        int interrupt = jit_enter_cpu(block, cpu, tlb);
+        int interrupt = jit_enter(block, &frame, tlb);
         if (interrupt == INT_NONE && i++ >= 100000) {
             i = 0;
             interrupt = INT_TIMER;
         }
         if (interrupt != INT_NONE) {
+            *cpu = frame.cpu;
             cpu->trapno = interrupt;
             read_wrunlock(&cpu->mem->lock);
             handle_interrupt(interrupt);
@@ -153,9 +149,41 @@ void cpu_run(struct cpu_state *cpu) {
                 tlb_flush(tlb);
                 changes = cpu->mem->changes;
             }
+            frame.cpu = *cpu;
         }
     }
 }
+
+#else
+
+void cpu_run(struct cpu_state *cpu) {
+    int i = 0;
+    struct tlb tlb = {.mem = cpu->mem};
+    tlb_flush(&tlb);
+    read_wrlock(&cpu->mem->lock);
+    int changes = cpu->mem->changes;
+    while (true) {
+        int interrupt = cpu_step32(cpu, &tlb);
+        if (interrupt == INT_NONE && i++ >= 100000) {
+            i = 0;
+            interrupt = INT_TIMER;
+        }
+        if (interrupt != INT_NONE) {
+            cpu->trapno = interrupt;
+            read_wrunlock(&cpu->mem->lock);
+            handle_interrupt(interrupt);
+            read_wrlock(&cpu->mem->lock);
+            if (tlb.mem != cpu->mem)
+                tlb.mem = cpu->mem;
+            if (cpu->mem->changes != changes) {
+                tlb_flush(&tlb);
+                changes = cpu->mem->changes;
+            }
+        }
+    }
+}
+
+#endif
 
 // really only here for ptraceomatic
 int cpu_step32(struct cpu_state *cpu, struct tlb *tlb) {
@@ -166,7 +194,9 @@ int cpu_step32(struct cpu_state *cpu, struct tlb *tlb) {
     gen_end(&state);
 
     struct jit_block *block = state.block;
-    int interrupt = jit_enter_cpu(block, cpu, tlb);
+    struct jit_frame frame = {.cpu = *cpu};
+    int interrupt = jit_enter(block, &frame, tlb);
+    *cpu = frame.cpu;
     jit_block_free(block);
     return interrupt;
 }
