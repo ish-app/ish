@@ -143,7 +143,8 @@ int tty_input(struct tty *tty, const char *input, size_t size) {
                 input += i + 1;
                 size -= i + 1;
                 i = 0;
-                send_group_signal(tty->fg_group, SIGINT_);
+                if (tty->fg_group != 0)
+                    send_group_signal(tty->fg_group, SIGINT_);
             }
         }
     }

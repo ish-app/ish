@@ -3,6 +3,7 @@
 #include "kernel/task.h"
 
 dword_t sys_setpgid(dword_t id, dword_t pgid) {
+    STRACE("setpgid(%d, %d)", id, pgid);
     int err;
     if (id == 0)
         id = current->pid;

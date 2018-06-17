@@ -47,6 +47,7 @@ void create_first_process() {
     list_add(&group->threads, &current->group_links);
     group->leader = current;
     current->group = group;
+    current->tgid = current->pid;
 
     struct fs_info *fs = fs_info_new();
     current->fs = fs;
