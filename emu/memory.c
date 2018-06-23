@@ -38,6 +38,7 @@ void mem_release(struct mem *mem) {
         pt_unmap(mem, 0, MEM_PAGES, PT_FORCE);
         free(mem->pt);
         write_wrunlock(&mem->lock);
+        jit_free(mem->jit);
         free(mem);
     }
 }
@@ -140,7 +141,9 @@ int pt_copy_on_write(struct mem *src, page_t src_start, struct mem *dst, page_t 
             entry->flags |= P_COW;
             entry->flags &= ~P_COMPILED;
             entry->data->refcount++;
-            dst->pt[dst_page] = *entry;
+            dst->pt[dst_page].data = entry->data;
+            dst->pt[dst_page].offset = entry->offset;
+            dst->pt[dst_page].flags = entry->flags;
         }
     }
     mem_changed(src);

@@ -143,8 +143,11 @@ void cpu_run(struct cpu_state *cpu) {
             read_wrunlock(&cpu->mem->lock);
             handle_interrupt(interrupt);
             read_wrlock(&cpu->mem->lock);
-            if (tlb->mem != cpu->mem)
+            if (tlb->mem != cpu->mem) {
                 tlb->mem = cpu->mem;
+                jit = cpu->mem->jit;
+                last_block = NULL;
+            }
             if (cpu->mem->changes != changes) {
                 tlb_flush(tlb);
                 changes = cpu->mem->changes;
