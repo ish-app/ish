@@ -47,10 +47,6 @@ void jit_free(struct jit *jit);
 // Invalidate all jit blocks in the given page. Locks the jit.
 void jit_invalidate_page(struct jit *jit, page_t page);
 
-#else
-
-static inline void jit_invalidate_page(struct jit *jit, page_t page) {}
-
 #endif
 
 #endif

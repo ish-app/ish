@@ -38,7 +38,9 @@ void mem_release(struct mem *mem) {
         pt_unmap(mem, 0, MEM_PAGES, PT_FORCE);
         free(mem->pt);
         write_wrunlock(&mem->lock);
+#if JIT
         jit_free(mem->jit);
+#endif
         free(mem);
     }
 }
