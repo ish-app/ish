@@ -28,7 +28,6 @@ threads = dependency('threads')
 librt = cc.find_library('rt', required: false)
 
 gdbm = subproject('gdbm').get_variable('gdbm')
-softfloat = subproject('softfloat').get_variable('softfloat_dep')
 
 subdir('vdso') # ish depends on the vdso
 
@@ -90,6 +89,7 @@ src = [
 
     'emu/memory.c',
     'emu/tlb.c',
+    'emu/softfloat.c',
     cified_vdso,
 ]
 if get_option('jit')
@@ -114,10 +114,10 @@ endif
 
 libish = library('ish', src,
     include_directories: includes,
-    dependencies: [librt, threads, softfloat, gdbm])
+    dependencies: [librt, threads, gdbm])
 ish = declare_dependency(
     link_with: libish,
-    dependencies: [librt, threads, softfloat, gdbm],
+    dependencies: [librt, threads, gdbm],
     include_directories: includes)
 
 # ptraceomatic et al

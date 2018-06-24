@@ -2,8 +2,8 @@
 #define EMU_H
 
 #include <stddef.h>
-#include <softfloat.h>
 #include "misc.h"
+#include "emu/softfloat.h"
 #include "emu/memory.h"
 #include "emu/tlb.h"
 
@@ -102,7 +102,7 @@ struct cpu_state {
     };
 
     // fpu
-    extFloat80_t fp[8];
+    floatx80 fp[8];
     union {
         word_t fsw;
         struct {
