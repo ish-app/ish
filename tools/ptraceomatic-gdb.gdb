@@ -1,3 +1,5 @@
+source ish-gdb.gdb
+
 define diff-mem
     dump binary memory real.bin real_page real_page+4096
     dump binary memory fake.bin fake_page fake_page+4096

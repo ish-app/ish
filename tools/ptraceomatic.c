@@ -55,7 +55,7 @@ static inline void setregs(int pid, struct user_regs_struct *regs) {
     trycall(ptrace(PTRACE_SETREGS, pid, NULL, regs), "ptrace setregs");
 }
 
-static int compare_cpus(struct cpu_state *cpu, int pid, int undefined_flags) {
+static int compare_cpus(struct cpu_state *cpu, struct tlb *tlb, int pid, int undefined_flags) {
     struct user_regs_struct regs;
     struct user_fpregs_struct fpregs;
     getregs(pid, &regs);
@@ -117,21 +117,24 @@ static int compare_cpus(struct cpu_state *cpu, int pid, int undefined_flags) {
     CHECK_FPREG(7);
 
     // compare pages marked dirty
-    int fd = open_mem(pid);
-    page_t dirty_page = cpu->mem->dirty_page;
-    char real_page[PAGE_SIZE];
-    trycall(lseek(fd, dirty_page, SEEK_SET), "compare seek mem");
-    trycall(read(fd, real_page, PAGE_SIZE), "compare read mem");
-    struct pt_entry entry = cpu->mem->pt[PAGE(dirty_page)];
-    void *fake_page = entry.data->data + entry.offset;
+    if (tlb->dirty_page != TLB_PAGE_EMPTY) {
+        int fd = open_mem(pid);
+        page_t dirty_page = tlb->dirty_page;
+        char real_page[PAGE_SIZE];
+        trycall(lseek(fd, dirty_page, SEEK_SET), "compare seek mem");
+        trycall(read(fd, real_page, PAGE_SIZE), "compare read mem");
+        close(fd);
+        struct pt_entry entry = cpu->mem->pt[PAGE(dirty_page)];
+        void *fake_page = entry.data->data + entry.offset;
 
-    if (memcmp(real_page, fake_page, PAGE_SIZE) != 0) {
-        println("page %x doesn't match", dirty_page);
-        debugger;
-        return -1;
+        if (memcmp(real_page, fake_page, PAGE_SIZE) != 0) {
+            println("page %x doesn't match", dirty_page);
+            debugger;
+            return -1;
+        }
+        tlb->dirty_page = TLB_PAGE_EMPTY;
     }
 
-    close(fd);
     setregs(pid, &regs);
     return 0;
 }
@@ -247,6 +250,7 @@ static void pt_copy_to_real(int pid, addr_t start, size_t size) {
 static void step_tracing(struct cpu_state *cpu, struct tlb *tlb, int pid, int sender, int receiver) {
     // step fake cpu
     cpu->tf = 1;
+    int changes = cpu->mem->changes;
     int interrupt = cpu_step32(cpu, tlb);
     if (interrupt != INT_NONE) {
         cpu->trapno = interrupt;
@@ -259,6 +263,8 @@ static void step_tracing(struct cpu_state *cpu, struct tlb *tlb, int pid, int se
         }
         handle_interrupt(interrupt);
     }
+    if (cpu->mem->changes != changes)
+        tlb_flush(tlb);
 
     // step real cpu
     // intercept cpuid, rdtsc, and int $0x80, though
@@ -297,7 +303,7 @@ static void step_tracing(struct cpu_state *cpu, struct tlb *tlb, int pid, int se
                 break;
             case 54: { // ioctl (god help us)
                 struct fd *fd = f_get(cpu->ebx);
-                if (fd) {
+                if (fd && fd->ops->ioctl_size) {
                     ssize_t ioctl_size = fd->ops->ioctl_size(fd, cpu->ecx);
                     if (ioctl_size >= 0)
                         pt_copy(pid, regs.rdx, ioctl_size);
@@ -314,6 +320,9 @@ static void step_tracing(struct cpu_state *cpu, struct tlb *tlb, int pid, int se
                     case 6: // getsockname
                         (void) user_get(args[2], len);
                         pt_copy(pid, args[1], len);
+                        break;
+                    case 8: // socketpair
+                        pt_copy(pid, args[3], sizeof(dword_t[2]));
                         break;
                     case 12: // recvfrom
                         pt_copy(pid, args[1], args[2]);
@@ -349,6 +358,8 @@ static void step_tracing(struct cpu_state *cpu, struct tlb *tlb, int pid, int se
             case 196: // lstat64
             case 197: // fstat64
                 pt_copy(pid, regs.rcx, sizeof(struct newstat64)); break;
+            case 300: // fstatat64
+                pt_copy(pid, regs.rdx, sizeof(struct newstat64)); break;
             case 220: // getdents64
                 pt_copy(pid, regs.rcx, cpu->eax); break;
             case 265: // clock_gettime
@@ -455,8 +466,9 @@ int main(int argc, char *const argv[]) {
     struct tlb *tlb = tlb_new(cpu->mem);
     int undefined_flags = 2;
     struct cpu_state old_cpu = *cpu;
+    int i = 0;
     while (true) {
-        if (compare_cpus(cpu, pid, undefined_flags) < 0) {
+        if (compare_cpus(cpu, tlb, pid, undefined_flags) < 0) {
             println("failure: resetting cpu");
             *cpu = old_cpu;
             __asm__("int3");
@@ -466,6 +478,7 @@ int main(int argc, char *const argv[]) {
         undefined_flags = undefined_flags_mask(pid, cpu);
         old_cpu = *cpu;
         step_tracing(cpu, tlb, pid, sender, receiver);
+        i++;
     }
 }
 

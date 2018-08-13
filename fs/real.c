@@ -148,13 +148,17 @@ off_t realfs_lseek(struct fd *fd, off_t offset, int whence) {
 int realfs_mmap(struct fd *fd, struct mem *mem, page_t start, pages_t pages, off_t offset, int prot, int flags) {
     if (pages == 0)
         return 0;
+
     int mmap_flags = 0;
     if (flags & MMAP_PRIVATE) mmap_flags |= MAP_PRIVATE;
     if (flags & MMAP_SHARED) mmap_flags |= MAP_SHARED;
+    int mmap_prot = PROT_READ;
+    if (prot & P_WRITE) mmap_prot |= PROT_WRITE;
+
     off_t real_offset = (offset / real_page_size) * real_page_size;
     off_t correction = offset - real_offset;
     char *memory = mmap(NULL, (pages * PAGE_SIZE) + correction,
-            PROT_READ | PROT_WRITE, mmap_flags, fd->real_fd, real_offset);
+            mmap_prot, mmap_flags, fd->real_fd, real_offset);
     if (memory != MAP_FAILED)
         memory += correction;
     return pt_map(mem, start, pages, memory, prot);

@@ -5,7 +5,7 @@ if build_machine.system() == 'linux'
         'ptutil.c',
     ]
     executable('ptraceomatic', ['ptraceomatic.c', 'undefined-flags.c', transplant_src], dependencies: [ish])
-    configure_file(input: 'ptraceomatic-gdb.gdb', output: '@PLAINNAME@', configuration: configuration_data())
+    configure_file(input: 'ptraceomatic-gdb.gdb', output: '@PLAINNAME@', copy: true)
 
     # tools for messing with vdsos
     # executable('vdso-dump', ['vdso-dump.c'], c_args: ['-m32'], link_args: ['-m32'])

@@ -37,6 +37,7 @@
 #else
 #define __no_instrument
 #endif
+#define unused __attribute__((unused))
 
 #if defined(__x86_64__)
 #define rdtsc() ({ \

@@ -18,7 +18,7 @@ static addr_t do_mmap(addr_t addr, dword_t len, dword_t prot, dword_t flags, fd_
         if (page == BAD_PAGE)
             return _ENOMEM;
     } else {
-        if (OFFSET(addr) != 0)
+        if (PGOFFSET(addr) != 0)
             return _EINVAL;
         page = PAGE(addr);
     }
@@ -57,7 +57,7 @@ addr_t sys_mmap(addr_t addr, dword_t len, dword_t prot, dword_t flags, fd_t fd_n
 
 int_t sys_munmap(addr_t addr, uint_t len) {
     STRACE("munmap(0x%x, 0x%x)", addr, len);
-    if (OFFSET(addr) != 0)
+    if (PGOFFSET(addr) != 0)
         return _EINVAL;
     if (len == 0)
         return _EINVAL;
@@ -71,7 +71,7 @@ int_t sys_munmap(addr_t addr, uint_t len) {
 
 int_t sys_mprotect(addr_t addr, uint_t len, int_t prot) {
     STRACE("mprotect(0x%x, 0x%x, 0x%x)", addr, len, prot);
-    if (OFFSET(addr) != 0)
+    if (PGOFFSET(addr) != 0)
         return _EINVAL;
     if (prot & ~(P_READ | P_WRITE | P_EXEC))
         return _EINVAL;

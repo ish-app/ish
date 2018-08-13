@@ -91,6 +91,7 @@ static int copy_task(struct task *task, dword_t flags, addr_t stack, addr_t ptid
     if (!(flags & CLONE_THREAD_)) {
         task->group = tgroup_copy(old_group);
         task->group->leader = task;
+        task->tgid = task->pid;
     }
     list_add(&task->group->threads, &task->group_links);
     unlock(&old_group->lock);

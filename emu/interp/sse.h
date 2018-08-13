@@ -14,8 +14,8 @@
     dst >>= count
 #define PSRLQ(count, dst) \
     xmm_dst = get(dst,128); \
-    SRL(get(count,z), xmm_dst.qw[0]); \
-    SRL(get(count,z), xmm_dst.qw[1]); \
+    SRL(get(count,), xmm_dst.qw[0]); \
+    SRL(get(count,), xmm_dst.qw[1]); \
     set(dst, xmm_dst,128)
 
 #define XORP(src, dst) \
@@ -49,6 +49,6 @@
 #define MOVD(src, dst) \
     set(dst, get(src,128).dw[0],32)
 
-#include <softfloat.h>
+#include "emu/float80.h"
 #define CVTTSD2SI(src, dst) \
-    set(dst, f64_to_i32(get(src,64), softfloat_round_minMag, false),32)
+    set(dst, (int32_t) get(src,64),32)

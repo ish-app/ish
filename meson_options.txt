@@ -2,6 +2,8 @@ option('log', type: 'string', value: '')
 option('nolog', type: 'string', value: '')
 option('log_handler', type: 'string', value: 'dprintf')
 
+option('jit', type: 'boolean', value: false)
+
 option('vdso_c_args', type: 'string', value: '')
 
 option('no_crlf', type: 'boolean', value: false)

@@ -185,7 +185,7 @@ dword_t sys_dup2(fd_t f, fd_t new_f) {
     f_close(new_f);
     fd->refcount++;
     table->files[new_f] = fd;
-    return 0;
+    return new_f;
 }
 
 dword_t sys_fcntl64(fd_t f, dword_t cmd, dword_t arg) {

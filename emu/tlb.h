@@ -13,6 +13,7 @@ struct tlb_entry {
 #define TLB_SIZE (1 << TLB_BITS)
 struct tlb {
     struct mem *mem;
+    page_t dirty_page;
     struct tlb_entry entries[TLB_SIZE];
 };
 
@@ -35,7 +36,7 @@ forceinline __no_instrument void *__tlb_read_ptr(struct tlb *tlb, addr_t addr) {
 }
 bool __tlb_read_cross_page(struct tlb *tlb, addr_t addr, char *out, unsigned size);
 forceinline __no_instrument bool tlb_read(struct tlb *tlb, addr_t addr, void *out, unsigned size) {
-    if (OFFSET(addr) > PAGE_SIZE - size)
+    if (PGOFFSET(addr) > PAGE_SIZE - size)
         return __tlb_read_cross_page(tlb, addr, out, size);
     void *ptr = __tlb_read_ptr(tlb, addr);
     if (ptr == NULL)
@@ -47,7 +48,7 @@ forceinline __no_instrument bool tlb_read(struct tlb *tlb, addr_t addr, void *ou
 forceinline __no_instrument void *__tlb_write_ptr(struct tlb *tlb, addr_t addr) {
     struct tlb_entry entry = tlb->entries[TLB_INDEX(addr)];
     if (entry.page_if_writable == TLB_PAGE(addr)) {
-        tlb->mem->dirty_page = TLB_PAGE(addr);
+        tlb->dirty_page = TLB_PAGE(addr);
         void *address = (void *) (entry.data_minus_addr + addr);
         postulate(address != NULL);
         return address;
@@ -56,7 +57,7 @@ forceinline __no_instrument void *__tlb_write_ptr(struct tlb *tlb, addr_t addr) 
 }
 bool __tlb_write_cross_page(struct tlb *tlb, addr_t addr, const char *value, unsigned size);
 forceinline __no_instrument bool tlb_write(struct tlb *tlb, addr_t addr, const void *value, unsigned size) {
-    if (OFFSET(addr) > PAGE_SIZE - size)
+    if (PGOFFSET(addr) > PAGE_SIZE - size)
         return __tlb_write_cross_page(tlb, addr, value, size);
     void *ptr = __tlb_write_ptr(tlb, addr);
     if (ptr == NULL)

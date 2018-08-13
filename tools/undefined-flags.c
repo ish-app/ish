@@ -65,6 +65,7 @@ int undefined_flags_mask(int pid, struct cpu_state *cpu) {
             read(modrm);
             switch (REG(modrm)) {
                 case 4: return S|Z|A|P; // mul
+                case 5: return S|Z|A|P; // imul
             }
             break;
         }

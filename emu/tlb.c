@@ -4,6 +4,7 @@
 struct tlb *tlb_new(struct mem *mem) {
     struct tlb *tlb = malloc(sizeof(struct tlb));
     tlb->mem = mem;
+    tlb->dirty_page = TLB_PAGE_EMPTY;
     tlb_flush(tlb);
     return tlb;
 }
@@ -22,7 +23,7 @@ bool __tlb_read_cross_page(struct tlb *tlb, addr_t addr, char *value, unsigned s
     char *ptr2 = __tlb_read_ptr(tlb, (PAGE(addr) + 1) << PAGE_BITS);
     if (ptr1 == NULL || ptr2 == NULL)
         return false;
-    size_t part1 = PAGE_SIZE - OFFSET(addr);
+    size_t part1 = PAGE_SIZE - PGOFFSET(addr);
     assert(part1 < size);
     memcpy(value, ptr1, part1);
     memcpy(value + part1, ptr2, size - part1);
@@ -34,7 +35,7 @@ bool __tlb_write_cross_page(struct tlb *tlb, addr_t addr, const char *value, uns
     char *ptr2 = __tlb_write_ptr(tlb, (PAGE(addr) + 1) << PAGE_BITS);
     if (ptr1 == NULL || ptr2 == NULL)
         return false;
-    size_t part1 = PAGE_SIZE - OFFSET(addr);
+    size_t part1 = PAGE_SIZE - PGOFFSET(addr);
     assert(part1 < size);
     memcpy(ptr1, value, part1);
     memcpy(ptr2, value + part1, size - part1);
@@ -42,9 +43,10 @@ bool __tlb_write_cross_page(struct tlb *tlb, addr_t addr, const char *value, uns
 }
 
 __no_instrument void *tlb_handle_miss(struct tlb *tlb, addr_t addr, int type) {
-    char *ptr = mem_ptr(tlb->mem, addr & 0xfffff000, type);
+    char *ptr = mem_ptr(tlb->mem, TLB_PAGE(addr), type);
     if (ptr == NULL)
         return NULL;
+    tlb->dirty_page = TLB_PAGE(addr);
 
     struct tlb_entry *tlb_ent = &tlb->entries[TLB_INDEX(addr)];
     tlb_ent->page = TLB_PAGE(addr);
