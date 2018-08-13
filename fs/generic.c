@@ -140,6 +140,15 @@ int generic_setattrat(struct fd *at, const char *path_raw, struct attr attr, boo
     return mount->fs->setattr(mount, path, attr);
 }
 
+int generic_utime(struct fd *at, const char *path_raw, struct timespec atime, struct timespec mtime, bool follow_links) {
+    char path[MAX_PATH];
+    int err = path_normalize(at, path_raw, path, follow_links);
+    if (err < 0)
+        return err;
+    struct mount *mount = find_mount_and_trim_path(path);
+    return mount->fs->utime(mount, path, atime, mtime);
+}
+
 ssize_t generic_readlink(const char *path_raw, char *buf, size_t bufsize) {
     char path[MAX_PATH];
     int err = path_normalize(AT_PWD, path_raw, path, false);

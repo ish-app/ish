@@ -57,6 +57,7 @@ int generic_symlinkat(const char *target, struct fd *at, const char *link);
 int generic_access(const char *path, int mode);
 int generic_statat(struct fd *at, const char *path, struct statbuf *stat, bool follow_links);
 int generic_setattrat(struct fd *at, const char *path, struct attr attr, bool follow_links);
+int generic_utime(struct fd *at, const char *path, struct timespec atime, struct timespec mtime, bool follow_links);
 ssize_t generic_readlink(const char *path, char *buf, size_t bufsize);
 int generic_mkdirat(struct fd *at, const char *path, mode_t_ mode);
 
@@ -114,6 +115,7 @@ extern const struct fs_ops fakefs;
 extern const struct fd_ops realfs_fdops;
 
 int realfs_truncate(struct mount *mount, const char *path, off_t_ size);
+int realfs_utime(struct mount *mount, const char *path, struct timespec atime, struct timespec mtime);
 
 int realfs_statfs(struct mount *mount, struct statfsbuf *stat);
 int realfs_flock(struct fd *fd, int operation);

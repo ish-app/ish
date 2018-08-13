@@ -351,6 +351,7 @@ const struct fs_ops fakefs = {
     .flock = realfs_flock,
     .setattr = fakefs_setattr,
     .fsetattr = fakefs_fsetattr,
+    .utime = realfs_utime,
 
     .mkdir = fakefs_mkdir,
     .rmdir = fakefs_rmdir,
