@@ -262,7 +262,7 @@ static inline bool gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define IMUL2(val, reg,z) IMUL3(val, reg, reg, z)
 
 #define CVT ga(cvt, sz(oz))
-#define CVTE UNDEFINED
+#define CVTE ga(cvte, sz(oz))
 
 #define ROL(count, val,z) los(rol, count, val, z)
 #define ROR(count, val,z) los(ror, count, val, z)

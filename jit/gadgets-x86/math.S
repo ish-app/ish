@@ -195,3 +195,11 @@
     cdq
     gret
 .gadget_list cvt, SIZE_LIST
+
+.gadget cvte_16
+    cwde
+    gret
+.gadget cvte_32
+    cdqe
+    gret
+.gadget_list cvte, SIZE_LIST
