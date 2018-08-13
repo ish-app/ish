@@ -49,6 +49,6 @@
 #define MOVD(src, dst) \
     set(dst, get(src,128).dw[0],32)
 
-#include "emu/softfloat.h"
+#include "emu/float80.h"
 #define CVTTSD2SI(src, dst) \
-    set(dst, float64_to_int32(get(src,64)),32)
+    set(dst, (int32_t) get(src,64),32)

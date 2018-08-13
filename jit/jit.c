@@ -145,6 +145,8 @@ void cpu_run(struct cpu_state *cpu) {
             read_wrlock(&cpu->mem->lock);
             if (tlb->mem != cpu->mem) {
                 tlb->mem = cpu->mem;
+            }
+            if (jit != cpu->mem->jit) {
                 jit = cpu->mem->jit;
                 last_block = NULL;
             }

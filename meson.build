@@ -89,7 +89,8 @@ src = [
 
     'emu/memory.c',
     'emu/tlb.c',
-    'emu/softfloat.c',
+    'emu/fpu.c',
+    'emu/float80.c',
     cified_vdso,
 ]
 if get_option('jit')
@@ -134,3 +135,7 @@ foreach script : gdb_scripts
         command: ['ln', '-sf', '@INPUT@', '@OUTPUT@'],
         build_by_default: true)
 endforeach
+
+# test for floating point library
+float80_test = executable('float80_test', ['emu/float80.c', 'emu/float80-test.c'])
+test('float80', float80_test)

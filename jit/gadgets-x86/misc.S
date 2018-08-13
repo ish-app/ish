@@ -5,6 +5,7 @@
     gret
 
 .gadget cpuid
+    # regrettable
     push %rsi
     push %rdi
     push %r8
@@ -55,3 +56,45 @@
     movb %r15b, CPU_eflags(%_cpu)
     gret 1
 .gadget_array cmpxchg
+
+.macro do_helper type, size=
+    .gadget helper_\type\size
+        .ifin(\type, read,write)
+            \type\()_prep (\size*4)
+        .endifin
+        save_c
+        movq %_cpu, %rdi
+        .ifc \type,1
+            movq 8(%_ip), %rsi
+        .endif
+        .ifc \type,2
+            movq 8(%_ip), %rsi
+            movq 16(%_ip), %rdx
+        .endif
+        .ifin(\type, read,write)
+            movq %_addrq, %rsi
+        .endifin
+        callq *(%_ip)
+        restore_c
+        .ifc \type,write
+            write_done (\size*4)
+        .endif
+        .ifc \type,0
+            gret 1
+        .else; .ifc \type,2
+            gret 3
+        .else
+            gret 2
+        .endif; .endif
+.endm
+do_helper 0
+do_helper 1
+do_helper 2
+.irp size, SIZE_LIST,64,80
+    do_helper read, \size
+    do_helper write, \size
+.endr
+
+.gadget fstsw_ax
+    movw CPU_fsw(%_cpu), %ax
+    gret

@@ -1,24 +1,24 @@
-#include "emu/softfloat.h"
-
-// yay hack
-static inline floatx80 floatx80_to_float80(floatx80 f) { return f; }
-static inline floatx80 float80_to_floatx80(floatx80 f) { return f; }
+#include "emu/float80.h"
 
 #define ty_real(x) ty_real_##x
-#define ty_real_16 float16
-#define ty_real_32 float32
-#define ty_real_64 float64
-#define ty_real_80 floatx80
+#define ty_real_32 float
+#define ty_real_64 double
+#define ty_real_80 float80
 
 #define mem_read_real(addr, size) mem_read_ts(addr, ty_real(size), size)
 #define mem_write_real(addr, val, size) mem_write_ts(addr, val, ty_real(size), size)
 #define get_mem_addr_real(size) mem_read_real(addr, size)
 #define set_mem_addr_real(to, size) mem_write_real(addr, to, size)
 
-#define floatx80_to_float(f, z) glue(floatx80_to_float, sz(z))(f)
-#define float_to_floatx80(f_, z) glue3(float, sz(z), _to_floatx80)(f_)
-#define floatx80_to_int(i, z) glue(floatx80_to_int, sz(z))(i)
-#define int_to_floatx80(i_, z) glue3(int, sz(z), _to_floatx80)(i_)
+// my god this is annoying
+#define f80_from_float(x, z) f80_from_float##z(x)
+#define f80_from_float32 f80_from_double
+#define f80_from_float64 f80_from_double
+#define f80_from_float80(x) x
+#define f80_to_float(x, z) f80_to_float##z(x)
+#define f80_to_float32 f80_to_double
+#define f80_to_float64 f80_to_double
+#define f80_to_float80(x) x
 
 #define ST(i) cpu->fp[cpu->top + i]
 #define ST_i ST(modrm.rm_opcode)
@@ -28,74 +28,76 @@ static inline floatx80 float80_to_floatx80(floatx80 f) { return f; }
     cpu->top++
 
 #define FXCH() \
-    floatx80 ftmp = ST(0); ST(0) = ST_i; ST_i = ftmp
+    float80 ftmp = ST(0); ST(0) = ST_i; ST_i = ftmp
 
 #define st_0 ST(0)
 #define st_i ST(modrm.rm_opcode)
 
 #define FADD(src, dst) \
-    dst = floatx80_add(dst, src)
+    dst = f80_add(dst, src)
 #define FIADD(val,z) \
-    ST(0) = floatx80_add(ST(0), int64_to_floatx80((sint(z)) get(val,z)))
+    ST(0) = f80_add(ST(0), f80_from_int((sint(z)) get(val,z)))
 #define FADDM(val,z) \
-    ST(0) = floatx80_add(ST(0), float_to_floatx80(get(val,z),z))
+    ST(0) = f80_add(ST(0), f80_from_float(get(val,z),z))
 #define FSUB(src, dst) \
-    dst = floatx80_sub(dst, src)
-#define FSUBM(val,z) \
-    ST(0) = floatx80_sub(ST(0), float_to_floatx80(get(val,z),z))
+    dst = f80_sub(dst, src)
 #define FISUB(val,z) \
-    ST(0) = floatx80_sub(ST(0), int64_to_floatx80((sint(z)) get(val,z)))
+    ST(0) = f80_sub(ST(0), f80_from_int((sint(z)) get(val,z)))
+#define FSUBM(val,z) \
+    ST(0) = f80_sub(ST(0), f80_from_float(get(val,z),z))
+#define FSUBR(src, dst) \
+    dst = f80_sub(src, dst)
+#define FISUBR(val,z) \
+    ST(0) = f80_sub(f80_from_int((sint(z)) get(val,z)), ST(0))
+#define FSUBRM(val,z) \
+    ST(0) = f80_sub(f80_from_float(get(val,z),z), ST(0))
 #define FMUL(src, dst) \
-    dst = floatx80_mul(dst, src)
+    dst = f80_mul(dst, src)
 #define FIMUL(val,z) \
-    ST(0) = floatx80_mul(ST(0), int64_to_floatx80((sint(z)) get(val,z)))
+    ST(0) = f80_mul(ST(0), f80_from_int((sint(z)) get(val,z)))
 #define FMULM(val,z) \
-    ST(0) = floatx80_mul(ST(0), float_to_floatx80(get(val,z),z))
+    ST(0) = f80_mul(ST(0), f80_from_float(get(val,z),z))
 #define FDIV(src, dst) \
-    dst = floatx80_div(dst, src)
+    dst = f80_div(dst, src)
 #define FIDIV(val,z) \
-    ST(0) = floatx80_div(ST(0), int64_to_floatx80((sint(z)) get(val,z)))
+    ST(0) = f80_div(ST(0), f80_from_int((sint(z)) get(val,z)))
 #define FDIVM(val,z) \
-    ST(0) = floatx80_div(ST(0), float_to_floatx80(get(val,z),z))
+    ST(0) = f80_div(ST(0), f80_from_float(get(val,z),z))
 
 #define FCHS() \
-    floatx80_neg(ST(0))
+    ST(0) = f80_neg(ST(0))
 #define FABS() \
-    floatx80_abs(ST(0))
+    ST(0) = f80_abs(ST(0))
 
-// FIXME this is the IEEE ABSOLUTELY CORRECT AND AWESOME REMAINDER which is
-// computed by fprem1, not fprem
-// only known case of intel naming an instruction by taking another instruction
-// that does the same thing but wrong and adding a 1
 #define FPREM() \
-    ST(0) = floatx80_rem(ST(0), ST(1))
+    ST(0) = f80_mod(ST(0), ST(1))
 
 #define FUCOMI() \
-    cpu->zf = floatx80_eq(ST(0), ST_i); \
-    cpu->cf = floatx80_lt(ST(0), ST_i); \
+    cpu->zf = f80_eq(ST(0), ST_i); \
+    cpu->cf = f80_lt(ST(0), ST_i); \
     cpu->pf = 0; cpu->pf_res = 0
 // not worrying about nans and shit yet
 
 #define FUCOM() \
-    cpu->c0 = floatx80_lt(ST(0), ST_i); \
+    cpu->c0 = f80_lt(ST(0), ST_i); \
     cpu->c1 = 0; \
     cpu->c2 = 0; /* again, not worrying about nans */ \
-    cpu->c3 = floatx80_eq(ST(0), ST_i)
+    cpu->c3 = f80_eq(ST(0), ST_i)
 
 #define FILD(val,z) \
-    FPUSH(int64_to_floatx80((sint(z)) get(val,z)))
+    FPUSH(f80_from_int((sint(z)) get(val,z)))
 #define FLD() FPUSH(ST_i)
 #define FLDM(val,z) \
-    FPUSH(float_to_floatx80(get(val,z),z))
+    FPUSH(f80_from_float(get(val,z),z))
 
 #define FLDC(what) FPUSH(fconst_##what)
-#define fconst_one int64_to_floatx80(1)
-#define fconst_zero int64_to_floatx80(0)
+#define fconst_one f80_from_int(1)
+#define fconst_zero f80_from_int(0)
 
 #define FSTM(dst,z) \
-    set(dst, floatx80_to_float(ST(0),z),z)
+    set(dst, f80_to_float(ST(0),z),z)
 #define FIST(dst,z) \
-    set(dst, floatx80_to_int(ST(0), z),z)
+    set(dst, f80_to_int(ST(0)),z)
 
 #define FST() ST_i = ST(0)
 

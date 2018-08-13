@@ -2,6 +2,7 @@
 #include "jit/gen.h"
 #include "emu/modrm.h"
 #include "emu/cpuid.h"
+#include "emu/fpu.h"
 #include "emu/interrupt.h"
 
 static void gen(struct gen_state *state, unsigned long thing) {
@@ -90,6 +91,7 @@ enum arg {
 enum size {
     size_8, size_16, size_32,
     size_count,
+    size_64, size_80, // FIXME bonus sizes, fpu only at the moment
 };
 
 // sync with COND_LIST in control.S
@@ -115,6 +117,11 @@ typedef void (*gadget_t)();
 #define gag(g, i, a) do { ga(g, i); GEN(a); } while (0)
 #define gagg(g, i, a, b) do { ga(g, i); GEN(a); GEN(b); } while (0)
 #define gz(g, z) ga(g, sz(z))
+#define h(h) gg(helper_0, h)
+#define hh(h, a) ggg(helper_1, h, a)
+#define hhh(h, a, b) gggg(helper_2, h, a, b)
+#define h_read(h, z) do { g_addr(); gg_here(helper_read##z, h##z); } while (0)
+#define h_write(h, z) do { g_addr(); gg_here(helper_write##z, h##z); } while (0)
 #define gg_here(g, a) ggg(g, a, state->ip)
 #define UNDEFINED do { gg_here(interrupt, INT_UNDEFINED); return false; } while (0)
 #define SEGFAULT do { gg_here(interrupt, INT_GPF); return false; } while (0)
@@ -127,6 +134,19 @@ static inline int sz(int size) {
         default: return -1;
     }
 }
+
+bool gen_addr(struct gen_state *state, struct modrm *modrm, bool seg_gs) {
+    if (modrm->base == reg_none)
+        gg(addr_none, modrm->offset);
+    else
+        gag(addr, modrm->base, modrm->offset);
+    if (modrm->type == modrm_mem_si)
+        ga(si, modrm->index * 4 + modrm->shift);
+    if (seg_gs)
+        g(seg_gs);
+    return true;
+}
+#define g_addr() gen_addr(state, &modrm, seg_gs)
 
 // this really wants to use all the locals of the decoder, which we can do
 // really nicely in gcc using nested functions, but that won't work in clang,
@@ -160,18 +180,9 @@ static inline bool gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
         debugger;
         UNDEFINED;
     }
-    switch (arg) {
-        case arg_mem:
-        case arg_addr:
-            if (modrm->base == reg_none)
-                gg(addr_none, modrm->offset);
-            else
-                gag(addr, modrm->base, modrm->offset);
-            if (modrm->type == modrm_mem_si)
-                ga(si, modrm->index * 4 + modrm->shift);
-            if (seg_gs)
-                g(seg_gs);
-            break;
+    if (arg == arg_mem || arg == arg_addr) {
+        if (!gen_addr(state, modrm, seg_gs))
+            return false;
     }
     GEN(gadgets[arg]);
     if (arg == arg_imm)
@@ -313,35 +324,40 @@ static inline bool gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define CVTTSD2SI(src, dst) UNDEFINED
 
 // fpu
-#define FLD() UNDEFINED
-#define FILD(val,z) UNDEFINED
-#define FLDM(val,z) UNDEFINED
-#define FSTM(dst,z) UNDEFINED
-#define FIST(dst,z) UNDEFINED
-#define FXCH() UNDEFINED
-#define FUCOM() UNDEFINED
+#define st_0 0
+#define st_i modrm.rm_opcode
+#define FLD() hh(fpu_ld, st_i);
+#define FILD(val,z) h_read(fpu_ild, z)
+#define FLDM(val,z) h_read(fpu_ldm, z)
+#define FSTM(dst,z) h_write(fpu_stm, z)
+#define FIST(dst,z) h_write(fpu_ist, z)
+#define FXCH() hh(fpu_xch, st_i)
+#define FUCOM() hh(fpu_ucom, st_i)
 #define FUCOMI() UNDEFINED
-#define FST() UNDEFINED
+#define FST() hh(fpu_st, st_i)
 #define FCHS() UNDEFINED
 #define FABS() UNDEFINED
-#define FLDC(what) UNDEFINED
-#define FPREM() UNDEFINED
-#define FSTSW(dst) UNDEFINED
-#define FSTCW(dst) UNDEFINED
-#define FLDCW(dst) UNDEFINED
-#define FPOP UNDEFINED
-#define FADD(src, dst) UNDEFINED
-#define FIADD(val,z) UNDEFINED
-#define FADDM(val,z) UNDEFINED
-#define FSUB(src, dst) UNDEFINED
-#define FSUBM(val,z) UNDEFINED
-#define FISUB(val,z) UNDEFINED
-#define FMUL(src, dst) UNDEFINED
-#define FIMUL(val,z) UNDEFINED
-#define FMULM(val,z) UNDEFINED
-#define FDIV(src, dst) UNDEFINED
-#define FIDIV(val,z) UNDEFINED
-#define FDIVM(val,z) UNDEFINED
+#define FLDC(what) hh(fpu_ldc, fconst_##what)
+#define FPREM() h(fpu_prem)
+#define FSTSW(dst) if (arg_##dst == arg_reg_a) g(fstsw_ax); else UNDEFINED
+#define FSTCW(dst) if (arg_##dst == arg_reg_a) UNDEFINED; else h_write(fpu_stcw, 16)
+#define FLDCW(dst) if (arg_##dst == arg_reg_a) UNDEFINED; else h_read(fpu_ldcw, 16)
+#define FPOP h(fpu_pop)
+#define FADD(src, dst) hhh(fpu_add, src, dst)
+#define FIADD(val,z) h_read(fpu_iadd, z)
+#define FADDM(val,z) h_read(fpu_addm, z)
+#define FSUB(src, dst) hhh(fpu_sub, src, dst)
+#define FSUBM(val,z) h_read(fpu_subm, z)
+#define FISUB(val,z) h_read(fpu_isub, z)
+#define FSUBR(src, dst) hhh(fpu_subr, src, dst)
+#define FSUBRM(val,z) h_read(fpu_subrm, z)
+#define FISUBR(val,z) h_read(fpu_isubr, z)
+#define FMUL(src, dst) hhh(fpu_mul, src, dst)
+#define FIMUL(val,z) h_read(fpu_imul, z)
+#define FMULM(val,z) h_read(fpu_mulm, z)
+#define FDIV(src, dst) hhh(fpu_div, src, dst)
+#define FIDIV(val,z) h_read(fpu_idiv, z)
+#define FDIVM(val,z) h_read(fpu_divm, z)
 
 #define DECODER_RET int
 #define DECODER_NAME gen_step

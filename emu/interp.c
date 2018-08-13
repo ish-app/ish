@@ -16,7 +16,7 @@
     union xmm_reg xmm_src; \
     union xmm_reg xmm_dst; \
     \
-    floatx80 ftmp;
+    float80 ftmp;
 
 #define FINISH \
     return -1 // everything is ok.

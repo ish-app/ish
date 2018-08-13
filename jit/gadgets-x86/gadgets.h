@@ -114,6 +114,8 @@
         gadgets \type\()8, \list
         gadgets \type\()16, \list
         gadgets \type\()32, \list
+        gadgets \type\()64, \list
+        gadgets \type\()80, \list
     .popsection
 .endm
 

@@ -3,7 +3,7 @@
 
 #include <stddef.h>
 #include "misc.h"
-#include "emu/softfloat.h"
+#include "emu/float80.h"
 #include "emu/memory.h"
 #include "emu/tlb.h"
 
@@ -102,7 +102,7 @@ struct cpu_state {
     };
 
     // fpu
-    floatx80 fp[8];
+    float80 fp[8];
     union {
         word_t fsw;
         struct {
