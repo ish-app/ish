@@ -75,14 +75,11 @@
     .else; .ifc \cond,cz
         check_cf
         jnz \target
-        check_res
-        jz \target
+        res_or_flag z, ZF_RES, ZF_FLAG, \target
     .else; .ifc \cond,s
-        check_res
-        js \target
+        res_or_flag s, SF_RES, SF_FLAG, \target
     .else; .ifc \cond,p
-        check_res
-        jp \target
+        res_or_flag p, PF_RES, PF_FLAG, \target
     .else; .ifc \cond,sxo
         check_res
         sets %r14b
@@ -160,6 +157,16 @@
     movl %tmpd, CPU_eflags(%_cpu)
     add $4, %_esp
 
+    save_c
+    movq %_cpu, %rdi
+    call helper_expand_flags
+    restore_c
+    gret
+
+.gadget sahf
+    xchgb %ah, %al
+    movb %al, CPU_eflags(%_cpu)
+    xchgb %al, %ah
     save_c
     movq %_cpu, %rdi
     call helper_expand_flags
