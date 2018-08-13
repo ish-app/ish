@@ -26,7 +26,7 @@
 #include "tools/transplant.h"
 #include "tools/ptutil.h"
 #include "undefined-flags.h"
-#include "libvdso.so.h"
+#include "kernel/vdso.h"
 
 #include "xX_main_Xx.h"
 
