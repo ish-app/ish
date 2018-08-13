@@ -34,7 +34,7 @@ subdir('vdso') # ish depends on the vdso
 
 offsets = custom_target('offsets',
     output: 'cpu-offsets.h', input: 'jit/offsets.c', depfile: 'cpu-offsets.h.d',
-    command: [find_program('tools/staticdefine.sh'), 'compile_commands.json', '@INPUT@', '@OUTPUT@', '@DEPFILE@'])
+    command: [find_program('tools/staticdefine.sh'), '@OUTDIR@/compile_commands.json', '@INPUT@', '@OUTPUT@', '@DEPFILE@'])
 
 src = [
     'kernel/init.c',
