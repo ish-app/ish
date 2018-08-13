@@ -509,7 +509,7 @@ dword_t sys_rmdir(addr_t path_addr) {
     char path[MAX_PATH];
     if (user_read_string(path_addr, path, sizeof(path)))
         return _EFAULT;
-    return generic_rmdirat(NULL, path);
+    return generic_rmdirat(AT_PWD, path);
 }
 
 // a few stubs

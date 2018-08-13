@@ -45,6 +45,8 @@ int err_map(int err) {
         ERRCASE(ENAMETOOLONG)
         ERRCASE(ENOLCK)
         ERRCASE(ENOSYS)
+        ERRCASE(ENOTEMPTY)
+        ERRCASE(ELOOP)
         ERRCASE(ENOSTR)
         ERRCASE(ENODATA)
         ERRCASE(ETIME)

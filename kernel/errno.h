@@ -43,6 +43,8 @@
 #define _ENAMETOOLONG  -36 /* File name too long */
 #define _ENOLCK        -37 /* No record locks available */
 #define _ENOSYS        -38 /* Invalid system call number */
+#define _ENOTEMPTY     -39 /* Directory not empty */
+#define _ELOOP         -40 /* Too many symbolic links encountered */
 
 #define _EBFONT        -59 /* Bad font file format */
 #define _ENOSTR        -60 /* Device not a stream */
