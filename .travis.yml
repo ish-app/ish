@@ -8,10 +8,6 @@ install:
     - curl -LO https://github.com/ninja-build/ninja/releases/download/v1.8.2/ninja-linux.zip
     - unzip ninja-linux.zip ninja -d ~/bin
 
-# man I wish I could get away with a container, but I currently need docker for compiling the vdso
-sudo: required
-services: docker
-
 env:
     - MESON_OPTS=-Djit=true
     - MESON_OPTS=-Djit=false
