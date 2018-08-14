@@ -25,8 +25,8 @@ You'll need these things to build the project:
 
  - Python 3
  - Ninja
- - Meson
- - Docker (required to build the VDSO)
+ - Meson (`pip install meson`)
+ - Clang and LLD (on mac, `brew install llvm`, on linux, `sudo apt install clang lld` or `sudo pacman -S clang lld` or whatever)
 
 To set up your environment, cd to the project and run `meson build`. Then run `ninja` in the build directory to build.
 
