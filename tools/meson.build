@@ -1,5 +1,5 @@
-# these tools are linux-specific
-if build_machine.system() == 'linux'
+# these tools are specific to x86_64 linux
+if host_machine.system() == 'linux' and host_machine.cpu() == 'x86_64'
     transplant_src = [
         'vdso-transplant.c',
         'ptutil.c',
