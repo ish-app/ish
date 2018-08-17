@@ -13,13 +13,13 @@ jit_enter:
     add _ip, x0, JIT_BLOCK_code
     # cpu is already x1
     add _tlb, x2, TLB_entries
-    ldr _eax, [_cpu, CPU_eax]
-    ldr _ebx, [_cpu, CPU_ebx]
-    ldr _ecx, [_cpu, CPU_ecx]
-    ldr _edx, [_cpu, CPU_edx]
-    ldr _esi, [_cpu, CPU_esi]
-    ldr _ebp, [_cpu, CPU_ebp]
-    ldr _esp, [_cpu, CPU_esp]
+    ldr eax, [_cpu, CPU_eax]
+    ldr ebx, [_cpu, CPU_ebx]
+    ldr ecx, [_cpu, CPU_ecx]
+    ldr edx, [_cpu, CPU_edx]
+    ldr esi, [_cpu, CPU_esi]
+    ldr ebp, [_cpu, CPU_ebp]
+    ldr esp, [_cpu, CPU_esp]
     gret
 
 .global jit_ret_chain
@@ -36,14 +36,14 @@ jit_ret:
 
 .global jit_exit
 jit_exit:
-    str _eax, [_cpu, CPU_eax]
-    str _ebx, [_cpu, CPU_ebx]
-    str _ecx, [_cpu, CPU_ecx]
-    str _edx, [_cpu, CPU_edx]
-    str _esi, [_cpu, CPU_esi]
-    str _ebp, [_cpu, CPU_ebp]
-    str _esp, [_cpu, CPU_esp]
-    str _eip, [_cpu, CPU_eip]
+    str eax, [_cpu, CPU_eax]
+    str ebx, [_cpu, CPU_ebx]
+    str ecx, [_cpu, CPU_ecx]
+    str edx, [_cpu, CPU_edx]
+    str esi, [_cpu, CPU_esi]
+    str ebp, [_cpu, CPU_ebp]
+    str esp, [_cpu, CPU_esp]
+    str eip, [_cpu, CPU_eip]
     ldp x28, x29, [sp, 0x50]
     ldp x26, x27, [sp, 0x40]
     ldp x24, x25, [sp, 0x30]
@@ -55,9 +55,9 @@ jit_exit:
 
 .gadget interrupt
     ldr _tmp, [_ip]
-    ldr _eip, [_ip, 8]
+    ldr eip, [_ip, 8]
     b jit_exit
 
 .gadget exit
-    ldr _eip, [_ip]
+    ldr eip, [_ip]
     b jit_ret

@@ -15,15 +15,15 @@
 # this would have been just a few nice compact nested loops, but gas said "nuh uh"
 
 .macro _do_op op, arg, size, s
-    /*
     .ifc \op,load
-        mov\ss \arg, %tmp\s
+        movs _tmp, \arg, \s
+        uxts _tmp, _tmp, \s
         .exitm
     .else; .ifc \op,store
-        mov\ss %tmp\s, \arg
-        .exitm
+        movs \arg, _tmp, \s
     .endif; .endif
 
+    /*
     .ifin(\op, add,sub,adc,sbb)
         mov\ss \arg, %r14\s
         setf_a src=%r14\s, dst=%tmp\s, ss=\ss
@@ -61,20 +61,22 @@
 
 .macro do_reg_op op, size, reg
     .gadget \op\size\()_reg_\reg
-        do_op \op, \size, \reg
+        do_op \op, \size, e\reg\()x
         gret
 .endm
 
 .macro do_hi_op op, size, reg
     # xchg %\reg\()h, %\reg\()l
-    do_op \op, \size, %\reg\()l
+    #do_op \op, \size, %\reg\()l
+    hlt 0
     # xchg %\reg\()h, %\reg\()l
 .endm
 
 .macro do_op_size op, size
     .ifnc \op,store
         .gadget \op\size\()_imm
-            do_op \op, \size, (%_ip)
+            ldr w8, [_ip]
+            do_op \op, \size, w8
             gret 1
     .endif
 
@@ -84,8 +86,10 @@
         .else
             read_prep \size
         .endif
-        do_op \op, \size, (%_addrq)
+        ldr w8, [_xaddr]
+        do_op \op, \size, w8
         .ifc \op,store
+            str w8, [_xaddr]
             write_done \size
         .endif
         gret 1
@@ -96,24 +100,14 @@
 
     .irp reg, si,di,sp,bp
         .gadget \op\size\()_reg_\reg
-            .if \size == 32
-                .ifnc \reg,sp
-                    do_op \op, \size, %e\reg
-                .else
-                    do_op \op, \size, %_esp
-                .endif
-            .elseif \size == 16
-                .ifnc \reg,sp
-                    do_op \op, \size, %\reg
-                .else
-                    do_op \op, \size, %_sp
-                .endif
-            .elseif \size == 8
+            .if \size == 8
                 .ifc \reg,sp; do_hi_op \op, \size, a; .else
                 .ifc \reg,bp; do_hi_op \op, \size, c; .else
                 .ifc \reg,si; do_hi_op \op, \size, d; .else
                 .ifc \reg,di; do_hi_op \op, \size, b
                 .endif; .endif; .endif; .endif
+            .else
+                do_op \op, \size, e\reg
             .endif
             gret
     .endr
@@ -195,21 +189,21 @@
 .endr
 
 .gadget cvt_16
-    tst _eax, 0x8000
+    tst eax, 0x8000
     cinv w8, wzr, ne
-    bfxil _edx, w8, 0, 16
+    bfxil edx, w8, 0, 16
     gret
 .gadget cvt_32
-    tst _eax, 0x80000000
-    cinv _edx, wzr, ne
+    tst eax, 0x80000000
+    cinv edx, wzr, ne
     gret
 .gadget_list cvt, SIZE_LIST
 
 .gadget cvte_16
-    sxtb _eax, w8
-    bfxil _eax, w8, 0, 16
+    sxtb eax, w8
+    bfxil eax, w8, 0, 16
     gret
 .gadget cvte_32
-    sxth _eax, _eax
+    sxth eax, eax
     gret
 .gadget_list cvte, SIZE_LIST

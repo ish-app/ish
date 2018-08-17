@@ -7,7 +7,7 @@
                 ldr w8, [_ip]
                 ands w8, w8, \size-1
             .else
-                ands w8, _ecx, \size-1
+                ands w8, ecx, \size-1
             .endif
             b.eq 1f
 

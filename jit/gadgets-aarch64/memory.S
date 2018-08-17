@@ -2,17 +2,17 @@
 #include "emu/interrupt.h"
 
 .gadget push
-    sub _esp, _esp, 4
-    mov _addr, _esp
+    sub esp, esp, 4
+    mov _addr, esp
     write_prep 32
     str _tmp, [_xaddr]
     write_done 32
     gret 1
 .gadget pop
-    mov _addr, _esp
+    mov _addr, esp
     read_prep 32
     ldr _tmp, [_xaddr]
-    add _esp, _esp, 4
+    add esp, esp, 4
     gret 1
 
 .macro x name, reg
@@ -82,7 +82,7 @@ si_gadgets:
 .endr
 
 segfault:
-    ldr _eip, [_ip]
+    ldr eip, [_ip]
     mov x0, INT_GPF
     b jit_exit
 

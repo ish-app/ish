@@ -1,23 +1,23 @@
 #include "cpu-offsets.h"
 
 # register assignments
-#define _eax w20
-#define _ebx w21
-#define _ecx w22
-#define _edx w23
-#define _xdx x23
-#define _esi w24
-#define _edi w25
-#define _ebp w26
-#define _esp w27
-#define _ip x28
-#define _eip w28
-#define _tmp w0
-#define _xtmp x0
-#define _cpu x1
-#define _tlb x2
-#define _addr w3
-#define _xaddr x3
+eax .req w20
+ebx .req w21
+ecx .req w22
+edx .req w23
+xdx .req x23
+esi .req w24
+edi .req w25
+ebp .req w26
+esp .req w27
+_ip .req x28
+eip .req w28
+_tmp .req w0
+_xtmp .req x0
+_cpu .req x1
+_tlb .req x2
+_addr .req w3
+_xaddr .req x3
 
 .extern jit_exit
 
@@ -129,14 +129,14 @@
 .endm
 
 .macro .each_reg macro:vararg
-    \macro reg_a, _eax
-    \macro reg_b, _ebx
-    \macro reg_c, _ecx
-    \macro reg_d, _edx
-    \macro reg_si, _esi
-    \macro reg_di, _edi
-    \macro reg_bp, _ebp
-    \macro reg_sp, _esp
+    \macro reg_a, eax
+    \macro reg_b, ebx
+    \macro reg_c, ecx
+    \macro reg_d, edx
+    \macro reg_si, esi
+    \macro reg_di, edi
+    \macro reg_bp, ebp
+    \macro reg_sp, esp
 .endm
 
 .macro ss size, macro, args:vararg
@@ -214,6 +214,16 @@
     ldp x8, x9, [sp, 0x20]
     ldp x2, x3, [sp, 0x10]
     ldp x0, x1, [sp], 0x50
+.endm
+
+.macro movs dst, src, s
+    .ifc \s,h
+        bfxil \dst, \src, 0, 16
+    .else; .ifc \s,b
+        bfxil \dst, \src, 0, 8
+    .else
+        mov \dst, \src
+    .endif; .endif
 .endm
 
 .macro uxts dst, src, s=

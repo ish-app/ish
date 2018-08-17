@@ -1,8 +1,8 @@
 #include "gadgets.h"
 
 .gadget call
-    sub _esp, _esp, 4
-    mov _addr, _esp
+    sub esp, esp, 4
+    mov _addr, esp
     write_prep 32
     ldr w8, [_ip, 16]
     str w8, [_xaddr]
@@ -11,30 +11,30 @@
     b jit_ret_chain
 
 .gadget call_indir
-    sub _esp, _esp, 4
-    mov _addr, _esp
+    sub esp, esp, 4
+    mov _addr, esp
     ldr w8, [_ip, 8]
     str w8, [_xaddr]
     write_done 32
-    mov _eip, _tmp
+    mov eip, _tmp
     b jit_ret
 
 .gadget ret
-    mov _addr, _esp
+    mov _addr, esp
     ldr w8, [_ip, 8]
-    add _esp, _esp, w8
+    add esp, esp, w8
     read_prep 32
-    ldr _eip, [_xaddr]
+    ldr eip, [_xaddr]
     b jit_ret
 
 .gadget jmp_indir
-    mov _eip, _tmp
+    mov eip, _tmp
     b jit_ret
 .gadget jmp
     ldr _ip, [_ip]
     b jit_ret_chain
 .gadget jcxz
-    cbnz _ecx, 1f
+    cbnz ecx, 1f
     ldr _ip, [_ip]
     b jit_ret_chain
 1:
@@ -154,8 +154,8 @@
     bl helper_collapse_flags
     restore_c
 
-    sub _esp, _esp, 4
-    mov _addr, _esp
+    sub esp, esp, 4
+    mov _addr, esp
     write_prep 32
     ldr x8, [_cpu, CPU_eflags]
     str x8, [_xaddr]
@@ -163,10 +163,10 @@
     gret
 
 .gadget popf
-    mov _addr, _esp
+    mov _addr, esp
     read_prep 32
     ldr x8, [_xaddr]
-    add _esp, _esp, 4
+    add esp, esp, 4
 
     save_c
     mov x0, _cpu
@@ -175,7 +175,7 @@
     gret
 
 .gadget sahf
-    ubfx w8, _eax, 8, 8
+    ubfx w8, eax, 8, 8
     strb w8, [_cpu, CPU_eflags]
     save_c
     mov x0, _cpu

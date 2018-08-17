@@ -25,7 +25,7 @@
 
     .gadget \op\size\()_\rep
         .ifnc \rep,once
-            cbz _ecx, 2f
+            cbz ecx, 2f
     1:
         .endif
         # df_offset = w12
@@ -36,39 +36,39 @@
     3:
 
         .ifc \op,lods
-            mov _addr, _esi
+            mov _addr, esi
             read_prep \size
-            ldr\s _eax, [_xaddr]
+            ldr\s eax, [_xaddr]
 
         .else; .ifc \op,stos
-            mov _addr, _edi
+            mov _addr, edi
             write_prep \size
-            str\s _eax, [_xaddr]
+            str\s eax, [_xaddr]
             write_done \size
 
         .else; .ifc \op,movs
-            mov _addr, _esi
+            mov _addr, esi
             read_prep \size
             ldr\s w8, [_xaddr]
-            mov _addr, _edi
+            mov _addr, edi
             write_prep \size
             str\s w8, [_xaddr]
             write_done \size
 
         .else; .ifc \op, scas
-            mov _addr, _edi
+            mov _addr, edi
             read_prep \size
             ldr _tmp, [_xaddr]
-            setf_a _eax, _tmp
-            subs _tmp, _tmp, _eax
+            setf_a eax, _tmp
+            subs _tmp, _tmp, eax
             setf_oc
             setf_zsp \s
 
         .else; .ifc \op, cmps
-            mov _addr, _esi
+            mov _addr, esi
             read_prep \size
             ldr _tmp, [_xaddr]
-            mov _addr, _edi
+            mov _addr, edi
             read_prep \size
             ldr w8, [_xaddr]
             setf_a w8, _tmp
@@ -78,14 +78,14 @@
         .endif; .endif; .endif; .endif; .endif
 
         .ifin(\op, lods,movs,cmps)
-            add _esi, _esi, w12
+            add esi, esi, w12
         .endifin
         .ifin(\op, movs,stos,cmps,scas)
-            add _edi, _edi, w12
+            add edi, edi, w12
         .endifin
 
         .ifnc \rep,once
-            sub _ecx, _ecx, #1
+            sub ecx, ecx, #1
             .ifin(\op, scas,cmps)
                 .ifc \rep,rep
                     cbnz _tmp, 2f
@@ -93,7 +93,7 @@
                     cbz _tmp, 2f
                 .endif; .endif
             .endifin
-            cbz _ecx, 1b
+            cbz ecx, 1b
     2:
         .endif
         gret 1
