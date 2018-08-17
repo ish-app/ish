@@ -7,6 +7,10 @@ install:
 # you can get from trusty *sigh*
     - curl -LO https://github.com/ninja-build/ninja/releases/download/v1.8.2/ninja-linux.zip
     - unzip ninja-linux.zip ninja -d ~/bin
+addons:
+    apt:
+        packages:
+            - unicorn
 
 env:
     - MESON_OPTS=-Djit=true
