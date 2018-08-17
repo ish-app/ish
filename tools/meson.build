@@ -13,6 +13,8 @@ if host_machine.system() == 'linux' and host_machine.cpu() == 'x86_64'
         include_directories: includes)
 endif
 
-unicorn = meson.get_compiler('c').find_library('unicorn')
-executable('unicornomatic', ['unicornomatic.c', 'undefined-flags.c'], dependencies: [ish, unicorn])
-configure_file(input: 'ptraceomatic-gdb.gdb', output: 'unicornomatic-gdb.gdb', copy: true)
+unicorn = meson.get_compiler('c').find_library('unicorn', required: false)
+if unicorn.found()
+    executable('unicornomatic', ['unicornomatic.c', 'undefined-flags.c'], dependencies: [ish, unicorn])
+    configure_file(input: 'ptraceomatic-gdb.gdb', output: 'unicornomatic-gdb.gdb', copy: true)
+endif
