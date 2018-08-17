@@ -475,7 +475,7 @@ int main(int argc, char *const argv[]) {
             cpu_step32(cpu, tlb);
             return -1;
         }
-        undefined_flags = undefined_flags_mask(pid, cpu);
+        undefined_flags = undefined_flags_mask(cpu, tlb);
         old_cpu = *cpu;
         step_tracing(cpu, tlb, pid, sender, receiver);
         i++;

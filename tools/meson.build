@@ -12,3 +12,7 @@ if host_machine.system() == 'linux' and host_machine.cpu() == 'x86_64'
     executable('vdso-transplant', ['vdso-transplant-main.c', transplant_src],
         include_directories: includes)
 endif
+
+unicorn = meson.get_compiler('c').find_library('unicorn')
+executable('unicornomatic', ['unicornomatic.c', 'undefined-flags.c'], dependencies: [ish, unicorn])
+configure_file(input: 'ptraceomatic-gdb.gdb', output: 'unicornomatic-gdb.gdb', copy: true)

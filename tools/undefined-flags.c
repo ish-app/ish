@@ -9,10 +9,10 @@
 #define S (1 << 7)
 #define O (1 << 11)
 
-int undefined_flags_mask(int pid, struct cpu_state *cpu) {
+int undefined_flags_mask(struct cpu_state *cpu, struct tlb *tlb) {
     addr_t ip = cpu->eip;
     byte_t opcode;
-#define read(x) pt_readn(pid, ip++, &x, sizeof(x));
+#define read(x) tlb_read(tlb, ip++, &x, sizeof(x));
     read(opcode);
     switch (opcode) {
         // shift or rotate, of is undefined if shift count is greater than 1
@@ -53,7 +53,7 @@ int undefined_flags_mask(int pid, struct cpu_state *cpu) {
             else if (opcode == 0xd2 || opcode == 0xd3)
                 shift_count = cpu->cl;
             else
-                pt_readn(pid, ip++, &shift_count, sizeof(shift_count));
+                read(shift_count);
             if (shift_count > 1)
                 return O;
             break;
