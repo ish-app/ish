@@ -23,7 +23,7 @@
                 strb w9, [_cpu, CPU_cf]
                 strb w10, [_cpu, CPU_of]
             .else
-                brk 1
+                hlt 0
             .endif
 
             .ifin(\type, shl,shr,sar)
@@ -49,7 +49,7 @@
 .macro do_shiftd op, arg
     .macro x name, reg
         .gadget \op\()_\arg\()32_\name
-            brk 1
+            hlt 0
             /*
             .ifc \arg,imm
                 pushq %rcx

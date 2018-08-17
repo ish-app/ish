@@ -53,7 +53,7 @@
         andl $~ZF_RES, CPU_flags_res(%_cpu)
     .endifin
     */
-    brk 1
+    hlt 0
 .endm
 .macro do_op op, size, arg
     ss \size, _do_op, \op, \arg
@@ -140,49 +140,49 @@
         # \op\()\ss %tmp\s
         # seto CPU_of(%_cpu)
         # setf_zsp
-        brk 1
+        hlt 0
     .endm
 .endr
 .macro do_sign_extend size, s, ss
     .if \size != 32
         # movs\ss\()l %tmp\s, %tmpd
     .endif
-    brk 1
+    hlt 0
 .endm
 .macro do_zero_extend size, s, ss
     .if \size != 32
         # movz\ss\()l %tmp\s, %tmpd
     .endif
-    brk 1
+    hlt 0
 .endm
 .macro do_div size, s, ss
     # div\ss %tmp\s
-    brk 1
+    hlt 0
 .endm
 .macro do_idiv size, s, ss
     # idiv\ss %tmp\s
-    brk 1
+    hlt 0
 .endm
 .macro do_mul size, s, ss
     # mul\ss %tmp\s
     # setf_oc
-    brk 1
+    hlt 0
 .endm
 .macro do_imul1 size, s, ss
     # imul\ss %tmp\s
     # setf_oc
-    brk 1
+    hlt 0
 .endm
 .macro do_neg size, s, ss
     # setf_a src=$0 dst=%tmp\s ss=\ss
     # neg\ss %tmp\s
     # setf_oc
     # setf_zsp %tmp\s, \ss
-    brk 1
+    hlt 0
 .endm
 .macro do_not size, s, ss
     # not\ss %tmp\s
-    brk 1
+    hlt 0
 .endm
 
 .irp op, inc,dec,sign_extend,zero_extend,div,idiv,mul,imul1,neg,not
