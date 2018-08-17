@@ -88,17 +88,18 @@ src = [
     'emu/float80.c',
 ]
 if get_option('jit')
+    gadgets = 'jit/gadgets-' + host_machine.cpu_family()
     src += [
         'jit/jit.c',
         'jit/gen.c',
         'jit/helpers.c',
-        'jit/gadgets-x86/entry.S',
-        'jit/gadgets-x86/memory.S',
-        'jit/gadgets-x86/control.S',
-        'jit/gadgets-x86/math.S',
-        'jit/gadgets-x86/bits.S',
-        'jit/gadgets-x86/string.S',
-        'jit/gadgets-x86/misc.S',
+        gadgets+'/entry.S',
+        gadgets+'/memory.S',
+        gadgets+'/control.S',
+        gadgets+'/math.S',
+        gadgets+'/bits.S',
+        gadgets+'/string.S',
+        gadgets+'/misc.S',
         offsets,
     ]
 else

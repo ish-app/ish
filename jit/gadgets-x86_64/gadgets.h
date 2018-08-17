@@ -27,7 +27,6 @@
 .endm
 
 # memory reading and writing
-# TODO cross-page access handling (but it's going to be so slow :cry:)
 .irp type, read,write
 
 .macro \type\()_prep size

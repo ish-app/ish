@@ -45,7 +45,7 @@
         __asm__ volatile("rdtsc" : "=a" (high), "=d" (low)); \
         ((uint64_t) high) << 32 | low; \
     })
-#elif defined(__arm64__)
+#elif defined(__arm64__) || defined(__aarch64__)
 #define rdtsc() ({ \
         uint64_t tsc; \
         __asm__ volatile("mrs %0, PMCCNTR_EL0" : "=r" (tsc)); \
