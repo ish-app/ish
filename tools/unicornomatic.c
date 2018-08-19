@@ -40,17 +40,18 @@ struct uc_regs {
     dword_t ebp;
     dword_t esp;
     dword_t eip;
+    dword_t eflags;
 };
 void uc_getregs(uc_engine *uc, struct uc_regs *regs) {
     static int uc_regs_ids[] = {
         UC_X86_REG_EAX, UC_X86_REG_EBX, UC_X86_REG_ECX, UC_X86_REG_EDX,
         UC_X86_REG_ESI, UC_X86_REG_EDI, UC_X86_REG_EBP, UC_X86_REG_ESP,
-        UC_X86_REG_EIP,
+        UC_X86_REG_EIP, UC_X86_REG_EFLAGS,
     };
     void *ptrs[sizeof(uc_regs_ids)/sizeof(uc_regs_ids[0])] = {
         &regs->eax, &regs->ebx, &regs->ecx, &regs->edx,
         &regs->esi, &regs->edi, &regs->ebp, &regs->esp,
-        &regs->eip,
+        &regs->eip, &regs->eflags,
     };
     uc_trycall(uc_reg_read_batch(uc, uc_regs_ids, ptrs, sizeof(ptrs)/sizeof(ptrs[0])), "uc_reg_read_batch");
 }
@@ -78,6 +79,19 @@ int compare_cpus(struct cpu_state *cpu, struct tlb *tlb, uc_engine *uc, int unde
     CHECK_REG(edi);
     CHECK_REG(esp);
     CHECK_REG(ebp);
+
+    // check the flags, with a nice visual representation
+    regs.eflags = (regs.eflags & ~undefined_flags) | (cpu->eflags & undefined_flags);
+    if (regs.eflags != cpu->eflags) {
+#define f(x,n) ((regs.eflags & (1 << n)) ? #x : "-"),
+        printf("real eflags = 0x%x %s%s%s%s%s%s%s%s%s, fake eflags = 0x%x %s%s%s%s%s%s%s%s%s\r\n%0d",
+                regs.eflags, f(o,11)f(d,10)f(i,9)f(t,8)f(s,7)f(z,6)f(a,4)f(p,2)f(c,0)
+#undef f
+#define f(x,n) ((cpu->eflags & (1 << n)) ? #x : "-"),
+                cpu->eflags, f(o,11)f(d,10)f(i,9)f(t,8)f(s,7)f(z,6)f(a,4)f(p,2)f(c,0)0);
+        debugger;
+        return -1;
+    }
     return 0;
 }
 
@@ -107,6 +121,7 @@ uc_engine *start_unicorn(struct cpu_state *cpu, struct mem *mem) {
     uc_trycall(uc_reg_write(uc, UC_X86_REG_##uc_reg, &cpu->cpu_reg), "uc_reg_write " #cpu_reg)
     copy_reg(esp, ESP);
     copy_reg(eip, EIP);
+    copy_reg(eflags, EFLAGS);
 
     // copy memory
     for (page_t page = 0; page < MEM_PAGES; page++) {
