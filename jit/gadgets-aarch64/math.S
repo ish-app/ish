@@ -21,6 +21,7 @@
         .exitm
     .else; .ifc \op,store
         movs \arg, _tmp, \s
+        .exitm
     .endif; .endif
 
     /*
@@ -28,22 +29,38 @@
         mov\ss \arg, %r14\s
         setf_a src=%r14\s, dst=%tmp\s, ss=\ss
     .endifin
+    */
     .ifin(\op, and,or,xor)
         clearf_a
         clearf_oc
     .endifin
+    /*
     .ifin(\op, adc,sbb)
         btw $0, CPU_cf(%_cpu)
     .endifin
+     */
 
+    .ifc \op,xor
+        op_s eor _tmp, _tmp, \arg
+    .else; .ifc \op,and
+        op_s and _tmp, _tmp, \arg
+    .else; .ifc \op,add
+        op_s add _tmp, _tmp, \arg
+    .else
+        hlt 0
+    .endif; .endif; .endif
+
+    /*
     \op\ss \arg, %tmp\s
 
     .ifin(\op, add,sub,adc,sbb,imul)
         setf_oc
     .endifin
+    */
     .ifin(\op, add,sub,adc,sbb,and,or,xor)
-        setf_zsp %tmp\s, \ss
+        setf_zsp \s
     .endifin
+    /*
     .ifin(\op, bsf,bsr)
         # I sure hope this isn't too hot
         setzb %r14b
@@ -53,7 +70,6 @@
         andl $~ZF_RES, CPU_flags_res(%_cpu)
     .endifin
     */
-    hlt 0
 .endm
 .macro do_op op, size, arg
     ss \size, _do_op, \op, \arg

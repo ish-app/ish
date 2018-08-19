@@ -113,8 +113,8 @@ uc_engine *start_unicorn(struct cpu_state *cpu, struct mem *mem) {
         struct pt_entry *pt = &mem->pt[page];
         if (pt->data == NULL)
             continue;
-        int prot = 0;
-        if (pt->flags & P_READ) prot |= UC_PROT_READ | UC_PROT_EXEC;
+        int prot = UC_PROT_READ | UC_PROT_EXEC;
+        // really only the write bit is meaningful (FIXME)
         if (pt->flags & P_WRITE) prot |= UC_PROT_WRITE;
         addr_t addr = page << PAGE_BITS;
         void *data = pt->data->data + pt->offset;

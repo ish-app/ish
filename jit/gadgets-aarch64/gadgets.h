@@ -26,7 +26,8 @@ _xaddr .req x3
     gadget_\()\name :
 .endm
 .macro gret pop=0
-    ldr x8, [_ip], 8
+    ldr x8, [_ip, \pop*8]!
+    add _ip, _ip, 8 /* TODO get rid of this */
     br x8
 .endm
 
@@ -38,7 +39,7 @@ _xaddr .req x3
     cmp x8, (0x1000-(\size/8))
     b.hi 12f
     and x8, _xaddr, 0xfffff000
-    ldr x8, [_tlb, (-TLB_entries+TLB_dirty_page)]
+    str x8, [_tlb, (-TLB_entries+TLB_dirty_page)]
     ubfiz x9, _xaddr, 4, 10
     add x9, x9, _tlb
     .ifc \type,read
@@ -202,18 +203,20 @@ _xaddr .req x3
 .endm
 
 .macro save_c
-    stp x0, x1, [sp, -0x50]!
+    stp x0, x1, [sp, -0x60]!
     stp x2, x3, [sp, 0x10]
     stp x8, x9, [sp, 0x20]
     stp x10, x11, [sp, 0x30]
     stp x12, x13, [sp, 0x40]
+    str lr, [sp, 0x50]
 .endm
 .macro restore_c
+    ldr lr, [sp, 0x50]
     ldp x12, x13, [sp, 0x40]
     ldp x10, x11, [sp, 0x30]
     ldp x8, x9, [sp, 0x20]
     ldp x2, x3, [sp, 0x10]
-    ldp x0, x1, [sp], 0x50
+    ldp x0, x1, [sp], 0x60
 .endm
 
 .macro movs dst, src, s
@@ -224,6 +227,15 @@ _xaddr .req x3
     .else
         mov \dst, \src
     .endif; .endif
+.endm
+.macro op_s op, dst, src, s
+    .ifb \s
+        \op \dst, \src
+    .else
+        movs w10, \dst
+        \op w10, w10, \src
+        movs \dst, w10
+    .endif
 .endm
 
 .macro uxts dst, src, s=
