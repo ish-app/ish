@@ -58,8 +58,21 @@
             strb w10, [_cpu, CPU_cf]
         .else
             # for 16 or 8 bit operands...
-            # tune in next time
-            hlt 0
+            # ok first figure out signed overflow
+            sxt\s w10, _tmp
+            \op w10, w10, \arg, sxt\s
+            cmp w10, w10, sxt\s
+            cset w10, ne
+            strb w10, [_cpu, CPU_of]
+            # now unsigned overflow
+            uxt\s w10, _tmp
+            \op _tmp, w10, \arg, uxt\s
+            .ifc \s,b
+                lsr w10, _tmp, 8
+            .else
+                lsr w10, _tmp, 16
+            .endif
+            strb w10, [_cpu, CPU_cf]
         .endif
     .endifin
 
