@@ -19,6 +19,7 @@ jit_enter:
     ldr ecx, [_cpu, CPU_ecx]
     ldr edx, [_cpu, CPU_edx]
     ldr esi, [_cpu, CPU_esi]
+    ldr edi, [_cpu, CPU_edi]
     ldr ebp, [_cpu, CPU_ebp]
     ldr esp, [_cpu, CPU_esp]
     gret
@@ -41,6 +42,7 @@ jit_exit:
     str ebx, [_cpu, CPU_ebx]
     str ecx, [_cpu, CPU_ecx]
     str edx, [_cpu, CPU_edx]
+    str edi, [_cpu, CPU_edi]
     str esi, [_cpu, CPU_esi]
     str ebp, [_cpu, CPU_ebp]
     str esp, [_cpu, CPU_esp]
