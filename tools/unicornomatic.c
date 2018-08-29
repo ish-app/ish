@@ -92,6 +92,22 @@ int compare_cpus(struct cpu_state *cpu, struct tlb *tlb, uc_engine *uc, int unde
         debugger;
         return -1;
     }
+
+    // compare pages marked dirty
+    if (tlb->dirty_page != TLB_PAGE_EMPTY) {
+        char real_page[PAGE_SIZE];
+        uc_trycall(uc_mem_read(uc, tlb->dirty_page, real_page, PAGE_SIZE), "compare read");
+        struct pt_entry entry = cpu->mem->pt[PAGE(tlb->dirty_page)];
+        void *fake_page = entry.data->data + entry.offset;
+
+        if (memcmp(real_page, fake_page, PAGE_SIZE) != 0) {
+            println("page %x doesn't match", tlb->dirty_page);
+            debugger;
+            return -1;
+        }
+        tlb->dirty_page = TLB_PAGE_EMPTY;
+    }
+
     return 0;
 }
 

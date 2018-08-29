@@ -24,40 +24,58 @@
         .exitm
     .endif; .endif
 
-    /*
-    .ifin(\op, add,sub,adc,sbb)
-        mov\ss \arg, %r14\s
-        setf_a src=%r14\s, dst=%tmp\s, ss=\ss
+    .ifin(\op, add,sub,adc,sbc)
+        setf_a \arg, _tmp
     .endifin
-    */
-    .ifin(\op, and,or,xor)
+    .ifin(\op, and,orr,eor)
         clearf_a
         clearf_oc
     .endifin
     /*
-    .ifin(\op, adc,sbb)
+    .ifin(\op, adc,sbc)
         btw $0, CPU_cf(%_cpu)
     .endifin
-     */
+    */
 
-    .ifc \op,xor
-        op_s eor _tmp, _tmp, \arg
-    .else; .ifc \op,and
-        op_s and _tmp, _tmp, \arg
-    .else; .ifc \op,add
-        op_s add _tmp, _tmp, \arg
-    .else
+    .ifin(\op, and,orr,eor)
+        op_s \op, _tmp, _tmp, \arg, \s
+    .endifin
+
+    .ifin(\op, add,sub)
+        # setting flags: a horror story
+        .ifb \s
+            # for 32-bit operands, we can just do the operation and the chip
+            # will set v and c right, which we copy
+            \op\()s _tmp, _tmp, \arg
+            cset w10, vs
+            strb w10, [_cpu, CPU_of]
+            .ifc \op,add
+                cset w10, cs
+            .endif
+            .ifc \op,sub
+                cset w10, cc
+            .endif
+            strb w10, [_cpu, CPU_cf]
+        .else
+            # for 16 or 8 bit operands...
+            # tune in next time
+            hlt 0
+        .endif
+    .endifin
+
+    .ifin(\op, adc,sbc,xchg)
+        # unimplemented
         hlt 0
-    .endif; .endif; .endif
+    .endifin
 
     /*
     \op\ss \arg, %tmp\s
 
-    .ifin(\op, add,sub,adc,sbb,imul)
+    .ifin(\op, add,sub,adc,sbc,imul)
         setf_oc
     .endifin
     */
-    .ifin(\op, add,sub,adc,sbb,and,or,xor)
+    .ifin(\op, add,sub,adc,sbc,and,orr,eor)
         setf_zsp \s
     .endifin
     /*
@@ -75,9 +93,9 @@
     ss \size, _do_op, \op, \arg
 .endm
 
-.macro do_reg_op op, size, reg
+.macro do_reg_op op, armop, size, reg
     .gadget \op\size\()_reg_\reg
-        do_op \op, \size, e\reg\()x
+        do_op \armop, \size, e\reg\()x
         gret
 .endm
 
@@ -88,11 +106,11 @@
     # xchg %\reg\()h, %\reg\()l
 .endm
 
-.macro do_op_size op, size
+.macro do_op_size op, armop, size
     .ifnc \op,store
         .gadget \op\size\()_imm
             ldr w8, [_ip]
-            do_op \op, \size, w8
+            do_op \armop, \size, w8
             gret 1
     .endif
 
@@ -103,7 +121,7 @@
             read_prep \size
         .endif
         ldr w8, [_xaddr]
-        do_op \op, \size, w8
+        do_op \armop, \size, w8
         .ifc \op,store
             str w8, [_xaddr]
             write_done \size
@@ -111,7 +129,7 @@
         gret 1
 
     .irp reg, a,b,c,d
-        do_reg_op \op, \size, \reg
+        do_reg_op \op, \armop, \size, \reg
     .endr
 
     .irp reg, si,di,sp,bp
@@ -123,7 +141,7 @@
                 .ifc \reg,di; do_hi_op \op, \size, b
                 .endif; .endif; .endif; .endif
             .else
-                do_op \op, \size, e\reg
+                do_op \armop, \size, e\reg
             .endif
             gret
     .endr
@@ -131,28 +149,42 @@
 
 .irp op, load,store,xchg,add,sub,adc,sbb,and,or,xor
     .irp size, SIZE_LIST
-        do_op_size \op, \size
+        # a couple operations have slightly different names on arm
+        .ifc \op,xor
+            do_op_size \op, eor, \size
+        .else; .ifc \op,sbb
+            do_op_size \op, sbc, \size
+        .else; .ifc \op,or
+            do_op_size \op, orr, \size
+        .else
+            do_op_size \op, \op, \size
+        .endif; .endif; .endif
     .endr
     .gadget_array \op
 .endr
 .irp op, imul,bsf,bsr
     .irp size, 16,32
-        do_op_size \op, \size
+        do_op_size \op, \op, \size
     .endr
     .gadget_array \op
 .endr
 
 # unary operations (well, only one explicit operand)
 
-.irp op, inc,dec
-    .macro do_\op size, s
-        # setf_a $1 %tmp\s
-        # \op\()\ss %tmp\s
-        # seto CPU_of(%_cpu)
-        # setf_zsp
-        hlt 0
-    .endm
-.endr
+# TODO OF, AF (not CF)
+.macro do_inc size, s
+    mov w10, 1
+    setf_a w10, _tmp
+    op_s add _tmp, _tmp, 1
+    setf_zsp
+.endm
+.macro do_dec size, s
+    mov w10, 1
+    setf_a w10, _tmp
+    op_s sub _tmp, _tmp, 1
+    setf_zsp
+.endm
+
 .macro do_sign_extend size, s, ss
     .if \size != 32
         # movs\ss\()l %tmp\s, %tmpd

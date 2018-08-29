@@ -177,7 +177,7 @@ _xaddr .req x3
     str \src, [_cpu, CPU_op1]
     str \dst, [_cpu, CPU_op2]
     ldr w10, [_cpu, CPU_flags_res]
-    bic w10, w10, AF_OPS
+    orr w10, w10, AF_OPS
     str w10, [_cpu, CPU_flags_res]
 .endm
 .macro clearf_a
@@ -228,12 +228,12 @@ _xaddr .req x3
         mov \dst, \src
     .endif; .endif
 .endm
-.macro op_s op, dst, src, s
+.macro op_s op, dst, src1, src2, s
     .ifb \s
-        \op \dst, \src
+        \op \dst, \src1, \src2
     .else
         movs w10, \dst
-        \op w10, w10, \src
+        \op w10, \src1, \src2
         movs \dst, w10
     .endif
 .endm
