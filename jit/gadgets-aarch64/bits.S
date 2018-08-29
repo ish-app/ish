@@ -22,9 +22,21 @@
                 eor w10, w10, w9
                 strb w9, [_cpu, CPU_cf]
                 strb w10, [_cpu, CPU_of]
-            .else
-                hlt 0
             .endif
+            .ifc \type,shr
+                ubfx w10, _tmp, \size-1, 1
+                sub w8, w8, 1
+                lsr _tmp, _tmp, w8
+                and w9, _tmp, 1
+                lsr _tmp, _tmp, 1
+                strb w9, [_cpu, CPU_cf]
+                strb w10, [_cpu, CPU_of]
+            .endif
+
+            .ifin(\type, sar,rol,ror)
+                # unimplemented
+                hlt 0
+            .endifin
 
             .ifin(\type, shl,shr,sar)
                 setf_zsp \s
