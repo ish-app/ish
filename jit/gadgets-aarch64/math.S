@@ -198,44 +198,43 @@
     setf_zsp
 .endm
 
-.macro do_sign_extend size, s, ss
+.macro do_sign_extend size, s
     .if \size != 32
         # movs\ss\()l %tmp\s, %tmpd
+        sxt\s _tmp, _tmp
     .endif
-    hlt 0
 .endm
-.macro do_zero_extend size, s, ss
+.macro do_zero_extend size, s
     .if \size != 32
-        # movz\ss\()l %tmp\s, %tmpd
+        uxt\s _tmp, _tmp
     .endif
-    hlt 0
 .endm
-.macro do_div size, s, ss
+.macro do_div size, s
     # div\ss %tmp\s
     hlt 0
 .endm
-.macro do_idiv size, s, ss
+.macro do_idiv size, s
     # idiv\ss %tmp\s
     hlt 0
 .endm
-.macro do_mul size, s, ss
+.macro do_mul size, s
     # mul\ss %tmp\s
     # setf_oc
     hlt 0
 .endm
-.macro do_imul1 size, s, ss
+.macro do_imul1 size, s
     # imul\ss %tmp\s
     # setf_oc
     hlt 0
 .endm
-.macro do_neg size, s, ss
+.macro do_neg size, s
     # setf_a src=$0 dst=%tmp\s ss=\ss
     # neg\ss %tmp\s
     # setf_oc
     # setf_zsp %tmp\s, \ss
     hlt 0
 .endm
-.macro do_not size, s, ss
+.macro do_not size, s
     # not\ss %tmp\s
     hlt 0
 .endm
