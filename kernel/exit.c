@@ -40,6 +40,7 @@ noreturn void do_exit(int status) {
         // notify parent that we died
         struct task *parent = leader->parent;
         if (parent == NULL) {
+            // init died
             halt_system(status);
         } else {
             lock(&parent->group->lock);
@@ -68,6 +69,7 @@ noreturn void do_exit_group(int status) {
 }
 
 void (*exit_hook)(int code) = NULL;
+// always called from init process
 static void halt_system(int status) {
     // brutally murder everything
     // which will leave everything in an inconsistent state. I will solve this problem later.
