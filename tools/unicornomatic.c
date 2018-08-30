@@ -92,6 +92,8 @@ int compare_cpus(struct cpu_state *cpu, struct tlb *tlb, uc_engine *uc, int unde
         debugger;
         return -1;
     }
+    // sync up the flags so undefined flags won't error out next time
+    uc_trycall(uc_reg_write(uc, UC_X86_REG_EFLAGS, &regs.eflags), "sync flags");
 
     // compare pages marked dirty
     if (tlb->dirty_page != TLB_PAGE_EMPTY) {
