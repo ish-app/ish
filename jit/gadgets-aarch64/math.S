@@ -210,8 +210,29 @@
     .endif
 .endm
 .macro do_div size, s
-    # div\ss %tmp\s
-    hlt 0
+    .if \size == 8
+        uxth w8, eax
+        uxtb _tmp, _tmp
+        udiv w9, w8, _tmp
+        msub w10, w9, _tmp, w8
+        bfi eax, w9, 0, 8
+        bfi eax, w10, 8, 8
+    .elseif \size == 16
+        bfi w8, eax, 0, 16
+        bfi w8, edx, 16, 16
+        uxth _tmp, _tmp
+        udiv w9, w8, _tmp
+        msub w10, w9, _tmp, w8
+        ubfx eax, w9, 0, 16
+        ubfx edx, w10, 0, 16
+    .elseif \size == 32
+        bfi x8, xax, 0, 32
+        bfi x8, xdx, 32, 32
+        udiv x9, x8, _xtmp
+        msub x10, x9, _xtmp, x8
+        mov eax, w9
+        mov edx, w10
+    .endif
 .endm
 .macro do_idiv size, s
     # idiv\ss %tmp\s

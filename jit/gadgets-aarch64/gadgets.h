@@ -2,6 +2,7 @@
 
 # register assignments
 eax .req w20
+xax .req x20
 ebx .req w21
 ecx .req w22
 edx .req w23
