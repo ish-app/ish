@@ -13,6 +13,7 @@
 .gadget call_indir
     sub esp, esp, 4
     mov _addr, esp
+    write_prep 32
     ldr w8, [_ip, 8]
     str w8, [_xaddr]
     write_done 32
@@ -105,7 +106,7 @@
         cset w8, lt
         ldrb w9, [_cpu, CPU_of]
         cmp w8, w9
-        b.eq \target
+        b.ne \target
     .endif; .endif; .endif; .endif; .endif; .endif; .endif; .endif
 .endm
 
