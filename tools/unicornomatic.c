@@ -16,6 +16,8 @@
 
 #include "undefined-flags.h"
 
+// unicorn wrappers
+
 long trycall(long res, const char *msg) {
     if (res == -1 && errno != 0) {
         perror(msg); printf("\r\n"); exit(1);
@@ -28,6 +30,24 @@ void uc_trycall(uc_err res, const char *msg) {
         printf("%s: %s\r\n", msg, uc_strerror(res));
         exit(1);
     }
+}
+
+uint32_t uc_getreg(uc_engine *uc, int reg_id) {
+    uint32_t value;
+    uc_trycall(uc_reg_read(uc, reg_id, &value), "uc_getreg");
+    return value;
+}
+
+void uc_setreg(uc_engine *uc, int reg_id, uint32_t value) {
+    uc_trycall(uc_reg_write(uc, reg_id, &value), "uc_setreg");
+}
+
+void uc_read(uc_engine *uc, addr_t addr, void *buf, size_t size) {
+    uc_trycall(uc_mem_read(uc, addr, buf, size), "uc_read");
+}
+
+void uc_write(uc_engine *uc, addr_t addr, void *buf, size_t size) {
+    uc_trycall(uc_mem_write(uc, addr, buf, size), "uc_write");
 }
 
 struct uc_regs {
@@ -61,9 +81,9 @@ int compare_cpus(struct cpu_state *cpu, struct tlb *tlb, uc_engine *uc, int unde
     uc_getregs(uc, &regs);
     collapse_flags(cpu);
 
-#define CHECK(real, fake, name) \
-    if ((real) != (fake)) { \
-        println(name ": real 0x%llx, fake 0x%llx", (unsigned long long) (real), (unsigned long long) (fake)); \
+#define CHECK(uc, ish, name) \
+    if ((uc) != (ish)) { \
+        println(name ": uc 0x%llx, ish 0x%llx", (unsigned long long) (uc), (unsigned long long) (ish)); \
         debugger; \
         return -1; \
     }
@@ -93,7 +113,7 @@ int compare_cpus(struct cpu_state *cpu, struct tlb *tlb, uc_engine *uc, int unde
         return -1;
     }
     // sync up the flags so undefined flags won't error out next time
-    uc_trycall(uc_reg_write(uc, UC_X86_REG_EFLAGS, &regs.eflags), "sync flags");
+    uc_setreg(uc, UC_X86_REG_EFLAGS, regs.eflags);
 
     // compare pages marked dirty
     if (tlb->dirty_page != TLB_PAGE_EMPTY) {
@@ -113,6 +133,17 @@ int compare_cpus(struct cpu_state *cpu, struct tlb *tlb, uc_engine *uc, int unde
     return 0;
 }
 
+static int uc_interrupt;
+
+static void set_tls_pointer(uc_engine *uc, dword_t tls_ptr);
+
+static void _mem_sync(struct tlb *tlb, uc_engine *uc, addr_t addr, dword_t size) {
+    char buf[size];
+    tlb_read(tlb, addr, buf, size);
+    uc_write(uc, addr, buf, size);
+}
+#define mem_sync(addr, size) _mem_sync(tlb, uc, addr, size)
+
 void step_tracing(struct cpu_state *cpu, struct tlb *tlb, uc_engine *uc) {
     // step ish
     int changes = cpu->mem->changes;
@@ -125,23 +156,103 @@ void step_tracing(struct cpu_state *cpu, struct tlb *tlb, uc_engine *uc) {
         tlb_flush(tlb);
 
     // step unicorn
-    dword_t eip;
-    uc_trycall(uc_reg_read(uc, UC_X86_REG_EIP, &eip), "unicorn read eip");
+    uc_interrupt = -1;
+    dword_t eip = uc_getreg(uc, UC_X86_REG_EIP);
     uc_trycall(uc_emu_start(uc, eip, -1, 0, 1), "unicorn step");
+
+    // handle unicorn interrupts
+    struct uc_regs regs;
+    uc_getregs(uc, &regs);
+    if (uc_interrupt == 0x80) {
+        uint32_t syscall_num = regs.eax;
+        switch (syscall_num) {
+            case 243: { // set_thread_area
+                // icky hacky
+                addr_t tls_ptr;
+                uc_read(uc, regs.ebx + 4, &tls_ptr, sizeof(tls_ptr));
+                set_tls_pointer(uc, tls_ptr);
+                mem_sync(regs.ebx, 4);
+                break;
+            }
+        }
+        uc_setreg(uc, UC_X86_REG_EAX, cpu->eax);
+    }
 }
+
+static void uc_interrupt_callback(uc_engine *uc, uint32_t interrupt, void *user_data) {
+    uc_interrupt = interrupt;
+    uc_emu_stop(uc);
+}
+
+// thread local bullshit {{{
+struct gdt_entry {
+    uint16_t limit0;
+    uint16_t base0;
+    uint8_t base1;
+    bits type:4;
+    bits system:1;
+    bits dpl:2;
+    bits present:1;
+    unsigned limit1:4;
+    bits avail:1;
+    bits is_64_code:1;
+    bits db:1;
+    bits granularity:1;
+    uint8_t base2;
+} __attribute__((packed));
+
+// it has to go somewhere, so why not page 1, where nothing can go normally
+#define GDT_ADDR 0x1000
+
+static void setup_gdt(uc_engine *uc) {
+    // construct gdt
+    struct gdt_entry gdt[13] = {};
+    // descriptor 0 can't be used
+    // descriptor 1 = all of memory as code
+    gdt[1].limit0 = 0xffff; gdt[1].limit1 = 0xf; gdt[1].granularity = 1;
+    gdt[1].system = 1; gdt[1].type = 0xf; gdt[1].db = 1; gdt[1].present = 1;
+    // descriptor 2 = all of memory as data
+    gdt[2] = gdt[1]; gdt[2].type = 0x3;
+    // descriptor 12 = thread locals
+    gdt[12] = gdt[2];
+
+    // put gdt into memory, somewhere, idgaf where
+    uc_trycall(uc_mem_map(uc, GDT_ADDR, PAGE_SIZE, UC_PROT_READ), "map gdt");
+    uc_trycall(uc_mem_write(uc, GDT_ADDR, &gdt, sizeof(gdt)), "write gdt");
+
+    // load segment registers
+    uc_x86_mmr gdtr = {.base = GDT_ADDR, .limit = sizeof(gdt)};
+    uc_trycall(uc_reg_write(uc, UC_X86_REG_GDTR, &gdtr), "write gdtr");
+    uc_setreg(uc, UC_X86_REG_CS, 1<<3);
+    uc_setreg(uc, UC_X86_REG_DS, 2<<3);
+    uc_setreg(uc, UC_X86_REG_ES, 2<<3);
+    uc_setreg(uc, UC_X86_REG_FS, 2<<3);
+    uc_setreg(uc, UC_X86_REG_SS, 2<<3);
+}
+
+static void set_tls_pointer(uc_engine *uc, dword_t tls_ptr) {
+    return;
+    struct gdt_entry tls_entry;
+    uc_read(uc, GDT_ADDR + 12 * sizeof(struct gdt_entry), &tls_entry, sizeof(tls_entry));
+    tls_entry.base0 = (tls_ptr & 0x0000ffff);
+    tls_entry.base1 = (tls_ptr & 0x00ff0000) >> 16;
+    tls_entry.base2 = (tls_ptr & 0xff000000) >> 24;
+    uc_write(uc, GDT_ADDR + 12 * sizeof(struct gdt_entry), &tls_entry, sizeof(tls_entry));
+}
+// }}}
 
 uc_engine *start_unicorn(struct cpu_state *cpu, struct mem *mem) {
     uc_engine *uc;
     uc_trycall(uc_open(UC_ARCH_X86, UC_MODE_32, &uc), "uc_open");
 
     // copy registers
-#define copy_reg(cpu_reg, uc_reg) \
-    uc_trycall(uc_reg_write(uc, UC_X86_REG_##uc_reg, &cpu->cpu_reg), "uc_reg_write " #cpu_reg)
-    copy_reg(esp, ESP);
-    copy_reg(eip, EIP);
-    copy_reg(eflags, EFLAGS);
+    uc_setreg(uc, UC_X86_REG_ESP, cpu->esp);
+    uc_setreg(uc, UC_X86_REG_EIP, cpu->eip);
+    uc_setreg(uc, UC_X86_REG_EFLAGS, cpu->eflags);
 
     // copy memory
+    // XXX unicorn has a ?bug? where setting up 334 mappings takes five
+    // seconds on my raspi. it seems to be accidentally quadratic (dot tumblr dot com)
     for (page_t page = 0; page < MEM_PAGES; page++) {
         struct pt_entry *pt = &mem->pt[page];
         if (pt->data == NULL)
@@ -154,6 +265,13 @@ uc_engine *start_unicorn(struct cpu_state *cpu, struct mem *mem) {
         uc_trycall(uc_mem_map(uc, addr, PAGE_SIZE, prot), "uc_mem_map");
         uc_trycall(uc_mem_write(uc, addr, data, PAGE_SIZE), "uc_mem_write");
     }
+
+    // set up some sort of gdt, because we need gs to work for thread locals
+    //setup_gdt(uc);
+
+    // set up exception handler
+    uc_hook hook;
+    uc_trycall(uc_hook_add(uc, &hook, UC_HOOK_INTR, uc_interrupt_callback, NULL, 1, 0), "uc_hook_add");
 
     return uc;
 }
@@ -192,4 +310,5 @@ void dump_memory(uc_engine *uc, const char *file, addr_t start, size_t size) {
     uc_trycall(uc_mem_read(uc, start, buf, size), "uc_mem_read");
     FILE *f = fopen(file, "w");
     fwrite(buf, 1, sizeof(buf), f);
+    fclose(f);
 }
