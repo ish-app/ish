@@ -176,6 +176,9 @@ void step_tracing(struct cpu_state *cpu, struct tlb *tlb, uc_engine *uc) {
             }
         }
         uc_setreg(uc, UC_X86_REG_EAX, cpu->eax);
+    } else if (uc_interrupt != -1) {
+        println("unhandled unicorn interrupt 0x%x", uc_interrupt);
+        exit(1);
     }
 }
 
@@ -214,7 +217,7 @@ static void setup_gdt(uc_engine *uc) {
     // descriptor 2 = all of memory as data
     gdt[2] = gdt[1]; gdt[2].type = 0x3;
     // descriptor 12 = thread locals
-    gdt[12] = gdt[2];
+    gdt[12] = gdt[2]; gdt[12].dpl = 3;
 
     // put gdt into memory, somewhere, idgaf where
     uc_trycall(uc_mem_map(uc, GDT_ADDR, PAGE_SIZE, UC_PROT_READ), "map gdt");
@@ -231,7 +234,6 @@ static void setup_gdt(uc_engine *uc) {
 }
 
 static void set_tls_pointer(uc_engine *uc, dword_t tls_ptr) {
-    return;
     struct gdt_entry tls_entry;
     uc_read(uc, GDT_ADDR + 12 * sizeof(struct gdt_entry), &tls_entry, sizeof(tls_entry));
     tls_entry.base0 = (tls_ptr & 0x0000ffff);
@@ -267,7 +269,7 @@ uc_engine *start_unicorn(struct cpu_state *cpu, struct mem *mem) {
     }
 
     // set up some sort of gdt, because we need gs to work for thread locals
-    //setup_gdt(uc);
+    setup_gdt(uc);
 
     // set up exception handler
     uc_hook hook;
