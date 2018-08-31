@@ -249,15 +249,19 @@
     hlt 0
 .endm
 .macro do_neg size, s
-    # setf_a src=$0 dst=%tmp\s ss=\ss
-    # neg\ss %tmp\s
-    # setf_oc
-    # setf_zsp %tmp\s, \ss
-    hlt 0
+    setf_a wzr, _tmp
+    negs _tmp, _tmp
+    setf_oc
+    setf_zsp \s
 .endm
 .macro do_not size, s
-    # not\ss %tmp\s
-    hlt 0
+    .ifb \s
+        mvn _tmp, _tmp
+    .else
+        movs w10, _tmp, \s
+        mvn w10, w10
+        movs _tmp, w10, \s
+    .endif
 .endm
 
 .irp op, inc,dec,sign_extend,zero_extend,div,idiv,mul,imul1,neg,not

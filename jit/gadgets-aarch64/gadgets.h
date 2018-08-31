@@ -233,9 +233,9 @@ _xaddr .req x3
     .ifb \s
         \op \dst, \src1, \src2
     .else
-        movs w10, \dst
+        movs w10, \dst, \s
         \op w10, \src1, \src2
-        movs \dst, w10
+        movs \dst, w10, \s
     .endif
 .endm
 
