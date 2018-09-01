@@ -158,7 +158,8 @@ void step_tracing(struct cpu_state *cpu, struct tlb *tlb, uc_engine *uc) {
     // step unicorn
     uc_interrupt = -1;
     dword_t eip = uc_getreg(uc, UC_X86_REG_EIP);
-    uc_trycall(uc_emu_start(uc, eip, -1, 0, 1), "unicorn step");
+    while (uc_getreg(uc, UC_X86_REG_EIP) == eip)
+        uc_trycall(uc_emu_start(uc, eip, -1, 0, 1), "unicorn step");
 
     // handle unicorn interrupts
     struct uc_regs regs;
