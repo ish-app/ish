@@ -61,25 +61,38 @@
 .macro do_shiftd op, arg
     .macro x name, reg
         .gadget \op\()_\arg\()32_\name
-            hlt 0
-            /*
             .ifc \arg,imm
-                pushq %rcx
-                movb (%_ip), %cl
+                ldrb w8, [_ip]
+            .else
+                uxtb w8, ecx
             .endif
-            testb $(32 - 1), %cl
-            jz 1f
-            \op %cl, %\reg, %tmpd
-            setf_oc
-            setf_zsp %tmpd, l
+            tst w8, 31
+            b.eq 1f
+            mov w9, 32
+            sub w9, w9, w8
+            sub w8, w8, 1 /* shift by one less */
+            .ifc \op,shrd
+                lsr w8, _tmp, w8
+                # and by one more
+                and w10, w8, 1
+                lsr w8, w8, 1
+                lsl w9, \reg, w9
+            .else
+                lsl w8, _tmp, w8
+                # and by one more
+                ubfx w10, w8, 31, 1
+                lsl w8, w8, 1
+                lsr w9, \reg, w9
+            .endif
+            orr _tmp, w8, w9
+            strb w10, [_cpu, CPU_cf]
+            setf_zsp
         1:
             .ifc \arg,imm
-                popq %rcx
                 gret 1
             .else
                 gret
             .endif
-            */
     .endm
     .each_reg x
     .purgem x
