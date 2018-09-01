@@ -38,7 +38,7 @@
     */
 
     .ifin(\op, and,orr,eor)
-        op_s \op, _tmp, _tmp, \arg, \s
+        \op _tmp, _tmp, \arg
     .endifin
 
     .ifin(\op, add,sub)
@@ -75,6 +75,20 @@
             strb w10, [_cpu, CPU_cf]
         .endif
     .endifin
+
+    .ifc \op,imul
+        .ifnb \s
+            sxt\s w10, \arg
+            mul _tmp, _tmp, w10
+            cmp _tmp, _tmp, sxt\s
+        .else
+            smull _xtmp, _tmp, \arg
+            cmp _xtmp, _tmp, sxtw
+        .endif
+        cset w10, ne
+        strb w10, [_cpu, CPU_cf]
+        strb w10, [_cpu, CPU_of]
+    .endif
 
     .ifin(\op, adc,sbc,xchg)
         # unimplemented
