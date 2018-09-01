@@ -26,14 +26,13 @@
     .gadget \op\size\()_\rep
         .ifnc \rep,once
             cbz ecx, 2f
-    1:
         .endif
         # df_offset = w12
         mov w12, (\size/8)
         ldr w8, [_cpu, CPU_eflags]
         tst w8, DF_FLAG
         cneg w12, w12, ne
-    3:
+    1:
 
         .ifc \op,lods
             mov _addr, esi
@@ -49,10 +48,10 @@
         .else; .ifc \op,movs
             mov _addr, esi
             read_prep \size
-            ldr\s w8, [_xaddr]
+            ldr\s _tmp, [_xaddr]
             mov _addr, edi
             write_prep \size
-            str\s w8, [_xaddr]
+            str\s _tmp, [_xaddr]
             write_done \size
 
         .else; .ifc \op, scas
@@ -85,7 +84,7 @@
         .endifin
 
         .ifnc \rep,once
-            sub ecx, ecx, #1
+            subs ecx, ecx, 1
             .ifin(\op, scas,cmps)
                 .ifc \rep,rep
                     cbnz _tmp, 2f
@@ -93,7 +92,7 @@
                     cbz _tmp, 2f
                 .endif; .endif
             .endifin
-            cbz ecx, 1b
+            cbnz ecx, 1b
     2:
         .endif
         gret 1
