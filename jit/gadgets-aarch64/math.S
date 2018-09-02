@@ -31,17 +31,16 @@
         clearf_a
         clearf_oc
     .endifin
-    /*
     .ifin(\op, adc,sbc)
-        btw $0, CPU_cf(%_cpu)
+        ldrb w10, [_cpu, CPU_cf]
+        cmp w10, 1
     .endifin
-    */
 
     .ifin(\op, and,orr,eor)
         \op _tmp, _tmp, \arg
     .endifin
 
-    .ifin(\op, add,sub)
+    .ifin(\op, add,sub,adc,sbc)
         # setting flags: a horror story
         .ifb \s
             # for 32-bit operands, we can just do the operation and the chip
@@ -60,13 +59,26 @@
             # for 16 or 8 bit operands...
             # ok first figure out signed overflow
             sxt\s w10, _tmp
-            \op w10, w10, \arg, sxt\s
+            .ifin(\op, add,sub)
+                \op w10, w10, \arg, sxt\s
+            .endifin
+            .ifin(\op, adc,sbc)
+                # help me
+                sxt\s w9, \arg
+                \op w10, w10, w9
+            .endifin
             cmp w10, w10, sxt\s
             cset w10, ne
             strb w10, [_cpu, CPU_of]
             # now unsigned overflow
             uxt\s w10, _tmp
-            \op _tmp, w10, \arg, uxt\s
+            .ifin(\op, add,sub)
+                \op _tmp, w10, \arg, uxt\s
+            .endifin
+            .ifin(\op, adc,sbc)
+                uxt\s w9, \arg
+                \op w10, w10, w9
+            .endifin
             .ifc \s,b
                 lsr w10, _tmp, 8
             .else
@@ -90,18 +102,11 @@
         strb w10, [_cpu, CPU_of]
     .endif
 
-    .ifin(\op, adc,sbc,xchg)
+    .ifin(\op, xchg)
         # unimplemented
         hlt 0
     .endifin
 
-    /*
-    \op\ss \arg, %tmp\s
-
-    .ifin(\op, add,sub,adc,sbc,imul)
-        setf_oc
-    .endifin
-    */
     .ifin(\op, add,sub,adc,sbc,and,orr,eor)
         setf_zsp \s
     .endifin

@@ -79,7 +79,9 @@ _xaddr .req x3
 .popsection
 .endm
 
-#define ifin(thing, ...) irp da_op, __VA_ARGS__; .ifc thing,\da_op
+#define ifin(thing, ...) _ifin(thing, __COUNTER__, __VA_ARGS__)
+#define _ifin(thing, line, ...) __ifin(thing, line, __VA_ARGS__)
+#define __ifin(thing, line, ...) irp da_op##line, __VA_ARGS__; .ifc thing,\da_op##line
 #define endifin endif; .endr
 
 # sync with enum reg
