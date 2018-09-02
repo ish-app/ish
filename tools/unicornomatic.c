@@ -167,6 +167,17 @@ void step_tracing(struct cpu_state *cpu, struct tlb *tlb, uc_engine *uc) {
     if (uc_interrupt == 0x80) {
         uint32_t syscall_num = regs.eax;
         switch (syscall_num) {
+            case 54: { // ioctl (god help us)
+                struct fd *fd = f_get(cpu->ebx);
+                if (fd && fd->ops->ioctl_size) {
+                    ssize_t ioctl_size = fd->ops->ioctl_size(fd, cpu->ecx);
+                    if (ioctl_size >= 0)
+                        mem_sync(regs.edx, ioctl_size);
+                }
+                break;
+            }
+            case 104: // setitimer
+                mem_sync(regs.edx, sizeof(struct itimerval_)); break;
             case 243: { // set_thread_area
                 // icky hacky
                 addr_t tls_ptr;
