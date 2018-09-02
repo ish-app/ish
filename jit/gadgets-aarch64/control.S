@@ -98,7 +98,7 @@
         cset w8, lt
         ldrb w9, [_cpu, CPU_of]
         cmp w8, w9
-        b.eq \target
+        b.ne \target
     .else; .ifc \cond,sxoz
         ldr w8, [_cpu, CPU_res]
         cmp w8, 0
