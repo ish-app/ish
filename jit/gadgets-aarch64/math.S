@@ -102,6 +102,29 @@
         strb w10, [_cpu, CPU_of]
     .endif
 
+    .ifin(\op, bsf,bsr)
+        .ifc \op,bsf
+            rbit w10, \arg
+            clz w10, w10
+            cmp w10, 32
+        .else
+            clz w10, \arg
+            cmp w10, 32
+            .if \size != 32
+                sub w10, w10, 32-\size
+            .endif
+        .endif
+        csel _tmp, w10, _tmp, ne
+        cset w10, eq
+        ldrb w9, [_cpu, CPU_eflags]
+        bic w9, w9, ZF_FLAG
+        orr w9, w9, w10, lsl 6
+        strb w9, [_cpu, CPU_eflags]
+        ldrb w9, [_cpu, CPU_flags_res]
+        bic w9, w9, ZF_RES
+        strb w9, [_cpu, CPU_flags_res]
+    .endifin
+
     .ifin(\op, xchg)
         # unimplemented
         hlt 0
@@ -110,16 +133,6 @@
     .ifin(\op, add,sub,adc,sbc,and,orr,eor)
         setf_zsp \s
     .endifin
-    /*
-    .ifin(\op, bsf,bsr)
-        # I sure hope this isn't too hot
-        setzb %r14b
-        andb $~(1<<6), CPU_eflags(%_cpu)
-        shlb $6, %r14b
-        orb %r14b, CPU_eflags(%_cpu)
-        andl $~ZF_RES, CPU_flags_res(%_cpu)
-    .endifin
-    */
 .endm
 .macro do_op op, size, arg
     ss \size, _do_op, \op, \arg
