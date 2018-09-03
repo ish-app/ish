@@ -271,15 +271,6 @@ static ssize_t tty_write(struct fd *fd, const void *buf, size_t bufsize) {
     return bufsize;
 }
 
-static int tty_flush(struct tty *tty) {
-    lock(&tty->lock);
-    tty->bufsize = 0;
-    tty->canon_ready = false;
-    notify(&tty->consumed);
-    unlock(&tty->lock);
-    return 0;
-}
-
 static int tty_poll(struct fd *fd) {
     struct tty *tty = fd->tty;
     lock(&tty->lock);
@@ -310,7 +301,7 @@ static ssize_t tty_ioctl_size(struct fd *fd, int cmd) {
     switch (cmd) {
         case TCGETS_: case TCSETS_: case TCSETSW_:
             return sizeof(struct termios_);
-        case TCFLSH_: return sizeof(dword_t);
+        case TCFLSH_: return 0;
         case TIOCGPRGP_: case TIOCSPGRP_: return sizeof(dword_t);
         case TIOCGWINSZ_: return sizeof(struct winsize_);
     }
@@ -341,10 +332,12 @@ static int tty_ioctl(struct fd *fd, int cmd, void *arg) {
 
         case TCFLSH_:
             // only input flushing is currently useful
-            switch (*(dword_t *) arg) {
+            switch ((dword_t) arg) {
                 case TCIFLUSH_:
                 case TCIOFLUSH_:
-                    err = tty_flush(tty);
+                    tty->bufsize = 0;
+                    tty->canon_ready = false;
+                    notify(&tty->consumed);
                     break;
                 case TCOFLUSH_:
                     break;
