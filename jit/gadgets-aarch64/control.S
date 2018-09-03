@@ -52,12 +52,12 @@
     cmpb $0, CPU_cf(%_cpu)
 .endm
 
-.macro check_res_or_flag resflag, flag, target
+.macro check_res_or_flag resflag, flag, target, fallthrough
     ldr w8, [_cpu, CPU_flags_res]
-    tbz w8, \resflag, 2f
+    tbnz w8, \resflag, 2f
     ldr w8, [_cpu, CPU_eflags]
-    tbz w8, \flag, 2f
-    b \target
+    tbnz w8, \flag, \target
+    b \fallthrough
 2:
 .endm
 
@@ -68,22 +68,25 @@
         ldrb w8, [_cpu, CPU_cf]
         cbnz w8, \target
     .else; .ifc \cond,z
-        check_res_or_flag 1/*ZF_RES*/, 6/*ZF_FLAG*/, \target
+        check_res_or_flag 1/*ZF_RES*/, 6/*ZF_FLAG*/, \target, 3f
         ldr w8, [_cpu, CPU_res]
         cbz w8, \target
+    3:
     .else; .ifc \cond,cz
         ldrb w8, [_cpu, CPU_cf]
         cbnz w8, \target
-        check_res_or_flag 1/*ZF_RES*/, 6/*ZF_FLAG*/, \target
+        check_res_or_flag 1/*ZF_RES*/, 6/*ZF_FLAG*/, \target, 3f
         ldr w8, [_cpu, CPU_res]
         cbz w8, \target
+    3:
     .else; .ifc \cond,s
-        check_res_or_flag 2/*SF_RES*/, 7/*SF_FLAG*/, \target
+        check_res_or_flag 2/*SF_RES*/, 7/*SF_FLAG*/, \target, 3f
         ldr w8, [_cpu, CPU_res]
         cmp w8, 0
         b.lt \target
+    3:
     .else; .ifc \cond,p
-        check_res_or_flag 0/*PF_RES*/, 2/*PF_FLAG*/, \target
+        check_res_or_flag 0/*PF_RES*/, 2/*PF_FLAG*/, \target, 3f
         # this is so sad
         ldr w8, [_cpu, CPU_res]
         uxtb w8, w8
@@ -92,6 +95,7 @@
         uaddlv h0, v0.8b
         fmov w8, s0
         tbz w8, 0, \target
+    3:
     .else; .ifc \cond,sxo
         ldr w8, [_cpu, CPU_res]
         cmp w8, 0
