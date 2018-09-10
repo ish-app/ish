@@ -5,7 +5,8 @@
 __asm__(".data\n"
         ".global vdso_data\n"
         "vdso_data:\n"
-        ".incbin \"vdso/libvdso.so.elf\"");
+        ".incbin \"vdso/libvdso.so.elf\"\n"
+        ".skip 8192 - (. - vdso_data)\n");
 
 int vdso_symbol(const char *name) {
     struct elf_header *header = (void *) vdso_data;
