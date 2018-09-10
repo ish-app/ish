@@ -297,9 +297,21 @@
     hlt 0
 .endm
 .macro do_imul1 size, s
-    # imul\ss %tmp\s
-    # setf_oc
-    hlt 0
+    .ifb \s
+        smull xax, eax, _tmp
+        lsr xdx, xax, 32
+        cmp xax, eax, sxtw
+    .else
+        sxt\s w8, eax
+        sxt\s _tmp, _tmp
+        mul w8, w8, _tmp
+        cmp w8, w8, sxt\s
+        bfxil eax, w8, 0, \size
+        bfxil edx, w8, \size, \size
+    .endif
+    cset w8, ne
+    strb w8, [_cpu, CPU_cf]
+    strb w8, [_cpu, CPU_of]
 .endm
 .macro do_neg size, s
     setf_a wzr, _tmp
