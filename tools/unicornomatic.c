@@ -5,6 +5,7 @@
 // Oh and hopefully the code is somewhat less messy.
 #include <stdio.h>
 #include <errno.h>
+#include <sys/mman.h>
 
 #include <unicorn/unicorn.h>
 
@@ -48,6 +49,24 @@ void uc_read(uc_engine *uc, addr_t addr, void *buf, size_t size) {
 
 void uc_write(uc_engine *uc, addr_t addr, void *buf, size_t size) {
     uc_trycall(uc_mem_write(uc, addr, buf, size), "uc_write");
+}
+
+static void uc_unmap(uc_engine *uc, addr_t start, dword_t size) {
+    for (addr_t addr = start; addr < start + size; addr += 0x1000) {
+        uc_mem_unmap(uc, addr, 0x1000); // ignore errors
+    }
+}
+static void uc_map(uc_engine *uc, addr_t start, dword_t size) {
+    uc_unmap(uc, start, size);
+    for (addr_t addr = start; addr < start + size; addr += 0x1000) {
+        uc_trycall(uc_mem_map(uc, addr, 0x1000, UC_PROT_ALL), "mmap emulation");
+    }
+}
+static void uc_map_ptr(uc_engine *uc, addr_t start, void *mem, dword_t size) {
+    uc_unmap(uc, start, size);
+    for (addr_t addr = start; addr < start + size; addr += 0x1000) {
+        uc_trycall(uc_mem_map_ptr(uc, addr, 0x1000, UC_PROT_ALL, mem + (addr - start)), "mmap emulation");
+    }
 }
 
 struct uc_regs {
@@ -143,9 +162,9 @@ static void _mem_sync(struct tlb *tlb, uc_engine *uc, addr_t addr, dword_t size)
     uc_write(uc, addr, buf, size);
 }
 #define mem_sync(addr, size) _mem_sync(tlb, uc, addr, size)
-
 void step_tracing(struct cpu_state *cpu, struct tlb *tlb, uc_engine *uc) {
     // step ish
+    addr_t old_brk = current->brk; // this is important
     int changes = cpu->mem->changes;
     int interrupt = cpu_step32(cpu, tlb);
     if (interrupt != INT_NONE) {
@@ -167,6 +186,15 @@ void step_tracing(struct cpu_state *cpu, struct tlb *tlb, uc_engine *uc) {
     if (uc_interrupt == 0x80) {
         uint32_t syscall_num = regs.eax;
         switch (syscall_num) {
+            // put syscall result from fake process into real process
+            case 3: // read
+                mem_sync(regs.ecx, cpu->edx); break;
+            case 7: // waitpid
+                mem_sync(regs.ecx, sizeof(dword_t)); break;
+            case 13: // time
+                if (regs.ebx != 0)
+                    mem_sync(regs.ebx, sizeof(dword_t));
+                break;
             case 54: { // ioctl (god help us)
                 struct fd *fd = f_get(cpu->ebx);
                 if (fd && fd->ops->ioctl_size) {
@@ -176,8 +204,103 @@ void step_tracing(struct cpu_state *cpu, struct tlb *tlb, uc_engine *uc) {
                 }
                 break;
             }
+            case 85: // readlink
+                mem_sync(regs.ecx, regs.edx); break;
+            case 102: { // socketcall
+                dword_t args[6];
+                (void) user_get(regs.ecx, args);
+                dword_t len;
+                switch (cpu->ebx) {
+                    case 6: // getsockname
+                        (void) user_get(args[2], len);
+                        mem_sync(args[1], len);
+                        break;
+                    case 8: // socketpair
+                        mem_sync(args[3], sizeof(dword_t[2]));
+                        break;
+                    case 12: // recvfrom
+                        mem_sync(args[1], args[2]);
+                        (void) user_get(args[5], len);
+                        mem_sync(args[4], len);
+                        break;
+                }
+                break;
+            }
             case 104: // setitimer
                 mem_sync(regs.edx, sizeof(struct itimerval_)); break;
+            case 116: // sysinfo
+                mem_sync(regs.ebx, sizeof(struct sys_info)); break;
+            case 122: // uname
+                mem_sync(regs.ebx, sizeof(struct uname)); break;
+            case 140: // _llseek
+                mem_sync(regs.esi, 8); break;
+            case 145: { // readv
+                struct io_vec vecs[regs.edx];
+                (void) user_get(regs.ecx, vecs);
+                for (unsigned i = 0; i < regs.edx; i++)
+                    mem_sync(vecs[i].base, vecs[i].len);
+                break;
+            }
+            case 162: // nanosleep
+                mem_sync(regs.ecx, sizeof(struct timespec_)); break;
+            case 168: // poll
+                mem_sync(regs.ebx, sizeof(struct pollfd_) * regs.ecx); break;
+            case 174: // rt_sigaction
+                if (regs.edx)
+                    mem_sync(regs.edx, sizeof(struct sigaction_));
+                break;
+            case 183: // getcwd
+                mem_sync(regs.ebx, cpu->eax); break;
+
+            case 195: // stat64
+            case 196: // lstat64
+            case 197: // fstat64
+                mem_sync(regs.ecx, sizeof(struct newstat64)); break;
+            case 300: // fstatat64
+                mem_sync(regs.edx, sizeof(struct newstat64)); break;
+            case 220: // getdents64
+                mem_sync(regs.ecx, cpu->eax); break;
+            case 265: // clock_gettime
+                mem_sync(regs.ecx, sizeof(struct timespec_)); break;
+
+            case 192: // mmap2
+            case 90: // mmap
+                if (cpu->eax >= 0xfffff000) {
+                    // fake mmap failed, so don't try real mmap
+                    break;
+                }
+                // IMPORTANT: if you try to understand this code you will get brain cancer
+                addr_t start = cpu->eax;
+                dword_t size = cpu->ecx;
+                int prot = cpu->edx;
+                struct fd *fd = f_get(cpu->edi);
+                int real_fd = fd ? fd->real_fd : -1;
+                int flags = cpu->esi & ~MAP_FIXED;
+                off_t offset = cpu->ebp;
+                if (syscall_num == 192)
+                    offset <<= PAGE_BITS;
+                void *mem = mmap(NULL, size, prot, flags, real_fd, offset);
+                if (mem == MAP_FAILED) {
+                    perror("mmap emulation");
+                    exit(1);
+                }
+                uc_map_ptr(uc, start, mem, size);
+                break;
+
+            case 91: // munmap
+                if (cpu->eax >= 0)
+                    uc_unmap(uc, cpu->ebx, cpu->ecx);
+                break;
+
+            case 45: // brk
+                // matches up with the login in kernel/mmap.c
+                if (current->brk > old_brk) {
+                    uc_map(uc, BYTES_ROUND_UP(old_brk), BYTES_ROUND_UP(current->brk) - BYTES_ROUND_UP(old_brk));
+                } else if (current->brk < old_brk) {
+                    uc_unmap(uc, BYTES_ROUND_DOWN(current->brk), BYTES_ROUND_DOWN(old_brk) - BYTES_ROUND_DOWN(current->brk));
+                }
+                break;
+
             case 243: { // set_thread_area
                 // icky hacky
                 addr_t tls_ptr;
@@ -197,6 +320,10 @@ void step_tracing(struct cpu_state *cpu, struct tlb *tlb, uc_engine *uc) {
 static void uc_interrupt_callback(uc_engine *uc, uint32_t interrupt, void *user_data) {
     uc_interrupt = interrupt;
     uc_emu_stop(uc);
+}
+
+static void uc_log_callback(uc_engine *uc, uc_mem_type type, uint64_t address, int size, int64_t value, void *user_data) {
+    println("unicorn reports unmapped access at 0x%lx size %d", address, size);
 }
 
 // thread local bullshit {{{
@@ -286,6 +413,7 @@ uc_engine *start_unicorn(struct cpu_state *cpu, struct mem *mem) {
     // set up exception handler
     uc_hook hook;
     uc_trycall(uc_hook_add(uc, &hook, UC_HOOK_INTR, uc_interrupt_callback, NULL, 1, 0), "uc_hook_add");
+    uc_trycall(uc_hook_add(uc, &hook, UC_HOOK_MEM_UNMAPPED, uc_log_callback, NULL, 1, 0), "uc_hook_add");
 
     return uc;
 }
