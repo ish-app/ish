@@ -31,14 +31,14 @@
     write_prep 32
     ldr w8, [_xaddr]
     subs w9, eax, w8
-    mov eax, w8
-    csel w8, w8, _tmp, ne
+    setf_zsp val=w9
+    setf_a eax, w8
+    setf_oc
+    csel eax, w8, eax, ne
+    csel w8, _tmp, w8, eq
+    cset w9, eq
     str w8, [_xaddr]
     write_done 32
-    setf_oc
-    mov _tmp, w9
-    setf_zsp
-    setf_a eax, w8
     gret 1
 .gadget_array cmpxchg
 

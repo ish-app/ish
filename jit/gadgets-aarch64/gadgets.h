@@ -195,11 +195,11 @@ _xaddr .req x3
     strb wzr, [_cpu, CPU_of]
     strb wzr, [_cpu, CPU_cf]
 .endm
-.macro setf_zsp s
+.macro setf_zsp s, val=_tmp
     .ifnb \s
-        sxt\s _tmp, _tmp
+        sxt\s \val, \val
     .endif
-    str _tmp, [_cpu, CPU_res]
+    str \val, [_cpu, CPU_res]
     ldr w10, [_cpu, CPU_flags_res]
     orr w10, w10, (ZF_RES|SF_RES|PF_RES)
     str w10, [_cpu, CPU_flags_res]
