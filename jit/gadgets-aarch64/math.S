@@ -125,10 +125,11 @@
         strb w9, [_cpu, CPU_flags_res]
     .endifin
 
-    .ifin(\op, xchg)
-        # unimplemented
-        hlt 0
-    .endifin
+    .ifc \op,xchg
+        mov w8, _tmp
+        mov _tmp, \arg
+        mov \arg, w8
+    .endif
 
     .ifin(\op, add,sub,adc,sbc,and,orr,eor)
         setf_zsp \s
