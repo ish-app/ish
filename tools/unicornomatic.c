@@ -52,20 +52,20 @@ void uc_write(uc_engine *uc, addr_t addr, void *buf, size_t size) {
 }
 
 static void uc_unmap(uc_engine *uc, addr_t start, dword_t size) {
-    for (addr_t addr = start; addr < start + size; addr += 0x1000) {
-        uc_mem_unmap(uc, addr, 0x1000); // ignore errors
+    for (addr_t addr = start; addr < start + size; addr += PAGE_SIZE) {
+        uc_mem_unmap(uc, addr, PAGE_SIZE); // ignore errors
     }
 }
 static void uc_map(uc_engine *uc, addr_t start, dword_t size) {
     uc_unmap(uc, start, size);
-    for (addr_t addr = start; addr < start + size; addr += 0x1000) {
-        uc_trycall(uc_mem_map(uc, addr, 0x1000, UC_PROT_ALL), "mmap emulation");
+    for (addr_t addr = start; addr < start + size; addr += PAGE_SIZE) {
+        uc_trycall(uc_mem_map(uc, addr, PAGE_SIZE, UC_PROT_ALL), "mmap emulation");
     }
 }
 static void uc_map_ptr(uc_engine *uc, addr_t start, void *mem, dword_t size) {
     uc_unmap(uc, start, size);
-    for (addr_t addr = start; addr < start + size; addr += 0x1000) {
-        uc_trycall(uc_mem_map_ptr(uc, addr, 0x1000, UC_PROT_ALL, mem + (addr - start)), "mmap emulation");
+    for (addr_t addr = start; addr < start + size; addr += PAGE_SIZE) {
+        uc_trycall(uc_mem_map_ptr(uc, addr, PAGE_SIZE, UC_PROT_ALL, mem + (addr - start)), "mmap emulation");
     }
 }
 
@@ -322,8 +322,15 @@ static void uc_interrupt_callback(uc_engine *uc, uint32_t interrupt, void *user_
     uc_emu_stop(uc);
 }
 
-static void uc_log_callback(uc_engine *uc, uc_mem_type type, uint64_t address, int size, int64_t value, void *user_data) {
+static bool uc_unmapped_callback(uc_engine *uc, uc_mem_type type, uint64_t address, int size, int64_t value, void *user_data) {
+    struct pt_entry *pt = &current->cpu.mem->pt[PAGE(address)];
+    // handle stack growing
+    if (pt->flags & P_GROWSDOWN) {
+        uc_map(uc, BYTES_ROUND_DOWN(address), PAGE_SIZE);
+        return true;
+    }
     println("unicorn reports unmapped access at 0x%lx size %d", address, size);
+    return false;
 }
 
 // thread local bullshit {{{
@@ -413,7 +420,7 @@ uc_engine *start_unicorn(struct cpu_state *cpu, struct mem *mem) {
     // set up exception handler
     uc_hook hook;
     uc_trycall(uc_hook_add(uc, &hook, UC_HOOK_INTR, uc_interrupt_callback, NULL, 1, 0), "uc_hook_add");
-    uc_trycall(uc_hook_add(uc, &hook, UC_HOOK_MEM_UNMAPPED, uc_log_callback, NULL, 1, 0), "uc_hook_add");
+    uc_trycall(uc_hook_add(uc, &hook, UC_HOOK_MEM_UNMAPPED, uc_unmapped_callback, NULL, 1, 0), "uc_hook_add");
 
     return uc;
 }
