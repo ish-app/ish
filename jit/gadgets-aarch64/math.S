@@ -216,18 +216,32 @@
 
 # unary operations (well, only one explicit operand)
 
-# TODO OF, AF (not CF)
+# TODO OF (not CF)
 .macro do_inc size, s
     mov w10, 1
     setf_a w10, _tmp
     op_s add _tmp, _tmp, 1
     setf_zsp
+    .ifb \s
+        cset w8, vs
+    .else
+        cmp _tmp, _tmp, sxt\s
+        cset w8, ne
+    .endif
+    strb w8, [_cpu, CPU_of]
 .endm
 .macro do_dec size, s
     mov w10, 1
     setf_a w10, _tmp
     op_s sub _tmp, _tmp, 1
     setf_zsp
+    .ifb \s
+        cset w8, vs
+    .else
+        cmp _tmp, _tmp, sxt\s
+        cset w8, ne
+    .endif
+    strb w8, [_cpu, CPU_of]
 .endm
 
 .macro do_sign_extend size, s
