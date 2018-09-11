@@ -43,10 +43,24 @@
                 strb w10, [_cpu, CPU_of]
             .endif
 
-            .ifin(\type, rol,ror)
-                # unimplemented
-                hlt 0
-            .endifin
+            .ifc \type,rol
+                sub w8, wzr, w8
+                add w8, w8, \size
+                ror _tmp, _tmp, w8
+                ubfx w9, _tmp, 0, 1
+                ubfx w10, _tmp, \size-1, 1
+                eor w10, w10, w9
+                strb w9, [_cpu, CPU_cf]
+                strb w10, [_cpu, CPU_of]
+            .endif
+            .ifc \type,ror
+                ror _tmp, _tmp, w8
+                ubfx w9, _tmp, \size-1, 1
+                ubfx w10, _tmp, \size-2, 1
+                eor w10, w10, w9
+                strb w9, [_cpu, CPU_cf]
+                strb w10, [_cpu, CPU_of]
+            .endif
 
             .ifin(\type, shl,shr,sar)
                 setf_zsp \s
