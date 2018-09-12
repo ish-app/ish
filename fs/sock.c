@@ -37,7 +37,7 @@ dword_t sys_socket(dword_t domain, dword_t type, dword_t protocol) {
 
 static struct fd *sock_getfd(fd_t sock_fd) {
     struct fd *sock = f_get(sock_fd);
-    if (sock->ops != &socket_fdops)
+    if (sock == NULL || sock->ops != &socket_fdops)
         return NULL;
     return sock;
 }
@@ -155,7 +155,7 @@ dword_t sys_socketpair(dword_t domain, dword_t type, dword_t protocol, addr_t so
         goto close_fake_0;
 
     err = _EFAULT;
-    if (user_put(sockets_addr, sockets))
+    if (user_put(sockets_addr, fake_sockets))
         goto close_fake_1;
 
     STRACE(" [%d, %d]", fake_sockets[0], fake_sockets[1]);

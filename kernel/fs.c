@@ -157,11 +157,11 @@ dword_t sys_readv(fd_t fd_no, addr_t iovec_addr, dword_t iovec_count) {
     dword_t count = 0;
     for (unsigned i = 0; i < iovec_count; i++) {
         res = sys_read(fd_no, iovecs[i].base, iovecs[i].len);
-        if (iovecs[i].len != 0 && res == 0)
-            break;
         if (res < 0)
             return res;
         count += res;
+        if (res < iovecs[i].len)
+            break;
     }
     return count;
 }
@@ -188,6 +188,8 @@ dword_t sys_writev(fd_t fd_no, addr_t iovec_addr, dword_t iovec_count) {
         if (res < 0)
             return res;
         count += res;
+        if (res < iovecs[i].len)
+            break;
     }
     return count;
 }
@@ -360,14 +362,38 @@ dword_t sys_flock(fd_t f, dword_t operation) {
     return fd->mount->fs->flock(fd, operation);
 }
 
+static struct timespec convert_timespec(struct timespec_ t) {
+    struct timespec ts;
+    ts.tv_sec = t.sec;
+    ts.tv_nsec = t.nsec;
+    return ts;
+}
+
 dword_t sys_utimensat(fd_t at_f, addr_t path_addr, addr_t times_addr, dword_t flags) {
     struct timespec_ times[2];
-    if (user_get(times_addr, times))
-        return _EFAULT;
+    if (times_addr == 0) {
+        // if times is NULL, set both times to the current time
+        struct timespec now;
+        int err = clock_gettime(CLOCK_REALTIME, &now);
+        if (err < 0)
+            return errno_map();
+        times[0] = times[1] = (struct timespec_) {.sec = now.tv_sec, .nsec = now.tv_nsec};
+    } else {
+        if (user_get(times_addr, times))
+            return _EFAULT;
+    }
+
     char path[MAX_PATH];
     if (user_read_string(path_addr, path, sizeof(path)))
         return _EFAULT;
-    return 0; // TODO implement
+    struct fd *at = at_fd(at_f);
+    if (at == NULL)
+        return _EBADF;
+
+    struct timespec atime = convert_timespec(times[0]);
+    struct timespec mtime = convert_timespec(times[1]);
+    bool follow_links = flags & AT_SYMLINK_NOFOLLOW_ ? false : true;
+    return generic_utime(at, path, atime, mtime, follow_links); // TODO implement
 }
 
 dword_t sys_fchmod(fd_t f, dword_t mode) {
@@ -483,7 +509,7 @@ dword_t sys_rmdir(addr_t path_addr) {
     char path[MAX_PATH];
     if (user_read_string(path_addr, path, sizeof(path)))
         return _EFAULT;
-    return generic_rmdirat(NULL, path);
+    return generic_rmdirat(AT_PWD, path);
 }
 
 // a few stubs

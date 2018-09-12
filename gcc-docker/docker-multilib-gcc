@@ -1,2 +1,0 @@
-#!/bin/sh
-docker run --rm -v /:/root -w /root/$(pwd) tbodt/docker-multilib-gcc $@

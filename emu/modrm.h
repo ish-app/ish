@@ -8,78 +8,100 @@
 #undef DEFAULT_CHANNEL
 #define DEFAULT_CHANNEL instr
 
-struct regptr {
-    // offsets into the cpu_state structure
-    reg_id_t reg8_id;
-    reg_id_t reg16_id;
-    reg_id_t reg32_id;
-    reg_id_t reg128_id;
-};
-#if defined(DEBUG_instr) || defined(LOG_OVERRIDE)
-static const char *regptr_name(struct regptr regptr) {
-    static char buf[15];
-    sprintf(buf, "%s/%s/%s",
-            reg8_name(regptr.reg8_id),
-            reg16_name(regptr.reg16_id),
-            reg32_name(regptr.reg32_id));
-    return buf;
-}
-#endif
-
-struct modrm_info {
-    // MOD/RM BITS
-    bool sib;
+struct modrm {
+    union {
+        enum reg32 reg;
+        int opcode;
+    };
     enum {
-        mod_disp0,
-        mod_disp8,
-        mod_disp32,
-        mod_reg,
+        modrm_reg, modrm_mem, modrm_mem_si
     } type;
-    struct regptr modrm_regid;
-    byte_t rm_opcode;
-
-    // REG BITS
-    // offsets of the register into the cpu_state structure
-    struct regptr reg;
-    // for when it's not a register
-    byte_t opcode;
+    union {
+        enum reg32 base;
+        int rm_opcode;
+    };
+    int32_t offset;
+    enum reg32 index;
+    enum {
+        times_1 = 0,
+        times_2 = 1,
+        times_4 = 2,
+    } shift;
 };
 
-#ifdef DISABLE_MODRM_TABLE
-#define modrm_get_info modrm_compute_info
-struct modrm_info modrm_compute_info(byte_t byte);
-#else
-struct modrm_info modrm_table[0x100];
-static inline struct modrm_info modrm_get_info(byte_t byte) {
-    struct modrm_info info = modrm_table[byte];
-    TRACE("reg %s opcode %d ", regptr_name(info.reg), info.opcode);
-    switch (info.type) {
-        case mod_reg:
-            TRACE("mod_reg ");
-            break;
-        case mod_disp0:
-            TRACE("mod_disp0 ");
-            break;
-        case mod_disp8:
-            TRACE("mod_disp8 ");
-            break;
-        case mod_disp32:
-            TRACE("mod_disp32 ");
-            break;
-    }
-    if (info.sib) {
-        TRACE("with sib ");
-    } else {
-        TRACE("%s ", regptr_name(info.modrm_regid));
-    }
-    return info;
-}
-#endif
-
+enum {
+    rm_sib = reg_esp,
+    rm_none = reg_esp,
+    rm_disp32 = reg_ebp,
+};
 #define MOD(byte) ((byte & 0b11000000) >> 6)
 #define REG(byte) ((byte & 0b00111000) >> 3)
 #define RM(byte)  ((byte & 0b00000111) >> 0)
 
-void modrm_decode32(struct cpu_state *cpu, struct tlb *tlb, addr_t *addr_out, struct modrm_info *info_out);
+// read modrm and maybe sib, output information into *modrm, return false for segfault
+static inline bool modrm_decode32(addr_t *ip, struct tlb *tlb, struct modrm *modrm) {
+#define READ(thing) \
+    if (!tlb_read(tlb, *ip, &(thing), sizeof(thing))) \
+        return false; \
+    *ip += sizeof(thing);
+
+    byte_t modrm_byte;
+    READ(modrm_byte);
+
+    enum {
+        mode_disp0,
+        mode_disp8,
+        mode_disp32,
+        mode_reg,
+    } mode = MOD(modrm_byte);
+    modrm->type = modrm_mem;
+    modrm->reg = REG(modrm_byte);
+    modrm->base = RM(modrm_byte);
+    if (mode == mode_reg) {
+        modrm->type = modrm_reg;
+    } else if (modrm->base == rm_disp32 && mode == mode_disp0) {
+        modrm->base = reg_none;
+        mode = mode_disp32;
+    } else if (modrm->base == rm_sib && mode != mode_reg) {
+        byte_t sib_byte;
+        READ(sib_byte);
+        modrm->base = RM(sib_byte);
+        // wtf intel
+        if (modrm->base == rm_disp32) {
+            if (mode == mode_disp0) {
+                modrm->base = reg_none;
+                mode = mode_disp32;
+            } else {
+                modrm->base = reg_ebp;
+            }
+        }
+        modrm->index = REG(sib_byte);
+        modrm->shift = MOD(sib_byte);
+        if (modrm->index != rm_none)
+            modrm->type = modrm_mem_si;
+    }
+
+    if (mode == mode_disp0) {
+        modrm->offset = 0;
+    } else if (mode == mode_disp8) {
+        int8_t offset;
+        READ(offset);
+        modrm->offset = offset;
+    } else if (mode == mode_disp32) {
+        int32_t offset;
+        READ(offset);
+        modrm->offset = offset;
+    }
+#undef READ
+
+    TRACE("reg=%s opcode=%d ", reg32_name(modrm->reg), modrm->opcode);
+    TRACE("base=%s ", reg32_name(modrm->base));
+    if (modrm->type != modrm_reg)
+        TRACE("offset=%s0x%x ", modrm->offset < 0 ? "-" : "", modrm->offset);
+    if (modrm->type == modrm_mem_si)
+        TRACE("index=%s<<%d ", reg32_name(modrm->index), modrm->shift);
+
+    return true;
+}
 
 #endif

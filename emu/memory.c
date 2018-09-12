@@ -9,6 +9,7 @@
 #include "debug.h"
 #include "kernel/errno.h"
 #include "emu/memory.h"
+#include "jit/jit.h"
 
 // increment the change count
 static void mem_changed(struct mem *mem);
@@ -20,6 +21,9 @@ struct mem *mem_new() {
     mem->refcount = 1;
     mem->pt = calloc(MEM_PAGES, sizeof(struct pt_entry));
     mem->changes = 0;
+#if JIT
+    mem->jit = jit_new(mem);
+#endif
     wrlock_init(&mem->lock);
     return mem;
 }
@@ -34,6 +38,9 @@ void mem_release(struct mem *mem) {
         pt_unmap(mem, 0, MEM_PAGES, PT_FORCE);
         free(mem->pt);
         write_wrunlock(&mem->lock);
+#if JIT
+        jit_free(mem->jit);
+#endif
         free(mem);
     }
 }
@@ -91,6 +98,9 @@ int pt_unmap(struct mem *mem, page_t start, pages_t pages, int force) {
                 munmap(data->data, PAGE_SIZE);
                 free(data);
             }
+#if JIT
+            jit_invalidate_page(mem->jit, page);
+#endif
         }
     }
     mem_changed(mem);
@@ -108,8 +118,15 @@ int pt_set_flags(struct mem *mem, page_t start, pages_t pages, int flags) {
     for (page_t page = start; page < start + pages; page++)
         if (mem->pt[page].data == NULL)
             return _ENOMEM;
-    for (page_t page = start; page < start + pages; page++)
-        mem->pt[page].flags = flags;
+    for (page_t page = start; page < start + pages; page++) {
+        struct pt_entry *entry = &mem->pt[page];
+        entry->flags = flags;
+        void *data = (char *) entry->data->data + entry->offset;
+        int prot = PROT_READ;
+        if (flags & P_WRITE) prot |= PROT_WRITE;
+        if (mprotect(data, PAGE_SIZE, prot) < 0)
+            return errno_map();
+    }
     mem_changed(mem);
     return 0;
 }
@@ -124,8 +141,11 @@ int pt_copy_on_write(struct mem *src, page_t src_start, struct mem *dst, page_t 
             // TODO skip shared mappings
             struct pt_entry *entry = &src->pt[src_page];
             entry->flags |= P_COW;
+            entry->flags &= ~P_COMPILED;
             entry->data->refcount++;
-            dst->pt[dst_page] = *entry;
+            dst->pt[dst_page].data = entry->data;
+            dst->pt[dst_page].offset = entry->offset;
+            dst->pt[dst_page].flags = entry->flags;
         }
     }
     mem_changed(src);
@@ -135,10 +155,6 @@ int pt_copy_on_write(struct mem *src, page_t src_start, struct mem *dst, page_t 
 
 static void mem_changed(struct mem *mem) {
     mem->changes++;
-}
-
-static __no_instrument void set_dirty_page(struct mem *mem, page_t page) {
-    mem->dirty_page = page;
 }
 
 void *mem_ptr(struct mem *mem, addr_t addr, int type) {
@@ -158,24 +174,27 @@ void *mem_ptr(struct mem *mem, addr_t addr, int type) {
         pt_map_nothing(mem, page, 1, P_WRITE | P_GROWSDOWN);
     }
 
-    if (type == MEM_WRITE && !P_WRITABLE(entry->flags)) {
-        // page is unwritable or cow
+    if (type == MEM_WRITE) {
+        // if page is unwritable, well tough luck
+        if (!(entry->flags & P_WRITE))
+            return NULL;
         // if page is cow, ~~milk~~ copy it
         if (entry->flags & P_COW) {
             void *data = (char *) entry->data->data + entry->offset;
-            void *copy = mmap(NULL, PAGE_SIZE, PROT_READ | PROT_WRITE, 
+            void *copy = mmap(NULL, PAGE_SIZE, PROT_READ | PROT_WRITE,
                     MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
             memcpy(copy, data, PAGE_SIZE);
             pt_map(mem, page, 1, copy, entry->flags &~ P_COW);
-        } else {
-            return NULL;
         }
+        // get rid of any compiled blocks in this page
+#if JIT
+        jit_invalidate_page(mem->jit, page);
+#endif
     }
 
     if (entry->data == NULL)
         return NULL;
-    set_dirty_page(mem, addr & 0xfffff000);
-    return entry->data->data + entry->offset + OFFSET(addr);
+    return entry->data->data + entry->offset + PGOFFSET(addr);
 }
 
 size_t real_page_size;

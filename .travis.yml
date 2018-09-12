@@ -6,17 +6,12 @@ install:
 # ok now I have to get a newer version of ninja than 1.3.1 which is the latest
 # you can get from trusty *sigh*
     - curl -LO https://github.com/ninja-build/ninja/releases/download/v1.8.2/ninja-linux.zip
-    - unzip ninja-linux.zip ninja
-    - export PATH=$PATH:.
-addons:
-    apt:
-        packages:
-            - libgdbm-dev
+    - unzip ninja-linux.zip ninja -d ~/bin
 
-# man I wish I could get away with a container, but I currently need docker for compiling the vdso
-sudo: required
-services: docker
+env:
+    - MESON_OPTS=-Djit=true
+    - MESON_OPTS=-Djit=false
 
 script:
-    - meson build
+    - meson build $MESON_OPTS
     - ninja -C build

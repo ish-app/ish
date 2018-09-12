@@ -67,12 +67,12 @@ static int load_entry(struct prg_header ph, addr_t bias, struct fd *fd) {
     addr_t memsize = ph.memsize;
     addr_t filesize = ph.filesize;
 
-    int flags = 0;
+    int flags = P_READ;
     if (ph.flags & PH_W) flags |= P_WRITE;
 
     if ((err = fd->ops->mmap(fd, curmem, PAGE(addr),
-                    PAGE_ROUND_UP(filesize + OFFSET(addr)),
-                    offset - OFFSET(addr), flags, MMAP_PRIVATE)) < 0)
+                    PAGE_ROUND_UP(filesize + PGOFFSET(addr)),
+                    offset - PGOFFSET(addr), flags, MMAP_PRIVATE)) < 0)
         return err;
 
     if (memsize > filesize) {
@@ -82,7 +82,7 @@ static int load_entry(struct prg_header ph, addr_t bias, struct fd *fd) {
         // first zero the tail from the end of the file mapping to the end
         // of the load entry or the end of the page, whichever comes first
         addr_t file_end = addr + filesize;
-        dword_t tail_size = PAGE_SIZE - OFFSET(file_end);
+        dword_t tail_size = PAGE_SIZE - PGOFFSET(file_end);
         if (tail_size == PAGE_SIZE)
             // if you can calculate tail_size better and not have to do this please let me know
             tail_size = 0;
@@ -116,7 +116,7 @@ static int elf_exec(struct fd *fd, const char *file, char *const argv[], char *c
     char *interp_name = NULL;
     struct fd *interp_fd = NULL;
     struct elf_header interp_header;
-    struct prg_header *interp_ph;
+    struct prg_header *interp_ph = NULL;
     for (unsigned i = 0; i < header.phent_count; i++) {
         if (ph[i].type != PT_INTERP)
             continue;
@@ -346,6 +346,7 @@ static int elf_exec(struct fd *fd, const char *file, char *const argv[], char *c
     current->cpu.esp = sp;
     current->cpu.eip = entry;
     current->cpu.fcw = 0x37f;
+    collapse_flags(&current->cpu);
     current->vfork_done = true;
     notify(&current->vfork_cond);
 

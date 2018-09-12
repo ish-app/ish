@@ -16,6 +16,12 @@ if get_option('no_crlf')
     add_project_arguments('-DNO_CRLF', language: 'c')
 endif
 
+if get_option('jit')
+    add_project_arguments('-DJIT=1', language: 'c')
+endif
+
+add_project_arguments('-Wno-switch', language: 'c')
+
 includes = [include_directories('.')]
 
 cc = meson.get_compiler('c')
@@ -23,9 +29,12 @@ threads = dependency('threads')
 librt = cc.find_library('rt', required: false)
 
 gdbm = subproject('gdbm').get_variable('gdbm')
-softfloat = subproject('softfloat').get_variable('softfloat_dep')
 
 subdir('vdso') # ish depends on the vdso
+
+offsets = custom_target('offsets',
+    output: 'cpu-offsets.h', input: 'jit/offsets.c', depfile: 'cpu-offsets.h.d',
+    command: [find_program('tools/staticdefine.sh'), '@OUTDIR@/compile_commands.json', '@INPUT@', '@OUTPUT@', '@DEPFILE@'])
 
 src = [
     'kernel/init.c',
@@ -75,16 +84,36 @@ src = [
 
     'emu/memory.c',
     'emu/tlb.c',
-    'emu/interp.c',
-    'emu/modrm.c',
+    'emu/fpu.c',
+    'emu/float80.c',
 ]
+if get_option('jit')
+    gadgets = 'jit/gadgets-' + host_machine.cpu_family()
+    src += [
+        'jit/jit.c',
+        'jit/gen.c',
+        'jit/helpers.c',
+        gadgets+'/entry.S',
+        gadgets+'/memory.S',
+        gadgets+'/control.S',
+        gadgets+'/math.S',
+        gadgets+'/bits.S',
+        gadgets+'/string.S',
+        gadgets+'/misc.S',
+        offsets,
+    ]
+else
+    src += [
+        'emu/interp.c',
+    ]
+endif
 
 libish = library('ish', src,
     include_directories: includes,
-    dependencies: [librt, threads, softfloat, gdbm])
+    dependencies: [librt, threads, gdbm])
 ish = declare_dependency(
     link_with: libish,
-    dependencies: [librt, threads, softfloat, gdbm],
+    dependencies: [librt, threads, gdbm],
     include_directories: includes)
 
 # ptraceomatic et al
@@ -101,3 +130,7 @@ foreach script : gdb_scripts
         command: ['ln', '-sf', '@INPUT@', '@OUTPUT@'],
         build_by_default: true)
 endforeach
+
+# test for floating point library
+float80_test = executable('float80_test', ['emu/float80.c', 'emu/float80-test.c'])
+test('float80', float80_test)

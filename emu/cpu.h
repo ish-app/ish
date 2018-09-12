@@ -2,8 +2,8 @@
 #define EMU_H
 
 #include <stddef.h>
-#include <softfloat.h>
 #include "misc.h"
+#include "emu/float80.h"
 #include "emu/memory.h"
 #include "emu/tlb.h"
 
@@ -20,6 +20,7 @@ union xmm_reg {
 
 struct cpu_state {
     struct mem *mem;
+    struct jit *jit;
 
     // assumes little endian (as does literally everything)
 #define _REG(n) \
@@ -56,7 +57,7 @@ struct cpu_state {
     union {
         dword_t eflags;
         struct {
-            bits cf:1;
+            bits cf_bit:1;
             bits pad1_1:1;
             bits pf:1;
             bits pad2_0:1;
@@ -67,22 +68,41 @@ struct cpu_state {
             bits tf:1;
             bits if_:1;
             bits df:1;
-            bits of:1;
+            bits of_bit:1;
             bits iopl:2;
         };
+        // for asm
+#define PF_FLAG (1 << 2)
+#define AF_FLAG (1 << 4)
+#define ZF_FLAG (1 << 6)
+#define SF_FLAG (1 << 7)
+#define DF_FLAG (1 << 10)
     };
+    // please pretend this doesn't exist
+    dword_t df_offset;
+    // for maximum efficiency these are stored in bytes
+    byte_t cf;
+    byte_t of;
     // whether the true flag values are in the above struct, or computed from
     // the stored result and operands
     dword_t res, op1, op2;
-    bits pf_res:1;
-    bits zf_res:1;
-    bits sf_res:1;
-    bits cf_ops:1;
-    bits of_ops:1;
-    bits af_ops:1;
+    union {
+        struct {
+            bits pf_res:1;
+            bits zf_res:1;
+            bits sf_res:1;
+            bits af_ops:1;
+        };
+        // for asm
+#define PF_RES (1 << 0)
+#define ZF_RES (1 << 1)
+#define SF_RES (1 << 2)
+#define AF_OPS (1 << 3)
+        byte_t flags_res;
+    };
 
     // fpu
-    extFloat80_t fp[8];
+    float80 fp[8];
     union {
         word_t fsw;
         struct {
@@ -141,6 +161,8 @@ static inline void collapse_flags(struct cpu_state *cpu) {
     cpu->sf = SF;
     cpu->pf = PF;
     cpu->zf_res = cpu->sf_res = cpu->pf_res = 0;
+    cpu->of_bit = cpu->of;
+    cpu->cf_bit = cpu->cf;
     cpu->af = AF;
     cpu->af_ops = 0;
     cpu->pad1_1 = 1;
@@ -148,47 +170,29 @@ static inline void collapse_flags(struct cpu_state *cpu) {
     cpu->if_ = 1;
 }
 
-typedef uint8_t reg_id_t;
-#define REG_ID(reg) offsetof(struct cpu_state, reg)
-#define REG_VAL(cpu, reg_id, size) (*((uint(size) *) (((char *) (cpu)) + reg_id)))
-static inline const char *reg8_name(uint8_t reg_id) {
-    switch (reg_id) {
-        case REG_ID(al): return "al";
-        case REG_ID(bl): return "bl";
-        case REG_ID(cl): return "cl";
-        case REG_ID(dl): return "dl";
-        case REG_ID(ah): return "ah";
-        case REG_ID(bh): return "bh";
-        case REG_ID(ch): return "ch";
-        case REG_ID(dh): return "dh";
-    }
-    return "??";
+static inline void expand_flags(struct cpu_state *cpu) {
+    cpu->of = cpu->of_bit;
+    cpu->cf = cpu->cf_bit;
+    cpu->zf_res = cpu->sf_res = cpu->pf_res = cpu->af_ops = 0;
 }
-static inline const char *reg16_name(uint8_t reg_id) {
-    switch (reg_id) {
-        case REG_ID(ax): return "ax";
-        case REG_ID(bx): return "bx";
-        case REG_ID(cx): return "cx";
-        case REG_ID(dx): return "dx";
-        case REG_ID(si): return "si";
-        case REG_ID(di): return "di";
-        case REG_ID(bp): return "bp";
-        case REG_ID(sp): return "sp";
+
+enum reg32 {
+    reg_eax = 0, reg_ecx, reg_edx, reg_ebx, reg_esp, reg_ebp, reg_esi, reg_edi, reg_count,
+    reg_none = reg_count,
+};
+
+static inline const char *reg32_name(enum reg32 reg) {
+    switch (reg) {
+        case reg_eax: return "eax";
+        case reg_ecx: return "ecx";
+        case reg_edx: return "edx";
+        case reg_ebx: return "ebx";
+        case reg_esp: return "esp";
+        case reg_ebp: return "ebp";
+        case reg_esi: return "esi";
+        case reg_edi: return "edi";
+        case reg_none: return "?";
     }
-    return "??";
-}
-static inline const char *reg32_name(uint8_t reg_id) {
-    switch (reg_id) {
-        case REG_ID(eax): return "eax";
-        case REG_ID(ebx): return "ebx";
-        case REG_ID(ecx): return "ecx";
-        case REG_ID(edx): return "edx";
-        case REG_ID(esi): return "esi";
-        case REG_ID(edi): return "edi";
-        case REG_ID(ebp): return "ebp";
-        case REG_ID(esp): return "esp";
-    }
-    return "???";
 }
 
 #endif

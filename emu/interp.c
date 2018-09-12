@@ -1,34 +1,45 @@
 #include "emu/cpu.h"
 #include "emu/cpuid.h"
+#include "emu/modrm.h"
+#include "emu/regid.h"
 
 // TODO get rid of these
 #pragma GCC diagnostic ignored "-Wsign-compare"
 #pragma GCC diagnostic ignored "-Wtautological-constant-out-of-range-compare"
 
 #define DECLARE_LOCALS \
+    dword_t addr_offset = 0; \
     dword_t saved_ip = cpu->eip; \
-    byte_t insn; \
-    struct modrm_info modrm; \
+    struct regptr modrm_regptr, modrm_base; \
     dword_t addr = 0; \
     \
-    uint64_t imm; \
     union xmm_reg xmm_src; \
     union xmm_reg xmm_dst; \
     \
-    extFloat80_t ftmp;
+    float80 ftmp;
 
-#define READMODRM modrm_decode32(cpu, tlb, &addr, &modrm)
-#define READIMM_(name,size) \
+#define FINISH \
+    return -1 // everything is ok.
+
+#define UNDEFINED { cpu->eip = saved_ip; return INT_UNDEFINED; }
+
+static bool modrm_compute(struct cpu_state *cpu, struct tlb *tlb, addr_t *addr_out,
+        struct modrm *modrm, struct regptr *modrm_regptr, struct regptr *modrm_base);
+#define READMODRM \
+    if (!modrm_compute(cpu, tlb, &addr, &modrm, &modrm_regptr, &modrm_base)) { \
+        cpu->segfault_addr = cpu->eip; \
+        cpu->eip = saved_ip; \
+        return INT_GPF; \
+    }
+#define READADDR READIMM_(addr_offset, 32); addr += addr_offset
+
+#define _READIMM(name,size) \
     name = mem_read(cpu->eip, size); \
-    cpu->eip += size/8; \
-    TRACE("imm %llx ", (long long) name)
-#define READIMM READIMM_(imm, OP_SIZE)
-#define READIMM8 READIMM_(imm, 8)
-#define READIMM16 READIMM_(imm, 16)
-#define READINSN \
-    insn = mem_read(cpu->eip, 8); \
-    cpu->eip++; \
-    TRACE("%02x ", insn);
+    cpu->eip += size/8
+
+#define TRACEIP() TRACE("%d %08x\t", current->pid, cpu->eip);
+
+#define SEG_GS() addr += cpu->tls_ptr
 
 // this is a completely insane way to turn empty into OP_SIZE and any other size into itself
 #define sz(x) sz_##x
@@ -76,106 +87,57 @@
 #define set(what, to, size) set_##what(to, sz(size))
 #define is_memory(what) is_memory_##what
 
-#define REGISTER(regptr, size) (*(ty(size) *) (((char *) cpu) + regptr.reg##size##_id))
+#define REGISTER(regptr, size) (*(ty(size) *) (((char *) cpu) + (regptr).reg##size##_id))
 
-#define get_modrm_reg(size) REGISTER(modrm.reg, size)
-#define set_modrm_reg(to, size) REGISTER(modrm.reg, size) = to
+#define get_modrm_reg(size) REGISTER(modrm_regptr, size)
+#define set_modrm_reg(to, size) REGISTER(modrm_regptr, size) = to
 #define is_memory_modrm_reg 0
 
-#define is_memory_modrm_val (modrm.type != mod_reg)
+#define is_memory_modrm_val (modrm.type != modrm_reg)
 #define get_modrm_val(size) \
-    (modrm.type == mod_reg ? \
-     REGISTER(modrm.modrm_regid, size) : \
+    (modrm.type == modrm_reg ? \
+     REGISTER(modrm_base, size) : \
      mem_read(addr, size))
 
 #define set_modrm_val(to, size) \
-    if (modrm.type == mod_reg) { \
-        REGISTER(modrm.modrm_regid, size) = to; \
+    if (modrm.type == modrm_reg) { \
+        REGISTER(modrm_base, size) = to; \
     } else { \
         mem_write(addr, to, size); \
     }(void)0
 
 #define get_imm(size) ((uint(size)) imm)
-#define get_imm8(size) ((int8_t) (uint8_t) imm)
 
 #define get_mem_addr(size) mem_read(addr, size)
 #define set_mem_addr(to, size) mem_write(addr, to, size)
 
-#define get_mem_si(size) mem_read(cpu->osi, size)
-#define set_mem_si(size) mem_write(cpu->osi, size)
-#define get_mem_di(size) mem_read(cpu->odi, size)
-#define set_mem_di(size) mem_write(cpu->osi, size)
+#define get_mem_si(size) mem_read(cpu->esi, size)
+#define set_mem_si(size) mem_write(cpu->esi, size)
+#define get_mem_di(size) mem_read(cpu->edi, size)
+#define set_mem_di(size) mem_write(cpu->esi, size)
 
 // DEFINE ALL THE MACROS
-#define get_oax(size) cpu->oax
-#define get_obx(size) cpu->obx
-#define get_ocx(size) cpu->ocx
-#define get_odx(size) cpu->odx
-#define get_osi(size) cpu->osi
-#define get_odi(size) cpu->odi
-#define get_obp(size) cpu->obp
-#define get_osp(size) cpu->osp
-#define get_eax(size) cpu->eax
-#define get_ebx(size) cpu->ebx
-#define get_ecx(size) cpu->ecx
-#define get_edx(size) cpu->edx
-#define get_esi(size) cpu->esi
-#define get_edi(size) cpu->edi
-#define get_ebp(size) cpu->ebp
-#define get_esp(size) cpu->esp
+#define get_reg_a(size) ((uint(size)) cpu->eax)
+#define get_reg_b(size) ((uint(size)) cpu->ebx)
+#define get_reg_c(size) ((uint(size)) cpu->ecx)
+#define get_reg_d(size) ((uint(size)) cpu->edx)
+#define get_reg_si(size) ((uint(size)) cpu->esi)
+#define get_reg_di(size) ((uint(size)) cpu->edi)
+#define get_reg_bp(size) ((uint(size)) cpu->ebp)
+#define get_reg_sp(size) ((uint(size)) cpu->esp)
 #define get_eip(size) cpu->eip
 #define get_eflags(size) cpu->eflags
-#define get_ax(size) cpu->ax
-#define get_bx(size) cpu->bx
-#define get_cx(size) cpu->cx
-#define get_dx(size) cpu->dx
-#define get_si(size) cpu->si
-#define get_di(size) cpu->di
-#define get_bp(size) cpu->bp
-#define get_sp(size) cpu->sp
-#define get_al(size) cpu->al
-#define get_bl(size) cpu->bl
-#define get_cl(size) cpu->cl
-#define get_dl(size) cpu->dl
-#define get_ah(size) cpu->ah
-#define get_bh(size) cpu->bh
-#define get_ch(size) cpu->ch
-#define get_dh(size) cpu->dh
 #define get_gs(size) cpu->gs
-#define set_oax(to, size) cpu->oax = to
-#define set_obx(to, size) cpu->obx = to
-#define set_ocx(to, size) cpu->ocx = to
-#define set_odx(to, size) cpu->odx = to
-#define set_osi(to, size) cpu->osi = to
-#define set_odi(to, size) cpu->odi = to
-#define set_obp(to, size) cpu->obp = to
-#define set_osp(to, size) cpu->osp = to
-#define set_eax(to, size) cpu->eax = to
-#define set_ebx(to, size) cpu->ebx = to
-#define set_ecx(to, size) cpu->ecx = to
-#define set_edx(to, size) cpu->edx = to
-#define set_esi(to, size) cpu->esi = to
-#define set_edi(to, size) cpu->edi = to
-#define set_ebp(to, size) cpu->ebp = to
-#define set_esp(to, size) cpu->esp = to
+#define set_reg_a(to, size) *(uint(size) *) &cpu->eax = to
+#define set_reg_b(to, size) *(uint(size) *) &cpu->ebx = to
+#define set_reg_c(to, size) *(uint(size) *) &cpu->ecx = to
+#define set_reg_d(to, size) *(uint(size) *) &cpu->edx = to
+#define set_reg_si(to, size) *(uint(size) *) &cpu->esi = to
+#define set_reg_di(to, size) *(uint(size) *) &cpu->edi = to
+#define set_reg_bp(to, size) *(uint(size) *) &cpu->ebp = to
+#define set_reg_sp(to, size) *(uint(size) *) &cpu->esp = to
 #define set_eip(to, size) cpu->eip = to
 #define set_eflags(to, size) cpu->eflags = to
-#define set_ax(to, size) cpu->ax = to
-#define set_bx(to, size) cpu->bx = to
-#define set_cx(to, size) cpu->cx = to
-#define set_dx(to, size) cpu->dx = to
-#define set_si(to, size) cpu->si = to
-#define set_di(to, size) cpu->di = to
-#define set_bp(to, size) cpu->bp = to
-#define set_sp(to, size) cpu->sp = to
-#define set_al(to, size) cpu->al = to
-#define set_bl(to, size) cpu->bl = to
-#define set_cl(to, size) cpu->cl = to
-#define set_dl(to, size) cpu->dl = to
-#define set_ah(to, size) cpu->ah = to
-#define set_bh(to, size) cpu->bh = to
-#define set_ch(to, size) cpu->ch = to
-#define set_dh(to, size) cpu->dh = to
 #define set_gs(to, size) cpu->gs = to
 
 #define get_0(size) 0
@@ -191,12 +153,12 @@
 // takes any unsigned integer and casts it to signed of the same size
 
 #define unsigned_overflow(what, a, b, res, z) ({ \
-    int ov = __builtin_##what##_overflow((uint(sz(z))) (a), (uint(sz(z))) (b), (uint(sz(z)) *) &res); \
-    res = (sint(sz(z))) res; ov; \
+    int ov = __builtin_##what##_overflow((uint(z)) (a), (uint(z)) (b), (uint(z) *) &res); \
+    res = (sint(z)) res; ov; \
 })
 #define signed_overflow(what, a, b, res, z) ({ \
-    int ov = __builtin_##what##_overflow((sint(sz(z))) (a), (sint(sz(z))) (b), (sint(sz(z)) *) &res); \
-    res = (sint(sz(z))) res; ov; \
+    int ov = __builtin_##what##_overflow((sint(z)) (a), (sint(z)) (b), (sint(z) *) &res); \
+    res = (sint(z)) res; ov; \
 })
 
 #define MOV(src, dst,z) \
@@ -212,12 +174,12 @@
     set(dst, tmp,z); \
 } while (0)
 
-#define PUSH(thing) \
-    mem_write(cpu->osp - OP_SIZE/8, get(thing, OP_SIZE), OP_SIZE); \
-    cpu->osp -= OP_SIZE/8
-#define POP(thing) \
-    set(thing, mem_read(cpu->osp, OP_SIZE),); \
-    cpu->osp += OP_SIZE/8
+#define PUSH(thing,z) \
+    mem_write(cpu->esp - OP_SIZE/8, get(thing,z),z); \
+    cpu->esp -= OP_SIZE/8
+#define POP(thing,z) \
+    set(thing, mem_read(cpu->esp, z),z); \
+    cpu->esp += OP_SIZE/8
 
 #define INT(code) \
     return get(code,8)
@@ -227,7 +189,7 @@
 #define SETRESFLAGS cpu->zf_res = cpu->sf_res = cpu->pf_res = 1
 #define SETRES_RAW(result,z)
 #define SETRES(result,z) \
-    cpu->res = (int32_t) (sint(sz(z))) (result); SETRESFLAGS
+    cpu->res = (int32_t) (sint(z)) (result); SETRESFLAGS
     // ^ sign extend result so SF is correct
 #define ZEROAF cpu->af = cpu->af_ops = 0
 #define SETAF(a, b,z) \
@@ -246,17 +208,17 @@
 #define ADC(src, dst,z) \
     SETAF(src, dst,z); \
     cpu->of = signed_overflow(add, get(dst,z), get(src,z) + cpu->cf, cpu->res,z) \
-        || (cpu->cf && get(src,z) == ((uint(sz(z))) -1) / 2); \
+        || (cpu->cf && get(src,z) == ((uint(z)) -1) / 2); \
     cpu->cf = unsigned_overflow(add, get(dst,z), get(src,z) + cpu->cf, cpu->res,z) \
-        || (cpu->cf && get(src,z) == (uint(sz(z))) -1); \
+        || (cpu->cf && get(src,z) == (uint(z)) -1); \
     set(dst, cpu->res,z); SETRESFLAGS
 
 #define SBB(src, dst,z) \
     SETAF(src, dst,z); \
     cpu->of = signed_overflow(sub, get(dst,z), get(src,z) + cpu->cf, cpu->res,z) \
-        || (cpu->cf && get(src,z) == ((uint(sz(z))) -1) / 2); \
+        || (cpu->cf && get(src,z) == ((uint(z)) -1) / 2); \
     cpu->cf = unsigned_overflow(sub, get(dst,z), get(src,z) + cpu->cf, cpu->res,z) \
-        || (cpu->cf && get(src,z) == (uint(sz(z))) -1); \
+        || (cpu->cf && get(src,z) == (uint(z)) -1); \
     set(dst, cpu->res,z); SETRESFLAGS
 
 #define OR(src, dst,z) \
@@ -296,49 +258,37 @@
 
 #define MUL18(val) cpu->ax = cpu->al * val
 #define MUL1(val,z) do { \
-    uint64_t tmp = cpu->oax * (uint64_t) get(val,z); \
-    cpu->oax = tmp; cpu->odx = tmp >> sz(z); \
-    cpu->cf = cpu->of = (tmp != (uint32_t) tmp); cpu->cf_ops = cpu->of_ops = 0; ZEROAF; \
+    uint64_t tmp = get(reg_a,z) * (uint64_t) get(val,z); \
+    set(reg_a, tmp,z); set(reg_d, tmp >> z,z);; \
+    cpu->cf = cpu->of = (tmp != (uint32_t) tmp); ZEROAF; \
     cpu->zf = cpu->sf = cpu->pf = cpu->zf_res = cpu->sf_res = cpu->pf_res = 0; \
 } while (0)
 #define IMUL1(val,z) do { \
-    int64_t tmp = (int64_t) (sint(sz(z))) cpu->oax * (sint(sz(z))) get(val,z); \
-    cpu->oax = tmp; cpu->odx = tmp >> sz(z); \
-    cpu->cf = cpu->of = (tmp != (int32_t) tmp); cpu->cf_ops = cpu->of_ops = 0; \
+    int64_t tmp = (int64_t) (sint(z)) get(reg_a,z) * (sint(z)) get(val,z); \
+    set(reg_a, tmp,z); set(reg_d, tmp >> z,z); \
+    cpu->cf = cpu->of = (tmp != (int32_t) tmp); \
     cpu->zf = cpu->sf = cpu->pf = cpu->zf_res = cpu->sf_res = cpu->pf_res = 0; \
 } while (0)
-#define MUL2(val, reg) \
-    cpu->cf = cpu->of = unsigned_overflow(mul, reg, val, cpu->res,z); \
-    set(reg, cpu->res,z); SETRESFLAGS
 #define IMUL2(val, reg,z) \
     cpu->cf = cpu->of = signed_overflow(mul, get(reg,z), get(val,z), cpu->res,z); \
     set(reg, cpu->res,z); SETRESFLAGS
-#define MUL3(imm, src, dst) \
-    cpu->cf = cpu->of = unsigned_overflow(mul, get(src,z), get(imm,z), cpu->res,z); \
-    set(dst, cpu->res,z); \
-    cpu->pf_res = 1; cpu->zf = cpu->sf = cpu->zf_res = cpu->sf_res = 0
 #define IMUL3(imm, src, dst,z) \
     cpu->cf = cpu->of = signed_overflow(mul, get(src,z), get(imm,z), cpu->res,z); \
     set(dst, cpu->res,z); \
     cpu->pf_res = 1; cpu->zf = cpu->sf = cpu->zf_res = cpu->sf_res = 0
-#define _MUL_MODRM(val) \
-    if (modrm.reg.reg32_id == modrm.modrm_regid.reg32_id) \
-        modrm_reg *= val; \
-    else \
-        modrm_reg = val * modrm_val
 
-#define DIV(reg, val, rem,z) do { \
+#define DIV(val,z) do { \
     if (get(val,z) == 0) return INT_DIV; \
-    uint(twice(sz(z))) dividend = get(reg,z) | ((uint(twice(sz(z)))) get(rem,z) << sz(z)); \
-    set(rem, dividend % get(val,z),z); \
-    set(reg, dividend / get(val,z),z); \
+    uint(twice(z)) dividend = get(reg_a,z) | ((uint(twice(z))) get(reg_d,z) << z); \
+    set(reg_d, dividend % get(val,z),z); \
+    set(reg_a, dividend / get(val,z),z); \
 } while (0)
 
-#define IDIV(reg, val, rem,z) do { \
+#define IDIV(val,z) do { \
     if (get(val,z) == 0) return INT_DIV; \
-    sint(twice(sz(z))) dividend = get(reg,z) | ((sint(twice(sz(z)))) get(rem,z) << sz(z)); \
-    set(rem, dividend % get(val,z),z); \
-    set(reg, dividend / get(val,z),z); \
+    sint(twice(z)) dividend = get(reg_a,z) | ((sint(twice(z))) get(reg_d,z) << z); \
+    set(reg_d, dividend % get(val,z),z); \
+    set(reg_a, dividend / get(val,z),z); \
 } while (0)
 
 // TODO this is probably wrong in some subtle way
@@ -346,62 +296,62 @@
 #define HALF_16 8
 #define HALF_32 16
 #define CVT \
-    cpu->odx = cpu->oax & (1 << (OP_SIZE - 1)) ? (uint(OP_SIZE)) -1 : 0
+    set(reg_d, get(reg_a,oz) & (1 << (oz - 1)) ? (uint(oz)) -1 : 0, oz)
 #define CVTE \
     REG_VAL(cpu, REG_ID(eax), HALF_OP_SIZE) = (sint(OP_SIZE)) REG_VAL(cpu, REG_ID(ax), OP_SIZE)
 
-#define CALL(loc) PUSH(eip); JMP(loc)
-#define CALL_REL(offset) PUSH(eip); JMP_REL(offset)
+#define CALL(loc) PUSH(eip,oz); JMP(loc)
+#define CALL_REL(offset) PUSH(eip,oz); JMP_REL(offset)
 
 #define ROL(count, val,z) \
-    if (get(count,z) % sz(z) != 0) { \
-        int cnt = get(count,z) % sz(z); \
+    if (get(count,8) % z != 0) { \
+        int cnt = get(count,8) % z; \
         /* the compiler miraculously turns this into a rol instruction with optimizations on */\
-        set(val, get(val,z) << cnt | get(val,z) >> (sz(z) - cnt),z); \
-        cpu->cf = get(val,z) & 1; cpu->cf_ops = 0; \
-        if (cnt == 1) { cpu->of = cpu->cf ^ (get(val,z) >> (OP_SIZE - 1)); cpu->of_ops = 0; } \
+        set(val, get(val,z) << cnt | get(val,z) >> (z - cnt),z); \
+        cpu->cf = get(val,z) & 1; \
+        if (cnt == 1) { cpu->of = cpu->cf ^ (get(val,z) >> (OP_SIZE - 1)); } \
     }
 #define ROR(count, val,z) \
-    if (get(count,z) % sz(z) != 0) { \
-        int cnt = get(count,z) % sz(z); \
-        set(val, get(val,z) >> cnt | get(val,z) << (sz(z) - cnt),z); \
-        cpu->cf = get(val,z) >> (OP_SIZE - 1); cpu->cf_ops = 0; \
-        if (cnt == 1) { cpu->of = cpu->cf ^ (get(val,z) & 1); cpu->of_ops = 0; } \
+    if (get(count,8) % z != 0) { \
+        int cnt = get(count,8) % z; \
+        set(val, get(val,z) >> cnt | get(val,z) << (z - cnt),z); \
+        cpu->cf = get(val,z) >> (OP_SIZE - 1); \
+        if (cnt == 1) { cpu->of = cpu->cf ^ (get(val,z) & 1); } \
     }
 #define SHL(count, val,z) \
-    if (get(count,z) % sz(z) != 0) { \
-        int cnt = get(count,z) % sz(z); \
-        cpu->cf = (get(val,z) << (cnt - 1)) >> (sz(z) - 1); \
-        cpu->of = cpu->cf ^ (get(val,z) >> (sz(z) - 1)); \
+    if (get(count,8) % z != 0) { \
+        int cnt = get(count,8) % z; \
+        cpu->cf = (get(val,z) << (cnt - 1)) >> (z - 1); \
+        cpu->of = cpu->cf ^ (get(val,z) >> (z - 1)); \
         set(val, get(val,z) << cnt,z); SETRES(get(val,z),z); ZEROAF; \
     }
 #define SHR(count, val,z) \
-    if (get(count,z) % sz(z) != 0) { \
-        int cnt = get(count,z) % sz(z); \
+    if (get(count,8) % z != 0) { \
+        int cnt = get(count,8) % z; \
         cpu->cf = (get(val,z) >> (cnt - 1)) & 1; \
-        cpu->of = get(val,z) >> (sz(z) - 1); \
+        cpu->of = get(val,z) >> (z - 1); \
         set(val, get(val,z) >> cnt,z); SETRES(get(val,z),z); ZEROAF; \
     }
 #define SAR(count, val,z) \
-    if (get(count,z) % sz(z) != 0) { \
-        int cnt = get(count,z) % sz(z); \
+    if (get(count,8) % z != 0) { \
+        int cnt = get(count,8) % z; \
         cpu->cf = (get(val,z) >> (cnt - 1)) & 1; cpu->of = 0; \
-        set(val, ((sint(sz(z))) get(val,z)) >> cnt,z); SETRES(get(val,z),z); ZEROAF; \
+        set(val, ((sint(z)) get(val,z)) >> cnt,z); SETRES(get(val,z),z); ZEROAF; \
     }
 
 #define SHRD(count, extra, dst,z) \
-    if (get(count,z) % sz(z) != 0) { \
-        int cnt = get(count,z) % sz(z); \
-        cpu->cf = (get(dst,z) >> (cnt - 1)) & 1; cpu->cf_ops = 0; \
-        cpu->res = get(dst,z) >> cnt | get(extra,z) << (sz(z) - cnt); \
+    if (get(count,8) % z != 0) { \
+        int cnt = get(count,8) % z; \
+        cpu->cf = (get(dst,z) >> (cnt - 1)) & 1; \
+        cpu->res = get(dst,z) >> cnt | get(extra,z) << (z - cnt); \
         set(dst, cpu->res,z); \
         SETRESFLAGS; \
     }
 
 #define SHLD(count, extra, dst,z) \
-    if (get(count,z) % sz(z) != 0) { \
-        int cnt = get(count,z) % sz(z); \
-        cpu->res = get(dst,z) << cnt | get(extra,z) >> (sz(z) - cnt); \
+    if (get(count,8) % z != 0) { \
+        int cnt = get(count,8) % z; \
+        cpu->res = get(dst,z) << cnt | get(extra,z) >> (z - cnt); \
         set(dst, cpu->res,z); \
         SETRESFLAGS; \
     }
@@ -418,7 +368,7 @@
     switch (modrm.opcode) { \
         case 0: \
         case 1: TRACE("test imm"); \
-                READIMM8; TEST(imm8, val); break; \
+                READIMM8; TEST(imm, val); break; \
         case 2: TRACE("not"); return INT_UNDEFINED; \
         case 3: TRACE("neg"); return INT_UNDEFINED; \
         case 4: TRACE("mul"); return INT_UNDEFINED; \
@@ -434,10 +384,10 @@
 
 #define get_bit(bit, val,z) \
     ((is_memory(val) ? \
-      mem_read(addr + get(bit,z) / sz(z) * (sz(z)/8), sz(z)) : \
-      get(val,z)) & (1 << (get(bit,z) % sz(z)))) ? 1 : 0
+      mem_read(addr + get(bit,z) / z * (z/8), z) : \
+      get(val,z)) & (1 << (get(bit,z) % z))) ? 1 : 0
 
-#define msk(bit,z) (1 << (get(bit,z) % sz(z)))
+#define msk(bit,z) (1 << (get(bit,z) % z))
 
 #define BT(bit, val,z) \
     cpu->cf = get_bit(bit, val,z);
@@ -462,7 +412,7 @@
 #define BSR(src, dst,z) \
     cpu->zf = get(src,z) == 0; \
     cpu->zf_res = 0; \
-    if (!cpu->zf) set(dst, sz(z) - __builtin_clz(get(src,z)),z)
+    if (!cpu->zf) set(dst, z - __builtin_clz(get(src,z)),z)
 
 // string instructions
 
@@ -479,60 +429,57 @@
 #define BUMP_SI_DI(size) \
     BUMP_SI(size); BUMP_DI(size)
 
-#define MOVS(z) \
-    mem_write(cpu->edi, mem_read(cpu->esi, sz(z)), sz(z)); \
+#define str_movs(z) \
+    mem_write(cpu->edi, mem_read(cpu->esi, z), z); \
     BUMP_SI_DI(z)
-
-#define STOS(z) \
-    mem_write(cpu->edi, REG_VAL(cpu, REG_ID(eax), sz(z)), sz(z)); \
+#define str_stos(z) \
+    mem_write(cpu->edi, get(reg_a,z),z); \
     BUMP_DI(z)
-
-#define LODS(z) \
-    REG_VAL(cpu, REG_ID(eax), sz(z)) = mem_read(cpu->esi, sz(z)); \
+#define str_lods(z) \
+    set(reg_a, mem_read(cpu->esi, z),z); \
     BUMP_SI(z)
-
-// found an alternative to al, see above, needs polishing
-#define SCAS(z) \
-    CMP(al, mem_di,z); \
+#define str_scas(z) \
+    CMP(reg_a, mem_di,z); \
     BUMP_DI(z)
-
-#define CMPS(z) \
+#define str_cmps(z) \
     CMP(mem_di, mem_si,z); \
     BUMP_SI_DI(z)
 
-#define REP(OP) \
-    while (cpu->ocx != 0) { \
-        OP; \
-        cpu->ocx--; \
+#define STR(op, z) str_##op(z)
+
+#define REP(op, z) \
+    while (cpu->ecx != 0) { \
+        STR(op, z); \
+        cpu->ecx--; \
     }
 
-#define REPNZ(OP) \
-    while (cpu->ocx != 0) { \
-        OP; \
-        cpu->ocx--; \
+#define REPNZ(op, z) \
+    while (cpu->ecx != 0) { \
+        STR(op, z); \
+        cpu->ecx--; \
         if (ZF) break; \
     }
 
-#define REPZ(OP) \
-    while (cpu->ocx != 0) { \
-        OP; \
-        cpu->ocx--; \
+#define REPZ(op, z) \
+    while (cpu->ecx != 0) { \
+        STR(op, z); \
+        cpu->ecx--; \
         if (!ZF) break; \
     }
 
 #define CMPXCHG(src, dst,z) \
-    CMP(oax, dst,z); \
+    CMP(reg_a, dst,z); \
     if (E) { \
         MOV(src, dst,z); \
     } else \
-        MOV(dst, oax,z)
+        MOV(dst, reg_a,z)
 
 #define XADD(src, dst,z) \
     XCHG(src, dst,z); \
     ADD(src, dst,z)
 
 #define BSWAP(dst) \
-    set(dst, __builtin_bswap32(get(dst,)),)
+    set(dst, __builtin_bswap32(get(dst,32)),32)
 
 // condition codes
 #define E ZF
@@ -556,24 +503,29 @@
     if (cond) { \
         cpu->eip += get(offset,); FIX_EIP; \
     }
-#define JCXZ_REL(offset) J_REL(cpu->ocx == 0, offset)
+#define JN_REL(cond, offset) \
+    if (!cond) { \
+        cpu->eip += get(offset,); FIX_EIP; \
+    }
+#define JCXZ_REL(offset) J_REL(get(reg_c,oz) == 0, offset)
 
-#define RET_NEAR() POP(eip); FIX_EIP
-#define RET_NEAR_IMM(imm) RET_NEAR(); cpu->osp += get(imm,16)
+#define RET_NEAR(imm) POP(eip,32); FIX_EIP; cpu->esp += get(imm,16)
 
 #define SET(cond, val) \
     set(val, (cond ? 1 : 0),8)
+#define SETN(cond, val) \
+    set(val, (cond ? 0 : 1),8)
 
-#define CMOV(cond, dst, src,z) \
-    if (cond) MOV(dst, src,z)
+#define CMOV(cond, dst, src,z) if (cond) MOV(dst, src,z)
+#define CMOVN(cond, dst, src,z) if (!cond) MOV(dst, src,z)
 
 #define POPF() \
-    POP(eflags); \
-    cpu->zf_res = cpu->sf_res = cpu->pf_res = cpu->af_ops = 0
+    POP(eflags,32); \
+    expand_flags(cpu)
 
 #define PUSHF() \
     collapse_flags(cpu); \
-    PUSH(eflags)
+    PUSH(eflags,oz)
 
 #define STD cpu->df = 1
 #define CLD cpu->df = 0
@@ -582,50 +534,52 @@
 #define SAHF \
     cpu->eflags &= 0xffffff00 | ~AH_FLAG_MASK; \
     cpu->eflags |= cpu->ah & AH_FLAG_MASK; \
-    cpu->cf_ops = cpu->pf_res = cpu->af_ops = cpu->zf_res = cpu->sf_res = 0
+    expand_flags(cpu)
 
 #define RDTSC \
     imm = rdtsc(); \
     cpu->eax = imm & 0xffffffff; \
     cpu->edx = imm >> 32
 
+#define CPUID() \
+    do_cpuid(&cpu->eax, &cpu->ebx, &cpu->ecx, &cpu->edx)
+
 #include "emu/interp/sse.h"
 #include "emu/interp/fpu.h"
 
 // ok now include the decoding function
-#define decoder_name cpu_step
+#define DECODER_RET int
+#define DECODER_NAME cpu_step
+#define DECODER_ARGS struct cpu_state *cpu, struct tlb *tlb
+#define DECODER_PASS_ARGS cpu, tlb
 
 #define OP_SIZE 32
-#define oax eax
-#define obx ebx
-#define ocx ecx
-#define odx edx
-#define osi esi
-#define odi edi
-#define obp ebp
-#define osp esp
-#include "decode.h"
+#include "emu/decode.h"
+#undef OP_SIZE
+#define OP_SIZE 16
+#include "emu/decode.h"
 #undef OP_SIZE
 
-#define OP_SIZE 16
-#undef oax
-#define oax ax
-#undef obx
-#define obx bx
-#undef ocx
-#define ocx cx
-#undef odx
-#define odx dx
-#undef osi
-#define osi si
-#undef odi
-#define odi di
-#undef obp
-#define obp bp
-#undef osp
-#define osp sp
-#include "decode.h"
-#undef OP_SIZE
+// reads a modrm and maybe sib byte, computes the address, and adds it to
+// *addr_out, returns false if segfault while reading the bytes
+static bool modrm_compute(struct cpu_state *cpu, struct tlb *tlb, addr_t *addr_out,
+        struct modrm *modrm, struct regptr *modrm_regptr, struct regptr *modrm_base) {
+    if (!modrm_decode32(&cpu->eip, tlb, modrm))
+        return false;
+    *modrm_regptr = regptr_from_reg(modrm->reg);
+    *modrm_base = regptr_from_reg(modrm->base);
+    if (modrm->type == modrm_reg)
+        return true;
+
+    if (modrm->base != reg_none)
+        *addr_out += REGISTER(*modrm_base, 32);
+    *addr_out += modrm->offset;
+    if (modrm->type == modrm_mem_si) {
+        struct regptr index_reg = regptr_from_reg(modrm->index);
+        *addr_out += REGISTER(index_reg, 32) << modrm->shift;
+    }
+    return true;
+}
 
 flatten __no_instrument void cpu_run(struct cpu_state *cpu) {
     int i = 0;
@@ -653,5 +607,3 @@ flatten __no_instrument void cpu_run(struct cpu_state *cpu) {
         }
     }
 }
-
-int log_override = 0;
