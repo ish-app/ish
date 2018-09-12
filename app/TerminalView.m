@@ -7,6 +7,10 @@
 
 #import "TerminalView.h"
 
+@interface TerminalView ()
+@property (weak) IBOutlet UIInputView *inputAccessoryView;
+@end
+
 @implementation TerminalView
 
 - (void)setTerminal:(Terminal *)terminal {
