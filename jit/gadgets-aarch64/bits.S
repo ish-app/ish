@@ -129,13 +129,15 @@
 .endr
 
 .macro do_bt_w8
+    and _tmp, _tmp, 0x1f
     lsr w8, w8, _tmp
     and w8, w8, 1
     strb w8, [_cpu, CPU_cf]
 .endm
 
 .gadget bt32_mem
-    add _addr, _addr, _tmp, lsr 3
+    bic w8, _tmp, 0x1f
+    add _addr, _addr, w8, lsr 3
     read_prep 32
     ldr w8, [_xaddr]
     do_bt_w8
