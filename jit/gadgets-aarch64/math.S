@@ -33,7 +33,12 @@
     .endifin
     .ifin(\op, adc,sbc)
         ldrb w10, [_cpu, CPU_cf]
-        cmp w10, 1
+        .ifc \op,adc
+            cmp w10, 1
+        .else
+            mvn w10, w10
+            cmn w10, 1
+        .endif
     .endifin
 
     .ifin(\op, and,orr,eor)
