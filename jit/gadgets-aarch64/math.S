@@ -156,10 +156,10 @@
     bfi e\reg\()x, w11, 8, 8
 .endm
 
-.macro do_op_size op, armop, size
+.macro do_op_size op, armop, size, s
     .ifnc \op,store
         .gadget \op\size\()_imm
-            ldr w8, [_ip]
+            ldr\s w8, [_ip]
             do_op \armop, \size, w8
             gret 1
     .endif
@@ -170,10 +170,10 @@
         .else
             read_prep \size
         .endif
-        ldr w8, [_xaddr]
+        ldr\s w8, [_xaddr]
         do_op \armop, \size, w8
         .ifc \op,store
-            str w8, [_xaddr]
+            str\s w8, [_xaddr]
             write_done \size
         .endif
         gret 1
@@ -201,20 +201,20 @@
     .irp size, SIZE_LIST
         # a couple operations have slightly different names on arm
         .ifc \op,xor
-            do_op_size \op, eor, \size
+            ss \size, do_op_size \op, eor
         .else; .ifc \op,sbb
-            do_op_size \op, sbc, \size
+            ss \size, do_op_size \op, sbc
         .else; .ifc \op,or
-            do_op_size \op, orr, \size
+            ss \size, do_op_size \op, orr
         .else
-            do_op_size \op, \op, \size
+            ss \size, do_op_size \op, \op
         .endif; .endif; .endif
     .endr
     .gadget_array \op
 .endr
 .irp op, imul,bsf,bsr
     .irp size, 16,32
-        do_op_size \op, \op, \size
+        ss \size, do_op_size \op, \op
     .endr
     .gadget_array \op
 .endr
