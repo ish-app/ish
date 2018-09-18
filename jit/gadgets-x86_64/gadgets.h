@@ -31,8 +31,12 @@
 
 .macro \type\()_prep size
     movl %_addr, %r14d
-    shrl $8, %r14d
-    andl $0x3ff0, %r14d
+    shrl $12, %r14d
+    andl $0x3ff, %r14d
+    movl %_addr, %r15d
+    shrl $22, %r15d
+    xor %r15d, %r14d
+    shll $4, %r14d
     movl %_addr, %r15d
     andl $0xfff, %r15d
     cmpl $(0x1000-(\size/8)), %r15d

@@ -80,7 +80,6 @@ int pt_map(struct mem *mem, page_t start, pages_t pages, void *memory, unsigned 
         mem->pt[page].offset = (page - start) << PAGE_BITS;
         mem->pt[page].flags = flags;
     }
-    mem_changed(mem);
     return 0;
 }
 
