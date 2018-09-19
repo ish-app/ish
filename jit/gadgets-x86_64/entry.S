@@ -1,9 +1,9 @@
 #include "emu/interrupt.h"
 #include "gadgets.h"
 
-.global jit_enter
-.type jit_enter,function
-jit_enter:
+.global NAME(jit_enter)
+.type_compat NAME(jit_enter),function
+NAME(jit_enter):
     push %rbp
     push %rbx
     push %r12

@@ -83,13 +83,13 @@
 
     .gadget \op\size\()_mem
         .ifc \op,store
-            write_prep \size
+            write_prep \size, \op\size\()_mem
         .else
-            read_prep \size
+            read_prep \size, \op\size\()_mem
         .endif
         do_op \op, \size, (%_addrq)
         .ifc \op,store
-            write_done \size
+            write_done \size, \op\size\()_mem
         .endif
         gret 1
 
@@ -139,7 +139,7 @@
 
 .irp op, inc,dec
     .macro do_\op size, s, ss
-        setf_a src=$1 dst=%tmp\s, ss=\ss
+        setf_a src=$1, dst=%tmp\s, ss=\ss
         \op\()\ss %tmp\s
         seto CPU_of(%_cpu)
         setf_zsp %tmp\s, \ss
@@ -170,7 +170,7 @@
     setf_oc
 .endm
 .macro do_neg size, s, ss
-    setf_a src=$0 dst=%tmp\s ss=\ss
+    setf_a src=$0, dst=%tmp\s, ss=\ss
     neg\ss %tmp\s
     setf_oc
     setf_zsp %tmp\s, \ss

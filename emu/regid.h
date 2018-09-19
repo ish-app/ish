@@ -52,7 +52,7 @@ struct regptr {
     reg_id_t reg32_id;
     reg_id_t reg128_id;
 };
-static unused const char *regptr_name(struct regptr regptr) {
+static __attribute__((unused)) const char *regptr_name(struct regptr regptr) {
     static char buf[15];
     sprintf(buf, "%s/%s/%s",
             regid8_name(regptr.reg8_id),
