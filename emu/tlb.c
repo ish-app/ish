@@ -50,7 +50,7 @@ __no_instrument void *tlb_handle_miss(struct tlb *tlb, addr_t addr, int type) {
 
     struct tlb_entry *tlb_ent = &tlb->entries[TLB_INDEX(addr)];
     tlb_ent->page = TLB_PAGE(addr);
-    if (tlb->mem->pt[PAGE(addr)].flags & P_WRITE)
+    if (type == MEM_WRITE)
         tlb_ent->page_if_writable = tlb_ent->page;
     else
         // 1 is not a valid page so this won't look like a hit
