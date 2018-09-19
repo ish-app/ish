@@ -46,10 +46,10 @@
 #define IMPLEMENTED_CONDS c,z,cz,s,p,sxo,sxoz
 
 .macro check_res
-    cmpl $$0, CPU_res(%_cpu)
+    cmpl DOLLAR(0), CPU_res(%_cpu)
 .endm
 .macro check_cf
-    cmpb $$0, CPU_cf(%_cpu)
+    cmpb DOLLAR(0), CPU_cf(%_cpu)
 .endm
 
 .macro res_or_flag type, resflag, flag, target

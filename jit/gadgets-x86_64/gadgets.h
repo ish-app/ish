@@ -130,9 +130,14 @@ crosspage_store_\id :
     andl $~AF_FLAG, CPU_eflags(%_cpu)
     andl $~AF_OPS, CPU_flags_res(%_cpu)
 .endm
+#if __APPLE__
+#define DOLLAR(x) $$x
+#else
+#define DOLLAR(x) $x
+#endif
 .macro clearf_oc
-    movl $$0, CPU_of(%_cpu)
-    movl $$0, CPU_cf(%_cpu)
+    movl DOLLAR(0), CPU_of(%_cpu)
+    movl DOLLAR(0), CPU_cf(%_cpu)
 .endm
 .macro setf_zsp res, ss
     .ifnc \ss,l
