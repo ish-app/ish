@@ -1,4 +1,4 @@
-# [ish](https://ish.app)
+# [iSH](https://ish.app)
 
 [![goto counter](https://img.shields.io/github/search/tbodt/ish/goto.svg)](https://github.com/tbodt/ish/search?q=goto)
 [![fuck counter](https://img.shields.io/github/search/tbodt/ish/fuck.svg)](https://github.com/tbodt/ish/search?q=fuck)
