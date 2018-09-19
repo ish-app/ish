@@ -131,6 +131,8 @@ foreach script : gdb_scripts
         build_by_default: true)
 endforeach
 
-# test for floating point library
-float80_test = executable('float80_test', ['emu/float80.c', 'emu/float80-test.c'])
-test('float80', float80_test)
+if not meson.is_cross_build()
+    # test for floating point library
+    float80_test = executable('float80_test', ['emu/float80.c', 'emu/float80-test.c'])
+    test('float80', float80_test)
+endif
