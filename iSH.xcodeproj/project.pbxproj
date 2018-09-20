@@ -669,7 +669,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "mkdir -p $TARGET_BUILD_DIR\nln -sf $MESON_BUILD_DIR/subprojects/gdbm-1.14.1/src/libgdbm.a $TARGET_BUILD_DIR";
+			shellScript = "mkdir -p $CONFIGURATION_BUILD_DIR\nln -sf $MESON_BUILD_DIR/subprojects/gdbm-1.14.1/src/libgdbm.a $CONFIGURATION_BUILD_DIR\n";
 		};
 		BB13F813200AEFAC003D1C4D /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -682,7 +682,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "mkdir -p $TARGET_BUILD_DIR\nln -sf $MESON_BUILD_DIR/libish.a $TARGET_BUILD_DIR";
+			shellScript = "mkdir -p $CONFIGURATION_BUILD_DIR\nln -sf $MESON_BUILD_DIR/libish.a $CONFIGURATION_BUILD_DIR\n";
 		};
 		BB4A53AC1FAA49CA00A72ACE /* Run Webpack */ = {
 			isa = PBXShellScriptBuildPhase;
