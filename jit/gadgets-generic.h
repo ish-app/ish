@@ -1,7 +1,9 @@
 #include "cpu-offsets.h"
 
-#define ifin(thing, ...) irp da_op, __VA_ARGS__; .ifc thing,\da_op
-#define endifin endif; .endr
+#define ifin(thing, ...) _ifin(thing, __COUNTER__, __VA_ARGS__)
+#define _ifin(thing, line, ...) __ifin(thing, line, __VA_ARGS__)
+#define __ifin(thing, line, ...) irp da_op##line, __VA_ARGS__ N .ifc thing,\da_op##line
+#define endifin endif N .endr
 
 # sync with enum reg
 #define REG_LIST reg_a,reg_c,reg_d,reg_b,reg_sp,reg_bp,reg_si,reg_di
@@ -13,7 +15,7 @@
 # darwin/linux compatibility
 .macro .pushsection_rodata
 #if __APPLE__
-    .pushsection __TEXT,__const
+    .pushsection __DATA,__const
 #else
     .pushsection .data.rel.ro
 #endif
@@ -80,6 +82,12 @@
 .endm
 
 # jfc
-#define _C __LINE__
+# https://github.com/llvm-mirror/llvm/blob/master/lib/Target/AArch64/MCTargetDesc/AArch64MCAsmInfo.cpp#L41
+# https://bugs.llvm.org/show_bug.cgi?id=39010#c4
+#if defined(__APPLE__) && defined(__arm64__)
+#define N %%
+#else
+#define N ;
+#endif
 
 # vim: ft=gas

@@ -18,7 +18,7 @@
     add x1, sp, 0x8
     add x2, sp, 0x4
     mov x3, sp
-    bl helper_cpuid
+    bl NAME(helper_cpuid)
     ldr eax, [sp, 0xc]
     ldr ebx, [sp, 0x8]
     ldr ecx, [sp, 0x4]
@@ -28,7 +28,7 @@
     gret
 
 .gadget cmpxchg32_mem
-    write_prep 32
+    write_prep 32, cmpxchg32_mem
     ldr w8, [_xaddr]
     subs w9, eax, w8
     setf_zsp val=w9
@@ -38,14 +38,15 @@
     csel w8, _tmp, w8, eq
     cset w9, eq
     str w8, [_xaddr]
-    write_done 32
+    write_done 32, cmpxchg32_mem
     gret 1
+    write_bullshit 32, cmpxchg32_mem
 .gadget_array cmpxchg
 
 .macro do_helper type, size=
     .gadget helper_\type\size
         .ifin(\type, read,write)
-            \type\()_prep (\size*4)
+            \type\()_prep (\size*4), helper_\type\size
         .endifin
         save_c
         mov x0, _cpu
@@ -63,15 +64,20 @@
         blr x8
         restore_c
         .ifc \type,write
-            write_done (\size*4)
+            write_done (\size*4), helper_\type\size
         .endif
         .ifc \type,0
             gret 1
-        .else; .ifc \type,2
+        .else N .ifc \type,2
             gret 3
         .else
             gret 2
-        .endif; .endif
+        .endif N .endif
+        .ifc \type,read
+            read_bullshit (\size*4), helper_\type\size
+        .else N .ifc \type,write
+            write_bullshit (\size*4), helper_\type\size
+        .endif N .endif
 .endm
 do_helper 0
 do_helper 1

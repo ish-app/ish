@@ -3,30 +3,33 @@
 .gadget call
     sub esp, esp, 4
     mov _addr, esp
-    write_prep 32
+    write_prep 32, call
     ldr w8, [_ip, 16]
     str w8, [_xaddr]
-    write_done 32
+    write_done 32, call
     ldr _ip, [_ip, 8]
     b jit_ret_chain
+    write_bullshit 32, call
 
 .gadget call_indir
     sub esp, esp, 4
     mov _addr, esp
-    write_prep 32
+    write_prep 32, call_indir
     ldr w8, [_ip, 8]
     str w8, [_xaddr]
-    write_done 32
+    write_done 32, call_indir
     mov eip, _tmp
     b jit_ret
+    write_bullshit 32, call_indir
 
 .gadget ret
     mov _addr, esp
     ldr w8, [_ip, 8]
     add esp, esp, w8
-    read_prep 32
+    read_prep 32, ret
     ldr eip, [_xaddr]
     b jit_ret
+    read_bullshit 32, ret
 
 .gadget jmp_indir
     mov eip, _tmp
@@ -64,28 +67,28 @@
 .macro do_jump cond, target
     # please tell me if you know a better way
     .ifc \cond,o
-    .else; .ifc \cond,c
+    .else N .ifc \cond,c
         ldrb w8, [_cpu, CPU_cf]
         cbnz w8, \target
-    .else; .ifc \cond,z
+    .else N .ifc \cond,z
         check_res_or_flag 1/*ZF_RES*/, 6/*ZF_FLAG*/, \target, 3f
         ldr w8, [_cpu, CPU_res]
         cbz w8, \target
     3:
-    .else; .ifc \cond,cz
+    .else N .ifc \cond,cz
         ldrb w8, [_cpu, CPU_cf]
         cbnz w8, \target
         check_res_or_flag 1/*ZF_RES*/, 6/*ZF_FLAG*/, \target, 3f
         ldr w8, [_cpu, CPU_res]
         cbz w8, \target
     3:
-    .else; .ifc \cond,s
+    .else N .ifc \cond,s
         check_res_or_flag 2/*SF_RES*/, 7/*SF_FLAG*/, \target, 3f
         ldr w8, [_cpu, CPU_res]
         cmp w8, 0
         b.lt \target
     3:
-    .else; .ifc \cond,p
+    .else N .ifc \cond,p
         check_res_or_flag 0/*PF_RES*/, 2/*PF_FLAG*/, \target, 3f
         # this is so sad
         ldr w8, [_cpu, CPU_res]
@@ -96,14 +99,14 @@
         fmov w8, s0
         tbz w8, 0, \target
     3:
-    .else; .ifc \cond,sxo
+    .else N .ifc \cond,sxo
         ldr w8, [_cpu, CPU_res]
         cmp w8, 0
         cset w8, lt
         ldrb w9, [_cpu, CPU_of]
         cmp w8, w9
         b.ne \target
-    .else; .ifc \cond,sxoz
+    .else N .ifc \cond,sxoz
         ldr w8, [_cpu, CPU_res]
         cmp w8, 0
         b.eq \target
@@ -111,7 +114,7 @@
         ldrb w9, [_cpu, CPU_of]
         cmp w8, w9
         b.ne \target
-    .endif; .endif; .endif; .endif; .endif; .endif; .endif; .endif
+    .endif N .endif N .endif N .endif N .endif N .endif N .endif N .endif
 .endm
 
 .irp cond, IMPLEMENTED_CONDS
@@ -156,34 +159,36 @@
 .gadget pushf
     save_c
     mov x0, _cpu
-    bl helper_collapse_flags
+    bl NAME(helper_collapse_flags)
     restore_c
 
     sub esp, esp, 4
     mov _addr, esp
-    write_prep 32
+    write_prep 32, pushf
     ldr x8, [_cpu, CPU_eflags]
     str x8, [_xaddr]
-    write_done 32
+    write_done 32, pushf
     gret
+    write_bullshit 32, pushf
 
 .gadget popf
     mov _addr, esp
-    read_prep 32
+    read_prep 32, popf
     ldr x8, [_xaddr]
     add esp, esp, 4
 
     save_c
     mov x0, _cpu
-    bl helper_expand_flags
+    bl NAME(helper_expand_flags)
     restore_c
     gret
+    read_bullshit 32, popf
 
 .gadget sahf
     ubfx w8, eax, 8, 8
     strb w8, [_cpu, CPU_eflags]
     save_c
     mov x0, _cpu
-    bl helper_expand_flags
+    bl NAME(helper_expand_flags)
     restore_c
     gret

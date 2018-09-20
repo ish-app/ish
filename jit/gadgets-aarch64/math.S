@@ -19,10 +19,10 @@
         movs _tmp, \arg, \s
         uxts _tmp, _tmp, \s
         .exitm
-    .else; .ifc \op,store
+    .else N .ifc \op,store
         movs \arg, _tmp, \s
         .exitm
-    .endif; .endif
+    .endif N .endif
 
     .ifin(\op, add,sub,adc,sbc)
         setf_a \arg, _tmp
@@ -166,17 +166,22 @@
 
     .gadget \op\size\()_mem
         .ifc \op,store
-            write_prep \size
+            write_prep \size, \op\size\()_mem
         .else
-            read_prep \size
+            read_prep \size, \op\size\()_mem
         .endif
         ldr\s w8, [_xaddr]
         do_op \armop, \size, w8
         .ifc \op,store
             str\s w8, [_xaddr]
-            write_done \size
+            write_done \size, \op\size\()_mem
         .endif
         gret 1
+        .ifc \op,store
+            write_bullshit \size, \op\size\()_mem
+        .else
+            read_bullshit \size, \op\size\()_mem
+        .endif
 
     .irp reg, a,b,c,d
         do_reg_op \op, \armop, \size, \reg
@@ -185,11 +190,11 @@
     .irp reg, si,di,sp,bp
         .gadget \op\size\()_reg_\reg
             .if \size == 8
-                .ifc \reg,sp; do_hi_op \op, \size, a; .else
-                .ifc \reg,bp; do_hi_op \op, \size, c; .else
-                .ifc \reg,si; do_hi_op \op, \size, d; .else
-                .ifc \reg,di; do_hi_op \op, \size, b
-                .endif; .endif; .endif; .endif
+                .ifc \reg,sp N do_hi_op \op, \size, a N .else
+                .ifc \reg,bp N do_hi_op \op, \size, c N .else
+                .ifc \reg,si N do_hi_op \op, \size, d N .else
+                .ifc \reg,di N do_hi_op \op, \size, b
+                .endif N .endif N .endif N .endif
             .else
                 do_op \armop, \size, e\reg
             .endif
@@ -201,20 +206,20 @@
     .irp size, SIZE_LIST
         # a couple operations have slightly different names on arm
         .ifc \op,xor
-            ss \size, do_op_size \op, eor
-        .else; .ifc \op,sbb
-            ss \size, do_op_size \op, sbc
-        .else; .ifc \op,or
-            ss \size, do_op_size \op, orr
+            ss \size, do_op_size, \op, eor
+        .else N .ifc \op,sbb
+            ss \size, do_op_size, \op, sbc
+        .else N .ifc \op,or
+            ss \size, do_op_size, \op, orr
         .else
-            ss \size, do_op_size \op, \op
-        .endif; .endif; .endif
+            ss \size, do_op_size, \op, \op
+        .endif N .endif N .endif
     .endr
     .gadget_array \op
 .endr
 .irp op, imul,bsf,bsr
     .irp size, 16,32
-        ss \size, do_op_size \op, \op
+        ss \size, do_op_size, \op, \op
     .endr
     .gadget_array \op
 .endr
@@ -225,7 +230,7 @@
 .macro do_inc size, s
     mov w10, 1
     setf_a w10, _tmp
-    op_s add _tmp, _tmp, 1
+    op_s add, _tmp, _tmp, 1
     setf_zsp
     .ifb \s
         cset w8, vs
@@ -238,7 +243,7 @@
 .macro do_dec size, s
     mov w10, 1
     setf_a w10, _tmp
-    op_s sub _tmp, _tmp, 1
+    op_s sub, _tmp, _tmp, 1
     setf_zsp
     .ifb \s
         cset w8, vs

@@ -138,10 +138,11 @@
 .gadget bt32_mem
     bic w8, _tmp, 0x1f
     add _addr, _addr, w8, lsr 3
-    read_prep 32
+    read_prep 32, bt32_mem
     ldr w8, [_xaddr]
     do_bt_w8
     gret 1
+    read_bullshit 32, bt32_mem
 
 .macro x name reg
     .gadget bt32_\name

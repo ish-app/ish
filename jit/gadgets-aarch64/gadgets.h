@@ -1,3 +1,4 @@
+#include "../gadgets-generic.h"
 #include "cpu-offsets.h"
 
 # register assignments
@@ -23,8 +24,9 @@ _xaddr .req x3
 .extern jit_exit
 
 .macro .gadget name
-    .global gadget_\()\name
-    gadget_\()\name :
+    .global NAME(gadget_\()\name)
+    .align 4
+    NAME(gadget_\()\name) :
 .endm
 .macro gret pop=0
     ldr x8, [_ip, \pop*8]!
@@ -35,10 +37,10 @@ _xaddr .req x3
 # memory reading and writing
 .irp type, read,write
 
-.macro \type\()_prep size
+.macro \type\()_prep size, id
     and w8, _addr, 0xfff
     cmp x8, (0x1000-(\size/8))
-    b.hi 12f
+    b.hi crosspage_load_\id
     and w8, _addr, 0xfffff000
     str w8, [_tlb, (-TLB_entries+TLB_dirty_page)]
     ubfx x9, _xaddr, 12, 10
@@ -51,87 +53,34 @@ _xaddr .req x3
         ldr w10, [x9, TLB_ENTRY_page_if_writable]
     .endif
     cmp w8, w10
-    b.ne 11f
+    b.ne handle_miss_\id
     ldr x10, [x9, TLB_ENTRY_data_minus_addr]
     add _xaddr, x10, _xaddr, uxtx
-10:
+back_\id:
+.endm
 
-.pushsection .text.bullshit
-11:
+.macro \type\()_bullshit size, id
+handle_miss_\id :
     bl handle_\type\()_miss
-    b 10b
-12:
+    b back_\id
+crosspage_load_\id :
     mov x19, (\size/8)
     bl crosspage_load
-    b 10b
-.popsection
+    b back_\id
+.ifc \type,write
+crosspage_store_\id :
+    mov x19, (\size/8)
+    bl crosspage_store
+    b back_write_done_\id
+.endif
 .endm
 
 .endr
-.macro write_done size
+.macro write_done size, id
     add x8, _cpu, LOCAL_value
     cmp x8, _xaddr
-    b.eq 11f
-10:
-.pushsection .text.bullshit
-11:
-    mov x19, (\size/8)
-    bl crosspage_store
-    b 10b
-.popsection
-.endm
-
-#define ifin(thing, ...) _ifin(thing, __COUNTER__, __VA_ARGS__)
-#define _ifin(thing, line, ...) __ifin(thing, line, __VA_ARGS__)
-#define __ifin(thing, line, ...) irp da_op##line, __VA_ARGS__; .ifc thing,\da_op##line
-#define endifin endif; .endr
-
-# sync with enum reg
-#define REG_LIST reg_a,reg_c,reg_d,reg_b,reg_sp,reg_bp,reg_si,reg_di
-# sync with enum arg
-#define GADGET_LIST REG_LIST,imm,mem,addr,gs
-# sync with enum size
-#define SIZE_LIST 8,16,32
-
-# an array of gadgets
-.macro .pushsection_rodata
-    .pushsection .data.rel.ro
-.endm
-.macro _gadget_array_start name
-    .pushsection_rodata
-    .global \name\()_gadgets
-    .type \name\()_gadgets,@object
-    \name\()_gadgets:
-.endm
-
-.macro gadgets type, list:vararg
-    .irp arg, \list
-        .ifndef gadget_\type\()_\arg
-            .set gadget_\type\()_\arg, 0
-        .endif
-        .quad gadget_\type\()_\arg
-    .endr
-.endm
-
-.macro .gadget_list type, list:vararg
-    _gadget_array_start \type
-        gadgets \type, \list
-    .popsection
-.endm
-
-.macro .gadget_list_size type, list:vararg
-    _gadget_array_start \type
-        # sync with enum size
-        gadgets \type\()8, \list
-        gadgets \type\()16, \list
-        gadgets \type\()32, \list
-        gadgets \type\()64, \list
-        gadgets \type\()80, \list
-    .popsection
-.endm
-
-.macro .gadget_array type
-    .gadget_list_size \type, GADGET_LIST
+    b.eq crosspage_store_\id
+back_write_done_\id :
 .endm
 
 .macro .each_reg macro:vararg
@@ -227,11 +176,11 @@ _xaddr .req x3
 .macro movs dst, src, s
     .ifc \s,h
         bfxil \dst, \src, 0, 16
-    .else; .ifc \s,b
+    .else N .ifc \s,b
         bfxil \dst, \src, 0, 8
     .else
         mov \dst, \src
-    .endif; .endif
+    .endif N .endif
 .endm
 .macro op_s op, dst, src1, src2, s
     .ifb \s

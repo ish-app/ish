@@ -178,6 +178,30 @@
 		BB7D93802087C2890008DA78 /* tty.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = tty.h; sourceTree = "<group>"; };
 		BB7D93812087C2890008DA78 /* debug.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = debug.h; sourceTree = "<group>"; };
 		BB7D93822087C2890008DA78 /* main.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = main.c; sourceTree = "<group>"; };
+		BB88F4722152F75A00A341FD /* frame.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = frame.h; sourceTree = "<group>"; };
+		BB88F4742152F75A00A341FD /* bits.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = bits.S; sourceTree = "<group>"; };
+		BB88F4752152F75A00A341FD /* control.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = control.S; sourceTree = "<group>"; };
+		BB88F4762152F75A00A341FD /* entry.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = entry.S; sourceTree = "<group>"; };
+		BB88F4772152F75A00A341FD /* gadgets.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = gadgets.h; sourceTree = "<group>"; };
+		BB88F4782152F75A00A341FD /* math.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = math.S; sourceTree = "<group>"; };
+		BB88F4792152F75A00A341FD /* memory.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = memory.S; sourceTree = "<group>"; };
+		BB88F47A2152F75A00A341FD /* misc.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = misc.S; sourceTree = "<group>"; };
+		BB88F47B2152F75A00A341FD /* string.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = string.S; sourceTree = "<group>"; };
+		BB88F47C2152F75A00A341FD /* gadgets-generic.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "gadgets-generic.h"; sourceTree = "<group>"; };
+		BB88F47E2152F75A00A341FD /* bits.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = bits.S; sourceTree = "<group>"; };
+		BB88F47F2152F75A00A341FD /* control.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = control.S; sourceTree = "<group>"; };
+		BB88F4802152F75A00A341FD /* entry.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = entry.S; sourceTree = "<group>"; };
+		BB88F4812152F75A00A341FD /* gadgets.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = gadgets.h; sourceTree = "<group>"; };
+		BB88F4822152F75A00A341FD /* math.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = math.S; sourceTree = "<group>"; };
+		BB88F4832152F75A00A341FD /* memory.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = memory.S; sourceTree = "<group>"; };
+		BB88F4842152F75A00A341FD /* misc.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = misc.S; sourceTree = "<group>"; };
+		BB88F4852152F75A00A341FD /* string.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = string.S; sourceTree = "<group>"; };
+		BB88F4862152F75A00A341FD /* gen.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = gen.c; sourceTree = "<group>"; };
+		BB88F4872152F75A00A341FD /* gen.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = gen.h; sourceTree = "<group>"; };
+		BB88F4882152F75A00A341FD /* helpers.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = helpers.c; sourceTree = "<group>"; };
+		BB88F4892152F75A00A341FD /* jit.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = jit.c; sourceTree = "<group>"; };
+		BB88F48A2152F75A00A341FD /* jit.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = jit.h; sourceTree = "<group>"; };
+		BB88F48B2152F75A00A341FD /* offsets.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = offsets.c; sourceTree = "<group>"; };
 		BBF124901FA7C3100088FB50 /* alpine */ = {isa = PBXFileReference; explicitFileType = folder; includeInIndex = 0; path = alpine; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -205,6 +229,7 @@
 		BB4A53931FAA393B00A72ACE /* most of the code */ = {
 			isa = PBXGroup;
 			children = (
+				BB88F4712152F75A00A341FD /* jit */,
 				BB7D931E2087C2880008DA78 /* emu */,
 				BB7D936A2087C2890008DA78 /* fs */,
 				BB7D933C2087C2880008DA78 /* kernel */,
@@ -420,6 +445,53 @@
 				BB7D93802087C2890008DA78 /* tty.h */,
 			);
 			path = fs;
+			sourceTree = "<group>";
+		};
+		BB88F4712152F75A00A341FD /* jit */ = {
+			isa = PBXGroup;
+			children = (
+				BB88F4722152F75A00A341FD /* frame.h */,
+				BB88F4732152F75A00A341FD /* gadgets-aarch64 */,
+				BB88F47C2152F75A00A341FD /* gadgets-generic.h */,
+				BB88F47D2152F75A00A341FD /* gadgets-x86_64 */,
+				BB88F4862152F75A00A341FD /* gen.c */,
+				BB88F4872152F75A00A341FD /* gen.h */,
+				BB88F4882152F75A00A341FD /* helpers.c */,
+				BB88F4892152F75A00A341FD /* jit.c */,
+				BB88F48A2152F75A00A341FD /* jit.h */,
+				BB88F48B2152F75A00A341FD /* offsets.c */,
+			);
+			path = jit;
+			sourceTree = "<group>";
+		};
+		BB88F4732152F75A00A341FD /* gadgets-aarch64 */ = {
+			isa = PBXGroup;
+			children = (
+				BB88F4742152F75A00A341FD /* bits.S */,
+				BB88F4752152F75A00A341FD /* control.S */,
+				BB88F4762152F75A00A341FD /* entry.S */,
+				BB88F4772152F75A00A341FD /* gadgets.h */,
+				BB88F4782152F75A00A341FD /* math.S */,
+				BB88F4792152F75A00A341FD /* memory.S */,
+				BB88F47A2152F75A00A341FD /* misc.S */,
+				BB88F47B2152F75A00A341FD /* string.S */,
+			);
+			path = "gadgets-aarch64";
+			sourceTree = "<group>";
+		};
+		BB88F47D2152F75A00A341FD /* gadgets-x86_64 */ = {
+			isa = PBXGroup;
+			children = (
+				BB88F47E2152F75A00A341FD /* bits.S */,
+				BB88F47F2152F75A00A341FD /* control.S */,
+				BB88F4802152F75A00A341FD /* entry.S */,
+				BB88F4812152F75A00A341FD /* gadgets.h */,
+				BB88F4822152F75A00A341FD /* math.S */,
+				BB88F4832152F75A00A341FD /* memory.S */,
+				BB88F4842152F75A00A341FD /* misc.S */,
+				BB88F4852152F75A00A341FD /* string.S */,
+			);
+			path = "gadgets-x86_64";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -1030,8 +1102,8 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
-				ISH_LOG = strace;
+				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				ISH_LOG = "";
 				MESON_BUILD_DIR = "$(CONFIGURATION_BUILD_DIR)/meson";
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
@@ -1069,8 +1141,8 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
-				ISH_LOG = strace;
+				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				ISH_LOG = "";
 				MESON_BUILD_DIR = "$(CONFIGURATION_BUILD_DIR)/meson";
 				SDKROOT = iphoneos;
 				VALID_ARCHS = arm64;
