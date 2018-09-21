@@ -236,6 +236,7 @@ static int fakefs_setattr(struct mount *mount, const char *path, struct attr att
         case attr_size:
             return realfs_truncate(mount, path, attr.size);
     }
+    write_stat(mount, path, &ishstat);
     return 0;
 }
 
