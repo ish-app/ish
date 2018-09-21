@@ -112,7 +112,8 @@ static bool read_stat(struct mount *mount, const char *path, struct ish_stat *st
     if (d.dptr == NULL)
         return false;
     assert(d.dsize == sizeof(struct ish_stat));
-    *stat = *(struct ish_stat *) d.dptr;
+    if (stat != NULL)
+        *stat = *(struct ish_stat *) d.dptr;
     free(d.dptr);
     return true;
 }
@@ -132,14 +133,16 @@ static struct fd *fakefs_open(struct mount *mount, const char *path, int flags, 
     if (IS_ERR(fd))
         return fd;
     if (flags & O_CREAT_) {
-        struct ish_stat ishstat;
-        ishstat.mode = mode | S_IFREG;
-        ishstat.uid = current->uid;
-        ishstat.gid = current->gid;
-        ishstat.rdev = 0;
-        lock_db(mount);
-        write_stat(mount, path, &ishstat);
-        unlock_db(mount);
+        if (!read_stat(mount, path, NULL)) {
+            struct ish_stat ishstat;
+            ishstat.mode = mode | S_IFREG;
+            ishstat.uid = current->uid;
+            ishstat.gid = current->gid;
+            ishstat.rdev = 0;
+            lock_db(mount);
+            write_stat(mount, path, &ishstat);
+            unlock_db(mount);
+        }
     }
     return fd;
 }
