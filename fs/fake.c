@@ -28,6 +28,23 @@ static noreturn void gdbm_err(GDBM_FILE db) {
     abort();
 }
 
+static void lock_db(struct mount *mount) {
+    int fd = gdbm_fdesc(mount->db);
+    while (true) {
+        int err = flock(fd, LOCK_EX);
+        if (err == 0)
+            break;
+        if (err < 0 && errno != EINTR)
+            DIE("could not lock database");
+    }
+}
+static void unlock_db(struct mount *mount) {
+    int fd = gdbm_fdesc(mount->db);
+    int err = flock(fd, LOCK_UN);
+    if (err < 0)
+        DIE("could not unlock database");
+}
+
 static datum make_datum(char *data, const char *format, ...) {
     va_list args;
     va_start(args, format);
@@ -120,16 +137,22 @@ static struct fd *fakefs_open(struct mount *mount, const char *path, int flags, 
         ishstat.uid = current->uid;
         ishstat.gid = current->gid;
         ishstat.rdev = 0;
+        lock_db(mount);
         write_stat(mount, path, &ishstat);
+        unlock_db(mount);
     }
     return fd;
 }
 
 static int fakefs_link(struct mount *mount, const char *src, const char *dst) {
+    lock_db(mount);
     int err = realfs.link(mount, src, dst);
-    if (err < 0)
+    if (err < 0) {
+        unlock_db(mount);
         return err;
+    }
     write_path(mount, dst);
+    unlock_db(mount);
     return 0;
 }
 
@@ -143,46 +166,64 @@ static int fakefs_unlink(struct mount *mount, const char *path) {
     if (fd >= 0)
         close(fd);
 
+    lock_db(mount);
     char keydata[30];
     datum key = stat_key(keydata, mount, path);
     int err = realfs.unlink(mount, path);
-    if (err < 0)
+    if (err < 0) {
+        unlock_db(mount);
         return err;
+    }
     delete_path(mount, path);
     if (gone)
         delete_meta(mount, key);
+    unlock_db(mount);
     return 0;
 }
 
 static int fakefs_rmdir(struct mount *mount, const char *path) {
+    lock_db(mount);
     char keydata[30];
     datum key = stat_key(keydata, mount, path);
     int err = realfs.rmdir(mount, path);
-    if (err < 0)
+    if (err < 0) {
+        unlock_db(mount);
         return err;
+    }
     delete_path(mount, path);
     delete_meta(mount, key);
+    unlock_db(mount);
     return 0;
 }
 
 static int fakefs_rename(struct mount *mount, const char *src, const char *dst) {
+    lock_db(mount);
     int err = realfs.rename(mount, src, dst);
-    if (err < 0)
+    if (err < 0) {
+        unlock_db(mount);
         return err;
+    }
     write_path(mount, dst);
     delete_path(mount, src);
+    unlock_db(mount);
     return 0;
 }
 
 static int fakefs_symlink(struct mount *mount, const char *target, const char *link) {
+    lock_db(mount);
     // create a file containing the target
     int fd = openat(mount->root_fd, fix_path(link), O_WRONLY | O_CREAT | O_EXCL, 0666);
-    if (fd < 0)
+    if (fd < 0) {
+        unlock_db(mount);
         return errno_map();
+    }
     ssize_t res = write(fd, target, strlen(target));
     close(fd);
     if (res < 0) {
+        int saved_errno = errno;
         unlinkat(mount->root_fd, fix_path(link), 0);
+        unlock_db(mount);
+        errno = saved_errno;
         return errno_map();
     }
 
@@ -193,14 +234,19 @@ static int fakefs_symlink(struct mount *mount, const char *target, const char *l
     ishstat.gid = current->gid;
     ishstat.rdev = 0;
     write_stat(mount, link, &ishstat);
+    unlock_db(mount);
     return 0;
 }
 
 static int fakefs_stat(struct mount *mount, const char *path, struct statbuf *fake_stat, bool follow_links) {
+    lock_db(mount);
     struct ish_stat ishstat;
-    if (!read_stat(mount, path, &ishstat))
+    if (!read_stat(mount, path, &ishstat)) {
+        unlock_db(mount);
         return _ENOENT;
+    }
     int err = realfs.stat(mount, path, fake_stat, follow_links);
+    unlock_db(mount);
     if (err < 0)
         return err;
     fake_stat->mode = ishstat.mode;
@@ -220,9 +266,12 @@ static int fakefs_fstat(struct fd *fd, struct statbuf *fake_stat) {
 }
 
 static int fakefs_setattr(struct mount *mount, const char *path, struct attr attr) {
+    lock_db(mount);
     struct ish_stat ishstat;
-    if (!read_stat(mount, path, &ishstat))
+    if (!read_stat(mount, path, &ishstat)) {
+        unlock_db(mount);
         return _ENOENT;
+    }
     switch (attr.type) {
         case attr_uid:
             ishstat.uid = attr.uid;
@@ -234,9 +283,11 @@ static int fakefs_setattr(struct mount *mount, const char *path, struct attr att
             ishstat.mode = (ishstat.mode & S_IFMT) | (attr.mode & ~S_IFMT);
             break;
         case attr_size:
+            unlock_db(mount);
             return realfs_truncate(mount, path, attr.size);
     }
     write_stat(mount, path, &ishstat);
+    unlock_db(mount);
     return 0;
 }
 
@@ -249,37 +300,50 @@ static int fakefs_fsetattr(struct fd *fd, struct attr attr) {
 }
 
 static int fakefs_mkdir(struct mount *mount, const char *path, mode_t_ mode) {
+    lock_db(mount);
     int err = realfs.mkdir(mount, path, 0777);
-    if (err < 0)
+    if (err < 0) {
+        unlock_db(mount);
         return err;
+    }
     struct ish_stat ishstat;
     ishstat.mode = mode | S_IFDIR;
     ishstat.uid = current->uid;
     ishstat.gid = current->gid;
     ishstat.rdev = 0;
     write_stat(mount, path, &ishstat);
+    unlock_db(mount);
     return 0;
 }
 
+static ssize_t file_readlink(struct mount *mount, const char *path, char *buf, size_t bufsize) {
+    // broken symlinks can't be included in an iOS app or else Xcode craps out
+    int fd = openat(mount->root_fd, fix_path(path), O_RDONLY);
+    if (fd < 0)
+        return errno_map();
+    int err = read(fd, buf, bufsize);
+    if (err < 0)
+        return errno_map();
+    close(fd);
+    return err;
+}
+
 static ssize_t fakefs_readlink(struct mount *mount, const char *path, char *buf, size_t bufsize) {
+    lock_db(mount);
     struct ish_stat ishstat;
-    if (!read_stat(mount, path, &ishstat))
+    if (!read_stat(mount, path, &ishstat)) {
+        unlock_db(mount);
         return _ENOENT;
-    if (!S_ISLNK(ishstat.mode))
+    }
+    if (!S_ISLNK(ishstat.mode)) {
+        unlock_db(mount);
         return _EINVAL;
+    }
 
     ssize_t err = realfs.readlink(mount, path, buf, bufsize);
-    if (err == _EINVAL) {
-        // broken symlinks can't be included in an iOS app or else Xcode craps out
-        int fd = openat(mount->root_fd, fix_path(path), O_RDONLY);
-        if (fd < 0)
-            return errno_map();
-        err = read(fd, buf, bufsize);
-        if (err < 0)
-            return errno_map();
-        close(fd);
-        return err;
-    }
+    if (err == _EINVAL)
+        err = file_readlink(mount, path, buf, bufsize);
+    unlock_db(mount);
     return err;
 }
 
@@ -291,7 +355,7 @@ static int fakefs_mount(struct mount *mount) {
     char *basename = strrchr(db_path, '/') + 1;
     assert(strcmp(basename, "data") == 0);
     strcpy(basename, "meta.db");
-    mount->db = gdbm_open(db_path, 0, GDBM_WRITER, 0, gdbm_fatal);
+    mount->db = gdbm_open(db_path, 0, GDBM_NOLOCK, 0, gdbm_fatal);
     if (mount->db == NULL) {
         println("gdbm error: %s", gdbm_strerror(gdbm_errno));
         return _EINVAL;
