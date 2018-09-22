@@ -53,6 +53,15 @@ static void ios_handle_exit(int code) {
     if (err < 0)
         return err;
     exit_hook = ios_handle_exit;
+    
+    // :^)
+    struct fd *fd = generic_open("/etc/resolv.conf", O_WRONLY_ | O_CREAT_, 0600);
+    if (!IS_ERR(fd)) {
+        static const char resolvConf[] = "nameserver 8.8.8.8\n";
+        fd->ops->write(fd, resolvConf, sizeof(resolvConf));
+        fd_close(fd);
+    }
+    
     task_start(current);
     return 0;
 }
