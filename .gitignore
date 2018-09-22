@@ -1,14 +1,13 @@
 build/
-build-gcc/
 xcuserdata/
-tags
-tags.log
 .floo
-pdfs
-cross-*.txt
 
-/app/xtermjs/xterm-dist
-node_modules
+cross-*.txt
 alpine
-fastlane/screenshots
+alpine.tar.gz
+
+node_modules
+app/xtermjs/xterm-dist
+app/xtermjs/.cache
+
 subprojects/packagecache
