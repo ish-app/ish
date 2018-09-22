@@ -1,9 +1,9 @@
 #include "emu/interrupt.h"
 #include "gadgets.h"
 
-.global jit_enter
-.type jit_enter,function
-jit_enter:
+.global NAME(jit_enter)
+.type_compat jit_enter,function
+NAME(jit_enter):
     stp x18, x19, [sp, -0x70]!
     stp x20, x21, [sp, 0x10]
     stp x22, x23, [sp, 0x20]

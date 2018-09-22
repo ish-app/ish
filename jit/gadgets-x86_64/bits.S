@@ -75,7 +75,7 @@
     andl $~(32-1), %r14d
     shrl $3, %r14d
     addl %r14d, %_addr
-    read_prep 32
+    read_prep 32, bt32_mem
     do_bt (%_addrq)
     gret 1
 

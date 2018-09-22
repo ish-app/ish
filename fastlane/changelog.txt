@@ -1,4 +1,4 @@
-ncdu's UI works. Mind blown. It errors trying to find the size of some things, but that's secondary.
+First build on a new developer account! The main thing you should notice is things are a good bit faster. And a good bit more broken, but hey, it's faster.
 
 As always, let me know if it crashes spectacularly. The best place to send bug reports or feedback of any kind is the GitHub issues page: https://github.com/tbodt/ish/issues
 

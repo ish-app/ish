@@ -441,12 +441,11 @@ int main(int argc, char *const argv[]) {
     int undefined_flags = 0;
     struct cpu_state old_cpu = *cpu;
     while (true) {
-        if (compare_cpus(cpu, tlb, uc, undefined_flags) < 0) {
-            println("failure: resetting cpu");
+        while (compare_cpus(cpu, tlb, uc, undefined_flags) < 0) {
+            println("resetting cpu");
             *cpu = old_cpu;
             debugger;
             cpu_step32(cpu, tlb);
-            return -1;
         }
         undefined_flags = undefined_flags_mask(cpu, tlb);
         old_cpu = *cpu;

@@ -3,27 +3,27 @@
 .gadget call
     subl $4, %_esp
     movl %_esp, %_addr
-    write_prep 32
+    write_prep 32, call
     movl 16(%_ip), %r14d
     movl %r14d, (%_addrq)
-    write_done 32
+    write_done 32, call
     movq 8(%_ip), %_ip
     jmp jit_ret_chain
 
 .gadget call_indir
     subl $4, %_esp
     movl %_esp, %_addr
-    write_prep 32
+    write_prep 32, call_indir
     movl 8(%_ip), %r14d
     movl %r14d, (%_addrq)
-    write_done 32
+    write_done 32, call_indir
     movl %_tmp, %_eip
     jmp jit_ret
 
 .gadget ret
     movl %_esp, %_addr
     addl 8(%_ip), %_esp
-    read_prep 32
+    read_prep 32, ret
     movl (%_addrq), %_eip
     jmp jit_ret
 
@@ -46,10 +46,10 @@
 #define IMPLEMENTED_CONDS c,z,cz,s,p,sxo,sxoz
 
 .macro check_res
-    cmpl $0, CPU_res(%_cpu)
+    cmpl DOLLAR(0), CPU_res(%_cpu)
 .endm
 .macro check_cf
-    cmpb $0, CPU_cf(%_cpu)
+    cmpb DOLLAR(0), CPU_cf(%_cpu)
 .endm
 
 .macro res_or_flag type, resflag, flag, target
@@ -139,27 +139,27 @@
 .gadget pushf
     save_c
     movq %_cpu, %rdi
-    call helper_collapse_flags
+    call NAME(helper_collapse_flags)
     restore_c
 
     sub $4, %_esp
     movl %_esp, %_addr
-    write_prep 32
+    write_prep 32, pushf
     movl CPU_eflags(%_cpu), %tmpd
     movl %tmpd, (%_addrq)
-    write_done 32
+    write_done 32, pushf
     gret
 
 .gadget popf
     movl %_esp, %_addr
-    read_prep 32
+    read_prep 32, popf
     movl (%_addrq), %tmpd
     movl %tmpd, CPU_eflags(%_cpu)
     add $4, %_esp
 
     save_c
     movq %_cpu, %rdi
-    call helper_expand_flags
+    call NAME(helper_expand_flags)
     restore_c
     gret
 
@@ -169,6 +169,6 @@
     xchgb %al, %ah
     save_c
     movq %_cpu, %rdi
-    call helper_expand_flags
+    call NAME(helper_expand_flags)
     restore_c
     gret

@@ -4,13 +4,13 @@
 .gadget push
     sub $4, %_esp
     movl %_esp, %_addr
-    write_prep 32
+    write_prep 32, push
     movl %_tmp, (%_addrq)
-    write_done 32
+    write_done 32, push
     gret 1
 .gadget pop
     movl %_esp, %_addr
-    read_prep 32
+    read_prep 32, pop
     movl (%_addrq), %_tmp
     add $4, %_esp
     gret 1
@@ -42,15 +42,14 @@
 .each_reg x
 .purgem x
 
-.section .rodata
-.global si_gadgets
-si_gadgets:
+.pushsection_rodata
+.global.name si_gadgets
 .irp reg, REG_LIST
     .irp times, 1,2,4,8
-        .quad gadget_si_\reg\()_\times
+        .quad NAME(gadget_si_\reg\()_\times)
     .endr
 .endr
-.previous
+.popsection
 
 .gadget seg_gs
     addl CPU_tls_ptr(%_cpu), %_addr
@@ -68,7 +67,7 @@ si_gadgets:
         .else
             movq $1, %rdx
         .endif
-        call tlb_handle_miss
+        call NAME(tlb_handle_miss)
         movq %rax, %r15
         restore_c
         testq %r15, %r15
@@ -89,7 +88,7 @@ crosspage_load:
     movl %_addr, %esi
     leaq LOCAL_value(%_cpu), %rdx
     movq %r14, %rcx
-    call __tlb_read_cross_page
+    call NAME(__tlb_read_cross_page)
     movq %rax, %r14
     restore_c
     testq %rax, %rax
@@ -105,7 +104,7 @@ crosspage_store:
     movl LOCAL_value_addr(%_cpu), %esi
     leaq LOCAL_value(%_cpu), %rdx
     movq %r14, %rcx
-    call __tlb_write_cross_page
+    call NAME(__tlb_write_cross_page)
     movq %rax, %r14
     restore_c
     testq %rax, %rax

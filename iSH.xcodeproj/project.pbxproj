@@ -11,7 +11,6 @@
 		BB0FC5921F980A6C00803272 /* Terminal.m in Sources */ = {isa = PBXBuildFile; fileRef = BB0FC5911F980A6B00803272 /* Terminal.m */; };
 		BB13F7EA200ADCED003D1C4D /* libish.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BB13F7DC200AD81D003D1C4D /* libish.a */; };
 		BB13F7FC200ADDA0003D1C4D /* libgdbm.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BB13F7EF200ADD69003D1C4D /* libgdbm.a */; };
-		BB13F810200AE716003D1C4D /* libsoftfloat.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BB13F804200AE69D003D1C4D /* libsoftfloat.a */; };
 		BB455E111FB37F6600AFB48B /* DelayedUITask.m in Sources */ = {isa = PBXBuildFile; fileRef = BB455E101FB37F6600AFB48B /* DelayedUITask.m */; };
 		BB52C03D2083DA3600104515 /* xterm-dist in Resources */ = {isa = PBXBuildFile; fileRef = BB52C03C2083DA3600104515 /* xterm-dist */; };
 		BB623CF91FA7C68800932047 /* alpine in Resources */ = {isa = PBXBuildFile; fileRef = BBF124901FA7C3100088FB50 /* alpine */; };
@@ -59,20 +58,6 @@
 			remoteGlobalIDString = BB13F7EE200ADD69003D1C4D;
 			remoteInfo = libgdbm;
 		};
-		BB13F80D200AE6AA003D1C4D /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = BB792B461F96D8E000FFB7A4 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = BB13F7D0200ACCA2003D1C4D;
-			remoteInfo = Ninja;
-		};
-		BB13F811200AE71F003D1C4D /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = BB792B461F96D8E000FFB7A4 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = BB13F803200AE69D003D1C4D;
-			remoteInfo = libsoftfloat;
-		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
@@ -81,7 +66,6 @@
 		BB13F7C8200ACC24003D1C4D /* xcode-meson.sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = "xcode-meson.sh"; sourceTree = "<group>"; };
 		BB13F7DC200AD81D003D1C4D /* libish.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libish.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		BB13F7EF200ADD69003D1C4D /* libgdbm.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libgdbm.a; sourceTree = BUILT_PRODUCTS_DIR; };
-		BB13F804200AE69D003D1C4D /* libsoftfloat.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libsoftfloat.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		BB455E0F1FB37F6600AFB48B /* DelayedUITask.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DelayedUITask.h; sourceTree = "<group>"; };
 		BB455E101FB37F6600AFB48B /* DelayedUITask.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = DelayedUITask.m; sourceTree = "<group>"; };
 		BB4A539A1FAA411D00A72ACE /* package.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = package.json; sourceTree = "<group>"; };
@@ -194,6 +178,30 @@
 		BB7D93802087C2890008DA78 /* tty.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = tty.h; sourceTree = "<group>"; };
 		BB7D93812087C2890008DA78 /* debug.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = debug.h; sourceTree = "<group>"; };
 		BB7D93822087C2890008DA78 /* main.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = main.c; sourceTree = "<group>"; };
+		BB88F4722152F75A00A341FD /* frame.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = frame.h; sourceTree = "<group>"; };
+		BB88F4742152F75A00A341FD /* bits.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = bits.S; sourceTree = "<group>"; };
+		BB88F4752152F75A00A341FD /* control.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = control.S; sourceTree = "<group>"; };
+		BB88F4762152F75A00A341FD /* entry.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = entry.S; sourceTree = "<group>"; };
+		BB88F4772152F75A00A341FD /* gadgets.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = gadgets.h; sourceTree = "<group>"; };
+		BB88F4782152F75A00A341FD /* math.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = math.S; sourceTree = "<group>"; };
+		BB88F4792152F75A00A341FD /* memory.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = memory.S; sourceTree = "<group>"; };
+		BB88F47A2152F75A00A341FD /* misc.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = misc.S; sourceTree = "<group>"; };
+		BB88F47B2152F75A00A341FD /* string.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = string.S; sourceTree = "<group>"; };
+		BB88F47C2152F75A00A341FD /* gadgets-generic.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "gadgets-generic.h"; sourceTree = "<group>"; };
+		BB88F47E2152F75A00A341FD /* bits.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = bits.S; sourceTree = "<group>"; };
+		BB88F47F2152F75A00A341FD /* control.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = control.S; sourceTree = "<group>"; };
+		BB88F4802152F75A00A341FD /* entry.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = entry.S; sourceTree = "<group>"; };
+		BB88F4812152F75A00A341FD /* gadgets.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = gadgets.h; sourceTree = "<group>"; };
+		BB88F4822152F75A00A341FD /* math.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = math.S; sourceTree = "<group>"; };
+		BB88F4832152F75A00A341FD /* memory.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = memory.S; sourceTree = "<group>"; };
+		BB88F4842152F75A00A341FD /* misc.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = misc.S; sourceTree = "<group>"; };
+		BB88F4852152F75A00A341FD /* string.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = string.S; sourceTree = "<group>"; };
+		BB88F4862152F75A00A341FD /* gen.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = gen.c; sourceTree = "<group>"; };
+		BB88F4872152F75A00A341FD /* gen.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = gen.h; sourceTree = "<group>"; };
+		BB88F4882152F75A00A341FD /* helpers.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = helpers.c; sourceTree = "<group>"; };
+		BB88F4892152F75A00A341FD /* jit.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = jit.c; sourceTree = "<group>"; };
+		BB88F48A2152F75A00A341FD /* jit.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = jit.h; sourceTree = "<group>"; };
+		BB88F48B2152F75A00A341FD /* offsets.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = offsets.c; sourceTree = "<group>"; };
 		BBF124901FA7C3100088FB50 /* alpine */ = {isa = PBXFileReference; explicitFileType = folder; includeInIndex = 0; path = alpine; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -203,7 +211,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				BB13F7EA200ADCED003D1C4D /* libish.a in Frameworks */,
-				BB13F810200AE716003D1C4D /* libsoftfloat.a in Frameworks */,
 				BB13F7FC200ADDA0003D1C4D /* libgdbm.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -222,6 +229,7 @@
 		BB4A53931FAA393B00A72ACE /* most of the code */ = {
 			isa = PBXGroup;
 			children = (
+				BB88F4712152F75A00A341FD /* jit */,
 				BB7D931E2087C2880008DA78 /* emu */,
 				BB7D936A2087C2890008DA78 /* fs */,
 				BB7D933C2087C2880008DA78 /* kernel */,
@@ -266,7 +274,6 @@
 				BBF124901FA7C3100088FB50 /* alpine */,
 				BB13F7DC200AD81D003D1C4D /* libish.a */,
 				BB13F7EF200ADD69003D1C4D /* libgdbm.a */,
-				BB13F804200AE69D003D1C4D /* libsoftfloat.a */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -440,6 +447,53 @@
 			path = fs;
 			sourceTree = "<group>";
 		};
+		BB88F4712152F75A00A341FD /* jit */ = {
+			isa = PBXGroup;
+			children = (
+				BB88F4722152F75A00A341FD /* frame.h */,
+				BB88F4732152F75A00A341FD /* gadgets-aarch64 */,
+				BB88F47C2152F75A00A341FD /* gadgets-generic.h */,
+				BB88F47D2152F75A00A341FD /* gadgets-x86_64 */,
+				BB88F4862152F75A00A341FD /* gen.c */,
+				BB88F4872152F75A00A341FD /* gen.h */,
+				BB88F4882152F75A00A341FD /* helpers.c */,
+				BB88F4892152F75A00A341FD /* jit.c */,
+				BB88F48A2152F75A00A341FD /* jit.h */,
+				BB88F48B2152F75A00A341FD /* offsets.c */,
+			);
+			path = jit;
+			sourceTree = "<group>";
+		};
+		BB88F4732152F75A00A341FD /* gadgets-aarch64 */ = {
+			isa = PBXGroup;
+			children = (
+				BB88F4742152F75A00A341FD /* bits.S */,
+				BB88F4752152F75A00A341FD /* control.S */,
+				BB88F4762152F75A00A341FD /* entry.S */,
+				BB88F4772152F75A00A341FD /* gadgets.h */,
+				BB88F4782152F75A00A341FD /* math.S */,
+				BB88F4792152F75A00A341FD /* memory.S */,
+				BB88F47A2152F75A00A341FD /* misc.S */,
+				BB88F47B2152F75A00A341FD /* string.S */,
+			);
+			path = "gadgets-aarch64";
+			sourceTree = "<group>";
+		};
+		BB88F47D2152F75A00A341FD /* gadgets-x86_64 */ = {
+			isa = PBXGroup;
+			children = (
+				BB88F47E2152F75A00A341FD /* bits.S */,
+				BB88F47F2152F75A00A341FD /* control.S */,
+				BB88F4802152F75A00A341FD /* entry.S */,
+				BB88F4812152F75A00A341FD /* gadgets.h */,
+				BB88F4822152F75A00A341FD /* math.S */,
+				BB88F4832152F75A00A341FD /* memory.S */,
+				BB88F4842152F75A00A341FD /* misc.S */,
+				BB88F4852152F75A00A341FD /* string.S */,
+			);
+			path = "gadgets-x86_64";
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXLegacyTarget section */
@@ -507,22 +561,6 @@
 			productReference = BB13F7EF200ADD69003D1C4D /* libgdbm.a */;
 			productType = "com.apple.product-type.library.static";
 		};
-		BB13F803200AE69D003D1C4D /* libsoftfloat */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = BB13F80C200AE69D003D1C4D /* Build configuration list for PBXNativeTarget "libsoftfloat" */;
-			buildPhases = (
-				BB13F80F200AE6B2003D1C4D /* ShellScript */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				BB13F80E200AE6AA003D1C4D /* PBXTargetDependency */,
-			);
-			name = libsoftfloat;
-			productName = libsoftfloat;
-			productReference = BB13F804200AE69D003D1C4D /* libsoftfloat.a */;
-			productType = "com.apple.product-type.library.static";
-		};
 		BB792B4F1F96D90D00FFB7A4 /* iSH */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = BB792B661F96D90D00FFB7A4 /* Build configuration list for PBXNativeTarget "iSH" */;
@@ -538,7 +576,6 @@
 			);
 			dependencies = (
 				BB13F7E7200AD874003D1C4D /* PBXTargetDependency */,
-				BB13F812200AE71F003D1C4D /* PBXTargetDependency */,
 				BB13F7FB200ADD99003D1C4D /* PBXTargetDependency */,
 			);
 			name = iSH;
@@ -557,27 +594,22 @@
 				TargetAttributes = {
 					BB13F7CA200ACC31003D1C4D = {
 						CreatedOnToolsVersion = 9.2;
-						DevelopmentTeam = W2NF7BNM62;
+						DevelopmentTeam = CK5SXRTBR7;
 						ProvisioningStyle = Automatic;
 					};
 					BB13F7D0200ACCA2003D1C4D = {
 						CreatedOnToolsVersion = 9.2;
-						DevelopmentTeam = W2NF7BNM62;
+						DevelopmentTeam = CK5SXRTBR7;
 						ProvisioningStyle = Automatic;
 					};
 					BB13F7DB200AD81D003D1C4D = {
 						CreatedOnToolsVersion = 9.2;
-						DevelopmentTeam = W2NF7BNM62;
+						DevelopmentTeam = CK5SXRTBR7;
 						ProvisioningStyle = Automatic;
 					};
 					BB13F7EE200ADD69003D1C4D = {
 						CreatedOnToolsVersion = 9.2;
-						DevelopmentTeam = W2NF7BNM62;
-						ProvisioningStyle = Automatic;
-					};
-					BB13F803200AE69D003D1C4D = {
-						CreatedOnToolsVersion = 9.2;
-						DevelopmentTeam = W2NF7BNM62;
+						DevelopmentTeam = CK5SXRTBR7;
 						ProvisioningStyle = Automatic;
 					};
 					BB792B4F1F96D90D00FFB7A4 = {
@@ -603,7 +635,6 @@
 				BB13F7CA200ACC31003D1C4D /* Meson */,
 				BB13F7D0200ACCA2003D1C4D /* Ninja */,
 				BB13F7DB200AD81D003D1C4D /* libish */,
-				BB13F803200AE69D003D1C4D /* libsoftfloat */,
 				BB13F7EE200ADD69003D1C4D /* libgdbm */,
 			);
 		};
@@ -637,20 +668,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "mkdir -p $TARGET_BUILD_DIR\nln -sf $MESON_BUILD_DIR/subprojects/gdbm-1.14.1/src/libgdbm.a $TARGET_BUILD_DIR";
-		};
-		BB13F80F200AE6B2003D1C4D /* ShellScript */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "mkdir -p $TARGET_BUILD_DIR\nln -sf $MESON_BUILD_DIR/subprojects/softfloat/libsoftfloat.a $TARGET_BUILD_DIR";
+			shellScript = "mkdir -p $CONFIGURATION_BUILD_DIR\nln -sf $MESON_BUILD_DIR/subprojects/gdbm-1.14.1/src/libgdbm.a $CONFIGURATION_BUILD_DIR\n";
 		};
 		BB13F813200AEFAC003D1C4D /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -663,7 +681,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "mkdir -p $TARGET_BUILD_DIR\nln -sf $MESON_BUILD_DIR/libish.a $TARGET_BUILD_DIR";
+			shellScript = "mkdir -p $CONFIGURATION_BUILD_DIR\nln -sf $MESON_BUILD_DIR/libish.a $CONFIGURATION_BUILD_DIR\n";
 		};
 		BB4A53AC1FAA49CA00A72ACE /* Run Webpack */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -759,16 +777,6 @@
 			target = BB13F7EE200ADD69003D1C4D /* libgdbm */;
 			targetProxy = BB13F7FA200ADD99003D1C4D /* PBXContainerItemProxy */;
 		};
-		BB13F80E200AE6AA003D1C4D /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = BB13F7D0200ACCA2003D1C4D /* Ninja */;
-			targetProxy = BB13F80D200AE6AA003D1C4D /* PBXContainerItemProxy */;
-		};
-		BB13F812200AE71F003D1C4D /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = BB13F803200AE69D003D1C4D /* libsoftfloat */;
-			targetProxy = BB13F811200AE71F003D1C4D /* PBXContainerItemProxy */;
-		};
 /* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
@@ -809,7 +817,6 @@
 				COPY_PHASE_STRIP = NO;
 				DEBUGGING_SYMBOLS = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = W2NF7BNM62;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
@@ -844,7 +851,6 @@
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = W2NF7BNM62;
 				ENABLE_NS_ASSERTIONS = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
@@ -874,7 +880,6 @@
 				COPY_PHASE_STRIP = NO;
 				DEBUGGING_SYMBOLS = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = W2NF7BNM62;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
@@ -909,7 +914,6 @@
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = W2NF7BNM62;
 				ENABLE_NS_ASSERTIONS = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
@@ -939,7 +943,6 @@
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = W2NF7BNM62;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_OPTIMIZATION_LEVEL = 0;
@@ -977,7 +980,6 @@
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = W2NF7BNM62;
 				ENABLE_NS_ASSERTIONS = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
@@ -1011,7 +1013,6 @@
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = W2NF7BNM62;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_OPTIMIZATION_LEVEL = 0;
@@ -1048,7 +1049,6 @@
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = W2NF7BNM62;
 				ENABLE_NS_ASSERTIONS = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
@@ -1057,76 +1057,6 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = gdbm;
-				SKIP_INSTALL = YES;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				VALIDATE_PRODUCT = YES;
-			};
-			name = Release;
-		};
-		BB13F80A200AE69D003D1C4D /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				CLANG_ANALYZER_NONNULL = YES;
-				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
-				CLANG_CXX_LIBRARY = "libc++";
-				CLANG_ENABLE_MODULES = YES;
-				CLANG_ENABLE_OBJC_ARC = YES;
-				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
-				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
-				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
-				CODE_SIGN_IDENTITY = "iPhone Developer";
-				CODE_SIGN_STYLE = Automatic;
-				COPY_PHASE_STRIP = NO;
-				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = W2NF7BNM62;
-				GCC_C_LANGUAGE_STANDARD = gnu11;
-				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					"DEBUG=1",
-					"$(inherited)",
-				);
-				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
-				IPHONEOS_DEPLOYMENT_TARGET = 11.2;
-				MTL_ENABLE_DEBUG_INFO = YES;
-				OTHER_LDFLAGS = "-ObjC";
-				PRODUCT_NAME = softfloat;
-				SKIP_INSTALL = YES;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Debug;
-		};
-		BB13F80B200AE69D003D1C4D /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				CLANG_ANALYZER_NONNULL = YES;
-				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
-				CLANG_CXX_LIBRARY = "libc++";
-				CLANG_ENABLE_MODULES = YES;
-				CLANG_ENABLE_OBJC_ARC = YES;
-				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
-				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
-				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
-				CODE_SIGN_IDENTITY = "iPhone Developer";
-				CODE_SIGN_STYLE = Automatic;
-				COPY_PHASE_STRIP = NO;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = W2NF7BNM62;
-				ENABLE_NS_ASSERTIONS = NO;
-				GCC_C_LANGUAGE_STANDARD = gnu11;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
-				IPHONEOS_DEPLOYMENT_TARGET = 11.2;
-				MTL_ENABLE_DEBUG_INFO = NO;
-				OTHER_LDFLAGS = "-ObjC";
-				PRODUCT_NAME = softfloat;
 				SKIP_INSTALL = YES;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALIDATE_PRODUCT = YES;
@@ -1153,7 +1083,8 @@
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				CURRENT_PROJECT_VERSION = 25;
+				CURRENT_PROJECT_VERSION = 26;
+				DEVELOPMENT_TEAM = CK5SXRTBR7;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -1163,8 +1094,8 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
-				ISH_LOG = memory;
+				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				ISH_LOG = "";
 				MESON_BUILD_DIR = "$(CONFIGURATION_BUILD_DIR)/meson";
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
@@ -1193,7 +1124,8 @@
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				CURRENT_PROJECT_VERSION = 25;
+				CURRENT_PROJECT_VERSION = 26;
+				DEVELOPMENT_TEAM = CK5SXRTBR7;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -1202,8 +1134,8 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
-				ISH_LOG = memory;
+				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				ISH_LOG = "";
 				MESON_BUILD_DIR = "$(CONFIGURATION_BUILD_DIR)/meson";
 				SDKROOT = iphoneos;
 				VALID_ARCHS = arm64;
@@ -1265,15 +1197,13 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = (
 					"$(SRCROOT)",
-					"$(SRCROOT)/subprojects/softfloat/source/include",
 					"$(MESON_BUILD_DIR)/subprojects/gdbm-1.14.1/src",
-					"$(MESON_BUILD_DIR)/subprojects/softfloat/source/include",
 				);
 				INFOPLIST_FILE = app/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = com.tbodt.ish;
+				PRODUCT_BUNDLE_IDENTIFIER = app.ish.iSH;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -1329,14 +1259,12 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = (
 					"$(SRCROOT)",
-					"$(SRCROOT)/subprojects/softfloat/source/include",
 					"$(MESON_BUILD_DIR)/subprojects/gdbm-1.14.1/src",
-					"$(MESON_BUILD_DIR)/subprojects/softfloat/source/include",
 				);
 				INFOPLIST_FILE = app/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				MTL_ENABLE_DEBUG_INFO = NO;
-				PRODUCT_BUNDLE_IDENTIFIER = com.tbodt.ish;
+				PRODUCT_BUNDLE_IDENTIFIER = app.ish.iSH;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -1380,15 +1308,6 @@
 			buildConfigurations = (
 				BB13F7F6200ADD69003D1C4D /* Debug */,
 				BB13F7F7200ADD69003D1C4D /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		BB13F80C200AE69D003D1C4D /* Build configuration list for PBXNativeTarget "libsoftfloat" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				BB13F80A200AE69D003D1C4D /* Debug */,
-				BB13F80B200AE69D003D1C4D /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

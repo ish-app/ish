@@ -19,10 +19,10 @@
         movs _tmp, \arg, \s
         uxts _tmp, _tmp, \s
         .exitm
-    .else; .ifc \op,store
+    .else N .ifc \op,store
         movs \arg, _tmp, \s
         .exitm
-    .endif; .endif
+    .endif N .endif
 
     .ifin(\op, add,sub,adc,sbc)
         setf_a \arg, _tmp
@@ -33,7 +33,12 @@
     .endifin
     .ifin(\op, adc,sbc)
         ldrb w10, [_cpu, CPU_cf]
-        cmp w10, 1
+        .ifc \op,adc
+            cmp w10, 1
+        .else
+            mvn w10, w10
+            cmn w10, 1
+        .endif
     .endifin
 
     .ifin(\op, and,orr,eor)
@@ -151,27 +156,32 @@
     bfi e\reg\()x, w11, 8, 8
 .endm
 
-.macro do_op_size op, armop, size
+.macro do_op_size op, armop, size, s
     .ifnc \op,store
         .gadget \op\size\()_imm
-            ldr w8, [_ip]
+            ldr\s w8, [_ip]
             do_op \armop, \size, w8
             gret 1
     .endif
 
     .gadget \op\size\()_mem
         .ifc \op,store
-            write_prep \size
+            write_prep \size, \op\size\()_mem
         .else
-            read_prep \size
+            read_prep \size, \op\size\()_mem
         .endif
-        ldr w8, [_xaddr]
+        ldr\s w8, [_xaddr]
         do_op \armop, \size, w8
         .ifc \op,store
-            str w8, [_xaddr]
-            write_done \size
+            str\s w8, [_xaddr]
+            write_done \size, \op\size\()_mem
         .endif
         gret 1
+        .ifc \op,store
+            write_bullshit \size, \op\size\()_mem
+        .else
+            read_bullshit \size, \op\size\()_mem
+        .endif
 
     .irp reg, a,b,c,d
         do_reg_op \op, \armop, \size, \reg
@@ -180,11 +190,11 @@
     .irp reg, si,di,sp,bp
         .gadget \op\size\()_reg_\reg
             .if \size == 8
-                .ifc \reg,sp; do_hi_op \op, \size, a; .else
-                .ifc \reg,bp; do_hi_op \op, \size, c; .else
-                .ifc \reg,si; do_hi_op \op, \size, d; .else
-                .ifc \reg,di; do_hi_op \op, \size, b
-                .endif; .endif; .endif; .endif
+                .ifc \reg,sp N do_hi_op \op, \size, a N .else
+                .ifc \reg,bp N do_hi_op \op, \size, c N .else
+                .ifc \reg,si N do_hi_op \op, \size, d N .else
+                .ifc \reg,di N do_hi_op \op, \size, b
+                .endif N .endif N .endif N .endif
             .else
                 do_op \armop, \size, e\reg
             .endif
@@ -196,20 +206,20 @@
     .irp size, SIZE_LIST
         # a couple operations have slightly different names on arm
         .ifc \op,xor
-            do_op_size \op, eor, \size
-        .else; .ifc \op,sbb
-            do_op_size \op, sbc, \size
-        .else; .ifc \op,or
-            do_op_size \op, orr, \size
+            ss \size, do_op_size, \op, eor
+        .else N .ifc \op,sbb
+            ss \size, do_op_size, \op, sbc
+        .else N .ifc \op,or
+            ss \size, do_op_size, \op, orr
         .else
-            do_op_size \op, \op, \size
-        .endif; .endif; .endif
+            ss \size, do_op_size, \op, \op
+        .endif N .endif N .endif
     .endr
     .gadget_array \op
 .endr
 .irp op, imul,bsf,bsr
     .irp size, 16,32
-        do_op_size \op, \op, \size
+        ss \size, do_op_size, \op, \op
     .endr
     .gadget_array \op
 .endr
@@ -220,7 +230,7 @@
 .macro do_inc size, s
     mov w10, 1
     setf_a w10, _tmp
-    op_s add _tmp, _tmp, 1
+    op_s add, _tmp, _tmp, 1
     setf_zsp
     .ifb \s
         cset w8, vs
@@ -233,7 +243,7 @@
 .macro do_dec size, s
     mov w10, 1
     setf_a w10, _tmp
-    op_s sub _tmp, _tmp, 1
+    op_s sub, _tmp, _tmp, 1
     setf_zsp
     .ifb \s
         cset w8, vs
@@ -307,9 +317,21 @@
     .endif
 .endm
 .macro do_mul size, s
-    # mul\ss %tmp\s
-    # setf_oc
-    hlt 0
+    .ifb \s
+        umull xax, eax, _tmp
+        lsr xdx, xax, 32
+        cmp xax, eax, uxtw
+    .else
+        uxt\s w8, eax
+        uxt\s _tmp, _tmp
+        mul w8, w8, _tmp
+        cmp w8, w8, uxt\s
+        bfxil eax, w8, 0, \size
+        bfxil edx, w8, \size, \size
+    .endif
+    cset w8, ne
+    strb w8, [_cpu, CPU_cf]
+    strb w8, [_cpu, CPU_of]
 .endm
 .macro do_imul1 size, s
     .ifb \s

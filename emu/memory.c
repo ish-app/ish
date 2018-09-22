@@ -80,7 +80,6 @@ int pt_map(struct mem *mem, page_t start, pages_t pages, void *memory, unsigned 
         mem->pt[page].offset = (page - start) << PAGE_BITS;
         mem->pt[page].flags = flags;
     }
-    mem_changed(mem);
     return 0;
 }
 
@@ -120,12 +119,18 @@ int pt_set_flags(struct mem *mem, page_t start, pages_t pages, int flags) {
             return _ENOMEM;
     for (page_t page = start; page < start + pages; page++) {
         struct pt_entry *entry = &mem->pt[page];
+        int old_flags = entry->flags;
         entry->flags = flags;
-        void *data = (char *) entry->data->data + entry->offset;
-        int prot = PROT_READ;
-        if (flags & P_WRITE) prot |= PROT_WRITE;
-        if (mprotect(data, PAGE_SIZE, prot) < 0)
-            return errno_map();
+        // check if protection is increasing
+        if ((flags & ~old_flags) & (P_READ|P_WRITE)) {
+            void *data = (char *) entry->data->data + entry->offset;
+            // force to be page aligned
+            data = (void *) ((uintptr_t) data & ~(real_page_size - 1));
+            int prot = PROT_READ;
+            if (flags & P_WRITE) prot |= PROT_WRITE;
+            if (mprotect(data, real_page_size, prot) < 0)
+                return errno_map();
+        }
     }
     mem_changed(mem);
     return 0;

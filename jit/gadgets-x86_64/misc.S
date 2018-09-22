@@ -21,7 +21,7 @@
     leaq 0x8(%rsp), %rsi
     leaq 0x4(%rsp), %rdx
     leaq 0x0(%rsp), %rcx
-    call helper_cpuid
+    call NAME(helper_cpuid)
     movl 0xc(%rsp), %eax
     movl 0x8(%rsp), %ebx
     movl 0x4(%rsp), %ecx
@@ -36,9 +36,9 @@
     gret
 
 .gadget cmpxchg32_mem
-    write_prep 32
+    write_prep 32, cmpxchg32_mem
     cmpxchg %tmpd, (%_addrq)
-    write_done 32
+    write_done 32, cmpxchg32_mem
     setf_oc
     # god help us
     setp %r10b
@@ -60,7 +60,7 @@
 .macro do_helper type, size=
     .gadget helper_\type\size
         .ifin(\type, read,write)
-            \type\()_prep (\size*4)
+            \type\()_prep (\size*4), helper_\type\size
         .endifin
         save_c
         movq %_cpu, %rdi
@@ -77,7 +77,7 @@
         callq *(%_ip)
         restore_c
         .ifc \type,write
-            write_done (\size*4)
+            write_done (\size*4), helper_\type\size
         .endif
         .ifc \type,0
             gret 1

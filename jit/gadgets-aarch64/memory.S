@@ -4,16 +4,19 @@
 .gadget push
     sub esp, esp, 4
     mov _addr, esp
-    write_prep 32
+    write_prep 32, push
     str _tmp, [_xaddr]
-    write_done 32
+    write_done 32, push
     gret 1
+    write_bullshit 32, push
+
 .gadget pop
     mov _addr, esp
-    read_prep 32
+    read_prep 32, pop
     ldr _tmp, [_xaddr]
     add esp, esp, 4
     gret 1
+    read_bullshit 32, pop
 
 .macro x name, reg
     .gadget addr_\name
@@ -33,13 +36,13 @@
         .gadget si_\name\()_\times
             .ifc \times,1
                 add _addr, _addr, \reg
-            .else; .ifc \times,2
+            .else N .ifc \times,2
                 add _addr, _addr, \reg, lsl 1
-            .else; .ifc \times,4
+            .else N .ifc \times,4
                 add _addr, _addr, \reg, lsl 2
-            .else; .ifc \times,8
+            .else N .ifc \times,8
                 add _addr, _addr, \reg, lsl 3
-            .endif; .endif; .endif; .endif
+            .endif N .endif N .endif N .endif
             gret
     .endr
 .endm
@@ -47,11 +50,11 @@
 .purgem x
 
 .pushsection_rodata
-.global si_gadgets
-si_gadgets:
+.global NAME(si_gadgets)
+NAME(si_gadgets):
 .irp reg, REG_LIST
     .irp times, 1,2,4,8
-        .quad gadget_si_\reg\()_\times
+        .quad NAME(gadget_si_\reg\()_\times)
     .endr
 .endr
 .popsection
@@ -73,7 +76,7 @@ si_gadgets:
         .else
             mov x2, 1
         .endif
-        bl tlb_handle_miss
+        bl NAME(tlb_handle_miss)
         mov x19, x0
         restore_c
         cbz x19, segfault
@@ -93,7 +96,7 @@ crosspage_load:
     add x2, _cpu, LOCAL_value
     mov w1, _addr
     mov x3, x19
-    bl __tlb_read_cross_page
+    bl NAME(__tlb_read_cross_page)
     mov x19, x0
     restore_c
     cbz x19, segfault
@@ -108,7 +111,7 @@ crosspage_store:
     add x2, _cpu, LOCAL_value
     ldr w1, [_cpu, LOCAL_value_addr]
     mov x3, x19
-    bl __tlb_write_cross_page
+    bl NAME(__tlb_write_cross_page)
     mov x19, x0
     restore_c
     cbz x19, segfault

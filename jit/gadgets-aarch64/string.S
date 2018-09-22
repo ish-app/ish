@@ -18,9 +18,9 @@
 .macro do_strop op, size, rep, s=
     # repnz is only a thing for cmps and scas
     .ifc \rep,repnz
-        .ifnc \op,cmps; .ifnc \op,scas
+        .ifnc \op,cmps N .ifnc \op,scas
             .exitm
-        .endif; .endif
+        .endif N .endif
     .endif
 
     .gadget \op\size\()_\rep
@@ -36,45 +36,45 @@
 
         .ifc \op,lods
             mov _addr, esi
-            read_prep \size
+            read_prep \size, \op\size\()_\rep
             ldr\s eax, [_xaddr]
 
-        .else; .ifc \op,stos
+        .else N .ifc \op,stos
             mov _addr, edi
-            write_prep \size
+            write_prep \size, \op\size\()_\rep
             str\s eax, [_xaddr]
-            write_done \size
+            write_done \size, \op\size\()_\rep
 
-        .else; .ifc \op,movs
+        .else N .ifc \op,movs
             mov _addr, esi
-            read_prep \size
+            read_prep \size, \op\size\()_\rep
             ldr\s _tmp, [_xaddr]
             mov _addr, edi
-            write_prep \size
+            write_prep \size, \op\size\()_\rep\()2
             str\s _tmp, [_xaddr]
-            write_done \size
+            write_done \size, \op\size\()_\rep\()2
 
-        .else; .ifc \op, scas
+        .else N .ifc \op, scas
             mov _addr, edi
-            read_prep \size
+            read_prep \size, \op\size\()_\rep
             ldr _tmp, [_xaddr]
             setf_a eax, _tmp
             subs _tmp, _tmp, eax
             setf_oc
             setf_zsp \s
 
-        .else; .ifc \op, cmps
+        .else N .ifc \op, cmps
             mov _addr, esi
-            read_prep \size
+            read_prep \size, \op\size\()_\rep
             ldr _tmp, [_xaddr]
             mov _addr, edi
-            read_prep \size
+            read_prep \size, \op\size\()_\rep\()2
             ldr w8, [_xaddr]
             setf_a w8, _tmp
             subs _tmp, _tmp, w8
             setf_oc
             setf_zsp \s
-        .endif; .endif; .endif; .endif; .endif
+        .endif N .endif N .endif N .endif N .endif
 
         .ifin(\op, lods,movs,cmps)
             add esi, esi, w12
@@ -88,14 +88,26 @@
             .ifin(\op, scas,cmps)
                 .ifc \rep,rep
                     cbnz _tmp, 2f
-                .else; .ifc \rep,repnz
+                .else N .ifc \rep,repnz
                     cbz _tmp, 2f
-                .endif; .endif
+                .endif N .endif
             .endifin
             cbnz ecx, 1b
     2:
         .endif
         gret 1
+        .ifin(\op, lods,movs,scas,cmps)
+            read_bullshit \size, \op\size\()_\rep
+        .endifin
+        .ifc \op,stos
+            write_bullshit \size, \op\size\()_\rep
+        .endif
+        .ifc \op,movs
+            write_bullshit \size, \op\size\()_\rep\()2
+        .endif
+        .ifc \op,cmps
+            read_bullshit \size, \op\size\()_\rep\()2
+        .endif
 .endm
 
 .irp op, lods,stos,movs,scas,cmps
