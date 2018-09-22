@@ -20,6 +20,10 @@
 
 @implementation TerminalViewController
 
+- (IBAction)hideButton:(id)sender {
+    [self.view endEditing:YES];
+}
+
 - (void)viewDidLoad {
     [super viewDidLoad];
     self.terminal = [Terminal terminalWithType:0 number:0];
@@ -35,7 +39,6 @@
                selector:@selector(keyboardDidSomething:)
                    name:UIKeyboardWillHideNotification
                  object:nil];
-
     [center addObserver:self
                selector:@selector(ishExited:)
                    name:ISHExitedNotification
