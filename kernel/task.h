@@ -60,7 +60,8 @@ extern __thread struct task *current;
 
 // Creates a new process, initializes most fields from the parent. Specify
 // parent as NULL to create the init process. Returns NULL if out of memory.
-struct task *task_create(struct task *parent);
+// Ends with an underscore because there's a mach function by the same name
+struct task *task_create_(struct task *parent);
 // Removes the process from the process table and frees it. Must be called with pids_lock.
 void task_destroy(struct task *task);
 

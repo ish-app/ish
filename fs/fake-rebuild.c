@@ -19,7 +19,7 @@ int fakefs_rebuild(struct mount *mount, const char *db_path) {
     char new_db_path[MAX_PATH];
     strcpy(new_db_path, db_path);
     strcat(new_db_path, ".new");
-    GDBM_FILE new_db = gdbm_open(new_db_path, 0, GDBM_NEWDB, 0666, NULL);
+    GDBM_FILE new_db = gdbm_open(new_db_path, 0x1000, GDBM_NEWDB, 0666, NULL);
     if (new_db == NULL)
         return errno_map();
 

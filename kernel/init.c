@@ -41,7 +41,7 @@ void create_first_process() {
     signal(SIGUSR1, nop_handler);
     signal(SIGPIPE, SIG_IGN);
 
-    current = task_create(NULL);
+    current = task_create_(NULL);
     current->cpu.mem = mem_new();
     struct tgroup *group = init_tgroup();
     list_add(&group->threads, &current->group_links);

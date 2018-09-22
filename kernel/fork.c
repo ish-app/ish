@@ -137,7 +137,7 @@ dword_t sys_clone(dword_t flags, addr_t stack, addr_t ptid, addr_t tls, addr_t c
     if (flags & CLONE_THREAD_ && !(flags & CLONE_SIGHAND_))
         return _EINVAL;
 
-    struct task *task = task_create(current);
+    struct task *task = task_create_(current);
     if (task == NULL)
         return _ENOMEM;
     int err = copy_task(task, flags, stack, ptid, tls, ctid);

@@ -36,7 +36,7 @@ struct task *pid_get_task(dword_t id) {
     return task;
 }
 
-struct task *task_create(struct task *parent) {
+struct task *task_create_(struct task *parent) {
     lock(&pids_lock);
     static int cur_pid = 1;
     while (!pid_empty(&pids[cur_pid])) {

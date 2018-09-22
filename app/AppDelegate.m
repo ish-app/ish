@@ -8,10 +8,7 @@
 #import "AppDelegate.h"
 #import "TerminalViewController.h"
 #include "kernel/init.h"
-// task_create in kernel/task.h conflicts with task_create in mach/task.h
-#define task_create fucking_task_create
 #include "kernel/calls.h"
-#undef task_create
 
 @interface AppDelegate ()
 
@@ -24,10 +21,13 @@ static void ios_handle_exit(int code) {
 @implementation AppDelegate
 
 - (int)startThings {
-    NSFileManager *manager = NSFileManager.defaultManager;
-    NSURL *documents = [manager URLsForDirectory:NSDocumentDirectory
-                                       inDomains:NSUserDomainMask][0];
-    NSURL *alpineRoot = [documents URLByAppendingPathComponent:@"alpine"];
+    NSFileManager *manager = [NSFileManager defaultManager];
+    NSURL *container = [manager containerURLForSecurityApplicationGroupIdentifier:@"group.app.ish.iSH"];
+    NSURL *alpineRoot = [container URLByAppendingPathComponent:@"roots/alpine"];
+    [manager createDirectoryAtURL:[container URLByAppendingPathComponent:@"roots"]
+      withIntermediateDirectories:YES
+                       attributes:@{}
+                            error:nil];
     if (![manager fileExistsAtPath:alpineRoot.path]) {
         NSURL *alpineMaster = [NSBundle.mainBundle URLForResource:@"alpine" withExtension:nil];
         NSError *error = nil;
