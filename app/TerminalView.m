@@ -7,6 +7,12 @@
 
 #import "TerminalView.h"
 
+@interface TerminalView ()
+
+@property (nonatomic) NSMutableArray<UIKeyCommand *> *keyCommands;
+
+@end
+
 @implementation TerminalView
 
 - (void)setTerminal:(Terminal *)terminal {
@@ -35,8 +41,16 @@
     return self.terminal.webView.scrollView;
 }
 
+#pragma mark Focus
+
 - (BOOL)canBecomeFirstResponder {
     return YES;
+}
+
+- (void)awakeFromNib {
+    [super awakeFromNib];
+    self.inputAssistantItem.leadingBarButtonGroups = @[];
+    self.inputAssistantItem.trailingBarButtonGroups = @[];
 }
 
 - (void)userContentController:(WKUserContentController *)userContentController didReceiveScriptMessage:(WKScriptMessage *)message {
@@ -52,10 +66,25 @@
     return [super resignFirstResponder];
 }
 
-// most of the logic here is about getting input
+- (IBAction)loseFocus:(id)sender {
+    [self resignFirstResponder];
+}
+
 // implementing these makes a keyboard pop up when this view is first responder
 
+#pragma mark Keyboard
+
 - (void)insertText:(NSString *)text {
+    if (self.controlKey.selected) {
+        self.controlKey.selected = NO;
+        if (text.length == 1) {
+            char ch = [text characterAtIndex:0];
+            if (strchr(controlKeys, ch) != NULL) {
+                ch = toupper(ch) ^ 0x40;
+                text = [NSString stringWithFormat:@"%c", ch];
+            }
+        }
+    }
     NSData *data = [text dataUsingEncoding:NSUTF8StringEncoding];
     [self.terminal sendInput:data.bytes length:data.length];
 }
@@ -84,44 +113,76 @@
     return UITextAutocorrectionTypeNo;
 }
 
-/*
-This code is the hacks that will be needed to remap caps lock to control. They're commented out for now.
+#pragma mark Hardware Keyboard
 
-- (void)keyPressed:(UIKeyCommand *)keyCommand {
-    NSLog(@"%@", keyCommand.input);
-}
-
-- (NSArray<UIKeyCommand *> *)createKeyCommands {
-    NSMutableArray<UIKeyCommand *> *keyCommands = [NSMutableArray new];
-    [keyCommands addObjectsFromArray:[self keyCommandsForModifiers:0]];
-    [keyCommands addObjectsFromArray:[self keyCommandsForModifiers:UIKeyModifierShift]];
-    [keyCommands addObjectsFromArray:[self keyCommandsForModifiers:UIKeyModifierControl]];
-    [keyCommands addObjectsFromArray:[self keyCommandsForModifiers:UIKeyModifierAlphaShift]];
-    return keyCommands;
-}
-
-- (NSArray<UIKeyCommand *> *)keyCommandsForModifiers:(UIKeyModifierFlags)modifiers {
-    NSMutableArray<NSString *> *keys = [NSMutableArray new];
-    [self addKeys:"qwertyuiopasdfghjklzxcvbnm1234567890-=[]\\;',./` " toArray:keys];
-    [keys addObject:UIKeyInputEscape];
-    [keys addObject:UIKeyInputUpArrow];
-    [keys addObject:UIKeyInputDownArrow];
-    [keys addObject:UIKeyInputLeftArrow];
-    [keys addObject:UIKeyInputRightArrow];
-    
-    NSMutableArray<UIKeyCommand *> *keyCommands = [NSMutableArray new];
-    for (NSString *key in keys) {
-        [keyCommands addObject:[UIKeyCommand keyCommandWithInput:key
-                                                   modifierFlags:modifiers
-                                                          action:@selector(keyPressed:)]];
+- (void)handleKeyCommand:(UIKeyCommand *)command {
+    NSString *key = command.input;
+    if (command.modifierFlags == 0) {
+        if ([key isEqualToString:UIKeyInputEscape])
+            key = @"\x1b";
+        else if ([key isEqualToString:UIKeyInputUpArrow])
+            key = @"\x1b[A";
+        else if ([key isEqualToString:UIKeyInputDownArrow])
+            key = @"\x1b[B";
+        else if ([key isEqualToString:UIKeyInputLeftArrow])
+            key = @"\x1b[D";
+        else if ([key isEqualToString:UIKeyInputRightArrow])
+            key = @"\x1b[C";
+        [self insertText:key];
+    } else if (command.modifierFlags & UIKeyModifierShift) {
+        [self insertText:[key uppercaseString]];
+    } else if (command.modifierFlags & UIKeyModifierControl || command.modifierFlags & UIKeyModifierAlphaShift) {
+        if (key.length == 0)
+            return;
+        if ([key isEqualToString:@"2"])
+            key = @"@";
+        else if ([key isEqualToString:@"6"])
+            key = @"^";
+        else if ([key isEqualToString:@"-"])
+            key = @"_";
+        char ch = (char) [key.uppercaseString characterAtIndex:0] ^ 0x40;
+        [self insertText:[NSString stringWithFormat:@"%c", ch]];
     }
-    return keyCommands;
 }
 
-- (void)addKeys:(const char *)chars toArray:(NSMutableArray<NSString *> *)keys {
-    for (size_t i = 0; chars[i] != '\0'; i++)
-        [keys addObject:[NSString stringWithFormat:@"%c", chars[i]]];
+static const char *alphabet = "abcdefghijklmnopqrstuvwxyz";
+static const char *controlKeys = "abcdefghijklmnopqrstuvwxyz26-=[]\\";
+
+- (BOOL)shouldMapCapsToControl {
+    NSString *language = self.textInputMode.primaryLanguage;
+    return [language hasPrefix:@"en"] || [language hasPrefix:@"dictation"];
 }
-*/
+
+- (NSArray<UIKeyCommand *> *)keyCommands {
+    if (_keyCommands != nil)
+        return _keyCommands;
+    _keyCommands = [NSMutableArray new];
+    [self addKeys:controlKeys withModifiers:UIKeyModifierControl];
+    for (NSString *specialKey in @[UIKeyInputEscape, UIKeyInputUpArrow, UIKeyInputDownArrow,
+                                   UIKeyInputLeftArrow, UIKeyInputRightArrow, @"\t"]) {
+        [self addKey:specialKey withModifiers:0];
+    }
+    if ([self shouldMapCapsToControl]) {
+        [self addKeys:controlKeys withModifiers:UIKeyModifierAlphaShift];
+        [self addKeys:alphabet withModifiers:0];
+        [self addKeys:alphabet withModifiers:UIKeyModifierShift];
+        [self addKey:@"" withModifiers:UIKeyModifierAlphaShift]; // otherwise tap of caps lock can switch layouts
+    }
+    return _keyCommands;
+}
+
+- (void)addKeys:(const char *)keys withModifiers:(UIKeyModifierFlags)modifiers {
+    for (size_t i = 0; keys[i] != '\0'; i++) {
+        [self addKey:[NSString stringWithFormat:@"%c", keys[i]] withModifiers:modifiers];
+    }
+}
+
+- (void)addKey:(NSString *)key withModifiers:(UIKeyModifierFlags)modifiers {
+    UIKeyCommand *command = [UIKeyCommand keyCommandWithInput:key
+                                                modifierFlags:modifiers
+                                                       action:@selector(handleKeyCommand:)];
+    [_keyCommands addObject:command];
+    
+}
 
 @end

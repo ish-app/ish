@@ -10,7 +10,11 @@
 
 @interface TerminalView : UIView <UIKeyInput, WKScriptMessageHandler>
 
+@property UIInputView *inputAccessoryView;
+
 @property (nonatomic) Terminal *terminal;
 @property (readonly) UIScrollView *scrollView;
+
+@property (weak) UIButton *controlKey;
 
 @end

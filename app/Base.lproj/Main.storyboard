@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="13529" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="BYZ-38-t0r">
-    <device id="retina5_5" orientation="portrait">
-        <adaptation id="fullscreen"/>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="14313.18" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES" initialViewController="BYZ-38-t0r">
+    <device id="ipad9_7" orientation="landscape">
+        <adaptation id="splitview2_3"/>
     </device>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="13527"/>
-        <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="14283.14"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <scenes>
@@ -14,12 +13,16 @@
         <scene sceneID="tne-QT-ifu">
             <objects>
                 <viewController id="BYZ-38-t0r" customClass="TerminalViewController" sceneMemberID="viewController">
+                    <layoutGuides>
+                        <viewControllerLayoutGuide type="top" id="7pl-FA-9Li"/>
+                        <viewControllerLayoutGuide type="bottom" id="3Sa-cq-IzT"/>
+                    </layoutGuides>
                     <view key="view" contentMode="scaleToFill" id="8bC-Xf-vdC">
-                        <rect key="frame" x="0.0" y="0.0" width="414" height="736"/>
+                        <rect key="frame" x="0.0" y="0.0" width="694" height="768"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="FQi-r8-odu" customClass="TerminalView">
-                                <rect key="frame" x="0.0" y="20" width="414" height="716"/>
+                                <rect key="frame" x="0.0" y="20" width="694" height="748"/>
                                 <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                             </view>
                         </subviews>
@@ -27,11 +30,10 @@
                         <gestureRecognizers/>
                         <constraints>
                             <constraint firstAttribute="trailing" secondItem="FQi-r8-odu" secondAttribute="trailing" id="EeQ-tO-BY6"/>
-                            <constraint firstItem="FQi-r8-odu" firstAttribute="top" secondItem="6Tk-OE-BBY" secondAttribute="top" id="Fd5-I9-Qjs"/>
+                            <constraint firstItem="FQi-r8-odu" firstAttribute="top" secondItem="7pl-FA-9Li" secondAttribute="bottom" id="Fd5-I9-Qjs"/>
                             <constraint firstItem="FQi-r8-odu" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leading" id="VUM-Zu-VAQ"/>
-                            <constraint firstItem="FQi-r8-odu" firstAttribute="bottom" secondItem="6Tk-OE-BBY" secondAttribute="bottom" id="fXD-Y3-UQj"/>
+                            <constraint firstItem="FQi-r8-odu" firstAttribute="bottom" secondItem="3Sa-cq-IzT" secondAttribute="top" id="fXD-Y3-UQj"/>
                         </constraints>
-                        <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
                     </view>
                     <connections>
                         <outlet property="bottomConstraint" destination="fXD-Y3-UQj" id="dpH-0p-KEx"/>
@@ -41,6 +43,138 @@
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="32.799999999999997" y="32.833583208395808"/>
+        </scene>
+        <!--Bar View Controller-->
+        <scene sceneID="LMT-0c-qdQ">
+            <objects>
+                <viewController storyboardIdentifier="bar" id="pTq-EG-QRM" customClass="BarViewController" sceneMemberID="viewController">
+                    <layoutGuides>
+                        <viewControllerLayoutGuide type="top" id="kDv-Qi-sEO"/>
+                        <viewControllerLayoutGuide type="bottom" id="Fa5-oj-qD4"/>
+                    </layoutGuides>
+                    <view key="view" contentMode="scaleToFill" id="GyN-ob-WFz" customClass="BarView">
+                        <rect key="frame" x="0.0" y="0.0" width="500" height="55"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES"/>
+                        <subviews>
+                            <stackView opaque="NO" contentMode="scaleToFill" spacing="6" translatesAutoresizingMaskIntoConstraints="NO" id="4pc-Ei-ihz">
+                                <rect key="frame" x="6" y="6" width="488" height="43"/>
+                                <subviews>
+                                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="cJt-oG-BnW" customClass="BarButton">
+                                        <rect key="frame" x="0.0" y="0.0" width="31" height="43"/>
+                                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                        <fontDescription key="fontDescription" type="system" pointSize="20"/>
+                                        <color key="tintColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                        <state key="normal" title="⇥">
+                                            <color key="titleColor" cocoaTouchSystemColor="darkTextColor"/>
+                                        </state>
+                                        <userDefinedRuntimeAttributes>
+                                            <userDefinedRuntimeAttribute type="color" keyPath="highlightedBackgroundColor">
+                                                <color key="value" red="0.67450980390000004" green="0.70588235290000001" blue="0.74509803919999995" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                            </userDefinedRuntimeAttribute>
+                                        </userDefinedRuntimeAttributes>
+                                        <connections>
+                                            <action selector="pressTab:" destination="pTq-EG-QRM" eventType="touchUpInside" id="Zjf-3k-bZz"/>
+                                        </connections>
+                                    </button>
+                                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="W9v-cj-FWz" customClass="BarButton">
+                                        <rect key="frame" x="37" y="0.0" width="31" height="43"/>
+                                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                        <fontDescription key="fontDescription" type="system" pointSize="20"/>
+                                        <color key="tintColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                        <state key="normal" title="⌃">
+                                            <color key="titleColor" cocoaTouchSystemColor="darkTextColor"/>
+                                        </state>
+                                        <userDefinedRuntimeAttributes>
+                                            <userDefinedRuntimeAttribute type="color" keyPath="highlightedBackgroundColor">
+                                                <color key="value" red="0.67258380569999998" green="0.70588235290000001" blue="0.74509803919999995" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                            </userDefinedRuntimeAttribute>
+                                        </userDefinedRuntimeAttributes>
+                                        <connections>
+                                            <action selector="pressControl:" destination="pTq-EG-QRM" eventType="touchUpInside" id="O2B-Fn-b3i"/>
+                                        </connections>
+                                    </button>
+                                    <button contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="IPm-l0-f25" customClass="BarButton">
+                                        <rect key="frame" x="74" y="0.0" width="31" height="43"/>
+                                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                        <fontDescription key="fontDescription" type="system" pointSize="24"/>
+                                        <color key="tintColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                        <state key="normal" title="⎋">
+                                            <color key="titleColor" cocoaTouchSystemColor="darkTextColor"/>
+                                        </state>
+                                        <userDefinedRuntimeAttributes>
+                                            <userDefinedRuntimeAttribute type="color" keyPath="highlightedBackgroundColor">
+                                                <color key="value" red="0.67480819800000003" green="0.70588235290000001" blue="0.74509803919999995" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                            </userDefinedRuntimeAttribute>
+                                        </userDefinedRuntimeAttributes>
+                                        <connections>
+                                            <action selector="pressEscape:" destination="pTq-EG-QRM" eventType="touchUpInside" id="sGs-cM-a5u"/>
+                                        </connections>
+                                    </button>
+                                    <view contentMode="scaleToFill" horizontalHuggingPriority="100" translatesAutoresizingMaskIntoConstraints="NO" id="qmg-M1-7W8" userLabel="Spacer">
+                                        <rect key="frame" x="111" y="0.0" width="303" height="43"/>
+                                    </view>
+                                    <button contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="infoLight" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="5dl-UV-6qh">
+                                        <rect key="frame" x="420" y="0.0" width="31" height="43"/>
+                                        <constraints>
+                                            <constraint firstAttribute="width" constant="31" id="1Ax-5U-2CI"/>
+                                        </constraints>
+                                        <color key="tintColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                        <state key="normal">
+                                            <color key="titleColor" cocoaTouchSystemColor="darkTextColor"/>
+                                        </state>
+                                    </button>
+                                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="7qw-ie-p4d" customClass="BarButton">
+                                        <rect key="frame" x="457" y="0.0" width="31" height="43"/>
+                                        <color key="backgroundColor" red="0.67450980390000004" green="0.70588235290000001" blue="0.74509803919999995" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                        <fontDescription key="fontDescription" type="system" pointSize="20"/>
+                                        <color key="tintColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                        <state key="normal" title="▼">
+                                            <color key="titleColor" cocoaTouchSystemColor="darkTextColor"/>
+                                        </state>
+                                        <userDefinedRuntimeAttributes>
+                                            <userDefinedRuntimeAttribute type="color" keyPath="highlightedBackgroundColor">
+                                                <color key="value" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                            </userDefinedRuntimeAttribute>
+                                        </userDefinedRuntimeAttributes>
+                                        <connections>
+                                            <action selector="loseFocus:" destination="r4l-oM-G19" eventType="touchUpInside" id="YdA-ve-5f3"/>
+                                        </connections>
+                                    </button>
+                                </subviews>
+                                <constraints>
+                                    <constraint firstItem="7qw-ie-p4d" firstAttribute="width" secondItem="5dl-UV-6qh" secondAttribute="width" id="5aW-YN-2vX"/>
+                                    <constraint firstItem="W9v-cj-FWz" firstAttribute="width" secondItem="5dl-UV-6qh" secondAttribute="width" id="Xdt-z5-Zdb"/>
+                                    <constraint firstItem="IPm-l0-f25" firstAttribute="width" secondItem="5dl-UV-6qh" secondAttribute="width" id="ebo-yF-ffX"/>
+                                    <constraint firstItem="cJt-oG-BnW" firstAttribute="width" secondItem="5dl-UV-6qh" secondAttribute="width" id="oQb-HX-lTG"/>
+                                </constraints>
+                            </stackView>
+                        </subviews>
+                        <constraints>
+                            <constraint firstItem="4pc-Ei-ihz" firstAttribute="leading" secondItem="GyN-ob-WFz" secondAttribute="leading" constant="6" id="Ha9-7V-oYm"/>
+                            <constraint firstAttribute="bottom" secondItem="4pc-Ei-ihz" secondAttribute="bottom" constant="6" id="OK7-xG-JFg"/>
+                            <constraint firstAttribute="trailing" secondItem="4pc-Ei-ihz" secondAttribute="trailing" constant="6" id="RAD-x5-aAI"/>
+                            <constraint firstItem="4pc-Ei-ihz" firstAttribute="top" secondItem="GyN-ob-WFz" secondAttribute="top" constant="6" id="gtD-Rx-Gdo"/>
+                        </constraints>
+                        <connections>
+                            <outlet property="barViewController" destination="pTq-EG-QRM" id="RhV-6V-xg2"/>
+                        </connections>
+                    </view>
+                    <freeformSimulatedSizeMetrics key="simulatedDestinationMetrics"/>
+                    <size key="freeformSize" width="500" height="55"/>
+                    <connections>
+                        <outlet property="bar" destination="4pc-Ei-ihz" id="V1S-xy-Ix7"/>
+                        <outlet property="barBottom" destination="OK7-xG-JFg" id="Y3P-Qx-NFe"/>
+                        <outlet property="barButtonWidth" destination="1Ax-5U-2CI" id="nD1-Qh-825"/>
+                        <outlet property="barLeading" destination="Ha9-7V-oYm" id="Q2g-cU-PNh"/>
+                        <outlet property="barTop" destination="gtD-Rx-Gdo" id="nL9-D3-fk9"/>
+                        <outlet property="barTrailing" destination="RAD-x5-aAI" id="33u-1K-hlf"/>
+                        <outlet property="controlKey" destination="W9v-cj-FWz" id="Gsx-G4-bfs"/>
+                        <outlet property="hideKeyboardButton" destination="7qw-ie-p4d" id="wsm-sS-Ujb"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="r4l-oM-G19" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="32" y="436"/>
         </scene>
     </scenes>
 </document>

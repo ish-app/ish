@@ -8,6 +8,7 @@
 #import "TerminalViewController.h"
 #import "AppDelegate.h"
 #import "TerminalView.h"
+#import "BarViewController.h"
 
 @interface TerminalViewController () <UIGestureRecognizerDelegate>
 
@@ -24,6 +25,12 @@
     [super viewDidLoad];
     self.terminal = [Terminal terminalWithType:0 number:0];
     self.termView.terminal = self.terminal;
+    BarViewController *barViewController = [self.storyboard instantiateViewControllerWithIdentifier:@"bar"];
+    UIView *barView = barViewController.view;
+    UIInputView *accessoryView = [[UIInputView alloc] initWithFrame:barView.frame inputViewStyle:UIInputViewStyleDefault];
+    [accessoryView addSubview:barView];
+    self.termView.inputAccessoryView = accessoryView;
+    self.termView.controlKey = barViewController.controlKey; // help me
     [self.termView becomeFirstResponder];
 
     NSNotificationCenter *center = [NSNotificationCenter defaultCenter];

@@ -12,6 +12,7 @@
 		BB13F7FC200ADDA0003D1C4D /* libgdbm.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BB13F7EF200ADD69003D1C4D /* libgdbm.a */; };
 		BB455E111FB37F6600AFB48B /* DelayedUITask.m in Sources */ = {isa = PBXBuildFile; fileRef = BB455E101FB37F6600AFB48B /* DelayedUITask.m */; };
 		BB52C03D2083DA3600104515 /* xterm-dist in Resources */ = {isa = PBXBuildFile; fileRef = BB52C03C2083DA3600104515 /* xterm-dist */; };
+		BB60F55221573FCA003A4E52 /* BarButton.m in Sources */ = {isa = PBXBuildFile; fileRef = BB60F55121573FCA003A4E52 /* BarButton.m */; };
 		BB623CF91FA7C68800932047 /* alpine in Resources */ = {isa = PBXBuildFile; fileRef = BBF124901FA7C3100088FB50 /* alpine */; };
 		BB78AB2B1FAD22440013E782 /* TerminalView.m in Sources */ = {isa = PBXBuildFile; fileRef = BB78AB2A1FAD22440013E782 /* TerminalView.m */; };
 		BB792B551F96D90D00FFB7A4 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = BB792B541F96D90D00FFB7A4 /* AppDelegate.m */; };
@@ -20,6 +21,7 @@
 		BB792B5D1F96D90D00FFB7A4 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BB792B5C1F96D90D00FFB7A4 /* Assets.xcassets */; };
 		BB792B601F96D90D00FFB7A4 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = BB792B5E1F96D90D00FFB7A4 /* LaunchScreen.storyboard */; };
 		BB792B631F96D90D00FFB7A4 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = BB792B621F96D90D00FFB7A4 /* main.m */; };
+		BB829FE72158247100794F96 /* BarViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = BB829FE62158247100794F96 /* BarViewController.m */; };
 		BB88F4942154760800A341FD /* FileProviderExtension.m in Sources */ = {isa = PBXBuildFile; fileRef = BB88F4932154760800A341FD /* FileProviderExtension.m */; };
 		BB88F4972154760800A341FD /* FileProviderItem.m in Sources */ = {isa = PBXBuildFile; fileRef = BB88F4962154760800A341FD /* FileProviderItem.m */; };
 		BB88F49A2154760800A341FD /* FileProviderEnumerator.m in Sources */ = {isa = PBXBuildFile; fileRef = BB88F4992154760800A341FD /* FileProviderEnumerator.m */; };
@@ -100,6 +102,8 @@
 		BB4A53A91FAA496700A72ACE /* term.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = term.html; sourceTree = "<group>"; };
 		BB4A53AF1FAA787900A72ACE /* term.css */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.css; path = term.css; sourceTree = "<group>"; };
 		BB52C03C2083DA3600104515 /* xterm-dist */ = {isa = PBXFileReference; lastKnownFileType = folder; path = "xterm-dist"; sourceTree = "<group>"; };
+		BB60F55021573FCA003A4E52 /* BarButton.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BarButton.h; sourceTree = "<group>"; };
+		BB60F55121573FCA003A4E52 /* BarButton.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = BarButton.m; sourceTree = "<group>"; };
 		BB78AB291FAD22440013E782 /* TerminalView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TerminalView.h; sourceTree = "<group>"; };
 		BB78AB2A1FAD22440013E782 /* TerminalView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TerminalView.m; sourceTree = "<group>"; };
 		BB792B501F96D90D00FFB7A4 /* iSH.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iSH.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -205,6 +209,8 @@
 		BB7D93802087C2890008DA78 /* tty.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = tty.h; sourceTree = "<group>"; };
 		BB7D93812087C2890008DA78 /* debug.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = debug.h; sourceTree = "<group>"; };
 		BB7D93822087C2890008DA78 /* main.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = main.c; sourceTree = "<group>"; };
+		BB829FE52158247100794F96 /* BarViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BarViewController.h; sourceTree = "<group>"; };
+		BB829FE62158247100794F96 /* BarViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = BarViewController.m; sourceTree = "<group>"; };
 		BB88F4722152F75A00A341FD /* frame.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = frame.h; sourceTree = "<group>"; };
 		BB88F4742152F75A00A341FD /* bits.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = bits.S; sourceTree = "<group>"; };
 		BB88F4752152F75A00A341FD /* control.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = control.S; sourceTree = "<group>"; };
@@ -332,6 +338,10 @@
 				BB792B541F96D90D00FFB7A4 /* AppDelegate.m */,
 				BB792B561F96D90D00FFB7A4 /* TerminalViewController.h */,
 				BB792B571F96D90D00FFB7A4 /* TerminalViewController.m */,
+				BB829FE52158247100794F96 /* BarViewController.h */,
+				BB829FE62158247100794F96 /* BarViewController.m */,
+				BB60F55021573FCA003A4E52 /* BarButton.h */,
+				BB60F55121573FCA003A4E52 /* BarButton.m */,
 				BB78AB291FAD22440013E782 /* TerminalView.h */,
 				BB78AB2A1FAD22440013E782 /* TerminalView.m */,
 				BB0FC5901F980A6B00803272 /* Terminal.h */,
@@ -851,9 +861,11 @@
 			files = (
 				BB792B581F96D90D00FFB7A4 /* TerminalViewController.m in Sources */,
 				BB78AB2B1FAD22440013E782 /* TerminalView.m in Sources */,
+				BB829FE72158247100794F96 /* BarViewController.m in Sources */,
 				BB455E111FB37F6600AFB48B /* DelayedUITask.m in Sources */,
 				BB0FC5921F980A6C00803272 /* Terminal.m in Sources */,
 				BB792B631F96D90D00FFB7A4 /* main.m in Sources */,
+				BB60F55221573FCA003A4E52 /* BarButton.m in Sources */,
 				BB792B551F96D90D00FFB7A4 /* AppDelegate.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
