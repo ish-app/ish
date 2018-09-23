@@ -11,3 +11,8 @@ app/xtermjs/xterm-dist
 app/xtermjs/.cache
 
 subprojects/packagecache
+
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots
+fastlane/test_output

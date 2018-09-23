@@ -10,9 +10,9 @@ lane :beta do
 
     build_app
     upload_to_testflight(
-        changelog: changelog, 
+        changelog: changelog,
         wait_for_uploaded_build: true,
-        distribute_external: true, 
+        distribute_external: true,
         groups: ["People"]
     )
 
