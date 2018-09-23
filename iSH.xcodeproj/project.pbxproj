@@ -1219,7 +1219,7 @@
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				CURRENT_PROJECT_VERSION = 26;
+				CURRENT_PROJECT_VERSION = 28;
 				DEVELOPMENT_TEAM = CK5SXRTBR7;
 				ENABLE_BITCODE = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -1261,7 +1261,7 @@
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				CURRENT_PROJECT_VERSION = 26;
+				CURRENT_PROJECT_VERSION = 28;
 				DEVELOPMENT_TEAM = CK5SXRTBR7;
 				ENABLE_BITCODE = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -1444,7 +1444,7 @@
 					"$(SRCROOT)",
 					"$(MESON_BUILD_DIR)/subprojects/gdbm-1.14.1/src",
 				);
-				INFOPLIST_FILE = "$(SRCROOT)/app/FileProvider/Info.plist";
+				INFOPLIST_FILE = app/FileProvider/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
@@ -1484,7 +1484,7 @@
 					"$(SRCROOT)",
 					"$(MESON_BUILD_DIR)/subprojects/gdbm-1.14.1/src",
 				);
-				INFOPLIST_FILE = "$(SRCROOT)/app/FileProvider/Info.plist";
+				INFOPLIST_FILE = app/FileProvider/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
 				MTL_ENABLE_DEBUG_INFO = NO;

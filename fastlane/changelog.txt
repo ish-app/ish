@@ -1,4 +1,10 @@
-First build on a new developer account! The main thing you should notice is things are a good bit faster. And a good bit more broken, but hey, it's faster.
+I've decided there are a few UI features I want to get out of the way before I get started on that compatibility/regression crusade. Expect a bit more of the same in the next update.
+
+- Serious hardware keyboard support, including caps lock mapped to control.
+- Extra row of keys, so you can press tab or control or escape without a hardware keyboard.
+- Automatic DNS configuration - no more `echo nameserver 8.8.8.8 > /etc/resolv.conf`!
+- Half-finished Files app integration. You can browse the directory structure and view some files (but not others, for no apparent reason).
+- A little (i) button that doesn't do anything, but will eventually open a settings popup.
 
 As always, let me know if it crashes spectacularly. The best place to send bug reports or feedback of any kind is the GitHub issues page: https://github.com/tbodt/ish/issues
 
