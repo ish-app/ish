@@ -158,6 +158,9 @@
                                             <color key="value" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                         </userDefinedRuntimeAttribute>
                                     </userDefinedRuntimeAttributes>
+                                    <connections>
+                                        <action selector="loseFocus:" destination="dkx-z0-nzr" eventType="primaryActionTriggered" id="T2t-j9-oFz"/>
+                                    </connections>
                                 </button>
                             </subviews>
                             <constraints>
