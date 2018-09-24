@@ -30,12 +30,18 @@
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                         <gestureRecognizers/>
                         <constraints>
-                            <constraint firstItem="IVs-Oh-AhK" firstAttribute="trailing" secondItem="FQi-r8-odu" secondAttribute="trailing" id="EeQ-tO-BY6"/>
+                            <constraint firstItem="FQi-r8-odu" firstAttribute="trailing" secondItem="IVs-Oh-AhK" secondAttribute="trailing" id="EeQ-tO-BY6"/>
                             <constraint firstItem="FQi-r8-odu" firstAttribute="top" secondItem="IVs-Oh-AhK" secondAttribute="top" id="Fd5-I9-Qjs"/>
+                            <constraint firstItem="FQi-r8-odu" firstAttribute="bottom" secondItem="IVs-Oh-AhK" secondAttribute="bottom" id="KAq-UZ-1X2"/>
                             <constraint firstItem="FQi-r8-odu" firstAttribute="leading" secondItem="IVs-Oh-AhK" secondAttribute="leading" id="VUM-Zu-VAQ"/>
-                            <constraint firstItem="FQi-r8-odu" firstAttribute="bottom" secondItem="IVs-Oh-AhK" secondAttribute="bottom" id="fXD-Y3-UQj"/>
+                            <constraint firstItem="FQi-r8-odu" firstAttribute="bottom" secondItem="8bC-Xf-vdC" secondAttribute="bottom" id="fXD-Y3-UQj"/>
                         </constraints>
                         <viewLayoutGuide key="safeArea" id="IVs-Oh-AhK"/>
+                        <variation key="default">
+                            <mask key="constraints">
+                                <exclude reference="fXD-Y3-UQj"/>
+                            </mask>
+                        </variation>
                     </view>
                     <connections>
                         <outlet property="bar" destination="4pc-Ei-ihz" id="iy4-s8-7yt"/>
@@ -48,6 +54,7 @@
                         <outlet property="bottomConstraint" destination="fXD-Y3-UQj" id="dpH-0p-KEx"/>
                         <outlet property="controlKey" destination="W9v-cj-FWz" id="c9i-VC-j7f"/>
                         <outlet property="hideKeyboardButton" destination="7qw-ie-p4d" id="n5f-XX-i98"/>
+                        <outlet property="safeAreaBottomConstraint" destination="KAq-UZ-1X2" id="mjp-hT-EsA"/>
                         <outlet property="termView" destination="FQi-r8-odu" id="QIa-yI-fmG"/>
                     </connections>
                 </viewController>
@@ -57,7 +64,7 @@
                     <autoresizingMask key="autoresizingMask" widthSizable="YES"/>
                     <subviews>
                         <stackView opaque="NO" contentMode="scaleToFill" spacing="6" translatesAutoresizingMaskIntoConstraints="NO" id="4pc-Ei-ihz">
-                            <rect key="frame" x="6" y="6" width="488" height="43"/>
+                            <rect key="frame" x="6" y="6" width="988" height="43"/>
                             <subviews>
                                 <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="cJt-oG-BnW" customClass="BarButton">
                                     <rect key="frame" x="0.0" y="0.0" width="31" height="43"/>
@@ -128,10 +135,10 @@
                                     </connections>
                                 </button>
                                 <view contentMode="scaleToFill" horizontalHuggingPriority="100" translatesAutoresizingMaskIntoConstraints="NO" id="qmg-M1-7W8" userLabel="Spacer">
-                                    <rect key="frame" x="148" y="0.0" width="266" height="43"/>
+                                    <rect key="frame" x="148" y="0.0" width="766" height="43"/>
                                 </view>
                                 <button contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="infoLight" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="5dl-UV-6qh">
-                                    <rect key="frame" x="420" y="0.0" width="31" height="43"/>
+                                    <rect key="frame" x="920" y="0.0" width="31" height="43"/>
                                     <constraints>
                                         <constraint firstAttribute="width" constant="31" id="1Ax-5U-2CI"/>
                                     </constraints>
@@ -144,7 +151,7 @@
                                     </connections>
                                 </button>
                                 <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="7qw-ie-p4d" customClass="BarButton">
-                                    <rect key="frame" x="457" y="0.0" width="31" height="43"/>
+                                    <rect key="frame" x="957" y="0.0" width="31" height="43"/>
                                     <color key="backgroundColor" red="0.67450980390000004" green="0.70588235290000001" blue="0.74509803919999995" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                     <fontDescription key="fontDescription" type="system" pointSize="20"/>
                                     <color key="tintColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
