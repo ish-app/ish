@@ -179,6 +179,8 @@ int realfs_getpath(struct fd *fd, char *buf) {
         size_t source_len = strlen(fd->mount->source);
         memmove(buf, buf + source_len, MAX_PATH - source_len);
     }
+    if (buf[0] == '\0')
+        strcpy(buf, "/");
     return 0;
 }
 
