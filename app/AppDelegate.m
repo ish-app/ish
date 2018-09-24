@@ -73,7 +73,6 @@ static void ios_handle_exit(int code) {
                     sizeof(address), NULL, 0, NI_NUMERICHOST);
         [resolvConf appendFormat:@"nameserver %s\n", address];
     }
-    NSLog(@"%@", resolvConf);
     struct fd *fd = generic_open("/etc/resolv.conf", O_WRONLY_ | O_CREAT_, 0600);
     if (!IS_ERR(fd)) {
         fd->ops->write(fd, resolvConf.UTF8String, [resolvConf lengthOfBytesUsingEncoding:NSUTF8StringEncoding]);
