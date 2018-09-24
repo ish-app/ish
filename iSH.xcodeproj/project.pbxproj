@@ -29,6 +29,8 @@
 		BB88F4A62154770200A341FD /* libish.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BB13F7DC200AD81D003D1C4D /* libish.a */; };
 		BB88F4A72154770600A341FD /* libgdbm.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BB13F7EF200ADD69003D1C4D /* libgdbm.a */; };
 		BBFB55662158644C00DFE6DE /* libresolv.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = BBFB55652158644C00DFE6DE /* libresolv.tbd */; };
+		BBFB556A215868E800DFE6DE /* About.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = BBFB5569215868E800DFE6DE /* About.storyboard */; };
+		BBFB557121586C4800DFE6DE /* UIViewController+Back.m in Sources */ = {isa = PBXBuildFile; fileRef = BBFB557021586C4800DFE6DE /* UIViewController+Back.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -248,6 +250,9 @@
 		BB88F4A4215476BA00A341FD /* iSH.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = iSH.entitlements; sourceTree = "<group>"; };
 		BBF124901FA7C3100088FB50 /* alpine */ = {isa = PBXFileReference; explicitFileType = folder; includeInIndex = 0; path = alpine; sourceTree = "<group>"; };
 		BBFB55652158644C00DFE6DE /* libresolv.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libresolv.tbd; path = usr/lib/libresolv.tbd; sourceTree = SDKROOT; };
+		BBFB5569215868E800DFE6DE /* About.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = About.storyboard; sourceTree = "<group>"; };
+		BBFB556F21586C4800DFE6DE /* UIViewController+Back.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "UIViewController+Back.h"; sourceTree = "<group>"; };
+		BBFB557021586C4800DFE6DE /* UIViewController+Back.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "UIViewController+Back.m"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -351,8 +356,8 @@
 				BB0FC5911F980A6B00803272 /* Terminal.m */,
 				BB4A53991FAA40FD00A72ACE /* xtermjs */,
 				BB792B591F96D90D00FFB7A4 /* Main.storyboard */,
-				BB455E0F1FB37F6600AFB48B /* DelayedUITask.h */,
-				BB455E101FB37F6600AFB48B /* DelayedUITask.m */,
+				BBFB557321586C7600DFE6DE /* About */,
+				BBFB557221586C6600DFE6DE /* Utilities */,
 				BB792B5C1F96D90D00FFB7A4 /* Assets.xcassets */,
 				BB792B5E1F96D90D00FFB7A4 /* LaunchScreen.storyboard */,
 				BB792B611F96D90D00FFB7A4 /* Info.plist */,
@@ -572,6 +577,25 @@
 			path = FileProvider;
 			sourceTree = "<group>";
 		};
+		BBFB557221586C6600DFE6DE /* Utilities */ = {
+			isa = PBXGroup;
+			children = (
+				BB455E0F1FB37F6600AFB48B /* DelayedUITask.h */,
+				BB455E101FB37F6600AFB48B /* DelayedUITask.m */,
+				BBFB556F21586C4800DFE6DE /* UIViewController+Back.h */,
+				BBFB557021586C4800DFE6DE /* UIViewController+Back.m */,
+			);
+			name = Utilities;
+			sourceTree = "<group>";
+		};
+		BBFB557321586C7600DFE6DE /* About */ = {
+			isa = PBXGroup;
+			children = (
+				BBFB5569215868E800DFE6DE /* About.storyboard */,
+			);
+			name = About;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXLegacyTarget section */
@@ -761,6 +785,7 @@
 			files = (
 				BB792B5D1F96D90D00FFB7A4 /* Assets.xcassets in Resources */,
 				BB792B601F96D90D00FFB7A4 /* LaunchScreen.storyboard in Resources */,
+				BBFB556A215868E800DFE6DE /* About.storyboard in Resources */,
 				BB792B5B1F96D90D00FFB7A4 /* Main.storyboard in Resources */,
 				BB623CF91FA7C68800932047 /* alpine in Resources */,
 				BB52C03D2083DA3600104515 /* xterm-dist in Resources */,
@@ -870,6 +895,7 @@
 				BB0FC5921F980A6C00803272 /* Terminal.m in Sources */,
 				BB792B631F96D90D00FFB7A4 /* main.m in Sources */,
 				BB60F55221573FCA003A4E52 /* BarButton.m in Sources */,
+				BBFB557121586C4800DFE6DE /* UIViewController+Back.m in Sources */,
 				BB792B551F96D90D00FFB7A4 /* AppDelegate.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

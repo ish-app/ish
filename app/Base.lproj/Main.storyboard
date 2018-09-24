@@ -122,6 +122,9 @@
                                         <state key="normal">
                                             <color key="titleColor" cocoaTouchSystemColor="darkTextColor"/>
                                         </state>
+                                        <connections>
+                                            <action selector="showAbout:" destination="r4l-oM-G19" eventType="touchUpInside" id="tjs-f1-X77"/>
+                                        </connections>
                                     </button>
                                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="7qw-ie-p4d" customClass="BarButton">
                                         <rect key="frame" x="457" y="0.0" width="31" height="43"/>

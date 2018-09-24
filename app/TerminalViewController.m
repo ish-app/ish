@@ -90,4 +90,9 @@
     [self presentViewController:alert animated:YES completion:nil];
 }
 
+- (IBAction)showAbout:(id)sender {
+    UIViewController *aboutViewController = [[UIStoryboard storyboardWithName:@"About" bundle:nil] instantiateInitialViewController];
+    [self presentViewController:aboutViewController animated:YES completion:nil];
+}
+
 @end
