@@ -8,7 +8,9 @@
 #import "ArrowBarButton.h"
 
 
-@interface ArrowBarButton () <CALayerDelegate>
+@interface ArrowBarButton () <CALayerDelegate> {
+    CALayer *arrowLayers[5];
+}
 
 @property CGPoint startPoint;
 @property (nonatomic) ArrowDirection direction;
@@ -33,12 +35,20 @@
     return self;
 }
 
+static CGPoint anchors[] = {
+    {},
+    {.5, .95}, // ArrowUp
+    {.5, .05}, // ArrowDown
+    {1.05, .5}, // ArrowLeft
+    {-.05, .5}, // ArrowRight
+};
+
 - (void)setupLayers {
     self.layer.delegate = self;
-    [self addTextLayer:@"↑" anchoredAt:CGPointMake(.5, .95)];
-    [self addTextLayer:@"↓" anchoredAt:CGPointMake(.5, .05)];
-    [self addTextLayer:@"←" anchoredAt:CGPointMake(1.05, .5)];
-    [self addTextLayer:@"→" anchoredAt:CGPointMake(-.05, .5)];
+    [self addTextLayer:@"↑" direction:ArrowUp];
+    [self addTextLayer:@"↓" direction:ArrowDown];
+    [self addTextLayer:@"←" direction:ArrowLeft];
+    [self addTextLayer:@"→" direction:ArrowRight];
     [self layoutSublayersOfLayer:self.layer];
     
     self.layer.cornerRadius = 5;
@@ -48,7 +58,7 @@
     self.defaultColor = self.backgroundColor;
 }
 
-- (void)addTextLayer:(NSString *)text anchoredAt:(CGPoint)anchor {
+- (void)addTextLayer:(NSString *)text direction:(ArrowDirection)direction {
     CATextLayer *layer = [CATextLayer new];
     layer.contentsScale = UIScreen.mainScreen.scale;
     layer.string = text;
@@ -60,8 +70,9 @@
     layer.foregroundColor = UIColor.blackColor.CGColor;
     
     layer.alignmentMode = kCAAlignmentCenter;
-    layer.anchorPoint = anchor;
+    layer.anchorPoint = anchors[direction];
     [self.layer addSublayer:layer];
+    self->arrowLayers[direction] = layer;
 }
 
 - (void)layoutSublayersOfLayer:(CALayer *)superlayer {
@@ -119,20 +130,34 @@
     }
 }
 
+- (void)animateLayerUpdates {
+    [UIView animateWithDuration:0.25 animations:^{
+        for (int d = ArrowUp; d <= ArrowRight; d++) {
+            CALayer *layer = self->arrowLayers[d];
+            if (self.direction == ArrowNone || self.direction != d) {
+                layer.opacity = self.selected ? 0.25 : 1;
+            } else {
+                layer.opacity = 1;
+            }
+        }
+    }];
+}
+
 - (void)setDirection:(ArrowDirection)direction {
     ArrowDirection oldDirection = _direction;
     _direction = direction;
     if (direction != oldDirection) {
+        [self animateLayerUpdates];
         [self.timer invalidate];
-    }
-    if (direction != oldDirection && direction != ArrowNone) {
-        [self sendActionsForControlEvents:UIControlEventValueChanged];
-        self.timer = [NSTimer scheduledTimerWithTimeInterval:0.5 repeats:NO block:^(NSTimer *timer) {
+        if (direction != ArrowNone) {
             [self sendActionsForControlEvents:UIControlEventValueChanged];
-            self.timer = [NSTimer scheduledTimerWithTimeInterval:0.1 repeats:YES block:^(NSTimer *timer) {
+            self.timer = [NSTimer scheduledTimerWithTimeInterval:0.5 repeats:NO block:^(NSTimer *timer) {
                 [self sendActionsForControlEvents:UIControlEventValueChanged];
+                self.timer = [NSTimer scheduledTimerWithTimeInterval:0.1 repeats:YES block:^(NSTimer *timer) {
+                    [self sendActionsForControlEvents:UIControlEventValueChanged];
+                }];
             }];
-        }];
+        }
     }
 }
 
@@ -143,6 +168,6 @@
     } else {
         self.backgroundColor = self.defaultColor;
     }
-    
+    [self animateLayerUpdates];
 }
 @end
