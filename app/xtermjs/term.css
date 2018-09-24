@@ -34,7 +34,7 @@ body {
 
 .terminal.focus:not(.xterm-cursor-style-underline):not(.xterm-cursor-style-bar) .terminal-cursor {
     background-color: black;
-    color: #000;
+    color: white;
 }
 .terminal:not(.focus) .terminal-cursor {
     outline: 1px solid black;
