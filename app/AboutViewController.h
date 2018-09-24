@@ -1,5 +1,5 @@
 //
-//  UIViewController+Unwind.h
+//  AboutViewController.h
 //  iSH
 //
 //  Created by Theodore Dubois on 9/23/18.
@@ -9,9 +9,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface UIViewController (Unwind)
-
-- (IBAction)unwind:(UIStoryboardSegue *)segue;
+@interface AboutViewController : UITableViewController
 
 @end
 

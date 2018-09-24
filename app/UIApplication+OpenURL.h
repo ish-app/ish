@@ -1,5 +1,5 @@
 //
-//  UIViewController+Unwind.h
+//  UIApplication+OpenURL.h
 //  iSH
 //
 //  Created by Theodore Dubois on 9/23/18.
@@ -9,9 +9,9 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface UIViewController (Unwind)
+@interface UIApplication (OpenURL)
 
-- (IBAction)unwind:(UIStoryboardSegue *)segue;
++ (void)openURL:(NSString *)url;
 
 @end
 

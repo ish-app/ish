@@ -31,6 +31,9 @@
 		BBFB55662158644C00DFE6DE /* libresolv.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = BBFB55652158644C00DFE6DE /* libresolv.tbd */; };
 		BBFB556A215868E800DFE6DE /* About.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = BBFB5569215868E800DFE6DE /* About.storyboard */; };
 		BBFB557121586C4800DFE6DE /* UIViewController+Back.m in Sources */ = {isa = PBXBuildFile; fileRef = BBFB557021586C4800DFE6DE /* UIViewController+Back.m */; };
+		BBFB557621586F9200DFE6DE /* DismissSegue.m in Sources */ = {isa = PBXBuildFile; fileRef = BBFB557521586F9200DFE6DE /* DismissSegue.m */; };
+		BBFB5579215876CD00DFE6DE /* AboutViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = BBFB5578215876CD00DFE6DE /* AboutViewController.m */; };
+		BBFB557C215878C600DFE6DE /* UIApplication+OpenURL.m in Sources */ = {isa = PBXBuildFile; fileRef = BBFB557B215878C600DFE6DE /* UIApplication+OpenURL.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -253,6 +256,12 @@
 		BBFB5569215868E800DFE6DE /* About.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = About.storyboard; sourceTree = "<group>"; };
 		BBFB556F21586C4800DFE6DE /* UIViewController+Back.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "UIViewController+Back.h"; sourceTree = "<group>"; };
 		BBFB557021586C4800DFE6DE /* UIViewController+Back.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "UIViewController+Back.m"; sourceTree = "<group>"; };
+		BBFB557421586F9200DFE6DE /* DismissSegue.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DismissSegue.h; sourceTree = "<group>"; };
+		BBFB557521586F9200DFE6DE /* DismissSegue.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = DismissSegue.m; sourceTree = "<group>"; };
+		BBFB5577215876CD00DFE6DE /* AboutViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AboutViewController.h; sourceTree = "<group>"; };
+		BBFB5578215876CD00DFE6DE /* AboutViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AboutViewController.m; sourceTree = "<group>"; };
+		BBFB557A215878C600DFE6DE /* UIApplication+OpenURL.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "UIApplication+OpenURL.h"; sourceTree = "<group>"; };
+		BBFB557B215878C600DFE6DE /* UIApplication+OpenURL.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "UIApplication+OpenURL.m"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -584,6 +593,10 @@
 				BB455E101FB37F6600AFB48B /* DelayedUITask.m */,
 				BBFB556F21586C4800DFE6DE /* UIViewController+Back.h */,
 				BBFB557021586C4800DFE6DE /* UIViewController+Back.m */,
+				BBFB557A215878C600DFE6DE /* UIApplication+OpenURL.h */,
+				BBFB557B215878C600DFE6DE /* UIApplication+OpenURL.m */,
+				BBFB557421586F9200DFE6DE /* DismissSegue.h */,
+				BBFB557521586F9200DFE6DE /* DismissSegue.m */,
 			);
 			name = Utilities;
 			sourceTree = "<group>";
@@ -592,6 +605,8 @@
 			isa = PBXGroup;
 			children = (
 				BBFB5569215868E800DFE6DE /* About.storyboard */,
+				BBFB5577215876CD00DFE6DE /* AboutViewController.h */,
+				BBFB5578215876CD00DFE6DE /* AboutViewController.m */,
 			);
 			name = About;
 			sourceTree = "<group>";
@@ -890,11 +905,14 @@
 			files = (
 				BB792B581F96D90D00FFB7A4 /* TerminalViewController.m in Sources */,
 				BB78AB2B1FAD22440013E782 /* TerminalView.m in Sources */,
+				BBFB557621586F9200DFE6DE /* DismissSegue.m in Sources */,
 				BB829FE72158247100794F96 /* BarViewController.m in Sources */,
 				BB455E111FB37F6600AFB48B /* DelayedUITask.m in Sources */,
 				BB0FC5921F980A6C00803272 /* Terminal.m in Sources */,
 				BB792B631F96D90D00FFB7A4 /* main.m in Sources */,
 				BB60F55221573FCA003A4E52 /* BarButton.m in Sources */,
+				BBFB557C215878C600DFE6DE /* UIApplication+OpenURL.m in Sources */,
+				BBFB5579215876CD00DFE6DE /* AboutViewController.m in Sources */,
 				BBFB557121586C4800DFE6DE /* UIViewController+Back.m in Sources */,
 				BB792B551F96D90D00FFB7A4 /* AppDelegate.m in Sources */,
 			);

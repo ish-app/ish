@@ -1,5 +1,5 @@
 //
-//  UIViewController+Back.m
+//  UIViewController+Unwind.m
 //  iSH
 //
 //  Created by Theodore Dubois on 9/23/18.
@@ -7,9 +7,9 @@
 
 #import "UIViewController+Back.h"
 
-@implementation UIViewController (Back)
+@implementation UIViewController (Unwind)
 
-- (IBAction)back:(UIStoryboardSegue *)segue {
+- (IBAction)unwind:(UIStoryboardSegue *)segue {
 }
 
 @end
