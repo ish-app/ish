@@ -82,7 +82,7 @@
     [super continueTrackingWithTouch:touch withEvent:event];
     CGPoint currentPoint = [touch locationInView:self];
     CGPoint diff = CGPointMake(currentPoint.x - self.startPoint.x, currentPoint.y - self.startPoint.y);
-    if (hypot(diff.x, diff.y) < 10) {
+    if (hypot(diff.x, diff.y) < 20) {
         self.direction = ArrowNone;
     } else if (fabs(diff.x) > fabs(diff.y)) {
         // more to the side
