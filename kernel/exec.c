@@ -485,7 +485,7 @@ found:
     for (fd_t f = 0; f < current->files->size; f++)
         if (f_is_cloexec(f))
             f_close(f);
-    return 0;
+    return err;
 }
 
 #define MAX_ARGS 256 // for now
