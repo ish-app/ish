@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="14313.18" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES" initialViewController="BYZ-38-t0r">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="14313.18" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="BYZ-38-t0r">
     <device id="ipad9_7" orientation="landscape">
         <adaptation id="splitview2_3"/>
     </device>
     <dependencies>
         <deployment identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="14283.14"/>
+        <capability name="Safe area layout guides" minToolsVersion="9.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <scenes>
@@ -13,10 +14,6 @@
         <scene sceneID="tne-QT-ifu">
             <objects>
                 <viewController id="BYZ-38-t0r" customClass="TerminalViewController" sceneMemberID="viewController">
-                    <layoutGuides>
-                        <viewControllerLayoutGuide type="top" id="7pl-FA-9Li"/>
-                        <viewControllerLayoutGuide type="bottom" id="3Sa-cq-IzT"/>
-                    </layoutGuides>
                     <view key="view" contentMode="scaleToFill" id="8bC-Xf-vdC">
                         <rect key="frame" x="0.0" y="0.0" width="694" height="768"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
@@ -33,11 +30,12 @@
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                         <gestureRecognizers/>
                         <constraints>
-                            <constraint firstAttribute="trailing" secondItem="FQi-r8-odu" secondAttribute="trailing" id="EeQ-tO-BY6"/>
-                            <constraint firstItem="FQi-r8-odu" firstAttribute="top" secondItem="7pl-FA-9Li" secondAttribute="bottom" id="Fd5-I9-Qjs"/>
-                            <constraint firstItem="FQi-r8-odu" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leading" id="VUM-Zu-VAQ"/>
-                            <constraint firstItem="FQi-r8-odu" firstAttribute="bottom" secondItem="3Sa-cq-IzT" secondAttribute="top" id="fXD-Y3-UQj"/>
+                            <constraint firstItem="IVs-Oh-AhK" firstAttribute="trailing" secondItem="FQi-r8-odu" secondAttribute="trailing" id="EeQ-tO-BY6"/>
+                            <constraint firstItem="FQi-r8-odu" firstAttribute="top" secondItem="IVs-Oh-AhK" secondAttribute="top" id="Fd5-I9-Qjs"/>
+                            <constraint firstItem="FQi-r8-odu" firstAttribute="leading" secondItem="IVs-Oh-AhK" secondAttribute="leading" id="VUM-Zu-VAQ"/>
+                            <constraint firstItem="FQi-r8-odu" firstAttribute="bottom" secondItem="IVs-Oh-AhK" secondAttribute="bottom" id="fXD-Y3-UQj"/>
                         </constraints>
+                        <viewLayoutGuide key="safeArea" id="IVs-Oh-AhK"/>
                     </view>
                     <connections>
                         <outlet property="bar" destination="4pc-Ei-ihz" id="iy4-s8-7yt"/>
@@ -173,11 +171,12 @@
                         </stackView>
                     </subviews>
                     <constraints>
-                        <constraint firstItem="4pc-Ei-ihz" firstAttribute="leading" secondItem="GyN-ob-WFz" secondAttribute="leading" constant="6" id="Ha9-7V-oYm"/>
+                        <constraint firstItem="4pc-Ei-ihz" firstAttribute="leading" secondItem="hgN-L1-K1S" secondAttribute="leading" constant="6" id="Ha9-7V-oYm"/>
                         <constraint firstAttribute="bottom" secondItem="4pc-Ei-ihz" secondAttribute="bottom" constant="6" id="OK7-xG-JFg"/>
-                        <constraint firstAttribute="trailing" secondItem="4pc-Ei-ihz" secondAttribute="trailing" constant="6" id="RAD-x5-aAI"/>
+                        <constraint firstItem="hgN-L1-K1S" firstAttribute="trailing" secondItem="4pc-Ei-ihz" secondAttribute="trailing" constant="-494" id="RAD-x5-aAI"/>
                         <constraint firstItem="4pc-Ei-ihz" firstAttribute="top" secondItem="GyN-ob-WFz" secondAttribute="top" constant="6" id="gtD-Rx-Gdo"/>
                     </constraints>
+                    <viewLayoutGuide key="safeArea" id="hgN-L1-K1S"/>
                     <connections>
                         <outlet property="terminalViewController" destination="BYZ-38-t0r" id="Pog-Oc-1za"/>
                     </connections>
