@@ -138,7 +138,7 @@
 
 - (void)setSelected:(BOOL)selected {
     [super setSelected:selected];
-    if (self.selected || self.highlighted) {
+    if (self.selected) {
         self.backgroundColor = self.highlightedBackgroundColor;
     } else {
         self.backgroundColor = self.defaultColor;
