@@ -6,6 +6,7 @@
 //
 
 #import "BarViewController.h"
+#import "ArrowBarButton.h"
 
 @interface BarViewController ()
 
@@ -76,6 +77,16 @@
 
 - (IBAction)pressControl:(id)sender {
     self.controlKey.selected = !self.controlKey.selected;
+}
+
+- (IBAction)pressArrow:(ArrowBarButton *)sender {
+    switch (sender.direction) {
+        case ArrowUp: [self pressKey:@"\x1b[A"]; break;
+        case ArrowDown: [self pressKey:@"\x1b[B"]; break;
+        case ArrowLeft: [self pressKey:@"\x1b[D"]; break;
+        case ArrowRight: [self pressKey:@"\x1b[C"]; break;
+        case ArrowNone: break;
+    }
 }
 
 @end
