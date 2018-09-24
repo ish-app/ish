@@ -28,6 +28,7 @@
 		BB88F49F2154760800A341FD /* iSHFileProvider.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = BB88F4902154760800A341FD /* iSHFileProvider.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		BB88F4A62154770200A341FD /* libish.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BB13F7DC200AD81D003D1C4D /* libish.a */; };
 		BB88F4A72154770600A341FD /* libgdbm.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BB13F7EF200ADD69003D1C4D /* libgdbm.a */; };
+		BBFB55662158644C00DFE6DE /* libresolv.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = BBFB55652158644C00DFE6DE /* libresolv.tbd */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -246,6 +247,7 @@
 		BB88F49C2154760800A341FD /* iSHFileProvider.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = iSHFileProvider.entitlements; sourceTree = "<group>"; };
 		BB88F4A4215476BA00A341FD /* iSH.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = iSH.entitlements; sourceTree = "<group>"; };
 		BBF124901FA7C3100088FB50 /* alpine */ = {isa = PBXFileReference; explicitFileType = folder; includeInIndex = 0; path = alpine; sourceTree = "<group>"; };
+		BBFB55652158644C00DFE6DE /* libresolv.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libresolv.tbd; path = usr/lib/libresolv.tbd; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -253,6 +255,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BBFB55662158644C00DFE6DE /* libresolv.tbd in Frameworks */,
 				BB13F7EA200ADCED003D1C4D /* libish.a in Frameworks */,
 				BB13F7FC200ADDA0003D1C4D /* libgdbm.a in Frameworks */,
 			);
@@ -363,6 +366,7 @@
 		BB792B7D1F96E32B00FFB7A4 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				BBFB55652158644C00DFE6DE /* libresolv.tbd */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";

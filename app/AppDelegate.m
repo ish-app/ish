@@ -5,6 +5,9 @@
 //  Created by Theodore Dubois on 10/17/17.
 //
 
+#include <resolv.h>
+#include <arpa/inet.h>
+#include <netdb.h>
 #import "AppDelegate.h"
 #import "TerminalViewController.h"
 #include "kernel/init.h"
@@ -54,11 +57,26 @@ static void ios_handle_exit(int code) {
         return err;
     exit_hook = ios_handle_exit;
     
-    // :^)
+    // configure dns
+    struct __res_state res;
+    err = res_ninit(&res);
+    NSMutableString *resolvConf = [NSMutableString new];
+    for (int i = 0; res.dnsrch[i] != NULL; i++) {
+        [resolvConf appendFormat:@"search %s\n", res.dnsrch[i]];
+    }
+    for (int i = 0; i < res.nscount; i++) {
+        if (res.nsaddr_list[i].sin_len == 0)
+            continue;
+        char address[100];
+        getnameinfo((struct sockaddr *) &res.nsaddr_list[i],
+                    sizeof(res.nsaddr_list[i]), address,
+                    sizeof(address), NULL, 0, NI_NUMERICHOST);
+        [resolvConf appendFormat:@"nameserver %s\n", address];
+    }
+    NSLog(@"%@", resolvConf);
     struct fd *fd = generic_open("/etc/resolv.conf", O_WRONLY_ | O_CREAT_, 0600);
     if (!IS_ERR(fd)) {
-        static const char resolvConf[] = "nameserver 8.8.8.8\n";
-        fd->ops->write(fd, resolvConf, sizeof(resolvConf));
+        fd->ops->write(fd, resolvConf.UTF8String, [resolvConf lengthOfBytesUsingEncoding:NSUTF8StringEncoding]);
         fd_close(fd);
     }
     
