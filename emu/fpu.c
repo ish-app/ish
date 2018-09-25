@@ -112,10 +112,10 @@ void fpu_iadd16(struct cpu_state *cpu, int16_t *i) {
     ST(0) = f80_add(ST(0), f80_from_int(*i));
 }
 void fpu_isub16(struct cpu_state *cpu, int16_t *i) {
-    ST(0) = f80_add(ST(0), f80_from_int(*i));
+    ST(0) = f80_sub(ST(0), f80_from_int(*i));
 }
 void fpu_isubr16(struct cpu_state *cpu, int16_t *i) {
-    ST(0) = f80_add(f80_from_int(*i), ST(0));
+    ST(0) = f80_sub(f80_from_int(*i), ST(0));
 }
 void fpu_imul16(struct cpu_state *cpu, int16_t *i) {
     ST(0) = f80_mul(ST(0), f80_from_int(*i));
@@ -128,10 +128,10 @@ void fpu_iadd32(struct cpu_state *cpu, int32_t *i) {
     ST(0) = f80_add(ST(0), f80_from_int(*i));
 }
 void fpu_isub32(struct cpu_state *cpu, int32_t *i) {
-    ST(0) = f80_add(ST(0), f80_from_int(*i));
+    ST(0) = f80_sub(ST(0), f80_from_int(*i));
 }
 void fpu_isubr32(struct cpu_state *cpu, int32_t *i) {
-    ST(0) = f80_add(f80_from_int(*i), ST(0));
+    ST(0) = f80_sub(f80_from_int(*i), ST(0));
 }
 void fpu_imul32(struct cpu_state *cpu, int32_t *i) {
     ST(0) = f80_mul(ST(0), f80_from_int(*i));
