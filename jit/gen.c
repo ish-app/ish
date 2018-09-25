@@ -32,10 +32,6 @@ void gen_start(addr_t addr, struct gen_state *state) {
     struct jit_block *block = malloc(sizeof(struct jit_block) + state->capacity * sizeof(unsigned long));
     state->block = block;
     block->addr = addr;
-    list_init(&block->chain);
-    for (int i = 0; i <= 1; i++) {
-        list_init(&block->page[i]);
-    }
 }
 
 void gen_end(struct gen_state *state) {
@@ -50,6 +46,14 @@ void gen_end(struct gen_state *state) {
 
         list_init(&block->jumps_from[i]);
         list_init(&block->jumps_from_links[i]);
+    }
+    if (block->addr != state->ip)
+        block->end_addr = state->ip - 1;
+    else
+        block->end_addr = block->addr;
+    list_init(&block->chain);
+    for (int i = 0; i <= 1; i++) {
+        list_init(&block->page[i]);
     }
 }
 
