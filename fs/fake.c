@@ -3,6 +3,7 @@
 #include <string.h>
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <sys/file.h>
 #include <gdbm.h>
 
 #include "debug.h"
@@ -358,7 +359,7 @@ static int fakefs_mount(struct mount *mount) {
     char *basename = strrchr(db_path, '/') + 1;
     assert(strcmp(basename, "data") == 0);
     strcpy(basename, "meta.db");
-    mount->db = gdbm_open(db_path, 0, GDBM_NOLOCK, 0, gdbm_fatal);
+    mount->db = gdbm_open(db_path, 0, GDBM_NOLOCK | GDBM_WRITER, 0, gdbm_fatal);
     if (mount->db == NULL) {
         println("gdbm error: %s", gdbm_strerror(gdbm_errno));
         return _EINVAL;
