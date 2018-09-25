@@ -165,8 +165,8 @@
     sub esp, esp, 4
     mov _addr, esp
     write_prep 32, pushf
-    ldr x8, [_cpu, CPU_eflags]
-    str x8, [_xaddr]
+    ldr w8, [_cpu, CPU_eflags]
+    str w8, [_xaddr]
     write_done 32, pushf
     gret
     write_bullshit 32, pushf
@@ -174,7 +174,8 @@
 .gadget popf
     mov _addr, esp
     read_prep 32, popf
-    ldr x8, [_xaddr]
+    ldr w8, [_xaddr]
+    str w8, [_cpu, CPU_eflags]
     add esp, esp, 4
 
     save_c
