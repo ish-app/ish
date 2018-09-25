@@ -36,11 +36,11 @@ void mem_release(struct mem *mem) {
     if (--mem->refcount == 0) {
         write_wrlock(&mem->lock);
         pt_unmap(mem, 0, MEM_PAGES, PT_FORCE);
-        free(mem->pt);
-        write_wrunlock(&mem->lock);
 #if JIT
         jit_free(mem->jit);
 #endif
+        free(mem->pt);
+        write_wrunlock(&mem->lock);
         free(mem);
     }
 }
