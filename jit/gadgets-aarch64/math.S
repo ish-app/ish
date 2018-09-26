@@ -115,9 +115,8 @@
         .else
             clz w10, \arg
             cmp w10, 32
-            .if \size != 32
-                sub w10, w10, 32-\size
-            .endif
+            mov w9, 31
+            sub w10, w9, w10
         .endif
         csel _tmp, w10, _tmp, ne
         cset w10, eq
