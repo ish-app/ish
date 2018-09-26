@@ -8,6 +8,8 @@ A project to get a Linux shell running on iOS, using usermode x86 emulation and 
 
 For the current status of the project, check the [Emulation project](https://github.com/tbodt/ish/projects/3) and the commit logs.
 
+You can [join the Testflight beta](https://testflight.apple.com/join/97i7KM8O) now.
+
 # Hacking
 
 You'll need these things to build the project:
