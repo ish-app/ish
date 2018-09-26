@@ -110,7 +110,7 @@ static int ios_tty_open(struct tty *tty) {
     tty->data = (void *) CFBridgingRetain(terminal);
 
     // termios
-    tty->termios.lflags = ISIG_ | ICANON_ | ECHO_ | ECHOE_;
+    tty->termios.lflags = ISIG_ | ICANON_ | ECHO_ | ECHOE_ | ECHOCTL_;
     tty->termios.iflags = ICRNL_;
     tty->termios.oflags = OPOST_ | ONLCR_;
     tty->termios.cc[VINTR_] = '\x03';
