@@ -66,8 +66,8 @@ static struct jit_block *jit_lookup(struct jit *jit, addr_t addr) {
 
 static struct jit_block *jit_block_compile(addr_t ip, struct tlb *tlb) {
     struct gen_state state;
-    println("---------------");
-    println("%d block at 0x%x:", current->pid, ip);
+    TRACELN("---------------");
+    TRACELN("%d block at 0x%x:", current->pid, ip);
     gen_start(ip, &state);
     while (true) {
         if (!gen_step32(&state, tlb))
