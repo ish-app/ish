@@ -53,16 +53,23 @@ fd_t sys_open(addr_t path_addr, dword_t flags, mode_t_ mode) {
     return sys_openat(AT_FDCWD_, path_addr, flags, mode);
 }
 
-dword_t sys_readlink(addr_t path_addr, addr_t buf_addr, dword_t bufsize) {
+dword_t sys_readlinkat(fd_t at_f, addr_t path_addr, addr_t buf_addr, dword_t bufsize) {
     char path[MAX_PATH];
     if (user_read_string(path_addr, path, sizeof(path)))
         return _EFAULT;
+    struct fd *at = at_fd(at_f);
+    if (at == NULL)
+        return _EBADF;
     char buf[bufsize];
-    int err = generic_readlink(path, buf, bufsize);
+    int err = generic_readlinkat(at, path, buf, bufsize);
     if (err >= 0)
         if (user_write_string(buf_addr, buf))
             return _EFAULT;
     return err;
+}
+
+dword_t sys_readlink(addr_t path_addr, addr_t buf_addr, dword_t bufsize) {
+    return sys_readlinkat(AT_FDCWD_, path_addr, buf_addr, bufsize);
 }
 
 dword_t sys_linkat(fd_t src_at_f, addr_t src_addr, fd_t dst_at_f, addr_t dst_addr) {

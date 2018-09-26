@@ -58,7 +58,7 @@ int generic_access(const char *path, int mode);
 int generic_statat(struct fd *at, const char *path, struct statbuf *stat, bool follow_links);
 int generic_setattrat(struct fd *at, const char *path, struct attr attr, bool follow_links);
 int generic_utime(struct fd *at, const char *path, struct timespec atime, struct timespec mtime, bool follow_links);
-ssize_t generic_readlink(const char *path, char *buf, size_t bufsize);
+ssize_t generic_readlinkat(struct fd *at, const char *path, char *buf, size_t bufsize);
 int generic_mkdirat(struct fd *at, const char *path, mode_t_ mode);
 
 struct mount {
