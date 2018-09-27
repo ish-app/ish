@@ -31,7 +31,7 @@ static int tty_get(int type, int num, struct tty **tty_out) {
         lock_init(&tty->lock);
         lock_init(&tty->fds_lock);
         pthread_cond_init(&tty->produced, NULL);
-        pthread_cond_init(&tty->consumed, NULL);
+        memset(tty->buf_flag, false, sizeof(tty->buf_flag));
         tty->bufsize = 0;
 
         tty->driver = &tty_drivers[type];
@@ -125,6 +125,13 @@ static void tty_wake(struct tty *tty) {
     lock(&tty->lock);
 }
 
+static void tty_push_char(struct tty *tty, char ch, bool flag) {
+    if (tty->bufsize >= sizeof(tty->buf))
+        return;
+    tty->buf[tty->bufsize] = ch;
+    tty->buf_flag[tty->bufsize++] = flag;
+}
+
 int tty_input(struct tty *tty, const char *input, size_t size) {
     lock(&tty->lock);
     dword_t lflags = tty->termios.lflags;
@@ -169,6 +176,9 @@ int tty_input(struct tty *tty, const char *input, size_t size) {
                     count = 1;
                 }
                 for (int i = 0; i < count; i++) {
+                    // don't delete past a flag
+                    if (tty->buf_flag[tty->bufsize - 1])
+                        break;
                     tty->bufsize--;
                     if (lflags & ECHOE_) {
                         tty->driver->write(tty, "\b \b", 3);
@@ -177,22 +187,20 @@ int tty_input(struct tty *tty, const char *input, size_t size) {
                     }
                 }
                 echo = false;
-            } else if (ch == '\n' || ch == cc[VEOF_]) {
-                if (ch == '\n') {
-                    tty->buf[tty->bufsize++] = ch;
-                    // echo it now, before the read call goes through
-                    if (echo)
-                        tty->driver->write(tty, "\r\n", 2);
-                }
-
+            } else if (ch == cc[VEOF_]) {
+                ch = '\0';
+                goto canon_wake;
+            } else if (ch == '\n' || ch == cc[VEOL_]) {
+                println("eol");
+                // echo it now, before the read call goes through
+                if (echo)
+                    tty->driver->write(tty, "\r\n", 2);
+canon_wake:
+                tty_push_char(tty, ch, true);
                 echo = false;
-                tty->canon_ready = true;
                 tty_wake(tty);
-                while (tty->canon_ready)
-                    wait_for(&tty->consumed, &tty->lock);
             } else {
-                if (tty->bufsize < sizeof(tty->buf))
-                    tty->buf[tty->bufsize++] = ch;
+                tty_push_char(tty, ch, false);
             }
 
             if (echo) {
@@ -215,12 +223,34 @@ int tty_input(struct tty *tty, const char *input, size_t size) {
     return 0;
 }
 
+// expects bufsize <= tty->bufsize
+static void tty_read_into_buf(struct tty *tty, void *buf, size_t bufsize) {
+    memcpy(buf, tty->buf, bufsize);
+    tty->bufsize -= bufsize;
+    memmove(tty->buf, tty->buf + bufsize, tty->bufsize); // magic!
+    memmove(tty->buf_flag, tty->buf_flag + bufsize, tty->bufsize);
+}
+
+static ssize_t tty_canon_size(struct tty *tty) {
+    bool *flag_ptr = memchr(tty->buf_flag, true, tty->bufsize);
+    if (flag_ptr == NULL)
+        return -1;
+    return flag_ptr - tty->buf_flag + 1;
+}
+
 static ssize_t tty_read(struct fd *fd, void *buf, size_t bufsize) {
     struct tty *tty = fd->tty;
     lock(&tty->lock);
     if (tty->termios.lflags & ICANON_) {
-        while (!tty->canon_ready)
+        ssize_t canon_size = -1;
+        while ((canon_size = tty_canon_size(tty)) == -1)
             wait_for(&tty->produced, &tty->lock);
+        // null byte means eof was typed
+        if (tty->buf[canon_size-1] == '\0')
+            canon_size--;
+
+        if (bufsize > canon_size)
+            bufsize = canon_size;
     } else {
         dword_t min = tty->termios.cc[VMIN_];
         dword_t time = tty->termios.cc[VTIME_];
@@ -236,12 +266,11 @@ static ssize_t tty_read(struct fd *fd, void *buf, size_t bufsize) {
 
     if (bufsize > tty->bufsize)
         bufsize = tty->bufsize;
-    memcpy(buf, tty->buf, bufsize);
-    tty->bufsize -= bufsize;
-    memmove(tty->buf, tty->buf + bufsize, tty->bufsize); // magic!
-    if (tty->bufsize == 0) {
-        tty->canon_ready = false;
-        notify(&tty->consumed);
+    tty_read_into_buf(tty, buf, bufsize);
+    if (tty->buf[0] == '\0' && tty->buf_flag[0]) {
+        // remove the eof so the next read can succeed
+        char dummy;
+        tty_read_into_buf(tty, &dummy, 1);
     }
 
     unlock(&tty->lock);
@@ -276,7 +305,7 @@ static int tty_poll(struct fd *fd) {
     lock(&tty->lock);
     int types = POLL_WRITE;
     if (tty->termios.lflags & ICANON_) {
-        if (tty->canon_ready)
+        if (tty_canon_size(tty) != -1)
             types |= POLL_READ;
     } else {
         if (tty->bufsize > 0)
@@ -336,8 +365,6 @@ static int tty_ioctl(struct fd *fd, int cmd, void *arg) {
                 case TCIFLUSH_:
                 case TCIOFLUSH_:
                     tty->bufsize = 0;
-                    tty->canon_ready = false;
-                    notify(&tty->consumed);
                     break;
                 case TCOFLUSH_:
                     break;

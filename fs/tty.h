@@ -73,11 +73,13 @@ struct tty {
     unsigned refcount;
     struct tty_driver *driver;
 
-    char buf[4096];
+#define TTY_BUF_SIZE 4096
+    char buf[TTY_BUF_SIZE];
+    // A flag is a marker indicating the end of a canonical mode input. Flags
+    // are created by EOL and EOF characters. You can't backspace past a flag.
+    bool buf_flag[TTY_BUF_SIZE];
     size_t bufsize;
-    bool canon_ready;
     pthread_cond_t produced;
-    pthread_cond_t consumed;
 
     struct winsize_ winsize;
     struct termios_ termios;
