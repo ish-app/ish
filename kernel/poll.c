@@ -13,6 +13,7 @@ static int user_read_or_zero(addr_t addr, void *data, size_t size) {
 }
 
 dword_t sys_select(fd_t nfds, addr_t readfds_addr, addr_t writefds_addr, addr_t exceptfds_addr, addr_t timeout_addr) {
+    STRACE("select(%d, 0x%x, 0x%x, 0x%x, 0x%x)", nfds, readfds_addr, writefds_addr, exceptfds_addr, timeout_addr);
     size_t fdset_size = BITS_SIZE(nfds);
     char readfds[fdset_size];
     if (user_read_or_zero(readfds_addr, readfds, fdset_size))
@@ -73,6 +74,7 @@ dword_t sys_poll(addr_t fds, dword_t nfds, dword_t timeout) {
     if (nfds != 1)
         TODO("actual working poll");
 
+    STRACE("poll(0x%x, %d, %d)", fds, nfds, timeout);
     struct pollfd_ fake_poll;
     if (user_get(fds, fake_poll))
         return _EFAULT;

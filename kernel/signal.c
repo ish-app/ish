@@ -177,6 +177,7 @@ dword_t sys_rt_sigaction(dword_t signum, addr_t action_addr, addr_t oldaction_ad
     if (action_addr != 0)
         if (user_get(action_addr, action))
             return _EFAULT;
+    STRACE("rt_sigaction(%d, 0x%x, 0x%x, %d)", signum, action_addr, oldaction_addr, sigset_size);
 
     int err = do_sigaction(signum,
             action_addr ? &action : NULL,

@@ -79,6 +79,7 @@ dword_t sys_linkat(fd_t src_at_f, addr_t src_addr, fd_t dst_at_f, addr_t dst_add
     char dst[MAX_PATH];
     if (user_read_string(dst_addr, dst, sizeof(dst)))
         return _EFAULT;
+    STRACE("linkat(%d, \"%s\", %d, \"%s\")", src_at_f, src, dst_at_f, dst);
     struct fd *src_at = at_fd(src_at_f);
     if (src_at == NULL)
         return _EBADF;
@@ -96,6 +97,7 @@ dword_t sys_unlinkat(fd_t at_f, addr_t path_addr) {
     char path[MAX_PATH];
     if (user_read_string(path_addr, path, sizeof(path)))
         return _EFAULT;
+    STRACE("unlinkat(%d, \"%s\")", at_f, path);
     struct fd *at = at_fd(at_f);
     if (at == NULL)
         return _EBADF;
@@ -113,6 +115,7 @@ dword_t sys_renameat(fd_t src_at_f, addr_t src_addr, fd_t dst_at_f, addr_t dst_a
     char dst[MAX_PATH];
     if (user_read_string(dst_addr, dst, sizeof(dst)))
         return _EFAULT;
+    STRACE("renameat(%d, \"%s\", %d, \"%s\")", src_at_f, src, dst_at_f, dst);
     struct fd *src_at = at_fd(src_at_f);
     if (src_at == NULL)
         return _EBADF;
@@ -334,6 +337,7 @@ dword_t sys_chroot(addr_t path_addr) {
 }
 
 dword_t sys_umask(dword_t mask) {
+    STRACE("umask(0%o)", mask);
     struct fs_info *fs = current->fs;
     lock(&fs->lock);
     mode_t_ old_umask = fs->umask;
@@ -393,6 +397,8 @@ dword_t sys_utimensat(fd_t at_f, addr_t path_addr, addr_t times_addr, dword_t fl
     char path[MAX_PATH];
     if (user_read_string(path_addr, path, sizeof(path)))
         return _EFAULT;
+    STRACE("utimensat(%d, %s, {{%d, %d}, {%d, %d}}, %d)", at_f, path,
+            times[0].sec, times[0].nsec, times[1].sec, times[1].nsec, flags);
     struct fd *at = at_fd(at_f);
     if (at == NULL)
         return _EBADF;
@@ -448,6 +454,7 @@ dword_t sys_fchownat(fd_t at_f, addr_t path_addr, dword_t owner, dword_t group, 
     char path[MAX_PATH];
     if (user_read_string(path_addr, path, sizeof(path)))
         return _EFAULT;
+    STRACE("fchownat(%d, %s, %d, %d, %d)", at_f, path, owner, group, flags);
     struct fd *at = at_fd(at_f);
     if (at == NULL)
         return _EBADF;
@@ -501,6 +508,7 @@ dword_t sys_mkdirat(fd_t at_f, addr_t path_addr, mode_t_ mode) {
     char path[MAX_PATH];
     if (user_read_string(path_addr, path, sizeof(path)))
         return _EFAULT;
+    STRACE("mkdirat(%d, %s, 0%o)");
     struct fd *at = at_fd(at_f);
     if (at == NULL)
         return _EBADF;
