@@ -238,6 +238,9 @@ static ssize_t tty_canon_size(struct tty *tty) {
 }
 
 static ssize_t tty_read(struct fd *fd, void *buf, size_t bufsize) {
+    if (bufsize == 0)
+        return 0;
+
     struct tty *tty = fd->tty;
     lock(&tty->lock);
     if (tty->termios.lflags & ICANON_) {
