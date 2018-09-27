@@ -64,6 +64,9 @@ void receive_signals(void);
 struct sighand {
     atomic_uint refcount;
     struct sigaction_ action[NUM_SIGS];
+    addr_t altstack;
+    dword_t altstack_size;
+    bool on_altstack;
     lock_t lock;
 };
 struct sighand *sighand_new();
@@ -79,6 +82,15 @@ dword_t sys_rt_sigreturn(dword_t sig);
 #define SIG_SETMASK_ 2
 typedef uint64_t sigset_t_;
 dword_t sys_rt_sigprocmask(dword_t how, addr_t set, addr_t oldset, dword_t size);
+
+struct stack_t_ {
+    addr_t stack;
+    dword_t flags;
+    dword_t size;
+};
+#define SS_ONSTACK_ 1
+#define SS_DISABLE_ 2
+dword_t sys_sigaltstack(addr_t ss, addr_t old_ss);
 
 dword_t sys_kill(dword_t pid, dword_t sig);
 dword_t sys_tkill(dword_t tid, dword_t sig);

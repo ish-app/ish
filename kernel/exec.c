@@ -347,8 +347,6 @@ static int elf_exec(struct fd *fd, const char *file, char *const argv[], char *c
     current->cpu.eip = entry;
     current->cpu.fcw = 0x37f;
     collapse_flags(&current->cpu);
-    current->vfork_done = true;
-    notify(&current->vfork_cond);
 
     err = 0;
 out_free_interp:
@@ -485,6 +483,17 @@ found:
     for (fd_t f = 0; f < current->files->size; f++)
         if (f_is_cloexec(f))
             f_close(f);
+    current->vfork_done = true;
+    notify(&current->vfork_cond);
+
+    lock(&current->sighand->lock);
+    for (int sig = 0; sig < NUM_SIGS; sig++) {
+        struct sigaction_ *action = &current->sighand->action[sig];
+        if (action->handler != SIG_IGN_)
+            action->handler = SIG_DFL_;
+    }
+    current->sighand->altstack = 0;
+    unlock(&current->sighand->lock);
     return err;
 }
 

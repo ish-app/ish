@@ -76,6 +76,10 @@ static void receive_signal(struct sighand *sighand, int sig) {
     cpu->eip = sighand->action[sig].handler;
 
     dword_t sp = cpu->esp;
+    if (sighand->altstack) {
+        sp = sighand->altstack;
+        sighand->on_altstack = true;
+    }
     if (xsave_extra) {
         // do as the kernel does
         // this is superhypermega condensed version of fpu__alloc_mathframe in
@@ -151,6 +155,9 @@ dword_t sys_rt_sigreturn(dword_t sig) {
     cpu->eip = sc.ip;
     collapse_flags(cpu);
     cpu->eflags = sc.flags;
+    lock(&current->sighand->lock);
+    current->sighand->on_altstack = false;
+    unlock(&current->sighand->lock);
     return cpu->eax;
 }
 
@@ -231,6 +238,45 @@ dword_t sys_rt_sigprocmask(dword_t how, addr_t set_addr, addr_t oldset_addr, dwo
     if (oldset_addr != 0)
         if (user_put(oldset_addr, oldset))
             return _EFAULT;
+    return 0;
+}
+
+dword_t sys_sigaltstack(addr_t ss_addr, addr_t old_ss_addr) {
+    STRACE("sigaltstack(0x%x, 0x%x)", ss_addr, old_ss_addr);
+    struct sighand *sighand = current->sighand;
+    lock(&sighand->lock);
+    if (old_ss_addr != 0) {
+        struct stack_t_ old_ss;
+        old_ss.stack = sighand->altstack;
+        old_ss.size = sighand->altstack_size;
+        old_ss.flags = 0;
+        if (sighand->altstack == 0)
+            old_ss.flags |= SS_DISABLE_;
+        if (sighand->on_altstack)
+            old_ss.flags |= SS_ONSTACK_;
+        if (user_put(old_ss_addr, old_ss)) {
+            unlock(&sighand->lock);
+            return _EFAULT;
+        }
+    }
+    if (ss_addr != 0) {
+        if (sighand->on_altstack) {
+            unlock(&sighand->lock);
+            return _EPERM;
+        }
+        struct stack_t_ ss;
+        if (user_get(ss_addr, ss)) {
+            unlock(&sighand->lock);
+            return _EFAULT;
+        }
+        if (ss.flags & SS_DISABLE_) {
+            sighand->altstack = 0;
+        } else {
+            sighand->altstack = ss.stack;
+            sighand->altstack_size = ss.size;
+        }
+    }
+    unlock(&sighand->lock);
     return 0;
 }
 
