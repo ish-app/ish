@@ -191,7 +191,6 @@ int tty_input(struct tty *tty, const char *input, size_t size) {
                 ch = '\0';
                 goto canon_wake;
             } else if (ch == '\n' || ch == cc[VEOL_]) {
-                println("eol");
                 // echo it now, before the read call goes through
                 if (echo)
                     tty->driver->write(tty, "\r\n", 2);
