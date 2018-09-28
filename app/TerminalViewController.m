@@ -66,7 +66,8 @@
 }
 
 - (BOOL)prefersStatusBarHidden {
-    return YES;
+    BOOL isIPhoneX = UIApplication.sharedApplication.delegate.window.safeAreaInsets.top > 20;
+    return !isIPhoneX;
 }
 
 - (void)keyboardDidSomething:(NSNotification *)notification {
