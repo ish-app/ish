@@ -25,6 +25,14 @@ dword_t sys_select(fd_t nfds, addr_t readfds_addr, addr_t writefds_addr, addr_t 
     if (user_read_or_zero(exceptfds_addr, exceptfds, fdset_size))
         return _EFAULT;
 
+    int timeout = -1;
+    if (timeout_addr != 0) {
+        struct timeval_ timeout_timeval;
+        if (user_get(timeout_addr, timeout))
+            return _EFAULT;
+        timeout = timeout_timeval.usec / 1000 + timeout_timeval.sec * 1000;
+    }
+
     // current implementation only works with one fd
     fd_t fd = -1;
     int types = 0;
@@ -38,7 +46,7 @@ dword_t sys_select(fd_t nfds, addr_t readfds_addr, addr_t writefds_addr, addr_t 
             if (bit_test(i, writefds))
                 types |= POLL_WRITE;
             if (bit_test(i, exceptfds))
-                TODO("poll exceptfds");
+                FIXME("poll exceptfds");
         }
     }
 
@@ -47,7 +55,7 @@ dword_t sys_select(fd_t nfds, addr_t readfds_addr, addr_t writefds_addr, addr_t 
         return _ENOMEM;
     poll_add_fd(poll, f_get(fd), types);
     struct poll_event event;
-    int err = poll_wait(poll, &event, -1);
+    int err = poll_wait(poll, &event, timeout);
     if (err < 0) {
         poll_destroy(poll);
         return err;
@@ -67,7 +75,7 @@ dword_t sys_select(fd_t nfds, addr_t readfds_addr, addr_t writefds_addr, addr_t 
     if (exceptfds_addr && user_write(exceptfds_addr, exceptfds, fdset_size))
         return _EFAULT;
 
-    return 0;
+    return err;
 }
 
 dword_t sys_poll(addr_t fds, dword_t nfds, dword_t timeout) {
