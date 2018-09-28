@@ -136,6 +136,7 @@ dword_t sys_symlinkat(addr_t target_addr, fd_t at_f, addr_t link_addr) {
     char link[MAX_PATH];
     if (user_read_string(link_addr, link, sizeof(link)))
         return _EFAULT;
+    STRACE("symlinkat(\"%s\", %d, \"%s\")", target, at_f, link);
     struct fd *at = at_fd(at_f);
     if (at == NULL)
         return _EBADF;
