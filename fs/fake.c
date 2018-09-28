@@ -86,8 +86,8 @@ static ino_t write_path(struct mount *mount, const char *path) {
     if (inode != 0) {
         char keydata[MAX_PATH+strlen("inode")+1];
         char valuedata[30];
-        write_meta(mount, 
-                make_datum(keydata, "inode %s", path), 
+        write_meta(mount,
+                make_datum(keydata, "inode %s", path),
                 make_datum(valuedata, "%lu", inode));
     }
     return inode;
@@ -202,6 +202,11 @@ static int fakefs_rmdir(struct mount *mount, const char *path) {
 
 static int fakefs_rename(struct mount *mount, const char *src, const char *dst) {
     lock_db(mount);
+    // get the inode of the dst path
+    char keydata[30];
+    datum key = stat_key(keydata, mount, dst);
+    ino_t old_dst_inode = inode_for_path(mount, dst);
+
     int err = realfs.rename(mount, src, dst);
     if (err < 0) {
         unlock_db(mount);
@@ -209,6 +214,10 @@ static int fakefs_rename(struct mount *mount, const char *src, const char *dst) 
     }
     write_path(mount, dst);
     delete_path(mount, src);
+    // if this rename clobbered a file at the dst path, the metadata for that
+    // file needs to be deleted
+    if (old_dst_inode != 0 && old_dst_inode != inode_for_path(mount, dst))
+        delete_meta(mount, key);
     unlock_db(mount);
     return 0;
 }
