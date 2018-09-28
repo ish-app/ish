@@ -1,4 +1,5 @@
-This build is mostly a bunch of bug fixes from the previous build. Also a mostly non-working about box.
+Fixed programs: sleep, gcc, ed, vim, probably more I forgot about
+Fixed bugs: several crashes, echoing of control characters, pressing enter sometimes makes the app freeze, asking you for a password after you run apk upgrade, not displaying the status bar on iPhone X, and a few more things I think. Go read the commit log I guess.
 
 As always, let me know if it crashes spectacularly. The best place to send bug reports or feedback of any kind is the GitHub issues page: https://github.com/tbodt/ish/issues
 
