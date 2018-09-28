@@ -157,8 +157,10 @@ crosspage_store_\id :
     push %r9
     push %r10
     push %r11
+    sub DOLLAR(8), %rsp # stack must be 16-byte aligned on mac
 .endm
 .macro restore_c
+    add DOLLAR(8), %rsp
     pop %r11
     pop %r10
     pop %r9
