@@ -103,6 +103,7 @@ struct tty {
 };
 
 int tty_input(struct tty *tty, const char *input, size_t len);
+void tty_set_winsize(struct tty *tty, struct winsize_ winsize);
 
 extern struct dev_ops tty_dev;
 extern struct dev_ops ptmx_dev;

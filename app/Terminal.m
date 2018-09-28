@@ -50,9 +50,9 @@ static Terminal *terminal = nil;
     if ([message.name isEqualToString:@"log"]) {
         NSLog(@"%@", message.body);
     } else if ([message.name isEqualToString:@"resize"]) {
-        NSArray *parts = [message.body componentsSeparatedByString:@"x"];
-        self.tty->winsize.col = [parts[0] integerValue];
-        self.tty->winsize.row = [parts[1] integerValue];
+        NSArray<NSString *> *parts = [message.body componentsSeparatedByString:@"x"];
+        NSLog(@"%@", parts);
+        tty_set_winsize(self.tty, (struct winsize_) {.col = parts[0].intValue, .row = parts[1].intValue});
     }
 }
 

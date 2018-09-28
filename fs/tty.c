@@ -324,6 +324,7 @@ static int tty_poll(struct fd *fd) {
 #define TIOCGPRGP_ 0x540f
 #define TIOCSPGRP_ 0x5410
 #define TIOCGWINSZ_ 0x5413
+#define TIOCSWINSZ_ 0x5414
 #define TCIFLUSH_ 0
 #define TCOFLUSH_ 1
 #define TCIOFLUSH_ 2
@@ -334,7 +335,7 @@ static ssize_t tty_ioctl_size(struct fd *fd, int cmd) {
             return sizeof(struct termios_);
         case TCFLSH_: return 0;
         case TIOCGPRGP_: case TIOCSPGRP_: return sizeof(dword_t);
-        case TIOCGWINSZ_: return sizeof(struct winsize_);
+        case TIOCGWINSZ_: case TIOCSWINSZ_: return sizeof(struct winsize_);
     }
     return -1;
 }
@@ -397,10 +398,19 @@ static int tty_ioctl(struct fd *fd, int cmd, void *arg) {
         case TIOCGWINSZ_:
             *(struct winsize_ *) arg = fd->tty->winsize;
             break;
+        case TIOCSWINSZ_:
+            tty_set_winsize(fd->tty, *(struct winsize_ *) arg);
+            break;
     }
 
     unlock(&tty->lock);
     return err;
+}
+
+void tty_set_winsize(struct tty *tty, struct winsize_ winsize) {
+    tty->winsize = winsize;
+    if (tty->fg_group != 0)
+        send_group_signal(tty->fg_group, SIGWINCH_);
 }
 
 struct dev_ops tty_dev = {
