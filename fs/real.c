@@ -314,6 +314,13 @@ int realfs_mount(struct mount *mount) {
     return 0;
 }
 
+int realfs_fsync(struct fd *fd) {
+    int err = fsync(fd->real_fd);
+    if (err < 0)
+        return errno_map();
+    return 0;
+}
+
 const struct fs_ops realfs = {
     .mount = realfs_mount,
     .statfs = realfs_statfs,
@@ -342,5 +349,6 @@ const struct fd_ops realfs_fdops = {
     .lseek = realfs_lseek,
     .mmap = realfs_mmap,
     .getpath = realfs_getpath,
+    .fsync = realfs_fsync,
     .close = realfs_close,
 };

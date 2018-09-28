@@ -528,6 +528,16 @@ dword_t sys_rmdir(addr_t path_addr) {
     return generic_rmdirat(AT_PWD, path);
 }
 
+dword_t sys_fsync(fd_t f) {
+    struct fd *fd = f_get(f);
+    if (fd == NULL)
+        return _EBADF;
+    int err = 0;
+    if (fd->ops->fsync)
+        err = fd->ops->fsync(fd);
+    return err;
+}
+
 // a few stubs
 dword_t sys_sendfile(fd_t out_fd, fd_t in_fd, addr_t offset_addr, dword_t count) {
     return _EINVAL;

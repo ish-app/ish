@@ -73,6 +73,7 @@ struct fd_ops {
     // Returns the path of the file descriptor, buf must be at least MAX_PATH
     int (*getpath)(struct fd *fd, char *buf);
 
+    int (*fsync)(struct fd *fd);
     int (*close)(struct fd *fd);
 };
 

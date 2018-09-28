@@ -73,6 +73,7 @@ dword_t sys_fcntl64(fd_t f, dword_t cmd, dword_t arg);
 dword_t sys_dup(fd_t fd);
 dword_t sys_dup2(fd_t fd, fd_t new_fd);
 dword_t sys_close(fd_t fd);
+dword_t sys_fsync(fd_t f);
 dword_t sys_flock(fd_t fd, dword_t operation);
 dword_t sys_pipe(addr_t pipe_addr);
 
