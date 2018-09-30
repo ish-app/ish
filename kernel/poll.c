@@ -45,8 +45,8 @@ dword_t sys_select(fd_t nfds, addr_t readfds_addr, addr_t writefds_addr, addr_t 
                 types |= POLL_READ;
             if (bit_test(i, writefds))
                 types |= POLL_WRITE;
-            if (bit_test(i, exceptfds))
-                FIXME("poll exceptfds");
+            /* if (bit_test(i, exceptfds)) */
+            /*     FIXME("poll exceptfds"); */
         }
     }
 
