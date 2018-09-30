@@ -237,7 +237,7 @@ static inline bool gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
         state->jump_ip[1] = state->size + off2
 #define JMP(loc) load(loc, OP_SIZE); g(jmp_indir); end_block = true
 #define JMP_REL(off) gg(jmp, fake_ip + off); jump_ips(-1, 0); end_block = true
-#define JCXZ_REL(off) ggg(jcxz, fake_ip + off, fake_ip); end_block = true
+#define JCXZ_REL(off) ggg(jcxz, fake_ip + off, fake_ip); jump_ips(-2, -1); end_block = true
 #define jcc(cc, to, else) gagg(jmp, cond_##cc, to, else); jump_ips(-2, -1); end_block = true
 #define J_REL(cc, off)  jcc(cc, fake_ip + off, fake_ip)
 #define JN_REL(cc, off) jcc(cc, fake_ip, fake_ip + off)
