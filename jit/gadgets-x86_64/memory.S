@@ -91,7 +91,7 @@ crosspage_load:
     call NAME(__tlb_read_cross_page)
     movq %rax, %r14
     restore_c
-    testq %rax, %rax
+    testq %r14, %r14
     jz segfault
     movl %_addr, LOCAL_value_addr(%_cpu)
     leaq LOCAL_value(%_cpu), %_addrq
@@ -107,6 +107,6 @@ crosspage_store:
     call NAME(__tlb_write_cross_page)
     movq %rax, %r14
     restore_c
-    testq %rax, %rax
+    testq %r14, %r14
     jz segfault
     ret
