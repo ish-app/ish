@@ -6,7 +6,8 @@
 
 #if JIT
 
-#define JIT_HASH_SIZE (1 << 10)
+#define JIT_HASH_SIZE (1 << 14)
+#define JIT_CACHE_SIZE (1 << 10)
 
 struct jit {
     // there is one jit per address space

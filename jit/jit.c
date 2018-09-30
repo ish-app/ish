@@ -107,9 +107,14 @@ int jit_enter(struct jit_block *block, struct jit_frame *frame, struct tlb *tlb)
 
 #if 1
 
+static inline size_t jit_cache_hash(addr_t ip) {
+    return (ip ^ (ip >> 12)) % JIT_CACHE_SIZE;
+}
+
 void cpu_run(struct cpu_state *cpu) {
     struct tlb *tlb = tlb_new(cpu->mem);
     struct jit *jit = cpu->mem->jit;
+    struct jit_block *cache[JIT_CACHE_SIZE] = {};
     struct jit_frame frame = {.cpu = *cpu};
 
     int i = 0;
@@ -119,25 +124,33 @@ void cpu_run(struct cpu_state *cpu) {
     struct jit_block *last_block = NULL;
 
     while (true) {
-        lock(&jit->lock);
         addr_t ip = frame.cpu.eip;
-        struct jit_block *block = jit_lookup(jit, ip);
-        if (block == NULL) {
-            block = jit_block_compile(ip, tlb);
-            jit_insert(jit, block);
-        }
-        if (last_block != NULL) {
-            for (int i = 0; i <= 1; i++) {
-                if (last_block->jump_ip[i] != NULL &&
-                        (*last_block->jump_ip[i] & 0xffffffff) == block->addr) {
-                    *last_block->jump_ip[i] = (unsigned long) block->code;
-                    list_add(&block->jumps_from[i], &last_block->jumps_from_links[i]);
+        size_t cache_index = jit_cache_hash(ip);
+        struct jit_block *block = cache[cache_index];
+        if (block == NULL || block->addr != ip) {
+            lock(&jit->lock);
+            block = jit_lookup(jit, ip);
+            if (block == NULL) {
+                block = jit_block_compile(ip, tlb);
+                jit_insert(jit, block);
+            } else {
+                TRACELN("missed cache for 0x%x", ip);
+            }
+            if (last_block != NULL) {
+                for (int i = 0; i <= 1; i++) {
+                    if (last_block->jump_ip[i] != NULL &&
+                            (*last_block->jump_ip[i] & 0xffffffff) == block->addr) {
+                        *last_block->jump_ip[i] = (unsigned long) block->code;
+                        list_add(&block->jumps_from[i], &last_block->jumps_from_links[i]);
+                    }
                 }
             }
+            cache[cache_index] = block;
+            unlock(&jit->lock);
         }
-        unlock(&jit->lock);
         last_block = block;
 
+        TRACELN("executing block at 0x%x", ip);
         int interrupt = jit_enter(block, &frame, tlb);
         if (interrupt == INT_NONE && i++ >= 100000) {
             i = 0;
@@ -149,13 +162,14 @@ void cpu_run(struct cpu_state *cpu) {
             read_wrunlock(&cpu->mem->lock);
             handle_interrupt(interrupt);
             read_wrlock(&cpu->mem->lock);
-            
+
             jit = cpu->mem->jit;
             last_block = NULL;
             tlb->mem = cpu->mem;
             if (cpu->mem->changes != changes) {
                 tlb_flush(tlb);
                 changes = cpu->mem->changes;
+                memset(cache, 0, sizeof(cache));
             }
             frame.cpu = *cpu;
         }
