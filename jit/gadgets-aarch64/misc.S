@@ -46,7 +46,7 @@
 .macro do_helper type, size=
     .gadget helper_\type\size
         .ifin(\type, read,write)
-            \type\()_prep (\size*4), helper_\type\size
+            \type\()_prep (\size), helper_\type\size
         .endifin
         save_c
         mov x0, _cpu
@@ -64,7 +64,7 @@
         blr x8
         restore_c
         .ifc \type,write
-            write_done (\size*4), helper_\type\size
+            write_done (\size), helper_\type\size
         .endif
         .ifc \type,0
             gret 1
@@ -74,9 +74,9 @@
             gret 2
         .endif N .endif
         .ifc \type,read
-            read_bullshit (\size*4), helper_\type\size
+            read_bullshit (\size), helper_\type\size
         .else N .ifc \type,write
-            write_bullshit (\size*4), helper_\type\size
+            write_bullshit (\size), helper_\type\size
         .endif N .endif
 .endm
 do_helper 0

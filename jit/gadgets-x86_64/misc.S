@@ -60,7 +60,7 @@
 .macro do_helper type, size=
     .gadget helper_\type\size
         .ifin(\type, read,write)
-            \type\()_prep (\size*4), helper_\type\size
+            \type\()_prep (\size), helper_\type\size
         .endifin
         save_c
         movq %_cpu, %rdi
@@ -77,7 +77,7 @@
         callq *(%_ip)
         restore_c
         .ifc \type,write
-            write_done (\size*4), helper_\type\size
+            write_done (\size), helper_\type\size
         .endif
         .ifc \type,0
             gret 1
