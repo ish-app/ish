@@ -10,7 +10,8 @@ node_modules
 app/xtermjs/xterm-dist
 app/xtermjs/.cache
 
-subprojects/packagecache
+subprojects/
+!subprojects/*.wrap
 
 fastlane/report.xml
 fastlane/Preview.html
