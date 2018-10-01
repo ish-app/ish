@@ -831,14 +831,14 @@
 			files = (
 			);
 			inputPaths = (
-				"$(MESON_BUILD_DIR)/subprojects/gdbm-1.14.1/src/libgdbm.a",
+				"$(MESON_BUILD_DIR)/subprojects/gdbm-1.18/src/libgdbm.a",
 			);
 			name = "Run Script";
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "mkdir -p $CONFIGURATION_BUILD_DIR\nln -sf $MESON_BUILD_DIR/subprojects/gdbm-1.14.1/src/libgdbm.a $CONFIGURATION_BUILD_DIR\n";
+			shellScript = "mkdir -p $CONFIGURATION_BUILD_DIR\nln -sf $MESON_BUILD_DIR/subprojects/gdbm-1.18/src/libgdbm.a $CONFIGURATION_BUILD_DIR\n";
 		};
 		BB13F813200AEFAC003D1C4D /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -1391,7 +1391,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = (
 					"$(SRCROOT)",
-					"$(MESON_BUILD_DIR)/subprojects/gdbm-1.14.1/src",
+					"$(MESON_BUILD_DIR)/subprojects/gdbm-1.18/src",
 				);
 				INFOPLIST_FILE = app/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
@@ -1453,7 +1453,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = (
 					"$(SRCROOT)",
-					"$(MESON_BUILD_DIR)/subprojects/gdbm-1.14.1/src",
+					"$(MESON_BUILD_DIR)/subprojects/gdbm-1.18/src",
 				);
 				INFOPLIST_FILE = app/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
@@ -1498,7 +1498,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				HEADER_SEARCH_PATHS = (
 					"$(SRCROOT)",
-					"$(MESON_BUILD_DIR)/subprojects/gdbm-1.14.1/src",
+					"$(MESON_BUILD_DIR)/subprojects/gdbm-1.18/src",
 				);
 				INFOPLIST_FILE = app/FileProvider/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
@@ -1538,7 +1538,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				HEADER_SEARCH_PATHS = (
 					"$(SRCROOT)",
-					"$(MESON_BUILD_DIR)/subprojects/gdbm-1.14.1/src",
+					"$(MESON_BUILD_DIR)/subprojects/gdbm-1.18/src",
 				);
 				INFOPLIST_FILE = app/FileProvider/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
