@@ -509,7 +509,7 @@ dword_t sys_mkdirat(fd_t at_f, addr_t path_addr, mode_t_ mode) {
     char path[MAX_PATH];
     if (user_read_string(path_addr, path, sizeof(path)))
         return _EFAULT;
-    STRACE("mkdirat(%d, %s, 0%o)");
+    STRACE("mkdirat(%d, %s, 0%o)", at_f, path, mode);
     struct fd *at = at_fd(at_f);
     if (at == NULL)
         return _EBADF;
