@@ -292,6 +292,7 @@ dword_t sys_sigaltstack(addr_t ss_addr, addr_t old_ss_addr) {
 }
 
 dword_t sys_kill(dword_t pid, dword_t sig) {
+    STRACE("kill(%d, %d)", pid, sig);
     // TODO check permissions
     // TODO process groups
     lock(&pids_lock);
@@ -300,7 +301,9 @@ dword_t sys_kill(dword_t pid, dword_t sig) {
         unlock(&pids_lock);
         return _ESRCH;
     }
-    send_signal(task, sig);
+    // signal zero is for testing whether a process exists
+    if (sig != 0)
+        send_signal(task, sig);
     unlock(&pids_lock);
     return 0;
 }
