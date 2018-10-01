@@ -112,7 +112,7 @@ static int reap_if_zombie(struct task *task, addr_t status_addr, addr_t rusage_a
     if (task->group->doing_group_exit)
         exit_code = task->group->group_exit_code;
     if (status_addr != 0)
-        if (user_put(status_addr, task->exit_code))
+        if (user_put(status_addr, exit_code))
             return _EFAULT;
 
     struct rusage_ rusage = task->group->rusage;

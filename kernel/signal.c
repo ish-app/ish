@@ -8,7 +8,7 @@ int xsave_extra = 0;
 int fxsave_extra = 0;
 
 void deliver_signal(struct task *task, int sig) {
-    task->pending |= (1 << sig);
+    task->pending |= 1l << sig;
     if (task != current)
         pthread_kill(task->thread, SIGUSR1);
 }
@@ -17,8 +17,8 @@ void send_signal(struct task *task, int sig) {
     struct sighand *sighand = task->sighand;
     lock(&sighand->lock);
     if (sighand->action[sig].handler != SIG_IGN_) {
-        if (task->blocked & (1 << sig))
-            task->queued |= (1 << sig);
+        if (task->blocked & (1l << sig))
+            task->queued |= (1l << sig);
         else
             deliver_signal(task, sig);
     }
@@ -98,7 +98,7 @@ static void receive_signal(struct sighand *sighand, int sig) {
     // TODO do something other than nothing, like printk maybe
     (void) user_put(sp, frame);
 
-    current->pending &= ~(1 << sig);
+    current->pending &= ~(1l << sig);
 }
 
 void receive_signals() {
@@ -106,7 +106,7 @@ void receive_signals() {
     lock(&sighand->lock);
     if (current->pending) {
         for (int sig = 0; sig < NUM_SIGS; sig++)
-            if (current->pending & (1 << sig))
+            if (current->pending & (1l << sig))
                 receive_signal(sighand, sig);
     }
     unlock(&sighand->lock);

@@ -512,7 +512,7 @@ dword_t _sys_execve(addr_t filename_addr, addr_t argv_addr, addr_t envp_addr) {
             return _EFAULT;
         if (arg == 0)
             break;
-        if (i > MAX_ARGS)
+        if (i >= MAX_ARGS)
             return _E2BIG;
         argv[i] = malloc(MAX_PATH);
         if (user_read_string(arg, argv[i], MAX_PATH))
@@ -527,7 +527,7 @@ dword_t _sys_execve(addr_t filename_addr, addr_t argv_addr, addr_t envp_addr) {
             return _EFAULT;
         if (arg == 0)
             break;
-        if (i > MAX_ARGS)
+        if (i >= MAX_ARGS)
             return _E2BIG;
         envp[i] = malloc(MAX_PATH);
         if (user_read_string(arg, envp[i], MAX_PATH))

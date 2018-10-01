@@ -289,7 +289,7 @@ static struct socket_call {
 
 dword_t sys_socketcall(dword_t call_num, addr_t args_addr) {
     STRACE("%d ", call_num);
-    if (call_num < 1 || call_num > sizeof(socket_calls)/sizeof(socket_calls[0]))
+    if (call_num < 1 || call_num >= sizeof(socket_calls)/sizeof(socket_calls[0]))
         return _EINVAL;
     struct socket_call call = socket_calls[call_num];
     if (call.func == NULL) {

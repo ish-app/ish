@@ -180,7 +180,7 @@ int tty_input(struct tty *tty, const char *input, size_t size) {
                     if (tty->buf_flag[tty->bufsize - 1])
                         break;
                     tty->bufsize--;
-                    if (lflags & ECHOE_) {
+                    if (echo) {
                         tty->driver->write(tty, "\b \b", 3);
                         if (SHOULD_ECHOCTL(tty->buf[tty->bufsize]))
                             tty->driver->write(tty, "\b \b", 3);

@@ -28,7 +28,7 @@ dword_t sys_select(fd_t nfds, addr_t readfds_addr, addr_t writefds_addr, addr_t 
     int timeout = -1;
     if (timeout_addr != 0) {
         struct timeval_ timeout_timeval;
-        if (user_get(timeout_addr, timeout))
+        if (user_get(timeout_addr, timeout_timeval))
             return _EFAULT;
         timeout = timeout_timeval.usec / 1000 + timeout_timeval.sec * 1000;
     }
@@ -56,10 +56,9 @@ dword_t sys_select(fd_t nfds, addr_t readfds_addr, addr_t writefds_addr, addr_t 
     poll_add_fd(poll, f_get(fd), types);
     struct poll_event event;
     int err = poll_wait(poll, &event, timeout);
-    if (err < 0) {
-        poll_destroy(poll);
+    poll_destroy(poll);
+    if (err < 0)
         return err;
-    }
 
     memset(readfds, 0, fdset_size);
     memset(writefds, 0, fdset_size);
@@ -92,12 +91,10 @@ dword_t sys_poll(addr_t fds, dword_t nfds, dword_t timeout) {
     poll_add_fd(poll, f_get(fake_poll.fd), fake_poll.events);
     struct poll_event event;
     int err = poll_wait(poll, &event, timeout);
-    if (err < 0) {
-        poll_destroy(poll);
-        return err;
-    }
-    fake_poll.revents = event.types;
     poll_destroy(poll);
+    if (err < 0)
+        return err;
+    fake_poll.revents = event.types;
     if (user_put(fds, fake_poll))
         return _EFAULT;
     return err;

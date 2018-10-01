@@ -20,7 +20,7 @@ struct poll *poll_create() {
 
 int poll_add_fd(struct poll *poll, struct fd *fd, int types) {
     struct poll_fd *poll_fd = malloc(sizeof(struct poll_fd));
-    if (fd == NULL)
+    if (poll_fd == NULL)
         return _ENOMEM;
     poll_fd->fd = fd;
     poll_fd->poll = poll;

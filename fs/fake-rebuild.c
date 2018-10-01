@@ -77,16 +77,16 @@ int fakefs_rebuild(struct mount *mount, const char *db_path) {
         }
 
         // extract the stat data from the appropriate stat key
-        dkey.dsize = sprintf(dkey.dptr, "stat %lu", inode);
+        dkey.dsize = sprintf(dkey.dptr, "stat %lu", (unsigned long) inode);
         datum stat_data = gdbm_fetch(mount->db, dkey);
         if (stat_data.dptr == NULL)
             goto next;
         
         // store all the information in the new database
         dkey.dsize = sprintf(dkey.dptr, "inode %s", path);
-        dvalue.dsize = sprintf(dvalue.dptr, "%lu", real_inode);
+        dvalue.dsize = sprintf(dvalue.dptr, "%lu", (unsigned long) real_inode);
         gdbm_store(new_db, dkey, dvalue, GDBM_REPLACE);
-        dkey.dsize = sprintf(dkey.dptr, "stat %lu", real_inode);
+        dkey.dsize = sprintf(dkey.dptr, "stat %lu", (unsigned long) real_inode);
         gdbm_store(new_db, dkey, stat_data, GDBM_REPLACE);
         free(stat_data.dptr);
 

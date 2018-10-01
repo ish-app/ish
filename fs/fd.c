@@ -40,8 +40,10 @@ struct fdtable *fdtable_new(unsigned size) {
     fdt->files = NULL;
     fdt->cloexec = NULL;
     int err = fdtable_resize(fdt, size);
-    if (err < 0)
+    if (err < 0) {
+        free(fdt);
         return ERR_PTR(err);
+    }
     return fdt;
 }
 
@@ -67,8 +69,10 @@ int fdtable_resize(struct fdtable *table, unsigned size) {
         memcpy(files, table->files, sizeof(struct fd *) * table->size);
 
     bits_t *cloexec = malloc(BITS_SIZE(size));
-    if (cloexec == NULL)
+    if (cloexec == NULL) {
+        free(files);
         return _ENOMEM;
+    }
     memset(cloexec, 0, BITS_SIZE(size));
     if (table->cloexec)
         memcpy(cloexec, table->cloexec, BITS_SIZE(table->size));
