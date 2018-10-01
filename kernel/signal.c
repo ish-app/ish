@@ -37,8 +37,19 @@ void send_group_signal(dword_t pgid, int sig) {
 
 static void receive_signal(struct sighand *sighand, int sig) {
     if (sighand->action[sig].handler == SIG_DFL_) {
-        unlock(&sighand->lock); // do_exit must be called without this lock
-        do_exit(sig);
+        switch (sig) {
+            // non-fatal signals
+            case SIGURG_: case SIGCONT_: case SIGCHLD_:
+            case SIGIO_: case SIGWINCH_:
+                break;
+
+            // most of the rest are fatal
+            // some stop the process, we'll leave that as unimplemented
+            default:
+                unlock(&sighand->lock); // do_exit must be called without this lock
+                do_exit(sig);
+        }
+        return;
     }
 
     // setup the frame
