@@ -147,7 +147,7 @@ retry:
         // check if this child is a zombie
         struct task *task = pid_get_task_zombie(id);
         if (task == NULL || task->parent != current) {
-            unlock(&current->group->lock);
+            unlock(&pids_lock);
             return _ECHILD;
         }
         if (reap_if_zombie(task, status_addr, rusage_addr))

@@ -285,8 +285,10 @@ dword_t sys_kill(dword_t pid, dword_t sig) {
     // TODO process groups
     lock(&pids_lock);
     struct task *task = pid_get_task(pid);
-    if (task == NULL)
+    if (task == NULL) {
+        unlock(&pids_lock);
         return _ESRCH;
+    }
     send_signal(task, sig);
     unlock(&pids_lock);
     return 0;
