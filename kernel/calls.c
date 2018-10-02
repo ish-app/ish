@@ -119,6 +119,7 @@ syscall_t syscall_table[] = {
     [320] = (syscall_t) sys_utimensat,
     [324] = (syscall_t) sys_fallocate,
     [340] = (syscall_t) sys_prlimit,
+    [355] = (syscall_t) sys_getrandom,
 };
 
 void handle_interrupt(int interrupt) {
