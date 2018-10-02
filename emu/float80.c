@@ -389,6 +389,31 @@ float80 f80_mod(float80 x, float80 y) {
     return f80_sub(x, f80_mul(quotient, y));
 }
 
-bool f80_lt(float80 a, float80 b) {return false;}
-bool f80_gt(float80 a, float80 b) {return false;}
-bool f80_eq(float80 a, float80 b) {return false;}
+bool f80_uncomparable(float80 a, float80 b) {
+    if (!f80_is_supported(a) || !f80_is_supported(b))
+        return true;
+    if (f80_isnan(a) || f80_isnan(b))
+        return true;
+    return false;
+}
+
+bool f80_lt(float80 a, float80 b) {
+    if (f80_uncomparable(a, b))
+        return false;
+    // same signed infinities are equal, not less (though subtraction would produce nan)
+    if (f80_isinf(a) && f80_isinf(b) && a.sign == b.sign)
+        return false;
+    // zeroes are always equal
+    if (f80_iszero(a) && f80_iszero(b) && a.sign != b.sign)
+        return true;
+    // if a < b then a - b < 0
+    float80 diff = f80_sub(a, b);
+    return diff.sign == 1;
+}
+bool f80_eq(float80 a, float80 b) {
+    if (f80_uncomparable(a, b))
+        return false;
+    if (f80_iszero(a)) a.sign = 0;
+    if (f80_iszero(a)) b.sign = 0;
+    return a.sign == b.sign && a.exp == b.exp && a.signif == b.signif;
+}

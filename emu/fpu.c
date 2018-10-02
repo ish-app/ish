@@ -36,6 +36,8 @@ void fpu_ldc(struct cpu_state *cpu, enum fpu_const c) {
 }
 
 void fpu_ild32(struct cpu_state *cpu, int32_t *i) {
+    float80 conv =f80_from_int(*i);
+    println("fildl %d -> %Lf", *i, *(long double *)&conv);
     fpush(f80_from_int(*i));
 }
 void fpu_ild64(struct cpu_state *cpu, int64_t *i) {
@@ -86,10 +88,11 @@ void fpu_prem(struct cpu_state *cpu) {
 }
 
 void fpu_ucom(struct cpu_state *cpu, int i) {
-    cpu->c0 = f80_lt(ST(0), ST(i));
     cpu->c1 = 0;
-    cpu->c2 = 0; /* fuck nans */
+    cpu->c0 = f80_lt(ST(0), ST(i));
     cpu->c3 = f80_eq(ST(0), ST(i));
+    if (f80_uncomparable(ST(0), ST(i)))
+        cpu->c0 = cpu->c2 = cpu->c3 = 1;
 }
 
 void fpu_add(struct cpu_state *cpu, int srci, int dsti) {

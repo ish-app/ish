@@ -34,8 +34,8 @@ float80 f80_mod(float80 a, float80 b);
 float80 f80_rem(float80 a, float80 b);
 
 bool f80_lt(float80 a, float80 b);
-bool f80_gt(float80 a, float80 b);
 bool f80_eq(float80 a, float80 b);
+bool f80_uncomparable(float80 a, float80 b);
 
 enum f80_rounding_mode {
     round_to_nearest = 0,

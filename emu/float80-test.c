@@ -155,6 +155,42 @@ void test_math() {
     test(div, NAN, 123);
     test(div, NAN, NAN);
 #undef test
+#undef _test
+    suite_end();
+}
+
+void test_compare() {
+    suite_start();
+    union f80 ua, ub;
+    bool expected, actual;
+#define cop_eq ==
+#define cop_lt <
+#define _test(op, a, b) \
+    ua.ld = a; ub.ld = b; \
+    actual = f80_##op(ua.f, ub.f); \
+    expected = (long double) a cop_##op (long double) b; \
+    assertf(actual == expected, "f80_"#op"(%Le, %Le) = %s", ua.ld, ub.ld, actual ? "true" : "false")
+#define test(op, a, b) \
+    _test(op, a, b); \
+    _test(op, -a, b); \
+    _test(op, a, -b); \
+    _test(op, -a, -b)
+
+    test(eq, 0, 0);
+    test(eq, 1, 1);
+    test(eq, 0, 1);
+    test(eq, INFINITY, INFINITY);
+    test(eq, 1, INFINITY);
+    test(eq, NAN, 123);
+    test(eq, NAN, NAN);
+    test(lt, 0, 0);
+    test(lt, 1, 1);
+    test(lt, 0, 1);
+    test(lt, INFINITY, INFINITY);
+    test(lt, 1, INFINITY);
+    test(lt, NAN, 123);
+    test(lt, NAN, NAN);
+#undef test
     suite_end();
 }
 
@@ -166,6 +202,7 @@ int main() {
     test_int_convert();
     test_double_convert();
     test_math();
+    test_compare();
     printf("%d/%d passed (%.0f%%)", tests_passed, tests_total, (double) tests_passed / tests_total * 100);
     return tests_passed == tests_total ? 0 : 1;
 }
