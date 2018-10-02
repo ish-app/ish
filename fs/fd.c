@@ -137,9 +137,10 @@ static fd_t f_install_start(struct fd *fd, fd_t start) {
             f = err;
     }
 
-    if (f >= 0)
+    if (f >= 0) {
         table->files[f] = fd;
-    else
+        bit_clear(f, table->cloexec);
+    } else
         fd_close(fd);
     return f;
 }
