@@ -78,24 +78,32 @@ dword_t sys_select(fd_t nfds, addr_t readfds_addr, addr_t writefds_addr, addr_t 
 }
 
 dword_t sys_poll(addr_t fds, dword_t nfds, dword_t timeout) {
-    if (nfds != 1)
-        TODO("actual working poll");
-
     STRACE("poll(0x%x, %d, %d)", fds, nfds, timeout);
-    struct pollfd_ fake_poll;
-    if (user_get(fds, fake_poll))
-        return _EFAULT;
+    struct pollfd_ fake_polls[nfds];
+    if (fds != 0 || nfds != 0)
+        if (user_read(fds, fake_polls, sizeof(struct pollfd_) * nfds))
+            return _EFAULT;
     struct poll *poll = poll_create();
     if (poll == NULL)
         return _ENOMEM;
-    poll_add_fd(poll, f_get(fake_poll.fd), fake_poll.events);
+    for (int i = 0; i < nfds; i++) {
+        if (fake_polls[i].fd < 0)
+            continue;
+        // TODO think about not adding duplicates
+        poll_add_fd(poll, f_get(fake_polls[i].fd), fake_polls[i].events);
+    }
     struct poll_event event;
     int err = poll_wait(poll, &event, timeout);
     poll_destroy(poll);
     if (err < 0)
         return err;
-    fake_poll.revents = event.types;
-    if (user_put(fds, fake_poll))
-        return _EFAULT;
+    for (int i = 0; i < nfds; i++) {
+        fake_polls[i].revents = 0;
+        if (f_get(fake_polls[i].fd) == event.fd)
+            fake_polls[i].revents = event.types;
+    }
+    if (fds != 0 || nfds != 0)
+        if (user_write(fds, fake_polls, sizeof(struct pollfd_) * nfds))
+            return _EFAULT;
     return err;
 }

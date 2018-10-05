@@ -138,6 +138,7 @@ int poll_wait(struct poll *poll_, struct poll_event *event, int timeout) {
                     unlock(&poll_->lock);
                     return 1;
                 }
+                i++;
             }
         }
 
