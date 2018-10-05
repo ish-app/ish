@@ -5,6 +5,7 @@
 //  Created by Theodore Dubois on 10/18/17.
 //
 
+#include <iconv.h>
 #import "Terminal.h"
 #import "DelayedUITask.h"
 #include "fs/tty.h"
@@ -84,15 +85,28 @@ static Terminal *terminal = nil;
     if (self.webView.loading)
         return;
     
-    NSString *str;
+    NSData *data;
     @synchronized (self) {
-        str = [[NSString alloc] initWithData:self.pendingData encoding:NSUTF8StringEncoding];
+        data = self.pendingData;
         self.pendingData = [NSMutableData new];
     }
+    // character encoding hell
+    NSMutableData *cleanData = [NSMutableData dataWithLength:data.length];
+    iconv_t conv = iconv_open("UTF-8", "UTF-8");
+    BOOL yes = YES;
+    iconvctl(conv, ICONV_SET_DISCARD_ILSEQ, &yes);
+    const char *dataBytes = data.bytes;
+    char *cleanDataBytes = cleanData.mutableBytes;
+    size_t dataLength = data.length;
+    size_t cleanDataLength = cleanData.length;
+    iconv(conv, (char **) &dataBytes, &dataLength, &cleanDataBytes, &cleanDataLength);
+    iconv_close(conv);
+    cleanData.length -= cleanDataLength;
+    NSString *str = [[NSString alloc] initWithData:cleanData encoding:NSUTF8StringEncoding];
     
     NSError *err = nil;
     NSData *jsonData = [NSJSONSerialization dataWithJSONObject:@[str] options:0 error:&err];
-    NSString *json = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
+    NSString *json = [[NSString alloc] initWithData:jsonData encoding:NSASCIIStringEncoding];
     NSAssert(err == nil, @"JSON serialization failed, wtf");
     NSString *jsToEvaluate = [NSString stringWithFormat:@"term.write(%@[0])", json];
     [self.webView evaluateJavaScript:jsToEvaluate completionHandler:nil];
