@@ -396,8 +396,9 @@ dword_t sys_utimensat(fd_t at_f, addr_t path_addr, addr_t times_addr, dword_t fl
     }
 
     char path[MAX_PATH];
-    if (user_read_string(path_addr, path, sizeof(path)))
-        return _EFAULT;
+    if (path_addr != 0)
+        if (user_read_string(path_addr, path, sizeof(path)))
+            return _EFAULT;
     STRACE("utimensat(%d, %s, {{%d, %d}, {%d, %d}}, %d)", at_f, path,
             times[0].sec, times[0].nsec, times[1].sec, times[1].nsec, flags);
     struct fd *at = at_fd(at_f);
@@ -407,7 +408,7 @@ dword_t sys_utimensat(fd_t at_f, addr_t path_addr, addr_t times_addr, dword_t fl
     struct timespec atime = convert_timespec(times[0]);
     struct timespec mtime = convert_timespec(times[1]);
     bool follow_links = flags & AT_SYMLINK_NOFOLLOW_ ? false : true;
-    return generic_utime(at, path, atime, mtime, follow_links); // TODO implement
+    return generic_utime(at, path_addr != 0 ? path : ".", atime, mtime, follow_links); // TODO implement
 }
 
 dword_t sys_fchmod(fd_t f, dword_t mode) {
