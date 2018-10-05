@@ -126,6 +126,9 @@ void fpu_imul16(struct cpu_state *cpu, int16_t *i) {
 void fpu_idiv16(struct cpu_state *cpu, int16_t *i) {
     ST(0) = f80_div(ST(0), f80_from_int(*i));
 }
+void fpu_idivr16(struct cpu_state *cpu, int16_t *i) {
+    ST(0) = f80_div(f80_from_int(*i), ST(0));
+}
 
 void fpu_iadd32(struct cpu_state *cpu, int32_t *i) {
     ST(0) = f80_add(ST(0), f80_from_int(*i));
@@ -141,6 +144,9 @@ void fpu_imul32(struct cpu_state *cpu, int32_t *i) {
 }
 void fpu_idiv32(struct cpu_state *cpu, int32_t *i) {
     ST(0) = f80_div(ST(0), f80_from_int(*i));
+}
+void fpu_idivr32(struct cpu_state *cpu, int32_t *i) {
+    ST(0) = f80_div(f80_from_int(*i), ST(0));
 }
 
 void fpu_addm32(struct cpu_state *cpu, float32 *f) {

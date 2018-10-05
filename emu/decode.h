@@ -564,7 +564,9 @@ restart:
                     case 0xda0: TRACE("fiadd mem32"); FIADD(mem_addr,32); break;
                     case 0xda1: TRACE("fimul mem32"); FIMUL(mem_addr,32); break;
                     case 0xda4: TRACE("fisub mem32"); FISUB(mem_addr,32); break;
+                    case 0xda5: TRACE("fisubr mem32"); FISUBR(mem_addr,32); break;
                     case 0xda6: TRACE("fidiv mem32"); FIDIV(mem_addr,32); break;
+                    case 0xda7: TRACE("fidivr mem32"); FIDIVR(mem_addr,32); break;
                     case 0xdb0: TRACE("fild mem32"); FILD(mem_addr,32); break;
                     case 0xdb2: TRACE("fist mem32"); FIST(mem_addr,32); break;
                     case 0xdb3: TRACE("fistp mem32"); FIST(mem_addr,32); FPOP; break;
