@@ -53,7 +53,8 @@ dword_t sys_select(fd_t nfds, addr_t readfds_addr, addr_t writefds_addr, addr_t 
     struct poll *poll = poll_create();
     if (poll == NULL)
         return _ENOMEM;
-    poll_add_fd(poll, f_get(fd), types);
+    if (fd != -1)
+        poll_add_fd(poll, f_get(fd), types);
     struct poll_event event;
     int err = poll_wait(poll, &event, timeout);
     poll_destroy(poll);
