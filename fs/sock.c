@@ -132,6 +132,28 @@ dword_t sys_getsockname(fd_t sock_fd, addr_t sockaddr_addr, addr_t sockaddr_len_
     return res;
 }
 
+dword_t sys_getpeername(fd_t sock_fd, addr_t sockaddr_addr, addr_t sockaddr_len_addr) {
+    STRACE("getpeername(%d, 0x%x, 0x%x)", sock_fd, sockaddr_addr, sockaddr_len_addr);
+    struct fd *sock = sock_getfd(sock_fd);
+    if (sock == NULL)
+        return _EBADF;
+    dword_t sockaddr_len;
+    if (user_get(sockaddr_len_addr, sockaddr_len))
+        return _EFAULT;
+
+    char sockaddr[sockaddr_len];
+    int res = getpeername(sock->real_fd, (void *) sockaddr, &sockaddr_len);
+    if (res < 0)
+        return errno_map();
+
+    int err = sockaddr_write(sockaddr_addr, sockaddr, sockaddr_len);
+    if (err < 0)
+        return err;
+    if (user_put(sockaddr_len_addr, sockaddr_len))
+        return _EFAULT;
+    return res;
+}
+
 dword_t sys_socketpair(dword_t domain, dword_t type, dword_t protocol, addr_t sockets_addr) {
     STRACE("socketpair(%d, %d, %d, 0x%x)", domain, type, protocol, sockets_addr);
     int real_domain = sock_family_to_real(domain);
@@ -247,10 +269,39 @@ dword_t sys_setsockopt(fd_t sock_fd, dword_t level, dword_t option, addr_t value
     int real_opt = sock_opt_to_real(option);
     if (real_opt < 0)
         return _EINVAL;
+    int real_level = sock_level_to_real(level);
+    if (real_level < 0)
+        return _EINVAL;
 
-    int err = setsockopt(sock->real_fd, level, real_opt, value, value_len);
+    int err = setsockopt(sock->real_fd, real_level, real_opt, value, value_len);
     if (err < 0)
         return errno_map();
+    return 0;
+}
+
+dword_t sys_getsockopt(fd_t sock_fd, dword_t level, dword_t option, addr_t value_addr, dword_t len_addr) {
+    STRACE("getsockopt(%d, %d, %d, 0x%x, %d)", sock_fd, level, option, value_addr, len_addr);
+    struct fd *sock = sock_getfd(sock_fd);
+    if (sock == NULL)
+        return _EBADF;
+    dword_t value_len;
+    if (user_get(len_addr, value_len))
+        return _EFAULT;
+    char value[value_len];
+    if (user_read(value_addr, value, value_len))
+        return _EFAULT;
+    int real_opt = sock_opt_to_real(option);
+    if (real_opt < 0)
+        return _EINVAL;
+    int real_level = sock_level_to_real(level);
+    if (real_level < 0)
+        return _EINVAL;
+
+    int err = getsockopt(sock->real_fd, real_level, real_opt, value, &value_len);
+    if (err < 0)
+        return errno_map();
+    if (user_put(len_addr, value_len))
+        return _EFAULT;
     return 0;
 }
 
@@ -271,7 +322,7 @@ static struct socket_call {
     {NULL, 0}, // listen
     {NULL, 0}, // accept
     {(syscall_t) sys_getsockname, 3}, // getsockname
-    {NULL, 0}, // getpeername
+    {(syscall_t) sys_getpeername, 3}, // getpeername
     {(syscall_t) sys_socketpair, 4}, // socketpair
     {NULL, 0}, // send
     {NULL, 0}, // recv
@@ -279,7 +330,7 @@ static struct socket_call {
     {(syscall_t) sys_recvfrom, 6}, // recvfrom
     {(syscall_t) sys_shutdown, 2}, // shutdown
     {(syscall_t) sys_setsockopt, 5}, // setsockopt
-    {NULL, 0}, // getsockopt
+    {(syscall_t) sys_getsockopt, 5}, // getsockopt
     {NULL, 0}, // sendmsg
     {NULL, 0}, // recvmsg
     {NULL, 0}, // accept4

@@ -2,6 +2,7 @@
 #define SYS_SOCK_H
 
 #include <sys/socket.h>
+#include <netinet/in.h>
 #include <netinet/tcp.h>
 #include "kernel/errno.h"
 #include "misc.h"
@@ -68,12 +69,29 @@ static inline int sock_flags_to_real(int fake) {
 }
 
 #define TCP_NODELAY_ 1
+#define SO_ERROR_ 4
+#define SO_BROADCAST_ 6
 #define SO_KEEPALIVE_ 9
-
 static inline int sock_opt_to_real(int fake) {
     switch (fake) {
         case TCP_NODELAY_: return TCP_NODELAY;
+        case SO_ERROR_: return SO_ERROR;
+        case SO_BROADCAST_: return SO_BROADCAST;
         case SO_KEEPALIVE_: return SO_KEEPALIVE;
+    }
+    return -1;
+}
+
+#define SOL_SOCKET_ 1
+#define IPPROTO_TCP_ 6
+#define TCP_NODELAY_ 1
+#define SO_ERROR_ 4
+#define SO_BROADCAST_ 6
+#define SO_KEEPALIVE_ 9
+static inline int sock_level_to_real(int fake) {
+    switch (fake) {
+        case SOL_SOCKET_: return SOL_SOCKET;
+        case IPPROTO_TCP_: return IPPROTO_TCP;
     }
     return -1;
 }
