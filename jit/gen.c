@@ -312,7 +312,7 @@ static inline bool gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define REPNZ(op, z) strop(op, repnz, z)
 
 #define CMPXCHG(src, dst,z) load(src, z); op(cmpxchg, dst, z)
-#define XADD(src, dst,z) UNDEFINED
+#define XADD(src, dst,z) XCHG(src, dst,z); ADD(src, dst,z)
 
 #define RDTSC g(rdtsc)
 #define CPUID() g(cpuid)
