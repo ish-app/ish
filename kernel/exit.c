@@ -1,6 +1,7 @@
 #include <pthread.h>
 #include <signal.h>
 #include "kernel/calls.h"
+#include "kernel/futex.h"
 #include "fs/fd.h"
 
 static void halt_system(int status);
@@ -15,6 +16,13 @@ static bool exit_tgroup(struct task *task) {
 }
 
 noreturn void do_exit(int status) {
+    // has to happen before mem_release
+    if (current->clear_tid) {
+        pid_t_ zero = 0;
+        if (!user_put(current->clear_tid, zero))
+            futex_wake(current->clear_tid, 1);
+    }
+    
     // release all our resources
     mem_release(current->cpu.mem);
     fdtable_release(current->files);
