@@ -63,6 +63,8 @@ struct task *task_create_(struct task *parent) {
     if (parent != NULL) {
         task->parent = parent;
         list_add(&parent->children, &task->siblings);
+        list_add(&parent->pgroup, &task->pgroup);
+        list_add(&parent->session, &task->session);
     }
 
     lock_init(&task->vfork_lock);
