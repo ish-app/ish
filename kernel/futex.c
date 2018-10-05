@@ -100,7 +100,6 @@ int futex_wake(addr_t uaddr, dword_t val) {
 dword_t sys_futex(addr_t uaddr, dword_t op, dword_t val) {
     if (!(op & FUTEX_PRIVATE_FLAG_)) {
         FIXME("no support for shared futexes");
-        return _ENOSYS;
     }
     switch (op & FUTEX_CMD_MASK_) {
         case FUTEX_WAIT_:
