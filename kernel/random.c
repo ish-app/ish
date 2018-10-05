@@ -12,7 +12,7 @@ dword_t sys_getrandom(addr_t buf_addr, dword_t len, dword_t flags) {
     close(dev_random);
     if (err < 0)
         return _EIO;
-    if (user_put(buf_addr, buf))
+    if (user_write(buf_addr, buf, len))
         return _EFAULT;
     return len;
 }
