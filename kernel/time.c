@@ -13,6 +13,7 @@ dword_t sys_time(addr_t time_out) {
 }
 
 dword_t sys_clock_gettime(dword_t clock, addr_t tp) {
+    STRACE("clock_gettime(%d, 0x%x)", clock, tp);
     clockid_t clock_id;
     switch (clock) {
         case CLOCK_REALTIME_: clock_id = CLOCK_REALTIME; break;
