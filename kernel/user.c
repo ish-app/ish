@@ -4,7 +4,7 @@ int user_read_task(struct task *task, addr_t addr, void *buf, size_t count) {
     char *cbuf = (char *) buf;
     size_t i = 0;
     while (i < count) {
-        char *ptr = mem_ptr(task->cpu.mem, addr + i, MEM_READ);
+        char *ptr = mem_ptr(task->mem, addr + i, MEM_READ);
         if (ptr == NULL)
             return 1;
         cbuf[i++] = *ptr;
@@ -20,7 +20,7 @@ int user_write_task(struct task *task, addr_t addr, const void *buf, size_t coun
     const char *cbuf = (const char *) buf;
     size_t i = 0;
     while (i < count) {
-        char *ptr = mem_ptr(task->cpu.mem, addr + i, MEM_WRITE);
+        char *ptr = mem_ptr(task->mem, addr + i, MEM_WRITE);
         if (ptr == NULL)
             return 1;
         *ptr = cbuf[i++];

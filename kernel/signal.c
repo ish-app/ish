@@ -76,7 +76,7 @@ static void receive_signal(struct sighand *sighand, int sig) {
         fprintf(stderr, "sigreturn not found in vdso, this should never happen\n");
         abort();
     }
-    frame.pretcode = current->vdso + sigreturn_addr;
+    frame.pretcode = current->mem->vdso + sigreturn_addr;
     // for legacy purposes
     frame.retcode.popmov = 0xb858;
     frame.retcode.nr_sigreturn = 173; // rt_sigreturn

@@ -42,7 +42,7 @@ void create_first_process() {
     signal(SIGPIPE, SIG_IGN);
 
     current = task_create_(NULL);
-    current->cpu.mem = mem_new();
+    current->mem = current->cpu.mem = mem_new();
     struct tgroup *group = init_tgroup();
     list_add(&group->threads, &current->group_links);
     group->leader = current;

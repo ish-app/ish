@@ -51,12 +51,12 @@ static int copy_task(struct task *task, dword_t flags, addr_t stack, addr_t ptid
         task->cpu.esp = stack;
 
     int err;
-    struct mem *mem = task->cpu.mem;
+    struct mem *mem = task->mem;
     if (flags & CLONE_VM_) {
         mem_retain(mem);
     } else {
-        task->cpu.mem = mem_new();
-        pt_copy_on_write(mem, 0, task->cpu.mem, 0, MEM_PAGES);
+        task->mem = task->cpu.mem = mem_new();
+        pt_copy_on_write(mem, 0, task->mem, 0, MEM_PAGES);
     }
 
     if (flags & CLONE_FILES_) {
@@ -122,7 +122,7 @@ fail_free_fs:
 fail_free_files:
     fdtable_release(task->files);
 fail_free_mem:
-    mem_release(task->cpu.mem);
+    mem_release(task->mem);
     return err;
 }
 

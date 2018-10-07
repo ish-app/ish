@@ -21,7 +21,7 @@ static void __attribute__((constructor)) init_futex_hash() {
 
 // returns the futex for the current process at the given addr, and locks it
 static struct futex *futex_get(addr_t addr) {
-    int hash = (addr ^ (unsigned long) current->cpu.mem) % FUTEX_HASH_SIZE;
+    int hash = (addr ^ (unsigned long) current->mem) % FUTEX_HASH_SIZE;
     lock(&futex_hash_lock);
     struct list *bucket = &futex_hash[hash];
     struct futex *futex;
@@ -31,12 +31,12 @@ static struct futex *futex_get(addr_t addr) {
             goto have_futex;
         }
     }
-    
+
     futex = malloc(sizeof(struct futex));
     if (futex == NULL)
         return NULL;
     futex->refcount = 0;
-    futex->mem = current->cpu.mem;
+    futex->mem = current->mem;
     futex->addr = addr;
     lock_init(&futex->lock);
     pthread_cond_init(&futex->cond, NULL);

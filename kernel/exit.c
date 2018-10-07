@@ -17,14 +17,15 @@ static bool exit_tgroup(struct task *task) {
 
 noreturn void do_exit(int status) {
     // has to happen before mem_release
-    if (current->clear_tid) {
+    addr_t clear_tid = current->clear_tid;
+    if (clear_tid) {
         pid_t_ zero = 0;
-        if (!user_put(current->clear_tid, zero))
-            futex_wake(current->clear_tid, 1);
+        if (user_put(clear_tid, zero) == 0)
+            futex_wake(clear_tid, 1);
     }
-    
+
     // release all our resources
-    mem_release(current->cpu.mem);
+    mem_release(current->mem);
     fdtable_release(current->files);
     fs_info_release(current->fs);
     sighand_release(current->sighand);

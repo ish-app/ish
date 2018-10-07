@@ -13,6 +13,7 @@
 // locking, unless otherwise specified
 struct task {
     struct cpu_state cpu;
+    struct mem *mem;
     pthread_t thread;
 
     struct tgroup *group; // immutable
@@ -20,12 +21,6 @@ struct task {
     pid_t_ pid, tgid; // immutable
     uid_t_ uid, gid;
     uid_t_ euid, egid;
-
-    // TODO move into mem
-    addr_t vdso;
-    addr_t start_brk;
-    addr_t brk;
-    addr_t clear_tid;
 
     struct fdtable *files;
     struct fs_info *fs;
@@ -43,6 +38,8 @@ struct task {
     struct list session;
     struct list pgroup;
 
+    addr_t clear_tid;
+
     // locked by parent's thread group
     dword_t exit_code;
     bool zombie;
@@ -56,7 +53,6 @@ struct task {
 // current will always give the process that is currently executing
 // if I have to stop using __thread, current will become a macro
 extern __thread struct task *current;
-#define curmem current->cpu.mem
 
 // Creates a new process, initializes most fields from the parent. Specify
 // parent as NULL to create the init process. Returns NULL if out of memory.

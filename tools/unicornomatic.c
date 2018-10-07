@@ -323,7 +323,7 @@ static void uc_interrupt_callback(uc_engine *uc, uint32_t interrupt, void *user_
 }
 
 static bool uc_unmapped_callback(uc_engine *uc, uc_mem_type type, uint64_t address, int size, int64_t value, void *user_data) {
-    struct pt_entry *pt = &current->cpu.mem->pt[PAGE(address)];
+    struct pt_entry *pt = &current->mem->pt[PAGE(address)];
     // handle stack growing
     if (pt->flags & P_GROWSDOWN) {
         uc_map(uc, BYTES_ROUND_DOWN(address), PAGE_SIZE);
@@ -434,7 +434,7 @@ int main(int argc, char *const argv[]) {
     }
 
     // create a unicorn and set it up exactly the same as the current process
-    uc_engine *uc = start_unicorn(&current->cpu, current->cpu.mem);
+    uc_engine *uc = start_unicorn(&current->cpu, current->mem);
 
     struct cpu_state *cpu = &current->cpu;
     struct tlb *tlb = tlb_new(cpu->mem);
