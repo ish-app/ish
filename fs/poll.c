@@ -135,8 +135,7 @@ int poll_wait(struct poll *poll_, struct poll_event *event, int timeout) {
                     event->fd = poll_fd->fd;
                     // TODO translate flags
                     event->types = pollfds[i].revents;
-                    unlock(&poll_->lock);
-                    return 1;
+                    goto finished_poll;
                 }
                 i++;
             }
@@ -148,6 +147,7 @@ int poll_wait(struct poll *poll_, struct poll_event *event, int timeout) {
         poll_->notify_pipe[1] = -1;
     }
 
+finished_poll:
     if (poll_->notify_pipe[0] != -1)
         close(poll_->notify_pipe[0]);
     if (poll_->notify_pipe[1] != -1)
