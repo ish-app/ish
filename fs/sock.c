@@ -227,23 +227,29 @@ dword_t sys_recvfrom(fd_t sock_fd, addr_t buffer_addr, dword_t len, dword_t flag
     int real_flags = sock_flags_to_real(flags);
     if (real_flags < 0)
         return _EINVAL;
-    dword_t sockaddr_len;
-    if (user_get(sockaddr_len_addr, sockaddr_len))
-        return _EFAULT;
+    dword_t sockaddr_len = 0;
+    if (sockaddr_len_addr != 0)
+        if (user_get(sockaddr_len_addr, sockaddr_len))
+            return _EFAULT;
 
     char buffer[len];
     char sockaddr[sockaddr_len];
-    ssize_t res = recvfrom(sock->real_fd, buffer, len, real_flags, (void *) sockaddr, &sockaddr_len);
+    ssize_t res = recvfrom(sock->real_fd, buffer, len, real_flags,
+            sockaddr_addr != 0 ? (void *) sockaddr : NULL,
+            sockaddr_len_addr != 0 ? &sockaddr_len : NULL);
     if (res < 0)
         return errno_map();
 
     if (user_write(buffer_addr, buffer, len))
         return _EFAULT;
-    int err = sockaddr_write(sockaddr_addr, sockaddr, sockaddr_len);
-    if (err < 0)
-        return err;
-    if (user_put(sockaddr_len_addr, sockaddr_len))
-        return _EFAULT;
+    if (sockaddr_addr != 0) {
+        int err = sockaddr_write(sockaddr_addr, sockaddr, sockaddr_len);
+        if (err < 0)
+            return err;
+    }
+    if (sockaddr_len_addr != 0)
+        if (user_put(sockaddr_len_addr, sockaddr_len))
+            return _EFAULT;
     return res;
 }
 
