@@ -376,7 +376,3 @@ static inline bool gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define OP_SIZE 16
 #include "emu/decode.h"
 #undef OP_SIZE
-
-void do_the_cpuid(dword_t *a, dword_t *b, dword_t *c, dword_t *d) {
-    do_cpuid(a, b, c, d);
-}
