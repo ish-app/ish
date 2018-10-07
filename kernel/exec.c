@@ -159,7 +159,7 @@ static int elf_exec(struct fd *fd, const char *file, char *const argv[], char *c
     // killed before it even starts. please don't be too sad about it, it's
     // just a process.
     mem_release(current->mem);
-    current->mem = current->mem = mem_new();
+    current->mem = current->cpu.mem = mem_new();
     write_wrlock(&current->mem->lock);
 
     addr_t load_addr; // used for AX_PHDR
