@@ -85,6 +85,7 @@ NAME(si_gadgets):
 .endr
 
 segfault:
+    str _addr, [_cpu, CPU_segfault_addr]
     ldr eip, [_ip]
     mov x0, INT_GPF
     b jit_exit

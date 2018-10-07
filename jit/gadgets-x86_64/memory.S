@@ -77,6 +77,7 @@
 .endr
 
 segfault:
+    movl %_addr, CPU_segfault_addr(%_cpu)
     movl (%_ip), %_eip
     movl $INT_GPF, %_tmp
     jmp jit_exit
