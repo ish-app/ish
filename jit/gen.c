@@ -339,8 +339,8 @@ static inline bool gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define FUCOM() hh(fpu_ucom, st_i)
 #define FUCOMI() UNDEFINED
 #define FST() hh(fpu_st, st_i)
-#define FCHS() UNDEFINED
-#define FABS() UNDEFINED
+#define FCHS() h(fpu_chs)
+#define FABS() h(fpu_abs)
 #define FLDC(what) hh(fpu_ldc, fconst_##what)
 #define FPREM() h(fpu_prem)
 #define FSTSW(dst) if (arg_##dst == arg_reg_a) g(fstsw_ax); else UNDEFINED

@@ -93,6 +93,14 @@ void fpu_ucom(struct cpu_state *cpu, int i) {
         cpu->c0 = cpu->c2 = cpu->c3 = 1;
 }
 
+void fpu_abs(struct cpu_state *cpu) {
+    ST(0) = f80_abs(ST(0));
+}
+
+void fpu_chs(struct cpu_state *cpu) {
+    ST(0) = f80_neg(ST(0));
+}
+
 void fpu_add(struct cpu_state *cpu, int srci, int dsti) {
     ST(dsti) = f80_add(ST(srci), ST(dsti));
 }

@@ -30,6 +30,8 @@ void fpu_ldm80(struct cpu_state *cpu, float80 *f);
 
 void fpu_prem(struct cpu_state *cpu);
 void fpu_ucom(struct cpu_state *cpu, int i);
+void fpu_abs(struct cpu_state *cpu);
+void fpu_chs(struct cpu_state *cpu);
 
 void fpu_add(struct cpu_state *cpu, int srci, int dsti);
 void fpu_sub(struct cpu_state *cpu, int srci, int dsti);
