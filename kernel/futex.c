@@ -84,7 +84,7 @@ int futex_wake(addr_t uaddr, dword_t val) {
     struct futex *futex = futex_get(uaddr);
     if (val == 1)
         pthread_cond_signal(&futex->cond);
-    else if (val != 0x7fffffff)
+    else if (val == 0x7fffffff)
         pthread_cond_broadcast(&futex->cond);
     else
         TODO("invalid number of futex wakes %d", val);
