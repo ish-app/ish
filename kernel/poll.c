@@ -80,31 +80,57 @@ dword_t sys_select(fd_t nfds, addr_t readfds_addr, addr_t writefds_addr, addr_t 
 
 dword_t sys_poll(addr_t fds, dword_t nfds, dword_t timeout) {
     STRACE("poll(0x%x, %d, %d)", fds, nfds, timeout);
-    struct pollfd_ fake_polls[nfds];
+    struct pollfd_ polls[nfds];
     if (fds != 0 || nfds != 0)
-        if (user_read(fds, fake_polls, sizeof(struct pollfd_) * nfds))
+        if (user_read(fds, polls, sizeof(struct pollfd_) * nfds))
             return _EFAULT;
     struct poll *poll = poll_create();
     if (poll == NULL)
         return _ENOMEM;
+
+    // check for bad file descriptors
+    // also clear revents, which is reused to mark whether a pollfd has been added or not
     for (int i = 0; i < nfds; i++) {
-        if (fake_polls[i].fd < 0)
-            continue;
-        // TODO think about not adding duplicates
-        poll_add_fd(poll, f_get(fake_polls[i].fd), fake_polls[i].events);
+        if (polls[i].fd >= 0 && f_get(polls[i].fd) == NULL)
+            return _EBADF;
+        polls[i].revents = 0;
     }
+
+    // convert polls array into poll_add_fd calls
+    // FIXME this is quadratic
+    for (int i = 0; i < nfds; i++) {
+        if (polls[i].fd < 0 || polls[i].revents)
+            continue;
+
+        // if the same fd is listed more than once, merge the events bits together
+        int events = polls[i].events;
+        struct fd *fd = f_get(polls[i].fd);
+        polls[i].revents = 1;
+        for (int j = 0; j < nfds; j++) {
+            if (polls[j].revents)
+                continue;
+            if (fd == f_get(polls[j].fd)) {
+                events |= polls[j].events;
+                polls[j].revents = 1;
+            }
+        }
+
+        poll_add_fd(poll, f_get(polls[i].fd), events);
+    }
+
     struct poll_event event;
     int err = poll_wait(poll, &event, timeout);
     poll_destroy(poll);
     if (err < 0)
         return err;
+
     for (int i = 0; i < nfds; i++) {
-        fake_polls[i].revents = 0;
-        if (f_get(fake_polls[i].fd) == event.fd)
-            fake_polls[i].revents = event.types;
+        polls[i].revents = 0;
+        if (f_get(polls[i].fd) == event.fd)
+            polls[i].revents = polls[i].events & event.types;
     }
     if (fds != 0 || nfds != 0)
-        if (user_write(fds, fake_polls, sizeof(struct pollfd_) * nfds))
+        if (user_write(fds, polls, sizeof(struct pollfd_) * nfds))
             return _EFAULT;
     return err;
 }
