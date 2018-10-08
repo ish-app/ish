@@ -211,12 +211,11 @@ dword_t sys_sendto(fd_t sock_fd, addr_t buffer_addr, dword_t len, dword_t flags,
             return err;
     }
 
-
-    int err = sendto(sock->real_fd, buffer, len, real_flags,
+    ssize_t res = sendto(sock->real_fd, buffer, len, real_flags,
             sockaddr_addr ? (void *) sockaddr : NULL, sockaddr_len);
-    if (err < 0)
+    if (res < 0)
         return errno_map();
-    return 0;
+    return res;
 }
 
 dword_t sys_recvfrom(fd_t sock_fd, addr_t buffer_addr, dword_t len, dword_t flags, addr_t sockaddr_addr, addr_t sockaddr_len_addr) {
