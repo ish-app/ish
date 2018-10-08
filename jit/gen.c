@@ -126,7 +126,7 @@ typedef void (*gadget_t)();
 #define hhh(h, a, b) gggg(helper_2, h, a, b)
 #define h_read(h, z) do { g_addr(); gg_here(helper_read##z, h##z); } while (0)
 #define h_write(h, z) do { g_addr(); gg_here(helper_write##z, h##z); } while (0)
-#define gg_here(g, a) ggg(g, a, state->ip)
+#define gg_here(g, a) ggg(g, a, saved_ip)
 #define UNDEFINED do { gg_here(interrupt, INT_UNDEFINED); return false; } while (0)
 #define SEGFAULT do { gg_here(interrupt, INT_GPF); return false; } while (0)
 
@@ -139,7 +139,7 @@ static inline int sz(int size) {
     }
 }
 
-bool gen_addr(struct gen_state *state, struct modrm *modrm, bool seg_gs) {
+bool gen_addr(struct gen_state *state, struct modrm *modrm, bool seg_gs, dword_t saved_ip) {
     if (modrm->base == reg_none)
         gg(addr_none, modrm->offset);
     else
@@ -150,7 +150,7 @@ bool gen_addr(struct gen_state *state, struct modrm *modrm, bool seg_gs) {
         g(seg_gs);
     return true;
 }
-#define g_addr() gen_addr(state, &modrm, seg_gs)
+#define g_addr() gen_addr(state, &modrm, seg_gs, saved_ip)
 
 // this really wants to use all the locals of the decoder, which we can do
 // really nicely in gcc using nested functions, but that won't work in clang,
@@ -185,7 +185,7 @@ static inline bool gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
         UNDEFINED;
     }
     if (arg == arg_mem || arg == arg_addr) {
-        if (!gen_addr(state, modrm, seg_gs))
+        if (!gen_addr(state, modrm, seg_gs, saved_ip))
             return false;
     }
     GEN(gadgets[arg]);
@@ -244,7 +244,7 @@ static inline bool gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define CALL(loc) load(loc, OP_SIZE); ggg(call_indir, saved_ip, fake_ip); end_block = true
 #define CALL_REL(off) gggg(call, saved_ip, fake_ip + off, fake_ip); jump_ips(-2, 0); end_block = true
 #define RET_NEAR(imm) ggg(ret, saved_ip, 4 + imm); end_block = true
-#define INT(code) gg_here(interrupt, (uint8_t) code); end_block = true
+#define INT(code) ggg(interrupt, (uint8_t) code, state->ip); end_block = true
 
 #define SET(cc, dst) ga(set, cond_##cc); store(dst, 8)
 #define SETN(cc, dst) ga(setn, cond_##cc); store(dst, 8)
