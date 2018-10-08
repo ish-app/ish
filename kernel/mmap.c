@@ -91,7 +91,7 @@ addr_t sys_brk(addr_t new_brk) {
     STRACE("brk(0x%x)", new_brk);
     struct mem *mem = current->mem;
 
-    if (new_brk < mem->start_brk)
+    if (new_brk != 0 && new_brk < mem->start_brk)
         return _EINVAL;
     write_wrlock(&mem->lock);
     addr_t old_brk = mem->brk;
