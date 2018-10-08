@@ -36,8 +36,6 @@ void fpu_ldc(struct cpu_state *cpu, enum fpu_const c) {
 }
 
 void fpu_ild32(struct cpu_state *cpu, int32_t *i) {
-    float80 conv =f80_from_int(*i);
-    println("fildl %d -> %Lf", *i, *(long double *)&conv);
     fpush(f80_from_int(*i));
 }
 void fpu_ild64(struct cpu_state *cpu, int64_t *i) {
