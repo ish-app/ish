@@ -21,6 +21,7 @@ struct task {
     pid_t_ pid, tgid; // immutable
     uid_t_ uid, gid;
     uid_t_ euid, egid;
+    uid_t_ suid, sgid;
 
     struct fdtable *files;
     struct fs_info *fs;

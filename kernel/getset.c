@@ -48,6 +48,17 @@ dword_t sys_geteuid() {
     return current->euid & 0xffff;
 }
 
+dword_t sys_setresuid(uid_t_ ruid, uid_t_ euid, uid_t_ suid) {
+    STRACE("setresuid(%d, %d, %d)", ruid, euid, suid);
+    if (ruid != -1)
+        current->uid = ruid;
+    if (euid != -1)
+        current->euid = euid;
+    if (suid != -1)
+        current->suid = suid;
+    return 0;
+}
+
 dword_t sys_getgid32() {
     STRACE("getgid32()");
     return current->gid;
@@ -64,5 +75,16 @@ dword_t sys_getegid32() {
 dword_t sys_getegid() {
     STRACE("getegid()");
     return current->egid & 0xffff;
+}
+
+dword_t sys_setresgid(uid_t_ rgid, uid_t_ egid, uid_t_ sgid) {
+    STRACE("setresgid(%d, %d, %d)", rgid, egid, sgid);
+    if (rgid != -1)
+        current->gid = rgid;
+    if (egid != -1)
+        current->egid = egid;
+    if (sgid != -1)
+        current->sgid = sgid;
+    return 0;
 }
 
