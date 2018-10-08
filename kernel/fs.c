@@ -178,10 +178,11 @@ dword_t sys_readv(fd_t fd_no, addr_t iovec_addr, dword_t iovec_count) {
 }
 
 dword_t sys_write(fd_t fd_no, addr_t buf_addr, dword_t size) {
-    STRACE("write(%d, 0x%x, %d)", fd_no, buf_addr, size);
     char buf[size+1];
     if (user_read(buf_addr, buf, size))
         return _EFAULT;
+    buf[size] = '\0';
+    STRACE("write(%d, \"%s\", %d)", fd_no, buf, size);
     struct fd *fd = f_get(fd_no);
     if (fd == NULL)
         return _EBADF;
