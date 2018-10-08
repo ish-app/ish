@@ -43,7 +43,6 @@
     jmp jit_ret_chain
 
 #define COND_LIST o,c,z,cz,s,p,sxo,sxoz
-#define IMPLEMENTED_CONDS c,z,cz,s,p,sxo,sxoz
 
 .macro check_res
     cmpl DOLLAR(0), CPU_res(%_cpu)
@@ -67,6 +66,8 @@
 .macro do_jump cond, target
     # please tell me if you know a better way
     .ifc \cond,o
+        cmpb DOLLAR(0), CPU_cf(%_cpu)
+        jnz \target
     .else; .ifc \cond,c
         check_cf
         jnz \target
@@ -94,7 +95,7 @@
     .endif; .endif; .endif; .endif; .endif; .endif; .endif; .endif
 .endm
 
-.irp cond, IMPLEMENTED_CONDS
+.irp cond, COND_LIST
     .gadget jmp_\cond
         do_jump \cond, 1f
         movq 8(%_ip), %_ip
