@@ -42,6 +42,8 @@ static struct fd *realfs_open(struct mount *mount, const char *path, int flags, 
     if (flags & O_WRONLY_) real_flags |= O_WRONLY;
     if (flags & O_RDWR_) real_flags |= O_RDWR;
     if (flags & O_CREAT_) real_flags |= O_CREAT;
+    if (flags & O_APPEND_) real_flags |= O_APPEND;
+    if (flags & O_TRUNC_) real_flags |= O_TRUNC;
     int fd_no = openat(mount->root_fd, fix_path(path), real_flags, mode);
     if (fd_no < 0)
         return ERR_PTR(errno_map());

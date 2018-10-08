@@ -80,6 +80,8 @@ extern struct mount *mounts;
 #define O_WRONLY_ (1 << 0)
 #define O_RDWR_ (1 << 1)
 #define O_CREAT_ (1 << 6)
+#define O_TRUNC_ (1 << 9)
+#define O_APPEND_ (1 << 10)
 
 struct fs_ops {
     int (*mount)(struct mount *mount);
