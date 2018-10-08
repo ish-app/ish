@@ -272,7 +272,7 @@ static int fakefs_stat(struct mount *mount, const char *path, struct statbuf *fa
 static int fakefs_fstat(struct fd *fd, struct statbuf *fake_stat) {
     // this is truly sad, but there is no alternative
     char path[MAX_PATH];
-    int err = fd->ops->getpath(fd, path);
+    int err = fd->mount->fs->getpath(fd, path);
     if (err < 0)
         return err;
     return fakefs_stat(fd->mount, path, fake_stat, false);
@@ -306,7 +306,7 @@ static int fakefs_setattr(struct mount *mount, const char *path, struct attr att
 
 static int fakefs_fsetattr(struct fd *fd, struct attr attr) {
     char path[MAX_PATH];
-    int err = fd->ops->getpath(fd, path);
+    int err = fd->mount->fs->getpath(fd, path);
     if (err < 0)
         return err;
     return fakefs_setattr(fd->mount, path, attr);
@@ -423,12 +423,13 @@ const struct fs_ops fakefs = {
     .unlink = fakefs_unlink,
     .rename = fakefs_rename,
     .symlink = fakefs_symlink,
-    
+
     .stat = fakefs_stat,
     .fstat = fakefs_fstat,
     .flock = realfs_flock,
     .setattr = fakefs_setattr,
     .fsetattr = fakefs_fsetattr,
+    .getpath = realfs_getpath,
     .utime = realfs_utime,
 
     .mkdir = fakefs_mkdir,

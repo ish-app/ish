@@ -5,6 +5,7 @@
 #include "emu/memory.h"
 #include "util/list.h"
 #include "util/bits.h"
+#include "fs/stat.h"
 
 struct fd {
     atomic_uint refcount;
@@ -27,10 +28,8 @@ struct fd {
 
     // fs/inode data
     struct mount *mount;
-    union {
-        int real_fd;
-        struct statbuf *stat;
-    };
+    int real_fd;
+    struct statbuf stat; // for adhoc fs
 
     lock_t lock;
 };
@@ -69,9 +68,6 @@ struct fd_ops {
     ssize_t (*ioctl_size)(struct fd *fd, int cmd);
     // if ioctl_size returns non-zero, arg must point to ioctl_size valid bytes
     int (*ioctl)(struct fd *fd, int cmd, void *arg);
-
-    // Returns the path of the file descriptor, buf must be at least MAX_PATH
-    int (*getpath)(struct fd *fd, char *buf);
 
     int (*fsync)(struct fd *fd);
     int (*close)(struct fd *fd);

@@ -261,7 +261,7 @@ dword_t sys_getcwd(addr_t buf_addr, dword_t size) {
     lock(&current->fs->lock);
     struct fd *wd = current->fs->pwd;
     char pwd[MAX_PATH];
-    int err = wd->ops->getpath(wd, pwd);
+    int err = wd->mount->fs->getpath(wd, pwd);
     unlock(&current->fs->lock);
     if (err < 0)
         return err;

@@ -337,6 +337,7 @@ const struct fs_ops realfs = {
     .setattr = realfs_setattr,
     .fsetattr = realfs_fsetattr,
     .utime = realfs_utime,
+    .getpath = realfs_getpath,
     .flock = realfs_flock,
 
     .mkdir = realfs_mkdir,
@@ -348,7 +349,6 @@ const struct fd_ops realfs_fdops = {
     .readdir = realfs_readdir,
     .lseek = realfs_lseek,
     .mmap = realfs_mmap,
-    .getpath = realfs_getpath,
     .fsync = realfs_fsync,
     .close = realfs_close,
 };

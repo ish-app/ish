@@ -68,8 +68,8 @@ int create_stdio(struct tty_driver driver) {
 
     // FIXME use generic_open (or something) to avoid this mess
     struct fd *fd = adhoc_fd_create();
-    fd->stat->rdev = dev_make(4, 0);
-    fd->stat->mode = S_IFCHR | S_IRUSR;
+    fd->stat.rdev = dev_make(4, 0);
+    fd->stat.mode = S_IFCHR | S_IRUSR;
     int err = dev_open(4, 0, DEV_CHAR, fd);
     if (err < 0)
         return err;

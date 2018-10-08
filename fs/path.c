@@ -21,7 +21,7 @@ int path_normalize(struct fd *at, const char *path, char *out, bool follow_links
         unlock(&current->fs->lock);
         if (at != NULL) {
             char at_path[MAX_PATH];
-            int err = at->ops->getpath(at, at_path);
+            int err = at->mount->fs->getpath(at, at_path);
             if (err < 0)
                 return err;
             assert(path_is_normalized(at_path));
