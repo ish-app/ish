@@ -164,7 +164,7 @@ static void _mem_sync(struct tlb *tlb, uc_engine *uc, addr_t addr, dword_t size)
 #define mem_sync(addr, size) _mem_sync(tlb, uc, addr, size)
 void step_tracing(struct cpu_state *cpu, struct tlb *tlb, uc_engine *uc) {
     // step ish
-    addr_t old_brk = current->brk; // this is important
+    addr_t old_brk = current->mem->brk; // this is important
     int changes = cpu->mem->changes;
     int interrupt = cpu_step32(cpu, tlb);
     if (interrupt != INT_NONE) {
@@ -294,10 +294,10 @@ void step_tracing(struct cpu_state *cpu, struct tlb *tlb, uc_engine *uc) {
 
             case 45: // brk
                 // matches up with the login in kernel/mmap.c
-                if (current->brk > old_brk) {
-                    uc_map(uc, BYTES_ROUND_UP(old_brk), BYTES_ROUND_UP(current->brk) - BYTES_ROUND_UP(old_brk));
-                } else if (current->brk < old_brk) {
-                    uc_unmap(uc, BYTES_ROUND_DOWN(current->brk), BYTES_ROUND_DOWN(old_brk) - BYTES_ROUND_DOWN(current->brk));
+                if (current->mem->brk > old_brk) {
+                    uc_map(uc, BYTES_ROUND_UP(old_brk), BYTES_ROUND_UP(current->mem->brk) - BYTES_ROUND_UP(old_brk));
+                } else if (current->mem->brk < old_brk) {
+                    uc_unmap(uc, BYTES_ROUND_DOWN(current->mem->brk), BYTES_ROUND_DOWN(old_brk) - BYTES_ROUND_DOWN(current->mem->brk));
                 }
                 break;
 
