@@ -118,3 +118,23 @@ dword_t sys_getrusage(dword_t who, addr_t rusage_addr) {
         return _EFAULT;
     return 0;
 }
+
+dword_t sys_sched_getaffinity(pid_t_ pid, dword_t cpusetsize, addr_t cpuset_addr) {
+    if (pid != 0) {
+        lock(&pids_lock);
+        struct task *task = pid_get_task(pid);
+        unlock(&pids_lock);
+        if (task == NULL)
+            return _ESRCH;
+    }
+
+    int cpus = sysconf(_SC_NPROCESSORS_ONLN);
+    if (cpus > cpusetsize * 8)
+        cpus = cpusetsize * 8;
+    char cpuset[cpusetsize];
+    for (int i = 0; i < cpus; i++)
+        bit_set(i, cpuset);
+    if (user_write(cpuset_addr, cpuset, cpusetsize))
+        return _EFAULT;
+    return 0;
+}

@@ -59,4 +59,6 @@ void rusage_add(struct rusage_ *dst, struct rusage_ *src);
 #define RUSAGE_CHILDREN_ -1
 dword_t sys_getrusage(dword_t who, addr_t rusage_addr);
 
+dword_t sys_sched_getaffinity(pid_t_ pid, dword_t cpusetsize, addr_t cpuset_addr);
+
 #endif
