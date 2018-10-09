@@ -1,5 +1,4 @@
-Fixed programs: sleep, gcc, ed, vim, probably more I forgot about
-Fixed bugs: several crashes, echoing of control characters, pressing enter sometimes makes the app freeze, asking you for a password after you run apk upgrade, not displaying the status bar on iPhone X, and a few more things I think. Go read the commit log I guess.
+So many fixed programs, I can't remember all of them. It's kinda usable now, and guess what, ed works! I managed to download a tarball of TCC and build it from source.
 
 As always, let me know if it crashes spectacularly. The best place to send bug reports or feedback of any kind is the GitHub issues page: https://github.com/tbodt/ish/issues
 
