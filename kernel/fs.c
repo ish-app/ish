@@ -212,8 +212,10 @@ dword_t sys__llseek(fd_t f, dword_t off_high, dword_t off_low, addr_t res_addr, 
         return _EBADF;
     if (!fd->ops->lseek)
         return _ESPIPE;
+    lock(&fd->lock);
     off_t_ off = ((off_t_) off_high << 32) | off_low;
     off_t_ res = fd->ops->lseek(fd, off, whence);
+    unlock(&fd->lock);
     if (res < 0)
         return res;
     if (user_put(res_addr, res))
@@ -225,9 +227,29 @@ dword_t sys_lseek(fd_t f, dword_t off, dword_t whence) {
     struct fd *fd = f_get(f);
     if (fd == NULL)
         return _EBADF;
+    lock(&fd->lock);
     off_t res = fd->ops->lseek(fd, off, whence);
+    unlock(&fd->lock);
     if ((dword_t) res != res)
         return _EOVERFLOW;
+    return res;
+}
+
+dword_t sys_pread(fd_t f, addr_t buf_addr, dword_t size, off_t_ off) {
+    struct fd *fd = f_get(f);
+    if (fd == NULL)
+        return _EBADF;
+    char buf[size+1];
+    lock(&fd->lock);
+    sdword_t res = fd->ops->lseek(fd, off, LSEEK_SET);
+    if (res < 0)
+        goto out;
+    res = fd->ops->read(fd, buf, size);
+    if (res >= 0)
+        if (user_write(buf_addr, buf, res))
+            return _EFAULT;
+out:
+    unlock(&fd->lock);
     return res;
 }
 

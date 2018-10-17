@@ -76,6 +76,7 @@ syscall_t syscall_table[] = {
     [173] = (syscall_t) sys_rt_sigreturn,
     [174] = (syscall_t) sys_rt_sigaction,
     [175] = (syscall_t) sys_rt_sigprocmask,
+    [180] = (syscall_t) sys_pread,
     [183] = (syscall_t) sys_getcwd,
     [186] = (syscall_t) sys_sigaltstack,
     [187] = (syscall_t) sys_sendfile,

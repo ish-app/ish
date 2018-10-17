@@ -28,6 +28,7 @@ struct fd {
 
     // fs/inode data
     struct mount *mount;
+    // seeks on this fd require the lock
     int real_fd;
     struct statbuf stat; // for adhoc fs
 
