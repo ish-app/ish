@@ -335,9 +335,9 @@ static ssize_t file_readlink(struct mount *mount, const char *path, char *buf, s
     if (fd < 0)
         return errno_map();
     int err = read(fd, buf, bufsize);
+    close(fd);
     if (err < 0)
         return errno_map();
-    close(fd);
     return err;
 }
 
