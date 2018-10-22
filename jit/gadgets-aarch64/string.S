@@ -57,7 +57,7 @@
         .else N .ifc \op, scas
             mov _addr, edi
             read_prep \size, \op\size\()_\rep
-            ldr _tmp, [_xaddr]
+            ldr\s _tmp, [_xaddr]
             setf_a eax, _tmp
             subs _tmp, _tmp, eax
             setf_oc
@@ -66,10 +66,10 @@
         .else N .ifc \op, cmps
             mov _addr, esi
             read_prep \size, \op\size\()_\rep
-            ldr _tmp, [_xaddr]
+            ldr\s _tmp, [_xaddr]
             mov _addr, edi
             read_prep \size, \op\size\()_\rep\()2
-            ldr w8, [_xaddr]
+            ldr\s w8, [_xaddr]
             setf_a w8, _tmp
             subs _tmp, _tmp, w8
             setf_oc
