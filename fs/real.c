@@ -114,10 +114,14 @@ ssize_t realfs_write(struct fd *fd, const void *buf, size_t bufsize) {
 }
 
 int realfs_readdir(struct fd *fd, struct dir_entry *entry) {
-    if (fd->dir == NULL)
-        fd->dir = fdopendir(dup(fd->real_fd));
-    if (fd->dir == NULL)
-        return errno_map();
+    if (fd->dir == NULL) {
+        int dirfd = dup(fd->real_fd);
+        fd->dir = fdopendir(dirfd);
+        if (fd->dir == NULL) {
+            close(dirfd);
+            return errno_map();
+        }
+    }
     errno = 0;
     struct dirent *dirent = readdir(fd->dir);
     if (dirent == NULL) {
