@@ -157,14 +157,10 @@ crosspage_store_\id :
     push %r9
     push %r10
     push %r11
-#if __APPLE__
     sub DOLLAR(8), %rsp # 16 byte alignment is so annoying
-#endif
 .endm
 .macro restore_c
-#if __APPLE__
     add DOLLAR(8), %rsp
-#endif
     pop %r11
     pop %r10
     pop %r9
