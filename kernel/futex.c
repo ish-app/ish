@@ -11,7 +11,7 @@ struct futex {
 
 #define FUTEX_HASH_BITS 12
 #define FUTEX_HASH_SIZE (1 << FUTEX_HASH_BITS)
-static lock_t futex_hash_lock;
+static lock_t futex_hash_lock = LOCK_INITIALIZER;
 static struct list futex_hash[FUTEX_HASH_SIZE];
 
 static void __attribute__((constructor)) init_futex_hash() {
@@ -33,8 +33,10 @@ static struct futex *futex_get(addr_t addr) {
     }
 
     futex = malloc(sizeof(struct futex));
-    if (futex == NULL)
+    if (futex == NULL) {
+        unlock(&futex_hash_lock);
         return NULL;
+    }
     futex->refcount = 0;
     futex->mem = current->mem;
     futex->addr = addr;
