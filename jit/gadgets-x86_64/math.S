@@ -135,6 +135,77 @@
     .gadget_array \op
 .endr
 
+# same as above, but only atomics
+.macro _do_op_atomic op, arg, size, s, ss
+    .ifin(\op, and,or,xor)
+        clearf_a
+        clearf_oc
+    .endifin
+    .ifin(\op, adc,sbb)
+        btw $0, CPU_cf(%_cpu)
+    .endifin
+
+    mov\ss \arg, %r15\s
+    xchg %r15, %rax # cmpxchg uses rax as implicit operand
+    .ifc \op,xadd
+        push %tmp
+    .endif
+1:
+    mov %rax, %r14
+    .ifc \op,xadd
+        mov (%rsp), %tmp
+        xchg %tmp, %r14
+    .endif
+    .ifin(\op, add,sub,adc,sbb,xadd)
+        setf_a src=%tmp\s, dst=%r14\s, ss=\ss
+    .endifin
+    .ifin(\op, inc,dec)
+        setf_a src=$1, dst=%r14\s, ss=\ss
+    .endifin
+
+    .ifin(\op, add,sub,adc,sbb,and,or,xor)
+        \op\ss %tmp\s, %r14\s
+    .endifin
+    .ifc \op,xadd
+        add\ss %tmp\s, %r14\s
+    .endif
+    .ifin(\op, inc,dec)
+        \op\ss %r14\s
+    .endifin
+    lock cmpxchg\ss %r14\s, \arg
+    jnz 1b
+    mov %r15, %rax
+    .ifc \op,xadd
+        add $8, %rsp
+    .endif
+
+    .ifin(\op, add,sub,adc,sbb,xadd)
+        setf_oc
+    .endifin
+    .ifin(\op, inc,dec)
+        seto CPU_of(%_cpu)
+    .endifin
+    setf_zsp %r14\s, \ss
+.endm
+.macro do_op_atomic op, size, arg
+    ss \size, _do_op_atomic, \op, \arg
+.endm
+
+.macro do_op_size_atomic op, size
+    .gadget atomic_\op\size\()_mem
+        write_prep \size, atomic_\op\size\()_mem
+        do_op_atomic \op, \size, (%_addrq)
+        write_done \size, atomic_\op\size\()_mem
+        gret 1
+.endm
+
+.irp op, add,sub,adc,sbb,and,or,xor,inc,dec,xadd
+    .irp size, SIZE_LIST
+        do_op_size_atomic \op, \size
+    .endr
+    .gadget_array atomic_\op
+.endr
+
 # unary operations (well, only one explicit operand)
 
 .irp op, inc,dec

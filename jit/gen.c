@@ -318,17 +318,18 @@ static inline bool gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define CPUID() g(cpuid)
 
 // atomic
-#define ATOMIC_ADD ADD
-#define ATOMIC_OR OR
-#define ATOMIC_ADC ADC
-#define ATOMIC_SBB SBB
-#define ATOMIC_AND AND
-#define ATOMIC_SUB SUB
-#define ATOMIC_XOR XOR
-#define ATOMIC_INC INC
-#define ATOMIC_DEC DEC
-#define ATOMIC_CMPXCHG CMPXCHG
-#define ATOMIC_XADD XADD
+#define atomic_op(type, src, dst,z) load(src, z); op(atomic_##type, dst, z)
+#define ATOMIC_ADD(src, dst,z) atomic_op(add, src, dst, z)
+#define ATOMIC_OR(src, dst,z) atomic_op(or, src, dst, z)
+#define ATOMIC_ADC(src, dst,z) atomic_op(adc, src, dst, z)
+#define ATOMIC_SBB(src, dst,z) atomic_op(sbb, src, dst, z)
+#define ATOMIC_AND(src, dst,z) atomic_op(and, src, dst, z)
+#define ATOMIC_SUB(src, dst,z) atomic_op(sub, src, dst, z)
+#define ATOMIC_XOR(src, dst,z) atomic_op(xor, src, dst, z)
+#define ATOMIC_INC(val,z) op(atomic_inc, val, z)
+#define ATOMIC_DEC(val,z) op(atomic_dec, val, z)
+#define ATOMIC_CMPXCHG(src, dst,z) atomic_op(cmpxchg, src, dst, z)
+#define ATOMIC_XADD(src, dst,z) load(src, z); op(atomic_xadd, dst, z); store(src, z)
 
 // sse
 #define XORP(src, dst) UNDEFINED
