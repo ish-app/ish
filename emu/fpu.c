@@ -85,6 +85,12 @@ void fpu_prem(struct cpu_state *cpu) {
     ST(0) = f80_mod(ST(0), ST(1));
 }
 
+void fpu_rndint(struct cpu_state *cpu) {
+    if (f80_isinf(ST(0)) || f80_isnan(ST(0)))
+        return;
+    ST(0) = f80_from_int(f80_to_int(ST(0)));
+}
+
 void fpu_ucom(struct cpu_state *cpu, int i) {
     cpu->c1 = 0;
     cpu->c0 = f80_lt(ST(0), ST(i));

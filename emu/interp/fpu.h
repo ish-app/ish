@@ -76,6 +76,8 @@
 #define FPREM() \
     ST(0) = f80_mod(ST(0), ST(1))
 
+#define FRNDINT() UNDEFINED
+
 #define FUCOMI() \
     cpu->zf = f80_eq(ST(0), ST_i); \
     cpu->cf = f80_lt(ST(0), ST_i); \

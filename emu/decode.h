@@ -608,6 +608,7 @@ restart:
                     case 0xd950: TRACE("fld1"); FLDC(one); break;
                     case 0xd956: TRACE("fldz"); FLDC(zero); break;
                     case 0xd970: TRACE("fprem"); FPREM(); break;
+                    case 0xd974: TRACE("frndint"); FRNDINT(); break;
                     case 0xdf40: TRACE("fnstsw ax"); FSTSW(reg_a); break;
                     default: TRACE("undefined"); UNDEFINED;
                 }}
