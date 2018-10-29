@@ -599,6 +599,7 @@ restart:
                     case 0xde1: TRACE("fmulp st, st(i)"); FMUL(st_0, st_i); FPOP; break;
                     case 0xde4: TRACE("fsubrp st, st(i)"); FSUBR(st_0, st_i); FPOP; break;
                     case 0xde5: TRACE("fsubp st, st(i)"); FSUB(st_0, st_i); FPOP; break;
+                    case 0xde7: TRACE("fdivp st, st(i)"); FDIV(st_0, st_i); FPOP; break;
                     case 0xdf5: TRACE("fucomip st"); FUCOMI(); FPOP; break;
                     default: switch (insn << 8 | modrm.opcode << 4 | modrm.rm_opcode) {
                     case 0xd940: TRACE("fchs"); FCHS(); break;
