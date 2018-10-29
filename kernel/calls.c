@@ -121,6 +121,7 @@ syscall_t syscall_table[] = {
     [304] = (syscall_t) sys_symlinkat,
     [305] = (syscall_t) sys_readlinkat,
     [306] = (syscall_t) sys_fchmodat,
+    [307] = (syscall_t) sys_faccessat,
     [320] = (syscall_t) sys_utimensat,
     [324] = (syscall_t) sys_fallocate,
     [340] = (syscall_t) sys_prlimit,

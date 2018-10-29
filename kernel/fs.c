@@ -24,11 +24,18 @@ static void apply_umask(mode_t_ *mode) {
 // TODO ENAMETOOLONG
 
 dword_t sys_access(addr_t path_addr, dword_t mode) {
+    return sys_faccessat(AT_FDCWD_, path_addr, mode, 0);
+}
+// TODO: Something about flags
+dword_t sys_faccessat(fd_t at_f, addr_t path_addr, mode_t_ mode, dword_t flags) {
     char path[MAX_PATH];
     if (user_read_string(path_addr, path, sizeof(path)))
         return _EFAULT;
-    STRACE("access(\"%s\", 0x%x)", path, mode);
-    return generic_access(path, mode);
+    struct fd *at = at_fd(at_f);
+    if (at == NULL)
+        return _EBADF;
+    STRACE("faccessat(%d, \"%s\", 0x%x, %d)", at_f, path, mode, flags);
+    return generic_accessat(at, path, mode);
 }
 
 fd_t sys_openat(fd_t at_f, addr_t path_addr, dword_t flags, mode_t_ mode) {
