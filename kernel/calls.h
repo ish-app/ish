@@ -92,6 +92,7 @@ dword_t sys_renameat(fd_t src_at_f, addr_t src_addr, fd_t dst_at_f, addr_t dst_a
 dword_t sys_symlink(addr_t target_addr, addr_t link_addr);
 dword_t sys_symlinkat(addr_t target_addr, fd_t at_f, addr_t link_addr);
 dword_t sys_access(addr_t path_addr, dword_t mode);
+dword_t sys_faccessat(fd_t at_f, addr_t path, mode_t_ mode, dword_t flags);
 dword_t sys_readlink(addr_t path, addr_t buf, dword_t bufsize);
 dword_t sys_readlinkat(fd_t at_f, addr_t path, addr_t buf, dword_t bufsize);
 int_t sys_getdents64(fd_t f, addr_t dirents, dword_t count);

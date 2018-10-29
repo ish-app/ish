@@ -66,9 +66,9 @@ struct fd *generic_open(const char *path, int flags, int mode) {
     return generic_openat(AT_PWD, path, flags, mode);
 }
 
-int generic_access(const char *path_raw, int mode) {
+int generic_accessat(struct fd *dirfd, const char *path_raw, int mode) {
     char path[MAX_PATH];
-    int err = path_normalize(AT_PWD, path_raw, path, true);
+    int err = path_normalize(dirfd, path_raw, path, true);
     if (err < 0)
         return err;
 

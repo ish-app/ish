@@ -54,7 +54,7 @@ int generic_symlinkat(const char *target, struct fd *at, const char *link);
 #define AC_W 2
 #define AC_X 1
 #define AC_F 0
-int generic_access(const char *path, int mode);
+int generic_accessat(struct fd *dirfd, const char *path, int mode);
 int generic_statat(struct fd *at, const char *path, struct statbuf *stat, bool follow_links);
 int generic_setattrat(struct fd *at, const char *path, struct attr attr, bool follow_links);
 int generic_utime(struct fd *at, const char *path, struct timespec atime, struct timespec mtime, bool follow_links);
