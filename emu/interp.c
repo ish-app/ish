@@ -544,6 +544,18 @@ static bool modrm_compute(struct cpu_state *cpu, struct tlb *tlb, addr_t *addr_o
 #define CPUID() \
     do_cpuid(&cpu->eax, &cpu->ebx, &cpu->ecx, &cpu->edx)
 
+// atomic
+#define ATOMIC_ADD ADD
+#define ATOMIC_OR OR
+#define ATOMIC_ADC ADC
+#define ATOMIC_SBB SBB
+#define ATOMIC_AND AND
+#define ATOMIC_SUB SUB
+#define ATOMIC_XOR XOR
+#define ATOMIC_INC INC
+#define ATOMIC_DEC DEC
+#define ATOMIC_CMPXCHG CMPXCHG
+#define ATOMIC_XADD XADD
 #include "emu/interp/sse.h"
 #include "emu/interp/fpu.h"
 

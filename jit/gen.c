@@ -317,6 +317,19 @@ static inline bool gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define RDTSC g(rdtsc)
 #define CPUID() g(cpuid)
 
+// atomic
+#define ATOMIC_ADD ADD
+#define ATOMIC_OR OR
+#define ATOMIC_ADC ADC
+#define ATOMIC_SBB SBB
+#define ATOMIC_AND AND
+#define ATOMIC_SUB SUB
+#define ATOMIC_XOR XOR
+#define ATOMIC_INC INC
+#define ATOMIC_DEC DEC
+#define ATOMIC_CMPXCHG CMPXCHG
+#define ATOMIC_XADD XADD
+
 // sse
 #define XORP(src, dst) UNDEFINED
 #define PSRLQ(src, dst) UNDEFINED

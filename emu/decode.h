@@ -28,6 +28,7 @@ __no_instrument DECODER_RET glue(DECODER_NAME, OP_SIZE)(DECODER_ARGS) {
 #define READIMMoz READIMM // there's nothing more permanent than a temporary hack
 #define READIMM8 READIMM_(imm, 8); imm = (int8_t) (uint8_t) imm
 #define READIMM16 READIMM_(imm, 16)
+#define READMODRM_MEM READMODRM; if (modrm.type == modrm_reg) UNDEFINED
 
 restart:
     TRACEIP();
@@ -421,10 +422,7 @@ restart:
         case 0x8b: TRACEI("mov modrm, reg");
                    READMODRM; MOV(modrm_val, modrm_reg,oz); break;
 
-        case 0x8d: TRACEI("lea\t\t");
-                   READMODRM;
-                   if (modrm.type == modrm_reg)
-                       UNDEFINED;
+        case 0x8d: TRACEI("lea\t\t"); READMODRM_MEM;
                    MOV(addr, modrm_reg,oz); break;
 
         // only gs is supported, and it does nothing
@@ -625,7 +623,78 @@ restart:
         case 0xeb: TRACEI("jmp rel8\t");
                    READIMM8; JMP_REL(imm); break;
 
-        case 0xf0: TRACELN("lock (ignored for now)"); goto restart;
+        // lock
+        case 0xf0:
+            READINSN;
+            switch (insn) {
+
+#define MAKE_OP_ATOMIC(x, OP, op) \
+        case x+0x0: TRACEI("lock " op " reg8, modrm8"); \
+                   READMODRM_MEM; ATOMIC_##OP(modrm_reg, modrm_val,8); break; \
+        case x+0x1: TRACEI("lock " op " reg, modrm"); \
+                   READMODRM_MEM; ATOMIC_##OP(modrm_reg, modrm_val,oz); break; \
+
+                MAKE_OP_ATOMIC(0x00, ADD, "add");
+                MAKE_OP_ATOMIC(0x08, OR, "or");
+                MAKE_OP_ATOMIC(0x10, ADC, "adc");
+                MAKE_OP_ATOMIC(0x18, SBB, "sbb");
+                MAKE_OP_ATOMIC(0x20, AND, "and");
+                MAKE_OP_ATOMIC(0x28, SUB, "sub");
+                MAKE_OP_ATOMIC(0x30, XOR, "xor");
+
+#undef MAKE_OP_ATOMIC
+
+#define GRP1_ATOMIC(src, dst,z) \
+    switch (modrm.opcode) { \
+        case 0: TRACE("lock add"); ATOMIC_ADD(src, dst,z); break; \
+        case 1: TRACE("lock or");  ATOMIC_OR(src, dst,z); break; \
+        case 2: TRACE("lock adc"); ATOMIC_ADC(src, dst,z); break; \
+        case 3: TRACE("lock sbb"); ATOMIC_SBB(src, dst,z); break; \
+        case 4: TRACE("lock and"); ATOMIC_AND(src, dst,z); break; \
+        case 5: TRACE("lock sub"); ATOMIC_SUB(src, dst,z); break; \
+        case 6: TRACE("lock xor"); ATOMIC_XOR(src, dst,z); break; \
+        default: TRACE("undefined"); UNDEFINED; \
+    }
+
+                case 0x80: TRACEI("lock grp1 imm8, modrm8");
+                           READMODRM_MEM; READIMM8; GRP1_ATOMIC(imm, modrm_val,8); break;
+                case 0x81: TRACEI("lock grp1 imm, modrm");
+                           READMODRM_MEM; READIMM; GRP1_ATOMIC(imm, modrm_val,oz); break;
+                case 0x83: TRACEI("lock grp1 imm8, modrm");
+                           READMODRM_MEM; READIMM8; GRP1_ATOMIC(imm, modrm_val,oz); break;
+
+#undef GRP1_ATOMIC
+
+                case 0x0f:
+                    READINSN;
+                    switch (insn) {
+                        case 0xb1: TRACEI("lock cmpxchg reg, modrm");
+                                   READMODRM_MEM; ATOMIC_CMPXCHG(modrm_reg, modrm_val,oz); break;
+
+                        case 0xc0: TRACEI("lock xadd reg8, modrm8");
+                                   READMODRM_MEM; ATOMIC_XADD(modrm_reg, modrm_val,8); break;
+                        case 0xc1: TRACEI("lock xadd reg, modrm");
+                                   READMODRM_MEM; ATOMIC_XADD(modrm_reg, modrm_val,oz); break;
+                    }
+                    break;
+
+#define GRP5_ATOMIC(val,z) \
+    switch (modrm.opcode) { \
+        case 0: TRACE("lock inc"); ATOMIC_INC(val,z); break; \
+        case 1: TRACE("lock dec"); ATOMIC_DEC(val,z); break; \
+        default: TRACE("undefined"); UNDEFINED; \
+    }
+
+                case 0xfe: TRACEI("lock grp5 modrm8\t");
+                           READMODRM_MEM; GRP5_ATOMIC(modrm_val,8); break;
+                case 0xff: TRACEI("lock grp5 modrm\t");
+                           READMODRM_MEM; GRP5_ATOMIC(modrm_val,oz); break;
+
+#undef GRP5_ATOMIC
+
+                default: TRACE("undefined"); UNDEFINED;
+            }
+            break;
 
         case 0xf2:
             READINSN;
@@ -634,7 +703,7 @@ restart:
                     READINSN;
                     switch (insn) {
                         case 0x2c: TRACEI("cvttsd2si modrm64, reg32");
-                                   READMODRM; if (modrm.type == modrm_reg) UNDEFINED; // TODO xmm
+                                   READMODRM_MEM; // TODO xmm
                                    CVTTSD2SI(mem_addr_real, modrm_reg); break;
                         default: TRACE("undefined"); UNDEFINED;
                     }
