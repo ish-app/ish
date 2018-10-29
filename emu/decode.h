@@ -444,10 +444,11 @@ restart:
         case 0x98: TRACEI("cvte"); CVTE; break;
         case 0x99: TRACEI("cvt"); CVT; break;
 
-        case 0x9e: TRACEI("sahf\t\t"); SAHF; break;
+        case 0x9b: TRACEI("fwait (ignored)"); break;
 
         case 0x9c: TRACEI("pushf"); PUSHF(); break;
         case 0x9d: TRACEI("popf"); POPF(); break;
+        case 0x9e: TRACEI("sahf\t\t"); SAHF; break;
 
         case 0xa0: TRACEI("mov mem, al\t");
                    READADDR; MOV(mem_addr, reg_a,8); break;
