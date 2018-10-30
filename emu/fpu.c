@@ -86,6 +86,11 @@ void fpu_rndint(struct cpu_state *cpu) {
     ST(0) = f80_from_int(f80_to_int(ST(0)));
 }
 
+void fpu_yl2x(struct cpu_state *cpu) {
+    ST(1) = f80_mul(ST(1), f80_log2(ST(0)));
+    fpu_pop(cpu);
+}
+
 void fpu_ucom(struct cpu_state *cpu, int i) {
     cpu->c1 = 0;
     cpu->c0 = f80_lt(ST(0), ST(i));

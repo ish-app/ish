@@ -417,3 +417,39 @@ bool f80_eq(float80 a, float80 b) {
     if (f80_iszero(a)) b.sign = 0;
     return a.sign == b.sign && a.exp == b.exp && a.signif == b.signif;
 }
+
+bool f80_lte(float80 a, float80 b) {
+    return f80_lt(a, b) || f80_eq(a, b);
+}
+bool f80_gt(float80 a, float80 b) {
+    return !f80_lte(a, b);
+}
+
+float80 f80_log2(float80 x) {
+    float80 zero = f80_from_int(0);
+    float80 one = f80_from_int(1);
+    float80 two = f80_from_int(2);
+
+    int ipart = 0;
+    while (f80_lt(x, one)) {
+        ipart--;
+        x = f80_mul(x, two);
+    }
+    while (f80_gt(x, two)) {
+        ipart++;
+        x = f80_div(x, two);
+    }
+    float80 res = f80_from_int(ipart);
+
+    float80 bit = one;
+    while (f80_gt(bit, zero)) {
+        while (f80_lte(x, two) && f80_gt(bit, zero)) {
+            x = f80_mul(x, x);
+            bit = f80_div(bit, two);
+        }
+        res = f80_add(res, bit);
+        x = f80_div(x, two);
+    }
+    return res;
+}
+
