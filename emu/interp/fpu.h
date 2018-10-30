@@ -1,4 +1,5 @@
 #include "emu/float80.h"
+#include "emu/fpu.h"
 
 #define ty_real(x) ty_real_##x
 #define ty_real_32 float
@@ -96,7 +97,7 @@
 #define FLDM(val,z) \
     FPUSH(f80_from_float(get(val,z),z))
 
-#define FLDC(what) FPUSH(fconsts[fconst_##what])
+#define FLDC(what) FPUSH(fpu_consts[fconst_##what])
 
 #define FSTM(dst,z) \
     set(dst, f80_to_float(ST(0),z),z)
