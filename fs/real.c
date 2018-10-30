@@ -113,7 +113,7 @@ ssize_t realfs_write(struct fd *fd, const void *buf, size_t bufsize) {
     return res;
 }
 
-int realfs_readdir(struct fd *fd, struct dir_entry *entry) {
+static int realfs_opendir(struct fd *fd) {
     if (fd->dir == NULL) {
         int dirfd = dup(fd->real_fd);
         fd->dir = fdopendir(dirfd);
@@ -122,17 +122,38 @@ int realfs_readdir(struct fd *fd, struct dir_entry *entry) {
             return errno_map();
         }
     }
+    return 0;
+}
+
+int realfs_readdir(struct fd *fd, struct dir_entry *entry) {
+    int err = realfs_opendir(fd);
+    if (err < 0)
+        return err;
     errno = 0;
     struct dirent *dirent = readdir(fd->dir);
     if (dirent == NULL) {
         if (errno != 0)
             return errno_map();
         else
-            return 1;
+            return 0;
     }
     entry->inode = dirent->d_ino;
-    /* entry->offset = dirent->d_off; */
     strcpy(entry->name, dirent->d_name);
+    return 1;
+}
+
+long realfs_telldir(struct fd *fd) {
+    int err = realfs_opendir(fd);
+    if (err < 0)
+        return err;
+    return telldir(fd->dir);
+}
+
+int realfs_seekdir(struct fd *fd, long ptr) {
+    int err = realfs_opendir(fd);
+    if (err < 0)
+        return err;
+    seekdir(fd->dir, ptr);
     return 0;
 }
 
@@ -353,6 +374,8 @@ const struct fd_ops realfs_fdops = {
     .read = realfs_read,
     .write = realfs_write,
     .readdir = realfs_readdir,
+    .telldir = realfs_telldir,
+    .seekdir = realfs_seekdir,
     .lseek = realfs_lseek,
     .mmap = realfs_mmap,
     .fsync = realfs_fsync,

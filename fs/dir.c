@@ -22,13 +22,15 @@ int_t sys_getdents64(fd_t f, addr_t dirents, dword_t count) {
 
     dword_t orig_count = count;
 
+    long ptr;
+    int err;
     while (true) {
-        /* debugger; */
+        ptr = fd->ops->telldir(fd);
         struct dir_entry entry;
-        int err = fd->ops->readdir(fd, &entry);
+        err = fd->ops->readdir(fd, &entry);
         if (err < 0)
             return err;
-        if (err == 1)
+        if (err == 0)
             break;
 
         dword_t reclen = offsetof(struct linux_dirent64, name) +
@@ -36,7 +38,7 @@ int_t sys_getdents64(fd_t f, addr_t dirents, dword_t count) {
         char dirent_data[reclen];
         struct linux_dirent64 *dirent = (struct linux_dirent64 *) dirent_data;
         dirent->inode = entry.inode;
-        dirent->offset = entry.offset;
+        dirent->offset = fd->ops->telldir(fd);
         dirent->reclen = reclen;
         strcpy(dirent->name, entry.name);
 
@@ -48,5 +50,6 @@ int_t sys_getdents64(fd_t f, addr_t dirents, dword_t count) {
         count -= reclen;
     }
 
+    fd->ops->seekdir(fd, ptr);
     return orig_count - count;
 }

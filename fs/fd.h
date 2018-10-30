@@ -46,7 +46,6 @@ int fd_close(struct fd *fd);
 #define NAME_MAX 255
 struct dir_entry {
     qword_t inode;
-    qword_t offset;
     char name[NAME_MAX + 1];
 };
 
@@ -57,6 +56,10 @@ struct fd_ops {
 
     // Reads a directory entry from the stream
     int (*readdir)(struct fd *fd, struct dir_entry *entry);
+    // Return an opaque value representing the current point in the directory stream
+    long (*telldir)(struct fd *fd);
+    // Seek to the location represented by a pointer returned from telldir
+    int (*seekdir)(struct fd *fd, long ptr);
 
     // map the file
     int (*mmap)(struct fd *fd, struct mem *mem, page_t start, pages_t pages, off_t offset, int prot, int flags);
