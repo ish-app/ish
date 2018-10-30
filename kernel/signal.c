@@ -213,22 +213,11 @@ dword_t sys_sigaction(dword_t signum, addr_t action_addr, addr_t oldaction_addr)
     return sys_rt_sigaction(signum, action_addr, oldaction_addr, 1);
 }
 
-dword_t sys_rt_sigprocmask(dword_t how, addr_t set_addr, addr_t oldset_addr, dword_t size) {
-    if (size != sizeof(sigset_t_))
-        return _EINVAL;
-
-    sigset_t_ set;
-    if (user_get(set_addr, set))
-        return _EFAULT;
-    STRACE("rt_sigprocmask(%s, 0x%llx, 0x%x, %d)",
-            how == SIG_BLOCK_ ? "SIG_BLOCK" :
-            how == SIG_UNBLOCK_ ? "SIG_UNBLOCK" :
-            how == SIG_SETMASK_ ? "SIG_SETMASK" : "??",
-            (long long) set, oldset_addr, size);
-    sigset_t_ oldset = current->blocked;
-
+int do_sigprocmask(dword_t how, sigset_t_ set, sigset_t_ *oldset_out) {
     struct sighand *sighand = current->sighand;
     lock(&sighand->lock);
+    sigset_t oldset = current->blocked;
+
     if (how == SIG_BLOCK_)
         current->blocked |= set;
     else if (how == SIG_UNBLOCK_)
@@ -245,7 +234,27 @@ dword_t sys_rt_sigprocmask(dword_t how, addr_t set_addr, addr_t oldset_addr, dwo
     current->pending |= current->queued & unblocked;
     current->queued &= ~unblocked;
     unlock(&sighand->lock);
+    if (oldset_out != NULL)
+        *oldset_out = current->blocked;
+    return 0;
+}
 
+dword_t sys_rt_sigprocmask(dword_t how, addr_t set_addr, addr_t oldset_addr, dword_t size) {
+    if (size != sizeof(sigset_t_))
+        return _EINVAL;
+
+    sigset_t_ set, oldset;
+    if (user_get(set_addr, set))
+        return _EFAULT;
+    STRACE("rt_sigprocmask(%s, 0x%llx, 0x%x, %d)",
+            how == SIG_BLOCK_ ? "SIG_BLOCK" :
+            how == SIG_UNBLOCK_ ? "SIG_UNBLOCK" :
+            how == SIG_SETMASK_ ? "SIG_SETMASK" : "??",
+            (long long) set, oldset_addr, size);
+
+    int err = do_sigprocmask(how, set, &oldset);
+    if (err < 0)
+        return err;
     if (oldset_addr != 0)
         if (user_put(oldset_addr, oldset))
             return _EFAULT;

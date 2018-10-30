@@ -134,3 +134,23 @@ dword_t sys_poll(addr_t fds, dword_t nfds, dword_t timeout) {
             return _EFAULT;
     return err;
 }
+
+dword_t sys_pselect(fd_t nfds, addr_t readfds_addr, addr_t writefds_addr, addr_t exceptfds_addr, addr_t timeout_addr, addr_t sigmask_addr) {
+    // a system call can only take 6 parameters, so the last two need to be passed as a pointer to a struct
+    struct {
+        addr_t mask_addr;
+        dword_t mask_size;
+    } sigmask;
+    if (user_get(sigmask_addr, sigmask))
+        return _EFAULT;
+    if (sigmask.mask_size != sizeof(sigset_t_))
+        return _EINVAL;
+    sigset_t_ mask, old_mask;
+    if (user_get(sigmask.mask_addr, mask))
+        return _EFAULT;
+
+    do_sigprocmask(SIG_SETMASK_, mask, &old_mask);
+    dword_t res = sys_select(nfds, readfds_addr, writefds_addr, exceptfds_addr, timeout_addr);
+    do_sigprocmask(SIG_SETMASK_, old_mask, NULL);
+    return res;
+}
