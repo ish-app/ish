@@ -96,9 +96,7 @@
 #define FLDM(val,z) \
     FPUSH(f80_from_float(get(val,z),z))
 
-#define FLDC(what) FPUSH(fconst_##what)
-#define fconst_one f80_from_int(1)
-#define fconst_zero f80_from_int(0)
+#define FLDC(what) FPUSH(fconsts[fconst_##what])
 
 #define FSTM(dst,z) \
     set(dst, f80_to_float(ST(0),z),z)

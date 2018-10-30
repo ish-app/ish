@@ -606,6 +606,7 @@ restart:
                     case 0xd940: TRACE("fchs"); FCHS(); break;
                     case 0xd941: TRACE("fabs"); FABS(); break;
                     case 0xd950: TRACE("fld1"); FLDC(one); break;
+                    case 0xd955: TRACE("fldln2"); FLDC(ln2); break;
                     case 0xd956: TRACE("fldz"); FLDC(zero); break;
                     case 0xd970: TRACE("fprem"); FPREM(); break;
                     case 0xd974: TRACE("frndint"); FRNDINT(); break;

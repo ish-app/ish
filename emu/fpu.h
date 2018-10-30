@@ -1,12 +1,20 @@
 #ifndef EMU_FPU_H
 #define EMU_FPU_H
 #include "emu/float80.h"
+struct cpu_state;
 
 typedef float float32;
 typedef double float64;
 
 enum fpu_const {
-    fconst_one, fconst_zero,
+    fconst_one = 0,
+    fconst_ln2 = 5,
+    fconst_zero = 6,
+};
+static float80 fpu_consts[] = {
+    [fconst_one]  = (float80) {.signif = 0x8000000000000000, .signExp = 0x3fff},
+    [fconst_ln2]  = (float80) {.signif = 0xb17217f7d1cf79ac, .signExp = 0x3ffe},
+    [fconst_zero] = (float80) {.signif = 0x0000000000000000, .signExp = 0x0000},
 };
 
 void fpu_pop(struct cpu_state *cpu);

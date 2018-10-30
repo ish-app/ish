@@ -27,12 +27,7 @@ void fpu_ld(struct cpu_state *cpu, int i) {
 }
 
 void fpu_ldc(struct cpu_state *cpu, enum fpu_const c) {
-    switch (c) {
-        case fconst_zero:
-            fpush(f80_from_int(0)); break;
-        case fconst_one:
-            fpush(f80_from_int(1)); break;
-    }
+    fpush(fpu_consts[c]);
 }
 
 void fpu_ild32(struct cpu_state *cpu, int32_t *i) {
