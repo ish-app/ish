@@ -148,7 +148,14 @@ void handle_interrupt(int interrupt) {
         println("page fault at 0x%x", cpu->segfault_addr);
         deliver_signal(current, SIGSEGV_);
     } else if (interrupt == INT_UNDEFINED) {
-        println("illegal instruction at 0x%x", cpu->eip);
+        printk("illegal instruction at 0x%x: ", cpu->eip);
+        for (int i = 0; i < 8; i++) {
+            uint8_t b;
+            if (user_get(cpu->eip + i, b))
+                break;
+            printk("%02x ", b);
+        }
+        println("");
         deliver_signal(current, SIGILL_);
     } else if (interrupt != INT_TIMER) {
         println("exiting");
