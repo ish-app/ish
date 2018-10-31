@@ -66,8 +66,11 @@ static struct termios_ termios_from_real(struct termios real) {
 static struct termios old_termios;
 int real_tty_open(struct tty *tty) {
     struct winsize winsz;
-    if (ioctl(STDIN_FILENO, TIOCGWINSZ, &winsz) < 0)
+    if (ioctl(STDIN_FILENO, TIOCGWINSZ, &winsz) < 0) {
+        if (errno == ENOTTY)
+            goto notty;
         return errno_map();
+    }
     tty->winsize.col = winsz.ws_col;
     tty->winsize.row = winsz.ws_row;
     tty->winsize.xpixel = winsz.ws_xpixel;
@@ -85,6 +88,7 @@ int real_tty_open(struct tty *tty) {
 #endif
     if (tcsetattr(STDIN_FILENO, TCSANOW, &termios) < 0)
         DIE("failed to set terminal to raw mode");
+notty:
 
     if (pthread_create(&tty->thread, NULL, (void *(*)(void *)) real_tty_read_thread, tty) < 0)
         // ok if this actually happened it would be weird AF
@@ -98,7 +102,7 @@ ssize_t real_tty_write(struct tty *tty, const void *buf, size_t len) {
 }
 
 void real_tty_close(struct tty *tty) {
-    if (tcsetattr(STDIN_FILENO, TCSANOW, &old_termios) < 0)
+    if (tcsetattr(STDIN_FILENO, TCSANOW, &old_termios) < 0 && errno != ENOTTY)
         DIE("failed to reset terminal");
     pthread_cancel(tty->thread);
 }
