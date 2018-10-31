@@ -12,7 +12,7 @@ NAME(jit_enter):
     push %r15
     # make stack 16 byte aligned
     # this is preserved elsewhere by only doing even numbers of pushes
-    add $0x8, %rsp
+    sub $0x8, %rsp
     leaq JIT_BLOCK_code(%rdi), %_ip
     movq %rsi, %_cpu
     movq %rsp, LOCAL_bp(%_cpu)
@@ -50,7 +50,7 @@ jit_exit:
     movl %_esp, CPU_esp(%_cpu)
     movl %_eip, CPU_eip(%_cpu)
     movq LOCAL_bp(%_cpu), %rsp
-    sub $0x8, %rsp # keep stack 16 byte aligned
+    add $0x8, %rsp # keep stack 16 byte aligned
     pop %r15
     pop %r14
     pop %r13
