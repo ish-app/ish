@@ -10,7 +10,7 @@ int path_normalize(struct fd *at, const char *path, char *out, bool follow_links
     char *o = out;
     *o = '\0';
     int n = MAX_PATH - 1;
-    
+
     if (at != __NO_AT) {
         // start with root or cwd, depending on whether it starts with a slash
         lock(&current->fs->lock);
@@ -75,8 +75,8 @@ int path_normalize(struct fd *at, const char *path, char *out, bool follow_links
             // if it turns out to point to a symlink it's reused as the buffer
             // passed to the next path_normalize call
             char possible_symlink[MAX_PATH];
+            *o = '\0';
             strcpy(possible_symlink, out);
-            possible_symlink[o - out] = '\0';
             struct mount *mount = find_mount_and_trim_path(possible_symlink);
             assert(path_is_normalized(possible_symlink));
             int res = mount->fs->readlink(mount, possible_symlink, c, MAX_PATH - (c - out));
