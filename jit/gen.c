@@ -350,6 +350,8 @@ static inline bool gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define FSTM(dst,z) h_write(fpu_stm, z)
 #define FIST(dst,z) h_write(fpu_ist, z)
 #define FXCH() hh(fpu_xch, st_i)
+#define FCOM() hh(fpu_com, st_i)
+#define FCOMM(val,z) h_read(fpu_comm, z)
 #define FUCOM() hh(fpu_ucom, st_i)
 #define FUCOMI() UNDEFINED
 #define FST() hh(fpu_st, st_i)

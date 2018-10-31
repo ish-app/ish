@@ -573,11 +573,15 @@ restart:
                     case 0xdb5: TRACE("fld mem80"); FLDM(mem_addr_real,80); break;
                     case 0xdc0: TRACE("fadd mem64"); FADDM(mem_addr_real,64); break;
                     case 0xdc1: TRACE("fmul mem64"); FMULM(mem_addr_real,64); break;
+                    case 0xdc3: TRACE("fcomp mem64"); FCOMM(mem_addr_real,64); FPOP; break;
                     case 0xdd0: TRACE("fld mem64"); FLDM(mem_addr_real,64); break;
                     case 0xdc4: TRACE("fsub mem64"); FSUBM(mem_addr_real,64); break;
+                    case 0xdc5: TRACE("fsubr mem64"); FSUBRM(mem_addr_real,64); break;
                     case 0xdc6: TRACE("fdiv mem64"); FDIVM(mem_addr_real,64); break;
+                    case 0xdc7: TRACE("fdivr mem64"); FDIVRM(mem_addr_real,64); break;
                     case 0xdd2: TRACE("fst mem64"); FSTM(mem_addr_real,64); break;
                     case 0xdd3: TRACE("fstp mem64"); FSTM(mem_addr_real,64); FPOP; break;
+                    case 0xdf0: TRACE("fild mem16"); FILD(mem_addr,16); break;
                     case 0xdf5: TRACE("fild mem64"); FILD(mem_addr,64); break;
                     case 0xdf7: TRACE("fistp mem64"); FIST(mem_addr,64); FPOP; break;
                     default: TRACE("undefined"); UNDEFINED;

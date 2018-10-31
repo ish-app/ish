@@ -86,11 +86,14 @@
     cpu->pf = 0; cpu->pf_res = 0
 // not worrying about nans and shit yet
 
-#define FUCOM() \
-    cpu->c0 = f80_lt(ST(0), ST_i); \
+#define F_COMPARE(x) \
+    cpu->c0 = f80_lt(ST(0), x); \
     cpu->c1 = 0; \
     cpu->c2 = 0; /* again, not worrying about nans */ \
-    cpu->c3 = f80_eq(ST(0), ST_i)
+    cpu->c3 = f80_eq(ST(0), x)
+#define FCOM() F_COMPARE(ST_i)
+#define FUCOM FCOM
+#define FCOMM(val,z) F_COMPARE(f80_from_float(get(val,z),z))
 
 #define FILD(val,z) \
     FPUSH(f80_from_int((sint(z)) get(val,z)))

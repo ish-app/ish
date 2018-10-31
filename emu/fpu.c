@@ -30,6 +30,9 @@ void fpu_ldc(struct cpu_state *cpu, enum fpu_const c) {
     fpush(fpu_consts[c]);
 }
 
+void fpu_ild16(struct cpu_state *cpu, int16_t *i) {
+    fpush(f80_from_int(*i));
+}
 void fpu_ild32(struct cpu_state *cpu, int32_t *i) {
     fpush(f80_from_int(*i));
 }
@@ -91,12 +94,18 @@ void fpu_yl2x(struct cpu_state *cpu) {
     fpu_pop(cpu);
 }
 
-void fpu_ucom(struct cpu_state *cpu, int i) {
+static void fpu_compare(struct cpu_state *cpu, float80 x) {
     cpu->c1 = 0;
-    cpu->c0 = f80_lt(ST(0), ST(i));
-    cpu->c3 = f80_eq(ST(0), ST(i));
-    if (f80_uncomparable(ST(0), ST(i)))
+    cpu->c0 = f80_lt(ST(0), x);
+    cpu->c3 = f80_eq(ST(0), x);
+    if (f80_uncomparable(ST(0), x))
         cpu->c0 = cpu->c2 = cpu->c3 = 1;
+}
+void fpu_com(struct cpu_state *cpu, int i) {
+    fpu_compare(cpu, ST(i));
+}
+void fpu_comm64(struct cpu_state *cpu, double *f) {
+    fpu_compare(cpu, f80_from_double(*f));
 }
 
 void fpu_abs(struct cpu_state *cpu) {
