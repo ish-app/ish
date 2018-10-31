@@ -216,7 +216,7 @@ dword_t sys_sigaction(dword_t signum, addr_t action_addr, addr_t oldaction_addr)
 int do_sigprocmask(dword_t how, sigset_t_ set, sigset_t_ *oldset_out) {
     struct sighand *sighand = current->sighand;
     lock(&sighand->lock);
-    sigset_t oldset = current->blocked;
+    sigset_t_ oldset = current->blocked;
 
     if (how == SIG_BLOCK_)
         current->blocked |= set;
