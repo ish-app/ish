@@ -554,6 +554,7 @@ restart:
                 switch (insn << 4 | modrm.opcode) {
                     case 0xd80: TRACE("fadd mem32"); FADDM(mem_addr_real,32); break;
                     case 0xd81: TRACE("fmul mem32"); FMULM(mem_addr_real,32); break;
+                    case 0xd84: TRACE("fsub mem32"); FSUBM(mem_addr_real,32); break;
                     case 0xd86: TRACE("fdiv mem32"); FDIVM(mem_addr_real,32); break;
                     case 0xd87: TRACE("fdivr mem32"); FDIVRM(mem_addr_real,32); break;
                     case 0xd90: TRACE("fld mem32"); FLDM(mem_addr_real,32); break;
