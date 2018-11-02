@@ -53,6 +53,7 @@ static Terminal *terminal = nil;
     } else if ([message.name isEqualToString:@"resize"]) {
         NSArray<NSString *> *parts = [message.body componentsSeparatedByString:@"x"];
         NSLog(@"%@", parts);
+        // FIXME this can happen before self.tty is set
         tty_set_winsize(self.tty, (struct winsize_) {.col = parts[0].intValue, .row = parts[1].intValue});
     }
 }
