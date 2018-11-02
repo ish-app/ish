@@ -72,6 +72,7 @@ syscall_t syscall_table[] = {
     [145] = (syscall_t) sys_readv,
     [146] = (syscall_t) sys_writev,
     [162] = (syscall_t) sys_nanosleep,
+    [163] = (syscall_t) sys_mremap,
     [168] = (syscall_t) sys_poll,
     [173] = (syscall_t) sys_rt_sigreturn,
     [174] = (syscall_t) sys_rt_sigaction,

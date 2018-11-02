@@ -69,6 +69,30 @@ int_t sys_munmap(addr_t addr, uint_t len) {
     return 0;
 }
 
+#define MREMAP_MAYMOVE_ 1
+#define MREMAP_FIXED_ 2
+
+int_t sys_mremap(addr_t addr, dword_t old_len, dword_t new_len, dword_t flags) {
+    if (PGOFFSET(addr) != 0)
+        return _EINVAL;
+    if (flags & ~(MREMAP_MAYMOVE_ | MREMAP_FIXED_))
+        return _EINVAL;
+    if (flags & MREMAP_FIXED_)
+        TODO("MREMAP_FIXED");
+    pages_t old_pages = PAGE(old_len);
+    pages_t new_pages = PAGE(new_len);
+
+    // shrinking always works
+    if (new_len <= old_len) {
+        int err = pt_unmap(current->mem, PAGE(addr) + new_pages, old_pages - new_pages, 0);
+        if (err < 0)
+            return _EFAULT;
+        return addr;
+    }
+
+    TODO("mremap grow");
+}
+
 int_t sys_mprotect(addr_t addr, uint_t len, int_t prot) {
     STRACE("mprotect(0x%x, 0x%x, 0x%x)", addr, len, prot);
     if (PGOFFSET(addr) != 0)
