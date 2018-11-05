@@ -185,7 +185,10 @@
     .ifin(\op, inc,dec)
         seto CPU_of(%_cpu)
     .endifin
-    setf_zsp %r14\s, \ss
+    # setf_zsp is apparently broken in such a way that it can only use _tmp
+    xchg %r14, %r10
+    setf_zsp %tmp\s, \ss
+    xchg %r14, %r10
 .endm
 .macro do_op_atomic op, size, arg
     ss \size, _do_op_atomic, \op, \arg
