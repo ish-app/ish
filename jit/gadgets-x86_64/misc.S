@@ -60,7 +60,9 @@
 .gadget atomic_cmpxchg32_mem
     write_prep 32, atomic_cmpxchg32_mem
     lock cmpxchg %tmpd, (%_addrq)
+    pushf
     write_done 32, atomic_cmpxchg32_mem
+    popf
     setf_oc
     # god help us
     setp %r10b
