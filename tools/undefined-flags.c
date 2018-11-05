@@ -19,6 +19,9 @@ int undefined_flags_mask(struct cpu_state *cpu, struct tlb *tlb) {
         case 0x0f:
             read(opcode);
             switch(opcode) {
+                // shrd/shld
+                case 0xa4:
+                case 0xa5:
                 case 0xac:
                 case 0xad: {
                     ip++;
