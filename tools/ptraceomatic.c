@@ -105,6 +105,8 @@ static int compare_cpus(struct cpu_state *cpu, struct tlb *tlb, int pid, int und
 #define FSW_MASK 0x7d00 // only look at top, c0, c2, c3
     CHECK(fpregs.swd & FSW_MASK, cpu->fsw & FSW_MASK, "fsw");
     CHECK(fpregs.cwd, cpu->fcw, "fcw");
+    fpregs.swd &= FSW_MASK;
+
 #define CHECK_FPREG(i) \
     CHECK(*(uint64_t *) &fpregs.st_space[i * 4], cpu->fp[(cpu->top + i)%8].signif,  "st(" #i ") signif") \
     CHECK(*(uint16_t *) &fpregs.st_space[i*4+2], cpu->fp[(cpu->top + i)%8].signExp, "st(" #i ") sign/exp")
@@ -137,6 +139,7 @@ static int compare_cpus(struct cpu_state *cpu, struct tlb *tlb, int pid, int und
     }
 
     setregs(pid, &regs);
+    trycall(ptrace(PTRACE_SETFPREGS, pid, NULL, &fpregs), "ptrace setregs compare");
     return 0;
 }
 

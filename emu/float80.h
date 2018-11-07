@@ -39,6 +39,8 @@ bool f80_uncomparable(float80 a, float80 b);
 
 enum f80_rounding_mode {
     round_to_nearest = 0,
+    round_down = 1,
+    round_up = 2,
     round_chop = 3,
 };
 extern __thread enum f80_rounding_mode f80_rounding_mode;

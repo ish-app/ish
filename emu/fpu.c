@@ -117,19 +117,19 @@ void fpu_chs(struct cpu_state *cpu) {
 }
 
 void fpu_add(struct cpu_state *cpu, int srci, int dsti) {
-    ST(dsti) = f80_add(ST(srci), ST(dsti));
+    ST(dsti) = f80_add(ST(dsti), ST(srci));
 }
 void fpu_sub(struct cpu_state *cpu, int srci, int dsti) {
-    ST(dsti) = f80_sub(ST(srci), ST(dsti));
-}
-void fpu_subr(struct cpu_state *cpu, int srci, int dsti) {
     ST(dsti) = f80_sub(ST(dsti), ST(srci));
 }
+void fpu_subr(struct cpu_state *cpu, int srci, int dsti) {
+    ST(dsti) = f80_sub(ST(srci), ST(dsti));
+}
 void fpu_mul(struct cpu_state *cpu, int srci, int dsti) {
-    ST(dsti) = f80_mul(ST(srci), ST(dsti));
+    ST(dsti) = f80_mul(ST(dsti), ST(srci));
 }
 void fpu_div(struct cpu_state *cpu, int srci, int dsti) {
-    ST(dsti) = f80_div(ST(srci), ST(dsti));
+    ST(dsti) = f80_div(ST(dsti), ST(srci));
 }
 
 void fpu_iadd16(struct cpu_state *cpu, int16_t *i) {
@@ -213,4 +213,5 @@ void fpu_stcw16(struct cpu_state *cpu, uint16_t *i) {
 }
 void fpu_ldcw16(struct cpu_state *cpu, uint16_t *i) {
     cpu->fcw = *i;
+    f80_rounding_mode = cpu->rc;
 }

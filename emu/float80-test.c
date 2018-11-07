@@ -59,9 +59,9 @@ void test_int_convert() {
     int64_t i;
 #define test(x) \
     u.f = f80_from_int(x); \
-    assertf((int64_t) u.ld == x, "f80_from_int(%ld) = %Le", (int64_t) x, u.ld); \
+    assertf((int64_t) u.ld == x, "f80_from_int(%ld) = %.20Le", (int64_t) x, u.ld); \
     i = f80_to_int(u.f); \
-    assertf(i == x, "f80_to_int(%Le) = %ld", u.ld, i)
+    assertf(i == x, "f80_to_int(%.20Le) = %ld", u.ld, i)
 
     test(0);
     test(123); test(-123);
@@ -84,6 +84,7 @@ void test_double_convert() {
     test(0); test(-0);
     test(123); test(-123);
     test(3991994929919994995881.0);
+    test(9.223372036854776e18);
     test(DENORMAL);
     test(1e-310);
     test(INFINITY); test(-INFINITY);

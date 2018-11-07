@@ -33,27 +33,35 @@ __thread enum f80_rounding_mode f80_rounding_mode;
 
 // shift a 128 bit integer right but using the floating point rounding mode
 // used by f80_shift_right and to round the 128-bit result of multiplying significands
-static unsigned __int128 u128_shift_right_round(unsigned __int128 i, int shift) {
+// sign is necessary to decide which way to round when mode is round_up or round_down
+static unsigned __int128 u128_shift_right_round(unsigned __int128 i, int shift, int sign) {
+    // we're going to be shifting stuff by shift - 1, so stay safe
+    if (shift == 0)
+        return i;
+
+    // stuff necessary for rounding to nearest or even. reference: https://stackoverflow.com/a/8984135
+    // grab the guard bit, the last bit shifted out
+    int guard = (i >> (shift - 1)) & 1;
+    // now grab the rest of the bits being shifted out
+    int rest = i & ~(-1ul << (shift - 1));
+
+    i >>= shift;
     switch (f80_rounding_mode) {
-        case round_chop:
-            i >>= shift;
-            break;
-
-        case round_to_nearest:
-            // we're going to be shifting stuff by shift - 1, so stay safe
-            if (shift == 0)
-                break;
-
-            // grab the last bit shifted out
-            int last_bit = (i >> (shift - 1)) & 1;
-            i >>= shift;
-            // if every bit being shifted out is zero except for the last one, round to even
-            if ((i & ~(-1ul << (shift - 1))) == 0) {
-                if (i & 1)
-                    i++;
-            // otherwise if last bit is one, round up
-            } else if (last_bit) {
+        case round_up:
+            if (!sign)
                 i++;
+            break;
+        case round_down:
+            if (sign)
+                i++;
+            break;
+        case round_to_nearest:
+            // if guard bit is not set, no need to round up
+            if (guard) {
+                if (rest != 0)
+                    i++; // round up
+                else if (i & 1)
+                    i++; // round to nearest even
             }
             break;
     }
@@ -73,7 +81,7 @@ static float80 f80_shift_right(float80 f, int shift) {
         // shifts beyond the size of the type are undefined behavior
         f.signif = 0;
     else
-        f.signif = u128_shift_right_round(f.signif, shift);
+        f.signif = u128_shift_right_round(f.signif, shift, f.sign);
     f.exp += shift;
     return f;
 }
@@ -121,7 +129,7 @@ static float80 f80_normalize(float80 f) {
     return f80_shift_left(f, shift);
 }
 
-static float80 u128_normalize_round(unsigned __int128 signif, int exp) {
+static float80 u128_normalize_round(unsigned __int128 signif, int exp, int sign) {
     // correctly counting leading zeros on a 128-bit int is interesting
     int shift = __builtin_clzl((uint64_t) (signif >> 64));
     if (signif >> 64 == 0)
@@ -139,7 +147,11 @@ static float80 u128_normalize_round(unsigned __int128 signif, int exp) {
     // and round
     float80 f;
     f.exp = bias(exp);
-    f.signif = u128_shift_right_round(signif, 64);
+    // FIXME if signif is 0xffffffffffffffff0000000000000000,
+    // u128_shift_right_round will return 0x10000000000000000, which would then
+    // get truncated to 0
+    f.signif = u128_shift_right_round(signif, 64, sign);
+    f.sign = sign;
     return f;
 }
 
@@ -227,7 +239,14 @@ double f80_to_double(float80 f) {
         new_exp = unbias(f.exp) + 0x3ff;
     }
     db.exp = new_exp;
-    db.signif = f.signif >> 11;
+    uint64_t db_signif = u128_shift_right_round(f.signif, 11, f.sign);
+    // handle the case when f.signif becomes 0x1fffffffffffff after shifting
+    // and then is rounded up
+    if (db_signif & (1ul << 53)) {
+        db_signif >>= 1;
+        db.exp++;
+    }
+    db.signif = db_signif;
     double d;
     memcpy(&d, &db, sizeof(db));
     return d;
@@ -339,7 +358,7 @@ float80 f80_mul(float80 a, float80 b) {
     // multiply significands
     unsigned __int128 f_signif = (unsigned __int128) a.signif * b.signif;
     // normalize and round the 128-bit result
-    float80 f = u128_normalize_round(f_signif, f_exp);
+    float80 f = u128_normalize_round(f_signif, f_exp, a.sign ^ b.sign);
     // xor signs
     f.sign = a.sign ^ b.sign;
     return f;
@@ -373,7 +392,7 @@ float80 f80_div(float80 a, float80 b) {
     } else {
         unsigned __int128 signif = ((unsigned __int128) a.signif << 64) / b.signif;
         int exp = unbias_denormal(a.exp) - unbias_denormal(b.exp) + 63;
-        f = u128_normalize_round(signif, exp);
+        f = u128_normalize_round(signif, exp, a.sign ^ b.sign);
     }
 
     f.sign = a.sign ^ b.sign;
