@@ -40,7 +40,7 @@ static struct tgroup *tgroup_copy(struct tgroup *old_group) {
     group->timer = NULL;
     group->doing_group_exit = false;
     group->children_rusage = (struct rusage_) {};
-    pthread_cond_init(&group->child_exit, NULL);
+    cond_init(&group->child_exit);
     lock_init(&group->lock);
     return group;
 }
@@ -151,6 +151,7 @@ dword_t sys_clone(dword_t flags, addr_t stack, addr_t ptid, addr_t tls, addr_t c
     if (flags & CLONE_VFORK_) {
         lock(&task->vfork_lock);
         while (!task->vfork_done)
+            // ignore EINTR
             wait_for(&task->vfork_cond, &task->vfork_lock);
         unlock(&task->vfork_lock);
     }

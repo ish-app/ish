@@ -2,12 +2,13 @@
 #define TASK_H
 
 #include <pthread.h>
-#include "util/list.h"
 #include "emu/cpu.h"
 #include "kernel/fs.h"
 #include "kernel/signal.h"
 #include "kernel/resource.h"
+#include "util/list.h"
 #include "util/timer.h"
+#include "util/sync.h"
 
 // everything here is private to the thread executing this task and needs no
 // locking, unless otherwise specified
@@ -47,7 +48,7 @@ struct task {
 
     // I wish conditions variables were as reliable as wait queues. alas, they are not
     bool vfork_done;
-    pthread_cond_t vfork_cond;
+    cond_t vfork_cond;
     lock_t vfork_lock;
 };
 
@@ -83,7 +84,7 @@ struct tgroup {
     dword_t group_exit_code;
 
     struct rusage_ children_rusage;
-    pthread_cond_t child_exit;
+    cond_t child_exit;
 
     lock_t lock;
 };

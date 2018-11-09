@@ -13,11 +13,15 @@ void deliver_signal(struct task *task, int sig) {
         pthread_kill(task->thread, SIGUSR1);
 }
 
+static int signal_is_blockable(int sig) {
+    return sig != SIGKILL_ && sig != SIGSTOP_;
+}
+
 void send_signal(struct task *task, int sig) {
     struct sighand *sighand = task->sighand;
     lock(&sighand->lock);
     if (sighand->action[sig].handler != SIG_IGN_) {
-        if (task->blocked & (1l << sig))
+        if (task->blocked & (1l << sig) && signal_is_blockable(sig))
             task->queued |= (1l << sig);
         else
             deliver_signal(task, sig);
@@ -47,7 +51,7 @@ static void receive_signal(struct sighand *sighand, int sig) {
             // some stop the process, we'll leave that as unimplemented
             default:
                 unlock(&sighand->lock); // do_exit must be called without this lock
-                do_exit(sig);
+                do_exit_group(sig);
         }
         return;
     }

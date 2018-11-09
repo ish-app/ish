@@ -72,8 +72,14 @@ noreturn void do_exit_group(int status) {
     } else {
         status = group->group_exit_code;
     }
+
+    // kill everyone else in the group
+    struct task *task;
+    list_for_each_entry(&group->threads, task, group_links) {
+        send_signal(task, SIGKILL_);
+    }
+
     unlock(&group->lock);
-    // TODO kill everything else in the group
     do_exit(status);
 }
 
@@ -142,6 +148,7 @@ static int reap_if_zombie(struct task *task, addr_t status_addr, addr_t rusage_a
 dword_t sys_wait4(dword_t id, addr_t status_addr, dword_t options, addr_t rusage_addr) {
     STRACE("wait(%d, 0x%x, 0x%x, 0x%x)", id, status_addr, options, rusage_addr);
     lock(&pids_lock);
+    int err;
 
 retry:
     if (id == (dword_t) -1) {
@@ -155,26 +162,29 @@ retry:
     } else {
         // check if this child is a zombie
         struct task *task = pid_get_task_zombie(id);
-        if (task == NULL || task->parent != current) {
-            unlock(&pids_lock);
-            return _ECHILD;
-        }
+        err = _ECHILD;
+        if (task == NULL || task->parent != current)
+            goto error;
         if (reap_if_zombie(task, status_addr, rusage_addr))
             goto found_zombie;
     }
 
-    if (options & WNOHANG_) {
-        unlock(&pids_lock);
-        return _ECHILD;
-    }
+    err = _ECHILD;
+    if (options & WNOHANG_)
+        goto error;
 
     // no matching zombie found, wait for one
-    wait_for(&current->group->child_exit, &pids_lock);
+    err = _EINTR;
+    if (wait_for(&current->group->child_exit, &pids_lock))
+        goto error;
     goto retry;
 
 found_zombie:
     unlock(&pids_lock);
     return id;
+error:
+    unlock(&pids_lock);
+    return err;
 }
 
 dword_t sys_waitpid(dword_t pid, addr_t status_addr, dword_t options) {

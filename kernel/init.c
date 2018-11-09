@@ -33,7 +33,7 @@ static struct tgroup *init_tgroup() {
     *group = (struct tgroup) {};
     list_init(&group->threads);
     lock_init(&group->lock);
-    pthread_cond_init(&group->child_exit, NULL);
+    cond_init(&group->child_exit);
     return group;
 }
 

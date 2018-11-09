@@ -5,7 +5,7 @@ struct futex {
     struct mem *mem;
     addr_t addr;
     lock_t lock;
-    pthread_cond_t cond;
+    cond_t cond;
     struct list chain; // locked by futex_hash_lock
 };
 
@@ -41,7 +41,7 @@ static struct futex *futex_get(addr_t addr) {
     futex->mem = current->mem;
     futex->addr = addr;
     lock_init(&futex->lock);
-    pthread_cond_init(&futex->cond, NULL);
+    cond_init(&futex->cond);
     list_add(bucket, &futex->chain);
 
 have_futex:
@@ -77,21 +77,16 @@ int futex_wait(addr_t uaddr, dword_t val) {
     else if (tmp != val)
         err = _EAGAIN;
     else
-        pthread_cond_wait(&futex->cond, &futex->lock);
+        wait_for(&futex->cond, &futex->lock);
     futex_put(futex);
     return err;
 }
 
 int futex_wake(addr_t uaddr, dword_t val) {
     struct futex *futex = futex_get(uaddr);
-    if (val == 1)
-        pthread_cond_signal(&futex->cond);
-    else if (val == 0x7fffffff)
-        pthread_cond_broadcast(&futex->cond);
-    else
-        TODO("invalid number of futex wakes %d", val);
+    int wakes = notify_count(&futex->cond, val);
     futex_put(futex);
-    return val; // FIXME wrong if val is INT_MAX
+    return wakes;
 }
 
 #define FUTEX_WAIT_ 0

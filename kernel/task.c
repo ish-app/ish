@@ -68,7 +68,7 @@ struct task *task_create_(struct task *parent) {
     }
 
     lock_init(&task->vfork_lock);
-    pthread_cond_init(&task->vfork_cond, NULL);
+    cond_init(&task->vfork_cond);
     return task;
 }
 

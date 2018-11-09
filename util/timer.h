@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <time.h>
 #include <pthread.h>
-#include "misc.h"
+#include "util/sync.h"
 
 static inline struct timespec timespec_now() {
     struct timespec now;

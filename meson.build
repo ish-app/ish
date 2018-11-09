@@ -82,6 +82,7 @@ src = [
     'kernel/poll.c',
 
     'util/timer.c',
+    'util/sync.c',
 
     'emu/memory.c',
     'emu/tlb.c',

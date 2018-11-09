@@ -79,7 +79,7 @@ struct tty {
     // are created by EOL and EOF characters. You can't backspace past a flag.
     bool buf_flag[TTY_BUF_SIZE];
     size_t bufsize;
-    pthread_cond_t produced;
+    cond_t produced;
 
     struct winsize_ winsize;
     struct termios_ termios;

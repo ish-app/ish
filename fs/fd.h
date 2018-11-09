@@ -1,9 +1,9 @@
 #ifndef FD_H
 #define FD_H
 #include <dirent.h>
-#include "misc.h"
 #include "emu/memory.h"
 #include "util/list.h"
+#include "util/sync.h"
 #include "util/bits.h"
 #include "fs/stat.h"
 

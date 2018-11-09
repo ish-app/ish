@@ -4,8 +4,9 @@
 #include <stdatomic.h>
 #include <unistd.h>
 #include <string.h>
-#include "misc.h"
 #include "util/list.h"
+#include "util/sync.h"
+#include "misc.h"
 #if JIT
 struct jit;
 #endif

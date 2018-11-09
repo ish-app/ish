@@ -7,9 +7,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdnoreturn.h>
-#include <stdatomic.h>
 #include <sys/types.h>
-#include <pthread.h>
 
 // utility macros
 #define glue(a, b) _glue(a, b)
@@ -71,35 +69,6 @@ typedef sqword_t off_t_;
 
 #define uint(size) glue3(uint,size,_t)
 #define sint(size) glue3(int,size,_t)
-
-typedef pthread_mutex_t lock_t;
-#define lock_init(lock) pthread_mutex_init(lock, NULL)
-#define LOCK_INITIALIZER PTHREAD_MUTEX_INITIALIZER
-#define lock(lock) pthread_mutex_lock(lock)
-#define unlock(lock) pthread_mutex_unlock(lock)
-
-// this is a read-write lock that prefers writers, i.e. if there are any
-// writers waiting a read lock will block.
-// on darwin pthread_rwlock_t is already like this, on linux you can configure
-// it to prefer writers. not worrying about anything else right now.
-typedef pthread_rwlock_t wrlock_t;
-static inline void wrlock_init(wrlock_t *lock) {
-    pthread_rwlockattr_t *pattr = NULL;
-#if defined(__GLIBC__)
-    pthread_rwlockattr_t attr;
-    pattr = &attr;
-    pthread_rwlockattr_init(pattr);
-    pthread_rwlockattr_setkind_np(pattr, PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
-#endif
-    pthread_rwlock_init(lock, pattr);
-}
-#define read_wrlock(lock) pthread_rwlock_rdlock(lock)
-#define read_wrunlock(lock) pthread_rwlock_unlock(lock)
-#define write_wrlock(lock) pthread_rwlock_wrlock(lock)
-#define write_wrunlock(lock) pthread_rwlock_unlock(lock)
-
-#define wait_for(cond, lock) pthread_cond_wait(cond, lock)
-#define notify(cond) pthread_cond_broadcast(cond)
 
 #define ERR_PTR(err) (void *) (intptr_t) (err)
 #define PTR_ERR(ptr) (intptr_t) (ptr)

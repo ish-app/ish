@@ -30,7 +30,7 @@ static int tty_get(int type, int num, struct tty **tty_out) {
         memset(&tty->winsize, 0, sizeof(tty->winsize));
         lock_init(&tty->lock);
         lock_init(&tty->fds_lock);
-        pthread_cond_init(&tty->produced, NULL);
+        cond_init(&tty->produced);
         memset(tty->buf_flag, false, sizeof(tty->buf_flag));
         tty->bufsize = 0;
 
@@ -245,8 +245,10 @@ static ssize_t tty_read(struct fd *fd, void *buf, size_t bufsize) {
     lock(&tty->lock);
     if (tty->termios.lflags & ICANON_) {
         ssize_t canon_size = -1;
-        while ((canon_size = tty_canon_size(tty)) == -1)
-            wait_for(&tty->produced, &tty->lock);
+        while ((canon_size = tty_canon_size(tty)) == -1) {
+            if (wait_for(&tty->produced, &tty->lock))
+                goto eintr;
+        }
         // null byte means eof was typed
         if (tty->buf[canon_size-1] == '\0')
             canon_size--;
@@ -259,8 +261,10 @@ static ssize_t tty_read(struct fd *fd, void *buf, size_t bufsize) {
         if (min == 0 && time == 0) {
             // no need to wait for anything
         } else if (min > 0 && time == 0) {
-            while (tty->bufsize < min)
-                wait_for(&tty->produced, &tty->lock);
+            while (tty->bufsize < min) {
+                if (wait_for(&tty->produced, &tty->lock))
+                    goto eintr;
+            }
         } else {
             TODO("VTIME != 0");
         }
@@ -277,6 +281,9 @@ static ssize_t tty_read(struct fd *fd, void *buf, size_t bufsize) {
 
     unlock(&tty->lock);
     return bufsize;
+eintr:
+    unlock(&tty->lock);
+    return _EINTR;
 }
 
 static ssize_t tty_write(struct fd *fd, const void *buf, size_t bufsize) {
