@@ -9,8 +9,21 @@ int fxsave_extra = 0;
 
 void deliver_signal(struct task *task, int sig) {
     task->pending |= 1l << sig;
-    if (task != current)
+    if (task != current) {
+        // actual madness, I hope to god it's correct
+retry:
+        lock(&task->waiting_cond_lock);
+        if (task->waiting_cond != NULL) {
+            if (pthread_mutex_trylock(task->waiting_lock)) {
+                unlock(&task->waiting_cond_lock);
+                goto retry;
+            }
+            notify(task->waiting_cond);
+            unlock(task->waiting_lock);
+        }
+        unlock(&task->waiting_cond_lock);
         pthread_kill(task->thread, SIGUSR1);
+    }
 }
 
 static int signal_is_blockable(int sig) {

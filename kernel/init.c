@@ -24,8 +24,6 @@ int mount_root(const struct fs_ops *fs, const char *source) {
     return 0;
 }
 
-static void nop_handler() {}
-
 static struct tgroup *init_tgroup() {
     struct tgroup *group = malloc(sizeof(struct tgroup));
     if (group == NULL)
@@ -38,7 +36,8 @@ static struct tgroup *init_tgroup() {
 }
 
 void create_first_process() {
-    signal(SIGUSR1, nop_handler);
+    extern void sigusr1_handler();
+    signal(SIGUSR1, sigusr1_handler);
     signal(SIGPIPE, SIG_IGN);
 
     current = task_create_(NULL);

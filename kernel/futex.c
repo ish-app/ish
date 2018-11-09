@@ -85,9 +85,14 @@ int futex_wait(addr_t uaddr, dword_t val) {
 
 int futex_wake(addr_t uaddr, dword_t val) {
     struct futex *futex = futex_get(uaddr);
-    int wakes = notify_count(&futex->cond, val);
+    if (val == 1)
+        notify_once(&futex->cond);
+    else if (val == 0x7fffffff)
+        notify(&futex->cond);
+    else
+        TODO("invalid number of futex wakes %d", val);
     futex_put(futex);
-    return wakes;
+    return val; // FIXME wrong if val is INT_MAX
 }
 
 #define FUTEX_WAIT_ 0

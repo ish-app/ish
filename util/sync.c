@@ -4,84 +4,59 @@
 #include "util/sync.h"
 #include "debug.h"
 
-#if USE_POSIX_SEM
-static void _sem_init(_sem_t *sem, int init) {
-    // cannot fail if value and pshared are 0
-    sem_init(sem, 0, init);
-}
-static int _sem_wait(_sem_t *sem) {
-    if (current != NULL && current->pending)
-        return 1; // signal is waiting
-    int err = sem_wait(sem);
-    if (err < 0 && errno == EINTR)
-        return 1;
-    return 0;
-}
-static void _sem_post(_sem_t *sem) {
-    sem_post(sem);
-}
-static void _sem_destroy(_sem_t *sem) {}
-
-#else
-
-static task_t main_task;
-__attribute__((constructor)) static void get_main_task() {
-    main_task = mach_task_self();
-}
-
-static void _sem_init(_sem_t *sem, int init) {
-    semaphore_create(main_task, sem, SYNC_POLICY_FIFO, init);
-}
-static int _sem_wait(_sem_t *sem) {
-    if (current != NULL && current->pending)
-        return 1; // signal is waiting
-    kern_return_t err = semaphore_wait(*sem);
-    if (err == KERN_ABORTED)
-        return 1;
-    return 0;
-}
-static void _sem_post(_sem_t *sem) {
-    semaphore_signal(*sem);
-}
-static void _sem_destroy(_sem_t *sem) {
-    semaphore_destroy(main_task, *sem);
-}
-#endif
-
 void cond_init(cond_t *cond) {
-    cond->waiters = 0;
-    lock_init(&cond->lock);
-    _sem_init(&cond->waitsem, 0);
-    _sem_init(&cond->donesem, 0);
+    pthread_cond_init(&cond->cond, NULL);
 }
 void cond_destroy(cond_t *cond) {
-    _sem_destroy(&cond->waitsem);
-    _sem_destroy(&cond->donesem);
+    pthread_cond_destroy(&cond->cond);
 }
 
 int wait_for(cond_t *cond, lock_t *lock) {
-    lock(&cond->lock);
-    cond->waiters++;
-    unlock(&cond->lock);
-    unlock(lock);
-
-    int retval = _sem_wait(&cond->waitsem);
-    _sem_post(&cond->donesem);
-    lock(lock);
-    return retval;
+    if (current && current->pending)
+        return 1;
+    if (current) {
+        lock(&current->waiting_cond_lock);
+        current->waiting_cond = cond;
+        current->waiting_lock = lock;
+        unlock(&current->waiting_cond_lock);
+    }
+    pthread_cond_wait(&cond->cond, lock);
+    if (current) {
+        lock(&current->waiting_cond_lock);
+        current->waiting_cond = NULL;
+        current->waiting_lock = NULL;
+        unlock(&current->waiting_cond_lock);
+    }
+    if (current && current->pending)
+        return 1;
+    return 0;
 }
 
-int notify_count(cond_t *cond, int count) {
-    lock(&cond->lock);
-    if (count > cond->waiters)
-        count = cond->waiters;
-    for (int i = 0; i < count; i++)
-        _sem_post(&cond->waitsem);
-    for (int i = 0; i < count; i++)
-        _sem_wait(&cond->donesem);
-    unlock(&cond->lock);
-    return count;
-}
 void notify(cond_t *cond) {
-    notify_count(cond, INT_MAX);
+    pthread_cond_broadcast(&cond->cond);
 }
+void notify_once(cond_t *cond) {
+    pthread_cond_signal(&cond->cond);
+}
+
+__thread sigjmp_buf unwind_buf;
+__thread bool should_unwind = false;
+
+void sigusr1_handler() {
+    if (should_unwind) {
+        should_unwind = false;
+        siglongjmp(unwind_buf, 1);
+    }
+}
+
+/*
+int foo() {
+    if (sigunwind_start()) {
+        int retval = syscall();
+        sigunwind_end();
+        return retval;
+    } else {
+        return _EINTR;
+    }
+}
+*/

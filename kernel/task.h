@@ -50,6 +50,11 @@ struct task {
     bool vfork_done;
     cond_t vfork_cond;
     lock_t vfork_lock;
+
+    // current condition/lock, so it can be notified in case of a signal
+    cond_t *waiting_cond;
+    lock_t *waiting_lock;
+    lock_t waiting_cond_lock;
 };
 
 // current will always give the process that is currently executing
