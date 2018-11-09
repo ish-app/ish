@@ -54,6 +54,7 @@ have_futex:
 static void futex_put(struct futex *futex) {
     unlock(&futex->lock);
     if (--futex->refcount == 0) {
+        cond_destroy(&futex->cond);
         lock(&futex_hash_lock);
         list_remove(&futex->chain);
         unlock(&futex_hash_lock);

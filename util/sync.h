@@ -39,7 +39,8 @@ typedef struct {
 
 // Must call before using the condition
 void cond_init(cond_t *cond);
-// TODO we might need: void cond_destroy(cond_t *cond);
+// Must call when finished with the condition (otherwise you get semaphore leaks on darwin)
+void cond_destroy(cond_t *cond);
 // Releases the lock, waits for the condition, and reacquires the lock. Return
 // 0 if waiting stopped because another thread called notify, or 1 if waiting
 // stopped because the thread received a signal.

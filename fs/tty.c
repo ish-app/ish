@@ -64,6 +64,7 @@ void tty_release(struct tty *tty) {
             tty->driver->close(tty);
         ttys[tty->type][tty->num] = NULL;
         unlock(&tty->lock);
+        cond_destroy(&tty->produced);
         free(tty);
     } else {
         unlock(&tty->lock);

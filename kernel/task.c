@@ -77,6 +77,7 @@ void task_destroy(struct task *task) {
     list_remove(&task->pgroup);
     list_remove(&task->session);
     pid_get(task->pid)->task = NULL;
+    cond_destroy(&task->vfork_cond);
     free(task);
 }
 

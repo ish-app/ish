@@ -138,6 +138,7 @@ static int reap_if_zombie(struct task *task, addr_t status_addr, addr_t rusage_a
             return _EFAULT;
 
     unlock(&task->group->lock);
+    cond_destroy(&task->group->child_exit);
     free(task->group);
     task_destroy(task);
     return 1;
