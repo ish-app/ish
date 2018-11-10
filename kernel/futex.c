@@ -26,7 +26,7 @@ static struct futex *futex_get(addr_t addr) {
     struct list *bucket = &futex_hash[hash];
     struct futex *futex;
     list_for_each_entry(bucket, futex, chain) {
-        if (futex->addr == addr) {
+        if (futex->addr == addr && futex->mem == current->mem) {
             futex->refcount++;
             goto have_futex;
         }
@@ -37,7 +37,7 @@ static struct futex *futex_get(addr_t addr) {
         unlock(&futex_hash_lock);
         return NULL;
     }
-    futex->refcount = 0;
+    futex->refcount = 1;
     futex->mem = current->mem;
     futex->addr = addr;
     lock_init(&futex->lock);
