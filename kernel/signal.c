@@ -252,7 +252,7 @@ int do_sigprocmask(dword_t how, sigset_t_ set, sigset_t_ *oldset_out) {
     current->queued &= ~unblocked;
     unlock(&sighand->lock);
     if (oldset_out != NULL)
-        *oldset_out = current->blocked;
+        *oldset_out = oldset;
     return 0;
 }
 
