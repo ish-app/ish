@@ -4,14 +4,13 @@ struct futex {
     atomic_uint refcount;
     struct mem *mem;
     addr_t addr;
-    lock_t lock;
     cond_t cond;
     struct list chain; // locked by futex_hash_lock
 };
 
 #define FUTEX_HASH_BITS 12
 #define FUTEX_HASH_SIZE (1 << FUTEX_HASH_BITS)
-static lock_t futex_hash_lock = LOCK_INITIALIZER;
+static lock_t futex_lock = LOCK_INITIALIZER;
 static struct list futex_hash[FUTEX_HASH_SIZE];
 
 static void __attribute__((constructor)) init_futex_hash() {
@@ -22,47 +21,42 @@ static void __attribute__((constructor)) init_futex_hash() {
 // returns the futex for the current process at the given addr, and locks it
 static struct futex *futex_get(addr_t addr) {
     int hash = (addr ^ (unsigned long) current->mem) % FUTEX_HASH_SIZE;
-    lock(&futex_hash_lock);
+    lock(&futex_lock);
     struct list *bucket = &futex_hash[hash];
     struct futex *futex;
     list_for_each_entry(bucket, futex, chain) {
         if (futex->addr == addr && futex->mem == current->mem) {
             futex->refcount++;
-            goto have_futex;
+            return futex;
         }
     }
 
     futex = malloc(sizeof(struct futex));
     if (futex == NULL) {
-        unlock(&futex_hash_lock);
+        unlock(&futex_lock);
         return NULL;
     }
     futex->refcount = 1;
     futex->mem = current->mem;
     futex->addr = addr;
-    lock_init(&futex->lock);
     cond_init(&futex->cond);
     list_add(bucket, &futex->chain);
-
-have_futex:
-    lock(&futex->lock);
-    unlock(&futex_hash_lock);
     return futex;
 }
 
 // must be called on the result of futex_get when you're done with it
 static void futex_put(struct futex *futex) {
-    unlock(&futex->lock);
     if (--futex->refcount == 0) {
         cond_destroy(&futex->cond);
-        lock(&futex_hash_lock);
         list_remove(&futex->chain);
-        unlock(&futex_hash_lock);
+        free(futex);
     }
+    unlock(&futex_lock);
 }
 
 static int futex_load(struct futex *futex, dword_t *out) {
-    dword_t *ptr = mem_ptr(futex->mem, futex->addr, MEM_READ);
+    assert(futex->mem == current->mem);
+    dword_t *ptr = mem_ptr(current->mem, futex->addr, MEM_READ);
     if (ptr == NULL)
         return 1;
     *out = *ptr;
@@ -78,7 +72,7 @@ int futex_wait(addr_t uaddr, dword_t val) {
     else if (tmp != val)
         err = _EAGAIN;
     else
-        wait_for(&futex->cond, &futex->lock);
+        wait_for(&futex->cond, &futex_lock);
     futex_put(futex);
     return err;
 }
