@@ -146,6 +146,8 @@ dword_t sys_clone(dword_t flags, addr_t stack, addr_t ptid, addr_t tls, addr_t c
         return err;
     }
     task->cpu.eax = 0;
+    // task might be destroyed by the time we finish, so save the pid
+    pid_t pid = task->pid;
     task_start(task);
 
     if (flags & CLONE_VFORK_) {
@@ -155,7 +157,7 @@ dword_t sys_clone(dword_t flags, addr_t stack, addr_t ptid, addr_t tls, addr_t c
             wait_for(&task->vfork_cond, &task->vfork_lock);
         unlock(&task->vfork_lock);
     }
-    return task->pid;
+    return pid;
 }
 
 dword_t sys_fork() {

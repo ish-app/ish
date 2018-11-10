@@ -95,8 +95,13 @@ static void *task_run(void *task) {
     abort(); // above function call should never return
 }
 
+static pthread_attr_t task_thread_attr;
+__attribute__((constructor)) static void create_attr() {
+    pthread_attr_init(&task_thread_attr);
+    pthread_attr_setdetachstate(&task_thread_attr, PTHREAD_CREATE_DETACHED);
+}
+
 void task_start(struct task *task) {
-    if (pthread_create(&task->thread, NULL, task_run, task) < 0)
+    if (pthread_create(&task->thread, &task_thread_attr, task_run, task) < 0)
         abort();
-    pthread_detach(task->thread);
 }
