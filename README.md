@@ -27,6 +27,23 @@ You can replace `ish` with `tools/ptraceomatic` to run the program in a real pro
 
 To compile the iOS app, just open the Xcode project and click run. There are scripts that should download and set up the alpine filesystem and create build directories for cross compilation and so on automatically.
 
+## Further setup guide
+
+To enable local development there are a few more steps that needs to be done.
+
+- Go to the project settings in Xcode find the "iSH" target
+- Under "General" change the bundle identifier to a specific identifier for you
+- Under "Capabilities" change the name of the "App Group" and remove the old app group
+
+- Go to the "iSHFileProvider" target
+- Under "General" use the same bundle identifier you created before and add `.FileProvider` to it
+- Under "Capabilities" use the same name of the "App Group" as for the "iSH" target
+
+- Go to the file `app/AppDelegate.m`
+- Change the string in the function `manager containerURLForSecurityApplicationGroupIdentifier:` to your App Group name that you entered in the step before.
+
+Congratulations! You should now have the app running!
+
 # A note on the JIT
 
 Possibly the most interesting thing I wrote as part of iSH is the JIT. It's not actually a JIT since it doesn't target machine code. Instead it generates an array of pointers to functions called gadgets, and each gadget ends with a tailcall to the next function; like the threaded code technique used by some Forth interpreters. The result is a speedup of roughly 3-5x compared to pure emulation.
