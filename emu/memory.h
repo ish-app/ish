@@ -17,7 +17,7 @@ typedef dword_t page_t;
 
 struct mem {
     atomic_uint refcount;
-    unsigned changes; // increment whenever a tlb flush is needed
+    atomic_uint changes; // increment whenever a tlb flush is needed
     struct pt_entry *pt; // TODO replace with red-black tree
 
     // TODO put these in their own mm struct maybe
