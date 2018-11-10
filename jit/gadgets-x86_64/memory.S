@@ -58,6 +58,7 @@
 .irp type, read,write
     .global handle_\type\()_miss
     handle_\type\()_miss:
+        subq $8, %rsp
         save_c
         # %tlb actually points to tlb->entries
         leaq -TLB_entries(%_tlb), %rdi
@@ -73,6 +74,7 @@
         testq %r15, %r15
         jz segfault
         movq %r15, %_addrq
+        addq $8, %rsp
         ret
 .endr
 
