@@ -47,6 +47,7 @@ static inline void wrlock_init(wrlock_t *lock) {
 #endif
     pthread_rwlock_init(lock, pattr);
 }
+#define wrlock_destroy(lock) pthread_rwlock_destroy(lock)
 #define read_wrlock(lock) pthread_rwlock_rdlock(lock)
 #define read_wrunlock(lock) pthread_rwlock_unlock(lock)
 #define write_wrlock(lock) pthread_rwlock_wrlock(lock)

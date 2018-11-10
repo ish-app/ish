@@ -41,6 +41,7 @@ void mem_release(struct mem *mem) {
 #endif
         free(mem->pt);
         write_wrunlock(&mem->lock);
+        wrlock_destroy(&mem->lock);
         free(mem);
     }
 }
