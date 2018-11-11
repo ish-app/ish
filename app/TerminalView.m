@@ -9,11 +9,38 @@
 
 @interface TerminalView ()
 
+typedef enum {
+    kNone,
+    kEsc,
+    kCtrl,
+} CapsLockTarget;
+
+
 @property (nonatomic) NSMutableArray<UIKeyCommand *> *keyCommands;
+@property (nonatomic) CapsLockTarget currentCapsLocktarget;
 
 @end
 
 @implementation TerminalView
+
+- (void)registerExternalKeyboardNotificationsToNotificationCenter:(NSNotificationCenter *)center {
+    [center addObserver:self
+               selector:@selector(keyboardDidChange:)
+                   name:UITextInputCurrentInputModeDidChangeNotification
+                 object:nil];
+    [center addObserver:self
+               selector:@selector(appDidBecomeActive:)
+                   name:UIApplicationDidBecomeActiveNotification
+                 object:nil];
+}
+
+- (void)keyboardDidChange:(NSNotification *)notification {
+    self.currentCapsLocktarget = [self capsLockTarget];
+}
+
+- (void)appDidBecomeActive:(NSNotification *)notification {
+    self.currentCapsLocktarget = [self capsLockTarget];
+}
 
 - (void)setTerminal:(Terminal *)terminal {
     if (self.terminal) {
@@ -131,6 +158,8 @@
         [self insertText:key];
     } else if (command.modifierFlags & UIKeyModifierShift) {
         [self insertText:[key uppercaseString]];
+    } else if(command.modifierFlags & UIKeyModifierAlphaShift) {
+        [self handleCapsLockWithCommand:command];
     } else if (command.modifierFlags & UIKeyModifierControl || command.modifierFlags & UIKeyModifierAlphaShift) {
         if (key.length == 0)
             return;
@@ -147,10 +176,10 @@
 
 static const char *alphabet = "abcdefghijklmnopqrstuvwxyz";
 static const char *controlKeys = "abcdefghijklmnopqrstuvwxyz26-=[]\\";
+NSString *kiSHCapsLockMapping = @"kiSHCapsLockMapping";
 
-- (BOOL)shouldMapCapsToControl {
-    NSString *language = self.textInputMode.primaryLanguage;
-    return [language hasPrefix:@"en"] || [language hasPrefix:@"dictation"];
+- (BOOL)shouldRemapCapsLock {
+    return self.currentCapsLocktarget != kNone;
 }
 
 - (NSArray<UIKeyCommand *> *)keyCommands {
@@ -162,7 +191,7 @@ static const char *controlKeys = "abcdefghijklmnopqrstuvwxyz26-=[]\\";
                                    UIKeyInputLeftArrow, UIKeyInputRightArrow, @"\t"]) {
         [self addKey:specialKey withModifiers:0];
     }
-    if ([self shouldMapCapsToControl]) {
+    if ([self shouldRemapCapsLock]) {
         [self addKeys:controlKeys withModifiers:UIKeyModifierAlphaShift];
         [self addKeys:alphabet withModifiers:0];
         [self addKeys:alphabet withModifiers:UIKeyModifierShift];
@@ -183,6 +212,45 @@ static const char *controlKeys = "abcdefghijklmnopqrstuvwxyz26-=[]\\";
                                                        action:@selector(handleKeyCommand:)];
     [_keyCommands addObject:command];
     
+}
+
+- (CapsLockTarget)capsLockTarget {
+    NSString *target = [[NSUserDefaults standardUserDefaults] stringForKey:kiSHCapsLockMapping];
+    if([target isEqualToString:@"esc"]) {
+        return kEsc;
+    } else if([target isEqualToString:@"ctrl"]) {
+        return kCtrl;
+    }
+    return kNone;
+}
+
+- (void)keyCommandTriggered:(UIKeyCommand *)sender {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self handleKeyCommand:sender];
+    });
+}
+
+- (void)handleCapsLockWithCommand:(UIKeyCommand *)command {
+    CapsLockTarget target = self.currentCapsLocktarget;
+    NSString *newInput = command.input ? command.input : @"";
+    UIKeyModifierFlags flags = command.modifierFlags;
+    flags ^= UIKeyModifierAlphaShift;
+    if(target == kEsc) {
+        newInput = UIKeyInputEscape;
+    } else if(target == kCtrl) {
+        if([newInput length] == 0) {
+            return;
+        }
+
+        flags |= UIKeyModifierControl;
+    } else {
+        return;
+    }
+
+    UIKeyCommand *newCommand = [UIKeyCommand keyCommandWithInput:newInput
+                                                   modifierFlags:flags
+                                                          action:@selector(keyCommandTriggered:)];
+    [self handleKeyCommand:newCommand];
 }
 
 @end
