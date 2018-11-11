@@ -368,6 +368,8 @@ static void step_tracing(struct cpu_state *cpu, struct tlb *tlb, int pid, int se
                 pt_copy(pid, regs.rcx, cpu->eax); break;
             case 265: // clock_gettime
                 pt_copy(pid, regs.rcx, sizeof(struct timespec_)); break;
+	    case 340: // prlimit
+		if (regs.rsi != 0) pt_copy(pid, regs.rsi, sizeof(struct rlimit_)); break;
 
             case 355: // getrandom
                 pt_copy(pid, regs.rbx, regs.rcx); break;
