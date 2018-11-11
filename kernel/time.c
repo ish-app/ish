@@ -112,19 +112,9 @@ dword_t sys_times( addr_t tbuf) {
     STRACE("times(0x%x)", tbuf);
     if (tbuf) {
         struct tms tmp;
-#if __linux__
-        struct rusage usage;
-        int err = getrusage(RUSAGE_THREAD, &usage);
-        assert(err == 0);
-        tmp.tms_utime = usage.ru_utime.tv_usec * (CLOCKS_PER_SEC/1000);
-        tmp.tms_stime = usage.ru_stime.tv_usec * (CLOCKS_PER_SEC/1000);
-#elif __APPLE__
-        thread_basic_info_data_t info;
-        mach_msg_type_number_t count = THREAD_BASIC_INFO_COUNT;
-        int err = thread_info(mach_thread_self(), THREAD_BASIC_INFO, (thread_info_t) &info, &count);
-        tmp.tms_utime = info.user_time.microseconds * (CLOCKS_PER_SEC/1000);
-        tmp.tms_stime = info.system_time.microseconds * (CLOCKS_PER_SEC/1000);
-#endif
+        struct rusage_ rusage = rusage_get_current();
+        tmp.tms_utime = rusage.utime.usec * (CLOCKS_PER_SEC/1000);
+        tmp.tms_stime = rusage.stime.usec * (CLOCKS_PER_SEC/1000);
         if (user_put(tbuf, tmp)) 
             return _EFAULT;
     }
