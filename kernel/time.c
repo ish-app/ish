@@ -1,8 +1,13 @@
+#ifdef __linux__
+#define _GNU_SOURCE
+#include <sys/resource.h>
+#endif
 #include "debug.h"
 #include <time.h>
 #include <signal.h>
 #include "kernel/calls.h"
 #include "kernel/errno.h"
+#include "kernel/resource.h"
 
 dword_t sys_time(addr_t time_out) {
     dword_t now = time(NULL);
@@ -98,6 +103,29 @@ dword_t sys_nanosleep(addr_t req_addr, addr_t rem_addr) {
         rem_ts.sec = rem.tv_sec;
         rem_ts.nsec = rem.tv_nsec;
         if (user_put(rem_addr, rem_ts))
+            return _EFAULT;
+    }
+    return 0;
+}
+
+dword_t sys_times( addr_t tbuf) { 
+    STRACE("times(0x%x)", tbuf);
+    if (tbuf) {
+        struct tms tmp;
+#if __linux__
+        struct rusage usage;
+        int err = getrusage(RUSAGE_THREAD, &usage);
+        assert(err == 0);
+        tmp.tms_utime = usage.ru_utime.tv_usec * (CLOCKS_PER_SEC/1000);
+        tmp.tms_stime = usage.ru_stime.tv_usec * (CLOCKS_PER_SEC/1000);
+#elif __APPLE__
+        thread_basic_info_data_t info;
+        mach_msg_type_number_t count = THREAD_BASIC_INFO_COUNT;
+        int err = thread_info(mach_thread_self(), THREAD_BASIC_INFO, (thread_info_t) &info, &count);
+        tmp.tms_utime = info.user_time.microseconds * (CLOCKS_PER_SEC/1000);
+        tmp.tms_stime = info.system_time.microseconds * (CLOCKS_PER_SEC/1000);
+#endif
+        if (user_put(tbuf, tmp)) 
             return _EFAULT;
     }
     return 0;
