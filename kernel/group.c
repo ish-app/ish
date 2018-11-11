@@ -67,3 +67,11 @@ dword_t sys_setsid() {
     unlock(&pids_lock);
     return 0;
 }
+
+dword_t sys_getsid() {
+    pid_t_ sid;
+    lock(&pids_lock);
+    sid = current->sid;
+    unlock(&pids_lock);
+    return sid;
+}

@@ -152,6 +152,7 @@ int task_set_thread_area(struct task *task, addr_t u_info);
 int sys_set_thread_area(addr_t u_info);
 int sys_set_tid_address(addr_t blahblahblah);
 dword_t sys_setsid(void);
+dword_t sys_getsid(void);
 
 // system information
 #define UNAME_LENGTH 65
