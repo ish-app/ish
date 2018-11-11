@@ -45,6 +45,10 @@ void send_signal(struct task *task, int sig) {
 void send_group_signal(dword_t pgid, int sig) {
     lock(&pids_lock);
     struct pid *pid = pid_get(pgid);
+    if (pid == NULL) {
+        unlock(&pids_lock);
+        return;
+    }
     struct task *task;
     list_for_each_entry(&pid->pgroup, task, pgroup) {
         send_signal(task, sig);
