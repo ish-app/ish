@@ -53,6 +53,8 @@
                selector:@selector(ishExited:)
                    name:ISHExitedNotification
                  object:nil];
+
+    [self.termView registerExternalKeyboardNotificationsToNotificationCenter:center];
     
     if (UIDevice.currentDevice.userInterfaceIdiom == UIUserInterfaceIdiomPad) {
         [self.bar removeArrangedSubview:self.hideKeyboardButton];

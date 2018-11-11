@@ -9,11 +9,38 @@
 
 @interface TerminalView ()
 
+typedef enum {
+    kNone,
+    kEsc,
+    kCtrl,
+} CapsLockTarget;
+
+
 @property (nonatomic) NSMutableArray<UIKeyCommand *> *keyCommands;
+@property (nonatomic) CapsLockTarget currentCapsLocktarget;
 
 @end
 
 @implementation TerminalView
+
+- (void)registerExternalKeyboardNotificationsToNotificationCenter:(NSNotificationCenter *)center {
+    [center addObserver:self
+               selector:@selector(keyboardDidChange:)
+                   name:UITextInputCurrentInputModeDidChangeNotification
+                 object:nil];
+    [center addObserver:self
+               selector:@selector(appDidBecomeActive:)
+                   name:UIApplicationDidBecomeActiveNotification
+                 object:nil];
+}
+
+- (void)keyboardDidChange:(NSNotification *)notification {
+    self.currentCapsLocktarget = [self capsLockTarget];
+}
+
+- (void)appDidBecomeActive:(NSNotification *)notification {
+    self.currentCapsLocktarget = [self capsLockTarget];
+}
 
 - (void)setTerminal:(Terminal *)terminal {
     if (self.terminal) {
@@ -152,8 +179,7 @@ static const char *controlKeys = "abcdefghijklmnopqrstuvwxyz26-=[]\\";
 NSString *kiSHCapsLockMapping = @"kiSHCapsLockMapping";
 
 - (BOOL)shouldRemapCapsLock {
-    NSString *language = self.textInputMode.primaryLanguage;
-    return [language hasPrefix:@"en"] || [language hasPrefix:@"dictation"];
+    return self.currentCapsLocktarget != kNone;
 }
 
 - (NSArray<UIKeyCommand *> *)keyCommands {
@@ -188,15 +214,8 @@ NSString *kiSHCapsLockMapping = @"kiSHCapsLockMapping";
     
 }
 
-typedef enum {
-    kNone,
-    kEsc,
-    kCtrl,
-} CapsLockTarget;
-
 - (CapsLockTarget)capsLockTarget {
     NSString *target = [[NSUserDefaults standardUserDefaults] stringForKey:kiSHCapsLockMapping];
-    target = @"esc";
     if([target isEqualToString:@"esc"]) {
         return kEsc;
     } else if([target isEqualToString:@"ctrl"]) {
@@ -212,18 +231,20 @@ typedef enum {
 }
 
 - (void)handleCapsLockWithCommand:(UIKeyCommand *)command {
-    CapsLockTarget target = [self capsLockTarget];
+    CapsLockTarget target = self.currentCapsLocktarget;
     NSString *newInput = command.input ? command.input : @"";
     UIKeyModifierFlags flags = command.modifierFlags;
     flags ^= UIKeyModifierAlphaShift;
     if(target == kEsc) {
         newInput = UIKeyInputEscape;
-    } else {
+    } else if(target == kCtrl) {
         if([newInput length] == 0) {
             return;
         }
 
         flags |= UIKeyModifierControl;
+    } else {
+        return;
     }
 
     UIKeyCommand *newCommand = [UIKeyCommand keyCommandWithInput:newInput
