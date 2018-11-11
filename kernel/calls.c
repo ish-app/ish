@@ -71,6 +71,7 @@ syscall_t syscall_table[] = {
     [143] = (syscall_t) sys_flock,
     [145] = (syscall_t) sys_readv,
     [146] = (syscall_t) sys_writev,
+    [147] = (syscall_t) sys_getsid,
     [162] = (syscall_t) sys_nanosleep,
     [163] = (syscall_t) sys_mremap,
     [168] = (syscall_t) sys_poll,
