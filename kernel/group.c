@@ -11,18 +11,22 @@ dword_t sys_setpgid(dword_t id, dword_t pgid) {
         pgid = id;
     lock(&pids_lock);
     struct pid *pid = pid_get(id);
-
-    // when creating a process group, you need to specify your own pid
-    // TODO or a child in the same session
-    err = _EPERM;
-    if (list_empty(&pid->pgroup) && id != pgid)
-        goto out;
-    // TODO you can only join a process group in the same session
-
     struct task *task = pid->task;
     err = _ESRCH;
     if (task == NULL)
         goto out;
+
+    // you can only join a process group in the same session
+    if (id != pgid) {
+        // there has to be a process in pgrp that's in the same session as id
+        err = _EPERM;
+        struct pid *group_pid = pid_get(pgid);
+        if (list_empty(&group_pid->pgroup))
+            goto out;
+        struct task *group_task = list_first_entry(&group_pid->pgroup, struct task, pgroup);
+        if (group_task->sid != task->sid)
+            goto out;
+    }
 
     // you can only change the process group of yourself or a child
     err = _ESRCH;

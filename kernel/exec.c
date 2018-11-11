@@ -496,6 +496,8 @@ found:
     }
     current->sighand->altstack = 0;
     unlock(&current->sighand->lock);
+
+    current->did_exec = true;
     return err;
 }
 

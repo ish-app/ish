@@ -58,6 +58,7 @@ struct task *task_create_(struct task *parent) {
     pid->task = task;
     unlock(&pids_lock);
 
+    task->did_exec = false;
     list_init(&task->children);
     list_init(&task->siblings);
     if (parent != NULL) {

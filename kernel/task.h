@@ -23,6 +23,7 @@ struct task {
     uid_t_ uid, gid;
     uid_t_ euid, egid;
     uid_t_ suid, sgid;
+    bool did_exec; // for that one annoying setsid edge case
 
     struct fdtable *files;
     struct fs_info *fs;
