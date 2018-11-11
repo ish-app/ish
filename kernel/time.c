@@ -1,8 +1,13 @@
+#ifdef __linux__
+#define _GNU_SOURCE
+#include <sys/resource.h>
+#endif
 #include "debug.h"
 #include <time.h>
 #include <signal.h>
 #include "kernel/calls.h"
 #include "kernel/errno.h"
+#include "kernel/resource.h"
 
 dword_t sys_time(addr_t time_out) {
     dword_t now = time(NULL);
@@ -98,6 +103,19 @@ dword_t sys_nanosleep(addr_t req_addr, addr_t rem_addr) {
         rem_ts.sec = rem.tv_sec;
         rem_ts.nsec = rem.tv_nsec;
         if (user_put(rem_addr, rem_ts))
+            return _EFAULT;
+    }
+    return 0;
+}
+
+dword_t sys_times( addr_t tbuf) { 
+    STRACE("times(0x%x)", tbuf);
+    if (tbuf) {
+        struct tms tmp;
+        struct rusage_ rusage = rusage_get_current();
+        tmp.tms_utime = rusage.utime.usec * (CLOCKS_PER_SEC/1000);
+        tmp.tms_stime = rusage.stime.usec * (CLOCKS_PER_SEC/1000);
+        if (user_put(tbuf, tmp)) 
             return _EFAULT;
     }
     return 0;

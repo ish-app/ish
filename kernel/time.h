@@ -23,9 +23,17 @@ struct itimerval_ {
     struct timeval_ interval;
     struct timeval_ value;
 };
+
+struct tms {
+    clock_t tms_utime;  /* user time */
+    clock_t tms_stime;  /* system time */
+    clock_t tms_cutime; /* user time of children */
+    clock_t tms_cstime; /* system time of children */
+};
+
 dword_t sys_getitimer(dword_t which, addr_t val);
 dword_t sys_setitimer(dword_t which, addr_t new_val, addr_t old_val);
-
+dword_t sys_times( addr_t tbuf);
 dword_t sys_nanosleep(addr_t req, addr_t rem);
 
 #endif
