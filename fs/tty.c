@@ -151,8 +151,11 @@ int tty_input(struct tty *tty, const char *input, size_t size) {
                 input += i + 1;
                 size -= i + 1;
                 i = 0;
-                if (tty->fg_group != 0)
+                if (tty->fg_group != 0) {
+                    unlock(&tty->lock);
                     send_group_signal(tty->fg_group, SIGINT_);
+                    lock(&tty->lock);
+                }
             }
         }
     }
@@ -417,8 +420,11 @@ static int tty_ioctl(struct fd *fd, int cmd, void *arg) {
 
 void tty_set_winsize(struct tty *tty, struct winsize_ winsize) {
     tty->winsize = winsize;
-    if (tty->fg_group != 0)
+    if (tty->fg_group != 0) {
+        unlock(&tty->lock);
         send_group_signal(tty->fg_group, SIGWINCH_);
+        lock(&tty->lock);
+    }
 }
 
 struct dev_ops tty_dev = {
