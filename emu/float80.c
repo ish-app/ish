@@ -390,8 +390,9 @@ float80 f80_div(float80 a, float80 b) {
         if (f80_iszero(a))
             f = F80_NAN;
     } else {
-        unsigned __int128 signif = ((unsigned __int128) a.signif << 64) / b.signif;
-        int exp = unbias_denormal(a.exp) - unbias_denormal(b.exp) + 63;
+        int b_trailing = __builtin_ctzl(b.signif);
+        unsigned __int128 signif = ((unsigned __int128) a.signif << 64) / (b.signif >> b_trailing);
+        int exp = unbias_denormal(a.exp) - unbias_denormal(b.exp) + 63 - b_trailing;
         f = u128_normalize_round(signif, exp, a.sign ^ b.sign);
     }
 
