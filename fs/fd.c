@@ -156,6 +156,7 @@ int f_close(fd_t f) {
         return _EBADF;
     int err = fd_close(fd);
     table->files[f] = NULL;
+    bit_clear(f, table->cloexec);
     return err;
 }
 
