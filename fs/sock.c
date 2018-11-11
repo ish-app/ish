@@ -314,6 +314,7 @@ static struct fd_ops socket_fdops = {
     .read = realfs_read,
     .write = realfs_write,
     .close = realfs_close,
+    .getflags = realfs_getflags,
 };
 
 static struct socket_call {

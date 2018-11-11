@@ -126,6 +126,7 @@ int realfs_flock(struct fd *fd, int operation);
 int realfs_getpath(struct fd *fd, char *buf);
 ssize_t realfs_read(struct fd *fd, void *buf, size_t bufsize);
 ssize_t realfs_write(struct fd *fd, const void *buf, size_t bufsize);
+int realfs_getflags(struct fd *fd);
 int realfs_close(struct fd *fd);
 
 // adhoc fs

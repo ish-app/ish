@@ -348,6 +348,13 @@ int realfs_fsync(struct fd *fd) {
     return 0;
 }
 
+int realfs_getflags(struct fd *fd) {
+    int flags = fcntl(fd->real_fd, F_GETFL);
+    if (flags < 0)
+        return errno_map();
+    return flags;
+}
+
 const struct fs_ops realfs = {
     .mount = realfs_mount,
     .statfs = realfs_statfs,
@@ -380,4 +387,5 @@ const struct fd_ops realfs_fdops = {
     .mmap = realfs_mmap,
     .fsync = realfs_fsync,
     .close = realfs_close,
+    .getflags = realfs_getflags,
 };

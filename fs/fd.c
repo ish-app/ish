@@ -215,6 +215,12 @@ dword_t sys_fcntl64(fd_t f, dword_t cmd, dword_t arg) {
                 bit_clear(f, table->cloexec);
             return 0;
 
+        case F_GETFL_:
+            STRACE("fcntl(%d, F_GETFL)", f);
+            if (fd->ops->getflags == NULL)
+                return 0;
+            return fd->ops->getflags(fd);
+
         default:
             STRACE("fcntl(%d, %d)", f, cmd);
             return _EINVAL;

@@ -75,6 +75,9 @@ struct fd_ops {
 
     int (*fsync)(struct fd *fd);
     int (*close)(struct fd *fd);
+
+    // handle F_GETFL, i.e. return open flags for this fd
+    int (*getflags)(struct fd *fd);
 };
 
 struct fdtable {
