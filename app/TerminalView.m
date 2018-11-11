@@ -112,6 +112,7 @@ typedef enum {
             }
         }
     }
+    text = [text stringByReplacingOccurrencesOfString:@"\n" withString:@"\r"];
     NSData *data = [text dataUsingEncoding:NSUTF8StringEncoding];
     [self.terminal sendInput:data.bytes length:data.length];
 }
