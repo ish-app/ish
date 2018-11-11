@@ -146,6 +146,7 @@ void test_math() {
     test(div, 1, 1e1000l);
     test(div, 1, 1e-1000l);
     test(div, 12.4123331, 934.11223e200);
+    test(div, 1288490188200, 210);
     test(div, 1e-4949l, 10);
     test(div, 10, 1e-4949l);
     test(div, 1e-4949l, 1e-4949l);
