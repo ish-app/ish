@@ -17,7 +17,7 @@ term.on('focus', function() {
     webkit.messageHandlers.focus.postMessage('focus');
 });
 term.on('resize', function(size) {
-    webkit.messageHandlers.resize.postMessage(size.cols + 'x' + size.rows);
+    webkit.messageHandlers.resize.postMessage('resize');
 });
 term.fit();
 window.addEventListener('resize', function() {

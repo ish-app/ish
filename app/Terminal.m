@@ -13,7 +13,7 @@
 @interface Terminal () <WKScriptMessageHandler>
 
 @property WKWebView *webView;
-@property struct tty *tty;
+@property (nonatomic) struct tty *tty;
 @property NSMutableData *pendingData;
 
 @property DelayedUITask *refreshTask;
@@ -47,15 +47,33 @@ static Terminal *terminal = nil;
     return self;
 }
 
+- (void)setTty:(struct tty *)tty {
+    _tty = tty;
+    [self syncWindowSize];
+}
+
 - (void)userContentController:(WKUserContentController *)userContentController didReceiveScriptMessage:(WKScriptMessage *)message {
     if ([message.name isEqualToString:@"log"]) {
         NSLog(@"%@", message.body);
     } else if ([message.name isEqualToString:@"resize"]) {
-        NSArray<NSString *> *parts = [message.body componentsSeparatedByString:@"x"];
-        NSLog(@"%@", parts);
-        // FIXME this can happen before self.tty is set
-        tty_set_winsize(self.tty, (struct winsize_) {.col = parts[0].intValue, .row = parts[1].intValue});
+        [self syncWindowSize];
     }
+}
+
+- (void)syncWindowSize {
+    NSLog(@"syncing");
+    [self.webView evaluateJavaScript:@"[term.cols, term.rows]" completionHandler:^(NSArray<NSNumber *> *dimensions, NSError *error) {
+        if (self.tty == NULL) {
+            NSLog(@"gave up");
+            return;
+        }
+        int cols = dimensions[0].intValue;
+        int rows = dimensions[1].intValue;
+        NSLog(@"%dx%d", cols, rows);
+        lock(&self.tty->lock);
+        tty_set_winsize(self.tty, (struct winsize_) {.col = cols, .row = rows});
+        unlock(&self.tty->lock);
+    }];
 }
 
 - (size_t)write:(const void *)buf length:(size_t)len {
