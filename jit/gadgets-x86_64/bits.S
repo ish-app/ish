@@ -38,17 +38,31 @@
     .macro x name, reg
         .gadget \op\()_\arg\()32_\name
             .ifc \arg,imm
-                pushq %rcx
+                .ifnc \name,reg_c
+                    pushq %rcx
+                .else
+                    pushq %rdx
+                    xchg %ecx, %edx
+                .endif
                 movb (%_ip), %cl
             .endif
             testb $(32 - 1), %cl
             jz 1f
-            \op %cl, %\reg, %tmpd
+            .ifc \name,reg_c
+                \op %cl, %edx, %tmpd
+            .else
+                \op %cl, %\reg, %tmpd
+            .endif
             setf_oc
             setf_zsp %tmpd, l
         1:
             .ifc \arg,imm
-                popq %rcx
+                .ifnc \name,reg_c
+                    popq %rcx
+                .else
+                    xchg %ecx, %edx
+                    popq %rdx
+                .endif
                 gret 1
             .else
                 gret
