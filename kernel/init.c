@@ -37,6 +37,12 @@ static struct tgroup *init_tgroup() {
 
 void create_first_process() {
     extern void sigusr1_handler();
+    struct sigaction sigact;
+    sigact.sa_handler = sigusr1_handler;
+    sigact.sa_flags = 0;
+    sigemptyset(&sigact.sa_mask);
+    sigaddset(&sigact.sa_mask, SIGUSR1);
+    sigaction(SIGUSR1, &sigact, NULL);
     signal(SIGUSR1, sigusr1_handler);
     signal(SIGPIPE, SIG_IGN);
 
