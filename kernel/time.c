@@ -43,7 +43,6 @@ static void itimer_notify(struct task *task) {
 }
 
 dword_t sys_setitimer(dword_t which, addr_t new_val_addr, addr_t old_val_addr) {
-    STRACE("setitimer");
     if (which != ITIMER_REAL_)
         TODO("setitimer %d", which);
 
@@ -51,6 +50,7 @@ dword_t sys_setitimer(dword_t which, addr_t new_val_addr, addr_t old_val_addr) {
     if (user_get(new_val_addr, val))
         return _EFAULT;
 
+    STRACE("setitimer({%ds %dus, %ds %dus}, 0x%x)", val.value.sec, val.value.usec, val.interval.sec, val.interval.usec, old_val_addr);
     struct tgroup *group = current->group;
     lock(&group->lock);
     if (!group->has_timer) {
