@@ -21,6 +21,7 @@ struct mem *mem_new() {
     mem->refcount = 1;
     mem->pt = calloc(MEM_PAGES, sizeof(struct pt_entry));
     mem->changes = 0;
+    mem->start_brk = mem->brk = 0; // should get overwritten by exec
 #if JIT
     mem->jit = jit_new(mem);
 #endif
