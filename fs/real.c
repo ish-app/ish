@@ -355,6 +355,13 @@ int realfs_getflags(struct fd *fd) {
     return flags;
 }
 
+int realfs_setflags(struct fd *fd, dword_t arg) {
+    int ret = fcntl(fd->real_fd, F_SETFL, arg);
+    if (ret < 0)
+        return errno_map();
+    return 0;
+}
+
 const struct fs_ops realfs = {
     .mount = realfs_mount,
     .statfs = realfs_statfs,
@@ -388,4 +395,5 @@ const struct fd_ops realfs_fdops = {
     .fsync = realfs_fsync,
     .close = realfs_close,
     .getflags = realfs_getflags,
+    .setflags = realfs_setflags,
 };
