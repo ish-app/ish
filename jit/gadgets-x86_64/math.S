@@ -271,9 +271,9 @@
 .gadget_list cvt, SIZE_LIST
 
 .gadget cvte_16
-    cwde
+    cbw
     gret
 .gadget cvte_32
-    cdqe
+    cwde
     gret
 .gadget_list cvte, SIZE_LIST
