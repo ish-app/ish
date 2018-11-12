@@ -38,7 +38,7 @@ static inline bool timespec_is_zero(struct timespec ts) {
 }
 
 static inline bool timespec_positive(struct timespec ts) {
-    return ts.tv_sec > 0 && ts.tv_nsec > 0;
+    return ts.tv_sec > 0 || (ts.tv_sec == 0 && ts.tv_nsec > 0);
 }
 
 typedef void (*timer_callback_t)(void *data);
