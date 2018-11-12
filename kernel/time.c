@@ -113,8 +113,10 @@ dword_t sys_times(addr_t tbuf) {
     if (tbuf) {
         struct tms_ tmp;
         struct rusage_ rusage = rusage_get_current();
-        tmp.tms_utime = rusage.utime.usec * (CLOCKS_PER_SEC/1000);
-        tmp.tms_stime = rusage.stime.usec * (CLOCKS_PER_SEC/1000);
+        tmp.tms_utime = (rusage.utime.sec * 100) + (rusage.utime.usec/10000);
+        tmp.tms_stime = (rusage.utime.sec * 100) + (rusage.utime.usec/10000);
+        tmp.tms_cutime = tmp.tms_utime;
+        tmp.tms_cstime = tmp.tms_stime;
         if (user_put(tbuf, tmp))
             return _EFAULT;
     }
