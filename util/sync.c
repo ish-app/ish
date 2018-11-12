@@ -14,6 +14,12 @@ void cond_destroy(cond_t *cond) {
 int wait_for(cond_t *cond, lock_t *lock) {
     if (current && current->pending)
         return 1;
+    wait_for_ignore_signals(cond, lock);
+    if (current && current->pending)
+        return 1;
+    return 0;
+}
+void wait_for_ignore_signals(cond_t *cond, lock_t *lock) {
     if (current) {
         lock(&current->waiting_cond_lock);
         current->waiting_cond = cond;
@@ -27,9 +33,6 @@ int wait_for(cond_t *cond, lock_t *lock) {
         current->waiting_lock = NULL;
         unlock(&current->waiting_cond_lock);
     }
-    if (current && current->pending)
-        return 1;
-    return 0;
 }
 
 void notify(cond_t *cond) {
