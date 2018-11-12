@@ -43,7 +43,6 @@ void create_first_process() {
     sigemptyset(&sigact.sa_mask);
     sigaddset(&sigact.sa_mask, SIGUSR1);
     sigaction(SIGUSR1, &sigact, NULL);
-    signal(SIGUSR1, sigusr1_handler);
     signal(SIGPIPE, SIG_IGN);
 
     current = task_create_(NULL);
