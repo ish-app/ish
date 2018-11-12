@@ -30,18 +30,41 @@ static uint64_t get_total_ram() {
     sysctl((int []) {CTL_DEBUG, HW_PHYSMEM}, 2, &total_ram, NULL, NULL, 0);
     return total_ram;
 }
+static uint64_t get_uptime() {
+    uint64_t value[2];
+    size_t size = sizeof(value);
+    sysctlbyname("kern.boottime", &value, &size, NULL, 0);
+    struct timeval now;
+    gettimeofday(&now, NULL);
+    return now.tv_sec - value[0];
+}
+static void sysinfo_specific(struct sys_info *info) {
+    info->totalram = get_total_ram();
+    info->uptime = get_uptime();
+    // TODO: everything else
+}
 #elif __linux__
-static uint64_t get_total_ram() {
-    struct sysinfo info;
-    sysinfo(&info);
-    return info.totalram;
+static void sysinfo_specific(struct sys_info *info) {
+    struct sysinfo host_info;
+    sysinfo(&host_info);
+    memcpy(info->loads, host_info.loads, sizeof(host_info.loads));
+    info->uptime = host_info.uptime;
+    info->totalram = host_info.totalram;
+    info->freeram = host_info.freeram;
+    info->sharedram = host_info.sharedram;
+    info->totalswap = host_info.totalswap;
+    info->freeswap = host_info.freeswap;
+    info->procs = host_info.procs;
+    info->totalhigh = host_info.totalhigh;
+    info->freehigh = host_info.freehigh;
+    info->mem_unit = host_info.mem_unit;
 }
 #endif
 
 dword_t sys_sysinfo(addr_t info_addr) {
-    struct sys_info info;
-    info.totalram = get_total_ram();
-    // TODO everything else
+    struct sys_info info = {0};
+    sysinfo_specific(&info);
+
     if (user_put(info_addr, info))
         return _EFAULT;
     return 0;
