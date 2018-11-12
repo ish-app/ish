@@ -65,12 +65,8 @@ dword_t sys_setitimer(dword_t which, addr_t new_val_addr, addr_t old_val_addr) {
 
     struct timer_spec spec;
     
-    if (val.value.sec && !val.value.usec) {
-        val.value.usec = val.value.sec * 1000;
-    }
     if (!val.interval.sec && !val.interval.usec) {
-        val.interval.sec = val.value.sec;
-        val.interval.usec = val.value.usec;
+        val.interval.sec = 1;
     }
     spec.interval.tv_sec = val.interval.sec;
     spec.interval.tv_nsec = val.interval.usec * 1000;
