@@ -39,13 +39,17 @@ dword_t sys_wait4(dword_t pid, addr_t status_addr, dword_t options, addr_t rusag
 dword_t sys_waitpid(dword_t pid, addr_t status_addr, dword_t options);
 
 // memory management
+struct mmap_arg_struct {
+    dword_t addr, len, prot, flags, fd, offset;
+};
+
 addr_t sys_brk(addr_t new_brk);
 
 #define MMAP_SHARED 0x1
 #define MMAP_PRIVATE 0x2
 #define MMAP_FIXED 0x10
 #define MMAP_ANONYMOUS 0x20
-addr_t sys_mmap(addr_t addr, dword_t len, dword_t prot, dword_t flags, fd_t fd_no, dword_t offset);
+addr_t sys_mmap(struct mmap_arg_struct *args);
 addr_t sys_mmap2(addr_t addr, dword_t len, dword_t prot, dword_t flags, fd_t fd_no, dword_t offset);
 int_t sys_munmap(addr_t addr, uint_t len);
 int_t sys_mprotect(addr_t addr, uint_t len, int_t prot);

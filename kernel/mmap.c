@@ -5,10 +5,6 @@
 #include "fs/fd.h"
 #include "emu/memory.h"
 
-addr_t sys_mmap2(addr_t addr, dword_t len, dword_t prot, dword_t flags, fd_t fd_no, dword_t offset) {
-    return sys_mmap(addr, len, prot, flags, fd_no, offset << PAGE_BITS);
-}
-
 static addr_t do_mmap(addr_t addr, dword_t len, dword_t prot, dword_t flags, fd_t fd_no, dword_t offset) {
     int err;
     pages_t pages = PAGE_ROUND_UP(len);
@@ -42,7 +38,7 @@ static addr_t do_mmap(addr_t addr, dword_t len, dword_t prot, dword_t flags, fd_
     return page << PAGE_BITS;
 }
 
-addr_t sys_mmap(addr_t addr, dword_t len, dword_t prot, dword_t flags, fd_t fd_no, dword_t offset) {
+static addr_t mmap_common(addr_t addr, dword_t len, dword_t prot, dword_t flags, fd_t fd_no, dword_t offset) {
     STRACE("mmap(0x%x, 0x%x, 0x%x, 0x%x, %d, %d)", addr, len, prot, flags, fd_no, offset);
     if (len == 0)
         return _EINVAL;
@@ -53,6 +49,14 @@ addr_t sys_mmap(addr_t addr, dword_t len, dword_t prot, dword_t flags, fd_t fd_n
     addr_t res = do_mmap(addr, len, prot, flags, fd_no, offset);
     write_wrunlock(&current->mem->lock);
     return res;
+}
+
+addr_t sys_mmap2(addr_t addr, dword_t len, dword_t prot, dword_t flags, fd_t fd_no, dword_t offset) {
+    return mmap_common(addr, len, prot, flags, fd_no, offset << PAGE_BITS);
+}
+
+addr_t sys_mmap(struct mmap_arg_struct *args) {
+    return mmap_common(args->addr, args->len, args->prot, args->flags, args->fd, args->offset);
 }
 
 int_t sys_munmap(addr_t addr, uint_t len) {
