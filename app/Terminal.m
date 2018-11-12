@@ -85,6 +85,7 @@ static Terminal *terminal = nil;
 }
 
 - (void)sendInput:(const char *)buf length:(size_t)len {
+    NSLog(@"%@", [NSData dataWithBytes:buf length:len]);
     tty_input(self.tty, buf, len);
     [self.scrollToBottomTask schedule];
 }
@@ -100,15 +101,7 @@ static Terminal *terminal = nil;
     }
 }
 
-- (void)refresh {
-    if (self.webView.loading)
-        return;
-    
-    NSData *data;
-    @synchronized (self) {
-        data = self.pendingData;
-        self.pendingData = [NSMutableData new];
-    }
+NSData *removeInvalidUTF8(NSData *data) {
     // character encoding hell
     NSMutableData *cleanData = [NSMutableData dataWithLength:data.length];
     iconv_t conv = iconv_open("UTF-8", "UTF-8");
@@ -121,11 +114,28 @@ static Terminal *terminal = nil;
     iconv(conv, (char **) &dataBytes, &dataLength, &cleanDataBytes, &cleanDataLength);
     iconv_close(conv);
     cleanData.length -= cleanDataLength;
+    return cleanData;
+}
+
+- (void)refresh {
+    if (self.webView.loading)
+        return;
+    
+    NSData *data;
+    @synchronized (self) {
+        data = self.pendingData;
+        self.pendingData = [NSMutableData new];
+    }
+    NSData *cleanData = removeInvalidUTF8(data);
     NSString *str = [[NSString alloc] initWithData:cleanData encoding:NSUTF8StringEncoding];
+    if (str == nil) {
+        // dammit what to do.
+        str = @"[invalid utf8]";
+    }
     
     NSError *err = nil;
     NSData *jsonData = [NSJSONSerialization dataWithJSONObject:@[str] options:0 error:&err];
-    NSString *json = [[NSString alloc] initWithData:jsonData encoding:NSASCIIStringEncoding];
+    NSString *json = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
     NSAssert(err == nil, @"JSON serialization failed, wtf");
     NSString *jsToEvaluate = [NSString stringWithFormat:@"term.write(%@[0])", json];
     [self.webView evaluateJavaScript:jsToEvaluate completionHandler:nil];
