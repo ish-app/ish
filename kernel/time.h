@@ -24,11 +24,11 @@ struct itimerval_ {
     struct timeval_ value;
 };
 
-struct tms {
-    clock_t tms_utime;  /* user time */
-    clock_t tms_stime;  /* system time */
-    clock_t tms_cutime; /* user time of children */
-    clock_t tms_cstime; /* system time of children */
+struct tms_ {
+    dword_t tms_utime;  /* user time */
+    dword_t tms_stime;  /* system time */
+    dword_t tms_cutime; /* user time of children */
+    dword_t tms_cstime; /* system time of children */
 };
 
 dword_t sys_getitimer(dword_t which, addr_t val);

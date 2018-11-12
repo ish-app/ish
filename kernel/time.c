@@ -108,14 +108,14 @@ dword_t sys_nanosleep(addr_t req_addr, addr_t rem_addr) {
     return 0;
 }
 
-dword_t sys_times( addr_t tbuf) { 
+dword_t sys_times(addr_t tbuf) {
     STRACE("times(0x%x)", tbuf);
     if (tbuf) {
-        struct tms tmp;
+        struct tms_ tmp;
         struct rusage_ rusage = rusage_get_current();
         tmp.tms_utime = rusage.utime.usec * (CLOCKS_PER_SEC/1000);
         tmp.tms_stime = rusage.stime.usec * (CLOCKS_PER_SEC/1000);
-        if (user_put(tbuf, tmp)) 
+        if (user_put(tbuf, tmp))
             return _EFAULT;
     }
     return 0;
