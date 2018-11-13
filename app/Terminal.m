@@ -8,6 +8,7 @@
 #include <iconv.h>
 #import "Terminal.h"
 #import "DelayedUITask.h"
+#import "UserPreferences.h"
 #include "fs/tty.h"
 
 @interface Terminal () <WKScriptMessageHandler>
@@ -42,6 +43,7 @@ static Terminal *terminal = nil;
          [NSURLRequest requestWithURL:
           [NSBundle.mainBundle URLForResource:@"xterm-dist/term" withExtension:@"html"]]];
         [self.webView addObserver:self forKeyPath:@"loading" options:0 context:NULL];
+        [self _addPreferenceObservers];
         terminal = self;
     }
     return self;
@@ -94,10 +96,33 @@ static Terminal *terminal = nil;
     [self.webView evaluateJavaScript:@"term.scrollToBottom()" completionHandler:nil];
 }
 
+- (void)_addPreferenceObservers {
+    UserPreferences *prefs = [UserPreferences shared];
+    NSKeyValueObservingOptions opts = NSKeyValueObservingOptionInitial | NSKeyValueObservingOptionNew;
+    [prefs addObserver:self forKeyPath:@"fontSize" options:opts context:nil];
+    [prefs addObserver:self forKeyPath:@"foregroundColor" options:opts context:nil];
+    [prefs addObserver:self forKeyPath:@"backgroundColor" options:opts context:nil];
+}
+
+- (void)_updateStyleFromPreferences {
+    UserPreferences *prefs = [UserPreferences shared];
+    
+    NSString *js = [NSString stringWithFormat:@"var terminal = document.getElementsByClassName('terminal')[0];"
+                                              @"var prefs = %@;"
+                                              @"terminal.style.fontSize = prefs.fontSize;"
+                                              @"terminal.style.backgroundColor = prefs.backgroundColor;"
+                                              @"terminal.style.color = prefs.foregroundColor;",
+                    [prefs JSONDictionary]];
+    
+    [self.webView evaluateJavaScript:js completionHandler:nil];
+}
+
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context {
     if (object == self.webView && [keyPath isEqualToString:@"loading"] && !self.webView.loading) {
         [self.refreshTask schedule];
         [self.webView removeObserver:self forKeyPath:@"loading"];
+    } else if (object == [UserPreferences shared]) {
+        [self _updateStyleFromPreferences];
     }
 }
 

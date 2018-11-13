@@ -46,14 +46,14 @@ static NSString *const kPreferenceBackgroundColorKey = @"kPreferenceBackgroundCo
     [_defaults setBool:mapCapsLockAsControl forKey:kPreferenceMapCapsLockAsControlKey];
 }
 
-- (NSUInteger)fontSize
+- (NSNumber *)fontSize
 {
-    return [_defaults integerForKey:kPreferenceFontSizeKey] ?: 12;
+    return [_defaults objectForKey:kPreferenceFontSizeKey] ?: @(12);
 }
 
-- (void)setFontSize:(NSUInteger)fontSize
+- (void)setFontSize:(NSNumber *)fontSize
 {
-    [_defaults setInteger:fontSize forKey:kPreferenceFontSizeKey];
+    [_defaults setObject:fontSize forKey:kPreferenceFontSizeKey];
 }
 
 - (NSString *)foregroundColor
@@ -74,6 +74,17 @@ static NSString *const kPreferenceBackgroundColorKey = @"kPreferenceBackgroundCo
 - (void)setBackgroundColor:(NSString *)backgroundColor
 {
     [_defaults setObject:backgroundColor forKey:kPreferenceBackgroundColorKey];
+}
+
+- (NSString *)JSONDictionary
+{
+    NSDictionary *dict = @{
+                           @"mapCapsLockAsControl": @(self.mapCapsLockAsControl),
+                           @"fontSize": self.fontSize,
+                           @"foregroundColor": self.foregroundColor,
+                           @"backgroundColor": self.backgroundColor
+                           };
+    return [[NSString alloc] initWithData:[NSJSONSerialization dataWithJSONObject:dict options:0 error:nil] encoding:NSUTF8StringEncoding];
 }
 
 @end
