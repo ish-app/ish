@@ -4,7 +4,7 @@
 [![goto counter](https://img.shields.io/github/search/tbodt/ish/goto.svg)](https://github.com/tbodt/ish/search?q=goto)
 [![fuck counter](https://img.shields.io/github/search/tbodt/ish/fuck.svg)](https://github.com/tbodt/ish/search?q=fuck)
 
-A project to get a Linux shell running on iOS, using usermode x86 emulation and syscall translation.
+iSH is a Linux shell on iOS with usermode x86 emulation and syscall translation.
 
 For the current status of the project, check the [Compatibility](https://github.com/tbodt/ish/projects/7) and [Emulation](https://github.com/tbodt/ish/projects/3) projects, and the commit logs.
 
@@ -12,7 +12,7 @@ You can [join the Testflight beta](https://testflight.apple.com/join/97i7KM8O) n
 
 # Hacking
 
-You'll need these things to build the project:
+Build requirements:
 
  - Python 3
  - Ninja
@@ -28,9 +28,9 @@ You can replace `ish` with `tools/ptraceomatic` to run the program in a real pro
 
 To compile the iOS app, just open the Xcode project and click run. There are scripts that should download and set up the alpine filesystem and create build directories for cross compilation and so on automatically.
 
-## Further setup guide
+## Development guide
 
-To enable local development there are a few more steps that needs to be done.
+Local development requires a few more steps.
 
 - Go to the project settings in Xcode find the "iSH" target
 - Under "General" change the bundle identifier to a specific identifier for you
