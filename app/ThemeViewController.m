@@ -8,6 +8,9 @@
 #import "ThemeViewController.h"
 #import "UserPreferences.h"
 
+static NSString *const PreviewCellIdentifier = @"PreviewCell";
+static NSString *const ThemeNameCellIdentifier = @"ThemeNameCell";
+
 @interface ThemeViewController ()
 
 @end
@@ -17,8 +20,8 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     
-    [self.tableView registerClass:[UITableViewCell class] forCellReuseIdentifier:@"PreviewCell"];
-    [self.tableView registerClass:[UITableViewCell class] forCellReuseIdentifier:@"ThemeNameCell"];
+    [self.tableView registerClass:[UITableViewCell class] forCellReuseIdentifier:PreviewCellIdentifier];
+    [self.tableView registerClass:[UITableViewCell class] forCellReuseIdentifier:ThemeNameCellIdentifier];
     
     [[UserPreferences shared] addObserver:self forKeyPath:@"theme" options:NSKeyValueObservingOptionNew context:nil];
 }
@@ -64,8 +67,8 @@
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     
-    // reuse example cell separately to avoid reuse issues
-    NSString *reuseIdentifier = indexPath.section == 1 ? @"ExampleCell" : @"ThemeNameCell";
+    // reuse preview cell separately to avoid reuse issues
+    NSString *reuseIdentifier = indexPath.section == 1 ? PreviewCellIdentifier : ThemeNameCellIdentifier;
     UserPreferences *prefs = [UserPreferences shared];
     
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:reuseIdentifier forIndexPath:indexPath];
