@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		30F5698921986630001B01FB /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 30F5698821986630001B01FB /* Settings.bundle */; };
 		30F5698A21986630001B01FB /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 30F5698821986630001B01FB /* Settings.bundle */; };
+		8632A7BF219A59FB00F02325 /* UserPreferences.m in Sources */ = {isa = PBXBuildFile; fileRef = 8632A7BE219A59FB00F02325 /* UserPreferences.m */; };
 		BB0FC5921F980A6C00803272 /* Terminal.m in Sources */ = {isa = PBXBuildFile; fileRef = BB0FC5911F980A6B00803272 /* Terminal.m */; };
 		BB13F7EA200ADCED003D1C4D /* libish.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BB13F7DC200AD81D003D1C4D /* libish.a */; };
 		BB13F7FC200ADDA0003D1C4D /* libgdbm.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BB13F7EF200ADD69003D1C4D /* libgdbm.a */; };
@@ -100,6 +101,8 @@
 
 /* Begin PBXFileReference section */
 		30F5698821986630001B01FB /* Settings.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = Settings.bundle; sourceTree = "<group>"; };
+		8632A7BD219A59FB00F02325 /* UserPreferences.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = UserPreferences.h; sourceTree = "<group>"; };
+		8632A7BE219A59FB00F02325 /* UserPreferences.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = UserPreferences.m; sourceTree = "<group>"; };
 		BB0FC5901F980A6B00803272 /* Terminal.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Terminal.h; sourceTree = "<group>"; };
 		BB0FC5911F980A6B00803272 /* Terminal.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Terminal.m; sourceTree = "<group>"; };
 		BB13F7C8200ACC24003D1C4D /* xcode-meson.sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = "xcode-meson.sh"; sourceTree = "<group>"; };
@@ -620,6 +623,8 @@
 				BBFB5569215868E800DFE6DE /* About.storyboard */,
 				BBFB5577215876CD00DFE6DE /* AboutViewController.h */,
 				BBFB5578215876CD00DFE6DE /* AboutViewController.m */,
+				8632A7BD219A59FB00F02325 /* UserPreferences.h */,
+				8632A7BE219A59FB00F02325 /* UserPreferences.m */,
 			);
 			name = About;
 			sourceTree = "<group>";
@@ -934,6 +939,7 @@
 				BBFB557621586F9200DFE6DE /* DismissSegue.m in Sources */,
 				BB455E111FB37F6600AFB48B /* DelayedUITask.m in Sources */,
 				BB0FC5921F980A6C00803272 /* Terminal.m in Sources */,
+				8632A7BF219A59FB00F02325 /* UserPreferences.m in Sources */,
 				BB792B631F96D90D00FFB7A4 /* main.m in Sources */,
 				BB60F55221573FCA003A4E52 /* BarButton.m in Sources */,
 				BBFB557C215878C600DFE6DE /* UIApplication+OpenURL.m in Sources */,
