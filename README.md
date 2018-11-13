@@ -8,9 +8,9 @@ iSH is a Linux shell on iOS with usermode x86 emulation and syscall translation.
 
 For the current status of the project check the [Compatibility](https://github.com/tbodt/ish/projects/7) project, [Emulation](https://github.com/tbodt/ish/projects/3) project, and the commit logs.
 
-You can [join the Testflight beta](https://testflight.apple.com/join/97i7KM8O) now. There's also a [Discord server](https://discord.gg/SndDh5y) (for some reason).
+You can [join the Testflight beta](https://testflight.apple.com/join/97i7KM8O). There's also a [Discord server](https://discord.gg/SndDh5y) (for some reason).
 
-# Hacking
+# Compilation setup
 
 Build requirements:
 
@@ -28,7 +28,7 @@ You can replace `ish` with `tools/ptraceomatic` to run the program in a real pro
 
 To compile the iOS app, just open the Xcode project and click run. There are scripts that should download and set up the alpine filesystem and create build directories for cross compilation and so on automatically.
 
-## Development guide
+## Development setup
 
 Local development requires a few more steps.
 
