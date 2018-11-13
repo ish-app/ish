@@ -592,6 +592,7 @@ restart:
                     case 0xd80: TRACE("fadd st(i), st"); FADD(st_i, st_0); break;
                     case 0xd81: TRACE("fmul st(i), st"); FMUL(st_i, st_0); break;
                     case 0xd84: TRACE("fsub st(i), st"); FSUB(st_i, st_0); break;
+                    case 0xd85: TRACE("fsubr st(i), st"); FSUBR(st_i, st_0); break;
                     case 0xd90: TRACE("fld st(i)"); FLD(); break;
                     case 0xd91: TRACE("fxch st"); FXCH(); break;
                     case 0xdb5: TRACE("fucomi st"); FUCOMI(); break;
