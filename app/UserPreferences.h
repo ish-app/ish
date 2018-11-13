@@ -16,6 +16,7 @@ typedef NS_ENUM(NSInteger, UserPreferenceTheme) {
 
 extern UIColor *ThemeBackgroundColor(UserPreferenceTheme theme);
 extern UIColor *ThemeForegroundColor(UserPreferenceTheme theme);
+extern UIStatusBarStyle ThemeStatusBar(UserPreferenceTheme theme);
 extern NSString *ThemeName(UserPreferenceTheme theme);
 
 NS_ASSUME_NONNULL_BEGIN

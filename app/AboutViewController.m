@@ -25,6 +25,11 @@
     [self _updatePreferenceUI];
 }
 
+- (void)dealloc
+{
+    [self _removeObservers];
+}
+
 - (void)_addObservers {
     UserPreferences *prefs = [UserPreferences shared];
     NSKeyValueObservingOptions opts = NSKeyValueObservingOptionNew;

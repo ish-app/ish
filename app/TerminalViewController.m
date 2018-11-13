@@ -9,6 +9,7 @@
 #import "AppDelegate.h"
 #import "TerminalView.h"
 #import "ArrowBarButton.h"
+#import "UserPreferences.h"
 
 @interface TerminalViewController () <UIGestureRecognizerDelegate>
 
@@ -53,9 +54,11 @@
                selector:@selector(ishExited:)
                    name:ISHExitedNotification
                  object:nil];
-
-    [self.termView registerExternalKeyboardNotificationsToNotificationCenter:center];
     
+    self.view.backgroundColor = ThemeBackgroundColor([UserPreferences shared].theme);
+    [[UserPreferences shared] addObserver:self forKeyPath:@"theme" options:NSKeyValueObservingOptionNew context:nil];
+    
+    [self.termView registerExternalKeyboardNotificationsToNotificationCenter:center];
     if (UIDevice.currentDevice.userInterfaceIdiom == UIUserInterfaceIdiomPad) {
         [self.bar removeArrangedSubview:self.hideKeyboardButton];
         [self.hideKeyboardButton removeFromSuperview];
@@ -65,6 +68,28 @@
     } else {
         self.barView.frame = CGRectMake(0, 0, 100, 55);
     }
+}
+
+- (void)dealloc
+{
+    @try {
+        [[UserPreferences shared] removeObserver:self forKeyPath:@"theme"];
+    } @catch (NSException * __unused exception) {}
+}
+
+- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context
+{
+    if (object == [UserPreferences shared]) {
+        [UIView animateWithDuration:0.1 animations:^{
+            self.view.backgroundColor = ThemeBackgroundColor([UserPreferences shared].theme);
+        }];
+    } else {
+        [super observeValueForKeyPath:keyPath ofObject:object change:change context:context];
+    }
+}
+
+- (UIStatusBarStyle)preferredStatusBarStyle {
+    return ThemeStatusBar([UserPreferences shared].theme);
 }
 
 - (BOOL)prefersStatusBarHidden {

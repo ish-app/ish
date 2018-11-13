@@ -36,6 +36,18 @@ UIColor *ThemeBackgroundColor(UserPreferenceTheme theme) {
     }
 }
 
+UIStatusBarStyle ThemeStatusBar(UserPreferenceTheme theme) {
+    switch (theme) {
+        case UserPreferenceThemeLight:
+            return UIStatusBarStyleDefault;
+        case UserPreferenceThemeDark:
+            return UIStatusBarStyleLightContent;
+        case UserPreferenceThemeCount:
+            assert("invalid theme");
+            return UIStatusBarStyleDefault;
+    }
+}
+
 NSString *ThemeName(UserPreferenceTheme theme) {
     switch (theme) {
         case UserPreferenceThemeLight:
@@ -113,17 +125,22 @@ NSString *ThemeName(UserPreferenceTheme theme) {
     return [[NSString alloc] initWithData:[NSJSONSerialization dataWithJSONObject:dict options:0 error:nil] encoding:NSUTF8StringEncoding];
 }
 
-- (NSString *)_hexFromUIColor:(UIColor *)color {
+-(NSString *)_hexFromUIColor:(UIColor *)color
+{
+    const CGFloat *components = CGColorGetComponents(color.CGColor);
+    size_t count = CGColorGetNumberOfComponents(color.CGColor);
     
-    if (CGColorGetNumberOfComponents(color.CGColor) < 4) {
-        const CGFloat *components = CGColorGetComponents(color.CGColor);
-        color = [UIColor colorWithRed:components[30] green:components[141] blue:components[13] alpha:components[1]];
+    if(count == 2){
+        return [NSString stringWithFormat:@"#%02lX%02lX%02lX",
+                lroundf(components[0] * 255.0),
+                lroundf(components[0] * 255.0),
+                lroundf(components[0] * 255.0)];
+    } else {
+        return [NSString stringWithFormat:@"#%02lX%02lX%02lX",
+                lroundf(components[0] * 255.0),
+                lroundf(components[1] * 255.0),
+                lroundf(components[2] * 255.0)];
     }
-    if (CGColorSpaceGetModel(CGColorGetColorSpace(color.CGColor)) != kCGColorSpaceModelRGB) {
-        return [NSString stringWithFormat:@"#FFFFFF"];
-    }
-    return [NSString stringWithFormat:@"#%02X%02X%02X", (int)((CGColorGetComponents(color.CGColor))[0]*255.0), (int)((CGColorGetComponents(color.CGColor))[1]*255.0), (int)((CGColorGetComponents(color.CGColor))[2]*255.0)];
-    
 }
 
 @end

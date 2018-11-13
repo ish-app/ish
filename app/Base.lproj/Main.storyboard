@@ -20,7 +20,7 @@
                         <subviews>
                             <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="FQi-r8-odu" customClass="TerminalView">
                                 <rect key="frame" x="0.0" y="20" width="694" height="748"/>
-                                <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <connections>
                                     <outlet property="controlKey" destination="W9v-cj-FWz" id="HgQ-u7-5IL"/>
                                     <outlet property="inputAccessoryView" destination="GyN-ob-WFz" id="mVD-kz-BQc"/>
