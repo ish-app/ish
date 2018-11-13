@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="14313.18" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="0yy-Uo-cZb">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="14460.31" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="0yy-Uo-cZb">
     <device id="ipad9_7" orientation="portrait">
         <adaptation id="fullscreen"/>
     </device>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="14283.14"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="14460.20"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <scenes>
@@ -37,6 +37,9 @@
                                                 <switch opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" on="YES" translatesAutoresizingMaskIntoConstraints="NO" id="d8L-Q5-dsF">
                                                     <rect key="frame" x="473" y="6" width="49" height="31"/>
                                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                                    <connections>
+                                                        <action selector="didSwitchCapsLock:" destination="yJz-O7-jlW" eventType="valueChanged" id="oqY-SQ-J1m"/>
+                                                    </connections>
                                                 </switch>
                                             </subviews>
                                         </tableViewCellContentView>
@@ -187,6 +190,9 @@
                         </connections>
                     </navigationItem>
                     <connections>
+                        <outlet property="backgroundColorCell" destination="3YF-i1-D5D" id="8Ki-CN-5VZ"/>
+                        <outlet property="fontSizeCell" destination="CTf-zd-xjl" id="AvD-Zl-Y54"/>
+                        <outlet property="foregroundColorCell" destination="dqn-Cd-cNm" id="qLU-S2-Nn7"/>
                         <outlet property="openGithub" destination="F4i-eC-hQ6" id="66M-sQ-RJR"/>
                         <outlet property="openTwitter" destination="bge-GA-6p8" id="r0A-lN-0e0"/>
                         <outlet property="sendFeedback" destination="gMm-4C-5X3" id="nhX-ZH-zyP"/>
