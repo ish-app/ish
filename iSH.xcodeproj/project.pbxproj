@@ -886,7 +886,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = "/bin/sh -e";
-			shellScript = "cd $SRCROOT/app/xtermjs\nyarn\nyarn build";
+			shellScript = "cd $SRCROOT/app/xtermjs\nunset SDKROOT\nyarn\nyarn build";
 		};
 		BBF1248A1FA7BDBA0088FB50 /* Create Alpine Filesystem */ = {
 			isa = PBXShellScriptBuildPhase;
