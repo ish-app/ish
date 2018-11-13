@@ -34,6 +34,7 @@ static NSString *const ThemeNameCellIdentifier = @"ThemeNameCell";
 
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context {
     [self.tableView reloadData];
+    [self setNeedsStatusBarAppearanceUpdate];
 }
 
 #pragma mark - Table view data source
