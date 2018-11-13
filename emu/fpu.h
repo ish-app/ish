@@ -42,7 +42,9 @@ void fpu_rndint(struct cpu_state *cpu);
 void fpu_yl2x(struct cpu_state *cpu);
 void fpu_com(struct cpu_state *cpu, int i);
 void fpu_comm64(struct cpu_state *cpu, double *f);
+void fpu_comi(struct cpu_state *cpu, int i);
 #define fpu_ucom fpu_com
+#define fpu_ucomi fpu_comi
 void fpu_abs(struct cpu_state *cpu);
 void fpu_chs(struct cpu_state *cpu);
 

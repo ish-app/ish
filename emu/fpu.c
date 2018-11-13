@@ -95,6 +95,14 @@ void fpu_yl2x(struct cpu_state *cpu) {
 }
 
 static void fpu_compare(struct cpu_state *cpu, float80 x) {
+    cpu->zf_res = cpu->pf_res = 0;
+    cpu->zf = cpu->pf = cpu->cf = 0;
+    cpu->cf = f80_lt(ST(0), x);
+    cpu->zf = f80_eq(ST(0), x);
+    if (f80_uncomparable(ST(0), x))
+        cpu->zf = cpu->pf = cpu->cf = 1;
+}
+static void fpu_comparei(struct cpu_state *cpu, float80 x) {
     cpu->c1 = 0;
     cpu->c0 = f80_lt(ST(0), x);
     cpu->c3 = f80_eq(ST(0), x);
@@ -103,6 +111,9 @@ static void fpu_compare(struct cpu_state *cpu, float80 x) {
 }
 void fpu_com(struct cpu_state *cpu, int i) {
     fpu_compare(cpu, ST(i));
+}
+void fpu_comi(struct cpu_state *cpu, int i) {
+    fpu_comparei(cpu, ST(i));
 }
 void fpu_comm64(struct cpu_state *cpu, double *f) {
     fpu_compare(cpu, f80_from_double(*f));

@@ -369,7 +369,7 @@ static inline bool gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define FCOM() hh(fpu_com, st_i)
 #define FCOMM(val,z) h_read(fpu_comm, z)
 #define FUCOM() hh(fpu_ucom, st_i)
-#define FUCOMI() UNDEFINED
+#define FUCOMI() hh(fpu_ucomi, st_i)
 #define FST() hh(fpu_st, st_i)
 #define FCHS() h(fpu_chs)
 #define FABS() h(fpu_abs)
