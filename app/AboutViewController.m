@@ -34,6 +34,15 @@
     [prefs addObserver:self forKeyPath:@"theme" options:opts context:nil];
 }
 
+- (void)_removeObservers {
+    @try {
+        UserPreferences *prefs = [UserPreferences shared];
+        [prefs removeObserver:self forKeyPath:@"mapCapsLockAsControl"];
+        [prefs removeObserver:self forKeyPath:@"fontSize"];
+        [prefs removeObserver:self forKeyPath:@"theme"];
+    } @catch (NSException * __unused exception) {}
+}
+
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context {
     if ([object isKindOfClass:[UserPreferences class]]) {
         [self _updatePreferenceUI];
