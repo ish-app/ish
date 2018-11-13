@@ -57,6 +57,7 @@ void send_group_signal(dword_t pgid, int sig) {
 }
 
 static void receive_signal(struct sighand *sighand, int sig) {
+    STRACE("%d receiving signal %d", current->pid, sig);
     if (sighand->action[sig].handler == SIG_DFL_) {
         switch (sig) {
             // non-fatal signals
@@ -254,6 +255,11 @@ int do_sigprocmask(dword_t how, sigset_t_ set, sigset_t_ *oldset_out) {
     sigset_t_ unblocked = oldset & ~current->blocked;
     current->pending |= current->queued & unblocked;
     current->queued &= ~unblocked;
+    // transfer blocked signals from pending to queued
+    sigset_t_ blocked = current->blocked & ~oldset;
+    current->queued |= current->pending & blocked;
+    current->pending &= ~blocked;
+
     unlock(&sighand->lock);
     if (oldset_out != NULL)
         *oldset_out = oldset;
