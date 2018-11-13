@@ -28,7 +28,7 @@ You can replace `ish` with `tools/ptraceomatic` to run the program in a real pro
 
 To compile the iOS app, just open the Xcode project and click run. There are scripts that should download and set up the alpine filesystem and create build directories for cross compilation and so on automatically.
 
-## Development setup
+## iOS development setup
 
 Local development requires a few more steps.
 
