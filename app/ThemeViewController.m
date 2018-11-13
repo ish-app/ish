@@ -17,7 +17,7 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     
-    [self.tableView registerClass:[UITableViewCell class] forCellReuseIdentifier:@"ExampleCell"];
+    [self.tableView registerClass:[UITableViewCell class] forCellReuseIdentifier:@"PreviewCell"];
     [self.tableView registerClass:[UITableViewCell class] forCellReuseIdentifier:@"ThemeNameCell"];
     
     [[UserPreferences shared] addObserver:self forKeyPath:@"theme" options:NSKeyValueObservingOptionNew context:nil];
@@ -45,12 +45,21 @@
     if (section == 0) {
         return UserPreferenceThemeCount;
     } else if (section == 1) {
-        // Example row to show selected theme
+        // row used to preview selected theme
         return 1;
     }
     
     assert("unhandled section");
     return 0;
+}
+
+- (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section
+{
+    if (section == 1) {
+        return @"Preview";
+    }
+    
+    return nil;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
@@ -67,7 +76,7 @@
     } else if (indexPath.section == 1) {
         cell.backgroundColor = ThemeBackgroundColor(prefs.theme);
         cell.textLabel.textColor = ThemeForegroundColor(prefs.theme);
-        cell.textLabel.font = [UIFont fontWithName:@"Menlo-Regular" size:17.0];
+        cell.textLabel.font = [UIFont fontWithName:@"Menlo-Regular" size:prefs.fontSize.doubleValue];
         cell.textLabel.text = [NSString stringWithFormat:@"%@:~# ps aux", [UIDevice currentDevice].name];
         cell.selectionStyle = UITableViewCellSelectionStyleNone;
     }
