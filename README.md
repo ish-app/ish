@@ -6,7 +6,7 @@
 
 iSH is a Linux shell on iOS with usermode x86 emulation and syscall translation.
 
-For the current status of the project, check the [Compatibility](https://github.com/tbodt/ish/projects/7) and [Emulation](https://github.com/tbodt/ish/projects/3) projects, and the commit logs.
+For the current status of the project check the [Compatibility](https://github.com/tbodt/ish/projects/7) project, [Emulation](https://github.com/tbodt/ish/projects/3) project, and the commit logs.
 
 You can [join the Testflight beta](https://testflight.apple.com/join/97i7KM8O) now. There's also a [Discord server](https://discord.gg/SndDh5y) (for some reason).
 
