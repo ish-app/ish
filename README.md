@@ -1,4 +1,8 @@
-# [iSH](https://ish.app)
+<p>
+<a href="https://ish.app">
+<img src="https://user-images.githubusercontent.com/27065646/48439559-e0537580-e786-11e8-85e3-cf2a5d830204.png">
+</a>
+</p>
 
 [![Build Status](https://travis-ci.org/tbodt/ish.svg?branch=master)](https://travis-ci.org/tbodt/ish)
 [![goto counter](https://img.shields.io/github/search/tbodt/ish/goto.svg)](https://github.com/tbodt/ish/search?q=goto)
