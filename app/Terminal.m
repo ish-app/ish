@@ -100,8 +100,7 @@ static Terminal *terminal = nil;
     UserPreferences *prefs = [UserPreferences shared];
     NSKeyValueObservingOptions opts = NSKeyValueObservingOptionNew;
     [prefs addObserver:self forKeyPath:@"fontSize" options:opts context:nil];
-    [prefs addObserver:self forKeyPath:@"foregroundColor" options:opts context:nil];
-    [prefs addObserver:self forKeyPath:@"backgroundColor" options:opts context:nil];
+    [prefs addObserver:self forKeyPath:@"theme" options:opts context:nil];
 }
 
 - (void)_updateStyleFromPreferences {
@@ -110,7 +109,6 @@ static Terminal *terminal = nil;
     NSString *js = [NSString stringWithFormat:@"var terminal = document.getElementsByClassName('terminal')[0];"
                                               @"var prefs = %@;"
                                               @"terminal.style.fontSize = prefs.fontSize + 'px';"
-                                              @"terminal.style.backgroundColor = prefs.backgroundColor;"
                                               @"terminal.style.color = prefs.foregroundColor;",
                     [prefs JSONDictionary]];
     
