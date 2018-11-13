@@ -55,7 +55,7 @@
                    name:ISHExitedNotification
                  object:nil];
     
-    self.view.backgroundColor = ThemeBackgroundColor([UserPreferences shared].theme);
+    [self _updateStyleFromPreferences:NO];
     [[UserPreferences shared] addObserver:self forKeyPath:@"theme" options:NSKeyValueObservingOptionNew context:nil];
     
     [self.termView registerExternalKeyboardNotificationsToNotificationCenter:center];
@@ -78,12 +78,18 @@
 
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context {
     if (object == [UserPreferences shared]) {
-        [UIView animateWithDuration:0.1 animations:^{
-            self.view.backgroundColor = ThemeBackgroundColor([UserPreferences shared].theme);
-        }];
+        [self _updateStyleFromPreferences:YES];
     } else {
         [super observeValueForKeyPath:keyPath ofObject:object change:change context:context];
     }
+}
+
+- (void)_updateStyleFromPreferences:(BOOL)animated {
+    NSTimeInterval duration = animated ? 0.1 : 0;
+    [UIView animateWithDuration:duration animations:^{
+        self.view.backgroundColor = ThemeBackgroundColor([UserPreferences shared].theme);
+        self.termView.keyboardAppearance = ThemeKeyboard([UserPreferences shared].theme);
+    }];
 }
 
 - (UIStatusBarStyle)preferredStatusBarStyle {

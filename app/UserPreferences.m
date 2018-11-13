@@ -48,6 +48,18 @@ UIStatusBarStyle ThemeStatusBar(UserPreferenceTheme theme) {
     }
 }
 
+UIKeyboardAppearance ThemeKeyboard(UserPreferenceTheme theme)  {
+    switch (theme) {
+        case UserPreferenceThemeLight:
+            return UIKeyboardAppearanceDefault;
+        case UserPreferenceThemeDark:
+            return UIKeyboardAppearanceDark;
+        case UserPreferenceThemeCount:
+            assert("invalid theme");
+            return UIKeyboardAppearanceDefault;
+    }
+}
+
 NSString *ThemeName(UserPreferenceTheme theme) {
     switch (theme) {
         case UserPreferenceThemeLight:
