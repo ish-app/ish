@@ -58,8 +58,8 @@
                                                     <nil key="textColor"/>
                                                     <nil key="highlightedColor"/>
                                                 </label>
-                                                <label opaque="NO" multipleTouchEnabled="YES" contentMode="left" insetsLayoutMarginsFromSafeArea="NO" text="12.0" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="GQx-Qd-fTC">
-                                                    <rect key="frame" x="470.5" y="12" width="31.5" height="20.5"/>
+                                                <label opaque="NO" multipleTouchEnabled="YES" contentMode="left" insetsLayoutMarginsFromSafeArea="NO" text="12" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="GQx-Qd-fTC">
+                                                    <rect key="frame" x="484.5" y="12" width="17.5" height="20.5"/>
                                                     <autoresizingMask key="autoresizingMask"/>
                                                     <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                                     <nil key="textColor"/>
@@ -170,10 +170,10 @@
                     </navigationItem>
                     <connections>
                         <outlet property="fontSizeCell" destination="CTf-zd-xjl" id="AvD-Zl-Y54"/>
-                        <outlet property="foregroundColorCell" destination="dqn-Cd-cNm" id="qLU-S2-Nn7"/>
                         <outlet property="openGithub" destination="F4i-eC-hQ6" id="66M-sQ-RJR"/>
                         <outlet property="openTwitter" destination="bge-GA-6p8" id="r0A-lN-0e0"/>
                         <outlet property="sendFeedback" destination="gMm-4C-5X3" id="nhX-ZH-zyP"/>
+                        <outlet property="themeCell" destination="dqn-Cd-cNm" id="dfh-et-0o7"/>
                     </connections>
                 </tableViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="OPJ-Ps-ATb" userLabel="First Responder" sceneMemberID="firstResponder"/>
