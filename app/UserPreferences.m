@@ -18,8 +18,8 @@ UIColor *ThemeForegroundColor(UserPreferenceTheme theme) {
             return [UIColor blackColor];
         case UserPreferenceThemeDark:
             return [UIColor whiteColor];
-        default:
-            assert("unhandled theme");
+        case UserPreferenceThemeCount:
+            assert("invalid theme");
             return nil;
     }
 }
@@ -30,8 +30,20 @@ UIColor *ThemeBackgroundColor(UserPreferenceTheme theme) {
             return [UIColor whiteColor];
         case UserPreferenceThemeDark:
             return [UIColor blackColor];
-        default:
-            assert("unhandled theme");
+        case UserPreferenceThemeCount:
+            assert("invalid theme");
+            return nil;
+    }
+}
+
+NSString *ThemeName(UserPreferenceTheme theme) {
+    switch (theme) {
+        case UserPreferenceThemeLight:
+            return @"Light";
+        case UserPreferenceThemeDark:
+            return @"Dark";
+        case UserPreferenceThemeCount:
+            assert("invalid theme");
             return nil;
     }
 }
