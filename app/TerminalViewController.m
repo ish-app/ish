@@ -9,6 +9,7 @@
 #import "AppDelegate.h"
 #import "TerminalView.h"
 #import "ArrowBarButton.h"
+#import "ExportViewController.h"
 
 @interface TerminalViewController () <UIGestureRecognizerDelegate>
 
@@ -152,18 +153,23 @@
     self.barButtonWidth.constant = buttonWidth;
 }
 
-- (IBAction)pressEscape:(id)sender {
+- (IBAction)pressEscape:(BarButton *)sender {
     [self pressKey:@"\x1b"];
 }
-- (IBAction)pressTab:(id)sender {
+- (IBAction)pressTab:(BarButton *)sender {
     [self pressKey:@"\t"];
 }
 - (void)pressKey:(NSString *)key {
     [self.termView insertText:key];
 }
 
-- (IBAction)pressControl:(id)sender {
+- (IBAction)pressControl:(BarButton *)sender {
     self.controlKey.selected = !self.controlKey.selected;
+}
+
+- (IBAction)pressShare:(BarButton *)sender {
+    UIViewController *exportViewController = [[UIStoryboard storyboardWithName:@"Export" bundle:nil] instantiateInitialViewController];
+    [self presentViewController:exportViewController animated:YES completion:nil];
 }
 
 - (IBAction)pressArrow:(ArrowBarButton *)sender {

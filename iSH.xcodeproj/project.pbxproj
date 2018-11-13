@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		2E0F6D33219AB32B00D33292 /* ExportViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2E0F6D32219AB32B00D33292 /* ExportViewController.m */; };
+		2E0F6D36219AB59100D33292 /* Export.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 2E0F6D35219AB59100D33292 /* Export.storyboard */; };
 		30F5698921986630001B01FB /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 30F5698821986630001B01FB /* Settings.bundle */; };
 		30F5698A21986630001B01FB /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 30F5698821986630001B01FB /* Settings.bundle */; };
 		BB0FC5921F980A6C00803272 /* Terminal.m in Sources */ = {isa = PBXBuildFile; fileRef = BB0FC5911F980A6B00803272 /* Terminal.m */; };
@@ -99,6 +101,9 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		2E0F6D31219AB32B00D33292 /* ExportViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ExportViewController.h; sourceTree = "<group>"; };
+		2E0F6D32219AB32B00D33292 /* ExportViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ExportViewController.m; sourceTree = "<group>"; };
+		2E0F6D35219AB59100D33292 /* Export.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = Export.storyboard; sourceTree = "<group>"; };
 		30F5698821986630001B01FB /* Settings.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = Settings.bundle; sourceTree = "<group>"; };
 		BB0FC5901F980A6B00803272 /* Terminal.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Terminal.h; sourceTree = "<group>"; };
 		BB0FC5911F980A6B00803272 /* Terminal.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Terminal.m; sourceTree = "<group>"; };
@@ -297,6 +302,16 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		2E0F6D34219AB57A00D33292 /* Export */ = {
+			isa = PBXGroup;
+			children = (
+				2E0F6D31219AB32B00D33292 /* ExportViewController.h */,
+				2E0F6D32219AB32B00D33292 /* ExportViewController.m */,
+				2E0F6D35219AB59100D33292 /* Export.storyboard */,
+			);
+			name = Export;
+			sourceTree = "<group>";
+		};
 		BB18B27F1F97F2590059FCD8 /* Scripts */ = {
 			isa = PBXGroup;
 			children = (
@@ -373,6 +388,7 @@
 				BB0FC5911F980A6B00803272 /* Terminal.m */,
 				BB4A53991FAA40FD00A72ACE /* xtermjs */,
 				BB792B591F96D90D00FFB7A4 /* Main.storyboard */,
+				2E0F6D34219AB57A00D33292 /* Export */,
 				BBFB557321586C7600DFE6DE /* About */,
 				BBFB557221586C6600DFE6DE /* Utilities */,
 				BB792B5C1F96D90D00FFB7A4 /* Assets.xcassets */,
@@ -824,6 +840,7 @@
 			files = (
 				BB792B5D1F96D90D00FFB7A4 /* Assets.xcassets in Resources */,
 				BB792B601F96D90D00FFB7A4 /* LaunchScreen.storyboard in Resources */,
+				2E0F6D36219AB59100D33292 /* Export.storyboard in Resources */,
 				BBFB556A215868E800DFE6DE /* About.storyboard in Resources */,
 				BB792B5B1F96D90D00FFB7A4 /* Main.storyboard in Resources */,
 				BB623CF91FA7C68800932047 /* alpine in Resources */,
@@ -935,6 +952,7 @@
 				BB455E111FB37F6600AFB48B /* DelayedUITask.m in Sources */,
 				BB0FC5921F980A6C00803272 /* Terminal.m in Sources */,
 				BB792B631F96D90D00FFB7A4 /* main.m in Sources */,
+				2E0F6D33219AB32B00D33292 /* ExportViewController.m in Sources */,
 				BB60F55221573FCA003A4E52 /* BarButton.m in Sources */,
 				BBFB557C215878C600DFE6DE /* UIApplication+OpenURL.m in Sources */,
 				BBFB5579215876CD00DFE6DE /* AboutViewController.m in Sources */,
