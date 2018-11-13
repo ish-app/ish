@@ -98,7 +98,7 @@ static Terminal *terminal = nil;
 
 - (void)_addPreferenceObservers {
     UserPreferences *prefs = [UserPreferences shared];
-    NSKeyValueObservingOptions opts = NSKeyValueObservingOptionInitial | NSKeyValueObservingOptionNew;
+    NSKeyValueObservingOptions opts = NSKeyValueObservingOptionNew;
     [prefs addObserver:self forKeyPath:@"fontSize" options:opts context:nil];
     [prefs addObserver:self forKeyPath:@"foregroundColor" options:opts context:nil];
     [prefs addObserver:self forKeyPath:@"backgroundColor" options:opts context:nil];
@@ -109,7 +109,7 @@ static Terminal *terminal = nil;
     
     NSString *js = [NSString stringWithFormat:@"var terminal = document.getElementsByClassName('terminal')[0];"
                                               @"var prefs = %@;"
-                                              @"terminal.style.fontSize = prefs.fontSize;"
+                                              @"terminal.style.fontSize = prefs.fontSize + 'px';"
                                               @"terminal.style.backgroundColor = prefs.backgroundColor;"
                                               @"terminal.style.color = prefs.foregroundColor;",
                     [prefs JSONDictionary]];
@@ -119,6 +119,7 @@ static Terminal *terminal = nil;
 
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context {
     if (object == self.webView && [keyPath isEqualToString:@"loading"] && !self.webView.loading) {
+        [self _updateStyleFromPreferences];
         [self.refreshTask schedule];
         [self.webView removeObserver:self forKeyPath:@"loading"];
     } else if (object == [UserPreferences shared]) {

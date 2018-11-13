@@ -23,11 +23,12 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     [self _addObservers];
+    [self _updatePreferenceUI];
 }
 
 - (void)_addObservers {
     UserPreferences *prefs = [UserPreferences shared];
-    NSKeyValueObservingOptions opts = NSKeyValueObservingOptionInitial | NSKeyValueObservingOptionNew;
+    NSKeyValueObservingOptions opts = NSKeyValueObservingOptionNew;
     
     [prefs addObserver:self forKeyPath:@"mapCapsLockAsControl" options:opts context:nil];
     [prefs addObserver:self forKeyPath:@"fontSize" options:opts context:nil];
