@@ -5,12 +5,30 @@
 //  Created by Charlie Melbye on 11/12/18.
 //
 
+#import <UIKit/UIKit.h>
 #import "UserPreferences.h"
 
 static NSString *const kPreferenceMapCapsLockAsControlKey = @"kPreferenceMapCapsLockAsControlKey";
 static NSString *const kPreferenceFontSizeKey = @"kPreferenceFontSizeKey";
-static NSString *const kPreferenceForegroundColorKey = @"kPreferenceForegroundColorKey";
-static NSString *const kPreferenceBackgroundColorKey = @"kPreferenceBackgroundColorKey";
+static NSString *const kPreferenceThemeKey = @"kPreferenceThemeKey";
+
+UIColor *ThemeForegroundColor(UserPreferenceTheme theme) {
+    switch (theme) {
+        case UserPreferenceThemeLight:
+            return [UIColor blackColor];
+        case UserPreferenceThemeDark:
+            return [UIColor whiteColor];
+    }
+}
+
+UIColor *ThemeBackgroundColor(UserPreferenceTheme theme) {
+    switch (theme) {
+        case UserPreferenceThemeLight:
+            return [UIColor whiteColor];
+        case UserPreferenceThemeDark:
+            return [UIColor blackColor];
+    }
+}
 
 @implementation UserPreferences
 {
@@ -56,24 +74,14 @@ static NSString *const kPreferenceBackgroundColorKey = @"kPreferenceBackgroundCo
     [_defaults setObject:fontSize forKey:kPreferenceFontSizeKey];
 }
 
-- (NSString *)foregroundColor
+- (UserPreferenceTheme)theme
 {
-    return [_defaults stringForKey:kPreferenceForegroundColorKey] ?: @"black";
+    return [_defaults integerForKey:kPreferenceThemeKey] ?: UserPreferenceThemeLight;
 }
 
-- (void)setForegroundColor:(NSString *)foregroundColor
+- (void)setTheme:(UserPreferenceTheme)theme
 {
-    [_defaults setObject:foregroundColor forKey:kPreferenceForegroundColorKey];
-}
-
-- (NSString *)backgroundColor
-{
-    return [_defaults stringForKey:kPreferenceBackgroundColorKey] ?: @"white";
-}
-
-- (void)setBackgroundColor:(NSString *)backgroundColor
-{
-    [_defaults setObject:backgroundColor forKey:kPreferenceBackgroundColorKey];
+    [_defaults setInteger:theme forKey:kPreferenceThemeKey];
 }
 
 - (NSString *)JSONDictionary
@@ -81,10 +89,23 @@ static NSString *const kPreferenceBackgroundColorKey = @"kPreferenceBackgroundCo
     NSDictionary *dict = @{
                            @"mapCapsLockAsControl": @(self.mapCapsLockAsControl),
                            @"fontSize": self.fontSize,
-                           @"foregroundColor": self.foregroundColor,
-                           @"backgroundColor": self.backgroundColor
+                           @"foregroundColor": [self _hexFromUIColor:ThemeForegroundColor(self.theme)],
+                           @"backgroundColor": [self _hexFromUIColor:ThemeBackgroundColor(self.theme)]
                            };
     return [[NSString alloc] initWithData:[NSJSONSerialization dataWithJSONObject:dict options:0 error:nil] encoding:NSUTF8StringEncoding];
+}
+
+- (NSString *)_hexFromUIColor:(UIColor *)color {
+    
+    if (CGColorGetNumberOfComponents(color.CGColor) < 4) {
+        const CGFloat *components = CGColorGetComponents(color.CGColor);
+        color = [UIColor colorWithRed:components[30] green:components[141] blue:components[13] alpha:components[1]];
+    }
+    if (CGColorSpaceGetModel(CGColorGetColorSpace(color.CGColor)) != kCGColorSpaceModelRGB) {
+        return [NSString stringWithFormat:@"#FFFFFF"];
+    }
+    return [NSString stringWithFormat:@"#%02X%02X%02X", (int)((CGColorGetComponents(color.CGColor))[0]*255.0), (int)((CGColorGetComponents(color.CGColor))[1]*255.0), (int)((CGColorGetComponents(color.CGColor))[2]*255.0)];
+    
 }
 
 @end
