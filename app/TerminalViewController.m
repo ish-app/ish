@@ -70,15 +70,13 @@
     }
 }
 
-- (void)dealloc
-{
+- (void)dealloc {
     @try {
         [[UserPreferences shared] removeObserver:self forKeyPath:@"theme"];
     } @catch (NSException * __unused exception) {}
 }
 
-- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context
-{
+- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context {
     if (object == [UserPreferences shared]) {
         [UIView animateWithDuration:0.1 animations:^{
             self.view.backgroundColor = ThemeBackgroundColor([UserPreferences shared].theme);

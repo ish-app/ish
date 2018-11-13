@@ -25,8 +25,7 @@
     [self _updatePreferenceUI];
 }
 
-- (void)dealloc
-{
+- (void)dealloc {
     [self _removeObservers];
 }
 

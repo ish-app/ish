@@ -26,15 +26,13 @@ static NSString *const ThemeNameCellIdentifier = @"ThemeNameCell";
     [[UserPreferences shared] addObserver:self forKeyPath:@"theme" options:NSKeyValueObservingOptionNew context:nil];
 }
 
-- (void)dealloc
-{
+- (void)dealloc {
     @try {
         [[UserPreferences shared] removeObserver:self forKeyPath:@"theme"];
     } @catch (NSException * __unused exception) {}
 }
 
-- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context
-{
+- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context {
     [self.tableView reloadData];
 }
 
@@ -56,8 +54,7 @@ static NSString *const ThemeNameCellIdentifier = @"ThemeNameCell";
     return 0;
 }
 
-- (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section
-{
+- (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
     if (section == 1) {
         return @"Preview";
     }

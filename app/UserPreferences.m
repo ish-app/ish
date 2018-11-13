@@ -60,13 +60,11 @@ NSString *ThemeName(UserPreferenceTheme theme) {
     }
 }
 
-@implementation UserPreferences
-{
+@implementation UserPreferences {
     NSUserDefaults *_defaults;
 }
 
-+ (instancetype)shared
-{
++ (instancetype)shared {
     static UserPreferences *shared = nil;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
@@ -75,8 +73,7 @@ NSString *ThemeName(UserPreferenceTheme theme) {
     return shared;
 }
 
-- (instancetype)init
-{
+- (instancetype)init {
     self = [super init];
     if (self) {
         _defaults = [NSUserDefaults standardUserDefaults];
@@ -84,38 +81,31 @@ NSString *ThemeName(UserPreferenceTheme theme) {
     return self;
 }
 
-- (BOOL)mapCapsLockAsControl
-{
+- (BOOL)mapCapsLockAsControl {
     return [_defaults boolForKey:kPreferenceMapCapsLockAsControlKey] ?: NO;
 }
 
-- (void)setMapCapsLockAsControl:(BOOL)mapCapsLockAsControl
-{
+- (void)setMapCapsLockAsControl:(BOOL)mapCapsLockAsControl {
     [_defaults setBool:mapCapsLockAsControl forKey:kPreferenceMapCapsLockAsControlKey];
 }
 
-- (NSNumber *)fontSize
-{
+- (NSNumber *)fontSize {
     return [_defaults objectForKey:kPreferenceFontSizeKey] ?: @(12);
 }
 
-- (void)setFontSize:(NSNumber *)fontSize
-{
+- (void)setFontSize:(NSNumber *)fontSize {
     [_defaults setObject:fontSize forKey:kPreferenceFontSizeKey];
 }
 
-- (UserPreferenceTheme)theme
-{
+- (UserPreferenceTheme)theme {
     return [_defaults integerForKey:kPreferenceThemeKey] ?: UserPreferenceThemeLight;
 }
 
-- (void)setTheme:(UserPreferenceTheme)theme
-{
+- (void)setTheme:(UserPreferenceTheme)theme {
     [_defaults setInteger:theme forKey:kPreferenceThemeKey];
 }
 
-- (NSString *)JSONDictionary
-{
+- (NSString *)JSONDictionary {
     NSDictionary *dict = @{
                            @"mapCapsLockAsControl": @(self.mapCapsLockAsControl),
                            @"fontSize": self.fontSize,
@@ -125,8 +115,7 @@ NSString *ThemeName(UserPreferenceTheme theme) {
     return [[NSString alloc] initWithData:[NSJSONSerialization dataWithJSONObject:dict options:0 error:nil] encoding:NSUTF8StringEncoding];
 }
 
--(NSString *)_hexFromUIColor:(UIColor *)color
-{
+-(NSString *)_hexFromUIColor:(UIColor *)color {
     const CGFloat *components = CGColorGetComponents(color.CGColor);
     size_t count = CGColorGetNumberOfComponents(color.CGColor);
     
