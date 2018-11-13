@@ -18,6 +18,9 @@ UIColor *ThemeForegroundColor(UserPreferenceTheme theme) {
             return [UIColor blackColor];
         case UserPreferenceThemeDark:
             return [UIColor whiteColor];
+        default:
+            assert("unhandled theme");
+            return nil;
     }
 }
 
@@ -27,6 +30,9 @@ UIColor *ThemeBackgroundColor(UserPreferenceTheme theme) {
             return [UIColor whiteColor];
         case UserPreferenceThemeDark:
             return [UIColor blackColor];
+        default:
+            assert("unhandled theme");
+            return nil;
     }
 }
 

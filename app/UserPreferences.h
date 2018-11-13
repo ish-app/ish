@@ -7,15 +7,17 @@
 
 #import <Foundation/Foundation.h>
 
+// Add new themes to the end of the enum (before count) for backwards compatibility
 typedef NS_ENUM(NSInteger, UserPreferenceTheme) {
     UserPreferenceThemeLight,
-    UserPreferenceThemeDark
+    UserPreferenceThemeDark,
+    UserPreferenceThemeCount
 };
-
-NS_ASSUME_NONNULL_BEGIN
 
 extern UIColor *ThemeBackgroundColor(UserPreferenceTheme theme);
 extern UIColor *ThemeForegroundColor(UserPreferenceTheme theme);
+
+NS_ASSUME_NONNULL_BEGIN
 
 @interface UserPreferences : NSObject
 
