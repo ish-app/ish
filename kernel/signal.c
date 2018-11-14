@@ -57,7 +57,7 @@ void send_group_signal(dword_t pgid, int sig) {
 }
 
 static void receive_signal(struct sighand *sighand, int sig) {
-    STRACE("%d receiving signal %d", current->pid, sig);
+    STRACELN("%d receiving signal %d", current->pid, sig);
     if (sighand->action[sig].handler == SIG_DFL_) {
         switch (sig) {
             // non-fatal signals
