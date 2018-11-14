@@ -147,7 +147,7 @@ void handle_interrupt(int interrupt) {
             cpu->eax = result;
         }
     } else if (interrupt == INT_GPF) {
-        println("%d page fault at 0x%x", current->pid, cpu->segfault_addr);
+        println("%d page fault on 0x%x at 0x%x", current->pid, cpu->segfault_addr, cpu->eip);
         deliver_signal(current, SIGSEGV_);
     } else if (interrupt == INT_UNDEFINED) {
         printk("%d illegal instruction at 0x%x: ", current->pid, cpu->eip);
