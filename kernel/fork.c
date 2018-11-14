@@ -155,7 +155,7 @@ dword_t sys_clone(dword_t flags, addr_t stack, addr_t ptid, addr_t tls, addr_t c
     if (flags & CLONE_VFORK_) {
         lock(&task->vfork_lock);
         while (!task->vfork_done)
-            wait_for_ignore_signals(&task->vfork_cond, &task->vfork_lock);
+            wait_for_ignore_signals(&task->vfork_cond, &task->vfork_lock, NULL);
         unlock(&task->vfork_lock);
     }
     return pid;

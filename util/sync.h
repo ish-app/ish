@@ -26,9 +26,9 @@ void cond_init(cond_t *cond);
 void cond_destroy(cond_t *cond);
 // Releases the lock, waits for the condition, and reacquires the lock. Return
 // 1 if waiting stopped because the thread received a signal, 0 otherwise.
-int wait_for(cond_t *cond, lock_t *lock);
+int wait_for(cond_t *cond, lock_t *lock, struct timespec *timeout);
 // Use this if you want to wait even if there are signals pending
-void wait_for_ignore_signals(cond_t *cond, lock_t *lock);
+void wait_for_ignore_signals(cond_t *cond, lock_t *lock, struct timespec *timeout);
 // Wake up all waiters.
 void notify(cond_t *cond);
 // Wake up one waiter.
