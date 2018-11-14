@@ -250,7 +250,7 @@ static ssize_t tty_read(struct fd *fd, void *buf, size_t bufsize) {
     if (tty->termios.lflags & ICANON_) {
         ssize_t canon_size = -1;
         while ((canon_size = tty_canon_size(tty)) == -1) {
-            if (wait_for(&tty->produced, &tty->lock))
+            if (wait_for(&tty->produced, &tty->lock, NULL))
                 goto eintr;
         }
         // null byte means eof was typed
@@ -266,7 +266,7 @@ static ssize_t tty_read(struct fd *fd, void *buf, size_t bufsize) {
             // no need to wait for anything
         } else if (min > 0 && time == 0) {
             while (tty->bufsize < min) {
-                if (wait_for(&tty->produced, &tty->lock))
+                if (wait_for(&tty->produced, &tty->lock, NULL))
                     goto eintr;
             }
         } else {

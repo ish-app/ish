@@ -181,7 +181,7 @@ retry:
 
     // no matching zombie found, wait for one
     err = _EINTR;
-    if (wait_for(&current->group->child_exit, &pids_lock))
+    if (wait_for(&current->group->child_exit, &pids_lock, NULL))
         goto error;
     goto retry;
 

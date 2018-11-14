@@ -63,7 +63,7 @@ static int futex_load(struct futex *futex, dword_t *out) {
     return 0;
 }
 
-int futex_wait(addr_t uaddr, dword_t val) {
+int futex_wait(addr_t uaddr, dword_t val, struct timespec *timeout) {
     struct futex *futex = futex_get(uaddr);
     int err = 0;
     dword_t tmp;
@@ -72,7 +72,7 @@ int futex_wait(addr_t uaddr, dword_t val) {
     else if (tmp != val)
         err = _EAGAIN;
     else
-        wait_for(&futex->cond, &futex_lock);
+        wait_for(&futex->cond, &futex_lock, timeout);
     futex_put(futex);
     return err;
 }
@@ -94,14 +94,23 @@ int futex_wake(addr_t uaddr, dword_t val) {
 #define FUTEX_PRIVATE_FLAG_ 128
 #define FUTEX_CMD_MASK_ ~(FUTEX_PRIVATE_FLAG_)
 
-dword_t sys_futex(addr_t uaddr, dword_t op, dword_t val) {
+dword_t sys_futex(addr_t uaddr, dword_t op, dword_t val, addr_t timeout_or_val2, addr_t uaddr2, dword_t val3) {
+    STRACE("futex(%#x, %d, %d, timeout=%#x, %#x, %d)", uaddr, op, val, timeout_or_val2, uaddr2, val3);
     if (!(op & FUTEX_PRIVATE_FLAG_)) {
         FIXME("no support for shared futexes");
+    }
+    struct timespec timeout = {0};
+    if ((op & (FUTEX_WAIT_)) > 0) {
+        struct timespec_ timeout_;
+        if (user_get(timeout_or_val2, timeout_))
+            return _EFAULT;
+        timeout.tv_sec = timeout_.sec;
+        timeout.tv_nsec = timeout_.nsec;
     }
     switch (op & FUTEX_CMD_MASK_) {
         case FUTEX_WAIT_:
             STRACE("futex_wait(0x%x, %d)", uaddr, val);
-            return futex_wait(uaddr, val);
+            return futex_wait(uaddr, val, timeout_or_val2 ? &timeout : NULL);
         case FUTEX_WAKE_:
             STRACE("futex_wake(0x%x, %d)", uaddr, val);
             return futex_wake(uaddr, val);
