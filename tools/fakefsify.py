@@ -6,6 +6,9 @@ import urllib.request
 import tarfile
 import dbm.gnu
 
+def print_usage():
+    print("Usage: fakefsify.py <rootfs archive> <destination dir>")
+
 def extract_archive(archive, db):
     for member in archive.getmembers():
         # hack
@@ -53,7 +56,14 @@ def extract_archive(archive, db):
             rdev,
         )
 
+if sys.argv != 3:
+    print("You have not specified all arguments, check again.")
+    print_usage()
+    exit(1)
+
 _, archive_path, fs = sys.argv
+
+    
 fs = Path(fs)
 fs.mkdir(parents=True, exist_ok=True)
 data = fs/'data'
