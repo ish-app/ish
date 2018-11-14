@@ -5,6 +5,7 @@
 #include "debug.h"
 #include <time.h>
 #include <signal.h>
+#include <sys/time.h>
 #include "kernel/calls.h"
 #include "kernel/errno.h"
 #include "kernel/resource.h"
@@ -119,6 +120,25 @@ dword_t sys_times(addr_t tbuf) {
         tmp.tms_cstime = tmp.tms_stime;
         if (user_put(tbuf, tmp))
             return _EFAULT;
+    }
+    return 0;
+}
+
+dword_t sys_gettimeofday(addr_t tv, addr_t tz) {
+    STRACE("gettimeofday(0x%x, 0x%x)", tv, tz);
+    struct timeval timeval;
+    struct timezone timezone;
+    if (gettimeofday(&timeval, &timezone) < 0) {
+	    return errno_map();
+    }
+    struct timeval_ tv_;
+    struct timezone_ tz_;
+    tv_.sec = timeval.tv_sec;
+    tv_.usec = timeval.tv_usec;
+    tz_.minuteswest = timezone.tz_minuteswest;
+    tz_.dsttime = timezone.tz_dsttime;
+    if ((tv && user_put(tv, tv_)) || (tz && user_put(tz, tz_))) {
+	    return _EFAULT;
     }
     return 0;
 }
