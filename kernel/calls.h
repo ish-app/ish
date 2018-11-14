@@ -141,6 +141,8 @@ dword_t sys_getpgrp(void);
 dword_t sys_setpgrp(void);
 dword_t sys_getuid32(void);
 dword_t sys_getuid(void);
+dword_t sys_setuid32(uid_t_ uid);
+dword_t sys_setuid(uid_t_ uid);
 dword_t sys_geteuid32(void);
 dword_t sys_geteuid(void);
 dword_t sys_getgid32(void);
