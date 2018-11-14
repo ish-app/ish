@@ -64,10 +64,12 @@ dword_t sys_select(fd_t nfds, addr_t readfds_addr, addr_t writefds_addr, addr_t 
     memset(readfds, 0, fdset_size);
     memset(writefds, 0, fdset_size);
     memset(exceptfds, 0, fdset_size);
-    if (event.types & POLL_READ)
-        bit_set(fd, readfds);
-    if (event.types & POLL_WRITE)
-        bit_set(fd, writefds);
+    if (fd != -1) {
+        if (event.types & POLL_READ)
+            bit_set(fd, readfds);
+        if (event.types & POLL_WRITE)
+            bit_set(fd, writefds);
+    }
     if (readfds_addr && user_write(readfds_addr, readfds, fdset_size))
         return _EFAULT;
     if (writefds_addr && user_write(writefds_addr, writefds, fdset_size))
