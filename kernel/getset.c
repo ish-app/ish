@@ -60,20 +60,20 @@ dword_t sys_setuid(uid_t_ uid) {
 
 dword_t sys_setreuid32(uid_t_ uid, uid_t_ euid) {
     STRACE("setuid32(%d, %d)", uid, euid);
-    if (current->uid > 0 && current->euid > 0 && ruid != -1 && euid != current->uid && euid != current->suid)
+    if (current->uid > 0 && current->euid > 0 && uid != -1 && euid != current->uid && euid != current->suid)
         return _EPERM;
-    if (ruid != -1)
-        current->uid = ruid;
+    if (uid != -1)
+        current->uid = uid;
     if (euid != -1)
         current->euid = uid;
     return 0;
 }
 dword_t sys_setreuid(uid_t_ uid, uid_t_ euid) {
     STRACE("setreuid(%d, %d)", uid, euid);
-    if (current->uid > 0 && current->euid > 0 && ruid != -1 && euid != current->uid && euid != current->suid)
+    if (current->uid > 0 && current->euid > 0 && uid != -1 && euid != current->uid && euid != current->suid)
         return _EPERM;
-    if (ruid != -1)
-        current->uid = ruid;
+    if (uid != -1)
+        current->uid = uid;
     if (euid != -1)
         current->euid = uid;
     return 0;
