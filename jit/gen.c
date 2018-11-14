@@ -209,7 +209,8 @@ static inline bool gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define MOV(src, dst,z) load(src, z); store(dst, z)
 #define MOVZX(src, dst,zs,zd) load(src, zs); gz(zero_extend, zs); store(dst, zd)
 #define MOVSX(src, dst,zs,zd) load(src, zs); gz(sign_extend, zs); store(dst, zd)
-#define XCHG(src, dst,z) los(xchg, src, dst, z)
+// xchg must generate in this order to be atomic
+#define XCHG(src, dst,z) load(src, z); op(xchg, dst, z); store(src, z)
 
 #define ADD(src, dst,z) los(add, src, dst, z)
 #define OR(src, dst,z) los(or, src, dst, z)
