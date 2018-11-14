@@ -39,6 +39,22 @@ dword_t sys_getuid() {
     return current->uid & 0xffff;
 }
 
+// FIXME: add capabilities? CAP_SETUID?
+dword_t sys_setuid32(uid_t_ uid) {
+    STRACE("setuid32(%d)", uid);
+    if (current->uid > 0 && current->euid > 0)
+        return _EPERM;
+    current->uid = uid;
+    return 0;
+}
+dword_t sys_setuid(uid_t_ uid) {
+    STRACE("setuid(%d)", uid);
+    if (current->uid > 0 && current->euid > 0)
+        return _EPERM;
+    current->uid = uid;
+    return 0;
+}
+
 dword_t sys_geteuid32() {
     STRACE("geteuid32()");
     return current->euid;
@@ -79,6 +95,8 @@ dword_t sys_getegid() {
 
 dword_t sys_setresgid(uid_t_ rgid, uid_t_ egid, uid_t_ sgid) {
     STRACE("setresgid(%d, %d, %d)", rgid, egid, sgid);
+    if (current->uid > 0 || current->euid > 0)
+        return _EPERM;
     if (rgid != -1)
         current->gid = rgid;
     if (egid != -1)
