@@ -41,42 +41,20 @@ dword_t sys_getuid() {
 
 dword_t sys_setuid32(uid_t_ uid) {
     STRACE("setuid32(%d)", uid);
-    if (current->uid > 0 && current->euid > 0)
-        return _EPERM;
-    current->uid = uid;
-    current->euid = uid;
-    current->suid = uid;
-    return 0;
+    return setresuid(uid, uid, uid);
 }
 dword_t sys_setuid(uid_t_ uid) {
     STRACE("setuid(%d)", uid);
-    if (current->uid > 0 && current->euid > 0)
-        return _EPERM;
-    current->uid = uid;
-    current->euid = uid;
-    current->suid = uid;
-    return 0;
+    return setresuid(uid, uid, uid);
 }
 
 dword_t sys_setreuid32(uid_t_ uid, uid_t_ euid) {
     STRACE("setuid32(%d, %d)", uid, euid);
-    if (current->uid > 0 && current->euid > 0 && uid != -1 && euid != current->uid && euid != current->suid)
-        return _EPERM;
-    if (uid != -1)
-        current->uid = uid;
-    if (euid != -1)
-        current->euid = uid;
-    return 0;
+    return setresuid(uid, euid, -1);
 }
 dword_t sys_setreuid(uid_t_ uid, uid_t_ euid) {
     STRACE("setreuid(%d, %d)", uid, euid);
-    if (current->uid > 0 && current->euid > 0 && uid != -1 && euid != current->uid && euid != current->suid)
-        return _EPERM;
-    if (uid != -1)
-        current->uid = uid;
-    if (euid != -1)
-        current->euid = uid;
-    return 0;
+    return setresuid(uid, euid, -1);
 }
 
 dword_t sys_geteuid32() {
