@@ -52,6 +52,7 @@ syscall_t syscall_table[] = {
     [75]  = (syscall_t) sys_setrlimit,
     [76]  = (syscall_t) sys_getrlimit,
     [77]  = (syscall_t) sys_getrusage,
+    [78]  = (syscall_t) sys_gettimeofday,
     [83]  = (syscall_t) sys_symlink,
     [85]  = (syscall_t) sys_readlink,
     [90]  = (syscall_t) sys_mmap,
