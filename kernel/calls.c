@@ -166,6 +166,17 @@ void handle_interrupt(int interrupt) {
     receive_signals();
 }
 
+void dump_stack() {
+    for (int i = 0; i < 64; i++) {
+        dword_t stackword;
+        if (user_get(current->cpu.esp + (i * 4), stackword))
+            break;
+        printk("%08x ", stackword);
+        if (i % 8 == 7)
+            println("");
+    }
+}
+
 // TODO find a home for this
 #ifdef LOG_OVERRIDE
 int log_override = 0;
