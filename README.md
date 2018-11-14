@@ -4,6 +4,12 @@
 [![goto counter](https://img.shields.io/github/search/tbodt/ish/goto.svg)](https://github.com/tbodt/ish/search?q=goto)
 [![fuck counter](https://img.shields.io/github/search/tbodt/ish/fuck.svg)](https://github.com/tbodt/ish/search?q=fuck)
 
+<p align="center">
+<a href="https://ish.app">
+<img src="https://user-images.githubusercontent.com/27065646/48484608-dc6f3400-e816-11e8-92bb-04f56919866b.png">
+</a>
+</p>
+
 A project to get a Linux shell running on iOS, using usermode x86 emulation and syscall translation.
 
 For the current status of the project, check the [Compatibility](https://github.com/tbodt/ish/projects/7) and [Emulation](https://github.com/tbodt/ish/projects/3) projects, and the commit logs.
