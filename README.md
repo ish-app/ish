@@ -1,12 +1,14 @@
-<p>
-<a href="https://ish.app">
-<img src="https://user-images.githubusercontent.com/27065646/48439559-e0537580-e786-11e8-85e3-cf2a5d830204.png">
-</a>
-</p>
+# [iSH](https://ish.app)
 
 [![Build Status](https://travis-ci.org/tbodt/ish.svg?branch=master)](https://travis-ci.org/tbodt/ish)
 [![goto counter](https://img.shields.io/github/search/tbodt/ish/goto.svg)](https://github.com/tbodt/ish/search?q=goto)
 [![fuck counter](https://img.shields.io/github/search/tbodt/ish/fuck.svg)](https://github.com/tbodt/ish/search?q=fuck)
+
+<p align="center">
+<a href="https://ish.app">
+<img src="https://user-images.githubusercontent.com/27065646/48484608-dc6f3400-e816-11e8-92bb-04f56919866b.png">
+</a>
+</p>
 
 A project to get a Linux shell running on iOS, using usermode x86 emulation and syscall translation.
 
