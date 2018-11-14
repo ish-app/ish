@@ -69,7 +69,7 @@ dword_t sys_geteuid() {
 
 dword_t sys_setresuid(uid_t_ ruid, uid_t_ euid, uid_t_ suid) {
     STRACE("setresuid(%d, %d, %d)", ruid, euid, suid);
-    if ((euid != current->uid && current->uid > 0 && current->euid > 0))
+    if ((euid != current->uid && euid != current->suid && current->uid > 0 && current->euid > 0))
         return _EPERM;
     if (ruid != -1)
         current->uid = ruid;
