@@ -66,8 +66,25 @@
                         <stackView opaque="NO" contentMode="scaleToFill" spacing="6" translatesAutoresizingMaskIntoConstraints="NO" id="4pc-Ei-ihz">
                             <rect key="frame" x="6" y="6" width="988" height="43"/>
                             <subviews>
-                                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="cJt-oG-BnW" customClass="BarButton">
+                                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" adjustsImageSizeForAccessibilityContentSizeCategory="YES" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="kDT-gb-eMu" customClass="BarButton">
                                     <rect key="frame" x="0.0" y="0.0" width="31" height="43"/>
+                                    <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                    <fontDescription key="fontDescription" type="system" pointSize="20"/>
+                                    <color key="tintColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                    <state key="normal" image="clipboard">
+                                        <color key="titleColor" cocoaTouchSystemColor="darkTextColor"/>
+                                    </state>
+                                    <userDefinedRuntimeAttributes>
+                                        <userDefinedRuntimeAttribute type="color" keyPath="highlightedBackgroundColor">
+                                            <color key="value" red="0.67450980390000004" green="0.70588235290000001" blue="0.74509803919999995" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                        </userDefinedRuntimeAttribute>
+                                    </userDefinedRuntimeAttributes>
+                                    <connections>
+                                        <action selector="pasteFromClipboard:" destination="BYZ-38-t0r" eventType="primaryActionTriggered" id="hGb-p2-SoH"/>
+                                    </connections>
+                                </button>
+                                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="cJt-oG-BnW" customClass="BarButton">
+                                    <rect key="frame" x="37" y="0.0" width="31" height="43"/>
                                     <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                     <fontDescription key="fontDescription" type="system" pointSize="20"/>
                                     <color key="tintColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
@@ -84,7 +101,7 @@
                                     </connections>
                                 </button>
                                 <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="W9v-cj-FWz" customClass="BarButton">
-                                    <rect key="frame" x="37" y="0.0" width="31" height="43"/>
+                                    <rect key="frame" x="74" y="0.0" width="31" height="43"/>
                                     <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                     <fontDescription key="fontDescription" type="system" pointSize="20"/>
                                     <color key="tintColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
@@ -101,7 +118,7 @@
                                     </connections>
                                 </button>
                                 <button contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="IPm-l0-f25" customClass="BarButton">
-                                    <rect key="frame" x="74" y="0.0" width="31" height="43"/>
+                                    <rect key="frame" x="111" y="0.0" width="31" height="43"/>
                                     <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                     <fontDescription key="fontDescription" type="system" pointSize="24"/>
                                     <color key="tintColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
@@ -118,7 +135,7 @@
                                     </connections>
                                 </button>
                                 <button contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="VCr-TW-PIZ" customClass="ArrowBarButton">
-                                    <rect key="frame" x="111" y="0.0" width="31" height="43"/>
+                                    <rect key="frame" x="148" y="0.0" width="31" height="43"/>
                                     <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                     <fontDescription key="fontDescription" type="system" pointSize="24"/>
                                     <color key="tintColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
@@ -135,7 +152,7 @@
                                     </connections>
                                 </button>
                                 <view contentMode="scaleToFill" horizontalHuggingPriority="100" translatesAutoresizingMaskIntoConstraints="NO" id="qmg-M1-7W8" userLabel="Spacer">
-                                    <rect key="frame" x="148" y="0.0" width="766" height="43"/>
+                                    <rect key="frame" x="185" y="0.0" width="729" height="43"/>
                                 </view>
                                 <button contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="infoLight" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="5dl-UV-6qh">
                                     <rect key="frame" x="920" y="0.0" width="31" height="43"/>
@@ -174,6 +191,7 @@
                                 <constraint firstItem="IPm-l0-f25" firstAttribute="width" secondItem="5dl-UV-6qh" secondAttribute="width" id="ebo-yF-ffX"/>
                                 <constraint firstItem="5dl-UV-6qh" firstAttribute="width" secondItem="VCr-TW-PIZ" secondAttribute="width" id="fXl-3w-1Zj"/>
                                 <constraint firstItem="cJt-oG-BnW" firstAttribute="width" secondItem="5dl-UV-6qh" secondAttribute="width" id="oQb-HX-lTG"/>
+                                <constraint firstItem="cJt-oG-BnW" firstAttribute="width" secondItem="kDT-gb-eMu" secondAttribute="width" id="sRD-6I-hGi"/>
                             </constraints>
                         </stackView>
                     </subviews>
@@ -192,4 +210,7 @@
             <point key="canvasLocation" x="32.799999999999997" y="32.833583208395808"/>
         </scene>
     </scenes>
+    <resources>
+        <image name="clipboard" width="25.600000381469727" height="25.600000381469727"/>
+    </resources>
 </document>
