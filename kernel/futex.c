@@ -72,7 +72,7 @@ int futex_wait(addr_t uaddr, dword_t val, struct timespec *timeout) {
     else if (tmp != val)
         err = _EAGAIN;
     else
-        wait_for(&futex->cond, &futex_lock, timeout);
+        err = wait_for(&futex->cond, &futex_lock, timeout);
     futex_put(futex);
     return err;
 }
@@ -95,7 +95,6 @@ int futex_wake(addr_t uaddr, dword_t val) {
 #define FUTEX_CMD_MASK_ ~(FUTEX_PRIVATE_FLAG_)
 
 dword_t sys_futex(addr_t uaddr, dword_t op, dword_t val, addr_t timeout_or_val2, addr_t uaddr2, dword_t val3) {
-    STRACE("futex(%#x, %d, %d, timeout=%#x, %#x, %d)", uaddr, op, val, timeout_or_val2, uaddr2, val3);
     if (!(op & FUTEX_PRIVATE_FLAG_)) {
         FIXME("no support for shared futexes");
     }
@@ -109,12 +108,13 @@ dword_t sys_futex(addr_t uaddr, dword_t op, dword_t val, addr_t timeout_or_val2,
     }
     switch (op & FUTEX_CMD_MASK_) {
         case FUTEX_WAIT_:
-            STRACE("futex_wait(0x%x, %d)", uaddr, val);
+            STRACE("futex(FUTEX_WAIT, %#x, %d, 0x%x {%ds %dns})", uaddr, val, timeout_or_val2, timeout.tv_sec, timeout.tv_nsec);
             return futex_wait(uaddr, val, timeout_or_val2 ? &timeout : NULL);
         case FUTEX_WAKE_:
-            STRACE("futex_wake(0x%x, %d)", uaddr, val);
+            STRACE("futex(FUTEX_WAKE, %#x, %d)", uaddr, val);
             return futex_wake(uaddr, val);
     }
+    STRACE("futex(%#x, %d, %d, timeout=%#x, %#x, %d) ", uaddr, op, val, timeout_or_val2, uaddr2, val3);
     FIXME("unsupported futex operation %d", op);
     return _ENOSYS;
 }

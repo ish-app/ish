@@ -24,11 +24,12 @@ typedef struct {
 void cond_init(cond_t *cond);
 // Must call when finished with the condition (currently doesn't do much but might do something important eventually I guess)
 void cond_destroy(cond_t *cond);
-// Releases the lock, waits for the condition, and reacquires the lock. Return
-// 1 if waiting stopped because the thread received a signal, 0 otherwise.
+// Releases the lock, waits for the condition, and reacquires the lock.
+// Returns _EINTR if waiting stopped because the thread received a signal,
+// _ETIMEDOUT if waiting stopped because the timout expired, 0 otherwise.
 int wait_for(cond_t *cond, lock_t *lock, struct timespec *timeout);
-// Use this if you want to wait even if there are signals pending
-void wait_for_ignore_signals(cond_t *cond, lock_t *lock, struct timespec *timeout);
+// Same as wait_for, except it will never return _EINTR
+int wait_for_ignore_signals(cond_t *cond, lock_t *lock, struct timespec *timeout);
 // Wake up all waiters.
 void notify(cond_t *cond);
 // Wake up one waiter.

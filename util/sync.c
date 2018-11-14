@@ -3,6 +3,7 @@
 #include "kernel/task.h"
 #include "util/sync.h"
 #include "debug.h"
+#include "kernel/errno.h"
 
 void cond_init(cond_t *cond) {
     pthread_condattr_t attr;
@@ -18,23 +19,25 @@ void cond_destroy(cond_t *cond) {
 
 int wait_for(cond_t *cond, lock_t *lock, struct timespec *timeout) {
     if (current && current->pending)
-        return 1;
-    wait_for_ignore_signals(cond, lock, timeout);
+        return _EINTR;
+    int err = wait_for_ignore_signals(cond, lock, timeout);
+    if (err < 0)
+        return _ETIMEDOUT;
     if (current && current->pending)
-        return 1;
+        return _EINTR;
     return 0;
 }
-void wait_for_ignore_signals(cond_t *cond, lock_t *lock, struct timespec *timeout) {
+int wait_for_ignore_signals(cond_t *cond, lock_t *lock, struct timespec *timeout) {
     if (current) {
         lock(&current->waiting_cond_lock);
         current->waiting_cond = cond;
         current->waiting_lock = lock;
         unlock(&current->waiting_cond_lock);
     }
+    int rc = 0;
     if (!timeout) {
         pthread_cond_wait(&cond->cond, lock);
     } else {
-        int rc = 0;
 #if __linux__
         struct timespec abs_timeout;
         clock_gettime(CLOCK_MONOTONIC, &abs_timeout);
@@ -50,7 +53,6 @@ void wait_for_ignore_signals(cond_t *cond, lock_t *lock, struct timespec *timeou
 #else
 #error Unimplemented pthread_cond_wait relative timeout.
 #endif
-        // FIXME: rc isn't propagated
     }
     if (current) {
         lock(&current->waiting_cond_lock);
@@ -58,6 +60,9 @@ void wait_for_ignore_signals(cond_t *cond, lock_t *lock, struct timespec *timeou
         current->waiting_lock = NULL;
         unlock(&current->waiting_cond_lock);
     }
+    if (rc == ETIMEDOUT)
+        return _ETIMEDOUT;
+    return 0;
 }
 
 void notify(cond_t *cond) {
