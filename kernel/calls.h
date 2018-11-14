@@ -143,6 +143,8 @@ dword_t sys_getuid32(void);
 dword_t sys_getuid(void);
 dword_t sys_setuid32(uid_t_ uid);
 dword_t sys_setuid(uid_t_ uid);
+dword_t sys_setreuid32(uid_t_ uid, uid_t_ euid);
+dword_t sys_setreuid(uid_t_ uid, uid_t_ euid);
 dword_t sys_geteuid32(void);
 dword_t sys_geteuid(void);
 dword_t sys_getgid32(void);
