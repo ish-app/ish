@@ -56,13 +56,12 @@ def extract_archive(archive, db):
             rdev,
         )
 
-if sys.argv != 3:
-    print("You have not specified all arguments, check again.")
+try:
+    _, archive_path, fs = sys.argv
+except ValueError:
+    print('wrong number of arguments')
     print_usage()
-    exit(1)
-
-_, archive_path, fs = sys.argv
-
+    sys.exit(1)
     
 fs = Path(fs)
 fs.mkdir(parents=True, exist_ok=True)
