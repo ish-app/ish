@@ -31,6 +31,6 @@ int main(int argc, char *const argv[]) {
     transplant_vdso(pid, vdso, vdso_size);
 
     trycall(kill(pid, SIGSTOP), "pause process");
-    printk("attach debugger to %d\n", pid);
+    printf("attach debugger to %d\n", pid);
     return 0;
 }
