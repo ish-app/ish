@@ -1,5 +1,11 @@
-os: osx
-language: objective-c
+matrix:
+    - os: linux
+    dist: trusty
+    sudo: required
+    language: c
+    compiler: clang
+    - os: osx
+    language: objective-c
 
 env:
     - MESON_OPTS=-Djit=true
@@ -8,9 +14,19 @@ env:
 script:
     # this is so satanic i can't even begin to explain it
     # - brew update
-    - brew install llvm yarn
-    - export PATH=/usr/local/bin:/usr/local/sbin:/usr/local/opt/llvm/bin:$PATH
-    - pip3 install meson
-    - curl -LO https://github.com/ninja-build/ninja/releases/download/v1.8.2/ninja-mac.zip
-    - unzip ninja-mac.zip ninja -d ~/bin
-    - xcodebuild -project iSH.xcodeproj -alltargets -sdk iphoneos CODE_SIGNING_ALLOWED=NO
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+        brew install llvm yarn;
+        export PATH=/usr/local/bin:/usr/local/sbin:/usr/local/opt/llvm/bin:$PATH;
+        pip3 install meson;
+        curl -LO https://github.com/ninja-build/ninja/releases/download/v1.8.2/ninja-mac.zip;
+        unzip ninja-mac.zip ninja -d ~/bin;
+        xcodebuild -project iSH.xcodeproj -alltargets -sdk iphoneos CODE_SIGNING_ALLOWED=NO;
+    fi
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+        source ~/virtualenv/python3.6/bin/activate;
+        pip install meson;
+        curl -LO https://github.com/ninja-build/ninja/releases/download/v1.8.2/ninja-linux.zip;
+        unzip ninja-linux.zip ninja -d ~/bin;
+        meson build $MESON_OPTS;
+        ninja -C build;
+    fi
