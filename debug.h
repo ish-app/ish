@@ -4,6 +4,7 @@
 #include <stdlib.h>
 
 void printk(const char *msg, ...);
+void vprintk(const char *msg, va_list args);
 
 // debug output utilities
 // save me

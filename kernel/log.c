@@ -120,10 +120,7 @@ static void output_line(const char *line) {
     log_buf_append("\n");
 }
 
-void printk(const char *msg, ...) {
-    va_list args;
-    va_start(args, msg);
-
+void vprintk(const char *msg, va_list args) {
     // format the message
     // I'm trusting you to not pass an absurdly long message
     static __thread char buf[4096] = "";
@@ -143,7 +140,11 @@ void printk(const char *msg, ...) {
     }
     unlock(&log_lock);
     memmove(buf, b, strlen(b) + 1);
-
+}
+void printk(const char *msg, ...) {
+    va_list args;
+    va_start(args, msg);
+    vprintk(msg, args);
     va_end(args);
 }
 
