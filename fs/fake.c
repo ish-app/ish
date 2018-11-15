@@ -21,11 +21,11 @@ struct ish_stat {
 };
 
 static void gdbm_fatal(const char *thingy) {
-    println("fatal gdbm error: %s", thingy);
+    printk("fatal gdbm error: %s\n", thingy);
 }
 
 static noreturn void gdbm_err(GDBM_FILE db) {
-    println("gdbm error: %s", gdbm_db_strerror(db));
+    printk("gdbm error: %s\n", gdbm_db_strerror(db));
     abort();
 }
 
@@ -370,7 +370,7 @@ static int fakefs_mount(struct mount *mount) {
     strcpy(basename, "meta.db");
     mount->db = gdbm_open(db_path, 0, GDBM_NOLOCK | GDBM_WRITER, 0, gdbm_fatal);
     if (mount->db == NULL) {
-        println("gdbm error: %s", gdbm_strerror(gdbm_errno));
+        printk("gdbm error: %s\n", gdbm_strerror(gdbm_errno));
         return _EINVAL;
     }
 

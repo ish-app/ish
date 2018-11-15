@@ -136,21 +136,21 @@ syscall_t syscall_table[] = {
 };
 
 void handle_interrupt(int interrupt) {
-    TRACELN_(instr, "\n");
+    TRACE_(instr, "\n");
     struct cpu_state *cpu = &current->cpu;
     if (interrupt == INT_SYSCALL) {
         int syscall_num = cpu->eax;
         if (syscall_num >= NUM_SYSCALLS || syscall_table[syscall_num] == NULL) {
-            println("%d missing syscall %d", current->pid, syscall_num);
+            printk("%d missing syscall %d\n", current->pid, syscall_num);
             send_signal(current, SIGSYS_);
         } else {
             STRACE("%d call %-3d ", current->pid, syscall_num);
             int result = syscall_table[syscall_num](cpu->ebx, cpu->ecx, cpu->edx, cpu->esi, cpu->edi, cpu->ebp);
-            STRACELN(" = 0x%x", result);
+            STRACE(" = 0x%x\n", result);
             cpu->eax = result;
         }
     } else if (interrupt == INT_GPF) {
-        println("%d page fault on 0x%x at 0x%x", current->pid, cpu->segfault_addr, cpu->eip);
+        printk("%d page fault on 0x%x at 0x%x\n", current->pid, cpu->segfault_addr, cpu->eip);
         deliver_signal(current, SIGSEGV_);
     } else if (interrupt == INT_UNDEFINED) {
         printk("%d illegal instruction at 0x%x: ", current->pid, cpu->eip);
@@ -160,10 +160,10 @@ void handle_interrupt(int interrupt) {
                 break;
             printk("%02x ", b);
         }
-        println("");
+        printk("\n");
         deliver_signal(current, SIGILL_);
     } else if (interrupt != INT_TIMER) {
-        println("%d unhandled interrupt %d", current->pid, interrupt);
+        printk("%d unhandled interrupt %d\n", current->pid, interrupt);
         sys_exit(interrupt);
     }
     receive_signals();
@@ -176,7 +176,7 @@ void dump_stack() {
             break;
         printk("%08x ", stackword);
         if (i % 8 == 7)
-            println("");
+            printk("\n");
     }
 }
 

@@ -393,7 +393,7 @@ static int tty_ioctl(struct fd *fd, int cmd, void *arg) {
                 err = _ENOTTY;
                 break;
             }
-            TRACELN("tty group = %d", tty->fg_group);
+            TRACE("tty group = %d\n", tty->fg_group);
             *(dword_t *) arg = tty->fg_group; break;
         case TIOCSPGRP_:
             // FIXME I think current->sid needs to be locked
@@ -403,7 +403,7 @@ static int tty_ioctl(struct fd *fd, int cmd, void *arg) {
             }
             // TODO group must be in the right session
             tty->fg_group = *(dword_t *) arg;
-            TRACELN("tty group set to = %d", tty->fg_group);
+            TRACE("tty group set to = %d\n", tty->fg_group);
             break;
 
         case TIOCGWINSZ_:

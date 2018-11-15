@@ -269,7 +269,7 @@ dword_t sys_ioctl(fd_t f, dword_t cmd, dword_t arg) {
         return _EINVAL;
     ssize_t size = fd->ops->ioctl_size(fd, cmd);
     if (size < 0) {
-        println("unknown ioctl %x", cmd);
+        printk("unknown ioctl %x\n", cmd);
         return _EINVAL;
     }
     if (size == 0)

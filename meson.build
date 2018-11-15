@@ -45,6 +45,7 @@ src = [
     'kernel/vdso.c', vdso,
     'kernel/task.c',
     'kernel/group.c',
+    'kernel/log.c',
 
     'kernel/fork.c',
     'kernel/exec.c',
