@@ -15,7 +15,7 @@ struct fs_info {
     struct fd *root;
     lock_t lock;
 };
-struct fs_info *fs_info_new();
+struct fs_info *fs_info_new(void);
 struct fs_info *fs_info_copy(struct fs_info *fs);
 void fs_info_release(struct fs_info *fs);
 

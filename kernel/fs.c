@@ -189,7 +189,7 @@ dword_t sys_write(fd_t fd_no, addr_t buf_addr, dword_t size) {
     if (user_read(buf_addr, buf, size))
         return _EFAULT;
     buf[size] = '\0';
-    STRACE("write(%d, \"%s\", %d)", fd_no, buf, size);
+    STRACE("write(%d, \"%.100s\", %d)", fd_no, buf, size);
     struct fd *fd = f_get(fd_no);
     if (fd == NULL)
         return _EBADF;
@@ -269,7 +269,7 @@ dword_t sys_ioctl(fd_t f, dword_t cmd, dword_t arg) {
         return _EINVAL;
     ssize_t size = fd->ops->ioctl_size(fd, cmd);
     if (size < 0) {
-        println("unknown ioctl %x", cmd);
+        printk("unknown ioctl %x\n", cmd);
         return _EINVAL;
     }
     if (size == 0)

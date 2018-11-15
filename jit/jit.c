@@ -66,7 +66,7 @@ static struct jit_block *jit_lookup(struct jit *jit, addr_t addr) {
 
 static struct jit_block *jit_block_compile(addr_t ip, struct tlb *tlb) {
     struct gen_state state;
-    TRACELN("%d %08x --- compiling:", current->pid, ip);
+    TRACE("%d %08x --- compiling:\n", current->pid, ip);
     gen_start(ip, &state);
     while (true) {
         if (!gen_step32(&state, tlb))
@@ -133,7 +133,7 @@ void cpu_run(struct cpu_state *cpu) {
                 block = jit_block_compile(ip, tlb);
                 jit_insert(jit, block);
             } else {
-                TRACELN("%d %08x --- missed cache", current->pid, ip);
+                TRACE("%d %08x --- missed cache\n", current->pid, ip);
             }
             if (last_block != NULL) {
                 for (int i = 0; i <= 1; i++) {
@@ -149,7 +149,7 @@ void cpu_run(struct cpu_state *cpu) {
         }
         last_block = block;
 
-        TRACELN("%d %08x --- cycle %d", current->pid, ip, i);
+        TRACE("%d %08x --- cycle %d\n", current->pid, ip, i);
         int interrupt = jit_enter(block, &frame, tlb);
         if (interrupt == INT_NONE && ++i % (1 << 16) == 0)
             interrupt = INT_TIMER;

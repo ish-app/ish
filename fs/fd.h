@@ -87,7 +87,7 @@ struct fdtable {
     bits_t *cloexec;
 };
 
-struct fdtable *fdtable_new();
+struct fdtable *fdtable_new(unsigned size);
 void fdtable_release(struct fdtable *table);
 int fdtable_resize(struct fdtable *table, unsigned size);
 struct fdtable *fdtable_copy(struct fdtable *table);

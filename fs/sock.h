@@ -64,7 +64,7 @@ static inline int sock_flags_to_real(int fake) {
     if (fake & MSG_PEEK_) real |= MSG_PEEK;
     if (fake & MSG_WAITALL_) real |= MSG_WAITALL;
     if (fake & ~(MSG_OOB_|MSG_PEEK_|MSG_WAITALL_))
-        TRACELN("unimplemented socket flags %d", fake);
+        TRACE("unimplemented socket flags %d\n", fake);
     return real;
 }
 

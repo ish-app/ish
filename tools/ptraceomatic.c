@@ -63,7 +63,7 @@ static int compare_cpus(struct cpu_state *cpu, struct tlb *tlb, int pid, int und
     collapse_flags(cpu);
 #define CHECK(real, fake, name) \
     if ((real) != (fake)) { \
-        println(name ": real 0x%llx, fake 0x%llx", (unsigned long long) (real), (unsigned long long) (fake)); \
+        printk(name ": real 0x%llx, fake 0x%llx\n", (unsigned long long) (real), (unsigned long long) (fake)); \
         debugger; \
         return -1; \
     }
@@ -131,7 +131,7 @@ static int compare_cpus(struct cpu_state *cpu, struct tlb *tlb, int pid, int und
         void *fake_page = entry.data->data + entry.offset;
 
         if (memcmp(real_page, fake_page, PAGE_SIZE) != 0) {
-            println("page %x doesn't match", dirty_page);
+            printk("page %x doesn't match\n", dirty_page);
             debugger;
             return -1;
         }
@@ -480,7 +480,7 @@ int main(int argc, char *const argv[]) {
     int i = 0;
     while (true) {
         if (compare_cpus(cpu, tlb, pid, undefined_flags) < 0) {
-            println("failure: resetting cpu");
+            printk("failure: resetting cpu\n");
             *cpu = old_cpu;
             __asm__("int3");
             cpu_step32(cpu, tlb);

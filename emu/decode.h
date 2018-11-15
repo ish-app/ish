@@ -317,14 +317,14 @@ restart:
         case 0x5e: TRACEI("pop osi"); POP(reg_si,oz); break;
         case 0x5f: TRACEI("pop odi"); POP(reg_di,oz); break;
 
-        case 0x65: TRACELN("segment gs"); SEG_GS(); goto restart;
+        case 0x65: TRACE("segment gs\n"); SEG_GS(); goto restart;
 
         case 0x66:
 #if OP_SIZE == 32
-            TRACELN("entering 16 bit mode");
+            TRACE("entering 16 bit mode\n");
             return glue(DECODER_NAME, 16)(DECODER_PASS_ARGS);
 #else
-            TRACELN("entering 32 bit mode");
+            TRACE("entering 32 bit mode\n");
             return glue(DECODER_NAME, 32)(DECODER_PASS_ARGS);
 #endif
 
@@ -753,7 +753,7 @@ restart:
                 // ret. gcc used to use nop ret but repz ret is only one
                 // instruction
                 case 0xc3: TRACEI("repz ret\t"); RET_NEAR(0); break;
-                default: TRACELN("undefined"); UNDEFINED;
+                default: TRACE("undefined\n"); UNDEFINED;
             }
             break;
 
@@ -812,9 +812,9 @@ restart:
 #undef GRP5
 
         default:
-            TRACELN("undefined");
+            TRACE("undefined\n");
             UNDEFINED;
     }
-    TRACELN("");
+    TRACE("\n");
     FINISH;
 }

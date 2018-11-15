@@ -102,7 +102,7 @@ int compare_cpus(struct cpu_state *cpu, struct tlb *tlb, uc_engine *uc, int unde
 
 #define CHECK(uc, ish, name) \
     if ((uc) != (ish)) { \
-        println(name ": uc 0x%llx, ish 0x%llx", (unsigned long long) (uc), (unsigned long long) (ish)); \
+        printk(name ": uc 0x%llx, ish 0x%llx\n", (unsigned long long) (uc), (unsigned long long) (ish)); \
         debugger; \
         return -1; \
     }
@@ -142,7 +142,7 @@ int compare_cpus(struct cpu_state *cpu, struct tlb *tlb, uc_engine *uc, int unde
         void *fake_page = entry.data->data + entry.offset;
 
         if (memcmp(real_page, fake_page, PAGE_SIZE) != 0) {
-            println("page %x doesn't match", tlb->dirty_page);
+            printk("page %x doesn't match\n", tlb->dirty_page);
             debugger;
             return -1;
         }
@@ -312,7 +312,7 @@ void step_tracing(struct cpu_state *cpu, struct tlb *tlb, uc_engine *uc) {
         }
         uc_setreg(uc, UC_X86_REG_EAX, cpu->eax);
     } else if (uc_interrupt != -1) {
-        println("unhandled unicorn interrupt 0x%x", uc_interrupt);
+        printk("unhandled unicorn interrupt 0x%x\n", uc_interrupt);
         exit(1);
     }
 }
@@ -329,7 +329,7 @@ static bool uc_unmapped_callback(uc_engine *uc, uc_mem_type type, uint64_t addre
         uc_map(uc, BYTES_ROUND_DOWN(address), PAGE_SIZE);
         return true;
     }
-    println("unicorn reports unmapped access at 0x%lx size %d", address, size);
+    printk("unicorn reports unmapped access at 0x%lx size %d\n", address, size);
     return false;
 }
 
@@ -442,7 +442,7 @@ int main(int argc, char *const argv[]) {
     struct cpu_state old_cpu = *cpu;
     while (true) {
         while (compare_cpus(cpu, tlb, uc, undefined_flags) < 0) {
-            println("resetting cpu");
+            printk("resetting cpu\n");
             *cpu = old_cpu;
             debugger;
             cpu_step32(cpu, tlb);

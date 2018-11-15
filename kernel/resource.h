@@ -53,7 +53,7 @@ struct rusage_ {
     dword_t nivcsw;
 };
 
-struct rusage_ rusage_get_current();
+struct rusage_ rusage_get_current(void);
 void rusage_add(struct rusage_ *dst, struct rusage_ *src);
 #define RUSAGE_SELF_ 0
 #define RUSAGE_CHILDREN_ -1
