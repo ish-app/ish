@@ -114,6 +114,6 @@
 
 
 int err_map(int err);
-int errno_map();
+int errno_map(void);
 
 #endif
