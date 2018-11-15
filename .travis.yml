@@ -1,11 +1,6 @@
-matrix:
-    - os: linux
-    dist: trusty
-    sudo: required
-    language: c
-    compiler: clang
-    - os: osx
-    language: objective-c
+os:
+    - osx
+    - linux
 
 env:
     - MESON_OPTS=-Djit=true
