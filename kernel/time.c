@@ -39,6 +39,10 @@ dword_t sys_clock_gettime(dword_t clock, addr_t tp) {
     return 0;
 }
 
+dword_t sys_clock_settime(dword_t clock, addr_t tp) {
+    return _EPERM;
+}
+
 static void itimer_notify(struct task *task) {
     send_signal(task, SIGALRM_);
 }
@@ -141,4 +145,8 @@ dword_t sys_gettimeofday(addr_t tv, addr_t tz) {
 	    return _EFAULT;
     }
     return 0;
+}
+
+dword_t sys_settimeofday(addr_t tv, addr_t tz) {
+    return _EPERM;
 }
