@@ -69,7 +69,7 @@ struct sighand {
     bool on_altstack;
     lock_t lock;
 };
-struct sighand *sighand_new();
+struct sighand *sighand_new(void);
 struct sighand *sighand_copy(struct sighand *sighand);
 void sighand_release(struct sighand *sighand);
 

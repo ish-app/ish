@@ -85,7 +85,7 @@ void task_destroy(struct task *task) {
     free(task);
 }
 
-void (*task_run_hook)() = NULL;
+void (*task_run_hook)(void) = NULL;
 
 static void *task_run(void *task) {
     current = task;

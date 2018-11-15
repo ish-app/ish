@@ -58,7 +58,7 @@ void gen_end(struct gen_state *state) {
 }
 
 void gen_exit(struct gen_state *state) {
-    extern void gadget_exit();
+    extern void gadget_exit(void);
     // in case the last instruction didn't end the block
     gen(state, (unsigned long) gadget_exit);
     gen(state, state->ip);
@@ -110,10 +110,10 @@ enum repeat {
     rep_rep = rep_repz,
 };
 
-typedef void (*gadget_t)();
+typedef void (*gadget_t)(void);
 
 #define GEN(thing) gen(state, (unsigned long) (thing))
-#define g(g) do { extern void gadget_##g(); GEN(gadget_##g); } while (0)
+#define g(g) do { extern void gadget_##g(void); GEN(gadget_##g); } while (0)
 #define gg(_g, a) do { g(_g); GEN(a); } while (0)
 #define ggg(_g, a, b) do { g(_g); GEN(a); GEN(b); } while (0)
 #define gggg(_g, a, b, c) do { g(_g); GEN(a); GEN(b); GEN(c); } while (0)
