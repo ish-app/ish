@@ -64,14 +64,17 @@ dword_t sys_readlinkat(fd_t at_f, addr_t path_addr, addr_t buf_addr, dword_t buf
     char path[MAX_PATH];
     if (user_read_string(path_addr, path, sizeof(path)))
         return _EFAULT;
+    STRACE("readlinkat(%d, \"%s\", %#x, %#x)", at_f, path, buf_addr, bufsize);
     struct fd *at = at_fd(at_f);
     if (at == NULL)
         return _EBADF;
     char buf[bufsize];
     int err = generic_readlinkat(at, path, buf, bufsize);
-    if (err >= 0)
+    if (err >= 0) {
+        STRACE(" \"%.*s\"", bufsize, buf);
         if (user_write_string(buf_addr, buf))
             return _EFAULT;
+    }
     return err;
 }
 
@@ -288,6 +291,7 @@ dword_t sys_ioctl(fd_t f, dword_t cmd, dword_t arg) {
 }
 
 dword_t sys_getcwd(addr_t buf_addr, dword_t size) {
+    STRACE("getcwd(%#x, %#x)", buf_addr, size);
     lock(&current->fs->lock);
     struct fd *wd = current->fs->pwd;
     char pwd[MAX_PATH];
@@ -300,6 +304,7 @@ dword_t sys_getcwd(addr_t buf_addr, dword_t size) {
         return _ERANGE;
     char buf[size];
     strcpy(buf, pwd);
+    STRACE(" \"%.*s\"", size, buf);
     if (user_write(buf_addr, buf, sizeof(buf)))
         return _EFAULT;
     return size;

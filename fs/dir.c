@@ -14,6 +14,7 @@ struct linux_dirent64 {
 } __attribute__((packed));
 
 int_t sys_getdents64(fd_t f, addr_t dirents, dword_t count) {
+    STRACE("getdents64(%d, %#x, %#x)", f, dirents, count);
     struct fd *fd = f_get(f);
     if (fd == NULL)
         return _EBADF;
