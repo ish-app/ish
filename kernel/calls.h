@@ -203,6 +203,7 @@ dword_t sys_pselect(fd_t nfds, addr_t readfds_addr, addr_t writefds_addr, addr_t
 // misc
 dword_t sys_futex(addr_t uaddr, dword_t op, dword_t val, addr_t timeout_or_val2, addr_t uaddr2, dword_t val3);
 dword_t sys_getrandom(addr_t buf_addr, dword_t len, dword_t flags);
+int_t sys_syslog(int_t type, addr_t buf_addr, int_t len);
 
 typedef int (*syscall_t)(dword_t, dword_t, dword_t, dword_t, dword_t, dword_t);
 

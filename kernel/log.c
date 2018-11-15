@@ -4,36 +4,121 @@
 #if LOG_HANDLER_NSLOG
 #include <CoreFoundation/CoreFoundation.h>
 #endif
+#include "kernel/calls.h"
 #include "util/sync.h"
+#include "misc.h"
 
 #define LOG_BUF_SHIFT 20
 static char log_buf[1 << LOG_BUF_SHIFT];
 static size_t log_head = 0;
 static size_t log_size = 0;
+static lock_t log_lock = LOCK_INITIALIZER;
 
+#define SYSLOG_ACTION_CLOSE_ 0
+#define SYSLOG_ACTION_OPEN_ 1
+#define SYSLOG_ACTION_READ_ 2
+#define SYSLOG_ACTION_READ_ALL_ 3
+#define SYSLOG_ACTION_READ_CLEAR_ 4
+#define SYSLOG_ACTION_CLEAR_ 5
+#define SYSLOG_ACTION_CONSOLE_OFF_ 6
+#define SYSLOG_ACTION_CONSOLE_ON_ 7
+#define SYSLOG_ACTION_CONSOLE_LEVEL_ 8
+#define SYSLOG_ACTION_SIZE_UNREAD_ 9
+#define SYSLOG_ACTION_SIZE_BUFFER_ 10
+
+static int syslog_read(size_t start, addr_t buf_addr, int_t total) {
+    if (total > log_size)
+        total = log_size;
+    size_t remaining = total;
+    size_t log_p = log_head;
+    char buf[total];
+    char *b = buf;
+    while (remaining > 0) {
+        size_t len = remaining;
+        if (len > sizeof(log_buf) - log_head)
+            len = sizeof(log_buf) - log_head;
+        memcpy(b, &log_buf[log_p], len);
+        log_p = (log_p + len) % sizeof(log_buf);
+        b += len;
+        remaining -= len;
+    }
+    if (user_write(buf_addr, buf, total))
+        return -1;
+    return total;
+}
+static int syslog_read_all(addr_t buf_addr, addr_t len) {
+    if (len > log_size)
+        len = log_size;
+    return syslog_read((log_head + log_size - len) % sizeof(log_buf), buf_addr, len);
+}
+
+static int do_syslog(int type, addr_t buf_addr, int_t len) {
+    switch (type) {
+        case SYSLOG_ACTION_READ_:
+            len = syslog_read(log_head, buf_addr, len);
+            if (len < 0)
+                return _EFAULT;
+            log_head = (log_head + len) % sizeof(log_buf);
+            log_size -= len;
+            return len;
+        case SYSLOG_ACTION_READ_ALL_:
+            return syslog_read_all(buf_addr, len);
+        case SYSLOG_ACTION_READ_CLEAR_:
+            len = syslog_read_all(buf_addr, len);
+            log_head = log_size = 0;
+            return len;
+        case SYSLOG_ACTION_CLEAR_:
+            log_head = log_size = 0;
+            return 0;
+
+        case SYSLOG_ACTION_SIZE_UNREAD_:
+            return log_size;
+        case SYSLOG_ACTION_SIZE_BUFFER_:
+            return sizeof(log_buf);
+
+        case SYSLOG_ACTION_CLOSE_:
+        case SYSLOG_ACTION_OPEN_:
+        case SYSLOG_ACTION_CONSOLE_OFF_:
+        case SYSLOG_ACTION_CONSOLE_ON_:
+        case SYSLOG_ACTION_CONSOLE_LEVEL_:
+            return 0;
+        default:
+            return _EINVAL;
+    }
+}
+int_t sys_syslog(int_t type, addr_t buf_addr, int_t len) {
+    lock(&log_lock);
+    int retval = do_syslog(type, buf_addr, len);
+    unlock(&log_lock);
+    return retval;
+}
+
+static void log_buf_append(const char *msg) {
+    size_t log_p = (log_head + log_size) % sizeof(log_buf);
+    size_t remaining = strlen(msg);
+    while (*msg != '\0') {
+        size_t len = sizeof(log_buf) - log_head;
+        if (len > remaining)
+            len = remaining;
+        memcpy(&log_buf[log_p], msg, len);
+        log_size += len;
+        if (log_size > sizeof(log_buf)) {
+            log_head = (log_head + log_size - sizeof(log_buf)) % sizeof(log_buf);
+            log_size = sizeof(log_buf);
+        }
+        log_p = (log_p + len) % sizeof(log_buf);
+        msg += len;
+        remaining -= len;
+    }
+}
 static void log_line(const char *line);
 static void output_line(const char *line) {
     // send it to stdout or wherever
     log_line(line);
     // add it to the circular buffer
-
-    // while any left: copy to log_p size sizeof(log_buf)-log_head, 
-    char *log_p = log_buf;
-    size_t remaining = strlen(line);
-    while (*line != '\0') {
-        size_t len = sizeof(log_buf) - log_head;
-        if (len > remaining)
-            len = remaining;
-        memcpy(log_p, line, len);
-        log_size += len;
-        if (log_size > sizeof(log_buf))
-            log_size = sizeof(log_buf);
-        remaining -= len;
-        line += len;
-    }
+    log_buf_append(line);
+    log_buf_append("\n");
 }
-
-lock_t log_lock = LOCK_INITIALIZER;
 
 void printk(const char *msg, ...) {
     va_list args;

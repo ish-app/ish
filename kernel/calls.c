@@ -60,6 +60,7 @@ syscall_t syscall_table[] = {
     [91]  = (syscall_t) sys_munmap,
     [94]  = (syscall_t) sys_fchmod,
     [102] = (syscall_t) sys_socketcall,
+    [103] = (syscall_t) sys_syslog,
     [104] = (syscall_t) sys_setitimer,
     [114] = (syscall_t) sys_wait4,
     [116] = (syscall_t) sys_sysinfo,
