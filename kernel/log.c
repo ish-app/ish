@@ -29,6 +29,7 @@ static void output_line(const char *line) {
         if (log_size > sizeof(log_buf))
             log_size = sizeof(log_buf);
         remaining -= len;
+        line += len;
     }
 }
 
@@ -52,6 +53,7 @@ void printk(const char *msg, ...) {
         *p = '\0';
         output_line(b);
         *p = '\n';
+        buf_size -= p + 1 - b;
         b = p + 1;
     }
     unlock(&log_lock);
