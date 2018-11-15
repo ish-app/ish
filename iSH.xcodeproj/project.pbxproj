@@ -345,6 +345,7 @@
 				BB792B7D1F96E32B00FFB7A4 /* Frameworks */,
 			);
 			sourceTree = "<group>";
+			usesTabs = 0;
 		};
 		BB792B511F96D90D00FFB7A4 /* Products */ = {
 			isa = PBXGroup;
