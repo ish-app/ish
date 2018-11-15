@@ -24,7 +24,7 @@ static int read_header(struct fd *fd, struct elf_header *header) {
     if (fd->ops->lseek(fd, 0, SEEK_SET))
         return _EIO;
     if ((err = fd->ops->read(fd, header, sizeof(*header))) != sizeof(*header)) {
-        if (err != 0)
+        if (err < 0)
             return _EIO;
         return _ENOEXEC;
     }
