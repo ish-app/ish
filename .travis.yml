@@ -14,19 +14,15 @@ env:
 script:
     # this is so satanic i can't even begin to explain it
     # - brew update
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-        brew install llvm yarn;
-        export PATH=/usr/local/bin:/usr/local/sbin:/usr/local/opt/llvm/bin:$PATH;
-        pip3 install meson;
-        curl -LO https://github.com/ninja-build/ninja/releases/download/v1.8.2/ninja-mac.zip;
-        unzip ninja-mac.zip ninja -d ~/bin;
-        xcodebuild -project iSH.xcodeproj -alltargets -sdk iphoneos CODE_SIGNING_ALLOWED=NO;
-    fi
-    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
-        source ~/virtualenv/python3.6/bin/activate;
-        pip install meson;
-        curl -LO https://github.com/ninja-build/ninja/releases/download/v1.8.2/ninja-linux.zip;
-        unzip ninja-linux.zip ninja -d ~/bin;
-        meson build $MESON_OPTS;
-        ninja -C build;
-    fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install llvm yarn; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PATH=/usr/local/bin:/usr/local/sbin:/usr/local/opt/llvm/bin:$PATH; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pip3 install meson; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then curl -LO https://github.com/ninja-build/ninja/releases/download/v1.8.2/ninja-mac.zip; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then unzip ninja-mac.zip ninja -d ~/bin; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then xcodebuild -project iSH.xcodeproj -alltargets -sdk iphoneos CODE_SIGNING_ALLOWED=NO; fi
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then source ~/virtualenv/python3.6/bin/activate; fi  
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then pip install meson; fi
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then curl -LO https://github.com/ninja-build/ninja/releases/download/v1.8.2/ninja-linux.zip; fi
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then unzip ninja-linux.zip ninja -d ~/bin; fi
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then meson build $MESON_OPTS; fi
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then ninja -C build; fi
