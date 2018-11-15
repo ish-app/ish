@@ -15,7 +15,10 @@ script:
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then curl -LO https://github.com/ninja-build/ninja/releases/download/v1.8.2/ninja-mac.zip; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then unzip ninja-mac.zip ninja -d ~/bin; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then xcodebuild -project iSH.xcodeproj -alltargets -sdk iphoneos CODE_SIGNING_ALLOWED=NO; fi
-    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then source ~/virtualenv/python3.6/bin/activate; fi  
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then source ~/virtualenv/python3.6/bin/activate; fi
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install clang clang++ -y; fi
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export CC=clang; fi
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export CXX=clang++; fi
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then pip install meson; fi
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then curl -LO https://github.com/ninja-build/ninja/releases/download/v1.8.2/ninja-linux.zip; fi
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then unzip ninja-linux.zip ninja -d ~/bin; fi
