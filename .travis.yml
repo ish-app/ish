@@ -8,7 +8,6 @@ env:
 
 script:
     # this is so satanic i can't even begin to explain it
-    # - brew update
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install llvm yarn; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PATH=/usr/local/bin:/usr/local/sbin:/usr/local/opt/llvm/bin:$PATH; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pip3 install meson; fi
@@ -16,7 +15,6 @@ script:
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then unzip ninja-mac.zip ninja -d ~/bin; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then xcodebuild -project iSH.xcodeproj -alltargets -sdk iphoneos CODE_SIGNING_ALLOWED=NO; fi
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then source ~/virtualenv/python3.6/bin/activate; fi
-    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install clang clang++ -y; fi
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export CC=clang; fi
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export CXX=clang++; fi
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then pip install meson; fi
