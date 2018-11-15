@@ -24,7 +24,31 @@ static void gdbm_fatal(const char *thingy) {
     printk("fatal gdbm error: %s\n", thingy);
 }
 
-static noreturn void gdbm_err(GDBM_FILE db) {
+static void db_recovery_error(void *data, const char *fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    vprintk(fmt, args);
+    printk("\n");
+    va_end(args);
+}
+// check the error, do what needs to be done, return 1 if you should retry
+static int check_db_err(GDBM_FILE db) {
+    if (gdbm_needs_recovery(db)) {
+        printk("recovering database\n");
+        gdbm_recovery recovery = {
+            .errfun = db_recovery_error, .data = NULL,
+        };
+        int err = gdbm_recover(db, &recovery, GDBM_RCVR_BACKUP);
+        printk("recovery finished, %d lost keys, %d lost buckets, backed up to %s\n",
+                recovery.failed_keys, recovery.failed_buckets, recovery.backup_name);
+        if (err != 0) {
+            printk("recovery failed\n");
+            abort(); // TODO something less mean
+        }
+        return 1;
+    }
+    if (gdbm_last_errno(db) == GDBM_ITEM_NOT_FOUND)
+        return 0;
     printk("gdbm error: %s\n", gdbm_db_strerror(db));
     abort();
 }
@@ -55,20 +79,25 @@ static datum make_datum(char *data, const char *format, ...) {
 }
 
 static datum read_meta(struct mount *mount, datum key) {
-    datum value = gdbm_fetch(mount->db, key);
-    if (value.dptr == NULL && gdbm_last_errno(mount->db) != GDBM_ITEM_NOT_FOUND)
-        gdbm_err(mount->db);
+    datum value;
+    do {
+        value = gdbm_fetch(mount->db, key);
+    } while (value.dptr == NULL && check_db_err(mount->db));
     return value;
 }
 
 static void write_meta(struct mount *mount, datum key, datum data) {
-    if (gdbm_store(mount->db, key, data, GDBM_REPLACE) == -1)
-        gdbm_err(mount->db);
+    int err;
+    do {
+        err = gdbm_store(mount->db, key, data, GDBM_REPLACE);
+    } while (err == -1 && check_db_err(mount->db));
 }
 
 static void delete_meta(struct mount *mount, datum key) {
-    if (gdbm_delete(mount->db, key) == -1 && gdbm_last_errno(mount->db) != GDBM_ITEM_NOT_FOUND)
-        gdbm_err(mount->db);
+    int err;
+    do {
+        err = gdbm_delete(mount->db, key);
+    } while (err == -1 && check_db_err(mount->db));
 }
 
 static ino_t inode_for_path(struct mount *mount, const char *path) {
