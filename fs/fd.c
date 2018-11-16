@@ -225,6 +225,10 @@ dword_t sys_fcntl64(fd_t f, dword_t cmd, dword_t arg) {
                 return 0;
             return fd->ops->getflags(fd);
 
+        case F_SETFL_:
+            STRACE("fcntl(%d, F_SETFL, %#x)", f, arg);
+            return fd->ops->setflags(fd, arg);
+
         default:
             STRACE("fcntl(%d, %d)", f, cmd);
             return _EINVAL;

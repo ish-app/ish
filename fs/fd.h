@@ -77,6 +77,8 @@ struct fd_ops {
 
     // handle F_GETFL, i.e. return open flags for this fd
     int (*getflags)(struct fd *fd);
+    // handle F_SETFL, i.e. set O_NONBLOCK
+    int (*setflags)(struct fd *fd, dword_t arg);
 };
 
 struct fdtable {
