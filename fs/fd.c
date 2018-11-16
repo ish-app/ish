@@ -222,11 +222,15 @@ dword_t sys_fcntl64(fd_t f, dword_t cmd, dword_t arg) {
         case F_GETFL_:
             STRACE("fcntl(%d, F_GETFL)", f);
             if (fd->ops->getflags == NULL)
-                return 0;
+                return fd->flags;
             return fd->ops->getflags(fd);
-
         case F_SETFL_:
             STRACE("fcntl(%d, F_SETFL, %#x)", f, arg);
+            if (fd->ops->setflags != NULL) {
+                arg &= O_APPEND_ | O_NONBLOCK_;
+                fd->flags = arg;
+                return 0;
+            }
             return fd->ops->setflags(fd, arg);
 
         default:
