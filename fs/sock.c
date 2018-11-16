@@ -12,9 +12,11 @@ static fd_t sock_fd_create(int sock_fd, int flags) {
         return _ENOMEM;
     fd->real_fd = sock_fd;
     fd->ops = &socket_fdops;
-    if (flags & SOCK_CLOEXEC_)
-        fd->flags = FD_CLOEXEC_;
-    return f_install(fd);
+    fd_t f = f_install(fd);
+    if (f >= 0)
+        if (flags & SOCK_CLOEXEC_)
+            f_set_cloexec(f);
+    return f;
 }
 
 dword_t sys_socket(dword_t domain, dword_t type, dword_t protocol) {

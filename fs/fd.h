@@ -36,7 +36,6 @@ struct fd {
 };
 
 typedef sdword_t fd_t;
-#define FD_CLOEXEC_ 1
 #define AT_FDCWD_ -100
 
 struct fd *fd_create(void);
