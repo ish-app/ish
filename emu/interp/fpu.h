@@ -62,10 +62,12 @@
     dst = f80_div(dst, src)
 #define FIDIV(val,z) \
     ST(0) = f80_div(ST(0), f80_from_int((sint(z)) get(val,z)))
-#define FIDIVR(val,z) \
-    ST(0) = f80_div(f80_from_int((sint(z)) get(val,z)), ST(0))
 #define FDIVM(val,z) \
     ST(0) = f80_div(ST(0), f80_from_float(get(val,z),z))
+#define FDIV(src, dst) \
+    dst = f80_div(src, dst)
+#define FIDIVR(val,z) \
+    ST(0) = f80_div(f80_from_int((sint(z)) get(val,z)), ST(0))
 #define FDIVRM(val,z) \
     ST(0) = f80_div(f80_from_float(get(val,z),z), ST(0))
 

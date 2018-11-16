@@ -398,8 +398,9 @@ static inline bool gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define FMULM(val,z) h_read(fpu_mulm, z)
 #define FDIV(src, dst) hhh(fpu_div, src, dst)
 #define FIDIV(val,z) h_read(fpu_idiv, z)
-#define FIDIVR(val,z) h_read(fpu_idivr, z)
 #define FDIVM(val,z) h_read(fpu_divm, z)
+#define FDIVR(src, dst) hhh(fpu_divr, src, dst)
+#define FIDIVR(val,z) h_read(fpu_idivr, z)
 #define FDIVRM(val,z) h_read(fpu_divrm, z)
 
 #define DECODER_RET int

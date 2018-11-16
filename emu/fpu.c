@@ -152,6 +152,9 @@ void fpu_mul(struct cpu_state *cpu, int srci, int dsti) {
 void fpu_div(struct cpu_state *cpu, int srci, int dsti) {
     ST(dsti) = f80_div(ST(dsti), ST(srci));
 }
+void fpu_divr(struct cpu_state *cpu, int srci, int dsti) {
+    ST(dsti) = f80_div(ST(srci), ST(dsti));
+}
 
 void fpu_iadd16(struct cpu_state *cpu, int16_t *i) {
     ST(0) = f80_add(ST(0), f80_from_int(*i));

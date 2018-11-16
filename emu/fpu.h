@@ -64,6 +64,7 @@ void fpu_sub(struct cpu_state *cpu, int srci, int dsti);
 void fpu_subr(struct cpu_state *cpu, int srci, int dsti);
 void fpu_mul(struct cpu_state *cpu, int srci, int dsti);
 void fpu_div(struct cpu_state *cpu, int srci, int dsti);
+void fpu_divr(struct cpu_state *cpu, int srci, int dsti);
 void fpu_iadd16(struct cpu_state *cpu, int16_t *i);
 void fpu_isub16(struct cpu_state *cpu, int16_t *i);
 void fpu_isubr16(struct cpu_state *cpu, int16_t *i);

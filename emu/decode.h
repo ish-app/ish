@@ -598,6 +598,10 @@ restart:
                     case 0xdb5: TRACE("fucomi st"); FUCOMI(); break;
                     case 0xdc0: TRACE("fadd st, st(i)"); FADD(st_0, st_i); break;
                     case 0xdc1: TRACE("fmul st, st(i)"); FMUL(st_0, st_i); break;
+                    case 0xdc4: TRACE("fsubr st, st(i)"); FSUBR(st_0, st_i); break;
+                    case 0xdc5: TRACE("fsub st, st(i)"); FSUB(st_0, st_i); break;
+                    case 0xdc6: TRACE("fdivr st, st(i)"); FDIVR(st_0, st_i); break;
+                    case 0xdc7: TRACE("fdiv st, st(i)"); FDIV(st_0, st_i); break;
                     case 0xdd3: TRACE("fstp st"); FST(); FPOP; break;
                     case 0xdd4: TRACE("fucom st"); FUCOM(); break;
                     case 0xdd5: TRACE("fucomp st"); FUCOM(); FPOP; break;
@@ -606,6 +610,7 @@ restart:
                     case 0xde1: TRACE("fmulp st, st(i)"); FMUL(st_0, st_i); FPOP; break;
                     case 0xde4: TRACE("fsubrp st, st(i)"); FSUBR(st_0, st_i); FPOP; break;
                     case 0xde5: TRACE("fsubp st, st(i)"); FSUB(st_0, st_i); FPOP; break;
+                    case 0xde6: TRACE("fdivrp st, st(i)"); FDIVR(st_0, st_i); FPOP; break;
                     case 0xde7: TRACE("fdivp st, st(i)"); FDIV(st_0, st_i); FPOP; break;
                     case 0xdf5: TRACE("fucomip st"); FUCOMI(); FPOP; break;
                     default: switch (insn << 8 | modrm.opcode << 4 | modrm.rm_opcode) {
