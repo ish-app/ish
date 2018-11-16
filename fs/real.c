@@ -36,7 +36,7 @@ const char *fix_path(const char *path) {
     return path;
 }
 
-static struct fd *realfs_open(struct mount *mount, const char *path, int flags, int mode) {
+static int open_flags_real_from_fake(int flags) {
     int real_flags = 0;
     if (flags & O_RDONLY_) real_flags |= O_RDONLY;
     if (flags & O_WRONLY_) real_flags |= O_WRONLY;
@@ -44,6 +44,22 @@ static struct fd *realfs_open(struct mount *mount, const char *path, int flags, 
     if (flags & O_CREAT_) real_flags |= O_CREAT;
     if (flags & O_APPEND_) real_flags |= O_APPEND;
     if (flags & O_TRUNC_) real_flags |= O_TRUNC;
+    return real_flags;
+}
+
+static int open_flags_fake_from_real(int flags) {
+    int fake_flags = 0;
+    if (flags & O_RDONLY) fake_flags |= O_RDONLY_;
+    if (flags & O_WRONLY) fake_flags |= O_WRONLY_;
+    if (flags & O_RDWR) fake_flags |= O_RDWR_;
+    if (flags & O_CREAT) fake_flags |= O_CREAT_;
+    if (flags & O_APPEND) fake_flags |= O_APPEND_;
+    if (flags & O_TRUNC) fake_flags |= O_TRUNC_;
+    return fake_flags;
+}
+
+static struct fd *realfs_open(struct mount *mount, const char *path, int flags, int mode) {
+    int real_flags = open_flags_real_from_fake(flags);
     int fd_no = openat(mount->root_fd, fix_path(path), real_flags, mode);
     if (fd_no < 0)
         return ERR_PTR(errno_map());
@@ -352,11 +368,11 @@ int realfs_getflags(struct fd *fd) {
     int flags = fcntl(fd->real_fd, F_GETFL);
     if (flags < 0)
         return errno_map();
-    return flags;
+    return open_flags_fake_from_real(flags);
 }
 
-int realfs_setflags(struct fd *fd, dword_t arg) {
-    int ret = fcntl(fd->real_fd, F_SETFL, arg);
+int realfs_setflags(struct fd *fd, dword_t flags) {
+    int ret = fcntl(fd->real_fd, F_SETFL, open_flags_real_from_fake(flags));
     if (ret < 0)
         return errno_map();
     return 0;
