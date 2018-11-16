@@ -132,6 +132,7 @@ syscall_t syscall_table[] = {
     [308] = (syscall_t) sys_pselect,
     [320] = (syscall_t) sys_utimensat,
     [324] = (syscall_t) sys_fallocate,
+    [331] = (syscall_t) sys_pipe2,
     [340] = (syscall_t) sys_prlimit,
     [355] = (syscall_t) sys_getrandom,
 };

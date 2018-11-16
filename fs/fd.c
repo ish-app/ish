@@ -111,6 +111,9 @@ struct fd *f_get(fd_t f) {
 bool f_is_cloexec(fd_t f) {
     return bit_test(f, current->files->cloexec);
 }
+void f_set_cloexec(fd_t f) {
+    bit_set(f, current->files->cloexec);
+}
 
 static int fdtable_expand(struct fdtable *table, fd_t max) {
     unsigned size = max + 1;

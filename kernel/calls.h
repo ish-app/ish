@@ -82,7 +82,8 @@ dword_t sys_dup2(fd_t fd, fd_t new_fd);
 dword_t sys_close(fd_t fd);
 dword_t sys_fsync(fd_t f);
 dword_t sys_flock(fd_t fd, dword_t operation);
-dword_t sys_pipe(addr_t pipe_addr);
+int_t sys_pipe(addr_t pipe_addr);
+int_t sys_pipe2(addr_t pipe_addr, int_t flags);
 
 // file management
 fd_t sys_open(addr_t path_addr, dword_t flags, mode_t_ mode);

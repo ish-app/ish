@@ -95,6 +95,7 @@ void fdtable_free(struct fdtable *table);
 
 struct fd *f_get(fd_t f);
 bool f_is_cloexec(fd_t f);
+void f_set_cloexec(fd_t f);
 void f_put(fd_t f, struct fd *fd);
 // steals a reference to the fd, gives it to the table on success and destroys it on error
 fd_t f_install(struct fd *fd);
