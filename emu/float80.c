@@ -473,3 +473,19 @@ float80 f80_log2(float80 x) {
     return res;
 }
 
+float80 f80_sqrt(float80 x) {
+    if (f80_isnan(x) || x.sign)
+        return F80_NAN;
+    // for a rough guess, just cut the exponent by 2
+    float80 guess = x;
+    guess.exp = bias(unbias(guess.exp) / 2);
+    // now converge on the answer, using what newton's method
+    float80 old_guess;
+    float80 two = f80_from_int(2);
+    int i = 0;
+    do {
+        old_guess = guess;
+        guess = f80_div(f80_add(guess, f80_div(x, guess)), two);
+    } while (!f80_eq(guess, old_guess) && i++ < 100);
+    return guess;
+}

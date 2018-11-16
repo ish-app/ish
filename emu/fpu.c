@@ -90,6 +90,10 @@ void fpu_rndint(struct cpu_state *cpu) {
     ST(0) = f80_from_int(f80_to_int(ST(0)));
 }
 
+void fpu_sqrt(struct cpu_state *cpu) {
+    ST(0) = f80_sqrt(ST(0));
+}
+
 void fpu_yl2x(struct cpu_state *cpu) {
     ST(1) = f80_mul(ST(1), f80_log2(ST(0)));
     fpu_pop(cpu);

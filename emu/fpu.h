@@ -49,6 +49,7 @@ void fpu_prem(struct cpu_state *cpu);
 void fpu_rndint(struct cpu_state *cpu);
 void fpu_abs(struct cpu_state *cpu);
 void fpu_chs(struct cpu_state *cpu);
+void fpu_sqrt(struct cpu_state *cpu);
 void fpu_yl2x(struct cpu_state *cpu);
 void fpu_2xm1(struct cpu_state *cpu);
 
