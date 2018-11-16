@@ -287,7 +287,7 @@ dword_t sys_setsockopt(fd_t sock_fd, dword_t level, dword_t option, addr_t value
 }
 
 dword_t sys_getsockopt(fd_t sock_fd, dword_t level, dword_t option, addr_t value_addr, dword_t len_addr) {
-    STRACE("getsockopt(%d, %d, %d, 0x%x, %d)", sock_fd, level, option, value_addr, len_addr);
+    STRACE("getsockopt(%d, %d, %d, %#x, %#x)", sock_fd, level, option, value_addr, len_addr);
     struct fd *sock = sock_getfd(sock_fd);
     if (sock == NULL)
         return _EBADF;
@@ -307,7 +307,18 @@ dword_t sys_getsockopt(fd_t sock_fd, dword_t level, dword_t option, addr_t value
     int err = getsockopt(sock->real_fd, real_level, real_opt, value, &value_len);
     if (err < 0)
         return errno_map();
+
+    if (level == SOL_SOCKET_ && option == SO_TYPE_) {
+        dword_t *type = (dword_t *) &value[0];
+        switch (*type) {
+            case SOCK_STREAM_: *type = SOCK_STREAM; break;
+            case SOCK_DGRAM_: *type = SOCK_DGRAM; break;
+        }
+    }
+
     if (user_put(len_addr, value_len))
+        return _EFAULT;
+    if (user_put(value_addr, value))
         return _EFAULT;
     return 0;
 }
