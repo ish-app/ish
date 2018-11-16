@@ -612,6 +612,10 @@ restart:
                     case 0xd940: TRACE("fchs"); FCHS(); break;
                     case 0xd941: TRACE("fabs"); FABS(); break;
                     case 0xd950: TRACE("fld1"); FLDC(one); break;
+                    case 0xd951: TRACE("fldl2t"); FLDC(log2t); break;
+                    case 0xd952: TRACE("fldl2e"); FLDC(log2e); break;
+                    case 0xd953: TRACE("fldpi"); FLDC(pi); break;
+                    case 0xd954: TRACE("fldlg2"); FLDC(log2); break;
                     case 0xd955: TRACE("fldln2"); FLDC(ln2); break;
                     case 0xd956: TRACE("fldz"); FLDC(zero); break;
                     case 0xd961: TRACE("fyl2x"); FYL2X(); break;
