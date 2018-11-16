@@ -97,7 +97,8 @@ static void log_buf_append(const char *msg) {
     size_t log_p = (log_head + log_size) % sizeof(log_buf);
     size_t remaining = strlen(msg);
     while (*msg != '\0') {
-        size_t len = sizeof(log_buf) - log_head;
+        size_t log_tail = (log_head + log_size) % sizeof(log_buf);
+        size_t len = sizeof(log_buf) - log_tail;
         if (len > remaining)
             len = remaining;
         memcpy(&log_buf[log_p], msg, len);
