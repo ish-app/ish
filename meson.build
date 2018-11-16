@@ -27,6 +27,7 @@ includes = [include_directories('.')]
 cc = meson.get_compiler('c')
 threads = dependency('threads')
 librt = cc.find_library('rt', required: false)
+libm = cc.find_library('m', required: false)
 
 gdbm = subproject('gdbm').get_variable('gdbm')
 
@@ -113,10 +114,10 @@ endif
 
 libish = library('ish', src,
     include_directories: includes,
-    dependencies: [librt, threads, gdbm])
+    dependencies: [librt, libm, threads, gdbm])
 ish = declare_dependency(
     link_with: libish,
-    dependencies: [librt, threads, gdbm],
+    dependencies: [librt, libm, threads, gdbm],
     include_directories: includes)
 
 # ptraceomatic et al
