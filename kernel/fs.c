@@ -246,6 +246,7 @@ dword_t sys_lseek(fd_t f, dword_t off, dword_t whence) {
 }
 
 dword_t sys_pread(fd_t f, addr_t buf_addr, dword_t size, off_t_ off) {
+    STRACE("pread(%d, 0x%x, %d, %d)", f, buf_addr, size, off);
     struct fd *fd = f_get(f);
     if (fd == NULL)
         return _EBADF;
