@@ -2,6 +2,7 @@
 #include "emu/cpu.h"
 #include "emu/float80.h"
 #include "emu/fpu.h"
+#include <math.h>
 
 #define ST(i) cpu->fp[cpu->top + i]
 
@@ -92,6 +93,11 @@ void fpu_rndint(struct cpu_state *cpu) {
 void fpu_yl2x(struct cpu_state *cpu) {
     ST(1) = f80_mul(ST(1), f80_log2(ST(0)));
     fpu_pop(cpu);
+}
+
+void fpu_2xm1(struct cpu_state *cpu) {
+    // an example of the ancient chinese art of chi ting
+    ST(0) = f80_from_double(pow(2, f80_to_double(ST(0))) - 1);
 }
 
 static void fpu_comparei(struct cpu_state *cpu, float80 x) {

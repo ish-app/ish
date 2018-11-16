@@ -47,14 +47,16 @@ void fpu_ldm80(struct cpu_state *cpu, float80 *f);
 
 void fpu_prem(struct cpu_state *cpu);
 void fpu_rndint(struct cpu_state *cpu);
+void fpu_abs(struct cpu_state *cpu);
+void fpu_chs(struct cpu_state *cpu);
 void fpu_yl2x(struct cpu_state *cpu);
+void fpu_2xm1(struct cpu_state *cpu);
+
 void fpu_com(struct cpu_state *cpu, int i);
 void fpu_comm64(struct cpu_state *cpu, double *f);
 void fpu_comi(struct cpu_state *cpu, int i);
 #define fpu_ucom fpu_com
 #define fpu_ucomi fpu_comi
-void fpu_abs(struct cpu_state *cpu);
-void fpu_chs(struct cpu_state *cpu);
 
 void fpu_add(struct cpu_state *cpu, int srci, int dsti);
 void fpu_sub(struct cpu_state *cpu, int srci, int dsti);

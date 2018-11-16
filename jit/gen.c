@@ -378,6 +378,7 @@ static inline bool gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define FPREM() h(fpu_prem)
 #define FRNDINT() h(fpu_rndint)
 #define FYL2X() h(fpu_yl2x)
+#define F2XM1() h(fpu_2xm1)
 #define FSTSW(dst) if (arg_##dst == arg_reg_a) g(fstsw_ax); else UNDEFINED
 #define FSTCW(dst) if (arg_##dst == arg_reg_a) UNDEFINED; else h_write(fpu_stcw, 16)
 #define FLDCW(dst) if (arg_##dst == arg_reg_a) UNDEFINED; else h_read(fpu_ldcw, 16)

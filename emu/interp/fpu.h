@@ -79,6 +79,7 @@
 
 #define FRNDINT() UNDEFINED
 #define FYL2X() UNDEFINED
+#define F2XM1() UNDEFINED
 
 #define FUCOMI() \
     cpu->zf = f80_eq(ST(0), ST_i); \
