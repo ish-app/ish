@@ -267,11 +267,9 @@ out:
     return res;
 }
 
-dword_t sys_ioctl(fd_t f, dword_t cmd, dword_t arg) {
-    STRACE("ioctl(%d, 0x%x, 0x%x)", f, cmd, arg);
-    struct fd *fd = f_get(f);
-    if (fd == NULL)
-        return _EBADF;
+#define FIONBIO_ 0x5421
+
+static int fd_ioctl(struct fd *fd, dword_t cmd, dword_t arg) {
     if (!fd->ops->ioctl_size)
         return _EINVAL;
     ssize_t size = fd->ops->ioctl_size(fd, cmd);
@@ -292,6 +290,22 @@ dword_t sys_ioctl(fd_t f, dword_t cmd, dword_t arg) {
     if (user_write(arg, buf, size))
         return _EFAULT;
     return res;
+}
+
+dword_t sys_ioctl(fd_t f, dword_t cmd, dword_t arg) {
+    STRACE("ioctl(%d, 0x%x, 0x%x)", f, cmd, arg);
+    struct fd *fd = f_get(f);
+    if (fd == NULL)
+        return _EBADF;
+
+    switch (cmd) {
+        case FIONBIO_:
+            fd->flags |= O_NONBLOCK_;
+            break;
+        default:
+            return fd_ioctl(fd, cmd, arg);
+    }
+    return 0;
 }
 
 dword_t sys_getcwd(addr_t buf_addr, dword_t size) {
