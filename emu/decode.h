@@ -558,6 +558,7 @@ restart:
                     case 0xd86: TRACE("fdiv mem32"); FDIVM(mem_addr_real,32); break;
                     case 0xd87: TRACE("fdivr mem32"); FDIVRM(mem_addr_real,32); break;
                     case 0xd90: TRACE("fld mem32"); FLDM(mem_addr_real,32); break;
+                    case 0xd92: TRACE("fst mem32"); FSTM(mem_addr_real,32); break;
                     case 0xd93: TRACE("fstp mem32"); FSTM(mem_addr_real,32); FPOP; break;
                     case 0xd95: TRACE("fldcw mem16"); FLDCW(mem_addr); break;
                     case 0xd97: TRACE("fnstcw mem16"); FSTCW(mem_addr); break;
