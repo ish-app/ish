@@ -47,7 +47,7 @@ static int check_db_err(GDBM_FILE db) {
         }
         return 1;
     }
-    if (gdbm_last_errno(db) == GDBM_ITEM_NOT_FOUND)
+    if (gdbm_last_errno(db) == 0 || gdbm_last_errno(db) == GDBM_ITEM_NOT_FOUND)
         return 0;
     printk("gdbm error: %s\n", gdbm_db_strerror(db));
     abort();
