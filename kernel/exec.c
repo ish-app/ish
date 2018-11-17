@@ -353,7 +353,7 @@ out_free_interp:
     if (interp_name != NULL)
         free(interp_name);
     if (interp_fd != NULL)
-        interp_fd->ops->close(interp_fd);
+        fd_close(interp_fd);
     if (interp_ph != NULL)
         free(interp_ph);
 out_free_ph:
