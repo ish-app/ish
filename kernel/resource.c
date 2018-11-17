@@ -31,6 +31,7 @@ rlim_t_ rlimit(int resource) {
 
 dword_t sys_getrlimit(dword_t resource, addr_t rlim_addr) {
     struct rlimit_ rlimit = rlimit_get(current, resource);
+    STRACE("getrlimit(%d, {cur=%#x, max=%#x}", resource, rlimit.cur, rlimit.max);
     if (user_put(rlim_addr, rlimit))
         return _EFAULT;
     return 0;
@@ -40,6 +41,7 @@ dword_t sys_setrlimit(dword_t resource, addr_t rlim_addr) {
     struct rlimit_ rlimit;
     if (user_get(rlim_addr, rlimit))
         return _EFAULT;
+    STRACE("setrlimit(%d, {cur=%#x, max=%#x}", resource, rlimit.cur, rlimit.max);
     // TODO check permissions
     rlimit_set(current, resource, rlimit);
     return 0;
