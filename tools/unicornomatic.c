@@ -437,19 +437,20 @@ int main(int argc, char *const argv[]) {
     uc_engine *uc = start_unicorn(&current->cpu, current->mem);
 
     struct cpu_state *cpu = &current->cpu;
-    struct tlb *tlb = tlb_new(cpu->mem);
+    struct tlb tlb;
+    tlb_new(&tlb, cpu->mem);
     int undefined_flags = 0;
     struct cpu_state old_cpu = *cpu;
     while (true) {
-        while (compare_cpus(cpu, tlb, uc, undefined_flags) < 0) {
+        while (compare_cpus(cpu, &tlb, uc, undefined_flags) < 0) {
             printk("resetting cpu\n");
             *cpu = old_cpu;
             debugger;
-            cpu_step32(cpu, tlb);
+            cpu_step32(cpu, &tlb);
         }
-        undefined_flags = undefined_flags_mask(cpu, tlb);
+        undefined_flags = undefined_flags_mask(cpu, &tlb);
         old_cpu = *cpu;
-        step_tracing(cpu, tlb, uc);
+        step_tracing(cpu, &tlb, uc);
     }
 }
 

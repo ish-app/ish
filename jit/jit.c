@@ -111,7 +111,8 @@ static inline size_t jit_cache_hash(addr_t ip) {
 }
 
 void cpu_run(struct cpu_state *cpu) {
-    struct tlb *tlb = tlb_new(cpu->mem);
+    struct tlb tlb;
+    tlb_init(&tlb, cpu->mem);
     struct jit *jit = cpu->mem->jit;
     struct jit_block *cache[JIT_CACHE_SIZE] = {};
     struct jit_frame frame = {.cpu = *cpu};
@@ -130,7 +131,7 @@ void cpu_run(struct cpu_state *cpu) {
             lock(&jit->lock);
             block = jit_lookup(jit, ip);
             if (block == NULL) {
-                block = jit_block_compile(ip, tlb);
+                block = jit_block_compile(ip, &tlb);
                 jit_insert(jit, block);
             } else {
                 TRACE("%d %08x --- missed cache\n", current->pid, ip);
@@ -150,7 +151,7 @@ void cpu_run(struct cpu_state *cpu) {
         last_block = block;
 
         TRACE("%d %08x --- cycle %d\n", current->pid, ip, i);
-        int interrupt = jit_enter(block, &frame, tlb);
+        int interrupt = jit_enter(block, &frame, &tlb);
         if (interrupt == INT_NONE && ++i % (1 << 16) == 0)
             interrupt = INT_TIMER;
         if (interrupt != INT_NONE) {
@@ -162,9 +163,9 @@ void cpu_run(struct cpu_state *cpu) {
 
             jit = cpu->mem->jit;
             last_block = NULL;
-            tlb->mem = cpu->mem;
+            tlb.mem = cpu->mem;
             if (cpu->mem->changes != changes) {
-                tlb_flush(tlb);
+                tlb_flush(&tlb);
                 changes = cpu->mem->changes;
                 memset(cache, 0, sizeof(cache));
             }

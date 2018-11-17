@@ -474,21 +474,22 @@ int main(int argc, char *const argv[]) {
     prepare_tracee(pid);
 
     struct cpu_state *cpu = &current->cpu;
-    struct tlb *tlb = tlb_new(cpu->mem);
+    struct tlb tlb;
+    tlb_init(&tlb, cpu->mem);
     int undefined_flags = 2;
     struct cpu_state old_cpu = *cpu;
     int i = 0;
     while (true) {
-        if (compare_cpus(cpu, tlb, pid, undefined_flags) < 0) {
+        if (compare_cpus(cpu, &tlb, pid, undefined_flags) < 0) {
             printk("failure: resetting cpu\n");
             *cpu = old_cpu;
             __asm__("int3");
-            cpu_step32(cpu, tlb);
+            cpu_step32(cpu, &tlb);
             return -1;
         }
-        undefined_flags = undefined_flags_mask(cpu, tlb);
+        undefined_flags = undefined_flags_mask(cpu, &tlb);
         old_cpu = *cpu;
-        step_tracing(cpu, tlb, pid, sender, receiver);
+        step_tracing(cpu, &tlb, pid, sender, receiver);
         i++;
     }
 }
