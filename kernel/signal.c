@@ -31,6 +31,8 @@ static int signal_is_blockable(int sig) {
 }
 
 void send_signal(struct task *task, int sig) {
+    if (task->zombie)
+        return;
     struct sighand *sighand = task->sighand;
     lock(&sighand->lock);
     if (sighand->action[sig].handler != SIG_IGN_) {
