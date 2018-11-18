@@ -904,7 +904,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "rm -rf $SRCROOT/alpine\n$SRCROOT/tools/fakefsify.py $SRCROOT/alpine.tar.gz $SRCROOT/alpine";
+			shellScript = "rm -rf $SRCROOT/alpine\n$SRCROOT/tools/fakefsify.py $SRCROOT/alpine.tar.gz $SRCROOT/alpine\ncat <<EOF >$SRCROOT/alpine/data/etc/motd\nWelcome to Alpine!\n\nYou can install packages with: apk add <package>\n\nYou may change this message by editing /etc/motd.\n\nEOF\n";
 			showEnvVarsInLog = 0;
 		};
 		BBF1248B1FA7BF530088FB50 /* Download Alpine */ = {
