@@ -402,6 +402,7 @@ static inline bool gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define FDIVR(src, dst) hhh(fpu_divr, src, dst)
 #define FIDIVR(val,z) h_read(fpu_idivr, z)
 #define FDIVRM(val,z) h_read(fpu_divrm, z)
+#define FPATAN() h(fpu_patan)
 
 #define DECODER_RET int
 #define DECODER_NAME gen_step
