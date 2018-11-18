@@ -648,8 +648,10 @@ restart:
 
         // lock
         case 0xf0:
+            lockrestart:
             READINSN;
             switch (insn) {
+                case 0x65: TRACE("segment gs\n"); SEG_GS(); goto lockrestart;
 
 #define MAKE_OP_ATOMIC(x, OP, op) \
         case x+0x0: TRACEI("lock " op " reg8, modrm8"); \
