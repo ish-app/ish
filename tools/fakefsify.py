@@ -32,6 +32,8 @@ def extract_archive(archive, db):
             mode |= 0o060000
         elif member.isfifo():
             mode |= 0o010000
+        elif member.islnk():
+            pass
         else:
             raise ValueError('unrecognized tar entry type')
 
@@ -45,9 +47,15 @@ def extract_archive(archive, db):
             path.touch()
 
         inode = bytes(str(path.stat().st_ino), 'ascii')
+        if member.islnk():
+            # a hard link shares its target's inode
+            target_path = data/(member.linkname)
+            inode = bytes(str(target_path.stat().st_ino), 'ascii')
         meta_path = path.relative_to(data)
         meta_path = b'/' + bytes(meta_path) if meta_path.parts else b''
         db[b'inode ' + meta_path] = inode
+        if member.islnk():
+            continue
         db[b'stat ' + inode] = struct.pack(
             '=iiii',
             mode,
