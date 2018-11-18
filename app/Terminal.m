@@ -85,7 +85,6 @@ static Terminal *terminal = nil;
 }
 
 - (void)sendInput:(const char *)buf length:(size_t)len {
-    NSLog(@"%@", [NSData dataWithBytes:buf length:len]);
     tty_input(self.tty, buf, len);
     [self.scrollToBottomTask schedule];
 }
