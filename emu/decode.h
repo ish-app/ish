@@ -438,6 +438,18 @@ restart:
                    READMODRM; POP(modrm_val,oz); break;
 
         case 0x90: TRACEI("nop"); break;
+        case 0x91: TRACEI("xchg ocx, oax");
+                   XCHG(reg_c, reg_a,oz); break;
+        case 0x92: TRACEI("xchg odx, oax");
+                   XCHG(reg_d, reg_a,oz); break;
+        case 0x93: TRACEI("xchg obx, oax");
+                   XCHG(reg_b, reg_a,oz); break;
+        case 0x94: TRACEI("xchg osp, oax");
+                   XCHG(reg_sp, reg_a,oz); break;
+        case 0x95: TRACEI("xchg obp, oax");
+                   XCHG(reg_bp, reg_a,oz); break;
+        case 0x96: TRACEI("xchg osi, oax");
+                   XCHG(reg_si, reg_a,oz); break;
         case 0x97: TRACEI("xchg odi, oax");
                    XCHG(reg_di, reg_a,oz); break;
 
