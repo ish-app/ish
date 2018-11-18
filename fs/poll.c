@@ -144,7 +144,6 @@ int poll_wait(struct poll *poll_, poll_callback_t callback, void *context, int t
         poll_->notify_pipe[1] = -1;
     }
 
-finished_poll:
     if (poll_->notify_pipe[0] != -1)
         close(poll_->notify_pipe[0]);
     if (poll_->notify_pipe[1] != -1)
