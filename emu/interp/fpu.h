@@ -120,3 +120,8 @@
     set(dst, cpu->fcw,16)
 #define FLDCW(dst) \
     cpu->fcw = get(dst,16)
+
+// there's no native atan2 for 80-bit float yet.
+#define FPATAN() \
+    ST(1) = f80_from_double(atan2(f80_to_double(ST(1)), f80_to_double(ST(0)))); \
+    FPOP

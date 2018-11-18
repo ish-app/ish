@@ -555,6 +555,7 @@ restart:
                     case 0xd80: TRACE("fadd mem32"); FADDM(mem_addr_real,32); break;
                     case 0xd81: TRACE("fmul mem32"); FMULM(mem_addr_real,32); break;
                     case 0xd84: TRACE("fsub mem32"); FSUBM(mem_addr_real,32); break;
+                    case 0xd85: TRACE("fsubr mem32"); FSUBRM(mem_addr_real,32); break;
                     case 0xd86: TRACE("fdiv mem32"); FDIVM(mem_addr_real,32); break;
                     case 0xd87: TRACE("fdivr mem32"); FDIVRM(mem_addr_real,32); break;
                     case 0xd90: TRACE("fld mem32"); FLDM(mem_addr_real,32); break;
@@ -583,6 +584,8 @@ restart:
                     case 0xdc7: TRACE("fdivr mem64"); FDIVRM(mem_addr_real,64); break;
                     case 0xdd2: TRACE("fst mem64"); FSTM(mem_addr_real,64); break;
                     case 0xdd3: TRACE("fstp mem64"); FSTM(mem_addr_real,64); FPOP; break;
+                    case 0xde1: TRACE("fimuls mem16"); FIMUL(mem_addr,16); break;
+                    case 0xde7: TRACE("fidivrs mem16"); FIDIVR(mem_addr,16); break;
                     case 0xdf0: TRACE("fild mem16"); FILD(mem_addr,16); break;
                     case 0xdf5: TRACE("fild mem64"); FILD(mem_addr,64); break;
                     case 0xdf7: TRACE("fistp mem64"); FIST(mem_addr,64); FPOP; break;
@@ -594,6 +597,8 @@ restart:
                     case 0xd81: TRACE("fmul st(i), st"); FMUL(st_i, st_0); break;
                     case 0xd84: TRACE("fsub st(i), st"); FSUB(st_i, st_0); break;
                     case 0xd85: TRACE("fsubr st(i), st"); FSUBR(st_i, st_0); break;
+                    case 0xd86: TRACE("fdiv st(i), st"); FDIV(st_i, st_0); break;
+                    case 0xd87: TRACE("fdivr st(i), st"); FDIVR(st_i, st_0); break;
                     case 0xd90: TRACE("fld st(i)"); FLD(); break;
                     case 0xd91: TRACE("fxch st"); FXCH(); break;
                     case 0xdb5: TRACE("fucomi st"); FUCOMI(); break;
@@ -626,6 +631,7 @@ restart:
                     case 0xd956: TRACE("fldz"); FLDC(zero); break;
                     case 0xd960: TRACE("f2xm1"); F2XM1(); break;
                     case 0xd961: TRACE("fyl2x"); FYL2X(); break;
+                    case 0xd963: TRACE("fpatan"); FPATAN(); break;
                     case 0xd970: TRACE("fprem"); FPREM(); break;
                     case 0xd972: TRACE("fsqrt"); FSQRT(); break;
                     case 0xd974: TRACE("frndint"); FRNDINT(); break;

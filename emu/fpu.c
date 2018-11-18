@@ -239,3 +239,9 @@ void fpu_ldcw16(struct cpu_state *cpu, uint16_t *i) {
     cpu->fcw = *i;
     f80_rounding_mode = cpu->rc;
 }
+
+void fpu_patan(struct cpu_state *cpu) {
+    // there's no native atan2 for 80-bit float yet.
+    ST(1) = f80_from_double(atan2(f80_to_double(ST(1)), f80_to_double(ST(0))));
+    fpu_pop(cpu);
+}
