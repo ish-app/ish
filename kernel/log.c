@@ -156,8 +156,8 @@ static void log_line(const char *line) {
 }
 #elif LOG_HANDLER_NSLOG
 static void log_line(const char *line) {
-    extern void NSLogv(CFStringRef msg, va_list args);
-    NSLogv(CFSTR("%s"), line);
+    extern void NSLog(CFStringRef msg, ...);
+    NSLog(CFSTR("%s"), line);
 }
 #endif
 
