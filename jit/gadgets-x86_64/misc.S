@@ -56,7 +56,9 @@
 .gadget cmpxchg32_mem
     write_prep 32, cmpxchg32_mem
     cmpxchg %tmpd, (%_addrq)
+    pushf
     write_done 32, cmpxchg32_mem
+    popf
     cmpxchg_set_flags
     gret 1
 .gadget_array cmpxchg
