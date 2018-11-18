@@ -438,7 +438,7 @@ int main(int argc, char *const argv[]) {
 
     struct cpu_state *cpu = &current->cpu;
     struct tlb tlb;
-    tlb_new(&tlb, cpu->mem);
+    tlb_init(&tlb, cpu->mem);
     int undefined_flags = 0;
     struct cpu_state old_cpu = *cpu;
     while (true) {
