@@ -12,6 +12,22 @@ static int user_read_or_zero(addr_t addr, void *data, size_t size) {
     return 0;
 }
 
+struct select_context {
+    char *readfds;
+    char *writefds;
+    char *exceptfds;
+    fd_t fd;
+};
+static int select_event_callback(void *context, struct fd *fd, int types) {
+    struct select_context *c = context;
+    if (types & POLL_READ)
+        bit_set(c->fd, c->readfds);
+    if (types & POLL_WRITE)
+        bit_set(c->fd, c->writefds);
+    if (!(types & (POLL_READ|POLL_WRITE)))
+        return 0;
+    return 1;
+}
 dword_t sys_select(fd_t nfds, addr_t readfds_addr, addr_t writefds_addr, addr_t exceptfds_addr, addr_t timeout_addr) {
     STRACE("select(%d, 0x%x, 0x%x, 0x%x, 0x%x)", nfds, readfds_addr, writefds_addr, exceptfds_addr, timeout_addr);
     size_t fdset_size = BITS_SIZE(nfds);
@@ -55,31 +71,42 @@ dword_t sys_select(fd_t nfds, addr_t readfds_addr, addr_t writefds_addr, addr_t 
         return _ENOMEM;
     if (fd != -1)
         poll_add_fd(poll, f_get(fd), types);
-    struct poll_event event;
-    int err = poll_wait(poll, &event, timeout);
+    memset(readfds, 0, fdset_size);
+    memset(writefds, 0, fdset_size);
+    memset(exceptfds, 0, fdset_size);
+    struct select_context context = {readfds, writefds, exceptfds, fd};
+    int err = poll_wait(poll, select_event_callback, &context, timeout);
     poll_destroy(poll);
     if (err < 0)
         return err;
 
-    memset(readfds, 0, fdset_size);
-    memset(writefds, 0, fdset_size);
-    memset(exceptfds, 0, fdset_size);
-    if (fd != -1) {
-        if (event.types & POLL_READ)
-            bit_set(fd, readfds);
-        if (event.types & POLL_WRITE)
-            bit_set(fd, writefds);
-    }
     if (readfds_addr && user_write(readfds_addr, readfds, fdset_size))
         return _EFAULT;
     if (writefds_addr && user_write(writefds_addr, writefds, fdset_size))
         return _EFAULT;
     if (exceptfds_addr && user_write(exceptfds_addr, exceptfds, fdset_size))
         return _EFAULT;
-
     return err;
 }
 
+struct poll_context {
+    struct pollfd_ *polls;
+    int nfds;
+};
+#define POLL_ALWAYS_LISTENING (POLL_ERR|POLL_HUP|POLL_NVAL)
+static int poll_event_callback(void *context, struct fd *fd, int types) {
+    struct poll_context *c = context;
+    struct pollfd_ *polls = c->polls;
+    int nfds = c->nfds;
+    int res = 0;
+    for (int i = 0; i < nfds; i++) {
+        if (f_get(polls[i].fd) == fd) {
+            polls[i].revents = types & (polls[i].events | POLL_ALWAYS_LISTENING);
+            res = 1;
+        }
+    }
+    return res;
+}
 dword_t sys_poll(addr_t fds, dword_t nfds, dword_t timeout) {
     STRACE("poll(0x%x, %d, %d)", fds, nfds, timeout);
     struct pollfd_ polls[nfds];
@@ -120,21 +147,18 @@ dword_t sys_poll(addr_t fds, dword_t nfds, dword_t timeout) {
         poll_add_fd(poll, f_get(polls[i].fd), events);
     }
 
-    struct poll_event event;
-    int err = poll_wait(poll, &event, timeout);
-    poll_destroy(poll);
-    if (err < 0)
-        return err;
-
-    for (int i = 0; i < nfds; i++) {
+    for (int i = 0; i < nfds; i++)
         polls[i].revents = 0;
-        if (f_get(polls[i].fd) == event.fd)
-            polls[i].revents = polls[i].events & event.types;
-    }
+    struct poll_context context = {polls, nfds};
+    int res = poll_wait(poll, poll_event_callback, &context, timeout);
+    poll_destroy(poll);
+
+    if (res < 0)
+        return res;
     if (fds != 0 || nfds != 0)
         if (user_write(fds, polls, sizeof(struct pollfd_) * nfds))
             return _EFAULT;
-    return err;
+    return res;
 }
 
 dword_t sys_pselect(fd_t nfds, addr_t readfds_addr, addr_t writefds_addr, addr_t exceptfds_addr, addr_t timeout_addr, addr_t sigmask_addr) {
