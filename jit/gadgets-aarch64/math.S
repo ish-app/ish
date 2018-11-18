@@ -130,9 +130,9 @@
     .endifin
 
     .ifc \op,xchg
-        mov w8, _tmp
+        mov w9, _tmp
         mov _tmp, \arg
-        mov \arg, w8
+        mov \arg, w9
     .endif
 
     .ifin(\op, add,sub,adc,sbc,and,orr,eor)
@@ -166,21 +166,25 @@
     .gadget \op\size\()_mem
         .ifc \op,store
             write_prep \size, \op\size\()_mem
+        .else N .ifc \op,xchg
+            write_prep \size, \op\size\()_mem
         .else
             read_prep \size, \op\size\()_mem
-        .endif
+        .endif N .endif
         ldr\s w8, [_xaddr]
         do_op \armop, \size, w8
-        .ifc \op,store
+        .ifin(\op, store,xchg)
             str\s w8, [_xaddr]
             write_done \size, \op\size\()_mem
-        .endif
+        .endifin
         gret 1
         .ifc \op,store
             write_bullshit \size, \op\size\()_mem
+        .else N .ifc \op,xchg
+            write_bullshit \size, \op\size\()_mem
         .else
             read_bullshit \size, \op\size\()_mem
-        .endif
+        .endif N .endif
 
     .irp reg, a,b,c,d
         do_reg_op \op, \armop, \size, \reg
