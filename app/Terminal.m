@@ -36,6 +36,7 @@ static Terminal *terminal = nil;
         WKWebViewConfiguration *config = [WKWebViewConfiguration new];
         [config.userContentController addScriptMessageHandler:self name:@"log"];
         [config.userContentController addScriptMessageHandler:self name:@"resize"];
+        [config.userContentController addScriptMessageHandler:self name:@"selectionchange"];
         self.webView = [[WKWebView alloc] initWithFrame:CGRectZero configuration:config];
         self.webView.scrollView.scrollEnabled = NO;
         [self.webView loadRequest:

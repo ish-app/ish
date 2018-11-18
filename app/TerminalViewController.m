@@ -166,14 +166,6 @@
     self.controlKey.selected = !self.controlKey.selected;
 }
     
-- (IBAction)pasteFromClipboard:(id)sender {
-    UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
-    NSString *string = pasteboard.string;
-    if (string) {
-        [self.termView insertText:string];
-    }
-}
-
 - (IBAction)pressArrow:(ArrowBarButton *)sender {
     switch (sender.direction) {
         case ArrowUp: [self pressKey:@"\x1b[A"]; break;
