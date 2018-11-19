@@ -117,12 +117,6 @@ typedef enum {
     [self.terminal sendInput:data.bytes length:data.length];
 }
 
-- (BOOL)canPerformAction:(SEL)action withSender:(id)sender {
-    if (action == @selector(paste:))
-        return YES;
-    return NO;
-}
-
 - (void)paste:(id)sender {
     NSString *string = UIPasteboard.generalPasteboard.string;
     if (string) {
