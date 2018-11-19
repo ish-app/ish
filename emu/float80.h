@@ -22,6 +22,9 @@ double f80_to_double(float80 f);
 
 bool f80_isnan(float80 f);
 bool f80_isinf(float80 f);
+bool f80_iszero(float80 f);
+bool f80_isdenormal(float80 f);
+bool f80_is_supported(float80 f);
 
 float80 f80_neg(float80 f);
 float80 f80_abs(float80 f);

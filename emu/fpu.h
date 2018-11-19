@@ -93,5 +93,6 @@ void fpu_divrm64(struct cpu_state *cpu, double *f);
 void fpu_stcw16(struct cpu_state *cpu, uint16_t *i);
 void fpu_ldcw16(struct cpu_state *cpu, uint16_t *i);
 void fpu_patan(struct cpu_state *cpu);
+void fpu_xam(struct cpu_state *cpu);
 
 #endif
