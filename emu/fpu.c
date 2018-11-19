@@ -245,3 +245,27 @@ void fpu_patan(struct cpu_state *cpu) {
     ST(1) = f80_from_double(atan2(f80_to_double(ST(1)), f80_to_double(ST(0))));
     fpu_pop(cpu);
 }
+
+void fpu_xam(struct cpu_state *cpu) {
+    float80 f = ST(0);
+    int outflags = 0;
+    if (!f80_is_supported(f)) {
+        outflags = 0b000;
+    } else if (f80_isnan(f)) {
+        outflags = 0b001;
+    } else if (f80_isinf(f)) {
+        outflags = 0b011;
+    } else if (f80_iszero(f)) {
+        outflags = 0b100;
+    } else if (f80_isdenormal(f)) {
+        outflags = 0b110;
+    } else {
+        // normal.
+        // todo: empty
+        outflags = 0b010;
+    }
+    cpu->c1 = f.sign;
+    cpu->c0 = outflags & 1;
+    cpu->c2 = (outflags >> 1) & 1;
+    cpu->c3 = (outflags >> 2) & 1;
+}

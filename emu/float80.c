@@ -89,7 +89,7 @@ static float80 f80_shift_right(float80 f, int shift) {
 // a number is unsupported if the cursed bit (first bit of the significand,
 // also known as the integer bit) is incorrect. it must be 0 for denormals and
 // 1 for any other type of number.
-static bool f80_is_supported(float80 f) {
+bool f80_is_supported(float80 f) {
     if (f.exp == EXP_DENORMAL)
         return f.signif >> 63 == 0;
     return f.signif >> 63 == 1;
@@ -101,8 +101,11 @@ bool f80_isnan(float80 f) {
 bool f80_isinf(float80 f) {
     return f.exp == EXP_SPECIAL && (f.signif & (-1ul >> 1)) == 0;
 }
-static bool f80_iszero(float80 f) {
+bool f80_iszero(float80 f) {
     return f.exp == EXP_DENORMAL && f.signif == 0;
+}
+bool f80_isdenormal(float80 f) {
+    return f.exp == EXP_DENORMAL && f.signif != 0;
 }
 
 static float80 f80_normalize(float80 f) {

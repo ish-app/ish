@@ -405,6 +405,7 @@ void helper_rdtsc(struct cpu_state *cpu);
 #define FIDIVR(val,z) h_read(fpu_idivr, z)
 #define FDIVRM(val,z) h_read(fpu_divrm, z)
 #define FPATAN() h(fpu_patan)
+#define FXAM() h(fpu_xam)
 
 #define DECODER_RET int
 #define DECODER_NAME gen_step

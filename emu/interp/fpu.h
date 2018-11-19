@@ -128,3 +128,5 @@
 #define FPATAN() \
     ST(1) = f80_from_double(atan2(f80_to_double(ST(1)), f80_to_double(ST(0)))); \
     FPOP
+
+#define FXAM() UNDEFINED
