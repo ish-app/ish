@@ -1,9 +1,5 @@
 #include "gadgets.h"
 
-.gadget rdtsc
-    rdtsc
-    gret
-
 .gadget cpuid
     # regrettable
     push %rsi
@@ -78,6 +74,7 @@
         .ifin(\type, read,write)
             \type\()_prep (\size), helper_\type\size
         .endifin
+        save_regs
         save_c
         movq %_cpu, %rdi
         .ifc \type,1
@@ -92,6 +89,7 @@
         .endifin
         callq *(%_ip)
         restore_c
+        load_regs
         .ifc \type,write
             write_done (\size), helper_\type\size
         .endif

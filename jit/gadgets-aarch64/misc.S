@@ -1,11 +1,5 @@
 #include "gadgets.h"
 
-.gadget rdtsc
-    mrs x8, PMCCNTR_EL0
-    mov eax, w8
-    lsr xdx, x8, 32
-    gret
-
 .gadget cpuid
     # regrettable
     save_c
@@ -48,6 +42,7 @@
         .ifin(\type, read,write)
             \type\()_prep (\size), helper_\type\size
         .endifin
+        save_regs
         save_c
         mov x0, _cpu
         .ifc \type,1
@@ -63,6 +58,7 @@
         ldr x8, [_ip]
         blr x8
         restore_c
+        load_regs
         .ifc \type,write
             write_done (\size), helper_\type\size
         .endif

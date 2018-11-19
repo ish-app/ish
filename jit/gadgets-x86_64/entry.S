@@ -17,14 +17,7 @@ NAME(jit_enter):
     movq %rsi, %_cpu
     movq %rsp, LOCAL_bp(%_cpu)
     leaq TLB_entries(%rdx), %_tlb
-    movl CPU_eax(%_cpu), %eax
-    movl CPU_ebx(%_cpu), %ebx
-    movl CPU_ecx(%_cpu), %ecx
-    movl CPU_edx(%_cpu), %edx
-    movl CPU_esi(%_cpu), %esi
-    movl CPU_edi(%_cpu), %edi
-    movl CPU_ebp(%_cpu), %ebp
-    movl CPU_esp(%_cpu), %_esp
+    load_regs
     gret
 
 .global jit_ret_chain
@@ -40,14 +33,7 @@ jit_ret:
 
 .global jit_exit
 jit_exit:
-    movl %eax, CPU_eax(%_cpu)
-    movl %ebx, CPU_ebx(%_cpu)
-    movl %ecx, CPU_ecx(%_cpu)
-    movl %edx, CPU_edx(%_cpu)
-    movl %esi, CPU_esi(%_cpu)
-    movl %edi, CPU_edi(%_cpu)
-    movl %ebp, CPU_ebp(%_cpu)
-    movl %_esp, CPU_esp(%_cpu)
+    save_regs
     movl %_eip, CPU_eip(%_cpu)
     movq LOCAL_bp(%_cpu), %rsp
     add $0x8, %rsp # keep stack 16 byte aligned

@@ -172,4 +172,26 @@ crosspage_store_\id :
     pop %rax
 .endm
 
+.macro load_regs
+    movl CPU_eax(%_cpu), %eax
+    movl CPU_ebx(%_cpu), %ebx
+    movl CPU_ecx(%_cpu), %ecx
+    movl CPU_edx(%_cpu), %edx
+    movl CPU_esi(%_cpu), %esi
+    movl CPU_edi(%_cpu), %edi
+    movl CPU_ebp(%_cpu), %ebp
+    movl CPU_esp(%_cpu), %_esp
+.endm
+
+.macro save_regs
+    movl %eax, CPU_eax(%_cpu)
+    movl %ebx, CPU_ebx(%_cpu)
+    movl %ecx, CPU_ecx(%_cpu)
+    movl %edx, CPU_edx(%_cpu)
+    movl %esi, CPU_esi(%_cpu)
+    movl %edi, CPU_edi(%_cpu)
+    movl %ebp, CPU_ebp(%_cpu)
+    movl %_esp, CPU_esp(%_cpu)
+.endm
+
 # vim: ft=gas

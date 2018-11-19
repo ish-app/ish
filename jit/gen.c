@@ -315,7 +315,8 @@ static inline bool gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define CMPXCHG(src, dst,z) load(src, z); op(cmpxchg, dst, z)
 #define XADD(src, dst,z) XCHG(src, dst,z); ADD(src, dst,z)
 
-#define RDTSC g(rdtsc)
+void helper_rdtsc(struct cpu_state *cpu);
+#define RDTSC h(helper_rdtsc)
 #define CPUID() g(cpuid)
 
 // atomic
