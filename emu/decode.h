@@ -55,7 +55,7 @@ restart:
             // 2-byte opcode prefix
             READINSN;
             switch (insn) {
-                case 0x1f: TRACEI("nop modrm\t"); READMODRM; break;
+                case 0x18 ... 0x1f: TRACEI("nop modrm\t"); READMODRM; break;
 
                 case 0x28: TRACEI("movp modrm, reg");
                            READMODRM; MOV(modrm_val, modrm_reg,128); break;
@@ -470,8 +470,11 @@ restart:
                    READADDR; MOV(reg_a, mem_addr,8); break;
         case 0xa3: TRACEI("mov oax, mem\t");
                    READADDR; MOV(reg_a, mem_addr,oz); break;
+
         case 0xa4: TRACEI("movsb"); STR(movs, 8); break;
         case 0xa5: TRACEI("movs"); STR(movs, oz); break;
+        case 0xa6: TRACEI("cmpsb"); STR(cmps, 8); break;
+        case 0xa7: TRACEI("cmps"); STR(cmps, oz); break;
 
         case 0xa8: TRACEI("test imm8, al");
                    READIMM8; TEST(imm, reg_a,8); break;
@@ -481,6 +484,9 @@ restart:
         case 0xaa: TRACEI("stosb"); STR(stos, 8); break;
         case 0xab: TRACEI("stos"); STR(stos, oz); break;
         case 0xac: TRACEI("lodsb"); STR(lods, 8); break;
+        case 0xad: TRACEI("lods"); STR(lods, oz); break;
+        case 0xae: TRACEI("scasb"); STR(scas, 8); break;
+        case 0xaf: TRACEI("scas"); STR(scas, oz); break;
 
         case 0xb0: TRACEI("mov imm, al\t");
                    READIMM8; MOV(imm, reg_a,8); break;
@@ -748,10 +754,15 @@ restart:
                         case 0x2c: TRACEI("cvttsd2si modrm64, reg32");
                                    READMODRM_MEM; // TODO xmm
                                    CVTTSD2SI(mem_addr_real, modrm_reg); break;
+                        case 0x18 ... 0x1f: TRACEI("rep nop modrm\t"); READMODRM; break;
                         default: TRACE("undefined"); UNDEFINED;
                     }
                     break;
+
+                case 0xa6: TRACEI("repnz cmpsb"); REPNZ(cmps, 8); break;
+                case 0xa7: TRACEI("repnz cmps"); REPNZ(cmps, oz); break;
                 case 0xae: TRACEI("repnz scasb"); REPNZ(scas, 8); break;
+                case 0xaf: TRACEI("repnz scas"); REPNZ(scas, oz); break;
                 default: TRACE("undefined"); UNDEFINED;
             }
             break;
@@ -766,6 +777,7 @@ restart:
                     switch (insn) {
                         case 0x7e: TRACEI("movq modrm, xmm");
                                    READMODRM; MOVQ(modrm_val, modrm_reg); break;
+                        case 0x18 ... 0x1f: TRACEI("repz nop modrm\t"); READMODRM; break;
                         default: TRACE("undefined"); UNDEFINED;
                     }
                     break;
@@ -774,11 +786,14 @@ restart:
 
                 case 0xa4: TRACEI("rep movsb"); REP(movs, 8); break;
                 case 0xa5: TRACEI("rep movs"); REP(movs, oz); break;
-
                 case 0xa6: TRACEI("repz cmpsb"); REPZ(cmps, 8); break;
-
+                case 0xa7: TRACEI("repz cmps"); REPZ(cmps, oz); break;
                 case 0xaa: TRACEI("rep stosb"); REP(stos, 8); break;
                 case 0xab: TRACEI("rep stos"); REP(stos, oz); break;
+                case 0xac: TRACEI("rep lodsb"); REP(lods, 8); break;
+                case 0xad: TRACEI("rep lods"); REP(lods, oz); break;
+                case 0xae: TRACEI("repz scasb"); REPZ(scas, 8); break;
+                case 0xaf: TRACEI("repz scas"); REPZ(scas, oz); break;
 
                 // repz ret is equivalent to ret but on some amd chips there's
                 // a branch prediction penalty if the target of a branch is a

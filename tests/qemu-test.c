@@ -152,13 +152,13 @@ static inline long i2l(long v)
 #define OP ror
 #include "qemu-test-shift.h"
 
-#define OP rcr
-#define OP_CC
-#include "qemu-test-shift.h"
+//#define OP rcr
+//#define OP_CC
+//#include "qemu-test-shift.h"
 
-#define OP rcl
-#define OP_CC
-#include "qemu-test-shift.h"
+//#define OP rcl
+//#define OP_CC
+//#include "qemu-test-shift.h"
 
 #define OP shld
 #define OP_SHIFTD
@@ -174,6 +174,7 @@ static inline long i2l(long v)
 #undef CC_MASK
 #define CC_MASK (CC_C)
 
+#if 0
 #define OP bt
 #define OP_NOBYTE
 #include "qemu-test-shift.h"
@@ -189,6 +190,7 @@ static inline long i2l(long v)
 #define OP btc
 #define OP_NOBYTE
 #include "qemu-test-shift.h"
+#endif
 
 /* lea test (modrm support) */
 #define TEST_LEAQ(STR)\
@@ -335,7 +337,7 @@ void test_lea(void)
     TEST_LEAQ("0x4000(%%rcx, %%rcx, 2)");
     TEST_LEAQ("0x4000(%%rdx, %%rcx, 4)");
     TEST_LEAQ("0x4000(%%rsi, %%rcx, 8)");
-#else
+#elif 0
     /* limited 16 bit addressing test */
     TEST_LEA16("0x4000");
     TEST_LEA16("(%%bx)");
@@ -1163,6 +1165,7 @@ void test_xchg(void)
     TEST_XCHG(xaddw, "w", "+m");
     TEST_XCHG(xaddb, "b", "+m");
 
+#if 0
 #if defined(__x86_64__)
     TEST_CMPXCHG(cmpxchgq, "", "+q", 0xfbca7654);
 #endif
@@ -1176,21 +1179,23 @@ void test_xchg(void)
     TEST_CMPXCHG(cmpxchgl, "k", "+q", 0xfffefdfc);
     TEST_CMPXCHG(cmpxchgw, "w", "+q", 0xfffefdfc);
     TEST_CMPXCHG(cmpxchgb, "b", "+q", 0xfffefdfc);
+#endif
 
 #if defined(__x86_64__)
     TEST_CMPXCHG(cmpxchgq, "", "+m", 0xfbca7654);
 #endif
     TEST_CMPXCHG(cmpxchgl, "k", "+m", 0xfbca7654);
-    TEST_CMPXCHG(cmpxchgw, "w", "+m", 0xfbca7654);
-    TEST_CMPXCHG(cmpxchgb, "b", "+m", 0xfbca7654);
+    //TEST_CMPXCHG(cmpxchgw, "w", "+m", 0xfbca7654);
+    //TEST_CMPXCHG(cmpxchgb, "b", "+m", 0xfbca7654);
 
 #if defined(__x86_64__)
     TEST_CMPXCHG(cmpxchgq, "", "+m", 0xfffefdfc);
 #endif
     TEST_CMPXCHG(cmpxchgl, "k", "+m", 0xfffefdfc);
-    TEST_CMPXCHG(cmpxchgw, "w", "+m", 0xfffefdfc);
-    TEST_CMPXCHG(cmpxchgb, "b", "+m", 0xfffefdfc);
+    //TEST_CMPXCHG(cmpxchgw, "w", "+m", 0xfffefdfc);
+    //TEST_CMPXCHG(cmpxchgb, "b", "+m", 0xfffefdfc);
 
+#if 0
     {
         uint64_t op0, op1, op2;
         long eax, edx;
@@ -1214,6 +1219,7 @@ void test_xchg(void)
                    eax, edx, op1, eflags & CC_Z);
         }
     }
+#endif
 }
 
 #ifdef TEST_SEGS
@@ -1762,11 +1768,7 @@ void test_exceptions(void)
         /* bound exception */
         tab[0] = 1;
         tab[1] = 10;
-#ifdef __clang__
-        asm volatile ("bound %1, %0" : : "r" (11), "m" (tab[0]));
-#else
         asm volatile ("bound %0, %1" : : "r" (11), "m" (tab[0]));
-#endif
     }
 #endif
 
@@ -2736,14 +2738,14 @@ int main(int argc, char **argv)
     test_bsx();
     test_mul();
     test_jcc();
-    test_loop();
-    test_floats();
+    //test_loop();
+    //test_floats();
 #if !defined(__x86_64__)
-    test_bcd();
+    //test_bcd();
 #endif
     test_xchg();
     test_string();
-    test_misc();
+    //test_misc();
     test_lea();
 #ifdef TEST_SEGS
     test_segs();
@@ -2753,11 +2755,11 @@ int main(int argc, char **argv)
     test_vm86();
 #endif
 #if !defined(__x86_64__)
-    test_exceptions();
-    test_self_modifying_code();
-    test_single_step();
+    //test_exceptions();
+    //test_self_modifying_code();
+    //test_single_step();
 #endif
-    test_enter();
+    //test_enter();
     test_conv();
 #ifdef TEST_SSE
     test_sse();

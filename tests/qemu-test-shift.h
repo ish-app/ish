@@ -106,6 +106,7 @@ void exec_opl(long s2, long s0, long s1, long iflags)
            stringify(OP) "l", s0, s2, s1, res, iflags, flags & CC_MASK);
 }
 
+#if 0
 void exec_opw(long s2, long s0, long s1, long iflags)
 {
     long res, flags;
@@ -118,6 +119,7 @@ void exec_opw(long s2, long s0, long s1, long iflags)
     printf("%-10s A=" FMTLX " B=" FMTLX " C=" FMTLX " R=" FMTLX " CCIN=%04lx CC=%04lx\n",
            stringify(OP) "w", s0, s2, s1, res, iflags, flags & CC_MASK);
 }
+#endif
 
 #endif
 
@@ -145,7 +147,7 @@ void exec_op(long s2, long s0, long s1)
 #endif
     exec_opl(s2, s0, s1, 0);
 #ifdef OP_SHIFTD
-    exec_opw(s2, s0, s1, 0);
+    //exec_opw(s2, s0, s1, 0);
 #else
     exec_opw(s2, s0, s1, 0);
 #endif
