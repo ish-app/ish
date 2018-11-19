@@ -90,6 +90,9 @@
     cpu->pf = 0; cpu->pf_res = 0
 // not worrying about nans and shit yet
 
+#define FCOMI FUCOMI
+// FCOMI is supposed to be even more strict with NaNs. We still won't worry.
+
 #define F_COMPARE(x) \
     cpu->c0 = f80_lt(ST(0), x); \
     cpu->c1 = 0; \

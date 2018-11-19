@@ -620,6 +620,7 @@ restart:
                     case 0xd90: TRACE("fld st(i)"); FLD(); break;
                     case 0xd91: TRACE("fxch st"); FXCH(); break;
                     case 0xdb5: TRACE("fucomi st"); FUCOMI(); break;
+                    case 0xdb6: TRACE("fcomi st"); FCOMI(); break;
                     case 0xdc0: TRACE("fadd st, st(i)"); FADD(st_0, st_i); break;
                     case 0xdc1: TRACE("fmul st, st(i)"); FMUL(st_0, st_i); break;
                     case 0xdc4: TRACE("fsubr st, st(i)"); FSUBR(st_0, st_i); break;
