@@ -150,9 +150,9 @@
 .endm
 
 .macro do_hi_op op, size, reg
-    ubfx w11, e\reg\()x, 8, 8
-    do_op \op, \size, w11
-    bfi e\reg\()x, w11, 8, 8
+    ubfx w12, e\reg\()x, 8, 8
+    do_op \op, \size, w12
+    bfi e\reg\()x, w12, 8, 8
 .endm
 
 .macro do_op_size op, armop, size, s
