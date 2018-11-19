@@ -53,43 +53,43 @@
             \op\()s _tmp, _tmp, \arg
             cset w10, vs
             strb w10, [_cpu, CPU_of]
-            .ifc \op,add
+            .ifin(\op, add,adc)
                 cset w10, cs
-            .endif
-            .ifc \op,sub
+            .endifin
+            .ifin(\op, sub,sbc)
                 cset w10, cc
-            .endif
+            .endifin
             strb w10, [_cpu, CPU_cf]
         .else
             # for 16 or 8 bit operands...
-            # ok first figure out signed overflow
-            sxt\s w10, _tmp
-            .ifin(\op, add,sub)
-                \op w10, w10, \arg, sxt\s
-            .endifin
-            .ifin(\op, adc,sbc)
-                # help me
-                sxt\s w9, \arg
-                \op w10, w10, w9
-            .endifin
-            cmp w10, w10, sxt\s
-            cset w10, ne
-            strb w10, [_cpu, CPU_of]
-            # now unsigned overflow
+            # first figure out unsigned overflow
             uxt\s w10, _tmp
             .ifin(\op, add,sub)
-                \op _tmp, w10, \arg, uxt\s
+                \op w10, w10, \arg, uxt\s
             .endifin
             .ifin(\op, adc,sbc)
                 uxt\s w9, \arg
                 \op w10, w10, w9
             .endifin
             .ifc \s,b
-                lsr w10, _tmp, 8
+                lsr w10, w10, 8
             .else
-                lsr w10, _tmp, 16
+                lsr w10, w10, 16
             .endif
             strb w10, [_cpu, CPU_cf]
+            # now signed overflow
+            sxt\s w10, _tmp
+            .ifin(\op, add,sub)
+                \op _tmp, w10, \arg, sxt\s
+            .endifin
+            .ifin(\op, adc,sbc)
+                # help me
+                sxt\s w9, \arg
+                \op _tmp, w10, w9
+            .endifin
+            cmp _tmp, _tmp, sxt\s
+            cset w10, ne
+            strb w10, [_cpu, CPU_of]
         .endif
     .endifin
 
@@ -233,8 +233,8 @@
 .macro do_inc size, s
     mov w10, 1
     setf_a w10, _tmp
-    op_s add, _tmp, _tmp, 1
-    setf_zsp
+    op_s adds, _tmp, _tmp, 1, \s
+    setf_zsp \s
     .ifb \s
         cset w8, vs
     .else
@@ -246,8 +246,8 @@
 .macro do_dec size, s
     mov w10, 1
     setf_a w10, _tmp
-    op_s sub, _tmp, _tmp, 1
-    setf_zsp
+    op_s subs, _tmp, _tmp, 1, \s
+    setf_zsp \s
     .ifb \s
         cset w8, vs
     .else
