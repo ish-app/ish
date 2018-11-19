@@ -372,6 +372,7 @@ void helper_rdtsc(struct cpu_state *cpu);
 #define FCOMM(val,z) h_read(fpu_comm, z)
 #define FUCOM() hh(fpu_ucom, st_i)
 #define FUCOMI() hh(fpu_ucomi, st_i)
+#define FCOMI() hh(fpu_comi, st_i)
 #define FST() hh(fpu_st, st_i)
 #define FCHS() h(fpu_chs)
 #define FABS() h(fpu_abs)
