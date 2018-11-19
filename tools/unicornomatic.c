@@ -123,7 +123,7 @@ int compare_cpus(struct cpu_state *cpu, struct tlb *tlb, uc_engine *uc, int unde
     regs.eflags = (regs.eflags & ~undefined_flags) | (cpu->eflags & undefined_flags);
     if (regs.eflags != cpu->eflags) {
 #define f(x,n) ((regs.eflags & (1 << n)) ? #x : "-"),
-        printf("real eflags = 0x%x %s%s%s%s%s%s%s%s%s, fake eflags = 0x%x %s%s%s%s%s%s%s%s%s\r\n%0d",
+        printk("real eflags = 0x%x %s%s%s%s%s%s%s%s%s, fake eflags = 0x%x %s%s%s%s%s%s%s%s%s\n%0d",
                 regs.eflags, f(o,11)f(d,10)f(i,9)f(t,8)f(s,7)f(z,6)f(a,4)f(p,2)f(c,0)
 #undef f
 #define f(x,n) ((cpu->eflags & (1 << n)) ? #x : "-"),
