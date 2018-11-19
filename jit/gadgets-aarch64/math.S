@@ -233,28 +233,32 @@
 .macro do_inc size, s
     mov w10, 1
     setf_a w10, _tmp
-    op_s adds, _tmp, _tmp, 1, \s
-    setf_zsp \s
     .ifb \s
+        adds _tmp, _tmp, 1
         cset w8, vs
     .else
+        sxt\s _tmp, _tmp
+        add _tmp, _tmp, 1
         cmp _tmp, _tmp, sxt\s
         cset w8, ne
     .endif
     strb w8, [_cpu, CPU_of]
+    setf_zsp \s
 .endm
 .macro do_dec size, s
     mov w10, 1
     setf_a w10, _tmp
-    op_s subs, _tmp, _tmp, 1, \s
-    setf_zsp \s
     .ifb \s
+        subs _tmp, _tmp, 1
         cset w8, vs
     .else
+        sxt\s _tmp, _tmp
+        sub _tmp, _tmp, 1
         cmp _tmp, _tmp, sxt\s
         cset w8, ne
     .endif
     strb w8, [_cpu, CPU_of]
+    setf_zsp \s
 .endm
 
 .macro do_sign_extend size, s
