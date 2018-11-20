@@ -7,7 +7,7 @@
                 movl %ecx, %r14d
                 movb (%_ip), %cl
             .endif
-            testb $(\size - 1), %cl
+            testb $31, %cl
             jz 1f
             \type\()\ss %cl, %tmp\s
             setf_oc
