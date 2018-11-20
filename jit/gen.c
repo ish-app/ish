@@ -222,7 +222,7 @@ static inline bool gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define CMP(src, dst,z) lo(sub, src, dst, z)
 #define TEST(src, dst,z) lo(and, src, dst, z)
 #define NOT(val,z) load(val,z); gz(not, z); store(val,z)
-#define NEG(val,z) load(val,z); gz(neg, z); store(val,z)
+#define NEG(val,z) imm = 0; load(imm,z); op(sub, val,z); store(val,z)
 
 #define POP(thing,z) gg(pop, saved_ip); store(thing, z)
 #define PUSH(thing,z) load(thing, z); gg(push, saved_ip)

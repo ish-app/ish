@@ -243,12 +243,6 @@
     imul\ss %tmp\s
     setf_oc
 .endm
-.macro do_neg size, s, ss
-    setf_a src=$0, dst=%tmp\s, ss=\ss
-    neg\ss %tmp\s
-    setf_oc
-    setf_zsp %tmp\s, \ss
-.endm
 .macro do_not size, s, ss
     not\ss %tmp\s
 .endm

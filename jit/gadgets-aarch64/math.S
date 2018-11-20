@@ -367,12 +367,6 @@
     strb w8, [_cpu, CPU_cf]
     strb w8, [_cpu, CPU_of]
 .endm
-.macro do_neg size, s
-    setf_a wzr, _tmp
-    negs _tmp, _tmp
-    setf_oc
-    setf_zsp \s
-.endm
 .macro do_not size, s
     .ifb \s
         mvn _tmp, _tmp
