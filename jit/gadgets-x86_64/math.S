@@ -247,7 +247,7 @@
     not\ss %tmp\s
 .endm
 
-.irp op, inc,dec,sign_extend,zero_extend,div,idiv,mul,imul1,neg,not
+.irp op, inc,dec,sign_extend,zero_extend,div,idiv,mul,imul1,not
     .irp size, SIZE_LIST
         .gadget \op\()_\size
             ss \size, do_\op
