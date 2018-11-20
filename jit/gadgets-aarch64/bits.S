@@ -5,9 +5,9 @@
         .gadget \type\size\()_\arg
             .ifc \arg,imm
                 ldr w8, [_ip]
-                ands w8, w8, \size-1
+                ands w8, w8, 31
             .else
-                ands w8, ecx, \size-1
+                ands w8, ecx, 31
             .endif
             b.eq 1f
 
@@ -34,13 +34,12 @@
             .endif
             .ifc \type,sar
                 # lazy ass copy paste job
-                ubfx w10, _tmp, \size-1, 1
                 sub w8, w8, 1
                 asr _tmp, _tmp, w8
                 and w9, _tmp, 1
                 asr _tmp, _tmp, 1
                 strb w9, [_cpu, CPU_cf]
-                strb w10, [_cpu, CPU_of]
+                strb wzr, [_cpu, CPU_of]
             .endif
 
             .ifc \type,rol
