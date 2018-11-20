@@ -286,11 +286,12 @@
         uxth _tmp, _tmp
         udiv w9, w8, _tmp
         msub w10, w9, _tmp, w8
-        ubfx eax, w9, 0, 16
-        ubfx edx, w10, 0, 16
+        bfi eax, w9, 0, 16
+        bfi edx, w10, 0, 16
     .elseif \size == 32
         bfi x8, xax, 0, 32
         bfi x8, xdx, 32, 32
+        uxtw _xtmp, _tmp
         udiv x9, x8, _xtmp
         msub x10, x9, _xtmp, x8
         mov eax, w9
@@ -312,11 +313,12 @@
         sxth _tmp, _tmp
         sdiv w9, w8, _tmp
         msub w10, w9, _tmp, w8
-        ubfx eax, w9, 0, 16
-        ubfx edx, w10, 0, 16
+        bfi eax, w9, 0, 16
+        bfi edx, w10, 0, 16
     .elseif \size == 32
         bfi x8, xax, 0, 32
         bfi x8, xdx, 32, 32
+        sxtw _xtmp, _tmp
         sdiv x9, x8, _xtmp
         msub x10, x9, _xtmp, x8
         mov eax, w9
@@ -333,8 +335,12 @@
         uxt\s _tmp, _tmp
         mul w8, w8, _tmp
         cmp w8, w8, uxt\s
-        bfxil eax, w8, 0, \size
-        bfxil edx, w8, \size, \size
+        .if \size == 8
+            bfxil eax, w8, 0, \size*2
+        .else
+            bfxil eax, w8, 0, \size
+            bfxil edx, w8, \size, \size
+        .endif
     .endif
     cset w8, ne
     strb w8, [_cpu, CPU_cf]
@@ -350,8 +356,12 @@
         sxt\s _tmp, _tmp
         mul w8, w8, _tmp
         cmp w8, w8, sxt\s
-        bfxil eax, w8, 0, \size
-        bfxil edx, w8, \size, \size
+        .if \size == 8
+            bfxil eax, w8, 0, \size*2
+        .else
+            bfxil eax, w8, 0, \size
+            bfxil edx, w8, \size, \size
+        .endif
     .endif
     cset w8, ne
     strb w8, [_cpu, CPU_cf]
