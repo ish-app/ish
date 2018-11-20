@@ -70,12 +70,15 @@ except ValueError:
     print('wrong number of arguments')
     print_usage()
     sys.exit(1)
-    
+
 fs = Path(fs)
 fs.mkdir(parents=True, exist_ok=True)
 data = fs/'data'
 
 db_path = fs/'meta.db'
+if archive_path.find("x86.tar.gz") == -1:
+    print("Wrong rootfs version. Please get a i386 rootfs.")
+    sys.exit(1)
 with open(archive_path, 'rb') as archive:
     with tarfile.open(fileobj=archive) as archive:
         with dbm.gnu.open(str(db_path), 'c') as db:
