@@ -143,7 +143,7 @@
     .ifc \op,xchg
         mov w9, _tmp
         mov _tmp, \arg
-        mov \arg, w9
+        movs \arg, w9, \s
     .endif
 
     .ifin(\op, add,sub,adc,sbc,and,orr,eor)
