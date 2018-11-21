@@ -12,6 +12,8 @@ struct poll *poll_create() {
     struct poll *poll = malloc(sizeof(struct poll));
     if (poll == NULL)
         return NULL;
+    poll->notify_pipe[0] = -1;
+    poll->notify_pipe[1] = -1;
     list_init(&poll->poll_fds);
     lock_init(&poll->lock);
     return poll;
