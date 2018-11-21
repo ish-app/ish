@@ -108,14 +108,25 @@
     .endif
 
     .ifin(\op, bsf,bsr)
-        .ifc \op,bsf
-            rbit w10, \arg
-            clz w10, w10
-            cmp w10, 32
+        .ifnb \s
+            uxt\s w10, \arg
         .else
-            clz w10, \arg
-            cmp w10, 32
-            mov w9, 31
+            mov w10, \arg
+        .endif
+        .ifc \op,bsf
+            .if \size != 32
+                orr w10, w10, 1<<\size
+            .endif
+            rbit w10, w10
+            clz w10, w10
+            cmp w10, \size
+        .else
+            clz w10, w10
+            .if \size != 32
+                sub w10, w10, 32-\size
+            .endif
+            cmp w10, \size
+            mov w9, \size-1
             sub w10, w9, w10
         .endif
         csel _tmp, w10, _tmp, ne
