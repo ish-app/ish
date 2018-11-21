@@ -162,61 +162,96 @@ dword_t sys_symlink(addr_t target_addr, addr_t link_addr) {
 
 dword_t sys_read(fd_t fd_no, addr_t buf_addr, dword_t size) {
     STRACE("read(%d, 0x%x, %d)", fd_no, buf_addr, size);
-    char buf[size+1];
+    dword_t res = 0;
+    char *buf = (char *) malloc(size+1);
+    if (buf == NULL)
+        return _EFAULT;
     struct fd *fd = f_get(fd_no);
-    if (fd == NULL)
-        return _EBADF;
-    int res = fd->ops->read(fd, buf, size);
-    if (res >= 0)
-        if (user_write(buf_addr, buf, res))
-            return _EFAULT;
+    if (fd == NULL) {
+        res = _EBADF;
+        goto out;
+    }
+    res = fd->ops->read(fd, buf, size);
+    if (res >= 0) {
+        if (user_write(buf_addr, buf, res)) {
+            res = _EFAULT;
+            goto out;
+        }
+    }
+out:
+    free(buf);
     return res;
 }
 
 dword_t sys_readv(fd_t fd_no, addr_t iovec_addr, dword_t iovec_count) {
-    struct io_vec iovecs[iovec_count];
-    if (user_get(iovec_addr, iovecs))
+    dword_t res = 0;
+    dword_t iovec_size = sizeof(struct io_vec) * iovec_count;
+    struct io_vec *iovecs = (struct io_vec *) malloc(iovec_size);
+    if (iovecs == NULL)
         return _EFAULT;
-    int res;
+    if (user_read(iovec_addr, iovecs, iovec_size)) {
+        res = _EFAULT;
+        goto out;
+    }
     dword_t count = 0;
     for (unsigned i = 0; i < iovec_count; i++) {
         res = sys_read(fd_no, iovecs[i].base, iovecs[i].len);
         if (res < 0)
-            return res;
+            goto out;
         count += res;
         if (res < iovecs[i].len)
             break;
     }
+out:
+    free(iovecs);
     return count;
 }
 
 dword_t sys_write(fd_t fd_no, addr_t buf_addr, dword_t size) {
-    char buf[size+1];
-    if (user_read(buf_addr, buf, size))
+    char *buf = (char *) malloc(size + 1);
+    if (buf == NULL)
         return _EFAULT;
+    dword_t res = 0;
+    if (user_read(buf_addr, buf, size)) {
+        res = _EFAULT;
+        goto out;
+    }
     buf[size] = '\0';
     STRACE("write(%d, \"%.100s\", %d)", fd_no, buf, size);
     struct fd *fd = f_get(fd_no);
-    if (fd == NULL)
-        return _EBADF;
-    return fd->ops->write(fd, buf, size);
+    if (fd == NULL) {
+        res = _EBADF;
+        goto out;
+    }
+    res = fd->ops->write(fd, buf, size);
+out:
+    free(buf);
+    return res;
 }
 
 dword_t sys_writev(fd_t fd_no, addr_t iovec_addr, dword_t iovec_count) {
-    struct io_vec iovecs[iovec_count];
-    if (user_get(iovec_addr, iovecs))
+    dword_t iovec_size = sizeof(struct io_vec) * iovec_count;
+    struct io_vec *iovecs = (struct io_vec *) malloc(iovec_size);
+    if (iovecs == NULL)
         return _EFAULT;
-    int res;
+    int res = 0;
+    if (user_read(iovec_addr, iovecs, iovec_size)) {
+        res = _EFAULT;
+        goto out;
+    }
     dword_t count = 0;
     for (unsigned i = 0; i < iovec_count; i++) {
         res = sys_write(fd_no, iovecs[i].base, iovecs[i].len);
         if (res < 0)
-            return res;
+            goto out;
         count += res;
         if (res < iovecs[i].len)
             break;
     }
-    return count;
+    res = count;
+out:
+    free(iovecs);
+    return res;
 }
 
 dword_t sys__llseek(fd_t f, dword_t off_high, dword_t off_low, addr_t res_addr, dword_t whence) {
@@ -253,17 +288,23 @@ dword_t sys_pread(fd_t f, addr_t buf_addr, dword_t size, off_t_ off) {
     struct fd *fd = f_get(f);
     if (fd == NULL)
         return _EBADF;
-    char buf[size+1];
+    char *buf = (char *) malloc(size+1);
+    if (buf == NULL)
+        return _EFAULT;
     lock(&fd->lock);
     sdword_t res = fd->ops->lseek(fd, off, LSEEK_SET);
     if (res < 0)
         goto out;
     res = fd->ops->read(fd, buf, size);
-    if (res >= 0)
-        if (user_write(buf_addr, buf, res))
-            return _EFAULT;
+    if (res >= 0) {
+        if (user_write(buf_addr, buf, res)) {
+            res = _EFAULT;
+            goto out;
+        }
+    }
 out:
     unlock(&fd->lock);
+    free(buf);
     return res;
 }
 
@@ -320,11 +361,16 @@ dword_t sys_getcwd(addr_t buf_addr, dword_t size) {
 
     if (strlen(pwd) + 1 > size)
         return _ERANGE;
-    char buf[size];
+    char *buf = (char *) malloc(size);
+    if (buf == NULL)
+        return _EFAULT;
     strcpy(buf, pwd);
     STRACE(" \"%.*s\"", size, buf);
-    if (user_write(buf_addr, buf, sizeof(buf)))
-        return _EFAULT;
+    dword_t res = size; 
+    if (user_write(buf_addr, buf, sizeof(buf))) {
+        res = _EFAULT;
+    }
+    free(buf);
     return size;
 }
 
