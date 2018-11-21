@@ -178,7 +178,7 @@ void step_tracing(struct cpu_state *cpu, struct tlb *tlb, uc_engine *uc) {
     uc_interrupt = -1;
     dword_t eip = uc_getreg(uc, UC_X86_REG_EIP);
     // intercept cpuid and rdtsc
-    char code[2];
+    uint8_t code[2];
     uc_read(uc, eip, code, sizeof(code));
     if (code[0] == 0x0f && (code[1] == 0x31 || code[1] == 0xa2)) {
         if (code[1] == 0x31) {
