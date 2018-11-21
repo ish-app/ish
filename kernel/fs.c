@@ -300,10 +300,8 @@ dword_t sys_pread(fd_t f, addr_t buf_addr, dword_t size, off_t_ off) {
         goto out;
     res = fd->ops->read(fd, buf, size);
     if (res >= 0) {
-        if (user_write(buf_addr, buf, res)) {
+        if (user_write(buf_addr, buf, res))
             res = _EFAULT;
-            goto out;
-        }
     }
 out:
     unlock(&fd->lock);
@@ -364,13 +362,14 @@ dword_t sys_getcwd(addr_t buf_addr, dword_t size) {
 
     if (strlen(pwd) + 1 > size)
         return _ERANGE;
+    size = strlen(pwd) + 1;
     char *buf = malloc(size);
     if (buf == NULL)
         return _ENOMEM;
     strcpy(buf, pwd);
     STRACE(" \"%.*s\"", size, buf);
     dword_t res = size;
-    if (user_write(buf_addr, buf, sizeof(buf)))
+    if (user_write(buf_addr, buf, size))
         res = _EFAULT;
     free(buf);
     return res;
