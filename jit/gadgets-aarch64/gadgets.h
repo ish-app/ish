@@ -191,6 +191,10 @@ back_write_done_\id :
         movs \dst, w10, \s
     .endif
 .endm
+.macro ldrs src, dst, s
+    ldr\s w10, \dst
+    movs \src, w10, \s
+.endm
 
 .macro uxts dst, src, s=
     .ifnb \s
