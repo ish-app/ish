@@ -11,7 +11,14 @@
 
 static void real_tty_read_thread(struct tty *tty) {
     char ch;
-    while (read(STDIN_FILENO, &ch, 1) == 1) {
+    for (;;) {
+        int err = read(STDIN_FILENO, &ch, 1);
+        if (err != 1) {
+            printk("tty read returned %d\n", err);
+            if (err < 0)
+                printk("error: %s\n", strerror(errno));
+            continue;
+        }
         if (ch == '\x1c') {
             // ^\ (so ^C still works for emulated SIGINT)
             raise(SIGINT);
