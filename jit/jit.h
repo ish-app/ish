@@ -12,6 +12,7 @@
 struct jit {
     // there is one jit per address space
     struct mem *mem;
+    size_t mem_used;
     struct list hash[JIT_HASH_SIZE];
     lock_t lock;
 };
@@ -23,6 +24,7 @@ struct jit {
 struct jit_block {
     addr_t addr;
     addr_t end_addr;
+    size_t used;
 
     // pointers to the ip values in the last gadget
     unsigned long *jump_ip[2];

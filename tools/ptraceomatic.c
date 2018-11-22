@@ -127,7 +127,7 @@ static int compare_cpus(struct cpu_state *cpu, struct tlb *tlb, int pid, int und
         trycall(lseek(fd, dirty_page, SEEK_SET), "compare seek mem");
         trycall(read(fd, real_page, PAGE_SIZE), "compare read mem");
         close(fd);
-        struct pt_entry entry = cpu->mem->pt[PAGE(dirty_page)];
+        struct pt_entry entry = *mem_pt(cpu->mem, PAGE(dirty_page));
         void *fake_page = entry.data->data + entry.offset;
 
         if (memcmp(real_page, fake_page, PAGE_SIZE) != 0) {

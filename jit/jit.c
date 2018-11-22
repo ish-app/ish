@@ -14,6 +14,7 @@ static void jit_block_free(struct jit_block *block);
 struct jit *jit_new(struct mem *mem) {
     struct jit *jit = malloc(sizeof(struct jit));
     jit->mem = mem;
+    jit->mem_used = 0;
     for (int i = 0; i < JIT_HASH_SIZE; i++)
         list_init(&jit->hash[i]);
     lock_init(&jit->lock);
@@ -21,6 +22,7 @@ struct jit *jit_new(struct mem *mem) {
 }
 
 void jit_free(struct jit *jit) {
+    printk("freed jit with %d bytes used\n", jit->mem_used);
     for (int i = 0; i < JIT_HASH_SIZE; i++) {
         struct jit_block *block, *tmp;
         list_for_each_entry_safe(&jit->hash[i], block, tmp, chain) {
@@ -31,7 +33,7 @@ void jit_free(struct jit *jit) {
 }
 
 static inline struct list *blocks_list(struct jit *jit, page_t page, int i) {
-    return &jit->mem->pt[page].blocks[i];
+    return &mem_pt(jit->mem, page)->blocks[i];
 }
 
 void jit_invalidate_page(struct jit *jit, page_t page) {
@@ -49,6 +51,7 @@ void jit_invalidate_page(struct jit *jit, page_t page) {
 }
 
 static void jit_insert(struct jit *jit, struct jit_block *block) {
+    jit->mem_used += block->used;
     list_add(&jit->hash[block->addr % JIT_HASH_SIZE], &block->chain);
     list_init_add(blocks_list(jit, PAGE(block->addr), 0), &block->page[0]);
     if (PAGE(block->addr) != PAGE(block->end_addr))
@@ -83,6 +86,7 @@ static struct jit_block *jit_block_compile(addr_t ip, struct tlb *tlb) {
     }
     gen_end(&state);
     assert(state.ip - ip <= PAGE_SIZE);
+    state.block->used = state.capacity;
     return state.block;
 }
 

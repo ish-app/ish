@@ -19,7 +19,8 @@ struct mem *mem_new() {
     if (mem == NULL)
         return NULL;
     mem->refcount = 1;
-    mem->pt = calloc(MEM_PAGES, sizeof(struct pt_entry));
+    mem->pgdir = calloc(MEM_PGDIR_SIZE, sizeof(struct pt_entry *));
+    mem->pgdir_used = 0;
     mem->changes = 0;
     mem->start_brk = mem->brk = 0; // should get overwritten by exec
 #if JIT
@@ -40,11 +41,43 @@ void mem_release(struct mem *mem) {
 #if JIT
         jit_free(mem->jit);
 #endif
-        free(mem->pt);
+        for (int i = 0; i < MEM_PGDIR_SIZE; i++) {
+            if (mem->pgdir[i] != NULL)
+                free(mem->pgdir[i]);
+        }
+        free(mem->pgdir);
         write_wrunlock(&mem->lock);
         wrlock_destroy(&mem->lock);
         free(mem);
     }
+}
+
+#define PGDIR_TOP(page) ((page) >> 10)
+#define PGDIR_BOTTOM(page) ((page) & (MEM_PGDIR_SIZE - 1))
+
+static struct pt_entry *mem_pt_new(struct mem *mem, page_t page) {
+    struct pt_entry *pgdir = mem->pgdir[PGDIR_TOP(page)];
+    if (pgdir == NULL) {
+        pgdir = mem->pgdir[PGDIR_TOP(page)] = calloc(MEM_PGDIR_SIZE, sizeof(struct pt_entry));
+        mem->pgdir_used++;
+    }
+    return &pgdir[PGDIR_BOTTOM(page)];
+}
+
+struct pt_entry *mem_pt(struct mem *mem, page_t page) {
+    struct pt_entry *pgdir = mem->pgdir[PGDIR_TOP(page)];
+    if (pgdir == NULL)
+        return NULL;
+    struct pt_entry *entry = &pgdir[PGDIR_BOTTOM(page)];
+    if (entry->data == NULL)
+        return NULL;
+    return entry;
+}
+
+static void mem_pt_del(struct mem *mem, page_t page) {
+    struct pt_entry *entry = mem_pt(mem, page);
+    if (entry != NULL)
+        entry->data = NULL;
 }
 
 page_t pt_find_hole(struct mem *mem, pages_t size) {
@@ -52,11 +85,11 @@ page_t pt_find_hole(struct mem *mem, pages_t size) {
     bool in_hole = false;
     for (page_t page = 0xf7ffd; page > 0x40000; page--) {
         // I don't know how this works but it does
-        if (!in_hole && mem->pt[page].data == NULL) {
+        if (!in_hole && mem_pt(mem, page) == NULL) {
             in_hole = true;
             hole_end = page + 1;
         }
-        if (mem->pt[page].data != NULL)
+        if (mem_pt(mem, page) != NULL)
             in_hole = false;
         else if (hole_end - page == size)
             return page;
@@ -66,7 +99,7 @@ page_t pt_find_hole(struct mem *mem, pages_t size) {
 
 bool pt_is_hole(struct mem *mem, page_t start, pages_t pages) {
     for (page_t page = start; page < start + pages; page++) {
-        if (mem->pt[page].data != NULL)
+        if (mem_pt(mem, page) != NULL)
             return false;
     }
     return true;
@@ -83,12 +116,13 @@ int pt_map(struct mem *mem, page_t start, pages_t pages, void *memory, unsigned 
     data->refcount = 0;
 
     for (page_t page = start; page < start + pages; page++) {
-        if (mem->pt[page].data != NULL)
+        if (mem_pt(mem, page) != NULL)
             pt_unmap(mem, page, 1, 0);
         data->refcount++;
-        mem->pt[page].data = data;
-        mem->pt[page].offset = (page - start) << PAGE_BITS;
-        mem->pt[page].flags = flags;
+        struct pt_entry *pt = mem_pt_new(mem, page);
+        pt->data = data;
+        pt->offset = (page - start) << PAGE_BITS;
+        pt->flags = flags;
     }
     return 0;
 }
@@ -96,20 +130,21 @@ int pt_map(struct mem *mem, page_t start, pages_t pages, void *memory, unsigned 
 int pt_unmap(struct mem *mem, page_t start, pages_t pages, int force) {
     if (!force)
         for (page_t page = start; page < start + pages; page++)
-            if (mem->pt[page].data == NULL)
+            if (mem_pt(mem, page) == NULL)
                 return -1;
 
     for (page_t page = start; page < start + pages; page++) {
-        if (mem->pt[page].data != NULL) {
-            struct data *data = mem->pt[page].data;
-            mem->pt[page].data = NULL;
+        struct pt_entry *pt = mem_pt(mem, page);
+        if (pt != NULL) {
+#if JIT
+            jit_invalidate_page(mem->jit, page);
+#endif
+            struct data *data = pt->data;
+            mem_pt_del(mem, page);
             if (--data->refcount == 0) {
                 munmap(data->data, PAGE_SIZE);
                 free(data);
             }
-#if JIT
-            jit_invalidate_page(mem->jit, page);
-#endif
         }
     }
     mem_changed(mem);
@@ -125,10 +160,10 @@ int pt_map_nothing(struct mem *mem, page_t start, pages_t pages, unsigned flags)
 
 int pt_set_flags(struct mem *mem, page_t start, pages_t pages, int flags) {
     for (page_t page = start; page < start + pages; page++)
-        if (mem->pt[page].data == NULL)
+        if (mem_pt(mem, page) == NULL)
             return _ENOMEM;
     for (page_t page = start; page < start + pages; page++) {
-        struct pt_entry *entry = &mem->pt[page];
+        struct pt_entry *entry = mem_pt(mem, page);
         int old_flags = entry->flags;
         entry->flags = flags;
         // check if protection is increasing
@@ -150,17 +185,18 @@ int pt_copy_on_write(struct mem *src, page_t src_start, struct mem *dst, page_t 
     for (page_t src_page = src_start, dst_page = dst_start;
             src_page < src_start + pages;
             src_page++, dst_page++) {
-        if (src->pt[src_page].data != NULL) {
+        struct pt_entry *entry = mem_pt(src, src_page);
+        if (entry != NULL) {
             if (pt_unmap(dst, dst_page, 1, PT_FORCE) < 0)
                 return -1;
             // TODO skip shared mappings
-            struct pt_entry *entry = &src->pt[src_page];
             entry->flags |= P_COW;
             entry->flags &= ~P_COMPILED;
             entry->data->refcount++;
-            dst->pt[dst_page].data = entry->data;
-            dst->pt[dst_page].offset = entry->offset;
-            dst->pt[dst_page].flags = entry->flags;
+            struct pt_entry *dst_entry = mem_pt_new(dst, dst_page);
+            dst_entry->data = entry->data;
+            dst_entry->offset = entry->offset;
+            dst_entry->flags = entry->flags;
         }
     }
     mem_changed(src);
@@ -174,22 +210,23 @@ static void mem_changed(struct mem *mem) {
 
 void *mem_ptr(struct mem *mem, addr_t addr, int type) {
     page_t page = PAGE(addr);
-    struct pt_entry *entry = &mem->pt[page];
+    struct pt_entry *entry = mem_pt(mem, page);
 
-    if (entry->data == NULL) {
+    if (entry == NULL) {
         // page does not exist
         // look to see if the next VM region is willing to grow down
         page_t p = page + 1;
-        while (p < MEM_PAGES && mem->pt[p].data == NULL)
+        while (p < MEM_PAGES && mem_pt(mem, p) == NULL)
             p++;
         if (p >= MEM_PAGES)
             return NULL;
-        if (!(mem->pt[p].flags & P_GROWSDOWN))
+        if (!(mem_pt(mem, p)->flags & P_GROWSDOWN))
             return NULL;
         pt_map_nothing(mem, page, 1, P_WRITE | P_GROWSDOWN);
+        entry = mem_pt(mem, page);
     }
 
-    if (type == MEM_WRITE) {
+    if (entry != NULL && type == MEM_WRITE) {
         // if page is unwritable, well tough luck
         if (!(entry->flags & P_WRITE))
             return NULL;
@@ -201,13 +238,13 @@ void *mem_ptr(struct mem *mem, addr_t addr, int type) {
             memcpy(copy, data, PAGE_SIZE);
             pt_map(mem, page, 1, copy, entry->flags &~ P_COW);
         }
-        // get rid of any compiled blocks in this page
 #if JIT
+        // get rid of any compiled blocks in this page
         jit_invalidate_page(mem->jit, page);
 #endif
     }
 
-    if (entry->data == NULL)
+    if (entry == NULL)
         return NULL;
     return entry->data->data + entry->offset + PGOFFSET(addr);
 }
