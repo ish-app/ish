@@ -43,7 +43,7 @@ int_t sys_getdents64(fd_t f, addr_t dirents, dword_t count) {
         dirent->reclen = reclen;
         dirent->type = 0;
         strcpy(dirent->name, entry.name);
-        STRACE(" {inode=%d, offset=%d, name=%s, type=%d, reclen=%d}",
+        STRACE("\n{inode=%d, offset=%d, name=%s, type=%d, reclen=%d}",
                 dirent->inode, dirent->offset, dirent->name, dirent->type, dirent->reclen);
 
         if (reclen > count)
