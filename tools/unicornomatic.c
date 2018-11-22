@@ -138,7 +138,7 @@ int compare_cpus(struct cpu_state *cpu, struct tlb *tlb, uc_engine *uc, int unde
     if (tlb->dirty_page != TLB_PAGE_EMPTY) {
         char real_page[PAGE_SIZE];
         uc_trycall(uc_mem_read(uc, tlb->dirty_page, real_page, PAGE_SIZE), "compare read");
-        struct pt_entry entry = cpu->mem->pt[PAGE(tlb->dirty_page)];
+        struct pt_entry entry = *mem_pt(cpu->mem, PAGE(tlb->dirty_page));
         void *fake_page = entry.data->data + entry.offset;
 
         if (memcmp(real_page, fake_page, PAGE_SIZE) != 0) {
@@ -339,9 +339,9 @@ static void uc_interrupt_callback(uc_engine *uc, uint32_t interrupt, void *user_
 }
 
 static bool uc_unmapped_callback(uc_engine *uc, uc_mem_type type, uint64_t address, int size, int64_t value, void *user_data) {
-    struct pt_entry *pt = &current->mem->pt[PAGE(address)];
+    struct pt_entry *pt = mem_pt(current->mem, PAGE(address));
     // handle stack growing
-    if (pt->flags & P_GROWSDOWN) {
+    if (pt != NULL && pt->flags & P_GROWSDOWN) {
         uc_map(uc, BYTES_ROUND_DOWN(address), PAGE_SIZE);
         return true;
     }
@@ -418,8 +418,8 @@ uc_engine *start_unicorn(struct cpu_state *cpu, struct mem *mem) {
     // XXX unicorn has a ?bug? where setting up 334 mappings takes five
     // seconds on my raspi. it seems to be accidentally quadratic (dot tumblr dot com)
     for (page_t page = 0; page < MEM_PAGES; page++) {
-        struct pt_entry *pt = &mem->pt[page];
-        if (pt->data == NULL)
+        struct pt_entry *pt = mem_pt(mem, page);
+        if (pt == NULL)
             continue;
         int prot = UC_PROT_READ | UC_PROT_EXEC;
         // really only the write bit is meaningful (FIXME)
