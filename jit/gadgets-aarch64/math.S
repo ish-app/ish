@@ -255,11 +255,11 @@
 
 # atomics. oof
 
-.macro do_op_size_atomic op, armop, size, s
-    .gadget atomic_\op\size\()_mem
+.macro do_op_size_atomic opname, op, size, s
+    .gadget atomic_\opname\size\()_mem
         # There's so much stuff going on inside most of these operations that
         # the implementation is a compare-and-swap loop, instead of just ldaxr/stlxr
-        write_prep \size, atomic_\op\size\()_mem
+        write_prep \size, atomic_\opname\size\()_mem
         ldr\s w12, [_xaddr]
     1:
         mov w8, w12
@@ -331,9 +331,9 @@
         b.ne 3f
         stlxr\s w13, w8, [_xaddr]
         cbnz w13, 2b
-        write_done \size, atomic_\op\size\()_mem
+        write_done \size, atomic_\opname\size\()_mem
         gret 1
-        write_bullshit \size, atomic_\op\size\()_mem
+        write_bullshit \size, atomic_\opname\size\()_mem
     3:
         dmb ish
         mov w12, w13
