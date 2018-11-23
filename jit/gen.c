@@ -320,8 +320,6 @@ void helper_rdtsc(struct cpu_state *cpu);
 #define CPUID() g(cpuid)
 
 // atomic
-// TODO the gadgets currently don't exist on arm
-#if defined(__x86_64__)
 #define atomic_op(type, src, dst,z) load(src, z); op(atomic_##type, dst, z)
 #define ATOMIC_ADD(src, dst,z) atomic_op(add, src, dst, z)
 #define ATOMIC_OR(src, dst,z) atomic_op(or, src, dst, z)
@@ -334,20 +332,6 @@ void helper_rdtsc(struct cpu_state *cpu);
 #define ATOMIC_DEC(val,z) op(atomic_dec, val, z)
 #define ATOMIC_CMPXCHG(src, dst,z) atomic_op(cmpxchg, src, dst, z)
 #define ATOMIC_XADD(src, dst,z) load(src, z); op(atomic_xadd, dst, z); store(src, z)
-
-#else
-#define ATOMIC_ADD ADD
-#define ATOMIC_OR OR
-#define ATOMIC_ADC ADC
-#define ATOMIC_SBB SBB
-#define ATOMIC_AND AND
-#define ATOMIC_SUB SUB
-#define ATOMIC_XOR XOR
-#define ATOMIC_INC INC
-#define ATOMIC_DEC DEC
-#define ATOMIC_CMPXCHG CMPXCHG
-#define ATOMIC_XADD XADD
-#endif
 
 // sse
 #define XORP(src, dst) UNDEFINED

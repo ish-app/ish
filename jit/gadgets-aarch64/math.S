@@ -46,51 +46,7 @@
     .endifin
 
     .ifin(\op, add,sub,adc,sbc)
-        # setting flags: a horror story
-        .ifb \s
-            # for 32-bit operands, we can just do the operation and the chip
-            # will set v and c right, which we copy
-            \op\()s _tmp, _tmp, \arg
-            cset w10, vs
-            strb w10, [_cpu, CPU_of]
-            .ifin(\op, add,adc)
-                cset w10, cs
-            .endifin
-            .ifin(\op, sub,sbc)
-                cset w10, cc
-            .endifin
-            strb w10, [_cpu, CPU_cf]
-        .else
-            # for 16 or 8 bit operands...
-            # first figure out unsigned overflow
-            uxt\s w10, _tmp
-            .ifin(\op, add,sub)
-                \op w10, w10, \arg, uxt\s
-            .endifin
-            .ifin(\op, adc,sbc)
-                uxt\s w9, \arg
-                \op w10, w10, w9
-            .endifin
-            .ifc \s,b
-                lsr w10, w10, 8
-            .else
-                lsr w10, w10, 16
-            .endif
-            strb w10, [_cpu, CPU_cf]
-            # now signed overflow
-            sxt\s w10, _tmp
-            .ifin(\op, add,sub)
-                \op _tmp, w10, \arg, sxt\s
-            .endifin
-            .ifin(\op, adc,sbc)
-                # help me
-                sxt\s w9, \arg
-                \op _tmp, w10, w9
-            .endifin
-            cmp _tmp, _tmp, sxt\s
-            cset w10, ne
-            strb w10, [_cpu, CPU_of]
-        .endif
+        do_add \op, _tmp, \arg, \s
     .endifin
 
     .ifc \op,imul
@@ -154,6 +110,54 @@
     ss \size, _do_op, \op, \arg
 .endm
 
+.macro do_add op, dst, src, s
+    # setting flags: a horror story
+    .ifb \s
+        # for 32-bit operands, we can just do the operation and the chip
+        # will set v and c right, which we copy
+        \op\()s \dst, \dst, \src
+        cset w10, vs
+        strb w10, [_cpu, CPU_of]
+        .ifin(\op, add,adc)
+            cset w10, cs
+        .endifin
+        .ifin(\op, sub,sbc)
+            cset w10, cc
+        .endifin
+        strb w10, [_cpu, CPU_cf]
+    .else
+        # for 16 or 8 bit operands...
+        # first figure out unsigned overflow
+        uxt\s w10, \dst
+        .ifin(\op, add,sub)
+            \op w10, w10, \src, uxt\s
+        .endifin
+        .ifin(\op, adc,sbc)
+            uxt\s w9, \src
+            \op w10, w10, w9
+        .endifin
+        .ifc \s,b
+            lsr w10, w10, 8
+        .else
+            lsr w10, w10, 16
+        .endif
+        strb w10, [_cpu, CPU_cf]
+        # now signed overflow
+        sxt\s w10, \dst
+        .ifin(\op, add,sub)
+            \op \dst, w10, \src, sxt\s
+        .endifin
+        .ifin(\op, adc,sbc)
+            # help me
+            sxt\s w9, \src
+            \op \dst, w10, w9
+        .endifin
+        cmp \dst, \dst, sxt\s
+        cset w10, ne
+        strb w10, [_cpu, CPU_of]
+    .endif
+.endm
+
 .macro do_reg_op op, armop, size, reg
     .gadget \op\size\()_reg_\reg
         do_op \armop, \size, e\reg\()x
@@ -174,28 +178,38 @@
             gret 1
     .endif
 
-    .gadget \op\size\()_mem
-        .ifc \op,store
+    .ifnc \op,xchg
+        .gadget \op\size\()_mem
+            .ifc \op,store
+                write_prep \size, \op\size\()_mem
+            .else
+                read_prep \size, \op\size\()_mem
+            .endif
+            ldr\s w8, [_xaddr]
+            do_op \armop, \size, w8
+            .ifc \op,store
+                str\s w8, [_xaddr]
+                write_done \size, \op\size\()_mem
+            .endif
+            gret 1
+            .ifc \op,store
+                write_bullshit \size, \op\size\()_mem
+            .else
+                read_bullshit \size, \op\size\()_mem
+            .endif
+    .else
+        # xchg must be atomic
+        .gadget \op\size\()_mem
             write_prep \size, \op\size\()_mem
-        .else N .ifc \op,xchg
-            write_prep \size, \op\size\()_mem
-        .else
-            read_prep \size, \op\size\()_mem
-        .endif N .endif
-        ldr\s w8, [_xaddr]
-        do_op \armop, \size, w8
-        .ifin(\op, store,xchg)
-            str\s w8, [_xaddr]
+        1:
+            ldaxr\s w8, [_xaddr]
+            stlxr\s w10, _tmp, [_xaddr]
+            cbnz w10, 1b
+            movs _tmp, w8
             write_done \size, \op\size\()_mem
-        .endifin
-        gret 1
-        .ifc \op,store
+            gret 1
             write_bullshit \size, \op\size\()_mem
-        .else N .ifc \op,xchg
-            write_bullshit \size, \op\size\()_mem
-        .else
-            read_bullshit \size, \op\size\()_mem
-        .endif N .endif
+    .endif
 
     .irp reg, a,b,c,d
         do_reg_op \op, \armop, \size, \reg
@@ -214,6 +228,7 @@
             .endif
             gret
     .endr
+
 .endm
 
 .irp op, load,store,xchg,add,sub,adc,sbb,and,or,xor
@@ -238,9 +253,110 @@
     .gadget_array \op
 .endr
 
+# atomics. oof
+
+.macro do_op_size_atomic op, armop, size, s
+    .gadget atomic_\op\size\()_mem
+        # There's so much stuff going on inside most of these operations that
+        # the implementation is a compare-and-swap loop, instead of just ldaxr/stlxr
+        write_prep \size, atomic_\op\size\()_mem
+        ldr\s w12, [_xaddr]
+    1:
+        mov w8, w12
+
+        # do the operation
+        # dest = w8, src = _tmp
+        .ifin(\op, add,sub,adc,sbc)
+            setf_a src=_tmp, dst=w8
+        .endifin
+        .ifin(\op, and,orr,eor)
+            clearf_a
+            clearf_oc
+        .endifin
+        .ifin(\op, adc,sbc)
+            ldrb w10, [_cpu, CPU_cf]
+            .ifc \op,adc
+                cmp w10, 1
+            .else
+                mvn w10, w10
+                cmn w10, 1
+            .endif
+        .endifin
+
+        .ifin(\op, and,orr,eor)
+            \op w8, w8, _tmp
+        .endifin
+        .ifin(\op, add,sub,adc,sbc)
+            do_add \op, w8, _tmp, \s
+        .endifin
+        .ifc \op,xadd
+            # exchange, then add
+            mov w9, _tmp
+            mov _tmp, w8
+            mov w8, w9
+            do_add add, w8, _tmp, \s
+        .endif
+
+        .ifin(\op, add,sub,adc,sbc,and,orr,eor,xadd)
+            setf_zsp \s, val=w8
+        .endifin
+
+        .ifin(\op, inc,dec)
+            mov w10, 1
+            setf_a src=w10, dst=w8
+            .ifb \s
+                .ifc \op,inc
+                    adds w8, w8, 1
+                .else
+                    subs w8, w8, 1
+                .endif
+                cset w9, vs
+            .else
+                sxt\s w8, w8
+                .ifc \op,inc
+                    adds w8, w8, 1
+                .else
+                    subs w8, w8, 1
+                .endif
+                cmp w8, w8, sxt\s
+                cset w9, ne
+            .endif
+            strb w9, [_cpu, CPU_of]
+            setf_zsp \s
+        .endifin
+
+    2:
+        ldaxr\s w13, [_xaddr]
+        cmp w12, w13
+        b.ne 3f
+        stlxr\s w13, w8, [_xaddr]
+        cbnz w13, 2b
+        write_done \size, atomic_\op\size\()_mem
+        gret 1
+        write_bullshit \size, atomic_\op\size\()_mem
+    3:
+        dmb ish
+        mov w12, w13
+        b 1b
+.endm
+
+.irp op, add,sub,adc,sbb,and,or,xor,inc,dec,xadd
+    .irp size, SIZE_LIST
+        .ifc \op,xor
+            ss \size, do_op_size_atomic, \op, eor
+        .else N .ifc \op,sbb
+            ss \size, do_op_size_atomic, \op, sbc
+        .else N .ifc \op,or
+            ss \size, do_op_size_atomic, \op, orr
+        .else
+            ss \size, do_op_size_atomic, \op, \op
+        .endif N .endif N .endif
+    .endr
+    .gadget_array atomic_\op
+.endr
+
 # unary operations (well, only one explicit operand)
 
-# TODO OF (not CF)
 .macro do_inc size, s
     mov w10, 1
     setf_a w10, _tmp
