@@ -165,7 +165,7 @@ dword_t sys_read(fd_t fd_no, addr_t buf_addr, dword_t size) {
     char *buf = (char *) malloc(size+1);
     if (buf == NULL)
         return _ENOMEM;
-    dword_t res = 0;
+    int_t res = 0;
     struct fd *fd = f_get(fd_no);
     if (fd == NULL) {
         res = _EBADF;
@@ -295,7 +295,7 @@ dword_t sys_pread(fd_t f, addr_t buf_addr, dword_t size, off_t_ off) {
     if (buf == NULL)
         return _EFAULT;
     lock(&fd->lock);
-    sdword_t res = fd->ops->lseek(fd, off, LSEEK_SET);
+    int_t res = fd->ops->lseek(fd, off, LSEEK_SET);
     if (res < 0)
         goto out;
     res = fd->ops->read(fd, buf, size);
