@@ -60,6 +60,7 @@ void send_group_signal(dword_t pgid, int sig) {
 
 static void receive_signal(struct sighand *sighand, int sig) {
     STRACE("%d receiving signal %d\n", current->pid, sig);
+    current->pending &= ~(1l << sig);
     if (sighand->action[sig].handler == SIG_DFL_) {
         switch (sig) {
             // non-fatal signals
@@ -132,8 +133,6 @@ static void receive_signal(struct sighand *sighand, int sig) {
     // nothing we can do if this fails
     // TODO do something other than nothing, like printk maybe
     (void) user_put(sp, frame);
-
-    current->pending &= ~(1l << sig);
 }
 
 void receive_signals() {
