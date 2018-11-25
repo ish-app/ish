@@ -140,16 +140,20 @@ void cpu_run(struct cpu_state *cpu) {
             } else {
                 TRACE("%d %08x --- missed cache\n", current->pid, ip);
             }
-            if (last_block != NULL) {
-                for (int i = 0; i <= 1; i++) {
-                    if (last_block->jump_ip[i] != NULL &&
-                            (*last_block->jump_ip[i] & 0xffffffff) == block->addr) {
-                        *last_block->jump_ip[i] = (unsigned long) block->code;
-                        list_add(&block->jumps_from[i], &last_block->jumps_from_links[i]);
-                    }
+            cache[cache_index] = block;
+            unlock(&jit->lock);
+        }
+        if (last_block != NULL &&
+                (last_block->jump_ip[0] != NULL ||
+                 last_block->jump_ip[1] != NULL)) {
+            lock(&jit->lock);
+            for (int i = 0; i <= 1; i++) {
+                if (last_block->jump_ip[i] != NULL &&
+                        (*last_block->jump_ip[i] & 0xffffffff) == block->addr) {
+                    *last_block->jump_ip[i] = (unsigned long) block->code;
+                    list_add(&block->jumps_from[i], &last_block->jumps_from_links[i]);
                 }
             }
-            cache[cache_index] = block;
             unlock(&jit->lock);
         }
         last_block = block;
