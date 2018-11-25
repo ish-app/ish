@@ -142,8 +142,10 @@ dword_t sys_getpgrp(void);
 dword_t sys_setpgrp(void);
 dword_t sys_getuid32(void);
 dword_t sys_getuid(void);
+int_t sys_setuid(uid_t uid);
 dword_t sys_geteuid32(void);
 dword_t sys_geteuid(void);
+int_t sys_setgid(uid_t gid);
 dword_t sys_getgid32(void);
 dword_t sys_getgid(void);
 dword_t sys_getegid32(void);
@@ -159,6 +161,7 @@ int sys_set_thread_area(addr_t u_info);
 int sys_set_tid_address(addr_t blahblahblah);
 dword_t sys_setsid(void);
 dword_t sys_getsid(void);
+int_t sys_prctl(dword_t option, uint_t arg2, uint_t arg3, uint_t arg4, uint_t arg5);
 
 // system information
 #define UNAME_LENGTH 65

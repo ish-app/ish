@@ -122,4 +122,6 @@ void task_start(struct task *task);
 
 extern void (*exit_hook)(int code);
 
+#define superuser() (current->uid == 0)
+
 #endif
