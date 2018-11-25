@@ -1,5 +1,7 @@
-So many fixed programs, I can't remember all of them. It's kinda usable now, and guess what, ed works! I managed to download a tarball of TCC and build it from source.
+Git and Python are working! Sorry for taking so long to get this build out. In the future I'll push builds whenever I fix something interesting instead of waiting a month first :)
 
-As always, let me know if it crashes spectacularly. The best place to send bug reports or feedback of any kind is the GitHub issues page: https://github.com/tbodt/ish/issues
+I've also fixed a lot of bugs in the emulator, including implementing atomic operations so code that uses threads will actually work. This build also includes quite a few pull requests and patches from strangers who found the project on the internet and decided to help out. Many thanks to everyone who contributed. The full commit log for this build doesn't fit into the 4000 character limit, so you can find it here: https://gist.github.com/tbodt/b8b203e9011146b3b03bf39d71902f60
 
-Commits since last build:
+Send bug reports or feedback here: https://github.com/tbodt/ish/issues
+Join the Discord: https://discord.gg/SndDh5y
+Give me money: https://patreon.com/tbodt
