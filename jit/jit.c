@@ -160,7 +160,7 @@ void cpu_run(struct cpu_state *cpu) {
 
         TRACE("%d %08x --- cycle %d\n", current->pid, ip, i);
         int interrupt = jit_enter(block, &frame, &tlb);
-        if (interrupt == INT_NONE && ++i % (1 << 16) == 0)
+        if (interrupt == INT_NONE && ++i % (1 << 10) == 0)
             interrupt = INT_TIMER;
         if (interrupt != INT_NONE) {
             *cpu = frame.cpu;
