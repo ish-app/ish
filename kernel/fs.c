@@ -579,6 +579,10 @@ dword_t sys_chown32(addr_t path_addr, uid_t_ owner, uid_t_ group) {
     return sys_fchownat(AT_FDCWD_, path_addr, owner, group, 0);
 }
 
+dword_t sys_lchown(addr_t path_addr, uid_t_ owner, uid_t_ group) {
+    return sys_fchownat(AT_FDCWD_, path_addr, owner, group, AT_SYMLINK_NOFOLLOW_);
+}
+
 dword_t sys_truncate64(addr_t path_addr, dword_t size_low, dword_t size_high) {
     off_t_ size = ((off_t_) size_high << 32) | size_low;
     char path[MAX_PATH];

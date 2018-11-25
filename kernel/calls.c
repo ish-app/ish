@@ -96,6 +96,7 @@ syscall_t syscall_table[] = {
     [195] = (syscall_t) sys_stat64,
     [196] = (syscall_t) sys_lstat64,
     [197] = (syscall_t) sys_fstat64,
+    [198] = (syscall_t) sys_lchown,
     [199] = (syscall_t) sys_getuid32,
     [200] = (syscall_t) sys_getgid32,
     [201] = (syscall_t) sys_geteuid32,
