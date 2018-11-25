@@ -113,7 +113,7 @@ static void fpu_comparei(struct cpu_state *cpu, float80 x) {
         cpu->zf = cpu->pf = cpu->cf = 1;
 }
 static void fpu_compare(struct cpu_state *cpu, float80 x) {
-    cpu->c1 = 0;
+    cpu->c2 = cpu->c1 = 0;
     cpu->c0 = f80_lt(ST(0), x);
     cpu->c3 = f80_eq(ST(0), x);
     if (f80_uncomparable(ST(0), x))
