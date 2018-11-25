@@ -60,6 +60,7 @@ src = [
     'kernel/signal.c',
     'kernel/resource.c',
     'kernel/random.c',
+    'kernel/prctl.c',
 
     'kernel/fs.c',
     'kernel/fs_info.c',
