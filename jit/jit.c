@@ -22,7 +22,6 @@ struct jit *jit_new(struct mem *mem) {
 }
 
 void jit_free(struct jit *jit) {
-    printk("freed jit with %d bytes used\n", jit->mem_used);
     for (int i = 0; i < JIT_HASH_SIZE; i++) {
         struct jit_block *block, *tmp;
         list_for_each_entry_safe(&jit->hash[i], block, tmp, chain) {
