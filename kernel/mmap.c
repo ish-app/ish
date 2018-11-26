@@ -110,7 +110,10 @@ int_t sys_mremap(addr_t addr, dword_t old_len, dword_t new_len, dword_t flags) {
     pages_t extra_pages = new_pages - old_pages;
     if (!pt_is_hole(current->mem, extra_start, extra_pages))
         return _ENOMEM;
-    return pt_map_nothing(current->mem, extra_start, extra_pages, pt_flags);
+    int err = pt_map_nothing(current->mem, extra_start, extra_pages, pt_flags);
+    if (err < 0)
+        return err;
+    return addr;
 }
 
 int_t sys_mprotect(addr_t addr, uint_t len, int_t prot) {
