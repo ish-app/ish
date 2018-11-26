@@ -62,7 +62,7 @@
             [observer finishEnumeratingWithError:[self errorFromCode:err]];
             return;
         }
-        if (err == 1)
+        if (err == 0)
             break;
         if (strcmp(dirent.name, ".") == 0 || strcmp(dirent.name, "..") == 0)
             continue;
