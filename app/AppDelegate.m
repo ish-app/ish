@@ -84,6 +84,7 @@ static void ios_handle_exit(int code) {
 }
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+    UIApplication.sharedApplication.idleTimerDisabled = YES;
     int err = [self startThings];
     if (err < 0) {
         NSString *message = [NSString stringWithFormat:@"could not initialize"];
