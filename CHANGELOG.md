@@ -2,4 +2,4 @@
 
 ## Build 33 (unreleased)
 ### Fixed
-- Segfault while doing large download with pip, due to returning NULL from successful mremap
+- Segfault while doing large download with pip, due to returning NULL from successful mremap. ffmpeg also had this problem.
