@@ -7,11 +7,15 @@
 #include <setjmp.h>
 
 // locks, implemented using pthread
-typedef pthread_mutex_t lock_t;
-#define lock_init(lock) pthread_mutex_init(lock, NULL)
-#define LOCK_INITIALIZER PTHREAD_MUTEX_INITIALIZER
-#define lock(lock) pthread_mutex_lock(lock)
-#define unlock(lock) pthread_mutex_unlock(lock)
+
+typedef struct {
+    pthread_mutex_t m;
+    pthread_t owner;
+} lock_t;
+#define lock_init(lock) pthread_mutex_init(&(lock)->m, NULL)
+#define LOCK_INITIALIZER {PTHREAD_MUTEX_INITIALIZER, 0}
+#define lock(lock) do { pthread_mutex_lock(&(lock)->m); (lock)->owner = pthread_self(); } while (0)
+#define unlock(lock) pthread_mutex_unlock(&(lock)->m)
 
 // conditions, implemented using pthread conditions but hacked so you can also
 // be woken by a signal

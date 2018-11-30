@@ -14,12 +14,18 @@ void deliver_signal(struct task *task, int sig) {
 retry:
         lock(&task->waiting_cond_lock);
         if (task->waiting_cond != NULL) {
-            if (pthread_mutex_trylock(task->waiting_lock)) {
-                unlock(&task->waiting_cond_lock);
-                goto retry;
+            bool mine = false;
+            if (pthread_mutex_trylock(&task->waiting_lock->m) == EBUSY) {
+                if (pthread_equal(task->waiting_lock->owner, pthread_self()))
+                    mine = true;
+                if (!mine) {
+                    unlock(&task->waiting_cond_lock);
+                    goto retry;
+                }
             }
             notify(task->waiting_cond);
-            unlock(task->waiting_lock);
+            if (!mine)
+                unlock(task->waiting_lock);
         }
         unlock(&task->waiting_cond_lock);
         pthread_kill(task->thread, SIGUSR1);

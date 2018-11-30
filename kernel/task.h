@@ -16,6 +16,7 @@ struct task {
     struct cpu_state cpu;
     struct mem *mem;
     pthread_t thread;
+    uint64_t threadid;
 
     struct tgroup *group; // immutable
     struct list group_links;
