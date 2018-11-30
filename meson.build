@@ -29,8 +29,6 @@ threads = dependency('threads')
 librt = cc.find_library('rt', required: false)
 libm = cc.find_library('m', required: false)
 
-gdbm = subproject('gdbm').get_variable('gdbm')
-
 subdir('vdso') # ish depends on the vdso
 
 offsets = custom_target('offsets',
@@ -113,12 +111,13 @@ else
     ]
 endif
 
+sqlite3 = cc.find_library('sqlite3')
+
 libish = library('ish', src,
-    include_directories: includes,
-    dependencies: [librt, libm, threads, gdbm])
+    include_directories: includes)
 ish = declare_dependency(
     link_with: libish,
-    dependencies: [librt, libm, threads, gdbm],
+    dependencies: [librt, libm, threads, sqlite3],
     include_directories: includes)
 
 # ptraceomatic et al

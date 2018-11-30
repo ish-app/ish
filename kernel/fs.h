@@ -6,7 +6,7 @@
 #include "fs/stat.h"
 #include "emu/memory.h"
 #include <dirent.h>
-#include <gdbm.h>
+#include <sqlite3.h>
 
 struct fs_info {
     atomic_uint refcount;
@@ -70,7 +70,20 @@ struct mount {
     int root_fd;
     union {
         void *data;
-        GDBM_FILE db;
+        struct {
+            sqlite3 *db;
+            struct {
+                sqlite3_stmt *begin;
+                sqlite3_stmt *commit;
+                sqlite3_stmt *rollback;
+                sqlite3_stmt *read_stat;
+                sqlite3_stmt *write_stat;
+                sqlite3_stmt *delete_stat;
+                sqlite3_stmt *write_path;
+                sqlite3_stmt *delete_path;
+            } stmt;
+            lock_t lock;
+        };
     };
 };
 extern struct mount *mounts;
