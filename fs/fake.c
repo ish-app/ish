@@ -42,15 +42,13 @@ static int check_db_err(GDBM_FILE db) {
         printk("recovery finished, %d lost keys, %d lost buckets, backed up to %s\n",
                 recovery.failed_keys, recovery.failed_buckets, recovery.backup_name);
         if (err != 0) {
-            printk("recovery failed\n");
-            abort(); // TODO something less mean
+            die("recovery failed");
         }
         return 1;
     }
     if (gdbm_last_errno(db) == 0 || gdbm_last_errno(db) == GDBM_ITEM_NOT_FOUND)
         return 0;
-    printk("gdbm error: %s\n", gdbm_db_strerror(db));
-    abort();
+    die("gdbm error: %s", gdbm_db_strerror(db));
 }
 
 static void lock_db(struct mount *mount) {
@@ -60,14 +58,14 @@ static void lock_db(struct mount *mount) {
         if (err == 0)
             break;
         if (err < 0 && errno != EINTR)
-            DIE("could not lock database");
+            ERRNO_DIE("could not lock database");
     }
 }
 static void unlock_db(struct mount *mount) {
     int fd = gdbm_fdesc(mount->db);
     int err = flock(fd, LOCK_UN);
     if (err < 0)
-        DIE("could not unlock database");
+        ERRNO_DIE("could not unlock database");
 }
 
 static datum make_datum(char *data, const char *format, ...) {
@@ -413,7 +411,7 @@ static int fakefs_mount(struct mount *mount) {
     // database file is stored inside the database and compared with the actual
     // database file inode, and if they're different we rebuild the database.
     struct stat stat;
-    if (fstat(gdbm_fdesc(mount->db), &stat) < 0) DIE("fstat database");
+    if (fstat(gdbm_fdesc(mount->db), &stat) < 0) ERRNO_DIE("fstat database");
     datum key = {.dptr = "db inode", .dsize = strlen("db inode")};
     datum value = gdbm_fetch(mount->db, key);
     if (value.dptr != NULL) {

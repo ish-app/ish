@@ -98,8 +98,7 @@ static void receive_signal(struct sighand *sighand, int sig) {
 
     addr_t sigreturn_addr = vdso_symbol("__kernel_rt_sigreturn");
     if (sigreturn_addr == 0) {
-        fprintf(stderr, "sigreturn not found in vdso, this should never happen\n");
-        abort();
+        die("sigreturn not found in vdso, this should never happen");
     }
     frame.pretcode = current->mem->vdso + sigreturn_addr;
     // for legacy purposes

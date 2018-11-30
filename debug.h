@@ -68,9 +68,11 @@ extern int log_override;
 #define DEFAULT_CHANNEL default
 #endif
 
-#define TODO(msg, ...) { printk("TODO: " msg "\n", ##__VA_ARGS__); abort(); }
+#define TODO(msg, ...) die("TODO: " msg, ##__VA_ARGS__)
 #define FIXME(msg, ...) printk("FIXME " msg "\n", ##__VA_ARGS__)
-#define DIE(msg) { perror(msg); abort(); }
+#define ERRNO_DIE(msg) { perror(msg); abort(); }
+extern void (*die_handler)(const char *msg);
+_Noreturn void die(const char *msg, ...);
 
 #define STRACE(msg, ...) TRACE_(strace, msg, ##__VA_ARGS__)
 

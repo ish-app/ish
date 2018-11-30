@@ -12,8 +12,7 @@ static void gen(struct gen_state *state, unsigned long thing) {
         struct jit_block *bigger_block = realloc(state->block,
                 sizeof(struct jit_block) + state->capacity * sizeof(unsigned long));
         if (bigger_block == NULL) {
-            printk("out of memory while jitting");
-            abort();
+            die("out of memory while jitting");
         }
         state->block = bigger_block;
     }

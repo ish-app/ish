@@ -161,3 +161,17 @@ static void log_line(const char *line) {
 }
 #endif
 
+static void default_die_handler(const char *msg) {
+    printk("%s\n", msg);
+}
+void (*die_handler)(const char *msg) = default_die_handler;
+_Noreturn void die(const char *msg, ...);
+void die(const char *msg, ...) {
+    va_list args;
+    va_start(args, msg);
+    char buf[4096];
+    vsprintf(buf, msg, args);
+    die_handler(buf);
+    abort();
+    va_end(args);
+}

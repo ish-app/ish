@@ -272,7 +272,7 @@ static int elf_exec(struct fd *fd, const char *file, char *const argv[], char *c
     int dev_random = open("/dev/urandom", O_RDONLY);
     if (dev_random < 0 ||
             read(dev_random, random, sizeof(random)) != sizeof(random))
-        abort(); // if this fails, something is very badly wrong indeed
+        ERRNO_DIE("getting randomness for exec");
     close(dev_random);
     addr_t random_addr = sp -= sizeof(random);
     if (user_put(sp, random))

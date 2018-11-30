@@ -95,7 +95,7 @@ static void *task_run(void *task) {
         task_run_hook();
     else
         cpu_run(&current->cpu);
-    abort(); // above function call should never return
+    die("task_run returned"); // above function call should never return
 }
 
 static pthread_attr_t task_thread_attr;
@@ -106,5 +106,5 @@ __attribute__((constructor)) static void create_attr() {
 
 void task_start(struct task *task) {
     if (pthread_create(&task->thread, &task_thread_attr, task_run, task) < 0)
-        abort();
+        die("could not create thread");
 }
