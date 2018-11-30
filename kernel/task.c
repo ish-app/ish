@@ -91,7 +91,6 @@ void (*task_run_hook)(void) = NULL;
 
 static void *task_run(void *task) {
     current = task;
-    pthread_threadid_np(pthread_self(), &current->threadid);
     if (task_run_hook)
         task_run_hook();
     else
