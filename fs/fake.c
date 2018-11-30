@@ -96,7 +96,7 @@ static void delete_path(struct mount *mount, const char *path) {
 }
 
 static bool read_stat(struct mount *mount, const char *path, struct ish_stat *stat) {
-    ino_t inode = write_path(mount, path);
+    ino_t inode = inode_for_path(mount, path);
     if (inode == 0)
         return false;
     sqlite3_bind_int64(mount->stmt.read_stat, 1, inode);
@@ -389,6 +389,13 @@ static int fakefs_mount(struct mount *mount) {
         return _EINVAL;
     }
 
+    // let's do WAL mode
+    sqlite3_stmt *statement = db_prepare(mount, "pragma journal_mode=wal");
+    db_check_error(mount);
+    sqlite3_step(statement);
+    db_check_error(mount);
+    sqlite3_finalize(statement);
+
 #if DEBUG_sql
     sqlite3_trace_v2(mount->db, SQLITE_TRACE_STMT, trace_callback, NULL);
 #endif
@@ -405,7 +412,7 @@ static int fakefs_mount(struct mount *mount) {
     struct stat statbuf;
     if (stat(db_path, &statbuf) < 0) ERRNO_DIE("stat database");
     ino_t db_inode = statbuf.st_ino;
-    sqlite3_stmt *statement = db_prepare(mount, "select db_inode from meta");
+    statement = db_prepare(mount, "select db_inode from meta");
     if (sqlite3_step(statement) == SQLITE_ROW) {
         if (sqlite3_column_int64(statement, 0) != db_inode) {
             sqlite3_finalize(statement);
