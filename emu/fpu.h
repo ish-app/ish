@@ -54,8 +54,10 @@ void fpu_yl2x(struct cpu_state *cpu);
 void fpu_2xm1(struct cpu_state *cpu);
 
 void fpu_com(struct cpu_state *cpu, int i);
+void fpu_comm32(struct cpu_state *cpu, float *f);
 void fpu_comm64(struct cpu_state *cpu, double *f);
 void fpu_comi(struct cpu_state *cpu, int i);
+void fpu_tst(struct cpu_state *cpu);
 #define fpu_ucom fpu_com
 #define fpu_ucomi fpu_comi
 

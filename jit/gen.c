@@ -356,6 +356,8 @@ void helper_rdtsc(struct cpu_state *cpu);
 #define FUCOM() hh(fpu_ucom, st_i)
 #define FUCOMI() hh(fpu_ucomi, st_i)
 #define FCOMI() hh(fpu_comi, st_i)
+#define FTST() h(fpu_tst)
+#define FXAM() h(fpu_xam)
 #define FST() hh(fpu_st, st_i)
 #define FCHS() h(fpu_chs)
 #define FABS() h(fpu_abs)
@@ -388,7 +390,6 @@ void helper_rdtsc(struct cpu_state *cpu);
 #define FIDIVR(val,z) h_read(fpu_idivr, z)
 #define FDIVRM(val,z) h_read(fpu_divrm, z)
 #define FPATAN() h(fpu_patan)
-#define FXAM() h(fpu_xam)
 
 #define DECODER_RET int
 #define DECODER_NAME gen_step

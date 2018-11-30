@@ -571,6 +571,8 @@ restart:
                 switch (insn << 4 | modrm.opcode) {
                     case 0xd80: TRACE("fadd mem32"); FADDM(mem_addr_real,32); break;
                     case 0xd81: TRACE("fmul mem32"); FMULM(mem_addr_real,32); break;
+                    case 0xd82: TRACE("fcom mem32"); FCOMM(mem_addr_real,32); break;
+                    case 0xd83: TRACE("fcomp mem32"); FCOMM(mem_addr_real,32); FPOP; break;
                     case 0xd84: TRACE("fsub mem32"); FSUBM(mem_addr_real,32); break;
                     case 0xd85: TRACE("fsubr mem32"); FSUBRM(mem_addr_real,32); break;
                     case 0xd86: TRACE("fdiv mem32"); FDIVM(mem_addr_real,32); break;
@@ -612,6 +614,8 @@ restart:
                 switch (insn << 4 | modrm.opcode) {
                     case 0xd80: TRACE("fadd st(i), st"); FADD(st_i, st_0); break;
                     case 0xd81: TRACE("fmul st(i), st"); FMUL(st_i, st_0); break;
+                    case 0xd82: TRACE("fcom st"); FCOM(); break;
+                    case 0xd83: TRACE("fcomp st"); FCOM(); FPOP; break;
                     case 0xd84: TRACE("fsub st(i), st"); FSUB(st_i, st_0); break;
                     case 0xd85: TRACE("fsubr st(i), st"); FSUBR(st_i, st_0); break;
                     case 0xd86: TRACE("fdiv st(i), st"); FDIV(st_i, st_0); break;
@@ -640,6 +644,7 @@ restart:
                     default: switch (insn << 8 | modrm.opcode << 4 | modrm.rm_opcode) {
                     case 0xd940: TRACE("fchs"); FCHS(); break;
                     case 0xd941: TRACE("fabs"); FABS(); break;
+                    case 0xd944: TRACE("fchs"); FCHS(); break;
                     case 0xd945: TRACE("fxam"); FXAM(); break;
                     case 0xd950: TRACE("fld1"); FLDC(one); break;
                     case 0xd951: TRACE("fldl2t"); FLDC(log2t); break;
@@ -654,6 +659,7 @@ restart:
                     case 0xd970: TRACE("fprem"); FPREM(); break;
                     case 0xd972: TRACE("fsqrt"); FSQRT(); break;
                     case 0xd974: TRACE("frndint"); FRNDINT(); break;
+                    case 0xde31: TRACE("fcompp"); FCOM(); FPOP; FPOP; break;
                     case 0xdf40: TRACE("fnstsw ax"); FSTSW(reg_a); break;
                     default: TRACE("undefined"); UNDEFINED;
                 }}

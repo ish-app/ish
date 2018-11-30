@@ -452,6 +452,8 @@ float80 f80_log2(float80 x) {
     float80 zero = f80_from_int(0);
     float80 one = f80_from_int(1);
     float80 two = f80_from_int(2);
+    if (f80_isnan(x) || f80_lte(x, zero))
+        return F80_NAN;
 
     int ipart = 0;
     while (f80_lt(x, one)) {
