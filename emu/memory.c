@@ -113,6 +113,7 @@ int pt_map(struct mem *mem, page_t start, pages_t pages, void *memory, unsigned 
     if (data == NULL)
         return _ENOMEM;
     data->data = memory;
+    data->size = pages * PAGE_SIZE;
     data->refcount = 0;
 
     for (page_t page = start; page < start + pages; page++) {
@@ -142,7 +143,7 @@ int pt_unmap(struct mem *mem, page_t start, pages_t pages, int force) {
             struct data *data = pt->data;
             mem_pt_del(mem, page);
             if (--data->refcount == 0) {
-                munmap(data->data, PAGE_SIZE);
+                munmap(data->data, data->size);
                 free(data);
             }
         }

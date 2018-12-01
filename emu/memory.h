@@ -56,6 +56,7 @@ typedef dword_t pages_t;
 
 struct data {
     void *data; // immutable
+    size_t size; // also immutable
     atomic_uint refcount;
 };
 struct pt_entry {
