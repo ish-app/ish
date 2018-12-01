@@ -163,6 +163,8 @@ int sys_set_thread_area(addr_t u_info);
 int sys_set_tid_address(addr_t blahblahblah);
 dword_t sys_setsid(void);
 dword_t sys_getsid(void);
+
+int_t sys_sched_yield(void);
 int_t sys_prctl(dword_t option, uint_t arg2, uint_t arg3, uint_t arg4, uint_t arg5);
 
 // system information

@@ -108,3 +108,8 @@ void task_start(struct task *task) {
     if (pthread_create(&task->thread, &task_thread_attr, task_run, task) < 0)
         die("could not create thread");
 }
+
+int_t sys_sched_yield() {
+    sched_yield();
+    return 0;
+}
