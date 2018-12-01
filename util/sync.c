@@ -36,7 +36,7 @@ int wait_for_ignore_signals(cond_t *cond, lock_t *lock, struct timespec *timeout
     }
     int rc = 0;
     if (!timeout) {
-        pthread_cond_wait(&cond->cond, lock);
+        pthread_cond_wait(&cond->cond, &lock->m);
     } else {
 #if __linux__
         struct timespec abs_timeout;
@@ -47,9 +47,9 @@ int wait_for_ignore_signals(cond_t *cond, lock_t *lock, struct timespec *timeout
             abs_timeout.tv_sec++;
             abs_timeout.tv_nsec -= 1000000000;
         }
-        rc = pthread_cond_timedwait(&cond->cond, lock, &abs_timeout);
+        rc = pthread_cond_timedwait(&cond->cond, &lock->m, &abs_timeout);
 #elif __APPLE__
-        rc = pthread_cond_timedwait_relative_np(&cond->cond, lock, timeout);
+        rc = pthread_cond_timedwait_relative_np(&cond->cond, &lock->m, timeout);
 #else
 #error Unimplemented pthread_cond_wait relative timeout.
 #endif
