@@ -52,6 +52,8 @@ void jit_invalidate_page(struct jit *jit, page_t page) {
 static void jit_insert(struct jit *jit, struct jit_block *block) {
     jit->mem_used += block->used;
     list_add(&jit->hash[block->addr % JIT_HASH_SIZE], &block->chain);
+    if (mem_pt(jit->mem, PAGE(block->addr)) == NULL)
+        return;
     list_init_add(blocks_list(jit, PAGE(block->addr), 0), &block->page[0]);
     if (PAGE(block->addr) != PAGE(block->end_addr))
         list_init_add(blocks_list(jit, PAGE(block->end_addr), 1), &block->page[1]);
