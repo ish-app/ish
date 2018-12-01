@@ -39,6 +39,27 @@ dword_t sys_clock_gettime(dword_t clock, addr_t tp) {
     return 0;
 }
 
+dword_t sys_clock_getres(dword_t clock, addr_t res_addr) {
+    STRACE("clock_getres(%d, %#x)", clock, res_addr);
+    clockid_t clock_id;
+    switch (clock) {
+        case CLOCK_REALTIME_: clock_id = CLOCK_REALTIME; break;
+        case CLOCK_MONOTONIC_: clock_id = CLOCK_MONOTONIC; break;
+        default: return _EINVAL;
+    }
+
+    struct timespec res;
+    int err = clock_getres(clock_id, &res);
+    if (err < 0)
+        return errno_map();
+    struct timespec_ t;
+    t.sec = res.tv_sec;
+    t.nsec = res.tv_nsec;
+    if (user_put(res_addr, t))
+        return _EFAULT;
+    return 0;
+}
+
 dword_t sys_clock_settime(dword_t clock, addr_t tp) {
     return _EPERM;
 }

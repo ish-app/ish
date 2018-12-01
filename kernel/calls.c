@@ -122,6 +122,7 @@ syscall_t syscall_table[] = {
     [258] = (syscall_t) sys_set_tid_address,
     [264] = (syscall_t) sys_clock_settime,
     [265] = (syscall_t) sys_clock_gettime,
+    [266] = (syscall_t) sys_clock_getres,
     [268] = (syscall_t) sys_statfs64,
     [269] = (syscall_t) sys_fstatfs64,
     [295] = (syscall_t) sys_openat,
