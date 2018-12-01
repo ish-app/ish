@@ -125,6 +125,7 @@ syscall_t syscall_table[] = {
     [266] = (syscall_t) sys_clock_getres,
     [268] = (syscall_t) sys_statfs64,
     [269] = (syscall_t) sys_fstatfs64,
+    [274] = (syscall_t) sys_mbind,
     [295] = (syscall_t) sys_openat,
     [296] = (syscall_t) sys_mkdirat,
     [298] = (syscall_t) sys_fchownat,

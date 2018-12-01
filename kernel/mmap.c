@@ -134,6 +134,10 @@ dword_t sys_madvise(addr_t addr, dword_t len, dword_t advice) {
     return 0;
 }
 
+dword_t sys_mbind(addr_t addr, dword_t len, int_t mode, addr_t nodemask, dword_t maxnode, uint_t flags) {
+    return 0;
+}
+
 addr_t sys_brk(addr_t new_brk) {
     STRACE("brk(0x%x)", new_brk);
     struct mem *mem = current->mem;
