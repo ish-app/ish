@@ -364,6 +364,7 @@ void helper_rdtsc(struct cpu_state *cpu);
 #define FLDC(what) hh(fpu_ldc, fconst_##what)
 #define FPREM() h(fpu_prem)
 #define FRNDINT() h(fpu_rndint)
+#define FSCALE() h(fpu_scale)
 #define FSQRT() h(fpu_sqrt)
 #define FYL2X() h(fpu_yl2x)
 #define F2XM1() h(fpu_2xm1)

@@ -80,6 +80,7 @@
     ST(0) = f80_mod(ST(0), ST(1))
 
 #define FRNDINT() UNDEFINED
+#define FSCALE() UNDEFINED
 #define FYL2X() UNDEFINED
 #define F2XM1() UNDEFINED
 #define FSQRT() UNDEFINED

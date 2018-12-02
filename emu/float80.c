@@ -484,7 +484,7 @@ float80 f80_sqrt(float80 x) {
     // for a rough guess, just cut the exponent by 2
     float80 guess = x;
     guess.exp = bias(unbias(guess.exp) / 2);
-    // now converge on the answer, using what newton's method
+    // now converge on the answer, using newton's method
     float80 old_guess;
     float80 two = f80_from_int(2);
     int i = 0;
@@ -493,4 +493,10 @@ float80 f80_sqrt(float80 x) {
         guess = f80_div(f80_add(guess, f80_div(x, guess)), two);
     } while (!f80_eq(guess, old_guess) && i++ < 100);
     return guess;
+}
+
+float80 f80_scale(float80 x, int scale) {
+    if (!f80_is_supported(x) || f80_isnan(x))
+        return F80_NAN;
+    return u128_normalize_round((unsigned __int128) x.signif << 64, unbias(x.exp) + scale, x.sign);
 }

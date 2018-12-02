@@ -26,9 +26,6 @@ bool f80_iszero(float80 f);
 bool f80_isdenormal(float80 f);
 bool f80_is_supported(float80 f);
 
-float80 f80_neg(float80 f);
-float80 f80_abs(float80 f);
-
 float80 f80_add(float80 a, float80 b);
 float80 f80_sub(float80 a, float80 b);
 float80 f80_mul(float80 a, float80 b);
@@ -40,6 +37,14 @@ bool f80_lt(float80 a, float80 b);
 bool f80_eq(float80 a, float80 b);
 bool f80_uncomparable(float80 a, float80 b);
 
+float80 f80_neg(float80 f);
+float80 f80_abs(float80 f);
+
+float80 f80_log2(float80 x);
+float80 f80_sqrt(float80 x);
+
+float80 f80_scale(float80 x, int scale);
+
 enum f80_rounding_mode {
     round_to_nearest = 0,
     round_down = 1,
@@ -50,8 +55,5 @@ extern __thread enum f80_rounding_mode f80_rounding_mode;
 
 #define F80_NAN ((float80) {.signif = 0xc000000000000000, .exp = 0x7fff, .sign = 0})
 #define F80_INF ((float80) {.signif = 0x8000000000000000, .exp = 0x7fff, .sign = 0})
-
-float80 f80_log2(float80 x);
-float80 f80_sqrt(float80 x);
 
 #endif

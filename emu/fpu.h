@@ -47,6 +47,7 @@ void fpu_ldm80(struct cpu_state *cpu, float80 *f);
 
 void fpu_prem(struct cpu_state *cpu);
 void fpu_rndint(struct cpu_state *cpu);
+void fpu_scale(struct cpu_state *cpu);
 void fpu_abs(struct cpu_state *cpu);
 void fpu_chs(struct cpu_state *cpu);
 void fpu_sqrt(struct cpu_state *cpu);
