@@ -685,7 +685,7 @@
 				BB792B4D1F96D90D00FFB7A4 /* Frameworks */,
 				BBF1248B1FA7BF530088FB50 /* Download Alpine */,
 				BBF1248A1FA7BDBA0088FB50 /* Create Alpine Filesystem */,
-				BB4A53AC1FAA49CA00A72ACE /* Run Webpack */,
+				BB4A53AC1FAA49CA00A72ACE /* Compile JavaScript */,
 				BB792B4E1F96D90D00FFB7A4 /* Resources */,
 				BB88F4A32154760800A341FD /* Embed App Extensions */,
 			);
@@ -825,7 +825,7 @@
 			shellPath = /bin/sh;
 			shellScript = "mkdir -p $CONFIGURATION_BUILD_DIR\nln -sf $MESON_BUILD_DIR/libish.a $CONFIGURATION_BUILD_DIR\n";
 		};
-		BB4A53AC1FAA49CA00A72ACE /* Run Webpack */ = {
+		BB4A53AC1FAA49CA00A72ACE /* Compile JavaScript */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -833,13 +833,13 @@
 			inputPaths = (
 				"$(SRCROOT)/app/xtermjs",
 			);
-			name = "Run Webpack";
+			name = "Compile JavaScript";
 			outputPaths = (
 				"$(SRCROOT)/app/xtermjs/bundle.js",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = "/bin/sh -e";
-			shellScript = "unset SDKROOT\ncd $SRCROOT/app/xtermjs\nyarn\nyarn build\n";
+			shellScript = "unset SDKROOT\ncd $SRCROOT/app/xtermjs\ntest -d node_modules || npm install\nnpm run build\n";
 		};
 		BBF1248A1FA7BDBA0088FB50 /* Create Alpine Filesystem */ = {
 			isa = PBXShellScriptBuildPhase;

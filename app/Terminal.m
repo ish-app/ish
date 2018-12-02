@@ -103,16 +103,22 @@ static Terminal *terminal = nil;
     [prefs addObserver:self forKeyPath:@"theme" options:opts context:nil];
 }
 
+- (NSString *)cssColor:(UIColor *)color {
+    CGFloat red, green, blue, alpha;
+    [color getRed:&red green:&green blue:&blue alpha:&alpha];
+    return [NSString stringWithFormat:@"rgba(%ld, %ld, %ld, %ld)",
+            lround(red * 255), lround(green * 255), lround(blue * 255), lround(alpha * 255)];
+}
+
 - (void)_updateStyleFromPreferences {
     UserPreferences *prefs = [UserPreferences shared];
-    
-    NSString *js = [NSString stringWithFormat:@"var terminal = document.getElementsByClassName('terminal')[0];"
-                                              @"var prefs = %@;"
-                                              @"terminal.style.fontSize = prefs.fontSize + 'px';"
-                                              @"terminal.style.color = prefs.foregroundColor;",
-                    [prefs JSONDictionary]];
-    
-    [self.webView evaluateJavaScript:js completionHandler:nil];
+    id themeInfo = @{
+                     @"fontSize": prefs.fontSize,
+                     @"foregroundColor": [self cssColor:prefs.theme.foregroundColor],
+                     @"backgroundColor": [self cssColor:prefs.theme.backgroundColor],
+                     };
+    NSString *json = [[NSString alloc] initWithData:[NSJSONSerialization dataWithJSONObject:themeInfo options:0 error:nil] encoding:NSUTF8StringEncoding];
+    [self.webView evaluateJavaScript:[NSString stringWithFormat:@"updateStyle(%@)", json] completionHandler:nil];
 }
 
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context {

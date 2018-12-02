@@ -15,9 +15,7 @@ body {
 
 .terminal {
     background: transparent;
-    color: black;
     font-family: "Menlo";
-    font-size: 12px;
     
     -webkit-user-select: text;
     -webkit-tap-highlight-color: transparent;
@@ -32,12 +30,9 @@ body {
     -webkit-overflow-scrolling: touch;
 }
 
-.terminal.focus:not(.xterm-cursor-style-underline):not(.xterm-cursor-style-bar) .terminal-cursor {
-    background-color: black;
-    color: white;
-}
 .terminal:not(.focus) .terminal-cursor {
-    outline: 1px solid black;
+    outline-width: 1px;
+    outline-style: solid;
     outline-offset: -1px;
     background-color: transparent;
 }

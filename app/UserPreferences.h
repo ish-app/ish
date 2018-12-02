@@ -7,29 +7,39 @@
 
 #import <Foundation/Foundation.h>
 
-// Add new themes to the end of the enum (before count) for backwards compatibility
-typedef NS_ENUM(NSInteger, UserPreferenceTheme) {
-    UserPreferenceThemeLight,
-    UserPreferenceThemeDark,
-    UserPreferenceThemeCount
+typedef NS_ENUM(NSInteger, CapslockMapping) {
+    CapslockMapControl,
+    CapslockMapEscape,
+    CapslockMapNone,
 };
-
-extern UIColor *ThemeBackgroundColor(UserPreferenceTheme theme);
-extern UIColor *ThemeForegroundColor(UserPreferenceTheme theme);
-extern UIStatusBarStyle ThemeStatusBar(UserPreferenceTheme theme);
-extern UIKeyboardAppearance ThemeKeyboard(UserPreferenceTheme theme);
-extern NSString *ThemeName(UserPreferenceTheme theme);
 
 NS_ASSUME_NONNULL_BEGIN
 
+@interface Theme : NSObject
+
+- (instancetype)initWithProperties:(NSDictionary<NSString *, id> *)props;
+- (NSDictionary<NSString *, id> *)properties;
+
++ (instancetype)presetThemeNamed:(NSString *)name;
++ (NSArray<NSString *> *)presetNames;
+- (NSString *)presetName;
+
+@property (nonatomic, readonly) UIColor *foregroundColor;
+@property (nonatomic, readonly) UIColor *backgroundColor;
+@property (readonly) UIKeyboardAppearance keyboardAppearance;
+@property (readonly) UIStatusBarStyle statusBarStyle;
+
+@end
+extern NSString *const kThemeForegroundColor;
+extern NSString *const kThemeBackgroundColor;
+
 @interface UserPreferences : NSObject
 
-@property (nonatomic) BOOL mapCapsLockAsControl;
-@property (nonatomic) UserPreferenceTheme theme;
+@property (nonatomic) CapslockMapping capslockMapping;
+@property (nonatomic) Theme *theme;
 @property (nonatomic, copy) NSNumber *fontSize;
 
 + (instancetype)shared;
-- (NSString *)JSONDictionary;
 
 @end
 

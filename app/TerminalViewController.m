@@ -86,13 +86,13 @@
 - (void)_updateStyleFromPreferences:(BOOL)animated {
     NSTimeInterval duration = animated ? 0.1 : 0;
     [UIView animateWithDuration:duration animations:^{
-        self.view.backgroundColor = ThemeBackgroundColor([UserPreferences shared].theme);
-        self.termView.keyboardAppearance = ThemeKeyboard([UserPreferences shared].theme);
+        self.view.backgroundColor = UserPreferences.shared.theme.backgroundColor;
+        self.termView.keyboardAppearance = UserPreferences.shared.theme.keyboardAppearance;
     }];
 }
 
 - (UIStatusBarStyle)preferredStatusBarStyle {
-    return ThemeStatusBar([UserPreferences shared].theme);
+    return UserPreferences.shared.theme.statusBarStyle;
 }
 
 - (BOOL)prefersStatusBarHidden {

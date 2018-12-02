@@ -58,7 +58,7 @@
 - (void)_updatePreferenceUI {
     UserPreferences *prefs = [UserPreferences shared];
     _fontSizeCell.detailTextLabel.text = prefs.fontSize.stringValue;
-    _themeCell.detailTextLabel.text = ThemeName(prefs.theme);
+    _themeCell.detailTextLabel.text = prefs.theme.presetName;
 }
 
 - (IBAction)didSwitchCapsLock:(id)sender {

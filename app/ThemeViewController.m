@@ -45,7 +45,7 @@ static NSString *const ThemeNameCellIdentifier = @"ThemeNameCell";
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     if (section == 0) {
-        return UserPreferenceThemeCount;
+        return Theme.presetNames.count;
     } else if (section == 1) {
         // row used to preview selected theme
         return 1;
@@ -63,8 +63,11 @@ static NSString *const ThemeNameCellIdentifier = @"ThemeNameCell";
     return nil;
 }
 
+- (Theme *)_themeForRow:(NSUInteger)row {
+    return [Theme presetThemeNamed:Theme.presetNames[row]];
+}
+
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-    
     // reuse preview cell separately to avoid reuse issues
     NSString *reuseIdentifier = indexPath.section == 1 ? PreviewCellIdentifier : ThemeNameCellIdentifier;
     UserPreferences *prefs = [UserPreferences shared];
@@ -72,11 +75,15 @@ static NSString *const ThemeNameCellIdentifier = @"ThemeNameCell";
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:reuseIdentifier forIndexPath:indexPath];
     
     if (indexPath.section == 0) {
-        cell.textLabel.text = ThemeName(indexPath.row);
-        cell.accessoryType = indexPath.row == prefs.theme ? UITableViewCellAccessoryCheckmark : UITableViewCellAccessoryNone;
+        cell.textLabel.text = Theme.presetNames[indexPath.row];
+        if ([prefs.theme isEqual:[self _themeForRow:indexPath.row]]) {
+            cell.accessoryType = UITableViewCellAccessoryCheckmark;
+        } else {
+            cell.accessoryType = UITableViewCellAccessoryNone;
+        }
     } else if (indexPath.section == 1) {
-        cell.backgroundColor = ThemeBackgroundColor(prefs.theme);
-        cell.textLabel.textColor = ThemeForegroundColor(prefs.theme);
+        cell.backgroundColor = prefs.theme.backgroundColor;
+        cell.textLabel.textColor = prefs.theme.foregroundColor;
         cell.textLabel.font = [UIFont fontWithName:@"Menlo-Regular" size:prefs.fontSize.doubleValue];
         cell.textLabel.text = [NSString stringWithFormat:@"%@:~# ps aux", [UIDevice currentDevice].name];
         cell.selectionStyle = UITableViewCellSelectionStyleNone;
@@ -93,7 +100,7 @@ static NSString *const ThemeNameCellIdentifier = @"ThemeNameCell";
         return;
     }
     
-    [[UserPreferences shared] setTheme:indexPath.row];
+    UserPreferences.shared.theme = [self _themeForRow:indexPath.row];
 }
 
 @end
