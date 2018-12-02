@@ -335,27 +335,27 @@ static struct socket_call {
     syscall_t func;
     int args;
 } socket_calls[] = {
-    {NULL, 0},
+    {NULL},
     {(syscall_t) sys_socket, 3},
     {(syscall_t) sys_bind, 3},
     {(syscall_t) sys_connect, 3},
-    {NULL, 0}, // listen
-    {NULL, 0}, // accept
+    {NULL}, // listen
+    {NULL}, // accept
     {(syscall_t) sys_getsockname, 3}, // getsockname
     {(syscall_t) sys_getpeername, 3}, // getpeername
     {(syscall_t) sys_socketpair, 4}, // socketpair
-    {NULL, 0}, // send
-    {NULL, 0}, // recv
+    {NULL}, // send
+    {NULL}, // recv
     {(syscall_t) sys_sendto, 6}, // sendto
     {(syscall_t) sys_recvfrom, 6}, // recvfrom
     {(syscall_t) sys_shutdown, 2}, // shutdown
     {(syscall_t) sys_setsockopt, 5}, // setsockopt
     {(syscall_t) sys_getsockopt, 5}, // getsockopt
-    {NULL, 0}, // sendmsg
-    {NULL, 0}, // recvmsg
-    {NULL, 0}, // accept4
-    {NULL, 0}, // recvmmsg
-    {NULL, 0}, // sendmmsg
+    {NULL}, // sendmsg
+    {NULL}, // recvmsg
+    {NULL}, // accept4
+    {NULL}, // recvmmsg
+    {NULL}, // sendmmsg
 };
 
 dword_t sys_socketcall(dword_t call_num, addr_t args_addr) {
@@ -364,7 +364,7 @@ dword_t sys_socketcall(dword_t call_num, addr_t args_addr) {
         return _EINVAL;
     struct socket_call call = socket_calls[call_num];
     if (call.func == NULL) {
-        TODO("socketcall %d", call_num);
+        FIXME("socketcall %d", call_num);
         return _ENOSYS;
     }
 
