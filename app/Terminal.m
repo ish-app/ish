@@ -21,6 +21,14 @@
 
 @end
 
+@interface CustomWebView : WKWebView
+@end
+@implementation CustomWebView
+- (BOOL)becomeFirstResponder {
+    return NO;
+}
+@end
+
 @implementation Terminal
 
 static Terminal *terminal = nil;
@@ -37,7 +45,7 @@ static Terminal *terminal = nil;
         [config.userContentController addScriptMessageHandler:self name:@"log"];
         [config.userContentController addScriptMessageHandler:self name:@"resize"];
         [config.userContentController addScriptMessageHandler:self name:@"selectionchange"];
-        self.webView = [[WKWebView alloc] initWithFrame:CGRectZero configuration:config];
+        self.webView = [[CustomWebView alloc] initWithFrame:CGRectZero configuration:config];
         self.webView.scrollView.scrollEnabled = NO;
         [self.webView loadRequest:
          [NSURLRequest requestWithURL:
