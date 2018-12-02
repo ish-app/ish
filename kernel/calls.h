@@ -154,6 +154,8 @@ dword_t sys_getegid32(void);
 dword_t sys_getegid(void);
 dword_t sys_setresuid(uid_t_ ruid, uid_t_ euid, uid_t_ suid);
 dword_t sys_setresgid(uid_t_ rgid, uid_t_ egid, uid_t_ sgid);
+int_t sys_getgroups(dword_t size, addr_t list);
+int_t sys_setgroups(dword_t size, addr_t list);
 dword_t sys_getcwd(addr_t buf_addr, dword_t size);
 dword_t sys_chdir(addr_t path_addr);
 dword_t sys_chroot(addr_t path_addr);
@@ -163,6 +165,7 @@ int sys_set_thread_area(addr_t u_info);
 int sys_set_tid_address(addr_t blahblahblah);
 dword_t sys_setsid(void);
 dword_t sys_getsid(void);
+
 
 int_t sys_sched_yield(void);
 int_t sys_prctl(dword_t option, uint_t arg2, uint_t arg3, uint_t arg4, uint_t arg5);

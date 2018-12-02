@@ -130,3 +130,21 @@ dword_t sys_setresgid(uid_t_ rgid, uid_t_ egid, uid_t_ sgid) {
     return 0;
 }
 
+int_t sys_getgroups(dword_t size, addr_t list) {
+    if (size == 0)
+        return current->ngroups;
+    if (size < current->ngroups)
+        return _EINVAL;
+    if (user_write(list, current->groups, size * sizeof(uid_t_)))
+        return _EFAULT;
+    return 0;
+}
+
+int_t sys_setgroups(dword_t size, addr_t list) {
+    if (size > MAX_GROUPS)
+        return _EINVAL;
+    if (user_read(list, current->groups, size * sizeof(uid_t_)))
+        return _EFAULT;
+    current->ngroups = size;
+    return 0;
+}
