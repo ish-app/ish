@@ -62,10 +62,12 @@
     dst = f80_div(dst, src)
 #define FIDIV(val,z) \
     ST(0) = f80_div(ST(0), f80_from_int((sint(z)) get(val,z)))
-#define FIDIVR(val,z) \
-    ST(0) = f80_div(f80_from_int((sint(z)) get(val,z)), ST(0))
 #define FDIVM(val,z) \
     ST(0) = f80_div(ST(0), f80_from_float(get(val,z),z))
+#define FDIVR(src, dst) \
+    dst = f80_div(src, dst)
+#define FIDIVR(val,z) \
+    ST(0) = f80_div(f80_from_int((sint(z)) get(val,z)), ST(0))
 #define FDIVRM(val,z) \
     ST(0) = f80_div(f80_from_float(get(val,z),z), ST(0))
 
@@ -78,13 +80,19 @@
     ST(0) = f80_mod(ST(0), ST(1))
 
 #define FRNDINT() UNDEFINED
+#define FSCALE() UNDEFINED
 #define FYL2X() UNDEFINED
+#define F2XM1() UNDEFINED
+#define FSQRT() UNDEFINED
 
 #define FUCOMI() \
     cpu->zf = f80_eq(ST(0), ST_i); \
     cpu->cf = f80_lt(ST(0), ST_i); \
     cpu->pf = 0; cpu->pf_res = 0
 // not worrying about nans and shit yet
+
+#define FCOMI FUCOMI
+// FCOMI is supposed to be even more strict with NaNs. We still won't worry.
 
 #define F_COMPARE(x) \
     cpu->c0 = f80_lt(ST(0), x); \
@@ -94,6 +102,7 @@
 #define FCOM() F_COMPARE(ST_i)
 #define FUCOM FCOM
 #define FCOMM(val,z) F_COMPARE(f80_from_float(get(val,z),z))
+#define FTST() F_COMPARE(fpu_consts[fconst_zero])
 
 #define FILD(val,z) \
     FPUSH(f80_from_int((sint(z)) get(val,z)))
@@ -116,3 +125,10 @@
     set(dst, cpu->fcw,16)
 #define FLDCW(dst) \
     cpu->fcw = get(dst,16)
+
+// there's no native atan2 for 80-bit float yet.
+#define FPATAN() \
+    ST(1) = f80_from_double(atan2(f80_to_double(ST(1)), f80_to_double(ST(0)))); \
+    FPOP
+
+#define FXAM() UNDEFINED

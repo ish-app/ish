@@ -13,6 +13,7 @@ int undefined_flags_mask(struct cpu_state *cpu, struct tlb *tlb) {
     addr_t ip = cpu->eip;
     byte_t opcode;
 #define read(x) tlb_read(tlb, ip++, &x, sizeof(x));
+skip:
     read(opcode);
     switch (opcode) {
         // shift or rotate, of is undefined if shift count is greater than 1
@@ -31,7 +32,7 @@ int undefined_flags_mask(struct cpu_state *cpu, struct tlb *tlb) {
                     else
                         read(shift);
                     if (shift == 1)
-                        return A;
+                        return O|A;
                     else if (shift > 1)
                         return O|A;
                     break;
@@ -40,6 +41,7 @@ int undefined_flags_mask(struct cpu_state *cpu, struct tlb *tlb) {
                 case 0xbc: return O|S|A|P|C; // bsf
             }
             break;
+
         case 0x69:
         case 0x6b: return S|Z|A|P; // imul
 
@@ -62,7 +64,7 @@ int undefined_flags_mask(struct cpu_state *cpu, struct tlb *tlb) {
             break;
         }
 
-        case 0xf7: {
+        case 0xf6: case 0xf7: {
             // group 3
             byte_t modrm;
             read(modrm);
@@ -72,6 +74,7 @@ int undefined_flags_mask(struct cpu_state *cpu, struct tlb *tlb) {
             }
             break;
         }
+        case 0x66: goto skip;
     }
     return 0;
 }

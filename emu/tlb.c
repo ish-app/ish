@@ -1,12 +1,10 @@
 #include "emu/cpu.h"
 #include "emu/tlb.h"
 
-struct tlb *tlb_new(struct mem *mem) {
-    struct tlb *tlb = malloc(sizeof(struct tlb));
+void tlb_init(struct tlb *tlb, struct mem *mem) {
     tlb->mem = mem;
     tlb->dirty_page = TLB_PAGE_EMPTY;
     tlb_flush(tlb);
-    return tlb;
 }
 
 void tlb_flush(struct tlb *tlb) {

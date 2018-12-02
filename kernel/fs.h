@@ -6,7 +6,7 @@
 #include "fs/stat.h"
 #include "emu/memory.h"
 #include <dirent.h>
-#include <gdbm.h>
+#include <sqlite3.h>
 
 struct fs_info {
     atomic_uint refcount;
@@ -15,7 +15,7 @@ struct fs_info {
     struct fd *root;
     lock_t lock;
 };
-struct fs_info *fs_info_new();
+struct fs_info *fs_info_new(void);
 struct fs_info *fs_info_copy(struct fs_info *fs);
 void fs_info_release(struct fs_info *fs);
 
@@ -70,7 +70,20 @@ struct mount {
     int root_fd;
     union {
         void *data;
-        GDBM_FILE db;
+        struct {
+            sqlite3 *db;
+            struct {
+                sqlite3_stmt *begin;
+                sqlite3_stmt *commit;
+                sqlite3_stmt *rollback;
+                sqlite3_stmt *read_stat;
+                sqlite3_stmt *write_stat;
+                sqlite3_stmt *delete_stat;
+                sqlite3_stmt *write_path;
+                sqlite3_stmt *delete_path;
+            } stmt;
+            lock_t lock;
+        };
     };
 };
 extern struct mount *mounts;
@@ -82,6 +95,8 @@ extern struct mount *mounts;
 #define O_CREAT_ (1 << 6)
 #define O_TRUNC_ (1 << 9)
 #define O_APPEND_ (1 << 10)
+#define O_NONBLOCK_ (1 << 11)
+#define O_CLOEXEC_ (1 << 19)
 
 struct fs_ops {
     int (*mount)(struct mount *mount);
@@ -127,6 +142,7 @@ int realfs_getpath(struct fd *fd, char *buf);
 ssize_t realfs_read(struct fd *fd, void *buf, size_t bufsize);
 ssize_t realfs_write(struct fd *fd, const void *buf, size_t bufsize);
 int realfs_getflags(struct fd *fd);
+int realfs_setflags(struct fd *fd, dword_t arg);
 int realfs_close(struct fd *fd);
 
 // adhoc fs

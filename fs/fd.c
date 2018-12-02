@@ -111,6 +111,9 @@ struct fd *f_get(fd_t f) {
 bool f_is_cloexec(fd_t f) {
     return bit_test(f, current->files->cloexec);
 }
+void f_set_cloexec(fd_t f) {
+    bit_set(f, current->files->cloexec);
+}
 
 static int fdtable_expand(struct fdtable *table, fd_t max) {
     unsigned size = max + 1;
@@ -219,8 +222,16 @@ dword_t sys_fcntl64(fd_t f, dword_t cmd, dword_t arg) {
         case F_GETFL_:
             STRACE("fcntl(%d, F_GETFL)", f);
             if (fd->ops->getflags == NULL)
-                return 0;
+                return fd->flags;
             return fd->ops->getflags(fd);
+        case F_SETFL_:
+            STRACE("fcntl(%d, F_SETFL, %#x)", f, arg);
+            if (fd->ops->setflags == NULL) {
+                arg &= O_APPEND_ | O_NONBLOCK_;
+                fd->flags = arg;
+                return 0;
+            }
+            return fd->ops->setflags(fd, arg);
 
         default:
             STRACE("fcntl(%d, %d)", f, cmd);

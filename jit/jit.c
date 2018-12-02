@@ -14,6 +14,7 @@ static void jit_block_free(struct jit_block *block);
 struct jit *jit_new(struct mem *mem) {
     struct jit *jit = malloc(sizeof(struct jit));
     jit->mem = mem;
+    jit->mem_used = 0;
     for (int i = 0; i < JIT_HASH_SIZE; i++)
         list_init(&jit->hash[i]);
     lock_init(&jit->lock);
@@ -31,7 +32,7 @@ void jit_free(struct jit *jit) {
 }
 
 static inline struct list *blocks_list(struct jit *jit, page_t page, int i) {
-    return &jit->mem->pt[page].blocks[i];
+    return &mem_pt(jit->mem, page)->blocks[i];
 }
 
 void jit_invalidate_page(struct jit *jit, page_t page) {
@@ -49,7 +50,10 @@ void jit_invalidate_page(struct jit *jit, page_t page) {
 }
 
 static void jit_insert(struct jit *jit, struct jit_block *block) {
+    jit->mem_used += block->used;
     list_add(&jit->hash[block->addr % JIT_HASH_SIZE], &block->chain);
+    if (mem_pt(jit->mem, PAGE(block->addr)) == NULL)
+        return;
     list_init_add(blocks_list(jit, PAGE(block->addr), 0), &block->page[0]);
     if (PAGE(block->addr) != PAGE(block->end_addr))
         list_init_add(blocks_list(jit, PAGE(block->end_addr), 1), &block->page[1]);
@@ -66,7 +70,7 @@ static struct jit_block *jit_lookup(struct jit *jit, addr_t addr) {
 
 static struct jit_block *jit_block_compile(addr_t ip, struct tlb *tlb) {
     struct gen_state state;
-    TRACELN("%d %08x --- compiling:", current->pid, ip);
+    TRACE("%d %08x --- compiling:\n", current->pid, ip);
     gen_start(ip, &state);
     while (true) {
         if (!gen_step32(&state, tlb))
@@ -83,6 +87,7 @@ static struct jit_block *jit_block_compile(addr_t ip, struct tlb *tlb) {
     }
     gen_end(&state);
     assert(state.ip - ip <= PAGE_SIZE);
+    state.block->used = state.capacity;
     return state.block;
 }
 
@@ -111,7 +116,8 @@ static inline size_t jit_cache_hash(addr_t ip) {
 }
 
 void cpu_run(struct cpu_state *cpu) {
-    struct tlb *tlb = tlb_new(cpu->mem);
+    struct tlb tlb;
+    tlb_init(&tlb, cpu->mem);
     struct jit *jit = cpu->mem->jit;
     struct jit_block *cache[JIT_CACHE_SIZE] = {};
     struct jit_frame frame = {.cpu = *cpu};
@@ -130,28 +136,32 @@ void cpu_run(struct cpu_state *cpu) {
             lock(&jit->lock);
             block = jit_lookup(jit, ip);
             if (block == NULL) {
-                block = jit_block_compile(ip, tlb);
+                block = jit_block_compile(ip, &tlb);
                 jit_insert(jit, block);
             } else {
-                TRACELN("%d %08x --- missed cache", current->pid, ip);
-            }
-            if (last_block != NULL) {
-                for (int i = 0; i <= 1; i++) {
-                    if (last_block->jump_ip[i] != NULL &&
-                            (*last_block->jump_ip[i] & 0xffffffff) == block->addr) {
-                        *last_block->jump_ip[i] = (unsigned long) block->code;
-                        list_add(&block->jumps_from[i], &last_block->jumps_from_links[i]);
-                    }
-                }
+                TRACE("%d %08x --- missed cache\n", current->pid, ip);
             }
             cache[cache_index] = block;
             unlock(&jit->lock);
         }
+        if (last_block != NULL &&
+                (last_block->jump_ip[0] != NULL ||
+                 last_block->jump_ip[1] != NULL)) {
+            lock(&jit->lock);
+            for (int i = 0; i <= 1; i++) {
+                if (last_block->jump_ip[i] != NULL &&
+                        (*last_block->jump_ip[i] & 0xffffffff) == block->addr) {
+                    *last_block->jump_ip[i] = (unsigned long) block->code;
+                    list_add(&block->jumps_from[i], &last_block->jumps_from_links[i]);
+                }
+            }
+            unlock(&jit->lock);
+        }
         last_block = block;
 
-        TRACELN("%d %08x --- cycle %d", current->pid, ip, i);
-        int interrupt = jit_enter(block, &frame, tlb);
-        if (interrupt == INT_NONE && ++i % (1 << 16) == 0)
+        TRACE("%d %08x --- cycle %d\n", current->pid, ip, i);
+        int interrupt = jit_enter(block, &frame, &tlb);
+        if (interrupt == INT_NONE && ++i % (1 << 10) == 0)
             interrupt = INT_TIMER;
         if (interrupt != INT_NONE) {
             *cpu = frame.cpu;
@@ -162,9 +172,9 @@ void cpu_run(struct cpu_state *cpu) {
 
             jit = cpu->mem->jit;
             last_block = NULL;
-            tlb->mem = cpu->mem;
+            tlb.mem = cpu->mem;
             if (cpu->mem->changes != changes) {
-                tlb_flush(tlb);
+                tlb_flush(&tlb);
                 changes = cpu->mem->changes;
                 memset(cache, 0, sizeof(cache));
             }

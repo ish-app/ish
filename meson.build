@@ -27,8 +27,7 @@ includes = [include_directories('.')]
 cc = meson.get_compiler('c')
 threads = dependency('threads')
 librt = cc.find_library('rt', required: false)
-
-gdbm = subproject('gdbm').get_variable('gdbm')
+libm = cc.find_library('m', required: false)
 
 subdir('vdso') # ish depends on the vdso
 
@@ -45,6 +44,7 @@ src = [
     'kernel/vdso.c', vdso,
     'kernel/task.c',
     'kernel/group.c',
+    'kernel/log.c',
 
     'kernel/fork.c',
     'kernel/exec.c',
@@ -58,6 +58,7 @@ src = [
     'kernel/signal.c',
     'kernel/resource.c',
     'kernel/random.c',
+    'kernel/prctl.c',
 
     'kernel/fs.c',
     'kernel/fs_info.c',
@@ -110,12 +111,13 @@ else
     ]
 endif
 
+sqlite3 = cc.find_library('sqlite3')
+
 libish = library('ish', src,
-    include_directories: includes,
-    dependencies: [librt, threads, gdbm])
+    include_directories: includes)
 ish = declare_dependency(
     link_with: libish,
-    dependencies: [librt, threads, gdbm],
+    dependencies: [librt, libm, threads, sqlite3],
     include_directories: includes)
 
 # ptraceomatic et al

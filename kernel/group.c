@@ -21,7 +21,7 @@ dword_t sys_setpgid(dword_t id, dword_t pgid) {
         // there has to be a process in pgrp that's in the same session as id
         err = _EPERM;
         struct pid *group_pid = pid_get(pgid);
-        if (list_empty(&group_pid->pgroup))
+        if (group_pid == NULL || list_empty(&group_pid->pgroup))
             goto out;
         struct task *group_task = list_first_entry(&group_pid->pgroup, struct task, pgroup);
         if (group_task->sid != task->sid)

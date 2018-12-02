@@ -117,6 +117,13 @@ typedef enum {
     [self.terminal sendInput:data.bytes length:data.length];
 }
 
+- (void)paste:(id)sender {
+    NSString *string = UIPasteboard.generalPasteboard.string;
+    if (string) {
+        [self insertText:string];
+    }
+}
+
 - (void)deleteBackward {
     [self insertText:@"\x7f"];
 }

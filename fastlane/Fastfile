@@ -1,5 +1,7 @@
 lane :beta do
-    changelog = File.read('changelog.txt') + changelog_from_git_commits
+    tag = `git describe --tags --abbrev=0 --match builds/beta/\*`.chomp
+    changelog = File.read('changelog.txt') + `git shortlog #{tag}..HEAD`
+
     build_number = latest_testflight_build_number + 1
     increment_build_number(build_number: build_number)
     commit_version_bump(

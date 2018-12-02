@@ -37,7 +37,7 @@
         .ifc \op,lods
             mov _addr, esi
             read_prep \size, \op\size\()_\rep
-            ldr\s eax, [_xaddr]
+            ldrs eax, [_xaddr], \s
 
         .else N .ifc \op,stos
             mov _addr, edi
@@ -48,7 +48,7 @@
         .else N .ifc \op,movs
             mov _addr, esi
             read_prep \size, \op\size\()_\rep
-            ldr\s _tmp, [_xaddr]
+            ldrs _tmp, [_xaddr], \s
             mov _addr, edi
             write_prep \size, \op\size\()_\rep\()2
             str\s _tmp, [_xaddr]
@@ -57,7 +57,7 @@
         .else N .ifc \op, scas
             mov _addr, edi
             read_prep \size, \op\size\()_\rep
-            ldr\s _tmp, [_xaddr]
+            ldrs _tmp, [_xaddr], \s
             setf_a eax, _tmp
             subs _tmp, _tmp, eax
             setf_oc
@@ -66,10 +66,10 @@
         .else N .ifc \op, cmps
             mov _addr, esi
             read_prep \size, \op\size\()_\rep
-            ldr\s _tmp, [_xaddr]
+            ldrs _tmp, [_xaddr], \s
             mov _addr, edi
             read_prep \size, \op\size\()_\rep\()2
-            ldr\s w8, [_xaddr]
+            ldrs w8, [_xaddr], \s
             setf_a w8, _tmp
             subs _tmp, _tmp, w8
             setf_oc

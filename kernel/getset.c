@@ -48,8 +48,29 @@ dword_t sys_geteuid() {
     return current->euid & 0xffff;
 }
 
+int_t sys_setuid(uid_t_ uid) {
+    STRACE("setuid(%d)", uid);
+    if (superuser()) {
+        current->uid = current->suid = uid;
+    } else {
+        if (uid != current->uid && uid != current->suid)
+            return _EPERM;
+    }
+    current->euid = uid;
+    return 0;
+}
+
 dword_t sys_setresuid(uid_t_ ruid, uid_t_ euid, uid_t_ suid) {
     STRACE("setresuid(%d, %d, %d)", ruid, euid, suid);
+    if (!superuser()) {
+        if (ruid != -1 && ruid != current->uid && ruid != current->euid && ruid != current->suid)
+            return _EPERM;
+        if (euid != -1 && euid != current->uid && euid != current->euid && euid != current->suid)
+            return _EPERM;
+        if (suid != -1 && suid != current->uid && suid != current->euid && suid != current->suid)
+            return _EPERM;
+    }
+
     if (ruid != -1)
         current->uid = ruid;
     if (euid != -1)
@@ -77,8 +98,29 @@ dword_t sys_getegid() {
     return current->egid & 0xffff;
 }
 
+int_t sys_setgid(uid_t_ gid) {
+    STRACE("setgid(%d)", gid);
+    if (superuser()) {
+        current->gid = current->sgid = gid;
+    } else {
+        if (gid != current->gid && gid != current->sgid)
+            return _EPERM;
+    }
+    current->egid = gid;
+    return 0;
+}
+
 dword_t sys_setresgid(uid_t_ rgid, uid_t_ egid, uid_t_ sgid) {
     STRACE("setresgid(%d, %d, %d)", rgid, egid, sgid);
+    if (!superuser()) {
+        if (rgid != -1 && rgid != current->gid && rgid != current->egid && rgid != current->sgid)
+            return _EPERM;
+        if (egid != -1 && egid != current->gid && egid != current->egid && egid != current->sgid)
+            return _EPERM;
+        if (sgid != -1 && sgid != current->gid && sgid != current->egid && sgid != current->sgid)
+            return _EPERM;
+    }
+
     if (rgid != -1)
         current->gid = rgid;
     if (egid != -1)
@@ -88,3 +130,21 @@ dword_t sys_setresgid(uid_t_ rgid, uid_t_ egid, uid_t_ sgid) {
     return 0;
 }
 
+int_t sys_getgroups(dword_t size, addr_t list) {
+    if (size == 0)
+        return current->ngroups;
+    if (size < current->ngroups)
+        return _EINVAL;
+    if (user_write(list, current->groups, size * sizeof(uid_t_)))
+        return _EFAULT;
+    return 0;
+}
+
+int_t sys_setgroups(dword_t size, addr_t list) {
+    if (size > MAX_GROUPS)
+        return _EINVAL;
+    if (user_read(list, current->groups, size * sizeof(uid_t_)))
+        return _EFAULT;
+    current->ngroups = size;
+    return 0;
+}

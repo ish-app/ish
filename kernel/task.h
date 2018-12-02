@@ -16,6 +16,7 @@ struct task {
     struct cpu_state cpu;
     struct mem *mem;
     pthread_t thread;
+    uint64_t threadid;
 
     struct tgroup *group; // immutable
     struct list group_links;
@@ -23,6 +24,9 @@ struct task {
     uid_t_ uid, gid;
     uid_t_ euid, egid;
     uid_t_ suid, sgid;
+#define MAX_GROUPS 32
+    int ngroups;
+    uid_t_ groups[MAX_GROUPS];
     bool did_exec; // for that one annoying setsid edge case
 
     struct fdtable *files;
@@ -121,5 +125,7 @@ extern void (*task_run_hook)(void);
 void task_start(struct task *task);
 
 extern void (*exit_hook)(int code);
+
+#define superuser() (current->uid == 0)
 
 #endif

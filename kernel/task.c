@@ -15,6 +15,8 @@ static bool pid_empty(struct pid *pid) {
 }
 
 struct pid *pid_get(dword_t id) {
+    if (id > sizeof(pids)/sizeof(pids[0]))
+        return NULL;
     struct pid *pid = &pids[id];
     if (pid_empty(pid))
         return NULL;
@@ -85,7 +87,7 @@ void task_destroy(struct task *task) {
     free(task);
 }
 
-void (*task_run_hook)() = NULL;
+void (*task_run_hook)(void) = NULL;
 
 static void *task_run(void *task) {
     current = task;
@@ -93,7 +95,7 @@ static void *task_run(void *task) {
         task_run_hook();
     else
         cpu_run(&current->cpu);
-    abort(); // above function call should never return
+    die("task_run returned"); // above function call should never return
 }
 
 static pthread_attr_t task_thread_attr;
@@ -104,5 +106,10 @@ __attribute__((constructor)) static void create_attr() {
 
 void task_start(struct task *task) {
     if (pthread_create(&task->thread, &task_thread_attr, task_run, task) < 0)
-        abort();
+        die("could not create thread");
+}
+
+int_t sys_sched_yield() {
+    sched_yield();
+    return 0;
 }

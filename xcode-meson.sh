@@ -46,6 +46,6 @@ for var in buildtype log b_ndebug b_sanitize log_handler jit; do
     old_value=$(jq -r ".[] | select(.name==\"$var\") | .value" <<< $config)
     new_value=${!var}
     if [[ $old_value != $new_value ]]; then
-        meson configure -D$var=$new_value
+        meson configure "-D$var=$new_value"
     fi
 done

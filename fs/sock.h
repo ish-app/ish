@@ -64,17 +64,19 @@ static inline int sock_flags_to_real(int fake) {
     if (fake & MSG_PEEK_) real |= MSG_PEEK;
     if (fake & MSG_WAITALL_) real |= MSG_WAITALL;
     if (fake & ~(MSG_OOB_|MSG_PEEK_|MSG_WAITALL_))
-        TRACELN("unimplemented socket flags %d", fake);
+        TRACE("unimplemented socket flags %d\n", fake);
     return real;
 }
 
 #define TCP_NODELAY_ 1
+#define SO_TYPE_ 3
 #define SO_ERROR_ 4
 #define SO_BROADCAST_ 6
 #define SO_KEEPALIVE_ 9
 static inline int sock_opt_to_real(int fake) {
     switch (fake) {
         case TCP_NODELAY_: return TCP_NODELAY;
+        case SO_TYPE_: return SO_TYPE;
         case SO_ERROR_: return SO_ERROR;
         case SO_BROADCAST_: return SO_BROADCAST;
         case SO_KEEPALIVE_: return SO_KEEPALIVE;

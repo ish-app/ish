@@ -5,9 +5,9 @@
         .gadget \type\size\()_\arg
             .ifc \arg,imm
                 ldr w8, [_ip]
-                ands w8, w8, \size-1
+                ands w8, w8, 31
             .else
-                ands w8, ecx, \size-1
+                ands w8, ecx, 31
             .endif
             b.eq 1f
 
@@ -34,33 +34,47 @@
             .endif
             .ifc \type,sar
                 # lazy ass copy paste job
-                ubfx w10, _tmp, \size-1, 1
                 sub w8, w8, 1
                 asr _tmp, _tmp, w8
                 and w9, _tmp, 1
                 asr _tmp, _tmp, 1
                 strb w9, [_cpu, CPU_cf]
-                strb w10, [_cpu, CPU_of]
+                strb wzr, [_cpu, CPU_of]
             .endif
 
-            .ifc \type,rol
-                sub w8, wzr, w8
-                add w8, w8, \size
-                ror _tmp, _tmp, w8
-                ubfx w9, _tmp, 0, 1
-                ubfx w10, _tmp, \size-1, 1
+            # regrets
+            .ifin(\type, rol,ror)
+                .ifb \s
+                    .ifc \type,rol
+                        neg w8, w8
+                    .endif
+                    ror _tmp, _tmp, w8
+                .else
+                    # kill me
+                    uxt\s _tmp, _tmp
+                    neg w9, w8
+                    and w8, w8, \size-1
+                    and w9, w9, \size-1
+                    .ifc \type,rol
+                        lsl w8, _tmp, w8
+                        lsr w9, _tmp, w9
+                    .else
+                        lsr w8, _tmp, w8
+                        lsl w9, _tmp, w9
+                    .endif
+                    orr _tmp, w8, w9
+                .endif
+                .ifc \type,rol
+                    ubfx w9, _tmp, 0, 1
+                    ubfx w10, _tmp, \size-1, 1
+                .else
+                    ubfx w9, _tmp, \size-1, 1
+                    ubfx w10, _tmp, \size-2, 1
+                .endif
                 eor w10, w10, w9
                 strb w9, [_cpu, CPU_cf]
                 strb w10, [_cpu, CPU_of]
-            .endif
-            .ifc \type,ror
-                ror _tmp, _tmp, w8
-                ubfx w9, _tmp, \size-1, 1
-                ubfx w10, _tmp, \size-2, 1
-                eor w10, w10, w9
-                strb w9, [_cpu, CPU_cf]
-                strb w10, [_cpu, CPU_of]
-            .endif
+            .endifin
 
             .ifin(\type, shl,shr,sar)
                 setf_zsp \s

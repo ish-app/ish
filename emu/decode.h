@@ -2,7 +2,6 @@
 #include "emu/cpu.h"
 #include "emu/modrm.h"
 #include "emu/interrupt.h"
-#include "kernel/calls.h"
 
 #undef oz
 #define oz OP_SIZE
@@ -55,7 +54,7 @@ restart:
             // 2-byte opcode prefix
             READINSN;
             switch (insn) {
-                case 0x1f: TRACEI("nop modrm\t"); READMODRM; break;
+                case 0x18 ... 0x1f: TRACEI("nop modrm\t"); READMODRM; break;
 
                 case 0x28: TRACEI("movp modrm, reg");
                            READMODRM; MOV(modrm_val, modrm_reg,128); break;
@@ -317,14 +316,14 @@ restart:
         case 0x5e: TRACEI("pop osi"); POP(reg_si,oz); break;
         case 0x5f: TRACEI("pop odi"); POP(reg_di,oz); break;
 
-        case 0x65: TRACELN("segment gs"); SEG_GS(); goto restart;
+        case 0x65: TRACE("segment gs\n"); SEG_GS(); goto restart;
 
         case 0x66:
 #if OP_SIZE == 32
-            TRACELN("entering 16 bit mode");
+            TRACE("entering 16 bit mode\n");
             return glue(DECODER_NAME, 16)(DECODER_PASS_ARGS);
 #else
-            TRACELN("entering 32 bit mode");
+            TRACE("entering 32 bit mode\n");
             return glue(DECODER_NAME, 32)(DECODER_PASS_ARGS);
 #endif
 
@@ -438,6 +437,18 @@ restart:
                    READMODRM; POP(modrm_val,oz); break;
 
         case 0x90: TRACEI("nop"); break;
+        case 0x91: TRACEI("xchg ocx, oax");
+                   XCHG(reg_c, reg_a,oz); break;
+        case 0x92: TRACEI("xchg odx, oax");
+                   XCHG(reg_d, reg_a,oz); break;
+        case 0x93: TRACEI("xchg obx, oax");
+                   XCHG(reg_b, reg_a,oz); break;
+        case 0x94: TRACEI("xchg osp, oax");
+                   XCHG(reg_sp, reg_a,oz); break;
+        case 0x95: TRACEI("xchg obp, oax");
+                   XCHG(reg_bp, reg_a,oz); break;
+        case 0x96: TRACEI("xchg osi, oax");
+                   XCHG(reg_si, reg_a,oz); break;
         case 0x97: TRACEI("xchg odi, oax");
                    XCHG(reg_di, reg_a,oz); break;
 
@@ -458,8 +469,11 @@ restart:
                    READADDR; MOV(reg_a, mem_addr,8); break;
         case 0xa3: TRACEI("mov oax, mem\t");
                    READADDR; MOV(reg_a, mem_addr,oz); break;
+
         case 0xa4: TRACEI("movsb"); STR(movs, 8); break;
         case 0xa5: TRACEI("movs"); STR(movs, oz); break;
+        case 0xa6: TRACEI("cmpsb"); STR(cmps, 8); break;
+        case 0xa7: TRACEI("cmps"); STR(cmps, oz); break;
 
         case 0xa8: TRACEI("test imm8, al");
                    READIMM8; TEST(imm, reg_a,8); break;
@@ -469,6 +483,9 @@ restart:
         case 0xaa: TRACEI("stosb"); STR(stos, 8); break;
         case 0xab: TRACEI("stos"); STR(stos, oz); break;
         case 0xac: TRACEI("lodsb"); STR(lods, 8); break;
+        case 0xad: TRACEI("lods"); STR(lods, oz); break;
+        case 0xae: TRACEI("scasb"); STR(scas, 8); break;
+        case 0xaf: TRACEI("scas"); STR(scas, oz); break;
 
         case 0xb0: TRACEI("mov imm, al\t");
                    READIMM8; MOV(imm, reg_a,8); break;
@@ -554,10 +571,14 @@ restart:
                 switch (insn << 4 | modrm.opcode) {
                     case 0xd80: TRACE("fadd mem32"); FADDM(mem_addr_real,32); break;
                     case 0xd81: TRACE("fmul mem32"); FMULM(mem_addr_real,32); break;
+                    case 0xd82: TRACE("fcom mem32"); FCOMM(mem_addr_real,32); break;
+                    case 0xd83: TRACE("fcomp mem32"); FCOMM(mem_addr_real,32); FPOP; break;
                     case 0xd84: TRACE("fsub mem32"); FSUBM(mem_addr_real,32); break;
+                    case 0xd85: TRACE("fsubr mem32"); FSUBRM(mem_addr_real,32); break;
                     case 0xd86: TRACE("fdiv mem32"); FDIVM(mem_addr_real,32); break;
                     case 0xd87: TRACE("fdivr mem32"); FDIVRM(mem_addr_real,32); break;
                     case 0xd90: TRACE("fld mem32"); FLDM(mem_addr_real,32); break;
+                    case 0xd92: TRACE("fst mem32"); FSTM(mem_addr_real,32); break;
                     case 0xd93: TRACE("fstp mem32"); FSTM(mem_addr_real,32); FPOP; break;
                     case 0xd95: TRACE("fldcw mem16"); FLDCW(mem_addr); break;
                     case 0xd97: TRACE("fnstcw mem16"); FSTCW(mem_addr); break;
@@ -582,6 +603,8 @@ restart:
                     case 0xdc7: TRACE("fdivr mem64"); FDIVRM(mem_addr_real,64); break;
                     case 0xdd2: TRACE("fst mem64"); FSTM(mem_addr_real,64); break;
                     case 0xdd3: TRACE("fstp mem64"); FSTM(mem_addr_real,64); FPOP; break;
+                    case 0xde1: TRACE("fimuls mem16"); FIMUL(mem_addr,16); break;
+                    case 0xde7: TRACE("fidivrs mem16"); FIDIVR(mem_addr,16); break;
                     case 0xdf0: TRACE("fild mem16"); FILD(mem_addr,16); break;
                     case 0xdf5: TRACE("fild mem64"); FILD(mem_addr,64); break;
                     case 0xdf7: TRACE("fistp mem64"); FIST(mem_addr,64); FPOP; break;
@@ -591,12 +614,22 @@ restart:
                 switch (insn << 4 | modrm.opcode) {
                     case 0xd80: TRACE("fadd st(i), st"); FADD(st_i, st_0); break;
                     case 0xd81: TRACE("fmul st(i), st"); FMUL(st_i, st_0); break;
+                    case 0xd82: TRACE("fcom st"); FCOM(); break;
+                    case 0xd83: TRACE("fcomp st"); FCOM(); FPOP; break;
                     case 0xd84: TRACE("fsub st(i), st"); FSUB(st_i, st_0); break;
+                    case 0xd85: TRACE("fsubr st(i), st"); FSUBR(st_i, st_0); break;
+                    case 0xd86: TRACE("fdiv st(i), st"); FDIV(st_i, st_0); break;
+                    case 0xd87: TRACE("fdivr st(i), st"); FDIVR(st_i, st_0); break;
                     case 0xd90: TRACE("fld st(i)"); FLD(); break;
                     case 0xd91: TRACE("fxch st"); FXCH(); break;
                     case 0xdb5: TRACE("fucomi st"); FUCOMI(); break;
+                    case 0xdb6: TRACE("fcomi st"); FCOMI(); break;
                     case 0xdc0: TRACE("fadd st, st(i)"); FADD(st_0, st_i); break;
                     case 0xdc1: TRACE("fmul st, st(i)"); FMUL(st_0, st_i); break;
+                    case 0xdc4: TRACE("fsubr st, st(i)"); FSUBR(st_0, st_i); break;
+                    case 0xdc5: TRACE("fsub st, st(i)"); FSUB(st_0, st_i); break;
+                    case 0xdc6: TRACE("fdivr st, st(i)"); FDIVR(st_0, st_i); break;
+                    case 0xdc7: TRACE("fdiv st, st(i)"); FDIV(st_0, st_i); break;
                     case 0xdd3: TRACE("fstp st"); FST(); FPOP; break;
                     case 0xdd4: TRACE("fucom st"); FUCOM(); break;
                     case 0xdd5: TRACE("fucomp st"); FUCOM(); FPOP; break;
@@ -605,17 +638,29 @@ restart:
                     case 0xde1: TRACE("fmulp st, st(i)"); FMUL(st_0, st_i); FPOP; break;
                     case 0xde4: TRACE("fsubrp st, st(i)"); FSUBR(st_0, st_i); FPOP; break;
                     case 0xde5: TRACE("fsubp st, st(i)"); FSUB(st_0, st_i); FPOP; break;
+                    case 0xde6: TRACE("fdivrp st, st(i)"); FDIVR(st_0, st_i); FPOP; break;
                     case 0xde7: TRACE("fdivp st, st(i)"); FDIV(st_0, st_i); FPOP; break;
                     case 0xdf5: TRACE("fucomip st"); FUCOMI(); FPOP; break;
                     default: switch (insn << 8 | modrm.opcode << 4 | modrm.rm_opcode) {
                     case 0xd940: TRACE("fchs"); FCHS(); break;
                     case 0xd941: TRACE("fabs"); FABS(); break;
+                    case 0xd944: TRACE("fchs"); FCHS(); break;
+                    case 0xd945: TRACE("fxam"); FXAM(); break;
                     case 0xd950: TRACE("fld1"); FLDC(one); break;
+                    case 0xd951: TRACE("fldl2t"); FLDC(log2t); break;
+                    case 0xd952: TRACE("fldl2e"); FLDC(log2e); break;
+                    case 0xd953: TRACE("fldpi"); FLDC(pi); break;
+                    case 0xd954: TRACE("fldlg2"); FLDC(log2); break;
                     case 0xd955: TRACE("fldln2"); FLDC(ln2); break;
                     case 0xd956: TRACE("fldz"); FLDC(zero); break;
+                    case 0xd960: TRACE("f2xm1"); F2XM1(); break;
                     case 0xd961: TRACE("fyl2x"); FYL2X(); break;
+                    case 0xd963: TRACE("fpatan"); FPATAN(); break;
                     case 0xd970: TRACE("fprem"); FPREM(); break;
+                    case 0xd972: TRACE("fsqrt"); FSQRT(); break;
                     case 0xd974: TRACE("frndint"); FRNDINT(); break;
+                    case 0xd975: TRACE("fscale"); FSCALE(); break;
+                    case 0xde31: TRACE("fcompp"); FCOM(); FPOP; FPOP; break;
                     case 0xdf40: TRACE("fnstsw ax"); FSTSW(reg_a); break;
                     default: TRACE("undefined"); UNDEFINED;
                 }}
@@ -635,8 +680,10 @@ restart:
 
         // lock
         case 0xf0:
+            lockrestart:
             READINSN;
             switch (insn) {
+                case 0x65: TRACE("segment gs\n"); SEG_GS(); goto lockrestart;
 
 #define MAKE_OP_ATOMIC(x, OP, op) \
         case x+0x0: TRACEI("lock " op " reg8, modrm8"); \
@@ -715,10 +762,15 @@ restart:
                         case 0x2c: TRACEI("cvttsd2si modrm64, reg32");
                                    READMODRM_MEM; // TODO xmm
                                    CVTTSD2SI(mem_addr_real, modrm_reg); break;
+                        case 0x18 ... 0x1f: TRACEI("rep nop modrm\t"); READMODRM; break;
                         default: TRACE("undefined"); UNDEFINED;
                     }
                     break;
+
+                case 0xa6: TRACEI("repnz cmpsb"); REPNZ(cmps, 8); break;
+                case 0xa7: TRACEI("repnz cmps"); REPNZ(cmps, oz); break;
                 case 0xae: TRACEI("repnz scasb"); REPNZ(scas, 8); break;
+                case 0xaf: TRACEI("repnz scas"); REPNZ(scas, oz); break;
                 default: TRACE("undefined"); UNDEFINED;
             }
             break;
@@ -733,6 +785,7 @@ restart:
                     switch (insn) {
                         case 0x7e: TRACEI("movq modrm, xmm");
                                    READMODRM; MOVQ(modrm_val, modrm_reg); break;
+                        case 0x18 ... 0x1f: TRACEI("repz nop modrm\t"); READMODRM; break;
                         default: TRACE("undefined"); UNDEFINED;
                     }
                     break;
@@ -741,18 +794,21 @@ restart:
 
                 case 0xa4: TRACEI("rep movsb"); REP(movs, 8); break;
                 case 0xa5: TRACEI("rep movs"); REP(movs, oz); break;
-
                 case 0xa6: TRACEI("repz cmpsb"); REPZ(cmps, 8); break;
-
+                case 0xa7: TRACEI("repz cmps"); REPZ(cmps, oz); break;
                 case 0xaa: TRACEI("rep stosb"); REP(stos, 8); break;
                 case 0xab: TRACEI("rep stos"); REP(stos, oz); break;
+                case 0xac: TRACEI("rep lodsb"); REP(lods, 8); break;
+                case 0xad: TRACEI("rep lods"); REP(lods, oz); break;
+                case 0xae: TRACEI("repz scasb"); REPZ(scas, 8); break;
+                case 0xaf: TRACEI("repz scas"); REPZ(scas, oz); break;
 
                 // repz ret is equivalent to ret but on some amd chips there's
                 // a branch prediction penalty if the target of a branch is a
                 // ret. gcc used to use nop ret but repz ret is only one
                 // instruction
                 case 0xc3: TRACEI("repz ret\t"); RET_NEAR(0); break;
-                default: TRACELN("undefined"); UNDEFINED;
+                default: TRACE("undefined\n"); UNDEFINED;
             }
             break;
 
@@ -811,9 +867,9 @@ restart:
 #undef GRP5
 
         default:
-            TRACELN("undefined");
+            TRACE("undefined\n");
             UNDEFINED;
     }
-    TRACELN("");
+    TRACE("\n");
     FINISH;
 }

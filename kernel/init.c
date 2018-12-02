@@ -36,7 +36,7 @@ static struct tgroup *init_tgroup() {
 }
 
 void create_first_process() {
-    extern void sigusr1_handler();
+    extern void sigusr1_handler(int sig);
     struct sigaction sigact;
     sigact.sa_handler = sigusr1_handler;
     sigact.sa_flags = 0;
@@ -61,7 +61,9 @@ void create_first_process() {
     current->files = fdtable_new(3);
     current->sighand = sighand_new();
     for (int i = 0; i < RLIMIT_NLIMITS_; i++)
-        current->group->limits[i].cur = current->group->limits[i].max = RLIM_INFINITY_;
+        group->limits[i].cur = group->limits[i].max = RLIM_INFINITY_;
+    // python subprocess uses this limit as a way to close every open file
+    group->limits[RLIMIT_NOFILE_].cur = 1024;
     current->thread = pthread_self();
     sys_setsid();
 }

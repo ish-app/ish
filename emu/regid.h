@@ -79,7 +79,7 @@ static inline struct regptr regptr_from_reg(enum reg32 reg) {
         case reg_esi: return MAKE_REGPTR(esi,si,dh,xmm[6]);
         case reg_edi: return MAKE_REGPTR(edi,di,bh,xmm[7]);
         case reg_none: return (struct regptr) {};
-        default: abort();
+        default: die("invalid register");
     }
 }
 

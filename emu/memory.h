@@ -18,7 +18,8 @@ typedef dword_t page_t;
 struct mem {
     atomic_uint refcount;
     atomic_uint changes; // increment whenever a tlb flush is needed
-    struct pt_entry *pt; // TODO replace with red-black tree
+    struct pt_entry **pgdir;
+    int pgdir_used;
 
     // TODO put these in their own mm struct maybe
     addr_t vdso; // immutable
@@ -31,6 +32,7 @@ struct mem {
     wrlock_t lock;
 };
 #define MEM_PAGES (1 << 20) // at least on 32-bit
+#define MEM_PGDIR_SIZE (1 << 10)
 
 // Create a new address space
 struct mem *mem_new(void);
@@ -38,6 +40,8 @@ struct mem *mem_new(void);
 void mem_retain(struct mem *mem);
 // Decrement the refcount, destroy everything in the space if 0
 void mem_release(struct mem *mem);
+// Return the pagetable entry for the given page
+struct pt_entry *mem_pt(struct mem *mem, page_t page);
 
 #define PAGE_BITS 12
 #undef PAGE_SIZE // defined in system headers somewhere
@@ -52,6 +56,7 @@ typedef dword_t pages_t;
 
 struct data {
     void *data; // immutable
+    size_t size; // also immutable
     atomic_uint refcount;
 };
 struct pt_entry {
@@ -70,9 +75,11 @@ struct pt_entry {
 #define P_EXEC (1 << 2)
 #define P_GROWSDOWN (1 << 3)
 #define P_COW (1 << 4)
-#define P_COMPILED (1 << 5)
 #define P_WRITABLE(flags) (flags & P_WRITE && !(flags & P_COW))
+#define P_COMPILED (1 << 5)
+#define P_ANON (1 << 6)
 
+bool pt_is_hole(struct mem *mem, page_t start, pages_t pages);
 page_t pt_find_hole(struct mem *mem, pages_t size);
 
 #define PT_FORCE 1

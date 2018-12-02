@@ -14,6 +14,7 @@ struct linux_dirent64 {
 } __attribute__((packed));
 
 int_t sys_getdents64(fd_t f, addr_t dirents, dword_t count) {
+    STRACE("getdents64(%d, %#x, %#x)", f, dirents, count);
     struct fd *fd = f_get(f);
     if (fd == NULL)
         return _EBADF;
@@ -24,6 +25,7 @@ int_t sys_getdents64(fd_t f, addr_t dirents, dword_t count) {
 
     long ptr;
     int err;
+    int printed = 0;
     while (true) {
         ptr = fd->ops->telldir(fd);
         struct dir_entry entry;
@@ -40,7 +42,13 @@ int_t sys_getdents64(fd_t f, addr_t dirents, dword_t count) {
         dirent->inode = entry.inode;
         dirent->offset = fd->ops->telldir(fd);
         dirent->reclen = reclen;
+        dirent->type = 0;
         strcpy(dirent->name, entry.name);
+        if (printed < 20) {
+            STRACE(" {inode=%d, offset=%d, name=%s, type=%d, reclen=%d}",
+                    dirent->inode, dirent->offset, dirent->name, dirent->type, dirent->reclen);
+            printed++;
+        }
 
         if (reclen > count)
             break;

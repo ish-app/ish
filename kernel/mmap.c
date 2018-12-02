@@ -77,24 +77,43 @@ int_t sys_munmap(addr_t addr, uint_t len) {
 #define MREMAP_FIXED_ 2
 
 int_t sys_mremap(addr_t addr, dword_t old_len, dword_t new_len, dword_t flags) {
+    STRACE("mremap(%#x, %#x, %#x, %d)", addr, old_len, new_len, flags);
     if (PGOFFSET(addr) != 0)
         return _EINVAL;
     if (flags & ~(MREMAP_MAYMOVE_ | MREMAP_FIXED_))
         return _EINVAL;
-    if (flags & MREMAP_FIXED_)
-        TODO("MREMAP_FIXED");
+    if (flags & MREMAP_FIXED_) {
+        FIXME("missing MREMAP_FIXED");
+        return _EINVAL;
+    }
     pages_t old_pages = PAGE(old_len);
     pages_t new_pages = PAGE(new_len);
 
     // shrinking always works
-    if (new_len <= old_len) {
+    if (new_pages <= old_pages) {
         int err = pt_unmap(current->mem, PAGE(addr) + new_pages, old_pages - new_pages, 0);
         if (err < 0)
             return _EFAULT;
         return addr;
     }
 
-    TODO("mremap grow");
+    dword_t pt_flags = mem_pt(current->mem, PAGE(addr))->flags;
+    for (page_t page = PAGE(addr); page < PAGE(addr) + old_pages; page++) {
+        if (mem_pt(current->mem, page)->flags != pt_flags)
+            return _EFAULT;
+    }
+    if (!(pt_flags & P_ANON)) {
+        FIXME("mremap grow on file mappings");
+        return _EFAULT;
+    }
+    page_t extra_start = PAGE(addr) + old_pages;
+    pages_t extra_pages = new_pages - old_pages;
+    if (!pt_is_hole(current->mem, extra_start, extra_pages))
+        return _ENOMEM;
+    int err = pt_map_nothing(current->mem, extra_start, extra_pages, pt_flags);
+    if (err < 0)
+        return err;
+    return addr;
 }
 
 int_t sys_mprotect(addr_t addr, uint_t len, int_t prot) {
@@ -112,6 +131,10 @@ int_t sys_mprotect(addr_t addr, uint_t len, int_t prot) {
 
 dword_t sys_madvise(addr_t addr, dword_t len, dword_t advice) {
     // portable applications should not rely on linux's destructive semantics for MADV_DONTNEED.
+    return 0;
+}
+
+dword_t sys_mbind(addr_t addr, dword_t len, int_t mode, addr_t nodemask, dword_t maxnode, uint_t flags) {
     return 0;
 }
 

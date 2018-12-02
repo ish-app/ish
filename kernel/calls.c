@@ -28,6 +28,7 @@ syscall_t syscall_table[] = {
     [19]  = (syscall_t) sys_lseek,
     [20]  = (syscall_t) sys_getpid,
     [21]  = (syscall_t) sys_mount,
+    [23]  = (syscall_t) sys_setuid,
     [24]  = (syscall_t) sys_getuid,
     [33]  = (syscall_t) sys_access,
     [37]  = (syscall_t) sys_kill,
@@ -38,6 +39,7 @@ syscall_t syscall_table[] = {
     [42]  = (syscall_t) sys_pipe,
     [43]  = (syscall_t) sys_times,
     [45]  = (syscall_t) sys_brk,
+    [46]  = (syscall_t) sys_setgid,
     [47]  = (syscall_t) sys_getgid,
     [49]  = (syscall_t) sys_geteuid,
     [50]  = (syscall_t) sys_getegid,
@@ -52,12 +54,17 @@ syscall_t syscall_table[] = {
     [75]  = (syscall_t) sys_setrlimit,
     [76]  = (syscall_t) sys_getrlimit,
     [77]  = (syscall_t) sys_getrusage,
+    [78]  = (syscall_t) sys_gettimeofday,
+    [79]  = (syscall_t) sys_settimeofday,
+    [80]  = (syscall_t) sys_getgroups,
+    [81]  = (syscall_t) sys_setgroups,
     [83]  = (syscall_t) sys_symlink,
     [85]  = (syscall_t) sys_readlink,
     [90]  = (syscall_t) sys_mmap,
     [91]  = (syscall_t) sys_munmap,
     [94]  = (syscall_t) sys_fchmod,
     [102] = (syscall_t) sys_socketcall,
+    [103] = (syscall_t) sys_syslog,
     [104] = (syscall_t) sys_setitimer,
     [114] = (syscall_t) sys_wait4,
     [116] = (syscall_t) sys_sysinfo,
@@ -73,9 +80,11 @@ syscall_t syscall_table[] = {
     [145] = (syscall_t) sys_readv,
     [146] = (syscall_t) sys_writev,
     [147] = (syscall_t) sys_getsid,
+    [158] = (syscall_t) sys_sched_yield,
     [162] = (syscall_t) sys_nanosleep,
     [163] = (syscall_t) sys_mremap,
     [168] = (syscall_t) sys_poll,
+    [172] = (syscall_t) sys_prctl,
     [173] = (syscall_t) sys_rt_sigreturn,
     [174] = (syscall_t) sys_rt_sigaction,
     [175] = (syscall_t) sys_rt_sigprocmask,
@@ -90,15 +99,19 @@ syscall_t syscall_table[] = {
     [195] = (syscall_t) sys_stat64,
     [196] = (syscall_t) sys_lstat64,
     [197] = (syscall_t) sys_fstat64,
+    [198] = (syscall_t) sys_lchown,
     [199] = (syscall_t) sys_getuid32,
     [200] = (syscall_t) sys_getgid32,
     [201] = (syscall_t) sys_geteuid32,
     [202] = (syscall_t) sys_getegid32,
-    [206] = (syscall_t) syscall_stub,
+    [205] = (syscall_t) sys_getgroups,
+    [206] = (syscall_t) sys_setgroups,
     [207] = (syscall_t) sys_fchown32,
     [208] = (syscall_t) sys_setresuid,
     [210] = (syscall_t) sys_setresgid,
     [212] = (syscall_t) sys_chown32,
+    [213] = (syscall_t) sys_setuid,
+    [214] = (syscall_t) sys_setgid,
     [219] = (syscall_t) sys_madvise,
     [220] = (syscall_t) sys_getdents64,
     [221] = (syscall_t) sys_fcntl64,
@@ -111,9 +124,12 @@ syscall_t syscall_table[] = {
     [243] = (syscall_t) sys_set_thread_area,
     [252] = (syscall_t) sys_exit_group,
     [258] = (syscall_t) sys_set_tid_address,
+    [264] = (syscall_t) sys_clock_settime,
     [265] = (syscall_t) sys_clock_gettime,
+    [266] = (syscall_t) sys_clock_getres,
     [268] = (syscall_t) sys_statfs64,
     [269] = (syscall_t) sys_fstatfs64,
+    [274] = (syscall_t) sys_mbind,
     [295] = (syscall_t) sys_openat,
     [296] = (syscall_t) sys_mkdirat,
     [298] = (syscall_t) sys_fchownat,
@@ -128,26 +144,27 @@ syscall_t syscall_table[] = {
     [308] = (syscall_t) sys_pselect,
     [320] = (syscall_t) sys_utimensat,
     [324] = (syscall_t) sys_fallocate,
+    [331] = (syscall_t) sys_pipe2,
     [340] = (syscall_t) sys_prlimit,
     [355] = (syscall_t) sys_getrandom,
 };
 
 void handle_interrupt(int interrupt) {
-    TRACELN_(instr, "\n");
+    TRACE_(instr, "\n");
     struct cpu_state *cpu = &current->cpu;
     if (interrupt == INT_SYSCALL) {
         int syscall_num = cpu->eax;
         if (syscall_num >= NUM_SYSCALLS || syscall_table[syscall_num] == NULL) {
-            println("%d missing syscall %d", current->pid, syscall_num);
+            printk("%d missing syscall %d\n", current->pid, syscall_num);
             send_signal(current, SIGSYS_);
         } else {
             STRACE("%d call %-3d ", current->pid, syscall_num);
             int result = syscall_table[syscall_num](cpu->ebx, cpu->ecx, cpu->edx, cpu->esi, cpu->edi, cpu->ebp);
-            STRACELN(" = 0x%x", result);
+            STRACE(" = 0x%x\n", result);
             cpu->eax = result;
         }
     } else if (interrupt == INT_GPF) {
-        println("%d page fault at 0x%x", current->pid, cpu->segfault_addr);
+        printk("%d page fault on 0x%x at 0x%x\n", current->pid, cpu->segfault_addr, cpu->eip);
         deliver_signal(current, SIGSEGV_);
     } else if (interrupt == INT_UNDEFINED) {
         printk("%d illegal instruction at 0x%x: ", current->pid, cpu->eip);
@@ -157,13 +174,24 @@ void handle_interrupt(int interrupt) {
                 break;
             printk("%02x ", b);
         }
-        println("");
+        printk("\n");
         deliver_signal(current, SIGILL_);
     } else if (interrupt != INT_TIMER) {
-        println("%d unhandled interrupt %d", current->pid, interrupt);
+        printk("%d unhandled interrupt %d\n", current->pid, interrupt);
         sys_exit(interrupt);
     }
     receive_signals();
+}
+
+void dump_stack() {
+    for (int i = 0; i < 64; i++) {
+        dword_t stackword;
+        if (user_get(current->cpu.esp + (i * 4), stackword))
+            break;
+        printk("%08x ", stackword);
+        if (i % 8 == 7)
+            printk("\n");
+    }
 }
 
 // TODO find a home for this

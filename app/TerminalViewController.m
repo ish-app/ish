@@ -17,7 +17,6 @@
 @property UITapGestureRecognizer *tapRecognizer;
 @property (weak, nonatomic) IBOutlet TerminalView *termView;
 @property (weak, nonatomic) IBOutlet NSLayoutConstraint *bottomConstraint;
-@property (weak, nonatomic) IBOutlet NSLayoutConstraint *safeAreaBottomConstraint;
 
 @property (weak, nonatomic) IBOutlet UIButton *controlKey;
 
@@ -109,14 +108,10 @@
         NSValue *frame = notification.userInfo[UIKeyboardFrameEndUserInfoKey];
         pad = frame.CGRectValue.size.height;
     }
-    self.bottomConstraint.constant = -pad;
     if (pad == 0) {
-        self.bottomConstraint.active = NO;
-        self.safeAreaBottomConstraint.active = YES;
-    } else {
-        self.safeAreaBottomConstraint.active = NO;
-        self.bottomConstraint.active = YES;
+        pad = self.view.safeAreaInsets.bottom;
     }
+    self.bottomConstraint.constant = -pad;
     [self.view setNeedsUpdateConstraints];
     
     if (!initialLayout) {
@@ -194,7 +189,7 @@
 - (IBAction)pressControl:(id)sender {
     self.controlKey.selected = !self.controlKey.selected;
 }
-
+    
 - (IBAction)pressArrow:(ArrowBarButton *)sender {
     switch (sender.direction) {
         case ArrowUp: [self pressKey:@"\x1b[A"]; break;

@@ -12,8 +12,7 @@ static void gen(struct gen_state *state, unsigned long thing) {
         struct jit_block *bigger_block = realloc(state->block,
                 sizeof(struct jit_block) + state->capacity * sizeof(unsigned long));
         if (bigger_block == NULL) {
-            println("out of memory while jitting");
-            abort();
+            die("out of memory while jitting");
         }
         state->block = bigger_block;
     }
@@ -58,7 +57,7 @@ void gen_end(struct gen_state *state) {
 }
 
 void gen_exit(struct gen_state *state) {
-    extern void gadget_exit();
+    extern void gadget_exit(void);
     // in case the last instruction didn't end the block
     gen(state, (unsigned long) gadget_exit);
     gen(state, state->ip);
@@ -110,10 +109,10 @@ enum repeat {
     rep_rep = rep_repz,
 };
 
-typedef void (*gadget_t)();
+typedef void (*gadget_t)(void);
 
 #define GEN(thing) gen(state, (unsigned long) (thing))
-#define g(g) do { extern void gadget_##g(); GEN(gadget_##g); } while (0)
+#define g(g) do { extern void gadget_##g(void); GEN(gadget_##g); } while (0)
 #define gg(_g, a) do { g(_g); GEN(a); } while (0)
 #define ggg(_g, a, b) do { g(_g); GEN(a); GEN(b); } while (0)
 #define gggg(_g, a, b, c) do { g(_g); GEN(a); GEN(b); GEN(c); } while (0)
@@ -209,7 +208,8 @@ static inline bool gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define MOV(src, dst,z) load(src, z); store(dst, z)
 #define MOVZX(src, dst,zs,zd) load(src, zs); gz(zero_extend, zs); store(dst, zd)
 #define MOVSX(src, dst,zs,zd) load(src, zs); gz(sign_extend, zs); store(dst, zd)
-#define XCHG(src, dst,z) los(xchg, src, dst, z)
+// xchg must generate in this order to be atomic
+#define XCHG(src, dst,z) load(src, z); op(xchg, dst, z); store(src, z)
 
 #define ADD(src, dst,z) los(add, src, dst, z)
 #define OR(src, dst,z) los(or, src, dst, z)
@@ -221,7 +221,7 @@ static inline bool gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define CMP(src, dst,z) lo(sub, src, dst, z)
 #define TEST(src, dst,z) lo(and, src, dst, z)
 #define NOT(val,z) load(val,z); gz(not, z); store(val,z)
-#define NEG(val,z) load(val,z); gz(neg, z); store(val,z)
+#define NEG(val,z) imm = 0; load(imm,z); op(sub, val,z); store(val,z)
 
 #define POP(thing,z) gg(pop, saved_ip); store(thing, z)
 #define PUSH(thing,z) load(thing, z); gg(push, saved_ip)
@@ -314,12 +314,11 @@ static inline bool gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define CMPXCHG(src, dst,z) load(src, z); op(cmpxchg, dst, z)
 #define XADD(src, dst,z) XCHG(src, dst,z); ADD(src, dst,z)
 
-#define RDTSC g(rdtsc)
+void helper_rdtsc(struct cpu_state *cpu);
+#define RDTSC h(helper_rdtsc)
 #define CPUID() g(cpuid)
 
 // atomic
-// TODO the gadgets currently don't exist on arm
-#if defined(__x86_64__)
 #define atomic_op(type, src, dst,z) load(src, z); op(atomic_##type, dst, z)
 #define ATOMIC_ADD(src, dst,z) atomic_op(add, src, dst, z)
 #define ATOMIC_OR(src, dst,z) atomic_op(or, src, dst, z)
@@ -332,20 +331,6 @@ static inline bool gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define ATOMIC_DEC(val,z) op(atomic_dec, val, z)
 #define ATOMIC_CMPXCHG(src, dst,z) atomic_op(cmpxchg, src, dst, z)
 #define ATOMIC_XADD(src, dst,z) load(src, z); op(atomic_xadd, dst, z); store(src, z)
-
-#else
-#define ATOMIC_ADD ADD
-#define ATOMIC_OR OR
-#define ATOMIC_ADC ADC
-#define ATOMIC_SBB SBB
-#define ATOMIC_AND AND
-#define ATOMIC_SUB SUB
-#define ATOMIC_XOR XOR
-#define ATOMIC_INC INC
-#define ATOMIC_DEC DEC
-#define ATOMIC_CMPXCHG CMPXCHG
-#define ATOMIC_XADD XADD
-#endif
 
 // sse
 #define XORP(src, dst) UNDEFINED
@@ -369,14 +354,20 @@ static inline bool gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define FCOM() hh(fpu_com, st_i)
 #define FCOMM(val,z) h_read(fpu_comm, z)
 #define FUCOM() hh(fpu_ucom, st_i)
-#define FUCOMI() UNDEFINED
+#define FUCOMI() hh(fpu_ucomi, st_i)
+#define FCOMI() hh(fpu_comi, st_i)
+#define FTST() h(fpu_tst)
+#define FXAM() h(fpu_xam)
 #define FST() hh(fpu_st, st_i)
 #define FCHS() h(fpu_chs)
 #define FABS() h(fpu_abs)
 #define FLDC(what) hh(fpu_ldc, fconst_##what)
 #define FPREM() h(fpu_prem)
 #define FRNDINT() h(fpu_rndint)
+#define FSCALE() h(fpu_scale)
+#define FSQRT() h(fpu_sqrt)
 #define FYL2X() h(fpu_yl2x)
+#define F2XM1() h(fpu_2xm1)
 #define FSTSW(dst) if (arg_##dst == arg_reg_a) g(fstsw_ax); else UNDEFINED
 #define FSTCW(dst) if (arg_##dst == arg_reg_a) UNDEFINED; else h_write(fpu_stcw, 16)
 #define FLDCW(dst) if (arg_##dst == arg_reg_a) UNDEFINED; else h_read(fpu_ldcw, 16)
@@ -395,9 +386,11 @@ static inline bool gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define FMULM(val,z) h_read(fpu_mulm, z)
 #define FDIV(src, dst) hhh(fpu_div, src, dst)
 #define FIDIV(val,z) h_read(fpu_idiv, z)
-#define FIDIVR(val,z) h_read(fpu_idivr, z)
 #define FDIVM(val,z) h_read(fpu_divm, z)
+#define FDIVR(src, dst) hhh(fpu_divr, src, dst)
+#define FIDIVR(val,z) h_read(fpu_idivr, z)
 #define FDIVRM(val,z) h_read(fpu_divrm, z)
+#define FPATAN() h(fpu_patan)
 
 #define DECODER_RET int
 #define DECODER_NAME gen_step

@@ -55,6 +55,7 @@ int_t sys_munmap(addr_t addr, uint_t len);
 int_t sys_mprotect(addr_t addr, uint_t len, int_t prot);
 int_t sys_mremap(addr_t addr, dword_t old_len, dword_t new_len, dword_t flags);
 dword_t sys_madvise(addr_t addr, dword_t len, dword_t advice);
+dword_t sys_mbind(addr_t addr, dword_t len, int_t mode, addr_t nodemask, dword_t maxnode, uint_t flags);
 
 // file descriptor things
 #define LSEEK_SET 0
@@ -82,7 +83,8 @@ dword_t sys_dup2(fd_t fd, fd_t new_fd);
 dword_t sys_close(fd_t fd);
 dword_t sys_fsync(fd_t f);
 dword_t sys_flock(fd_t fd, dword_t operation);
-dword_t sys_pipe(addr_t pipe_addr);
+int_t sys_pipe(addr_t pipe_addr);
+int_t sys_pipe2(addr_t pipe_addr, int_t flags);
 
 // file management
 fd_t sys_open(addr_t path_addr, dword_t flags, mode_t_ mode);
@@ -112,6 +114,7 @@ dword_t sys_chmod(addr_t path_addr, dword_t mode);
 dword_t sys_fchown32(fd_t f, dword_t owner, dword_t group);
 dword_t sys_fchownat(fd_t at_f, addr_t path_addr, dword_t owner, dword_t group, int flags);
 dword_t sys_chown32(addr_t path_addr, uid_t_ owner, uid_t_ group);
+dword_t sys_lchown(addr_t path_addr, uid_t_ owner, uid_t_ group);
 dword_t sys_truncate64(addr_t path_addr, dword_t size_low, dword_t size_high);
 dword_t sys_ftruncate64(fd_t f, dword_t size_low, dword_t size_high);
 dword_t sys_fallocate(fd_t f, dword_t mode, dword_t offset_low, dword_t offset_high, dword_t len_low, dword_t len_high);
@@ -141,14 +144,18 @@ dword_t sys_getpgrp(void);
 dword_t sys_setpgrp(void);
 dword_t sys_getuid32(void);
 dword_t sys_getuid(void);
+int_t sys_setuid(uid_t uid);
 dword_t sys_geteuid32(void);
 dword_t sys_geteuid(void);
+int_t sys_setgid(uid_t gid);
 dword_t sys_getgid32(void);
 dword_t sys_getgid(void);
 dword_t sys_getegid32(void);
 dword_t sys_getegid(void);
 dword_t sys_setresuid(uid_t_ ruid, uid_t_ euid, uid_t_ suid);
 dword_t sys_setresgid(uid_t_ rgid, uid_t_ egid, uid_t_ sgid);
+int_t sys_getgroups(dword_t size, addr_t list);
+int_t sys_setgroups(dword_t size, addr_t list);
 dword_t sys_getcwd(addr_t buf_addr, dword_t size);
 dword_t sys_chdir(addr_t path_addr);
 dword_t sys_chroot(addr_t path_addr);
@@ -158,6 +165,10 @@ int sys_set_thread_area(addr_t u_info);
 int sys_set_tid_address(addr_t blahblahblah);
 dword_t sys_setsid(void);
 dword_t sys_getsid(void);
+
+
+int_t sys_sched_yield(void);
+int_t sys_prctl(dword_t option, uint_t arg2, uint_t arg3, uint_t arg4, uint_t arg5);
 
 // system information
 #define UNAME_LENGTH 65
@@ -201,8 +212,9 @@ dword_t sys_select(fd_t nfds, addr_t readfds_addr, addr_t writefds_addr, addr_t 
 dword_t sys_pselect(fd_t nfds, addr_t readfds_addr, addr_t writefds_addr, addr_t exceptfds_addr, addr_t timeout_addr, addr_t sigmask_addr);
 
 // misc
-dword_t sys_futex(addr_t uaddr, dword_t op, dword_t val);
+dword_t sys_futex(addr_t uaddr, dword_t op, dword_t val, addr_t timeout_or_val2, addr_t uaddr2, dword_t val3);
 dword_t sys_getrandom(addr_t buf_addr, dword_t len, dword_t flags);
+int_t sys_syslog(int_t type, addr_t buf_addr, int_t len);
 
 typedef int (*syscall_t)(dword_t, dword_t, dword_t, dword_t, dword_t, dword_t);
 

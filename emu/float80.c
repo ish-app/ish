@@ -89,7 +89,7 @@ static float80 f80_shift_right(float80 f, int shift) {
 // a number is unsupported if the cursed bit (first bit of the significand,
 // also known as the integer bit) is incorrect. it must be 0 for denormals and
 // 1 for any other type of number.
-static bool f80_is_supported(float80 f) {
+bool f80_is_supported(float80 f) {
     if (f.exp == EXP_DENORMAL)
         return f.signif >> 63 == 0;
     return f.signif >> 63 == 1;
@@ -101,8 +101,11 @@ bool f80_isnan(float80 f) {
 bool f80_isinf(float80 f) {
     return f.exp == EXP_SPECIAL && (f.signif & (-1ul >> 1)) == 0;
 }
-static bool f80_iszero(float80 f) {
+bool f80_iszero(float80 f) {
     return f.exp == EXP_DENORMAL && f.signif == 0;
+}
+bool f80_isdenormal(float80 f) {
+    return f.exp == EXP_DENORMAL && f.signif != 0;
 }
 
 static float80 f80_normalize(float80 f) {
@@ -449,6 +452,8 @@ float80 f80_log2(float80 x) {
     float80 zero = f80_from_int(0);
     float80 one = f80_from_int(1);
     float80 two = f80_from_int(2);
+    if (f80_isnan(x) || f80_lte(x, zero))
+        return F80_NAN;
 
     int ipart = 0;
     while (f80_lt(x, one)) {
@@ -473,3 +478,25 @@ float80 f80_log2(float80 x) {
     return res;
 }
 
+float80 f80_sqrt(float80 x) {
+    if (f80_isnan(x) || x.sign)
+        return F80_NAN;
+    // for a rough guess, just cut the exponent by 2
+    float80 guess = x;
+    guess.exp = bias(unbias(guess.exp) / 2);
+    // now converge on the answer, using newton's method
+    float80 old_guess;
+    float80 two = f80_from_int(2);
+    int i = 0;
+    do {
+        old_guess = guess;
+        guess = f80_div(f80_add(guess, f80_div(x, guess)), two);
+    } while (!f80_eq(guess, old_guess) && i++ < 100);
+    return guess;
+}
+
+float80 f80_scale(float80 x, int scale) {
+    if (!f80_is_supported(x) || f80_isnan(x))
+        return F80_NAN;
+    return u128_normalize_round((unsigned __int128) x.signif << 64, unbias(x.exp) + scale, x.sign);
+}

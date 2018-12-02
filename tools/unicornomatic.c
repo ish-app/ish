@@ -102,7 +102,7 @@ int compare_cpus(struct cpu_state *cpu, struct tlb *tlb, uc_engine *uc, int unde
 
 #define CHECK(uc, ish, name) \
     if ((uc) != (ish)) { \
-        println(name ": uc 0x%llx, ish 0x%llx", (unsigned long long) (uc), (unsigned long long) (ish)); \
+        printk(name ": uc 0x%llx, ish 0x%llx\n", (unsigned long long) (uc), (unsigned long long) (ish)); \
         debugger; \
         return -1; \
     }
@@ -123,7 +123,7 @@ int compare_cpus(struct cpu_state *cpu, struct tlb *tlb, uc_engine *uc, int unde
     regs.eflags = (regs.eflags & ~undefined_flags) | (cpu->eflags & undefined_flags);
     if (regs.eflags != cpu->eflags) {
 #define f(x,n) ((regs.eflags & (1 << n)) ? #x : "-"),
-        printf("real eflags = 0x%x %s%s%s%s%s%s%s%s%s, fake eflags = 0x%x %s%s%s%s%s%s%s%s%s\r\n%0d",
+        printk("real eflags = 0x%x %s%s%s%s%s%s%s%s%s, fake eflags = 0x%x %s%s%s%s%s%s%s%s%s\n%0d",
                 regs.eflags, f(o,11)f(d,10)f(i,9)f(t,8)f(s,7)f(z,6)f(a,4)f(p,2)f(c,0)
 #undef f
 #define f(x,n) ((cpu->eflags & (1 << n)) ? #x : "-"),
@@ -138,11 +138,11 @@ int compare_cpus(struct cpu_state *cpu, struct tlb *tlb, uc_engine *uc, int unde
     if (tlb->dirty_page != TLB_PAGE_EMPTY) {
         char real_page[PAGE_SIZE];
         uc_trycall(uc_mem_read(uc, tlb->dirty_page, real_page, PAGE_SIZE), "compare read");
-        struct pt_entry entry = cpu->mem->pt[PAGE(tlb->dirty_page)];
+        struct pt_entry entry = *mem_pt(cpu->mem, PAGE(tlb->dirty_page));
         void *fake_page = entry.data->data + entry.offset;
 
         if (memcmp(real_page, fake_page, PAGE_SIZE) != 0) {
-            println("page %x doesn't match", tlb->dirty_page);
+            printk("page %x doesn't match\n", tlb->dirty_page);
             debugger;
             return -1;
         }
@@ -177,8 +177,24 @@ void step_tracing(struct cpu_state *cpu, struct tlb *tlb, uc_engine *uc) {
     // step unicorn
     uc_interrupt = -1;
     dword_t eip = uc_getreg(uc, UC_X86_REG_EIP);
-    while (uc_getreg(uc, UC_X86_REG_EIP) == eip)
-        uc_trycall(uc_emu_start(uc, eip, -1, 0, 1), "unicorn step");
+    // intercept cpuid and rdtsc
+    uint8_t code[2];
+    uc_read(uc, eip, code, sizeof(code));
+    if (code[0] == 0x0f && (code[1] == 0x31 || code[1] == 0xa2)) {
+        if (code[1] == 0x31) {
+            uc_setreg(uc, UC_X86_REG_EAX, cpu->eax);
+            uc_setreg(uc, UC_X86_REG_EDX, cpu->edx);
+        } else if (code[1] == 0xa2) {
+            uc_setreg(uc, UC_X86_REG_EAX, cpu->eax);
+            uc_setreg(uc, UC_X86_REG_EBX, cpu->ebx);
+            uc_setreg(uc, UC_X86_REG_ECX, cpu->ecx);
+            uc_setreg(uc, UC_X86_REG_EDX, cpu->edx);
+        }
+        uc_setreg(uc, UC_X86_REG_EIP, eip+2);
+    } else {
+        while (uc_getreg(uc, UC_X86_REG_EIP) == eip)
+            uc_trycall(uc_emu_start(uc, eip, -1, 0, 1), "unicorn step");
+    }
 
     // handle unicorn interrupts
     struct uc_regs regs;
@@ -312,7 +328,7 @@ void step_tracing(struct cpu_state *cpu, struct tlb *tlb, uc_engine *uc) {
         }
         uc_setreg(uc, UC_X86_REG_EAX, cpu->eax);
     } else if (uc_interrupt != -1) {
-        println("unhandled unicorn interrupt 0x%x", uc_interrupt);
+        printk("unhandled unicorn interrupt 0x%x\n", uc_interrupt);
         exit(1);
     }
 }
@@ -323,13 +339,13 @@ static void uc_interrupt_callback(uc_engine *uc, uint32_t interrupt, void *user_
 }
 
 static bool uc_unmapped_callback(uc_engine *uc, uc_mem_type type, uint64_t address, int size, int64_t value, void *user_data) {
-    struct pt_entry *pt = &current->mem->pt[PAGE(address)];
+    struct pt_entry *pt = mem_pt(current->mem, PAGE(address));
     // handle stack growing
-    if (pt->flags & P_GROWSDOWN) {
+    if (pt != NULL && pt->flags & P_GROWSDOWN) {
         uc_map(uc, BYTES_ROUND_DOWN(address), PAGE_SIZE);
         return true;
     }
-    println("unicorn reports unmapped access at 0x%lx size %d", address, size);
+    printk("unicorn reports unmapped access at 0x%lx size %d\n", address, size);
     return false;
 }
 
@@ -402,8 +418,8 @@ uc_engine *start_unicorn(struct cpu_state *cpu, struct mem *mem) {
     // XXX unicorn has a ?bug? where setting up 334 mappings takes five
     // seconds on my raspi. it seems to be accidentally quadratic (dot tumblr dot com)
     for (page_t page = 0; page < MEM_PAGES; page++) {
-        struct pt_entry *pt = &mem->pt[page];
-        if (pt->data == NULL)
+        struct pt_entry *pt = mem_pt(mem, page);
+        if (pt == NULL)
             continue;
         int prot = UC_PROT_READ | UC_PROT_EXEC;
         // really only the write bit is meaningful (FIXME)
@@ -437,19 +453,20 @@ int main(int argc, char *const argv[]) {
     uc_engine *uc = start_unicorn(&current->cpu, current->mem);
 
     struct cpu_state *cpu = &current->cpu;
-    struct tlb *tlb = tlb_new(cpu->mem);
+    struct tlb tlb;
+    tlb_init(&tlb, cpu->mem);
     int undefined_flags = 0;
     struct cpu_state old_cpu = *cpu;
     while (true) {
-        while (compare_cpus(cpu, tlb, uc, undefined_flags) < 0) {
-            println("resetting cpu");
+        while (compare_cpus(cpu, &tlb, uc, undefined_flags) < 0) {
+            printk("resetting cpu\n");
             *cpu = old_cpu;
             debugger;
-            cpu_step32(cpu, tlb);
+            cpu_step32(cpu, &tlb);
         }
-        undefined_flags = undefined_flags_mask(cpu, tlb);
+        undefined_flags = undefined_flags_mask(cpu, &tlb);
         old_cpu = *cpu;
-        step_tracing(cpu, tlb, uc);
+        step_tracing(cpu, &tlb, uc);
     }
 }
 

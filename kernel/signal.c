@@ -14,12 +14,18 @@ void deliver_signal(struct task *task, int sig) {
 retry:
         lock(&task->waiting_cond_lock);
         if (task->waiting_cond != NULL) {
-            if (pthread_mutex_trylock(task->waiting_lock)) {
-                unlock(&task->waiting_cond_lock);
-                goto retry;
+            bool mine = false;
+            if (pthread_mutex_trylock(&task->waiting_lock->m) == EBUSY) {
+                if (pthread_equal(task->waiting_lock->owner, pthread_self()))
+                    mine = true;
+                if (!mine) {
+                    unlock(&task->waiting_cond_lock);
+                    goto retry;
+                }
             }
             notify(task->waiting_cond);
-            unlock(task->waiting_lock);
+            if (!mine)
+                unlock(task->waiting_lock);
         }
         unlock(&task->waiting_cond_lock);
         pthread_kill(task->thread, SIGUSR1);
@@ -31,6 +37,8 @@ static int signal_is_blockable(int sig) {
 }
 
 void send_signal(struct task *task, int sig) {
+    if (task->zombie)
+        return;
     struct sighand *sighand = task->sighand;
     lock(&sighand->lock);
     if (sighand->action[sig].handler != SIG_IGN_) {
@@ -57,6 +65,8 @@ void send_group_signal(dword_t pgid, int sig) {
 }
 
 static void receive_signal(struct sighand *sighand, int sig) {
+    STRACE("%d receiving signal %d\n", current->pid, sig);
+    current->pending &= ~(1l << sig);
     if (sighand->action[sig].handler == SIG_DFL_) {
         switch (sig) {
             // non-fatal signals
@@ -94,8 +104,7 @@ static void receive_signal(struct sighand *sighand, int sig) {
 
     addr_t sigreturn_addr = vdso_symbol("__kernel_rt_sigreturn");
     if (sigreturn_addr == 0) {
-        fprintf(stderr, "sigreturn not found in vdso, this should never happen\n");
-        abort();
+        die("sigreturn not found in vdso, this should never happen");
     }
     frame.pretcode = current->mem->vdso + sigreturn_addr;
     // for legacy purposes
@@ -129,8 +138,6 @@ static void receive_signal(struct sighand *sighand, int sig) {
     // nothing we can do if this fails
     // TODO do something other than nothing, like printk maybe
     (void) user_put(sp, frame);
-
-    current->pending &= ~(1l << sig);
 }
 
 void receive_signals() {
@@ -254,6 +261,11 @@ int do_sigprocmask(dword_t how, sigset_t_ set, sigset_t_ *oldset_out) {
     sigset_t_ unblocked = oldset & ~current->blocked;
     current->pending |= current->queued & unblocked;
     current->queued &= ~unblocked;
+    // transfer blocked signals from pending to queued
+    sigset_t_ blocked = current->blocked & ~oldset;
+    current->queued |= current->pending & blocked;
+    current->pending &= ~blocked;
+
     unlock(&sighand->lock);
     if (oldset_out != NULL)
         *oldset_out = oldset;

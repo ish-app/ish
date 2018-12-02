@@ -24,7 +24,7 @@ static int read_header(struct fd *fd, struct elf_header *header) {
     if (fd->ops->lseek(fd, 0, SEEK_SET))
         return _EIO;
     if ((err = fd->ops->read(fd, header, sizeof(*header))) != sizeof(*header)) {
-        if (err != 0)
+        if (err < 0)
             return _EIO;
         return _ENOEXEC;
     }
@@ -272,7 +272,7 @@ static int elf_exec(struct fd *fd, const char *file, char *const argv[], char *c
     int dev_random = open("/dev/urandom", O_RDONLY);
     if (dev_random < 0 ||
             read(dev_random, random, sizeof(random)) != sizeof(random))
-        abort(); // if this fails, something is very badly wrong indeed
+        ERRNO_DIE("getting randomness for exec");
     close(dev_random);
     addr_t random_addr = sp -= sizeof(random);
     if (user_put(sp, random))
@@ -353,7 +353,7 @@ out_free_interp:
     if (interp_name != NULL)
         free(interp_name);
     if (interp_fd != NULL)
-        interp_fd->ops->close(interp_fd);
+        fd_close(interp_fd);
     if (interp_ph != NULL)
         free(interp_ph);
 out_free_ph:

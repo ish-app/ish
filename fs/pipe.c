@@ -12,8 +12,13 @@ static fd_t pipe_f_create(int pipe_fd) {
     return f_install(fd);
 }
 
-dword_t sys_pipe(addr_t pipe_addr) {
-    STRACE("pipe(0x%x)", pipe_addr);
+int_t sys_pipe2(addr_t pipe_addr, int_t flags) {
+    STRACE("pipe2(%#x, %#x)", pipe_addr, flags);
+    if (flags & ~(O_CLOEXEC_)) {
+        FIXME("unsupported pipe2 flags");
+        return _EINVAL;
+    }
+
     int p[2];
     int err = pipe(p);
     if (err < 0)
@@ -27,6 +32,11 @@ dword_t sys_pipe(addr_t pipe_addr) {
     if (fp[1] < 0)
         goto close_fake_0;
 
+    if (flags & O_CLOEXEC_) {
+        f_set_cloexec(fp[0]);
+        f_set_cloexec(fp[1]);
+    }
+
     err = _EFAULT;
     if (user_put(pipe_addr, fp))
         goto close_fake_1;
@@ -34,11 +44,15 @@ dword_t sys_pipe(addr_t pipe_addr) {
     return 0;
 
 close_fake_1:
-    sys_close(fp[1]);
+    f_close(fp[1]);
 close_fake_0:
-    sys_close(fp[0]);
+    f_close(fp[0]);
 close_pipe:
     close(p[0]);
     close(p[1]);
     return err;
+}
+
+int_t sys_pipe(addr_t pipe_addr) {
+    return sys_pipe2(pipe_addr, 0);
 }

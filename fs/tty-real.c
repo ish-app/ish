@@ -11,7 +11,14 @@
 
 static void real_tty_read_thread(struct tty *tty) {
     char ch;
-    while (read(STDIN_FILENO, &ch, 1) == 1) {
+    for (;;) {
+        int err = read(STDIN_FILENO, &ch, 1);
+        if (err != 1) {
+            printk("tty read returned %d\n", err);
+            if (err < 0)
+                printk("error: %s\n", strerror(errno));
+            continue;
+        }
         if (ch == '\x1c') {
             // ^\ (so ^C still works for emulated SIGINT)
             raise(SIGINT);
@@ -87,7 +94,7 @@ int real_tty_open(struct tty *tty) {
     termios.c_oflag |= OPOST | ONLCR;
 #endif
     if (tcsetattr(STDIN_FILENO, TCSANOW, &termios) < 0)
-        DIE("failed to set terminal to raw mode");
+        ERRNO_DIE("failed to set terminal to raw mode");
 notty:
 
     if (pthread_create(&tty->thread, NULL, (void *(*)(void *)) real_tty_read_thread, tty) < 0)
@@ -103,7 +110,7 @@ ssize_t real_tty_write(struct tty *tty, const void *buf, size_t len) {
 
 void real_tty_close(struct tty *tty) {
     if (tcsetattr(STDIN_FILENO, TCSANOW, &old_termios) < 0 && errno != ENOTTY)
-        DIE("failed to reset terminal");
+        ERRNO_DIE("failed to reset terminal");
     pthread_cancel(tty->thread);
 }
 

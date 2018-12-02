@@ -1,35 +1,10 @@
-#ifndef DEBUG_H
-#define DEBUG_H
-#include <assert.h>
+#ifndef UTIL_DEBUG_H
+#define UTIL_DEBUG_H
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdarg.h>
-#if LOG_HANDLER_NSLOG
-#include <CoreFoundation/CoreFoundation.h>
-#endif
 
-static inline void printk(const char *msg, ...) {
-    va_list args;
-    va_start(args, msg);
-#if LOG_HANDLER_DPRINTF
-    vdprintf(666, msg, args);
-#elif LOG_HANDLER_NSLOG
-    extern void NSLogv(CFStringRef msg, va_list args);
-    CFStringRef cfmsg = CFStringCreateWithCStringNoCopy(NULL, msg, kCFStringEncodingUTF8, kCFAllocatorNull);
-    NSLogv(cfmsg, args);
-    CFRelease(cfmsg);
-#endif
-    va_end(args);
-}
-
-// all line endings should use \r\n so it can work even with the terminal in raw mode
-// this is subject to change, so use NEWLINE or println whenever you output a newline
-#if LOG_HANDLER_NSLOG
-#define NEWLINE
-#else
-#define NEWLINE "\r\n"
-#endif
-#define println(msg, ...) printk(msg NEWLINE, ##__VA_ARGS__)
+void printk(const char *msg, ...);
+void vprintk(const char *msg, va_list args);
 
 // debug output utilities
 // save me
@@ -89,18 +64,17 @@ extern int log_override;
 
 #define TRACE_(chan, msg, ...) glue(TRACE_, chan)(msg, ##__VA_ARGS__)
 #define TRACE(msg, ...) TRACE_(DEFAULT_CHANNEL, msg, ##__VA_ARGS__)
-#define TRACELN_(chan, msg, ...) TRACE_(chan, msg "\r\n", ##__VA_ARGS__)
-#define TRACELN(msg, ...) TRACE(msg NEWLINE, ##__VA_ARGS__)
 #ifndef DEFAULT_CHANNEL
 #define DEFAULT_CHANNEL default
 #endif
 
-#define TODO(msg, ...) { println("TODO: " msg, ##__VA_ARGS__); abort(); }
-#define FIXME(msg, ...) println("FIXME " msg, ##__VA_ARGS__)
-#define DIE(msg) { perror(msg); abort(); }
+#define TODO(msg, ...) die("TODO: " msg, ##__VA_ARGS__)
+#define FIXME(msg, ...) printk("FIXME " msg "\n", ##__VA_ARGS__)
+#define ERRNO_DIE(msg) { perror(msg); abort(); }
+extern void (*die_handler)(const char *msg);
+_Noreturn void die(const char *msg, ...);
 
 #define STRACE(msg, ...) TRACE_(strace, msg, ##__VA_ARGS__)
-#define STRACELN(msg, ...) TRACELN_(strace, msg, ##__VA_ARGS__)
 
 #if defined(__i386__) || defined(__x86_64__)
 #define debugger __asm__("int3")

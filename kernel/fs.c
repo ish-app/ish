@@ -53,7 +53,10 @@ fd_t sys_openat(fd_t at_f, addr_t path_addr, dword_t flags, mode_t_ mode) {
     struct fd *fd = generic_openat(at, path, flags, mode);
     if (IS_ERR(fd))
         return PTR_ERR(fd);
-    return f_install(fd);
+    fd_t f = f_install(fd);
+    if (f >= 0 && (flags & O_CLOEXEC_))
+        f_set_cloexec(f);
+    return f;
 }
 
 fd_t sys_open(addr_t path_addr, dword_t flags, mode_t_ mode) {
@@ -64,14 +67,17 @@ dword_t sys_readlinkat(fd_t at_f, addr_t path_addr, addr_t buf_addr, dword_t buf
     char path[MAX_PATH];
     if (user_read_string(path_addr, path, sizeof(path)))
         return _EFAULT;
+    STRACE("readlinkat(%d, \"%s\", %#x, %#x)", at_f, path, buf_addr, bufsize);
     struct fd *at = at_fd(at_f);
     if (at == NULL)
         return _EBADF;
     char buf[bufsize];
     int err = generic_readlinkat(at, path, buf, bufsize);
-    if (err >= 0)
+    if (err >= 0) {
+        STRACE(" \"%.*s\"", bufsize, buf);
         if (user_write_string(buf_addr, buf))
             return _EFAULT;
+    }
     return err;
 }
 
@@ -156,61 +162,99 @@ dword_t sys_symlink(addr_t target_addr, addr_t link_addr) {
 
 dword_t sys_read(fd_t fd_no, addr_t buf_addr, dword_t size) {
     STRACE("read(%d, 0x%x, %d)", fd_no, buf_addr, size);
-    char buf[size+1];
+    char *buf = (char *) malloc(size+1);
+    if (buf == NULL)
+        return _ENOMEM;
+    int_t res = 0;
     struct fd *fd = f_get(fd_no);
-    if (fd == NULL)
-        return _EBADF;
-    int res = fd->ops->read(fd, buf, size);
-    if (res >= 0)
+    if (fd == NULL) {
+        res = _EBADF;
+        goto out;
+    }
+    res = fd->ops->read(fd, buf, size);
+    if (res >= 0) {
         if (user_write(buf_addr, buf, res))
-            return _EFAULT;
+            res = _EFAULT;
+    }
+out:
+    free(buf);
     return res;
 }
 
 dword_t sys_readv(fd_t fd_no, addr_t iovec_addr, dword_t iovec_count) {
-    struct io_vec iovecs[iovec_count];
-    if (user_get(iovec_addr, iovecs))
-        return _EFAULT;
-    int res;
+    dword_t iovec_size = sizeof(struct io_vec) * iovec_count;
+    struct io_vec *iovecs = malloc(iovec_size);
+    if (iovecs == NULL)
+        return _ENOMEM;
+    dword_t res = 0;
+    if (user_read(iovec_addr, iovecs, iovec_size)) {
+        res = _EFAULT;
+        goto err;
+    }
     dword_t count = 0;
     for (unsigned i = 0; i < iovec_count; i++) {
         res = sys_read(fd_no, iovecs[i].base, iovecs[i].len);
         if (res < 0)
-            return res;
+            goto err;
         count += res;
         if (res < iovecs[i].len)
             break;
     }
+    free(iovecs);
     return count;
+
+err:
+    free(iovecs);
+    return res;
 }
 
 dword_t sys_write(fd_t fd_no, addr_t buf_addr, dword_t size) {
-    char buf[size+1];
-    if (user_read(buf_addr, buf, size))
-        return _EFAULT;
+    char *buf = malloc(size + 1);
+    if (buf == NULL)
+        return _ENOMEM;
+    dword_t res = 0;
+    if (user_read(buf_addr, buf, size)) {
+        res = _EFAULT;
+        goto out;
+    }
     buf[size] = '\0';
-    STRACE("write(%d, \"%s\", %d)", fd_no, buf, size);
+    STRACE("write(%d, \"%.100s\", %d)", fd_no, buf, size);
     struct fd *fd = f_get(fd_no);
-    if (fd == NULL)
-        return _EBADF;
-    return fd->ops->write(fd, buf, size);
+    if (fd == NULL) {
+        res = _EBADF;
+        goto out;
+    }
+    res = fd->ops->write(fd, buf, size);
+out:
+    free(buf);
+    return res;
 }
 
 dword_t sys_writev(fd_t fd_no, addr_t iovec_addr, dword_t iovec_count) {
-    struct io_vec iovecs[iovec_count];
-    if (user_get(iovec_addr, iovecs))
-        return _EFAULT;
-    int res;
+    dword_t iovec_size = sizeof(struct io_vec) * iovec_count;
+    struct io_vec *iovecs = malloc(iovec_size);
+    if (iovecs == NULL)
+        return _ENOMEM;
+    int res = 0;
+    if (user_read(iovec_addr, iovecs, iovec_size)) {
+        res = _EFAULT;
+        goto err;
+    }
     dword_t count = 0;
     for (unsigned i = 0; i < iovec_count; i++) {
         res = sys_write(fd_no, iovecs[i].base, iovecs[i].len);
         if (res < 0)
-            return res;
+            goto err;
         count += res;
         if (res < iovecs[i].len)
             break;
     }
+    free(iovecs);
     return count;
+
+err:
+    free(iovecs);
+    return res;
 }
 
 dword_t sys__llseek(fd_t f, dword_t off_high, dword_t off_low, addr_t res_addr, dword_t whence) {
@@ -243,33 +287,36 @@ dword_t sys_lseek(fd_t f, dword_t off, dword_t whence) {
 }
 
 dword_t sys_pread(fd_t f, addr_t buf_addr, dword_t size, off_t_ off) {
+    STRACE("pread(%d, 0x%x, %d, %d)", f, buf_addr, size, off);
     struct fd *fd = f_get(f);
     if (fd == NULL)
         return _EBADF;
-    char buf[size+1];
+    char *buf = malloc(size+1);
+    if (buf == NULL)
+        return _EFAULT;
     lock(&fd->lock);
-    sdword_t res = fd->ops->lseek(fd, off, LSEEK_SET);
+    int_t res = fd->ops->lseek(fd, off, LSEEK_SET);
     if (res < 0)
         goto out;
     res = fd->ops->read(fd, buf, size);
-    if (res >= 0)
+    if (res >= 0) {
         if (user_write(buf_addr, buf, res))
-            return _EFAULT;
+            res = _EFAULT;
+    }
 out:
     unlock(&fd->lock);
+    free(buf);
     return res;
 }
 
-dword_t sys_ioctl(fd_t f, dword_t cmd, dword_t arg) {
-    STRACE("ioctl(%d, 0x%x, 0x%x)", f, cmd, arg);
-    struct fd *fd = f_get(f);
-    if (fd == NULL)
-        return _EBADF;
+#define FIONBIO_ 0x5421
+
+static int fd_ioctl(struct fd *fd, dword_t cmd, dword_t arg) {
     if (!fd->ops->ioctl_size)
         return _EINVAL;
     ssize_t size = fd->ops->ioctl_size(fd, cmd);
     if (size < 0) {
-        println("unknown ioctl %x", cmd);
+        printk("unknown ioctl %x\n", cmd);
         return _EINVAL;
     }
     if (size == 0)
@@ -287,7 +334,24 @@ dword_t sys_ioctl(fd_t f, dword_t cmd, dword_t arg) {
     return res;
 }
 
+dword_t sys_ioctl(fd_t f, dword_t cmd, dword_t arg) {
+    STRACE("ioctl(%d, 0x%x, 0x%x)", f, cmd, arg);
+    struct fd *fd = f_get(f);
+    if (fd == NULL)
+        return _EBADF;
+
+    switch (cmd) {
+        case FIONBIO_:
+            fd->flags |= O_NONBLOCK_;
+            break;
+        default:
+            return fd_ioctl(fd, cmd, arg);
+    }
+    return 0;
+}
+
 dword_t sys_getcwd(addr_t buf_addr, dword_t size) {
+    STRACE("getcwd(%#x, %#x)", buf_addr, size);
     lock(&current->fs->lock);
     struct fd *wd = current->fs->pwd;
     char pwd[MAX_PATH];
@@ -298,11 +362,17 @@ dword_t sys_getcwd(addr_t buf_addr, dword_t size) {
 
     if (strlen(pwd) + 1 > size)
         return _ERANGE;
-    char buf[size];
+    size = strlen(pwd) + 1;
+    char *buf = malloc(size);
+    if (buf == NULL)
+        return _ENOMEM;
     strcpy(buf, pwd);
-    if (user_write(buf_addr, buf, sizeof(buf)))
-        return _EFAULT;
-    return size;
+    STRACE(" \"%.*s\"", size, buf);
+    dword_t res = size;
+    if (user_write(buf_addr, buf, size))
+        res = _EFAULT;
+    free(buf);
+    return res;
 }
 
 static struct fd *open_dir(const char *path) {
@@ -507,6 +577,10 @@ dword_t sys_fchownat(fd_t at_f, addr_t path_addr, dword_t owner, dword_t group, 
 
 dword_t sys_chown32(addr_t path_addr, uid_t_ owner, uid_t_ group) {
     return sys_fchownat(AT_FDCWD_, path_addr, owner, group, 0);
+}
+
+dword_t sys_lchown(addr_t path_addr, uid_t_ owner, uid_t_ group) {
+    return sys_fchownat(AT_FDCWD_, path_addr, owner, group, AT_SYMLINK_NOFOLLOW_);
 }
 
 dword_t sys_truncate64(addr_t path_addr, dword_t size_low, dword_t size_high) {

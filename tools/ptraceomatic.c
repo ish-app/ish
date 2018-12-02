@@ -63,7 +63,7 @@ static int compare_cpus(struct cpu_state *cpu, struct tlb *tlb, int pid, int und
     collapse_flags(cpu);
 #define CHECK(real, fake, name) \
     if ((real) != (fake)) { \
-        println(name ": real 0x%llx, fake 0x%llx", (unsigned long long) (real), (unsigned long long) (fake)); \
+        printk(name ": real 0x%llx, fake 0x%llx\n", (unsigned long long) (real), (unsigned long long) (fake)); \
         debugger; \
         return -1; \
     }
@@ -127,11 +127,11 @@ static int compare_cpus(struct cpu_state *cpu, struct tlb *tlb, int pid, int und
         trycall(lseek(fd, dirty_page, SEEK_SET), "compare seek mem");
         trycall(read(fd, real_page, PAGE_SIZE), "compare read mem");
         close(fd);
-        struct pt_entry entry = cpu->mem->pt[PAGE(dirty_page)];
+        struct pt_entry entry = *mem_pt(cpu->mem, PAGE(dirty_page));
         void *fake_page = entry.data->data + entry.offset;
 
         if (memcmp(real_page, fake_page, PAGE_SIZE) != 0) {
-            println("page %x doesn't match", dirty_page);
+            printk("page %x doesn't match\n", dirty_page);
             debugger;
             return -1;
         }
@@ -305,6 +305,8 @@ static void step_tracing(struct cpu_state *cpu, struct tlb *tlb, int pid, int se
                 if (regs.rbx != 0)
                     pt_copy(pid, regs.rbx, sizeof(dword_t));
                 break;
+            case 43:
+                pt_copy(pid, regs.rbx, sizeof(struct tms_)); break;
             case 54: { // ioctl (god help us)
                 struct fd *fd = f_get(cpu->ebx);
                 if (fd && fd->ops->ioctl_size) {
@@ -472,21 +474,22 @@ int main(int argc, char *const argv[]) {
     prepare_tracee(pid);
 
     struct cpu_state *cpu = &current->cpu;
-    struct tlb *tlb = tlb_new(cpu->mem);
+    struct tlb tlb;
+    tlb_init(&tlb, cpu->mem);
     int undefined_flags = 2;
     struct cpu_state old_cpu = *cpu;
     int i = 0;
     while (true) {
-        if (compare_cpus(cpu, tlb, pid, undefined_flags) < 0) {
-            println("failure: resetting cpu");
+        if (compare_cpus(cpu, &tlb, pid, undefined_flags) < 0) {
+            printk("failure: resetting cpu\n");
             *cpu = old_cpu;
             __asm__("int3");
-            cpu_step32(cpu, tlb);
+            cpu_step32(cpu, &tlb);
             return -1;
         }
-        undefined_flags = undefined_flags_mask(cpu, tlb);
+        undefined_flags = undefined_flags_mask(cpu, &tlb);
         old_cpu = *cpu;
-        step_tracing(cpu, tlb, pid, sender, receiver);
+        step_tracing(cpu, &tlb, pid, sender, receiver);
         i++;
     }
 }

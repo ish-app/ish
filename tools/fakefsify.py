@@ -4,7 +4,15 @@ from pathlib import Path
 import struct
 import urllib.request
 import tarfile
-import dbm.gnu
+import sqlite3
+
+SCHEMA = """
+create table meta (id integer unique default 0, db_inode integer);
+insert into meta (db_inode) values (0);
+create table paths (path blob primary key, inode integer);
+create table stats (inode integer primary key, stat blob);
+"""
+# no index is needed on stats, because the rows are ordered by the primary key
 
 def extract_archive(archive, db):
     for member in archive.getmembers():
@@ -18,9 +26,9 @@ def extract_archive(archive, db):
         rdev = ((minor & 0xfff00) << 12) | (major << 8) | (minor & 0xff)
         mode = member.mode
         if member.isfile():
-            mode |= 0o100000	
+            mode |= 0o100000
         elif member.isdir():
-            mode |= 0o040000	
+            mode |= 0o040000
         elif member.issym():
             mode |= 0o120000
         elif member.ischr():
@@ -29,6 +37,8 @@ def extract_archive(archive, db):
             mode |= 0o060000
         elif member.isfifo():
             mode |= 0o010000
+        elif member.islnk():
+            pass
         else:
             raise ValueError('unrecognized tar entry type')
 
@@ -41,19 +51,32 @@ def extract_archive(archive, db):
         else:
             path.touch()
 
-        inode = bytes(str(path.stat().st_ino), 'ascii')
+        inode = path.stat().st_ino
+        if member.islnk():
+            # a hard link shares its target's inode
+            target_path = data/(member.linkname)
+            inode = target_path.stat().st_ino
         meta_path = path.relative_to(data)
         meta_path = b'/' + bytes(meta_path) if meta_path.parts else b''
-        db[b'inode ' + meta_path] = inode
-        db[b'stat ' + inode] = struct.pack(
+        db.execute('insert into paths values (?, ?)', (meta_path, inode))
+        if member.islnk():
+            continue
+        statblob = memoryview(struct.pack(
             '=iiii',
             mode,
             member.uid,
             member.gid,
             rdev,
-        )
+        ))
+        db.execute('insert into stats values (?, ?)', (inode, statblob))
 
-_, archive_path, fs = sys.argv
+try:
+    _, archive_path, fs = sys.argv
+except ValueError:
+    print('wrong number of arguments')
+    print("Usage: fakefsify.py <rootfs archive> <destination dir>")
+    sys.exit(1)
+
 fs = Path(fs)
 fs.mkdir(parents=True, exist_ok=True)
 data = fs/'data'
@@ -61,6 +84,8 @@ data = fs/'data'
 db_path = fs/'meta.db'
 with open(archive_path, 'rb') as archive:
     with tarfile.open(fileobj=archive) as archive:
-        with dbm.gnu.open(str(db_path), 'c') as db:
-            extract_archive(archive, db)
-            db[b'db inode'] = str(db_path.stat().st_ino) + '\0'
+        db = sqlite3.connect(str(db_path))
+        db.executescript(SCHEMA)
+        extract_archive(archive, db)
+        db.execute('update meta set db_inode = ?', (db_path.stat().st_ino,))
+        db.execute('commit')

@@ -14,14 +14,7 @@ NAME(jit_enter):
     add _ip, x0, JIT_BLOCK_code
     # cpu is already x1
     add _tlb, x2, TLB_entries
-    ldr eax, [_cpu, CPU_eax]
-    ldr ebx, [_cpu, CPU_ebx]
-    ldr ecx, [_cpu, CPU_ecx]
-    ldr edx, [_cpu, CPU_edx]
-    ldr esi, [_cpu, CPU_esi]
-    ldr edi, [_cpu, CPU_edi]
-    ldr ebp, [_cpu, CPU_ebp]
-    ldr esp, [_cpu, CPU_esp]
+    load_regs
     gret
 
 .global jit_ret_chain
@@ -38,15 +31,7 @@ jit_ret:
 
 .global jit_exit
 jit_exit:
-    str eax, [_cpu, CPU_eax]
-    str ebx, [_cpu, CPU_ebx]
-    str ecx, [_cpu, CPU_ecx]
-    str edx, [_cpu, CPU_edx]
-    str edi, [_cpu, CPU_edi]
-    str esi, [_cpu, CPU_esi]
-    str ebp, [_cpu, CPU_ebp]
-    str esp, [_cpu, CPU_esp]
-    str eip, [_cpu, CPU_eip]
+    save_regs
     ldr lr, [sp, 0x60]
     ldp x28, x29, [sp, 0x50]
     ldp x26, x27, [sp, 0x40]

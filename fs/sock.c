@@ -12,9 +12,11 @@ static fd_t sock_fd_create(int sock_fd, int flags) {
         return _ENOMEM;
     fd->real_fd = sock_fd;
     fd->ops = &socket_fdops;
-    if (flags & SOCK_CLOEXEC_)
-        fd->flags = FD_CLOEXEC_;
-    return f_install(fd);
+    fd_t f = f_install(fd);
+    if (f >= 0)
+        if (flags & SOCK_CLOEXEC_)
+            f_set_cloexec(f);
+    return f;
 }
 
 dword_t sys_socket(dword_t domain, dword_t type, dword_t protocol) {
@@ -285,7 +287,7 @@ dword_t sys_setsockopt(fd_t sock_fd, dword_t level, dword_t option, addr_t value
 }
 
 dword_t sys_getsockopt(fd_t sock_fd, dword_t level, dword_t option, addr_t value_addr, dword_t len_addr) {
-    STRACE("getsockopt(%d, %d, %d, 0x%x, %d)", sock_fd, level, option, value_addr, len_addr);
+    STRACE("getsockopt(%d, %d, %d, %#x, %#x)", sock_fd, level, option, value_addr, len_addr);
     struct fd *sock = sock_getfd(sock_fd);
     if (sock == NULL)
         return _EBADF;
@@ -305,7 +307,18 @@ dword_t sys_getsockopt(fd_t sock_fd, dword_t level, dword_t option, addr_t value
     int err = getsockopt(sock->real_fd, real_level, real_opt, value, &value_len);
     if (err < 0)
         return errno_map();
+
+    if (level == SOL_SOCKET_ && option == SO_TYPE_) {
+        dword_t *type = (dword_t *) &value[0];
+        switch (*type) {
+            case SOCK_STREAM_: *type = SOCK_STREAM; break;
+            case SOCK_DGRAM_: *type = SOCK_DGRAM; break;
+        }
+    }
+
     if (user_put(len_addr, value_len))
+        return _EFAULT;
+    if (user_put(value_addr, value))
         return _EFAULT;
     return 0;
 }
@@ -315,33 +328,34 @@ static struct fd_ops socket_fdops = {
     .write = realfs_write,
     .close = realfs_close,
     .getflags = realfs_getflags,
+    .setflags = realfs_setflags,
 };
 
 static struct socket_call {
     syscall_t func;
     int args;
 } socket_calls[] = {
-    {NULL, 0},
+    {NULL},
     {(syscall_t) sys_socket, 3},
     {(syscall_t) sys_bind, 3},
     {(syscall_t) sys_connect, 3},
-    {NULL, 0}, // listen
-    {NULL, 0}, // accept
+    {NULL}, // listen
+    {NULL}, // accept
     {(syscall_t) sys_getsockname, 3}, // getsockname
     {(syscall_t) sys_getpeername, 3}, // getpeername
     {(syscall_t) sys_socketpair, 4}, // socketpair
-    {NULL, 0}, // send
-    {NULL, 0}, // recv
+    {NULL}, // send
+    {NULL}, // recv
     {(syscall_t) sys_sendto, 6}, // sendto
     {(syscall_t) sys_recvfrom, 6}, // recvfrom
     {(syscall_t) sys_shutdown, 2}, // shutdown
     {(syscall_t) sys_setsockopt, 5}, // setsockopt
     {(syscall_t) sys_getsockopt, 5}, // getsockopt
-    {NULL, 0}, // sendmsg
-    {NULL, 0}, // recvmsg
-    {NULL, 0}, // accept4
-    {NULL, 0}, // recvmmsg
-    {NULL, 0}, // sendmmsg
+    {NULL}, // sendmsg
+    {NULL}, // recvmsg
+    {NULL}, // accept4
+    {NULL}, // recvmmsg
+    {NULL}, // sendmmsg
 };
 
 dword_t sys_socketcall(dword_t call_num, addr_t args_addr) {
@@ -350,7 +364,7 @@ dword_t sys_socketcall(dword_t call_num, addr_t args_addr) {
         return _EINVAL;
     struct socket_call call = socket_calls[call_num];
     if (call.func == NULL) {
-        TODO("socketcall %d", call_num);
+        FIXME("socketcall %d", call_num);
         return _ENOSYS;
     }
 

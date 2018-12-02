@@ -191,6 +191,10 @@ back_write_done_\id :
         movs \dst, w10, \s
     .endif
 .endm
+.macro ldrs src, dst, s
+    ldr\s w10, \dst
+    movs \src, w10, \s
+.endm
 
 .macro uxts dst, src, s=
     .ifnb \s
@@ -200,6 +204,29 @@ back_write_done_\id :
     .ifnc \dst,\src
         mov \dst, \src
     .endif
+.endm
+
+.macro load_regs
+    ldr eax, [_cpu, CPU_eax]
+    ldr ebx, [_cpu, CPU_ebx]
+    ldr ecx, [_cpu, CPU_ecx]
+    ldr edx, [_cpu, CPU_edx]
+    ldr esi, [_cpu, CPU_esi]
+    ldr edi, [_cpu, CPU_edi]
+    ldr ebp, [_cpu, CPU_ebp]
+    ldr esp, [_cpu, CPU_esp]
+.endm
+
+.macro save_regs
+    str eax, [_cpu, CPU_eax]
+    str ebx, [_cpu, CPU_ebx]
+    str ecx, [_cpu, CPU_ecx]
+    str edx, [_cpu, CPU_edx]
+    str edi, [_cpu, CPU_edi]
+    str esi, [_cpu, CPU_esi]
+    str ebp, [_cpu, CPU_ebp]
+    str esp, [_cpu, CPU_esp]
+    str eip, [_cpu, CPU_eip]
 .endm
 
 # vim: ft=gas

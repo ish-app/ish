@@ -5,6 +5,7 @@
 #include "debug.h"
 #include <time.h>
 #include <signal.h>
+#include <sys/time.h>
 #include "kernel/calls.h"
 #include "kernel/errno.h"
 #include "kernel/resource.h"
@@ -36,6 +37,31 @@ dword_t sys_clock_gettime(dword_t clock, addr_t tp) {
     if (user_put(tp, t))
         return _EFAULT;
     return 0;
+}
+
+dword_t sys_clock_getres(dword_t clock, addr_t res_addr) {
+    STRACE("clock_getres(%d, %#x)", clock, res_addr);
+    clockid_t clock_id;
+    switch (clock) {
+        case CLOCK_REALTIME_: clock_id = CLOCK_REALTIME; break;
+        case CLOCK_MONOTONIC_: clock_id = CLOCK_MONOTONIC; break;
+        default: return _EINVAL;
+    }
+
+    struct timespec res;
+    int err = clock_getres(clock_id, &res);
+    if (err < 0)
+        return errno_map();
+    struct timespec_ t;
+    t.sec = res.tv_sec;
+    t.nsec = res.tv_nsec;
+    if (user_put(res_addr, t))
+        return _EFAULT;
+    return 0;
+}
+
+dword_t sys_clock_settime(dword_t clock, addr_t tp) {
+    return _EPERM;
 }
 
 static void itimer_notify(struct task *task) {
@@ -121,4 +147,27 @@ dword_t sys_times(addr_t tbuf) {
             return _EFAULT;
     }
     return 0;
+}
+
+dword_t sys_gettimeofday(addr_t tv, addr_t tz) {
+    STRACE("gettimeofday(0x%x, 0x%x)", tv, tz);
+    struct timeval timeval;
+    struct timezone timezone;
+    if (gettimeofday(&timeval, &timezone) < 0) {
+	    return errno_map();
+    }
+    struct timeval_ tv_;
+    struct timezone_ tz_;
+    tv_.sec = timeval.tv_sec;
+    tv_.usec = timeval.tv_usec;
+    tz_.minuteswest = timezone.tz_minuteswest;
+    tz_.dsttime = timezone.tz_dsttime;
+    if ((tv && user_put(tv, tv_)) || (tz && user_put(tz, tz_))) {
+	    return _EFAULT;
+    }
+    return 0;
+}
+
+dword_t sys_settimeofday(addr_t tv, addr_t tz) {
+    return _EPERM;
 }
