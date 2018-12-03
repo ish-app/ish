@@ -24,6 +24,26 @@ window.addEventListener('resize', function() {
     term.fit();
 });
 
+function updateStyle({foregroundColor, backgroundColor, fontSize}) {
+    const style = `
+    .terminal {
+        font-size: ${fontSize}px;
+        color: ${foregroundColor};
+    }
+    .terminal.focus:not(.xterm-cursor-style-underline):not(.xterm-cursor-style-bar) .terminal-cursor {
+        background-color: ${foregroundColor};
+        color: ${backgroundColor};
+    }
+    .terminal:not(.focus) .terminal-cursor {
+        outline-color: ${foregroundColor};
+    }
+    `;
+    document.getElementById('style').textContent = style;
+    term.fit();
+    term.fit(); // have to do a second time for it to correctly detect available space initially
+}
+window.updateStyle = updateStyle;
+
 // allow touches to scroll the div that exists to display a scrollbar
 term.element.addEventListener('touchstart', function(event) {
     event.stopPropagation();

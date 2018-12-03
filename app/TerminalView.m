@@ -6,41 +6,15 @@
 //
 
 #import "TerminalView.h"
+#import "UserPreferences.h"
 
 @interface TerminalView ()
 
-typedef enum {
-    kNone,
-    kEsc,
-    kCtrl,
-} CapsLockTarget;
-
-
 @property (nonatomic) NSMutableArray<UIKeyCommand *> *keyCommands;
-@property (nonatomic) CapsLockTarget currentCapsLocktarget;
 
 @end
 
 @implementation TerminalView
-
-- (void)registerExternalKeyboardNotificationsToNotificationCenter:(NSNotificationCenter *)center {
-    [center addObserver:self
-               selector:@selector(keyboardDidChange:)
-                   name:UITextInputCurrentInputModeDidChangeNotification
-                 object:nil];
-    [center addObserver:self
-               selector:@selector(appDidBecomeActive:)
-                   name:UIApplicationDidBecomeActiveNotification
-                 object:nil];
-}
-
-- (void)keyboardDidChange:(NSNotification *)notification {
-    self.currentCapsLocktarget = [self capsLockTarget];
-}
-
-- (void)appDidBecomeActive:(NSNotification *)notification {
-    self.currentCapsLocktarget = [self capsLockTarget];
-}
 
 - (void)setTerminal:(Terminal *)terminal {
     if (self.terminal) {
@@ -184,11 +158,6 @@ typedef enum {
 
 static const char *alphabet = "abcdefghijklmnopqrstuvwxyz";
 static const char *controlKeys = "abcdefghijklmnopqrstuvwxyz26-=[]\\";
-NSString *kiSHCapsLockMapping = @"kiSHCapsLockMapping";
-
-- (BOOL)shouldRemapCapsLock {
-    return self.currentCapsLocktarget != kNone;
-}
 
 - (NSArray<UIKeyCommand *> *)keyCommands {
     if (_keyCommands != nil)
@@ -199,7 +168,7 @@ NSString *kiSHCapsLockMapping = @"kiSHCapsLockMapping";
                                    UIKeyInputLeftArrow, UIKeyInputRightArrow, @"\t"]) {
         [self addKey:specialKey withModifiers:0];
     }
-    if ([self shouldRemapCapsLock]) {
+    if (UserPreferences.shared.capsLockMapping != CapsLockMapNone) {
         [self addKeys:controlKeys withModifiers:UIKeyModifierAlphaShift];
         [self addKeys:alphabet withModifiers:0];
         [self addKeys:alphabet withModifiers:UIKeyModifierShift];
@@ -222,16 +191,6 @@ NSString *kiSHCapsLockMapping = @"kiSHCapsLockMapping";
     
 }
 
-- (CapsLockTarget)capsLockTarget {
-    NSString *target = [[NSUserDefaults standardUserDefaults] stringForKey:kiSHCapsLockMapping];
-    if([target isEqualToString:@"esc"]) {
-        return kEsc;
-    } else if([target isEqualToString:@"ctrl"]) {
-        return kCtrl;
-    }
-    return kNone;
-}
-
 - (void)keyCommandTriggered:(UIKeyCommand *)sender {
     dispatch_async(dispatch_get_main_queue(), ^{
         [self handleKeyCommand:sender];
@@ -239,17 +198,16 @@ NSString *kiSHCapsLockMapping = @"kiSHCapsLockMapping";
 }
 
 - (void)handleCapsLockWithCommand:(UIKeyCommand *)command {
-    CapsLockTarget target = self.currentCapsLocktarget;
+    CapsLockMapping target = UserPreferences.shared.capsLockMapping;
     NSString *newInput = command.input ? command.input : @"";
     UIKeyModifierFlags flags = command.modifierFlags;
     flags ^= UIKeyModifierAlphaShift;
-    if(target == kEsc) {
+    if(target == CapsLockMapEscape) {
         newInput = UIKeyInputEscape;
-    } else if(target == kCtrl) {
+    } else if(target == CapsLockMapControl) {
         if([newInput length] == 0) {
             return;
         }
-
         flags |= UIKeyModifierControl;
     } else {
         return;

@@ -9,6 +9,8 @@
 /* Begin PBXBuildFile section */
 		30F5698921986630001B01FB /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 30F5698821986630001B01FB /* Settings.bundle */; };
 		30F5698A21986630001B01FB /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 30F5698821986630001B01FB /* Settings.bundle */; };
+		8632A7BF219A59FB00F02325 /* UserPreferences.m in Sources */ = {isa = PBXBuildFile; fileRef = 8632A7BE219A59FB00F02325 /* UserPreferences.m */; };
+		9A28E4EA219A8B670073D200 /* ThemeViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 9A28E4E9219A8B670073D200 /* ThemeViewController.m */; };
 		BB0FC5921F980A6C00803272 /* Terminal.m in Sources */ = {isa = PBXBuildFile; fileRef = BB0FC5911F980A6B00803272 /* Terminal.m */; };
 		BB13F7EA200ADCED003D1C4D /* libish.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BB13F7DC200AD81D003D1C4D /* libish.a */; };
 		BB455E111FB37F6600AFB48B /* DelayedUITask.m in Sources */ = {isa = PBXBuildFile; fileRef = BB455E101FB37F6600AFB48B /* DelayedUITask.m */; };
@@ -23,6 +25,7 @@
 		BB792B5D1F96D90D00FFB7A4 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BB792B5C1F96D90D00FFB7A4 /* Assets.xcassets */; };
 		BB792B601F96D90D00FFB7A4 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = BB792B5E1F96D90D00FFB7A4 /* LaunchScreen.storyboard */; };
 		BB792B631F96D90D00FFB7A4 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = BB792B621F96D90D00FFB7A4 /* main.m */; };
+		BB82A7FD21B4C2E8006AA5FD /* CapsLockMappingViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = BB82A7FC21B4C2E8006AA5FD /* CapsLockMappingViewController.m */; };
 		BB88F4942154760800A341FD /* FileProviderExtension.m in Sources */ = {isa = PBXBuildFile; fileRef = BB88F4932154760800A341FD /* FileProviderExtension.m */; };
 		BB88F4972154760800A341FD /* FileProviderItem.m in Sources */ = {isa = PBXBuildFile; fileRef = BB88F4962154760800A341FD /* FileProviderItem.m */; };
 		BB88F49A2154760800A341FD /* FileProviderEnumerator.m in Sources */ = {isa = PBXBuildFile; fileRef = BB88F4992154760800A341FD /* FileProviderEnumerator.m */; };
@@ -84,6 +87,10 @@
 
 /* Begin PBXFileReference section */
 		30F5698821986630001B01FB /* Settings.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = Settings.bundle; sourceTree = "<group>"; };
+		8632A7BD219A59FB00F02325 /* UserPreferences.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = UserPreferences.h; sourceTree = "<group>"; };
+		8632A7BE219A59FB00F02325 /* UserPreferences.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = UserPreferences.m; sourceTree = "<group>"; };
+		9A28E4E8219A8B670073D200 /* ThemeViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ThemeViewController.h; sourceTree = "<group>"; };
+		9A28E4E9219A8B670073D200 /* ThemeViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ThemeViewController.m; sourceTree = "<group>"; };
 		BB0FC5901F980A6B00803272 /* Terminal.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Terminal.h; sourceTree = "<group>"; };
 		BB0FC5911F980A6B00803272 /* Terminal.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Terminal.m; sourceTree = "<group>"; };
 		BB13F7C8200ACC24003D1C4D /* xcode-meson.sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = "xcode-meson.sh"; sourceTree = "<group>"; };
@@ -189,6 +196,8 @@
 		BB7D93802087C2890008DA78 /* tty.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = tty.h; sourceTree = "<group>"; };
 		BB7D93812087C2890008DA78 /* debug.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = debug.h; sourceTree = "<group>"; };
 		BB7D93822087C2890008DA78 /* main.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = main.c; sourceTree = "<group>"; };
+		BB82A7FB21B4C2E8006AA5FD /* CapsLockMappingViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CapsLockMappingViewController.h; sourceTree = "<group>"; };
+		BB82A7FC21B4C2E8006AA5FD /* CapsLockMappingViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CapsLockMappingViewController.m; sourceTree = "<group>"; };
 		BB8636F92167F4F200E7ADC0 /* cpu.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = cpu.h; sourceTree = "<group>"; };
 		BB8636FA2167F4F200E7ADC0 /* cpuid.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = cpuid.h; sourceTree = "<group>"; };
 		BB8636FB2167F4F200E7ADC0 /* decode.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = decode.h; sourceTree = "<group>"; };
@@ -601,6 +610,12 @@
 				BBFB5569215868E800DFE6DE /* About.storyboard */,
 				BBFB5577215876CD00DFE6DE /* AboutViewController.h */,
 				BBFB5578215876CD00DFE6DE /* AboutViewController.m */,
+				8632A7BD219A59FB00F02325 /* UserPreferences.h */,
+				8632A7BE219A59FB00F02325 /* UserPreferences.m */,
+				9A28E4E8219A8B670073D200 /* ThemeViewController.h */,
+				9A28E4E9219A8B670073D200 /* ThemeViewController.m */,
+				BB82A7FB21B4C2E8006AA5FD /* CapsLockMappingViewController.h */,
+				BB82A7FC21B4C2E8006AA5FD /* CapsLockMappingViewController.m */,
 			);
 			name = About;
 			sourceTree = "<group>";
@@ -675,7 +690,7 @@
 				BB792B4D1F96D90D00FFB7A4 /* Frameworks */,
 				BBF1248B1FA7BF530088FB50 /* Download Alpine */,
 				BBF1248A1FA7BDBA0088FB50 /* Create Alpine Filesystem */,
-				BB4A53AC1FAA49CA00A72ACE /* Run Webpack */,
+				BB4A53AC1FAA49CA00A72ACE /* Compile JavaScript */,
 				BB792B4E1F96D90D00FFB7A4 /* Resources */,
 				BB88F4A32154760800A341FD /* Embed App Extensions */,
 			);
@@ -815,7 +830,7 @@
 			shellPath = /bin/sh;
 			shellScript = "mkdir -p $CONFIGURATION_BUILD_DIR\nln -sf $MESON_BUILD_DIR/libish.a $CONFIGURATION_BUILD_DIR\n";
 		};
-		BB4A53AC1FAA49CA00A72ACE /* Run Webpack */ = {
+		BB4A53AC1FAA49CA00A72ACE /* Compile JavaScript */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -823,13 +838,13 @@
 			inputPaths = (
 				"$(SRCROOT)/app/xtermjs",
 			);
-			name = "Run Webpack";
+			name = "Compile JavaScript";
 			outputPaths = (
 				"$(SRCROOT)/app/xtermjs/bundle.js",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = "/bin/sh -e";
-			shellScript = "unset SDKROOT\ncd $SRCROOT/app/xtermjs\nyarn\nyarn build\n";
+			shellScript = "unset SDKROOT\ncd $SRCROOT/app/xtermjs\ntest -d node_modules || npm install\nnpm run build\n";
 		};
 		BBF1248A1FA7BDBA0088FB50 /* Create Alpine Filesystem */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -872,11 +887,14 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9A28E4EA219A8B670073D200 /* ThemeViewController.m in Sources */,
 				BB792B581F96D90D00FFB7A4 /* TerminalViewController.m in Sources */,
 				BB78AB2B1FAD22440013E782 /* TerminalView.m in Sources */,
 				BBFB557621586F9200DFE6DE /* DismissSegue.m in Sources */,
 				BB455E111FB37F6600AFB48B /* DelayedUITask.m in Sources */,
 				BB0FC5921F980A6C00803272 /* Terminal.m in Sources */,
+				BB82A7FD21B4C2E8006AA5FD /* CapsLockMappingViewController.m in Sources */,
+				8632A7BF219A59FB00F02325 /* UserPreferences.m in Sources */,
 				BB792B631F96D90D00FFB7A4 /* main.m in Sources */,
 				BB60F55221573FCA003A4E52 /* BarButton.m in Sources */,
 				BBFB557C215878C600DFE6DE /* UIApplication+OpenURL.m in Sources */,

@@ -8,7 +8,9 @@
 #import "TerminalViewController.h"
 #import "AppDelegate.h"
 #import "TerminalView.h"
+#import "BarButton.h"
 #import "ArrowBarButton.h"
+#import "UserPreferences.h"
 
 @interface TerminalViewController () <UIGestureRecognizerDelegate>
 
@@ -18,6 +20,8 @@
 @property (weak, nonatomic) IBOutlet NSLayoutConstraint *bottomConstraint;
 
 @property (weak, nonatomic) IBOutlet UIButton *controlKey;
+@property (weak, nonatomic) IBOutlet UIButton *aboutButton;
+@property (strong, nonatomic) IBOutletCollection(id) NSArray *barButtons;
 
 @property (weak, nonatomic) IBOutlet UIInputView *barView;
 @property (weak, nonatomic) IBOutlet UIStackView *bar;
@@ -52,8 +56,9 @@
                selector:@selector(ishExited:)
                    name:ISHExitedNotification
                  object:nil];
-
-    [self.termView registerExternalKeyboardNotificationsToNotificationCenter:center];
+    
+    [self _updateStyleFromPreferences:NO];
+    [[UserPreferences shared] addObserver:self forKeyPath:@"theme" options:NSKeyValueObservingOptionNew context:nil];
     
     if (UIDevice.currentDevice.userInterfaceIdiom == UIUserInterfaceIdiomPad) {
         [self.bar removeArrangedSubview:self.hideKeyboardButton];
@@ -64,6 +69,41 @@
     } else {
         self.barView.frame = CGRectMake(0, 0, 100, 55);
     }
+}
+
+- (void)dealloc {
+    @try {
+        [[UserPreferences shared] removeObserver:self forKeyPath:@"theme"];
+    } @catch (NSException * __unused exception) {}
+}
+
+- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context {
+    if (object == [UserPreferences shared]) {
+        [self _updateStyleFromPreferences:YES];
+    } else {
+        [super observeValueForKeyPath:keyPath ofObject:object change:change context:context];
+    }
+}
+
+- (void)_updateStyleFromPreferences:(BOOL)animated {
+    NSTimeInterval duration = animated ? 0.1 : 0;
+    [UIView animateWithDuration:duration animations:^{
+        self.view.backgroundColor = UserPreferences.shared.theme.backgroundColor;
+        UIKeyboardAppearance keyAppearance = UserPreferences.shared.theme.keyboardAppearance;
+        self.termView.keyboardAppearance = keyAppearance;
+        for (BarButton *button in self.barButtons) {
+            button.keyAppearance = keyAppearance;
+        }
+        if (keyAppearance == UIKeyboardAppearanceLight) {
+            self.aboutButton.tintColor = UIColor.blackColor;
+        } else {
+            self.aboutButton.tintColor = UIColor.whiteColor;
+        }
+    }];
+}
+
+- (UIStatusBarStyle)preferredStatusBarStyle {
+    return UserPreferences.shared.theme.statusBarStyle;
 }
 
 - (BOOL)prefersStatusBarHidden {

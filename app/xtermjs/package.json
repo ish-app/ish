@@ -1,12 +1,12 @@
 {
   "name": "xtermjs-glue",
   "scripts": {
-    "build": "parcel build --out-dir xterm-dist --public-url . --no-source-maps term.html"
+    "build": "rm -rf xterm-dist && parcel build --out-dir xterm-dist --public-url . --no-source-maps term.html"
   },
   "dependencies": {
     "xterm": "^2.9.2"
   },
   "devDependencies": {
-    "parcel-bundler": "^1.7.1"
+    "parcel-bundler": "^1.10.3"
   }
 }

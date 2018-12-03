@@ -8,6 +8,7 @@
 #include <iconv.h>
 #import "Terminal.h"
 #import "DelayedUITask.h"
+#import "UserPreferences.h"
 #include "fs/tty.h"
 
 @interface Terminal () <WKScriptMessageHandler>
@@ -51,6 +52,7 @@ static Terminal *terminal = nil;
          [NSURLRequest requestWithURL:
           [NSBundle.mainBundle URLForResource:@"xterm-dist/term" withExtension:@"html"]]];
         [self.webView addObserver:self forKeyPath:@"loading" options:0 context:NULL];
+        [self _addPreferenceObservers];
         terminal = self;
     }
     return self;
@@ -102,10 +104,38 @@ static Terminal *terminal = nil;
     [self.webView evaluateJavaScript:@"term.scrollToBottom()" completionHandler:nil];
 }
 
+- (void)_addPreferenceObservers {
+    UserPreferences *prefs = [UserPreferences shared];
+    NSKeyValueObservingOptions opts = NSKeyValueObservingOptionNew;
+    [prefs addObserver:self forKeyPath:@"fontSize" options:opts context:nil];
+    [prefs addObserver:self forKeyPath:@"theme" options:opts context:nil];
+}
+
+- (NSString *)cssColor:(UIColor *)color {
+    CGFloat red, green, blue, alpha;
+    [color getRed:&red green:&green blue:&blue alpha:&alpha];
+    return [NSString stringWithFormat:@"rgba(%ld, %ld, %ld, %ld)",
+            lround(red * 255), lround(green * 255), lround(blue * 255), lround(alpha * 255)];
+}
+
+- (void)_updateStyleFromPreferences {
+    UserPreferences *prefs = [UserPreferences shared];
+    id themeInfo = @{
+                     @"fontSize": prefs.fontSize,
+                     @"foregroundColor": [self cssColor:prefs.theme.foregroundColor],
+                     @"backgroundColor": [self cssColor:prefs.theme.backgroundColor],
+                     };
+    NSString *json = [[NSString alloc] initWithData:[NSJSONSerialization dataWithJSONObject:themeInfo options:0 error:nil] encoding:NSUTF8StringEncoding];
+    [self.webView evaluateJavaScript:[NSString stringWithFormat:@"updateStyle(%@)", json] completionHandler:nil];
+}
+
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context {
     if (object == self.webView && [keyPath isEqualToString:@"loading"] && !self.webView.loading) {
+        [self _updateStyleFromPreferences];
         [self.refreshTask schedule];
         [self.webView removeObserver:self forKeyPath:@"loading"];
+    } else if (object == [UserPreferences shared]) {
+        [self _updateStyleFromPreferences];
     }
 }
 
