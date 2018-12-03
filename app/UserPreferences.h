@@ -7,10 +7,10 @@
 
 #import <Foundation/Foundation.h>
 
-typedef NS_ENUM(NSInteger, CapslockMapping) {
-    CapslockMapControl,
-    CapslockMapEscape,
-    CapslockMapNone,
+typedef NS_ENUM(NSInteger, CapsLockMapping) {
+    CapsLockMapNone = 0,
+    CapsLockMapControl,
+    CapsLockMapEscape,
 };
 
 NS_ASSUME_NONNULL_BEGIN
@@ -35,7 +35,7 @@ extern NSString *const kThemeBackgroundColor;
 
 @interface UserPreferences : NSObject
 
-@property (nonatomic) CapslockMapping capslockMapping;
+@property (nonatomic) CapsLockMapping capsLockMapping;
 @property (nonatomic) Theme *theme;
 @property (nonatomic, copy) NSNumber *fontSize;
 

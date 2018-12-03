@@ -8,7 +8,7 @@
 #import <UIKit/UIKit.h>
 #import "UserPreferences.h"
 
-static NSString *const kPreferenceMapCapsLockAsControlKey = @"Caps Lock Mapping";
+static NSString *const kPreferenceCapsLockMappingKey = @"Caps Lock Mapping";
 static NSString *const kPreferenceFontSizeKey = @"Font Size";
 static NSString *const kPreferenceThemeKey = @"Theme";
 static NSString *const kPreferenceBackgroundKey = @"Background Color";
@@ -32,18 +32,20 @@ static NSString *const kPreferenceBackgroundKey = @"Background Color";
         _defaults = [NSUserDefaults standardUserDefaults];
         Theme *defaultTheme = [Theme presetThemeNamed:@"Light"];
         [_defaults registerDefaults:@{kPreferenceFontSizeKey: @(12),
-                                      kPreferenceThemeKey: defaultTheme.properties}];
+                                      kPreferenceThemeKey: defaultTheme.properties,
+                                      kPreferenceCapsLockMappingKey: @(CapsLockMapControl),
+                                      }];
         _theme = [[Theme alloc] initWithProperties:[_defaults objectForKey:kPreferenceThemeKey]];
     }
     return self;
 }
 
-- (BOOL)mapCapsLockAsControl {
-    return [_defaults boolForKey:kPreferenceMapCapsLockAsControlKey];
+- (CapsLockMapping)capsLockMapping {
+    return [_defaults integerForKey:kPreferenceCapsLockMappingKey];
 }
 
-- (void)setMapCapsLockAsControl:(BOOL)mapCapsLockAsControl {
-    [_defaults setBool:mapCapsLockAsControl forKey:kPreferenceMapCapsLockAsControlKey];
+- (void)setCapsLockMapping:(CapsLockMapping)capsLockMapping {
+    [_defaults setInteger:capsLockMapping forKey:kPreferenceCapsLockMappingKey];
 }
 
 - (NSNumber *)fontSize {

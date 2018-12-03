@@ -15,6 +15,7 @@
 @property (weak, nonatomic) IBOutlet UITableViewCell *openTwitter;
 @property (weak, nonatomic) IBOutlet UITableViewCell *fontSizeCell;
 @property (weak, nonatomic) IBOutlet UITableViewCell *themeCell;
+@property (weak, nonatomic) IBOutlet UITableViewCell *capsLockMappingCell;
 @end
 
 @implementation AboutViewController
@@ -33,7 +34,7 @@
     UserPreferences *prefs = [UserPreferences shared];
     NSKeyValueObservingOptions opts = NSKeyValueObservingOptionNew;
     
-    [prefs addObserver:self forKeyPath:@"mapCapsLockAsControl" options:opts context:nil];
+    [prefs addObserver:self forKeyPath:@"capsLockMapping" options:opts context:nil];
     [prefs addObserver:self forKeyPath:@"fontSize" options:opts context:nil];
     [prefs addObserver:self forKeyPath:@"theme" options:opts context:nil];
 }
@@ -41,7 +42,7 @@
 - (void)_removeObservers {
     @try {
         UserPreferences *prefs = [UserPreferences shared];
-        [prefs removeObserver:self forKeyPath:@"mapCapsLockAsControl"];
+        [prefs removeObserver:self forKeyPath:@"capsLockMapping"];
         [prefs removeObserver:self forKeyPath:@"fontSize"];
         [prefs removeObserver:self forKeyPath:@"theme"];
     } @catch (NSException * __unused exception) {}
@@ -57,12 +58,18 @@
 
 - (void)_updatePreferenceUI {
     UserPreferences *prefs = [UserPreferences shared];
-    _fontSizeCell.detailTextLabel.text = prefs.fontSize.stringValue;
-    _themeCell.detailTextLabel.text = prefs.theme.presetName;
-}
-
-- (IBAction)didSwitchCapsLock:(id)sender {
-    
+    self.fontSizeCell.detailTextLabel.text = prefs.fontSize.stringValue;
+    self.themeCell.detailTextLabel.text = prefs.theme.presetName;
+    NSString *capsLockMappingDescr;
+    switch (prefs.capsLockMapping) {
+        case CapsLockMapNone:
+            capsLockMappingDescr = @"None"; break;
+        case CapsLockMapControl:
+            capsLockMappingDescr = @"Control"; break;
+        case CapsLockMapEscape:
+            capsLockMappingDescr = @"Escape"; break;
+    }
+    self.capsLockMappingCell.detailTextLabel.text = capsLockMappingDescr;
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {

@@ -10,8 +10,6 @@
 
 @interface TerminalView : UIView <UIKeyInput, WKScriptMessageHandler>
 
-- (void)registerExternalKeyboardNotificationsToNotificationCenter:(NSNotificationCenter *)center;
-
 @property (nonatomic) UIKeyboardAppearance keyboardAppearance;
 
 @property (weak) IBOutlet UIInputView *inputAccessoryView;

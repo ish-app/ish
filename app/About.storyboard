@@ -172,6 +172,7 @@
                         </connections>
                     </navigationItem>
                     <connections>
+                        <outlet property="capsLockMappingCell" destination="31N-0g-RhF" id="UjF-21-3df"/>
                         <outlet property="fontSizeCell" destination="CTf-zd-xjl" id="AvD-Zl-Y54"/>
                         <outlet property="openGithub" destination="F4i-eC-hQ6" id="66M-sQ-RJR"/>
                         <outlet property="openTwitter" destination="bge-GA-6p8" id="r0A-lN-0e0"/>
@@ -186,7 +187,7 @@
         <!--Caps Lock-->
         <scene sceneID="VbH-40-Znm">
             <objects>
-                <tableViewController title="Caps Lock" id="Zzy-IN-laJ" sceneMemberID="viewController">
+                <tableViewController title="Caps Lock" id="Zzy-IN-laJ" customClass="CapsLockMappingViewController" sceneMemberID="viewController">
                     <tableView key="view" clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="static" style="grouped" separatorStyle="default" rowHeight="-1" estimatedRowHeight="-1" sectionHeaderHeight="18" sectionFooterHeight="18" id="ZlS-Ig-a8Z">
                         <rect key="frame" x="0.0" y="0.0" width="320" height="568"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
@@ -194,7 +195,7 @@
                         <sections>
                             <tableViewSection id="oTd-4i-TSa">
                                 <cells>
-                                    <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="default" indentationWidth="10" textLabel="zuo-ZW-n37" style="IBUITableViewCellStyleDefault" id="8ZS-Wp-1TX">
+                                    <tableViewCell clipsSubviews="YES" tag="1" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="default" indentationWidth="10" textLabel="zuo-ZW-n37" style="IBUITableViewCellStyleDefault" id="8ZS-Wp-1TX">
                                         <rect key="frame" x="0.0" y="35" width="320" height="44"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" preservesSuperviewLayoutMargins="YES" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="8ZS-Wp-1TX" id="GMp-XT-GYq">
@@ -211,7 +212,7 @@
                                             </subviews>
                                         </tableViewCellContentView>
                                     </tableViewCell>
-                                    <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="default" indentationWidth="10" textLabel="NR7-h5-BZD" style="IBUITableViewCellStyleDefault" id="IMH-6g-rLD">
+                                    <tableViewCell clipsSubviews="YES" tag="2" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="default" indentationWidth="10" textLabel="NR7-h5-BZD" style="IBUITableViewCellStyleDefault" id="IMH-6g-rLD">
                                         <rect key="frame" x="0.0" y="79" width="320" height="44"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" preservesSuperviewLayoutMargins="YES" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="IMH-6g-rLD" id="Qea-lO-LfG">

@@ -60,7 +60,6 @@
     [self _updateStyleFromPreferences:NO];
     [[UserPreferences shared] addObserver:self forKeyPath:@"theme" options:NSKeyValueObservingOptionNew context:nil];
     
-    [self.termView registerExternalKeyboardNotificationsToNotificationCenter:center];
     if (UIDevice.currentDevice.userInterfaceIdiom == UIUserInterfaceIdiomPad) {
         [self.bar removeArrangedSubview:self.hideKeyboardButton];
         [self.hideKeyboardButton removeFromSuperview];
