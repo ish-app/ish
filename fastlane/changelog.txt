@@ -1,8 +1,8 @@
-IMPORTANT: You will need to uninstall the app before installing this build, otherwise you'll get an error on launch.
+DARK THEME
 
-The big fix here is changing the database from GDBM to SQLite, making it like 100x more reliable. No more mysterious vanishing files! (If any of your files do mysteriously vanish, please tell me.)
+Plus a couple other UI fixes: terminal no longer overlaps with the keyboard when the app launches, and you can select text without making the keyboard go away.
 
-A couple other fixes: pip and ffmpeg no longer segfault when expanding large allocations, and files actually show up in the Files app like they're supposed to. So you can use youtube-dl to download separate audio and video, extract them through the Files app, and have no way of merging them!
+And a few emulation fixes: You can now import numpy, and pip doesn't throw MemoryError when you try to install anything nontrivial.
 
 Send bug reports or feedback here: https://github.com/tbodt/ish/issues
 Join the Discord: https://discord.gg/SndDh5y
