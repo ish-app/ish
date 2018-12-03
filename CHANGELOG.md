@@ -3,6 +3,7 @@
 ## Build 34
 ### New
 - Enough stubs and instructions to get numpy to import successfully.
+- DARK MODE
 ### Fixed
 - Massive VM leak, if you allocated 100M with mmap only the first 16k would ever get freed. This fixes MemoryError when installing stuff with pip.
 - Terminal is now correctly sized instead of overlapping with the keyboard initially.
