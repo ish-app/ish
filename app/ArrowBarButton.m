@@ -16,8 +16,6 @@
 @property (nonatomic) ArrowDirection direction;
 @property NSTimer *timer;
 
-@property UIColor *defaultColor;
-
 @end
 
 @implementation ArrowBarButton
@@ -55,7 +53,6 @@ static CGPoint anchors[] = {
     self.layer.shadowOffset = CGSizeMake(0, 1);
     self.layer.shadowOpacity = 0.4;
     self.layer.shadowRadius = 0;
-    self.defaultColor = self.backgroundColor;
 }
 
 - (void)addTextLayer:(NSString *)text direction:(ArrowDirection)direction {
@@ -124,7 +121,7 @@ static CGPoint anchors[] = {
 
 - (void)chooseBackground {
     if (self.selected || self.highlighted) {
-        self.backgroundColor = self.highlightedBackgroundColor;
+        self.backgroundColor = self.highlightedColor;
     } else {
         self.backgroundColor = self.defaultColor;
     }
@@ -133,7 +130,7 @@ static CGPoint anchors[] = {
 - (void)animateLayerUpdates {
     [UIView animateWithDuration:0.25 animations:^{
         for (int d = ArrowUp; d <= ArrowRight; d++) {
-            CALayer *layer = self->arrowLayers[d];
+            CATextLayer *layer = (CATextLayer *) self->arrowLayers[d];
             if (self.direction == ArrowNone || self.direction != d) {
                 layer.opacity = self.selected ? 0.25 : 1;
             } else {
@@ -161,13 +158,51 @@ static CGPoint anchors[] = {
     }
 }
 
-- (void)setSelected:(BOOL)selected {
-    [super setSelected:selected];
+- (UIColor *)textColor {
+    if (self.keyAppearance == UIKeyboardAppearanceLight)
+        return UIColor.blackColor;
+    else
+        return UIColor.whiteColor;
+}
+
+// copy pasted code :dab:
+- (UIColor *)defaultColor {
+    if (self.keyAppearance == UIKeyboardAppearanceLight)
+        return UIColor.whiteColor;
+    else
+        return [UIColor colorWithRed:1 green:1 blue:1 alpha:77/255.];
+}
+- (UIColor *)highlightedColor {
+    if (self.keyAppearance == UIKeyboardAppearanceLight)
+        return [UIColor colorWithRed:172/255. green:180/255. blue:190/255. alpha:1];
+    else
+        return [UIColor colorWithRed:147/255. green:147/255. blue:147/255. alpha:66/255.];
+}
+
+- (void)setColors {
     if (self.selected) {
-        self.backgroundColor = self.highlightedBackgroundColor;
+        self.backgroundColor = self.highlightedColor;
     } else {
         self.backgroundColor = self.defaultColor;
     }
+    for (int d = ArrowUp; d <= ArrowRight; d++) {
+        CATextLayer *layer = (CATextLayer *) arrowLayers[d];
+        if (self.keyAppearance == UIKeyboardAppearanceLight)
+            layer.foregroundColor = UIColor.blackColor.CGColor;
+        else
+            layer.foregroundColor = UIColor.whiteColor.CGColor;
+    }
     [self animateLayerUpdates];
 }
+
+- (void)setSelected:(BOOL)selected {
+    [super setSelected:selected];
+    [self setColors];
+}
+
+- (void)setKeyAppearance:(UIKeyboardAppearance)keyAppearance {
+    _keyAppearance = keyAppearance;
+    [self setColors];
+}
+
 @end

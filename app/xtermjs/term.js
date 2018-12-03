@@ -39,6 +39,8 @@ function updateStyle({foregroundColor, backgroundColor, fontSize}) {
     }
     `;
     document.getElementById('style').textContent = style;
+    term.fit();
+    term.fit(); // have to do a second time for it to correctly detect available space initially
 }
 window.updateStyle = updateStyle;
 

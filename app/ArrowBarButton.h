@@ -5,7 +5,7 @@
 //  Created by Theodore Dubois on 9/23/18.
 //
 
-#import "BarButton.h"
+#import <UIKit/UIKit.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -20,7 +20,7 @@ typedef enum : NSUInteger {
 IB_DESIGNABLE @interface ArrowBarButton : UIControl
 
 @property (nonatomic, readonly) ArrowDirection direction;
-@property IBInspectable UIColor *highlightedBackgroundColor;
+@property (nonatomic) UIKeyboardAppearance keyAppearance;
 
 @end
 

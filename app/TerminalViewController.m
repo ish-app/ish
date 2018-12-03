@@ -8,6 +8,7 @@
 #import "TerminalViewController.h"
 #import "AppDelegate.h"
 #import "TerminalView.h"
+#import "BarButton.h"
 #import "ArrowBarButton.h"
 #import "UserPreferences.h"
 
@@ -19,6 +20,8 @@
 @property (weak, nonatomic) IBOutlet NSLayoutConstraint *bottomConstraint;
 
 @property (weak, nonatomic) IBOutlet UIButton *controlKey;
+@property (weak, nonatomic) IBOutlet UIButton *aboutButton;
+@property (strong, nonatomic) IBOutletCollection(id) NSArray *barButtons;
 
 @property (weak, nonatomic) IBOutlet UIInputView *barView;
 @property (weak, nonatomic) IBOutlet UIStackView *bar;
@@ -87,7 +90,16 @@
     NSTimeInterval duration = animated ? 0.1 : 0;
     [UIView animateWithDuration:duration animations:^{
         self.view.backgroundColor = UserPreferences.shared.theme.backgroundColor;
-        self.termView.keyboardAppearance = UserPreferences.shared.theme.keyboardAppearance;
+        UIKeyboardAppearance keyAppearance = UserPreferences.shared.theme.keyboardAppearance;
+        self.termView.keyboardAppearance = keyAppearance;
+        for (BarButton *button in self.barButtons) {
+            button.keyAppearance = keyAppearance;
+        }
+        if (keyAppearance == UIKeyboardAppearanceLight) {
+            self.aboutButton.tintColor = UIColor.blackColor;
+        } else {
+            self.aboutButton.tintColor = UIColor.whiteColor;
+        }
     }];
 }
 

@@ -38,6 +38,7 @@
                         <viewLayoutGuide key="safeArea" id="IVs-Oh-AhK"/>
                     </view>
                     <connections>
+                        <outlet property="aboutButton" destination="5dl-UV-6qh" id="vzB-Rk-4aH"/>
                         <outlet property="bar" destination="4pc-Ei-ihz" id="iy4-s8-7yt"/>
                         <outlet property="barBottom" destination="OK7-xG-JFg" id="vWW-y5-fIo"/>
                         <outlet property="barButtonWidth" destination="1Ax-5U-2CI" id="Wlc-g8-GEs"/>
@@ -49,6 +50,11 @@
                         <outlet property="controlKey" destination="W9v-cj-FWz" id="c9i-VC-j7f"/>
                         <outlet property="hideKeyboardButton" destination="7qw-ie-p4d" id="n5f-XX-i98"/>
                         <outlet property="termView" destination="FQi-r8-odu" id="QIa-yI-fmG"/>
+                        <outletCollection property="barButtons" destination="cJt-oG-BnW" id="Yjx-uz-RbI"/>
+                        <outletCollection property="barButtons" destination="W9v-cj-FWz" id="OFf-FH-2Xy"/>
+                        <outletCollection property="barButtons" destination="IPm-l0-f25" id="dHH-gh-Tzq"/>
+                        <outletCollection property="barButtons" destination="VCr-TW-PIZ" id="NlS-hh-ara"/>
+                        <outletCollection property="barButtons" destination="7qw-ie-p4d" id="W9c-Z1-k6v"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
@@ -68,9 +74,7 @@
                                         <color key="titleColor" cocoaTouchSystemColor="darkTextColor"/>
                                     </state>
                                     <userDefinedRuntimeAttributes>
-                                        <userDefinedRuntimeAttribute type="color" keyPath="highlightedBackgroundColor">
-                                            <color key="value" red="0.67450980390000004" green="0.70588235290000001" blue="0.74509803919999995" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-                                        </userDefinedRuntimeAttribute>
+                                        <userDefinedRuntimeAttribute type="boolean" keyPath="secondary" value="NO"/>
                                     </userDefinedRuntimeAttributes>
                                     <connections>
                                         <action selector="pressTab:" destination="BYZ-38-t0r" eventType="primaryActionTriggered" id="Cbz-tT-Cre"/>
@@ -85,9 +89,7 @@
                                         <color key="titleColor" cocoaTouchSystemColor="darkTextColor"/>
                                     </state>
                                     <userDefinedRuntimeAttributes>
-                                        <userDefinedRuntimeAttribute type="color" keyPath="highlightedBackgroundColor">
-                                            <color key="value" red="0.67258380569999998" green="0.70588235290000001" blue="0.74509803919999995" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-                                        </userDefinedRuntimeAttribute>
+                                        <userDefinedRuntimeAttribute type="boolean" keyPath="secondary" value="NO"/>
                                     </userDefinedRuntimeAttributes>
                                     <connections>
                                         <action selector="pressControl:" destination="BYZ-38-t0r" eventType="primaryActionTriggered" id="c21-jR-m4I"/>
@@ -102,9 +104,7 @@
                                         <color key="titleColor" cocoaTouchSystemColor="darkTextColor"/>
                                     </state>
                                     <userDefinedRuntimeAttributes>
-                                        <userDefinedRuntimeAttribute type="color" keyPath="highlightedBackgroundColor">
-                                            <color key="value" red="0.67480819800000003" green="0.70588235290000001" blue="0.74509803919999995" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-                                        </userDefinedRuntimeAttribute>
+                                        <userDefinedRuntimeAttribute type="boolean" keyPath="secondary" value="NO"/>
                                     </userDefinedRuntimeAttributes>
                                     <connections>
                                         <action selector="pressEscape:" destination="BYZ-38-t0r" eventType="primaryActionTriggered" id="Z7i-gl-kzw"/>
@@ -120,7 +120,7 @@
                                     </state>
                                     <userDefinedRuntimeAttributes>
                                         <userDefinedRuntimeAttribute type="color" keyPath="highlightedBackgroundColor">
-                                            <color key="value" red="0.67480819800000003" green="0.70588235290000001" blue="0.74509803919999995" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                            <color key="value" red="0.67450980390000004" green="0.70588235290000001" blue="0.74509803919999995" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                         </userDefinedRuntimeAttribute>
                                     </userDefinedRuntimeAttributes>
                                     <connections>
@@ -152,9 +152,7 @@
                                         <color key="titleColor" cocoaTouchSystemColor="darkTextColor"/>
                                     </state>
                                     <userDefinedRuntimeAttributes>
-                                        <userDefinedRuntimeAttribute type="color" keyPath="highlightedBackgroundColor">
-                                            <color key="value" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-                                        </userDefinedRuntimeAttribute>
+                                        <userDefinedRuntimeAttribute type="boolean" keyPath="secondary" value="YES"/>
                                     </userDefinedRuntimeAttributes>
                                     <connections>
                                         <action selector="loseFocus:" destination="dkx-z0-nzr" eventType="primaryActionTriggered" id="T2t-j9-oFz"/>
