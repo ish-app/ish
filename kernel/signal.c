@@ -6,6 +6,7 @@
 
 int xsave_extra = 0;
 int fxsave_extra = 0;
+static int do_sigprocmask_unlocked(dword_t how, sigset_t_ set, sigset_t_ *oldset_out);
 
 void deliver_signal(struct task *task, int sig) {
     task->pending |= 1l << sig;
@@ -86,6 +87,8 @@ static void receive_signal(struct sighand *sighand, int sig) {
     // setup the frame
     struct sigframe_ frame = {};
     frame.sig = sig;
+    frame.sc.oldmask = current->blocked & 0xffffffff;
+    frame.extramask = current->blocked >> 32;
 
     struct cpu_state *cpu = &current->cpu;
     frame.sc.ax = cpu->eax;
@@ -131,8 +134,11 @@ static void receive_signal(struct sighand *sighand, int sig) {
     }
     sp -= sizeof(struct sigframe_);
     // align sp + 4 on a 16-byte boundary because that's what the abi says
-	sp = ((sp + 4) & ~0xf) - 4;
+    sp = ((sp + 4) & ~0xf) - 4;
     cpu->esp = sp;
+
+    // block the signal while running the handler
+    current->blocked |= (1l << sig);
 
     // install frame
     // nothing we can do if this fails
@@ -177,25 +183,28 @@ void sighand_release(struct sighand *sighand) {
 
 dword_t sys_rt_sigreturn(dword_t sig) {
     struct cpu_state *cpu = &current->cpu;
-    struct sigcontext_ sc;
+    struct sigframe_ frame;
     // skip the first two fields of the frame
     // the return address was popped by the ret instruction
     // the signal number was popped into ebx and passed as an argument
-    (void) user_get(cpu->esp, sc);
+    (void) user_get(cpu->esp - offsetof(struct sigframe_, sc), frame);
     // TODO check for errors in that
-    cpu->eax = sc.ax;
-    cpu->ebx = sc.bx;
-    cpu->ecx = sc.cx;
-    cpu->edx = sc.dx;
-    cpu->edi = sc.di;
-    cpu->esi = sc.si;
-    cpu->ebp = sc.bp;
-    cpu->esp = sc.sp;
-    cpu->eip = sc.ip;
+    cpu->eax = frame.sc.ax;
+    cpu->ebx = frame.sc.bx;
+    cpu->ecx = frame.sc.cx;
+    cpu->edx = frame.sc.dx;
+    cpu->edi = frame.sc.di;
+    cpu->esi = frame.sc.si;
+    cpu->ebp = frame.sc.bp;
+    cpu->esp = frame.sc.sp;
+    cpu->eip = frame.sc.ip;
     collapse_flags(cpu);
-    cpu->eflags = sc.flags;
+    cpu->eflags = frame.sc.flags;
+
     lock(&current->sighand->lock);
     current->sighand->on_altstack = false;
+    sigset_t_ oldmask = ((sigset_t_) frame.extramask << 32) | frame.sc.oldmask;
+    do_sigprocmask_unlocked(SIG_SETMASK_, oldmask, NULL);
     unlock(&current->sighand->lock);
     return cpu->eax;
 }
@@ -203,7 +212,7 @@ dword_t sys_rt_sigreturn(dword_t sig) {
 static int do_sigaction(int sig, const struct sigaction_ *action, struct sigaction_ *oldaction) {
     if (sig >= NUM_SIGS)
         return _EINVAL;
-    if (sig == SIGKILL_ || sig == SIGSTOP_)
+    if (!signal_is_blockable(sig))
         return _EINVAL;
 
     struct sighand *sighand = current->sighand;
@@ -241,9 +250,7 @@ dword_t sys_sigaction(dword_t signum, addr_t action_addr, addr_t oldaction_addr)
     return sys_rt_sigaction(signum, action_addr, oldaction_addr, 1);
 }
 
-int do_sigprocmask(dword_t how, sigset_t_ set, sigset_t_ *oldset_out) {
-    struct sighand *sighand = current->sighand;
-    lock(&sighand->lock);
+static int do_sigprocmask_unlocked(dword_t how, sigset_t_ set, sigset_t_ *oldset_out) {
     sigset_t_ oldset = current->blocked;
 
     if (how == SIG_BLOCK_)
@@ -252,10 +259,8 @@ int do_sigprocmask(dword_t how, sigset_t_ set, sigset_t_ *oldset_out) {
         current->blocked &= ~set;
     else if (how == SIG_SETMASK_)
         current->blocked = set;
-    else {
-        unlock(&sighand->lock);
+    else
         return _EINVAL;
-    }
 
     // transfer unblocked signals from queued to pending
     sigset_t_ unblocked = oldset & ~current->blocked;
@@ -266,10 +271,17 @@ int do_sigprocmask(dword_t how, sigset_t_ set, sigset_t_ *oldset_out) {
     current->queued |= current->pending & blocked;
     current->pending &= ~blocked;
 
-    unlock(&sighand->lock);
     if (oldset_out != NULL)
         *oldset_out = oldset;
     return 0;
+}
+
+int do_sigprocmask(dword_t how, sigset_t_ set, sigset_t_ *oldset_out) {
+    struct sighand *sighand = current->sighand;
+    lock(&sighand->lock);
+    int res = do_sigprocmask_unlocked(how, set, oldset_out);
+    unlock(&sighand->lock);
+    return res;
 }
 
 dword_t sys_rt_sigprocmask(dword_t how, addr_t set_addr, addr_t oldset_addr, dword_t size) {

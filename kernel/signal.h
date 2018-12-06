@@ -167,7 +167,7 @@ struct sigframe_ {
     dword_t sig;
     struct sigcontext_ sc;
     struct fpstate_ fpstate;
-    dword_t extramask[1];
+    dword_t extramask;
     struct {
         uint16_t popmov;
         dword_t nr_sigreturn;
