@@ -15,6 +15,7 @@ dword_t sys_setpgid(dword_t id, dword_t pgid) {
     err = _ESRCH;
     if (task == NULL)
         goto out;
+    struct tgroup *tgroup = task->group;
 
     // you can only join a process group in the same session
     if (id != pgid) {
@@ -23,8 +24,8 @@ dword_t sys_setpgid(dword_t id, dword_t pgid) {
         struct pid *group_pid = pid_get(pgid);
         if (group_pid == NULL || list_empty(&group_pid->pgroup))
             goto out;
-        struct task *group_task = list_first_entry(&group_pid->pgroup, struct task, pgroup);
-        if (group_task->sid != task->sid)
+        struct tgroup *group_first_tgroup = list_first_entry(&group_pid->pgroup, struct tgroup, pgroup);
+        if (tgroup->sid != group_first_tgroup->sid)
             goto out;
     }
 
@@ -34,15 +35,15 @@ dword_t sys_setpgid(dword_t id, dword_t pgid) {
         goto out;
     // a session leader cannot create a process group
     err = _EPERM;
-    if (task->sid == task->pid)
+    if (tgroup->sid == tgroup->leader->pid)
         goto out;
 
     // TODO cannot set process group of a child that has done exec
 
-    if (task->pgid != pgid) {
-        list_remove(&task->pgroup);
-        task->pgid = pgid;
-        list_add(&pid->pgroup, &task->pgroup);
+    if (tgroup->pgid != pgid) {
+        list_remove(&tgroup->pgroup);
+        tgroup->pgid = pgid;
+        list_add(&pid->pgroup, &tgroup->pgroup);
     }
 
     err = 0;
@@ -55,27 +56,42 @@ dword_t sys_setpgrp() {
     return sys_setpgid(0, 0);
 }
 
+dword_t sys_getpgid(dword_t pid) {
+    STRACE("getpgid(%d)", pid);
+    if (pid != 0)
+        return _EPERM;
+    lock(&pids_lock);
+    pid_t_ pgid = current->group->pgid;
+    unlock(&pids_lock);
+    return pgid;
+}
+dword_t sys_getpgrp() {
+    return sys_getpgid(0);
+}
+
 dword_t sys_setsid() {
     lock(&pids_lock);
-    if (current->pgid == current->pid || current->sid == current->pid) {
+    struct tgroup *group = current->group;
+    pid_t_ new_sid = group->leader->pid;
+    if (group->pgid == new_sid || group->sid == new_sid) {
         unlock(&pids_lock);
         return _EPERM;
     }
 
     struct pid *pid = pid_get(current->pid);
-    list_add(&pid->session, &current->session);
-    current->sid = current->pid;
-    list_add(&pid->pgroup, &current->pgroup);
-    current->pgid = current->pid;
+    list_add(&pid->session, &group->session);
+    group->sid = new_sid;
+    list_add(&pid->pgroup, &group->pgroup);
+    group->pgid = new_sid;
 
     unlock(&pids_lock);
-    return 0;
+    return new_sid;
 }
 
 dword_t sys_getsid() {
-    pid_t_ sid;
     lock(&pids_lock);
-    sid = current->sid;
+    pid_t_ sid = current->group->sid;
     unlock(&pids_lock);
     return sid;
 }
+

@@ -66,8 +66,6 @@ struct task *task_create_(struct task *parent) {
     if (parent != NULL) {
         task->parent = parent;
         list_add(&parent->children, &task->siblings);
-        list_add(&parent->pgroup, &task->pgroup);
-        list_add(&parent->session, &task->session);
     }
 
     lock_init(&task->vfork_lock);
@@ -80,8 +78,6 @@ struct task *task_create_(struct task *parent) {
 
 void task_destroy(struct task *task) {
     list_remove(&task->siblings);
-    list_remove(&task->pgroup);
-    list_remove(&task->session);
     pid_get(task->pid)->task = NULL;
     cond_destroy(&task->vfork_cond);
     free(task);

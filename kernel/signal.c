@@ -58,9 +58,9 @@ void send_group_signal(dword_t pgid, int sig) {
         unlock(&pids_lock);
         return;
     }
-    struct task *task;
-    list_for_each_entry(&pid->pgroup, task, pgroup) {
-        send_signal(task, sig);
+    struct tgroup *tgroup;
+    list_for_each_entry(&pid->pgroup, tgroup, pgroup) {
+        send_signal(tgroup->leader, sig);
     }
     unlock(&pids_lock);
 }

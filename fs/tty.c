@@ -92,14 +92,14 @@ static int tty_open(int major, int minor, int type, struct fd *fd) {
     unlock(&tty->fds_lock);
 
     lock(&pids_lock);
-    if (current->sid == current->pid) {
+    if (current->group->sid == current->pid) {
         lock(&current->group->lock);
         if (current->group->tty == NULL) {
             current->group->tty = tty;
-            unlock(&current->group->lock);
-            tty->session = current->sid;
-            tty->fg_group = current->pgid;
+            tty->session = current->group->sid;
+            tty->fg_group = current->group->pgid;
         }
+        unlock(&current->group->lock);
     }
     unlock(&pids_lock);
 
@@ -277,7 +277,7 @@ static ssize_t tty_read(struct fd *fd, void *buf, size_t bufsize) {
     if (bufsize > tty->bufsize)
         bufsize = tty->bufsize;
     tty_read_into_buf(tty, buf, bufsize);
-    if (tty->buf[0] == '\0' && tty->buf_flag[0]) {
+    if (tty->bufsize > 0 && tty->buf[0] == '\0' && tty->buf_flag[0]) {
         // remove the eof so the next read can succeed
         char dummy;
         tty_read_into_buf(tty, &dummy, 1);
@@ -396,8 +396,10 @@ static int tty_ioctl(struct fd *fd, int cmd, void *arg) {
             TRACE("tty group = %d\n", tty->fg_group);
             *(dword_t *) arg = tty->fg_group; break;
         case TIOCSPGRP_:
-            // FIXME I think current->sid needs to be locked
-            if (!tty_is_current(tty) || current->sid != tty->session) {
+            lock(&pids_lock);
+            pid_t_ sid = current->group->sid;
+            unlock(&pids_lock);
+            if (!tty_is_current(tty) || sid != tty->session) {
                 err = _ENOTTY;
                 break;
             }

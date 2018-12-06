@@ -15,6 +15,10 @@ static bool exit_tgroup(struct task *task) {
         if (group->timer) {
             timer_set(group->timer, (struct timer_spec) {}, NULL);
         }
+        lock(&pids_lock);
+        list_remove(&group->pgroup);
+        list_remove(&group->session);
+        unlock(&pids_lock);
     }
     unlock(&group->lock);
     return group_dead;

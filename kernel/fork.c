@@ -35,6 +35,10 @@ static struct tgroup *tgroup_copy(struct tgroup *old_group) {
     struct tgroup *group = malloc(sizeof(struct tgroup));
     *group = *old_group;
     list_init(&group->threads);
+    lock(&pids_lock);
+    list_add(&old_group->pgroup, &group->pgroup);
+    list_add(&old_group->session, &group->session);
+    unlock(&pids_lock);
     group->tty->refcount++;
     group->has_timer = false;
     group->timer = NULL;

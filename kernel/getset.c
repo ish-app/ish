@@ -19,16 +19,6 @@ dword_t sys_getppid() {
     unlock(&pids_lock);
     return ppid;
 }
-dword_t sys_getpgid(dword_t pid) {
-    STRACE("getpgid(%d)", pid);
-    if (pid != 0)
-        return _EPERM;
-    return current->pgid;
-}
-dword_t sys_getpgrp() {
-    STRACE("getpgrp()");
-    return current->pgid;
-}
 
 dword_t sys_getuid32() {
     STRACE("getuid32()");

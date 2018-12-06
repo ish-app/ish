@@ -41,9 +41,6 @@ struct task {
     struct task *parent;
     struct list children;
     struct list siblings;
-    pid_t_ sid, pgid;
-    struct list session;
-    struct list pgroup;
 
     addr_t clear_tid;
 
@@ -80,6 +77,11 @@ struct tgroup {
     struct list threads;
     struct task *leader; // immutable
     struct rusage_ rusage;
+
+    // locked by pids_lock
+    pid_t_ sid, pgid;
+    struct list session;
+    struct list pgroup;
 
     struct tty *tty;
 
