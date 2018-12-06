@@ -52,10 +52,7 @@ static int sockaddr_read(addr_t sockaddr_addr, void *sockaddr, size_t sockaddr_l
     real_addr->sa_family = sock_family_to_real(fake_addr->family);
     switch (real_addr->sa_family) {
         case PF_INET:
-            real_addr->sa_len = sizeof(struct sockaddr_in);
-            break;
         case PF_INET6:
-            real_addr->sa_len = sizeof(struct sockaddr_in6);
             break;
         case PF_LOCAL:
             return _ENOENT; // lol
