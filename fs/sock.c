@@ -49,12 +49,15 @@ static int sockaddr_read(addr_t sockaddr_addr, void *sockaddr, size_t sockaddr_l
         return _EFAULT;
     struct sockaddr *real_addr = sockaddr;
     struct sockaddr_ *fake_addr = sockaddr;
-    switch (fake_addr->family) {
-        case PF_INET_:
-        case PF_INET6_:
-            real_addr->sa_family = fake_addr->family;
+    real_addr->sa_family = sock_family_to_real(fake_addr->family);
+    switch (real_addr->sa_family) {
+        case PF_INET:
+            real_addr->sa_len = sizeof(struct sockaddr_in);
             break;
-        case PF_LOCAL_:
+        case PF_INET6:
+            real_addr->sa_len = sizeof(struct sockaddr_in6);
+            break;
+        case PF_LOCAL:
             return _ENOENT; // lol
         default:
             return _EINVAL;
@@ -65,10 +68,10 @@ static int sockaddr_read(addr_t sockaddr_addr, void *sockaddr, size_t sockaddr_l
 static int sockaddr_write(addr_t sockaddr_addr, void *sockaddr, size_t sockaddr_len) {
     struct sockaddr *real_addr = sockaddr;
     struct sockaddr_ *fake_addr = sockaddr;
-    switch (real_addr->sa_family) {
+    fake_addr->family = sock_family_from_real(real_addr->sa_family);
+    switch (fake_addr->family) {
         case PF_INET_:
         case PF_INET6_:
-            fake_addr->family = real_addr->sa_family;
             break;
         case PF_LOCAL_:
             return _ENOENT; // lol
@@ -110,6 +113,43 @@ dword_t sys_connect(fd_t sock_fd, addr_t sockaddr_addr, dword_t sockaddr_len) {
     if (err < 0)
         return errno_map();
     return err;
+}
+
+dword_t sys_listen(fd_t sock_fd, int_t backlog) {
+    STRACE("listen(%d, %d)", sock_fd, backlog);
+    struct fd *sock = sock_getfd(sock_fd);
+    if (sock == NULL)
+        return _EBADF;
+    int err = listen(sock->real_fd, backlog);
+    if (err < 0)
+        return errno_map();
+    return err;
+}
+
+dword_t sys_accept(fd_t sock_fd, addr_t sockaddr_addr, addr_t sockaddr_len_addr) {
+    STRACE("accept(%d, 0x%x, 0x%x)", sock_fd, sockaddr_addr, sockaddr_len_addr);
+    struct fd *sock = sock_getfd(sock_fd);
+    if (sock == NULL)
+        return _EBADF;
+    dword_t sockaddr_len;
+    if (user_get(sockaddr_len_addr, sockaddr_len))
+        return _EFAULT;
+
+    char sockaddr[sockaddr_len];
+    int err = accept(sock->real_fd, (void *) sockaddr, &sockaddr_len);
+    if (err < 0)
+        return errno_map();
+
+    int client = sockaddr_write(sockaddr_addr, sockaddr, sockaddr_len);
+    if (client < 0)
+        return client;
+    if (user_put(sockaddr_len_addr, sockaddr_len))
+        return _EFAULT;
+
+    fd_t client_f = sock_fd_create(client, 0);
+    if (client_f < 0)
+        close(client);
+    return client_f;
 }
 
 dword_t sys_getsockname(fd_t sock_fd, addr_t sockaddr_addr, addr_t sockaddr_len_addr) {
@@ -339,18 +379,18 @@ static struct socket_call {
     {(syscall_t) sys_socket, 3},
     {(syscall_t) sys_bind, 3},
     {(syscall_t) sys_connect, 3},
-    {NULL}, // listen
-    {NULL}, // accept
-    {(syscall_t) sys_getsockname, 3}, // getsockname
-    {(syscall_t) sys_getpeername, 3}, // getpeername
-    {(syscall_t) sys_socketpair, 4}, // socketpair
+    {(syscall_t) sys_listen, 2},
+    {(syscall_t) sys_accept, 3},
+    {(syscall_t) sys_getsockname, 3},
+    {(syscall_t) sys_getpeername, 3},
+    {(syscall_t) sys_socketpair, 4},
     {NULL}, // send
     {NULL}, // recv
-    {(syscall_t) sys_sendto, 6}, // sendto
-    {(syscall_t) sys_recvfrom, 6}, // recvfrom
-    {(syscall_t) sys_shutdown, 2}, // shutdown
-    {(syscall_t) sys_setsockopt, 5}, // setsockopt
-    {(syscall_t) sys_getsockopt, 5}, // getsockopt
+    {(syscall_t) sys_sendto, 6},
+    {(syscall_t) sys_recvfrom, 6},
+    {(syscall_t) sys_shutdown, 2},
+    {(syscall_t) sys_setsockopt, 5},
+    {(syscall_t) sys_getsockopt, 5},
     {NULL}, // sendmsg
     {NULL}, // recvmsg
     {NULL}, // accept4

@@ -34,6 +34,14 @@ static inline int sock_family_to_real(int fake) {
     }
     return -1;
 }
+static inline int sock_family_from_real(int fake) {
+    switch (fake) {
+        case PF_LOCAL: return PF_LOCAL_;
+        case PF_INET: return PF_INET_;
+        case PF_INET6: return PF_INET6_;
+    }
+    return -1;
+}
 
 #define SOCK_STREAM_ 1
 #define SOCK_DGRAM_ 2
@@ -69,6 +77,7 @@ static inline int sock_flags_to_real(int fake) {
 }
 
 #define TCP_NODELAY_ 1
+#define SO_REUSEADDR_ 2
 #define SO_TYPE_ 3
 #define SO_ERROR_ 4
 #define SO_BROADCAST_ 6
@@ -76,6 +85,7 @@ static inline int sock_flags_to_real(int fake) {
 static inline int sock_opt_to_real(int fake) {
     switch (fake) {
         case TCP_NODELAY_: return TCP_NODELAY;
+        case SO_REUSEADDR_: return SO_REUSEADDR;
         case SO_TYPE_: return SO_TYPE;
         case SO_ERROR_: return SO_ERROR;
         case SO_BROADCAST_: return SO_BROADCAST;
