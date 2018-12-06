@@ -133,12 +133,12 @@ dword_t sys_accept(fd_t sock_fd, addr_t sockaddr_addr, addr_t sockaddr_len_addr)
         return _EFAULT;
 
     char sockaddr[sockaddr_len];
-    int err = accept(sock->real_fd, (void *) sockaddr, &sockaddr_len);
-    if (err < 0)
+    int client = accept(sock->real_fd, (void *) sockaddr, &sockaddr_len);
+    if (client < 0)
         return errno_map();
 
-    int client = sockaddr_write(sockaddr_addr, sockaddr, sockaddr_len);
-    if (client < 0)
+    int err = sockaddr_write(sockaddr_addr, sockaddr, sockaddr_len);
+    if (err < 0)
         return client;
     if (user_put(sockaddr_len_addr, sockaddr_len))
         return _EFAULT;
