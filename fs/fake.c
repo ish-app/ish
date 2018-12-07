@@ -10,6 +10,7 @@
 #include "kernel/errno.h"
 #include "kernel/task.h"
 #include "fs/fd.h"
+#include "fs/dev.h"
 
 // TODO document database
 
@@ -138,8 +139,8 @@ static struct fd *fakefs_open(struct mount *mount, const char *path, int flags, 
         if (!read_stat(mount, path, NULL)) {
             struct ish_stat ishstat;
             ishstat.mode = mode | S_IFREG;
-            ishstat.uid = current->uid;
-            ishstat.gid = current->gid;
+            ishstat.uid = current->euid;
+            ishstat.gid = current->egid;
             ishstat.rdev = 0;
             write_stat(mount, path, &ishstat);
         }
@@ -232,19 +233,41 @@ static int fakefs_symlink(struct mount *mount, const char *target, const char *l
         int saved_errno = errno;
         unlinkat(mount->root_fd, fix_path(link), 0);
         db_rollback(mount);
-        errno = saved_errno;
+        errno = saved_errno; 
         return errno_map();
     }
 
     // customize the stat info so it looks like a link
     struct ish_stat ishstat;
     ishstat.mode = S_IFLNK | 0777; // symlinks always have full permissions
-    ishstat.uid = current->uid;
-    ishstat.gid = current->gid;
+    ishstat.uid = current->euid;
+    ishstat.gid = current->egid;
     ishstat.rdev = 0;
     write_stat(mount, link, &ishstat);
     db_commit(mount);
     return 0;
+}
+
+static int fakefs_mknod(struct mount *mount, const char *path, mode_t_ mode, dev_t_ dev) {
+    mode_t real_mode = mode;
+    if (S_ISBLK(mode) || S_ISCHR(mode))
+        real_mode = (mode & ~S_IFMT) | S_IFREG;
+    db_begin(mount);
+    int err = realfs.mknod(mount, path, mode, 0);
+    if (err < 0) {
+        db_rollback(mount);
+        return err;
+    }
+    struct ish_stat stat;
+    stat.mode = mode;
+    stat.uid = current->euid;
+    stat.gid = current->egid;
+    stat.rdev = 0;
+    if (S_ISBLK(mode) || S_ISCHR(mode))
+        stat.rdev = dev;
+    write_stat(mount, path, &stat);
+    db_commit(mount);
+    return err;
 }
 
 static int fakefs_stat(struct mount *mount, const char *path, struct statbuf *fake_stat, bool follow_links) {
@@ -317,8 +340,8 @@ static int fakefs_mkdir(struct mount *mount, const char *path, mode_t_ mode) {
     }
     struct ish_stat ishstat;
     ishstat.mode = mode | S_IFDIR;
-    ishstat.uid = current->uid;
-    ishstat.gid = current->gid;
+    ishstat.uid = current->euid;
+    ishstat.gid = current->egid;
     ishstat.rdev = 0;
     write_stat(mount, path, &ishstat);
     db_commit(mount);
@@ -465,6 +488,7 @@ const struct fs_ops fakefs = {
     .unlink = fakefs_unlink,
     .rename = fakefs_rename,
     .symlink = fakefs_symlink,
+    .mknod = fakefs_mknod,
 
     .stat = fakefs_stat,
     .fstat = fakefs_fstat,

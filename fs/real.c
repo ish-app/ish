@@ -36,6 +36,17 @@ const char *fix_path(const char *path) {
     return path;
 }
 
+// temporarily change directory and block other threads from doing so
+// useful for simulating mknodat on ios, dealing with long unix socket paths, etc
+lock_t fchdir_lock;
+static void lock_fchdir(int dirfd) {
+    lock(&fchdir_lock);
+    fchdir(dirfd);
+}
+static void unlock_fchdir() {
+    unlock(&fchdir_lock);
+}
+
 static int open_flags_real_from_fake(int flags) {
     int real_flags = 0;
     if (flags & O_RDONLY_) real_flags |= O_RDONLY;
@@ -262,6 +273,18 @@ static int realfs_symlink(struct mount *mount, const char *target, const char *l
     return err;
 }
 
+static int realfs_mknod(struct mount *mount, const char *path, mode_t_ mode, dev_t_ dev) {
+    mode_t real_mode = mode;
+    if (S_ISBLK(mode) || S_ISCHR(mode))
+        real_mode = (mode & ~S_IFMT) | S_IFREG;
+    lock_fchdir(mount->root_fd);
+    int err = mknod(fix_path(path), mode, dev);
+    unlock_fchdir();
+    if (err < 0)
+        return errno_map();
+    return err;
+}
+
 int realfs_truncate(struct mount *mount, const char *path, off_t_ size) {
     int fd = openat(mount->root_fd, fix_path(path), O_RDWR);
     if (fd < 0)
@@ -388,6 +411,7 @@ const struct fs_ops realfs = {
     .rmdir = realfs_rmdir,
     .rename = realfs_rename,
     .symlink = realfs_symlink,
+    .mknod = realfs_mknod,
 
     .stat = realfs_stat,
     .fstat = realfs_fstat,

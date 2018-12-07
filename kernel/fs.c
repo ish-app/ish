@@ -166,6 +166,7 @@ dword_t sys_mknod(addr_t path_addr, mode_t_ mode, dev_t_ dev) {
     if (user_read_string(path_addr, path, sizeof(path)))
         return _EFAULT;
     STRACE("mknod(\"%s\", %#x, %#x)", path, mode, dev);
+    apply_umask(&mode);
     return generic_mknod(path, mode, dev);
 }
 
