@@ -7,6 +7,7 @@
 #include "kernel/fs.h"
 #include "fs/fd.h"
 #include "fs/path.h"
+#include "fs/dev.h"
 
 static struct fd *at_fd(fd_t f) {
     if (f == AT_FDCWD_)
@@ -158,6 +159,14 @@ dword_t sys_symlinkat(addr_t target_addr, fd_t at_f, addr_t link_addr) {
 
 dword_t sys_symlink(addr_t target_addr, addr_t link_addr) {
     return sys_symlinkat(target_addr, AT_FDCWD_, link_addr);
+}
+
+dword_t sys_mknod(addr_t path_addr, mode_t_ mode, dev_t_ dev) {
+    char path[MAX_PATH];
+    if (user_read_string(path_addr, path, sizeof(path)))
+        return _EFAULT;
+    STRACE("mknod(\"%s\", %#x, %#x)", path, mode, dev);
+    return generic_mknod(path, mode, dev);
 }
 
 dword_t sys_read(fd_t fd_no, addr_t buf_addr, dword_t size) {

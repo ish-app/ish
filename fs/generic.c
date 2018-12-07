@@ -131,6 +131,17 @@ int generic_symlinkat(const char *target, struct fd *at, const char *link_raw) {
     return mount->fs->symlink(mount, target, link);
 }
 
+int generic_mknod(const char *path_raw, int mode, int dev) {
+    char path[MAX_PATH];
+    int err = path_normalize(AT_PWD, path_raw, path, false);
+    if (err < 0)
+        return err;
+    struct mount *mount = find_mount_and_trim_path(path);
+    if (mount->fs->mknod == NULL)
+        return _EPERM;
+    return mount->fs->mknod(mount, path, mode, dev);
+}
+
 int generic_setattrat(struct fd *at, const char *path_raw, struct attr attr, bool follow_links) {
     char path[MAX_PATH];
     int err = path_normalize(at, path_raw, path, follow_links);
