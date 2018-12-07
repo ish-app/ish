@@ -352,7 +352,7 @@ static int elf_exec(struct fd *fd, const char *file, char *const argv[], char *c
 out_free_interp:
     if (interp_name != NULL)
         free(interp_name);
-    if (interp_fd != NULL)
+    if (interp_fd != NULL && !IS_ERR(interp_fd))
         fd_close(interp_fd);
     if (interp_ph != NULL)
         free(interp_ph);
