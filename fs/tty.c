@@ -79,6 +79,9 @@ static int tty_open(int major, int minor, int type, struct fd *fd) {
     if (major == 5 && minor == 0) {
         lock(&current->group->lock);
         tty = current->group->tty;
+        lock(&tty->lock);
+        tty->refcount++;
+        unlock(&tty->lock);
         unlock(&current->group->lock);
     } else {
         if (major == 4 && minor < 64)
