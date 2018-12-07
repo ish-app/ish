@@ -12,6 +12,8 @@ static int user_read_or_zero(addr_t addr, void *data, size_t size) {
     return 0;
 }
 
+#define SELECT_READ (POLL_READ | POLL_HUP)
+#define SELECT_WRITE (POLL_WRITE | POLL_ERR)
 struct select_context {
     char *readfds;
     char *writefds;
@@ -20,11 +22,11 @@ struct select_context {
 };
 static int select_event_callback(void *context, struct fd *fd, int types) {
     struct select_context *c = context;
-    if (types & POLL_READ)
+    if (types & SELECT_READ)
         bit_set(c->fd, c->readfds);
-    if (types & POLL_WRITE)
+    if (types & SELECT_WRITE)
         bit_set(c->fd, c->writefds);
-    if (!(types & (POLL_READ|POLL_WRITE)))
+    if (!(types & (SELECT_READ | SELECT_WRITE)))
         return 0;
     return 1;
 }
@@ -58,9 +60,9 @@ dword_t sys_select(fd_t nfds, addr_t readfds_addr, addr_t writefds_addr, addr_t 
                 TODO("select with multiple fds");
             fd = i;
             if (bit_test(i, readfds))
-                types |= POLL_READ;
+                types |= SELECT_READ;
             if (bit_test(i, writefds))
-                types |= POLL_WRITE;
+                types |= SELECT_WRITE;
             /* if (bit_test(i, exceptfds)) */
             /*     FIXME("poll exceptfds"); */
         }
@@ -144,7 +146,7 @@ dword_t sys_poll(addr_t fds, dword_t nfds, dword_t timeout) {
             }
         }
 
-        poll_add_fd(poll, f_get(polls[i].fd), events);
+        poll_add_fd(poll, f_get(polls[i].fd), events | POLL_ALWAYS_LISTENING);
     }
 
     for (int i = 0; i < nfds; i++)
