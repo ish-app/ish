@@ -233,7 +233,7 @@ static int fakefs_symlink(struct mount *mount, const char *target, const char *l
         int saved_errno = errno;
         unlinkat(mount->root_fd, fix_path(link), 0);
         db_rollback(mount);
-        errno = saved_errno; 
+        errno = saved_errno;
         return errno_map();
     }
 
@@ -249,11 +249,11 @@ static int fakefs_symlink(struct mount *mount, const char *target, const char *l
 }
 
 static int fakefs_mknod(struct mount *mount, const char *path, mode_t_ mode, dev_t_ dev) {
-    mode_t real_mode = mode;
+    mode_t_ real_mode = mode;
     if (S_ISBLK(mode) || S_ISCHR(mode))
         real_mode = (mode & ~S_IFMT) | S_IFREG;
     db_begin(mount);
-    int err = realfs.mknod(mount, path, mode, 0);
+    int err = realfs.mknod(mount, path, real_mode, 0);
     if (err < 0) {
         db_rollback(mount);
         return err;

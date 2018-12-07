@@ -274,12 +274,18 @@ static int realfs_symlink(struct mount *mount, const char *target, const char *l
 }
 
 static int realfs_mknod(struct mount *mount, const char *path, mode_t_ mode, dev_t_ dev) {
-    mode_t real_mode = mode;
-    if (S_ISBLK(mode) || S_ISCHR(mode))
-        real_mode = (mode & ~S_IFMT) | S_IFREG;
-    lock_fchdir(mount->root_fd);
-    int err = mknod(fix_path(path), mode, dev);
-    unlock_fchdir();
+    int err;
+    if (S_ISFIFO(mode)) {
+        lock_fchdir(mount->root_fd);
+        err = mkfifo(fix_path(path), mode);
+        unlock_fchdir();
+    } else if (S_ISREG(mode)) {
+        err = openat(mount->root_fd, fix_path(path), O_CREAT|O_EXCL|O_RDONLY);
+        if (err >= 0)
+            err = close(err);
+    } else {
+        return _EPERM;
+    }
     if (err < 0)
         return errno_map();
     return err;

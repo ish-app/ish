@@ -4,6 +4,7 @@
 #include "misc.h"
 #include "util/list.h"
 #include "fs/stat.h"
+#include "fs/dev.h"
 #include "emu/memory.h"
 #include <dirent.h>
 #include <sqlite3.h>
@@ -50,7 +51,7 @@ int generic_unlinkat(struct fd *at, const char *path);
 int generic_rmdirat(struct fd *at, const char *path);
 int generic_renameat(struct fd *src_at, const char *src, struct fd *dst_at, const char *dst);
 int generic_symlinkat(const char *target, struct fd *at, const char *link);
-int generic_mknod(const char *path, int mode, int dev);
+int generic_mknod(const char *path, mode_t_ mode, dev_t_ dev);
 #define AC_R 4
 #define AC_W 2
 #define AC_X 1
@@ -111,7 +112,7 @@ struct fs_ops {
     int (*rmdir)(struct mount *mount, const char *path);
     int (*rename)(struct mount *mount, const char *src, const char *dst);
     int (*symlink)(struct mount *mount, const char *target, const char *link);
-    int (*mknod)(struct mount *mount, const char *path, int mode, int dev);
+    int (*mknod)(struct mount *mount, const char *path, mode_t_ mode, dev_t_ dev);
 
     int (*stat)(struct mount *mount, const char *path, struct statbuf *stat, bool follow_links);
     int (*fstat)(struct fd *fd, struct statbuf *stat);

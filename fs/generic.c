@@ -131,12 +131,12 @@ int generic_symlinkat(const char *target, struct fd *at, const char *link_raw) {
     return mount->fs->symlink(mount, target, link);
 }
 
-int generic_mknod(const char *path_raw, int mode, int dev) {
+int generic_mknod(const char *path_raw, mode_t_ mode, dev_t_ dev) {
     if (S_ISDIR(mode) || S_ISLNK(mode))
         return _EINVAL;
     if (!superuser() && (S_ISBLK(mode) || S_ISCHR(mode)))
         return _EPERM;
-    
+
     char path[MAX_PATH];
     int err = path_normalize(AT_PWD, path_raw, path, false);
     if (err < 0)
