@@ -20,17 +20,24 @@ dword_t sys_time(addr_t time_out) {
 
 dword_t sys_clock_gettime(dword_t clock, addr_t tp) {
     STRACE("clock_gettime(%d, 0x%x)", clock, tp);
-    clockid_t clock_id;
-    switch (clock) {
-        case CLOCK_REALTIME_: clock_id = CLOCK_REALTIME; break;
-        case CLOCK_MONOTONIC_: clock_id = CLOCK_MONOTONIC; break;
-        default: return _EINVAL;
-    }
 
     struct timespec ts;
-    int err = clock_gettime(clock_id, &ts);
-    if (err < 0)
-        return errno_map();
+    if (clock == CLOCK_PROCESS_CPUTIME_ID_) {
+        // FIXME this is thread usage, not process usage
+        struct rusage_ rusage = rusage_get_current();
+        ts.tv_sec = rusage.utime.sec;
+        ts.tv_nsec = rusage.utime.usec * 1000;
+    } else {
+        clockid_t clock_id;
+        switch (clock) {
+            case CLOCK_REALTIME_: clock_id = CLOCK_REALTIME; break;
+            case CLOCK_MONOTONIC_: clock_id = CLOCK_MONOTONIC; break;
+            default: return _EINVAL;
+        }
+        int err = clock_gettime(clock_id, &ts);
+        if (err < 0)
+            return errno_map();
+    }
     struct timespec_ t;
     t.sec = ts.tv_sec;
     t.nsec = ts.tv_nsec;
