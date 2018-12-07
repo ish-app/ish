@@ -277,10 +277,10 @@ static int realfs_mknod(struct mount *mount, const char *path, mode_t_ mode, dev
     int err;
     if (S_ISFIFO(mode)) {
         lock_fchdir(mount->root_fd);
-        err = mkfifo(fix_path(path), mode);
+        err = mkfifo(fix_path(path), mode & ~S_IFMT);
         unlock_fchdir();
     } else if (S_ISREG(mode)) {
-        err = openat(mount->root_fd, fix_path(path), O_CREAT|O_EXCL|O_RDONLY);
+        err = openat(mount->root_fd, fix_path(path), O_CREAT|O_EXCL|O_RDONLY, mode & ~S_IFMT);
         if (err >= 0)
             err = close(err);
     } else {

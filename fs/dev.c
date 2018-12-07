@@ -11,6 +11,7 @@ struct dev_ops *char_devs[] = {
     [0 ... 255] = NULL,
     [1] = &null_dev,
     [4] = &tty_dev,
+    [5] = &tty_dev,
 };
 
 int dev_open(int major, int minor, int type, struct fd *fd) {

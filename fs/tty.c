@@ -74,17 +74,23 @@ void tty_release(struct tty *tty) {
 
 static int tty_open(int major, int minor, int type, struct fd *fd) {
     assert(type == DEV_CHAR);
-    if (major == 4 && minor < 64)
-        type = TTY_VIRTUAL;
-    else if (major >= 136 && major <= 143)
-        type = TTY_PSEUDO;
-    else
-        assert(false);
 
     struct tty *tty;
-    int err = tty_get(type, minor, &tty);
-    if (err < 0)
-        return err;
+    if (major == 5 && minor == 0) {
+        lock(&current->group->lock);
+        tty = current->group->tty;
+        unlock(&current->group->lock);
+    } else {
+        if (major == 4 && minor < 64)
+            type = TTY_VIRTUAL;
+        else if (major >= 136 && major <= 143)
+            type = TTY_PSEUDO;
+        else
+            assert(false);
+        int err = tty_get(type, minor, &tty);
+        if (err < 0)
+            return err;
+    }
     fd->tty = tty;
 
     lock(&tty->fds_lock);
