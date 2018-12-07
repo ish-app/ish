@@ -98,6 +98,16 @@
     }
 }
 
+- (void)copy:(id)sender {
+    [self.terminal.webView evaluateJavaScript:@"window.getSelection().toString()" completionHandler:^(NSString *selection, NSError *err) {
+        if (err != nil) {
+            NSLog(@"error copying: %@", err);
+            return;
+        }
+        UIPasteboard.generalPasteboard.string = selection;
+    }];
+}
+
 - (void)deleteBackward {
     [self insertText:@"\x7f"];
 }
