@@ -337,6 +337,7 @@ static int tty_poll(struct fd *fd) {
 #define TCGETS_ 0x5401
 #define TCSETS_ 0x5402
 #define TCSETSW_ 0x5403
+#define TCSETSF_ 0x5404
 #define TCFLSH_ 0x540b
 #define TIOCGPRGP_ 0x540f
 #define TIOCSPGRP_ 0x5410
@@ -348,7 +349,7 @@ static int tty_poll(struct fd *fd) {
 
 static ssize_t tty_ioctl_size(struct fd *fd, int cmd) {
     switch (cmd) {
-        case TCGETS_: case TCSETS_: case TCSETSW_:
+        case TCGETS_: case TCSETS_: case TCSETSF_: case TCSETSW_:
             return sizeof(struct termios_);
         case TCFLSH_: return 0;
         case TIOCGPRGP_: case TIOCSPGRP_: return sizeof(dword_t);
@@ -373,6 +374,8 @@ static int tty_ioctl(struct fd *fd, int cmd, void *arg) {
         case TCGETS_:
             *(struct termios_ *) arg = tty->termios;
             break;
+        case TCSETSF_:
+            tty->bufsize = 0;
         case TCSETSW_:
             // we have no output buffer currently
         case TCSETS_:
