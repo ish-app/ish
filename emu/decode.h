@@ -13,6 +13,8 @@
 #undef DEFAULT_CHANNEL
 #define DEFAULT_CHANNEL instr
 #define TRACEI(msg, ...) TRACE(msg "\t", ##__VA_ARGS__)
+extern int current_pid(void);
+#define TRACEIP() TRACE("%d %08x\t", current_pid(), state->ip)
 
 // this will be the next PyEval_EvalFrameEx
 __no_instrument DECODER_RET glue(DECODER_NAME, OP_SIZE)(DECODER_ARGS) {

@@ -6,6 +6,7 @@
 #endif
 #include "kernel/calls.h"
 #include "util/sync.h"
+#include "kernel/task.h"
 #include "misc.h"
 
 #define LOG_BUF_SHIFT 20
@@ -174,4 +175,9 @@ void die(const char *msg, ...) {
     die_handler(buf);
     abort();
     va_end(args);
+}
+
+// fun little utility function
+int current_pid() {
+    return current->pid;
 }
