@@ -1,4 +1,5 @@
 #include "gadgets.h"
+#include "math.h"
 
 #define REP_LIST once,rep,repnz
 
@@ -48,7 +49,7 @@
         .else N .ifc \op,movs
             mov _addr, esi
             read_prep \size, \op\size\()_\rep
-            ldrs _tmp, [_xaddr], \s
+            ldr\s _tmp, [_xaddr]
             mov _addr, edi
             write_prep \size, \op\size\()_\rep\()2
             str\s _tmp, [_xaddr]
@@ -57,22 +58,21 @@
         .else N .ifc \op, scas
             mov _addr, edi
             read_prep \size, \op\size\()_\rep
-            ldrs _tmp, [_xaddr], \s
-            setf_a eax, _tmp
-            subs _tmp, _tmp, eax
-            setf_oc
+            ldr\s w8, [_xaddr]
+            mov _tmp, eax
+            setf_a src=w8, dst=_tmp
+            do_add sub, _tmp, w8, \s
             setf_zsp \s
 
         .else N .ifc \op, cmps
             mov _addr, esi
             read_prep \size, \op\size\()_\rep
-            ldrs _tmp, [_xaddr], \s
+            ldr\s _tmp, [_xaddr]
             mov _addr, edi
             read_prep \size, \op\size\()_\rep\()2
-            ldrs w8, [_xaddr], \s
-            setf_a w8, _tmp
-            subs _tmp, _tmp, w8
-            setf_oc
+            ldr\s w8, [_xaddr]
+            setf_a src=w8, dst=_tmp
+            do_add sub, _tmp, w8, \s
             setf_zsp \s
         .endif N .endif N .endif N .endif N .endif
 
