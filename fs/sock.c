@@ -1,4 +1,5 @@
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include "kernel/calls.h"
 #include "fs/fd.h"
 #include "fs/sock.h"
@@ -10,6 +11,7 @@ static fd_t sock_fd_create(int sock_fd, int flags) {
     struct fd *fd = adhoc_fd_create();
     if (fd == NULL)
         return _ENOMEM;
+    fd->stat.mode = S_IFSOCK | 0666;
     fd->real_fd = sock_fd;
     fd->ops = &socket_fdops;
     fd_t f = f_install(fd);
