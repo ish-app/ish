@@ -1,8 +1,17 @@
 # Changelog
 
-## Build 35
+## Build 35 (unreleased)
+### New
+- Server sockets
 ### Fixed
 - `out of memory`/`short read` error from tar, due to fork setting brk to 0
+- Signals not being blocked while the signal handler is running
+- Orphaned processes not being reparented to init
+- Git doing strange things when it gets a signal
+- /dev/tty not existing (if you're not installing from scratch, you have to run mknod /dev/tty c 5 0 to get it)
+- Copy button on iOS not existing
+- Segfault when trying to run a binary that requires glibc
+- irb exiting with an EINVAL due to stdin not reporting that it is open in read/write mode
 
 ## Build 34
 ### New
