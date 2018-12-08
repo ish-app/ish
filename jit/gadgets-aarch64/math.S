@@ -478,7 +478,7 @@
 .gadget_list cvt, SIZE_LIST
 
 .gadget cvte_16
-    sxtb eax, w8
+    sxtb w8, eax
     bfxil eax, w8, 0, 16
     gret
 .gadget cvte_32
