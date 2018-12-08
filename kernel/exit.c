@@ -55,6 +55,13 @@ noreturn void do_exit(int status) {
         task_destroy(current);
 
     if (group_dead) {
+        // reparent children
+        struct task *new_parent = pid_get_task(1);
+        struct task *child;
+        list_for_each_entry(&current->children, child, siblings) {
+            child->parent = new_parent;
+        }
+
         // notify parent that we died
         struct task *parent = leader->parent;
         if (parent == NULL) {
