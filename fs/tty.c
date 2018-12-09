@@ -188,6 +188,8 @@ int tty_input(struct tty *tty, const char *input, size_t size) {
                     echo = lflags & ECHOE_;
                     count = 1;
                 }
+                if (!(lflags & ECHO_))
+                    echo = false;
                 for (int i = 0; i < count; i++) {
                     // don't delete past a flag
                     if (tty->buf_flag[tty->bufsize - 1])
