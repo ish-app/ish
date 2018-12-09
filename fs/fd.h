@@ -24,6 +24,10 @@ struct fd {
             // locked by the tty
             struct list other_fds;
         };
+        struct {
+            uint64_t eventfd_val;
+            cond_t eventfd_cond;
+        };
     };
 
     // fs/inode data

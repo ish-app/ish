@@ -59,6 +59,7 @@ src = [
     'kernel/resource.c',
     'kernel/random.c',
     'kernel/prctl.c',
+    'kernel/eventfd.c',
 
     'kernel/fs.c',
     'kernel/fs_info.c',

@@ -86,6 +86,17 @@ dword_t sys_fsync(fd_t f);
 dword_t sys_flock(fd_t fd, dword_t operation);
 int_t sys_pipe(addr_t pipe_addr);
 int_t sys_pipe2(addr_t pipe_addr, int_t flags);
+struct pollfd_ {
+    fd_t fd;
+    word_t events;
+    word_t revents;
+};
+dword_t sys_poll(addr_t fds, dword_t nfds, dword_t timeout);
+dword_t sys_select(fd_t nfds, addr_t readfds_addr, addr_t writefds_addr, addr_t exceptfds_addr, addr_t timeout_addr);
+dword_t sys_pselect(fd_t nfds, addr_t readfds_addr, addr_t writefds_addr, addr_t exceptfds_addr, addr_t timeout_addr, addr_t sigmask_addr);
+
+int_t sys_eventfd2(uint_t initval, int_t flags);
+int_t sys_eventfd(uint_t initval);
 
 // file management
 fd_t sys_open(addr_t path_addr, dword_t flags, mode_t_ mode);
@@ -198,21 +209,11 @@ struct sys_info {
     dword_t totalhigh;
     dword_t freehigh;
     dword_t mem_unit;
-    char pad[8];
+    char pad;
 };
 dword_t sys_sysinfo(addr_t info_addr);
 
 // futexes
-
-// crap that ideally shouldn't exist
-struct pollfd_ {
-    fd_t fd;
-    word_t events;
-    word_t revents;
-};
-dword_t sys_poll(addr_t fds, dword_t nfds, dword_t timeout);
-dword_t sys_select(fd_t nfds, addr_t readfds_addr, addr_t writefds_addr, addr_t exceptfds_addr, addr_t timeout_addr);
-dword_t sys_pselect(fd_t nfds, addr_t readfds_addr, addr_t writefds_addr, addr_t exceptfds_addr, addr_t timeout_addr, addr_t sigmask_addr);
 
 // misc
 dword_t sys_futex(addr_t uaddr, dword_t op, dword_t val, addr_t timeout_or_val2, addr_t uaddr2, dword_t val3);
