@@ -670,7 +670,8 @@ dword_t sys_mount(addr_t source_addr, addr_t target_addr, addr_t type_addr, dwor
 dword_t sys_umount2(addr_t target_addr, dword_t flags) {
     return _EINVAL; // I'm sorry, we do not support this action at this time.
 }
-dword_t sys_fsetxattr(addr_t path_addr, addr_t name_addr, addr_t value_addr, dword_t size, dword_t flags) {
+
+dword_t sys_xattr_stub(addr_t path_addr, addr_t name_addr, addr_t value_addr, dword_t size, dword_t flags) {
     return _ENOTSUP;
 }
 
