@@ -76,34 +76,47 @@ static inline int sock_flags_to_real(int fake) {
     return real;
 }
 
-#define TCP_NODELAY_ 1
+#define SOL_SOCKET_ 1
+#define IPPROTO_TCP_ 6
+#define IPPROTO_IP_ 0
+#define IPPROTO_IPV6_ 41
+
 #define SO_REUSEADDR_ 2
 #define SO_TYPE_ 3
 #define SO_ERROR_ 4
 #define SO_BROADCAST_ 6
 #define SO_KEEPALIVE_ 9
-static inline int sock_opt_to_real(int fake) {
-    switch (fake) {
-        case TCP_NODELAY_: return TCP_NODELAY;
-        case SO_REUSEADDR_: return SO_REUSEADDR;
-        case SO_TYPE_: return SO_TYPE;
-        case SO_ERROR_: return SO_ERROR;
-        case SO_BROADCAST_: return SO_BROADCAST;
-        case SO_KEEPALIVE_: return SO_KEEPALIVE;
+#define IP_TOS_ 1
+#define TCP_NODELAY_ 1
+#define IPV6_TCLASS_ 67
+static inline int sock_opt_to_real(int fake, int level) {
+    switch (level) {
+        case SOL_SOCKET_: switch (fake) {
+            case SO_REUSEADDR_: return SO_REUSEADDR;
+            case SO_TYPE_: return SO_TYPE;
+            case SO_ERROR_: return SO_ERROR;
+            case SO_BROADCAST_: return SO_BROADCAST;
+            case SO_KEEPALIVE_: return SO_KEEPALIVE;
+        } break;
+        case IPPROTO_TCP_: switch (fake) {
+            case TCP_NODELAY_: return TCP_NODELAY;
+        } break;
+        case IPPROTO_IP_: switch (fake) {
+            case IP_TOS_: return IP_TOS;
+        } break;
+        case IPPROTO_IPV6_: switch (fake) {
+            case IPV6_TCLASS_: return IPV6_TCLASS;
+        } break;
     }
     return -1;
 }
 
-#define SOL_SOCKET_ 1
-#define IPPROTO_TCP_ 6
-#define TCP_NODELAY_ 1
-#define SO_ERROR_ 4
-#define SO_BROADCAST_ 6
-#define SO_KEEPALIVE_ 9
 static inline int sock_level_to_real(int fake) {
     switch (fake) {
         case SOL_SOCKET_: return SOL_SOCKET;
         case IPPROTO_TCP_: return IPPROTO_TCP;
+        case IPPROTO_IP_: return IPPROTO_IP;
+        case IPPROTO_IPV6_: return IPPROTO_IPV6;
     }
     return -1;
 }

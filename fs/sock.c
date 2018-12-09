@@ -312,7 +312,7 @@ dword_t sys_setsockopt(fd_t sock_fd, dword_t level, dword_t option, addr_t value
     char value[value_len];
     if (user_read(value_addr, value, value_len))
         return _EFAULT;
-    int real_opt = sock_opt_to_real(option);
+    int real_opt = sock_opt_to_real(option, level);
     if (real_opt < 0)
         return _EINVAL;
     int real_level = sock_level_to_real(level);
@@ -336,7 +336,7 @@ dword_t sys_getsockopt(fd_t sock_fd, dword_t level, dword_t option, addr_t value
     char value[value_len];
     if (user_read(value_addr, value, value_len))
         return _EFAULT;
-    int real_opt = sock_opt_to_real(option);
+    int real_opt = sock_opt_to_real(option, level);
     if (real_opt < 0)
         return _EINVAL;
     int real_level = sock_level_to_real(level);
