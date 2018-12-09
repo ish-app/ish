@@ -24,7 +24,13 @@ struct poll_fd {
     struct list polls;
 };
 
+// these are defined in system headers somewhere
+#undef POLL_PRI
+#undef POLL_ERR
+#undef POLL_HUP
+
 #define POLL_READ 1
+#define POLL_PRI 2
 #define POLL_WRITE 4
 #define POLL_ERR 8
 #define POLL_HUP 16
