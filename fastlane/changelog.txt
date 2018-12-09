@@ -1,8 +1,17 @@
-DARK THEME
+Now working:
+- SSH client (to make it work, you'll need to run `mknod /dev/tty c 5 0`)
+- ffmpeg (no more "Unknown encoder: 'copy'")
+- Server sockets, like now you can run python3 -m http.server and browse your files from another device
+- tar (sorry I broke it)
+- lynx (this was working in the last build too but I only just realized)
+- Ruby REPL (large programs will assert in the garbage collector though)
 
-Plus a couple other UI fixes: terminal no longer overlaps with the keyboard when the app launches, and you can select text without making the keyboard go away.
-
-And a few emulation fixes: You can now import numpy, and pip doesn't throw MemoryError when you try to install anything nontrivial.
+Also a bunch of general fixes:
+- Signals not being blocked while the signal handler is running
+- Orphaned processes not being reparented to init
+- Git doing strange things when it gets a signal
+- Copy button on iOS not existing
+- Segfault when trying to run a binary that requires glibc
 
 Send bug reports or feedback here: https://github.com/tbodt/ish/issues
 Join the Discord: https://discord.gg/SndDh5y

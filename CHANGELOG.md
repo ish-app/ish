@@ -1,9 +1,9 @@
 # Changelog
 
-## Build 35 (unreleased)
+## Build 35
 ### New
 - Server sockets
-- SSH works (apk add openssh-client)
+- SSH client works (apk add openssh-client)
 ### Fixed
 - `out of memory`/`short read` error from tar, due to fork setting brk to 0
 - Signals not being blocked while the signal handler is running
