@@ -12,6 +12,7 @@
 - Copy button on iOS not existing
 - Segfault when trying to run a binary that requires glibc
 - irb exiting with an EINVAL due to stdin not reporting that it is open in read/write mode
+- ffmpeg reporting "Unknown encoder: 'copy'" on iOS due to 8-bit string compares not working
 
 ## Build 34
 ### New
