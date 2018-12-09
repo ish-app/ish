@@ -19,13 +19,14 @@ struct poll *poll_create() {
     return poll;
 }
 
-int poll_add_fd(struct poll *poll, struct fd *fd, int types) {
+int poll_add_fd(struct poll *poll, struct fd *fd, int types, union poll_fd_info info) {
     struct poll_fd *poll_fd = malloc(sizeof(struct poll_fd));
     if (poll_fd == NULL)
         return _ENOMEM;
     poll_fd->fd = fd;
     poll_fd->poll = poll;
     poll_fd->types = types;
+    poll_fd->info = info;
 
     lock(&fd->lock);
     lock(&poll->lock);
@@ -91,7 +92,7 @@ int poll_wait(struct poll *poll_, poll_callback_t callback, void *context, int t
                     poll_types = 0;
             }
             if (poll_types) {
-                if (callback(context, fd, poll_types) == 1)
+                if (callback(context, fd, poll_types, poll_fd->info) == 1)
                     res++;
             }
         }
