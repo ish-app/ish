@@ -38,6 +38,9 @@ static int signal_is_blockable(int sig) {
 }
 
 void send_signal(struct task *task, int sig) {
+    // signal zero is for testing whether a process exists
+    if (sig == 0)
+        return;
     if (task->zombie)
         return;
     struct sighand *sighand = task->sighand;
@@ -51,18 +54,19 @@ void send_signal(struct task *task, int sig) {
     unlock(&sighand->lock);
 }
 
-void send_group_signal(dword_t pgid, int sig) {
+int send_group_signal(dword_t pgid, int sig) {
     lock(&pids_lock);
     struct pid *pid = pid_get(pgid);
     if (pid == NULL) {
         unlock(&pids_lock);
-        return;
+        return _ESRCH;
     }
     struct tgroup *tgroup;
     list_for_each_entry(&pid->pgroup, tgroup, pgroup) {
         send_signal(tgroup->leader, sig);
     }
     unlock(&pids_lock);
+    return 0;
 }
 
 static void receive_signal(struct sighand *sighand, int sig) {
@@ -345,23 +349,27 @@ dword_t sys_sigaltstack(addr_t ss_addr, addr_t old_ss_addr) {
     return 0;
 }
 
-dword_t sys_kill(dword_t pid, dword_t sig) {
+dword_t sys_kill(pid_t_ pid, dword_t sig) {
     STRACE("kill(%d, %d)", pid, sig);
+    if (sig >= NUM_SIGS)
+        return _EINVAL;
     // TODO check permissions
-    // TODO process groups
+    if (pid == 0)
+        pid = -current->group->pgid;
+    if (pid < 0)
+        return send_group_signal(-pid, sig);
+
     lock(&pids_lock);
     struct task *task = pid_get_task(pid);
     if (task == NULL) {
         unlock(&pids_lock);
         return _ESRCH;
     }
-    // signal zero is for testing whether a process exists
-    if (sig != 0)
-        send_signal(task, sig);
+    send_signal(task, sig);
     unlock(&pids_lock);
     return 0;
 }
 
-dword_t sys_tkill(dword_t tid, dword_t sig) {
+dword_t sys_tkill(pid_t_ tid, dword_t sig) {
     return sys_kill(tid, sig);
 }

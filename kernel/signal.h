@@ -56,8 +56,8 @@ struct sigaction_ {
 void send_signal(struct task *task, int sig);
 // send a signal without regard for whether the signal is blocked or ignored
 void deliver_signal(struct task *task, int sig);
-// send a signal to all processes in a group
-void send_group_signal(dword_t pgid, int sig);
+// send a signal to all processes in a group, could return ESRCH
+int send_group_signal(dword_t pgid, int sig);
 // check for and deliver pending signals on current, should be called from SIGUSR1 handler
 void receive_signals(void);
 
@@ -93,8 +93,8 @@ struct stack_t_ {
 #define SS_DISABLE_ 2
 dword_t sys_sigaltstack(addr_t ss, addr_t old_ss);
 
-dword_t sys_kill(dword_t pid, dword_t sig);
-dword_t sys_tkill(dword_t tid, dword_t sig);
+dword_t sys_kill(pid_t_ pid, dword_t sig);
+dword_t sys_tkill(pid_t_ tid, dword_t sig);
 
 // signal frame structs. There's a good chance this should go in its own header file
 
