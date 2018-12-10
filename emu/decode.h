@@ -597,6 +597,7 @@ restart:
                     case 0xdb5: TRACE("fld mem80"); FLDM(mem_addr_real,80); break;
                     case 0xdc0: TRACE("fadd mem64"); FADDM(mem_addr_real,64); break;
                     case 0xdc1: TRACE("fmul mem64"); FMULM(mem_addr_real,64); break;
+                    case 0xdc2: TRACE("fcom mem64"); FCOMM(mem_addr_real,64); break;
                     case 0xdc3: TRACE("fcomp mem64"); FCOMM(mem_addr_real,64); FPOP; break;
                     case 0xdd0: TRACE("fld mem64"); FLDM(mem_addr_real,64); break;
                     case 0xdc4: TRACE("fsub mem64"); FSUBM(mem_addr_real,64); break;
