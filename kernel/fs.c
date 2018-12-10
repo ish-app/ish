@@ -230,7 +230,7 @@ dword_t sys_write(fd_t fd_no, addr_t buf_addr, dword_t size) {
     buf[size] = '\0';
     STRACE("write(%d, \"%.100s\", %d)", fd_no, buf, size);
     struct fd *fd = f_get(fd_no);
-    if (fd == NULL) {
+    if (fd == NULL || fd->ops->write == NULL) {
         res = _EBADF;
         goto out;
     }

@@ -13,12 +13,8 @@ int_t sys_eventfd2(uint_t initval, int_t flags) {
     if (fd == NULL)
         return _ENOMEM;
     fd->ops = &eventfd_ops;
-
-    cond_init(&fd->eventfd_cond);
     fd->eventfd_val = initval;
-
-    fd_t f = f_install_flags(fd, flags);
-    return f;
+    return f_install_flags(fd, flags);
 }
 int_t sys_eventfd(uint_t initval) {
     return sys_eventfd2(initval, 0);
@@ -34,12 +30,12 @@ static ssize_t eventfd_read(struct fd *fd, void *buf, size_t bufsize) {
             unlock(&fd->lock);
             return _EAGAIN;
         }
-        wait_for(&fd->eventfd_cond, &fd->lock, NULL);
+        wait_for(&fd->cond, &fd->lock, NULL);
     }
 
     *(uint64_t *) buf = fd->eventfd_val;
     fd->eventfd_val = 0;
-    notify(&fd->eventfd_cond);
+    notify(&fd->cond);
     unlock(&fd->lock);
     poll_wake(fd);
     return sizeof(uint64_t);
@@ -58,11 +54,11 @@ static ssize_t eventfd_write(struct fd *fd, const void *buf, size_t bufsize) {
             unlock(&fd->lock);
             return _EAGAIN;
         }
-        wait_for(&fd->eventfd_cond, &fd->lock, NULL);
+        wait_for(&fd->cond, &fd->lock, NULL);
     }
 
     fd->eventfd_val += increment;
-    notify(&fd->eventfd_cond);
+    notify(&fd->cond);
     unlock(&fd->lock);
     poll_wake(fd);
     return sizeof(uint64_t);

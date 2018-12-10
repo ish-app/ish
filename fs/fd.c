@@ -13,6 +13,7 @@ struct fd *fd_create() {
     fd->mount = NULL;
     list_init(&fd->poll_fds);
     lock_init(&fd->lock);
+    cond_init(&fd->cond);
     return fd;
 }
 

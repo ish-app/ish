@@ -45,4 +45,6 @@ dword_t sys_nanosleep(addr_t req, addr_t rem);
 dword_t sys_gettimeofday(addr_t tv, addr_t tz);
 dword_t sys_settimeofday(addr_t tv, addr_t tz);
 
+fd_t sys_timerfd_create(int_t clockid, int_t flags);
+
 #endif

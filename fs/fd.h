@@ -18,15 +18,21 @@ struct fd {
         struct {
             DIR *dir;
         };
+        // tty
         struct {
             struct tty *tty;
             // links together fds pointing to the same tty
             // locked by the tty
             struct list other_fds;
         };
+        // eventfd
         struct {
             uint64_t eventfd_val;
-            cond_t eventfd_cond;
+        };
+        // timerfd
+        struct {
+            struct timer *timer;
+            uint64_t expirations;
         };
     };
 
@@ -36,7 +42,9 @@ struct fd {
     int real_fd;
     struct statbuf stat; // for adhoc fs
 
+    // these are used for a variety of things related to the fd
     lock_t lock;
+    cond_t cond;
 };
 
 typedef sdword_t fd_t;

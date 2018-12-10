@@ -9,6 +9,7 @@
 #include "kernel/calls.h"
 #include "kernel/errno.h"
 #include "kernel/resource.h"
+#include "fs/poll.h"
 
 dword_t sys_time(addr_t time_out) {
     dword_t now = time(NULL);
@@ -161,7 +162,7 @@ dword_t sys_gettimeofday(addr_t tv, addr_t tz) {
     struct timeval timeval;
     struct timezone timezone;
     if (gettimeofday(&timeval, &timezone) < 0) {
-	    return errno_map();
+        return errno_map();
     }
     struct timeval_ tv_;
     struct timezone_ tz_;
@@ -170,7 +171,7 @@ dword_t sys_gettimeofday(addr_t tv, addr_t tz) {
     tz_.minuteswest = timezone.tz_minuteswest;
     tz_.dsttime = timezone.tz_dsttime;
     if ((tv && user_put(tv, tv_)) || (tz && user_put(tz, tz_))) {
-	    return _EFAULT;
+        return _EFAULT;
     }
     return 0;
 }
@@ -178,3 +179,65 @@ dword_t sys_gettimeofday(addr_t tv, addr_t tz) {
 dword_t sys_settimeofday(addr_t tv, addr_t tz) {
     return _EPERM;
 }
+
+static struct fd_ops timerfd_ops;
+
+static void timerfd_callback(struct fd *fd) {
+    lock(&fd->lock);
+    fd->expirations++;
+    notify(&fd->cond);
+    unlock(&fd->lock);
+    poll_wake(fd);
+}
+
+fd_t sys_timerfd_create(int_t clockid, int_t flags) {
+    STRACE("timerfd_create(%d, %#x)", clockid, flags);
+    if (clockid != ITIMER_REAL_) {
+        FIXME("timerfd %d", clockid);
+        return _EINVAL;
+    }
+
+    struct fd *fd = adhoc_fd_create();
+    if (fd == NULL)
+        return _ENOMEM;
+    fd->ops = &timerfd_ops;
+
+    fd->timer = timer_new((timer_callback_t) timerfd_callback, fd);
+    return f_install_flags(fd, flags);
+}
+
+static ssize_t timerfd_read(struct fd *fd, void *buf, size_t bufsize) {
+    if (bufsize < sizeof(uint64_t))
+        return _EINVAL;
+    lock(&fd->lock);
+    while (fd->expirations == 0) {
+        if (fd->flags & O_NONBLOCK_) {
+            unlock(&fd->lock);
+            return _EAGAIN;
+        }
+        wait_for(&fd->cond, &fd->lock, NULL);
+    }
+
+    *(uint64_t *) buf = fd->expirations;
+    fd->expirations = 0;
+    unlock(&fd->lock);
+    return sizeof(uint64_t);
+}
+static int timerfd_poll(struct fd *fd) {
+    int res = 0;
+    lock(&fd->lock);
+    if (fd->expirations == 0)
+        res |= POLL_READ;
+    unlock(&fd->lock);
+    return res;
+}
+static int timerfd_close(struct fd *fd) {
+    timer_free(fd->timer);
+    return 0;
+}
+
+static struct fd_ops timerfd_ops = {
+    .read = timerfd_read,
+    .poll = timerfd_poll,
+    .close = timerfd_close,
+};
