@@ -100,6 +100,10 @@ extern struct mount *mounts;
 #define O_NONBLOCK_ (1 << 11)
 #define O_CLOEXEC_ (1 << 19)
 
+// generic ioctls
+#define FIONREAD_ 0x541b
+#define FIONBIO_ 0x5421
+
 struct fs_ops {
     int (*mount)(struct mount *mount);
     int (*umount)(struct mount *mount);

@@ -364,6 +364,7 @@ static ssize_t tty_ioctl_size(struct fd *fd, int cmd) {
         case TCFLSH_: case TIOCSCTTY_: return 0;
         case TIOCGPRGP_: case TIOCSPGRP_: return sizeof(dword_t);
         case TIOCGWINSZ_: case TIOCSWINSZ_: return sizeof(struct winsize_);
+        case FIONREAD_: return sizeof(dword_t);
     }
     return -1;
 }
@@ -470,6 +471,10 @@ static int tty_ioctl(struct fd *fd, int cmd, void *arg) {
             break;
         case TIOCSWINSZ_:
             tty_set_winsize(fd->tty, *(struct winsize_ *) arg);
+            break;
+
+        case FIONREAD_:
+            *(dword_t *) arg = tty->bufsize;
             break;
     }
 

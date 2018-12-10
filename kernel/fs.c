@@ -319,8 +319,6 @@ out:
     return res;
 }
 
-#define FIONBIO_ 0x5421
-
 static int fd_ioctl(struct fd *fd, dword_t cmd, dword_t arg) {
     if (!fd->ops->ioctl_size)
         return _EINVAL;
