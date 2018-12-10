@@ -11,8 +11,8 @@ struct dev_ops *mem_devs[] = {
     // [2] = &kmem_dev, // (not really applicable)
     [3] = &null_dev,
     // [4] = &port_dev,
-    // [5] = &zero_dev,
-    // [7] = &full_dev,
+    [5] = &zero_dev,
+    [7] = &full_dev,
     [8] = &random_dev,
     [9] = &random_dev,
     // [10] = &aio_dev,
@@ -46,21 +46,38 @@ static ssize_t null_read(struct fd *fd, void *buf, size_t bufsize) {
 static ssize_t null_write(struct fd *fd, const void *buf, size_t bufsize) {
     return bufsize;
 }
-
 struct dev_ops null_dev = {
     .open = null_open,
     .fd.read = null_read,
     .fd.write = null_write,
 };
 
+static ssize_t zero_read(struct fd *fd, void *buf, size_t bufsize) {
+    memset(buf, 0, bufsize);
+    return bufsize;
+}
+static ssize_t zero_write(struct fd *fd, const void *buf, size_t bufsize) {
+    return bufsize;
+}
+struct dev_ops zero_dev = {
+    .open = null_open,
+    .fd.read = zero_read,
+    .fd.write = zero_write,
+};
+
+static ssize_t full_write(struct fd *fd, const void *buf, size_t bufsize) {
+    return _ENOSPC;
+}
+struct dev_ops full_dev = {
+    .open = null_open,
+    .fd.read = zero_read,
+    .fd.write = full_write,
+};
+
 static ssize_t random_read(struct fd *fd, void *buf, size_t bufsize) {
     get_random(buf, bufsize);
     return bufsize;
 }
-static ssize_t random_write(struct fd *fd, const void *buf, size_t bufsize) {
-    return bufsize;
-}
-
 struct dev_ops random_dev = {
     .open = null_open,
     .fd.read = random_read,

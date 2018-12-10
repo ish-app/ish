@@ -7,6 +7,8 @@
 extern struct dev_ops
     mem_dev,
     null_dev,
+    zero_dev,
+    full_dev,
     random_dev;
 
 #endif
