@@ -472,7 +472,10 @@ float80 f80_log2(float80 x) {
             x = f80_mul(x, x);
             bit = f80_div(bit, two);
         }
+        float80 oldres = res;
         res = f80_add(res, bit);
+        if (oldres.signif == res.signif && oldres.exp == res.exp && oldres.sign == res.sign)
+            break;
         x = f80_div(x, two);
     }
     return res;
