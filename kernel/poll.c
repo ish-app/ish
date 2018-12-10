@@ -175,6 +175,8 @@ dword_t sys_pselect(fd_t nfds, addr_t readfds_addr, addr_t writefds_addr, addr_t
     } sigmask;
     if (user_get(sigmask_addr, sigmask))
         return _EFAULT;
+    if (sigmask.mask_addr == 0)
+        return sys_select(nfds, readfds_addr, writefds_addr, exceptfds_addr, timeout_addr);
     if (sigmask.mask_size != sizeof(sigset_t_))
         return _EINVAL;
     sigset_t_ mask, old_mask;
