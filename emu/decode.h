@@ -609,6 +609,7 @@ restart:
                     case 0xde1: TRACE("fimuls mem16"); FIMUL(mem_addr,16); break;
                     case 0xde7: TRACE("fidivrs mem16"); FIDIVR(mem_addr,16); break;
                     case 0xdf0: TRACE("fild mem16"); FILD(mem_addr,16); break;
+                    case 0xdf3: TRACE("fistp mem16"); FIST(mem_addr,16); FPOP; break;
                     case 0xdf5: TRACE("fild mem64"); FILD(mem_addr,64); break;
                     case 0xdf7: TRACE("fistp mem64"); FIST(mem_addr,64); FPOP; break;
                     default: TRACE("undefined"); UNDEFINED;
