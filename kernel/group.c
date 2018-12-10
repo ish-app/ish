@@ -79,8 +79,10 @@ dword_t sys_setsid() {
     }
 
     struct pid *pid = pid_get(current->pid);
+    list_remove_safe(&group->session);
     list_add(&pid->session, &group->session);
     group->sid = new_sid;
+    list_remove_safe(&group->pgroup);
     list_add(&pid->pgroup, &group->pgroup);
     group->pgid = new_sid;
 
