@@ -104,6 +104,8 @@ void f_set_cloexec(fd_t f);
 void f_put(fd_t f, struct fd *fd);
 // steals a reference to the fd, gives it to the table on success and destroys it on error
 fd_t f_install(struct fd *fd);
+// like f_install but handles O_CLOEXEC and O_NONBLOCK
+fd_t f_install_flags(struct fd *fd, int flags);
 int f_close(fd_t f);
 
 #endif

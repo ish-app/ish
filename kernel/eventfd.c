@@ -4,12 +4,9 @@
 
 static struct fd_ops eventfd_ops;
 
-#define EFD_CLOEXEC_ 0x80000
-#define EFD_NONBLOCK_ 0x800
-
 int_t sys_eventfd2(uint_t initval, int_t flags) {
     STRACE("eventfd(%d, %#x)", initval, flags);
-    if (flags & ~(EFD_CLOEXEC_|EFD_NONBLOCK_))
+    if (flags & ~(O_CLOEXEC_|O_NONBLOCK_))
         return _EINVAL;
 
     struct fd *fd = adhoc_fd_create();
@@ -20,13 +17,7 @@ int_t sys_eventfd2(uint_t initval, int_t flags) {
     cond_init(&fd->eventfd_cond);
     fd->eventfd_val = initval;
 
-    fd_t f = f_install(fd);
-    if (f >= 0) {
-        if (flags & EFD_CLOEXEC_)
-            f_set_cloexec(f);
-        if (flags & EFD_NONBLOCK_)
-            fd->flags |= O_NONBLOCK_;
-    }
+    fd_t f = f_install_flags(fd, flags);
     return f;
 }
 int_t sys_eventfd(uint_t initval) {
@@ -50,6 +41,7 @@ static ssize_t eventfd_read(struct fd *fd, void *buf, size_t bufsize) {
     fd->eventfd_val = 0;
     notify(&fd->eventfd_cond);
     unlock(&fd->lock);
+    poll_wake(fd);
     return sizeof(uint64_t);
 }
 
@@ -72,6 +64,7 @@ static ssize_t eventfd_write(struct fd *fd, const void *buf, size_t bufsize) {
     fd->eventfd_val += increment;
     notify(&fd->eventfd_cond);
     unlock(&fd->lock);
+    poll_wake(fd);
     return sizeof(uint64_t);
 }
 

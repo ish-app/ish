@@ -152,6 +152,17 @@ fd_t f_install(struct fd *fd) {
     return f_install_start(fd, 0);
 }
 
+fd_t f_install_flags(struct fd *fd, int flags) {
+    fd_t f = f_install(fd);
+    if (f >= 0) {
+        if (flags & O_CLOEXEC_)
+            f_set_cloexec(f);
+        if (flags & O_NONBLOCK_)
+            fd->flags |= O_NONBLOCK_;
+    }
+    return f;
+}
+
 int f_close(fd_t f) {
     struct fdtable *table = current->files;
     struct fd *fd = f_get(f);
