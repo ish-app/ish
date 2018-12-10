@@ -72,6 +72,16 @@ void tty_release(struct tty *tty) {
     unlock(&ttys_lock);
 }
 
+static void tty_set_controlling(struct tgroup *group, struct tty *tty) {
+    lock(&current->group->lock);
+    if (current->group->tty == NULL) {
+        current->group->tty = tty;
+        tty->session = current->group->sid;
+        tty->fg_group = current->group->pgid;
+    }
+    unlock(&current->group->lock);
+}
+
 static int tty_open(int major, int minor, int type, struct fd *fd) {
     assert(type == DEV_CHAR);
 
@@ -102,13 +112,7 @@ static int tty_open(int major, int minor, int type, struct fd *fd) {
 
     lock(&pids_lock);
     if (current->group->sid == current->pid) {
-        lock(&current->group->lock);
-        if (current->group->tty == NULL) {
-            current->group->tty = tty;
-            tty->session = current->group->sid;
-            tty->fg_group = current->group->pgid;
-        }
-        unlock(&current->group->lock);
+        tty_set_controlling(current->group, tty);
     }
     unlock(&pids_lock);
 
@@ -344,6 +348,7 @@ static int tty_poll(struct fd *fd) {
 #define TCSETSW_ 0x5403
 #define TCSETSF_ 0x5404
 #define TCFLSH_ 0x540b
+#define TIOCSCTTY_ 0x540e
 #define TIOCGPRGP_ 0x540f
 #define TIOCSPGRP_ 0x5410
 #define TIOCGWINSZ_ 0x5413
@@ -356,7 +361,7 @@ static ssize_t tty_ioctl_size(struct fd *fd, int cmd) {
     switch (cmd) {
         case TCGETS_: case TCSETS_: case TCSETSF_: case TCSETSW_:
             return sizeof(struct termios_);
-        case TCFLSH_: return 0;
+        case TCFLSH_: case TIOCSCTTY_: return 0;
         case TIOCGPRGP_: case TIOCSPGRP_: return sizeof(dword_t);
         case TIOCGWINSZ_: case TIOCSWINSZ_: return sizeof(struct winsize_);
     }
@@ -368,6 +373,40 @@ static bool tty_is_current(struct tty *tty) {
     bool is_current = current->group->tty == tty;
     unlock(&current->group->lock);
     return is_current;
+}
+
+static int tiocsctty(struct tty *tty, int force) {
+    int err = 0;
+    lock(&pids_lock);
+    // do nothing if this is already our controlling tty
+    if (current->group->sid == current->pid && current->group->sid == tty->session)
+        goto out;
+    // must not already have a tty
+    if (current->group->tty != NULL) {
+        err = _EPERM;
+        goto out;
+    }
+
+    if (tty->session) {
+        if (force == 1 && superuser()) {
+            // steal it
+            struct pid *pid = pid_get(tty->session);
+            struct tgroup *tgroup;
+            list_for_each_entry(&pid->session, tgroup, session) {
+                lock(&tgroup->lock);
+                tgroup->tty = NULL;
+                unlock(&tgroup->lock);
+            }
+        } else {
+            err = _EPERM;
+            goto out;
+        }
+    }
+
+    tty_set_controlling(current->group, tty);
+out:
+    unlock(&pids_lock);
+    return err;
 }
 
 static int tty_ioctl(struct fd *fd, int cmd, void *arg) {
@@ -402,12 +441,16 @@ static int tty_ioctl(struct fd *fd, int cmd, void *arg) {
             };
             break;
 
+        case TIOCSCTTY_:
+            err = tiocsctty(tty, (dword_t) arg);
+            break;
+
         case TIOCGPRGP_:
             if (!tty_is_current(tty) || tty->fg_group == 0) {
                 err = _ENOTTY;
                 break;
             }
-            TRACE("tty group = %d\n", tty->fg_group);
+            STRACE("tty group = %d\n", tty->fg_group);
             *(dword_t *) arg = tty->fg_group; break;
         case TIOCSPGRP_:
             lock(&pids_lock);
@@ -419,7 +462,7 @@ static int tty_ioctl(struct fd *fd, int cmd, void *arg) {
             }
             // TODO group must be in the right session
             tty->fg_group = *(dword_t *) arg;
-            TRACE("tty group set to = %d\n", tty->fg_group);
+            STRACE("tty group set to = %d\n", tty->fg_group);
             break;
 
         case TIOCGWINSZ_:

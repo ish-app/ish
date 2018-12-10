@@ -86,6 +86,10 @@ dword_t sys_setsid() {
     list_add(&pid->pgroup, &group->pgroup);
     group->pgid = new_sid;
 
+    lock(&group->lock);
+    group->tty = NULL;
+    unlock(&group->lock);
+
     unlock(&pids_lock);
     return new_sid;
 }
