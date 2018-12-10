@@ -77,6 +77,7 @@ src = [
     'fs/pipe.c',
 
     'fs/dev.c',
+    'fs/mem.c',
     'fs/tty.c',
     'fs/tty-real.c',
 
