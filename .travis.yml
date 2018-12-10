@@ -2,6 +2,7 @@ macros:
     - &linux
       language: c
       os: linux
+      dist: xenial
       compiler: clang
       install:
           - source ~/virtualenv/python3.6/bin/activate
