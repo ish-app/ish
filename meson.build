@@ -28,6 +28,7 @@ cc = meson.get_compiler('c')
 threads = dependency('threads')
 librt = cc.find_library('rt', required: false)
 libm = cc.find_library('m', required: false)
+security_framework = dependency('appleframeworks', modules : 'Security', required: false)
 
 subdir('vdso') # ish depends on the vdso
 
@@ -119,7 +120,7 @@ libish = library('ish', src,
     include_directories: includes)
 ish = declare_dependency(
     link_with: libish,
-    dependencies: [librt, libm, threads, sqlite3],
+    dependencies: [librt, libm, threads, sqlite3, security_framework],
     include_directories: includes)
 
 # ptraceomatic et al

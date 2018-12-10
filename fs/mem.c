@@ -1,4 +1,5 @@
 #include "kernel/errno.h"
+#include "kernel/random.h"
 #include "fs/mem.h"
 #include "fs/dev.h"
 
@@ -12,8 +13,8 @@ struct dev_ops *mem_devs[] = {
     // [4] = &port_dev,
     // [5] = &zero_dev,
     // [7] = &full_dev,
-    // [8] = &random_dev,
-    // [9] = &random_dev,
+    [8] = &random_dev,
+    [9] = &random_dev,
     // [10] = &aio_dev,
     // [11] = &kmsg_dev,
     // [12] = &oldmem_dev, // replaced by /proc/vmcore
@@ -49,5 +50,19 @@ static ssize_t null_write(struct fd *fd, const void *buf, size_t bufsize) {
 struct dev_ops null_dev = {
     .open = null_open,
     .fd.read = null_read,
+    .fd.write = null_write,
+};
+
+static ssize_t random_read(struct fd *fd, void *buf, size_t bufsize) {
+    get_random(buf, bufsize);
+    return bufsize;
+}
+static ssize_t random_write(struct fd *fd, const void *buf, size_t bufsize) {
+    return bufsize;
+}
+
+struct dev_ops random_dev = {
+    .open = null_open,
+    .fd.read = random_read,
     .fd.write = null_write,
 };
