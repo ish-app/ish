@@ -140,3 +140,11 @@ dword_t sys_sched_getaffinity(pid_t_ pid, dword_t cpusetsize, addr_t cpuset_addr
         return _EFAULT;
     return 0;
 }
+int_t sys_getpriority(int_t which, pid_t_ who) {
+    STRACE("getpriority(%d, %d)", which, who);
+    return 20;
+}
+int_t sys_setpriority(int_t which, pid_t_ who, int_t prio) {
+    STRACE("setpriority(%d, %d, %d)", which, who, prio);
+    return 0;
+}
