@@ -4,6 +4,8 @@
 #ifdef __APPLE__
 #include <Security/Security.h>
 #else
+#include <unistd.h>
+#include <sys/syscall.h>
 #include <linux/random.h>
 #endif
 
@@ -11,7 +13,7 @@ int get_random(char *buf, size_t len) {
 #ifdef __APPLE__
     return SecRandomCopyBytes(kSecRandomDefault, len, buf) != errSecSuccess;
 #else
-    return getrandom(buf, len, 0) < 0;
+    return syscall(SYS_getrandom, buf, len, 0) < 0;
 #endif
 }
 
