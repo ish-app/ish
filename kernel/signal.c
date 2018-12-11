@@ -8,6 +8,33 @@ int xsave_extra = 0;
 int fxsave_extra = 0;
 static int do_sigprocmask_unlocked(dword_t how, sigset_t_ set, sigset_t_ *oldset_out);
 
+static int signal_is_blockable(int sig) {
+    return sig != SIGKILL_ && sig != SIGSTOP_;
+}
+
+#define SIGNAL_IGNORE 0
+#define SIGNAL_KILL 1
+#define SIGNAL_CALL_HANDLER 2
+
+static int signal_action(struct sighand *sighand, int sig) {
+    if (signal_is_blockable(sig)) {
+        struct sigaction_ *action = &sighand->action[sig];
+        if (action->handler == SIG_IGN_)
+            return SIGNAL_IGNORE;
+        if (action->handler != SIG_DFL_)
+            return SIGNAL_CALL_HANDLER;
+    }
+
+    switch (sig) {
+        case SIGURG_: case SIGCONT_: case SIGCHLD_:
+        case SIGIO_: case SIGWINCH_:
+            return SIGNAL_IGNORE;
+
+        default:
+            return SIGNAL_KILL;
+    }
+}
+
 void deliver_signal(struct task *task, int sig) {
     task->pending |= 1l << sig;
     if (task != current) {
@@ -33,10 +60,6 @@ retry:
     }
 }
 
-static int signal_is_blockable(int sig) {
-    return sig != SIGKILL_ && sig != SIGSTOP_;
-}
-
 void send_signal(struct task *task, int sig) {
     // signal zero is for testing whether a process exists
     if (sig == 0)
@@ -45,7 +68,7 @@ void send_signal(struct task *task, int sig) {
         return;
     struct sighand *sighand = task->sighand;
     lock(&sighand->lock);
-    if (sighand->action[sig].handler != SIG_IGN_) {
+    if (signal_action(sighand, sig) != SIGNAL_IGNORE) {
         if (task->blocked & (1l << sig) && signal_is_blockable(sig))
             task->queued |= (1l << sig);
         else
@@ -72,20 +95,16 @@ int send_group_signal(dword_t pgid, int sig) {
 static void receive_signal(struct sighand *sighand, int sig) {
     STRACE("%d receiving signal %d\n", current->pid, sig);
     current->pending &= ~(1l << sig);
-    if (sighand->action[sig].handler == SIG_DFL_) {
-        switch (sig) {
-            // non-fatal signals
-            case SIGURG_: case SIGCONT_: case SIGCHLD_:
-            case SIGIO_: case SIGWINCH_:
-                break;
+    switch (signal_action(sighand, sig)) {
+        // signal is non-fatal
+        case SIGNAL_IGNORE:
+            return;
 
-            // most of the rest are fatal
-            // some stop the process, we'll leave that as unimplemented
-            default:
-                unlock(&sighand->lock); // do_exit must be called without this lock
-                do_exit_group(sig);
-        }
-        return;
+        // most of the rest are fatal
+        // some stop the process, we'll leave that as unimplemented
+        case SIGNAL_KILL:
+            unlock(&sighand->lock); // do_exit must be called without this lock
+            do_exit_group(sig);
     }
 
     // setup the frame
