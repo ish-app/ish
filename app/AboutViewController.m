@@ -10,13 +10,15 @@
 #import "UserPreferences.h"
 
 @interface AboutViewController ()
-@property (weak, nonatomic) IBOutlet UITableViewCell *sendFeedback;
-@property (weak, nonatomic) IBOutlet UITableViewCell *openGithub;
-@property (weak, nonatomic) IBOutlet UITableViewCell *openTwitter;
+@property (weak, nonatomic) IBOutlet UITableViewCell *capsLockMappingCell;
 @property (weak, nonatomic) IBOutlet UILabel *fontSizeLabel;
 @property (weak, nonatomic) IBOutlet UIStepper *fontSizeStepper;
 @property (weak, nonatomic) IBOutlet UITableViewCell *themeCell;
-@property (weak, nonatomic) IBOutlet UITableViewCell *capsLockMappingCell;
+@property (weak, nonatomic) IBOutlet UISwitch *disableDimmingSwitch;
+
+@property (weak, nonatomic) IBOutlet UITableViewCell *sendFeedback;
+@property (weak, nonatomic) IBOutlet UITableViewCell *openGithub;
+@property (weak, nonatomic) IBOutlet UITableViewCell *openTwitter;
 @end
 
 @implementation AboutViewController
@@ -72,6 +74,7 @@
             capsLockMappingDescr = @"Escape"; break;
     }
     self.capsLockMappingCell.detailTextLabel.text = capsLockMappingDescr;
+    self.disableDimmingSwitch.on = UserPreferences.shared.shouldDisableDimming;
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
@@ -90,6 +93,8 @@
     UserPreferences.shared.fontSize = @((int) self.fontSizeStepper.value);
 }
 
+- (IBAction)disableDimmingChanged:(id)sender {
+    UserPreferences.shared.shouldDisableDimming = self.disableDimmingSwitch.on;
 }
 
 @end

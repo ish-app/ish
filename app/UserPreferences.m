@@ -12,6 +12,7 @@ static NSString *const kPreferenceCapsLockMappingKey = @"Caps Lock Mapping";
 static NSString *const kPreferenceFontSizeKey = @"Font Size";
 static NSString *const kPreferenceThemeKey = @"Theme";
 static NSString *const kPreferenceBackgroundKey = @"Background Color";
+static NSString *const kPreferenceDisableDimmingKey = @"Disable Dimming";
 
 @implementation UserPreferences {
     NSUserDefaults *_defaults;
@@ -34,6 +35,7 @@ static NSString *const kPreferenceBackgroundKey = @"Background Color";
         [_defaults registerDefaults:@{kPreferenceFontSizeKey: @(12),
                                       kPreferenceThemeKey: defaultTheme.properties,
                                       kPreferenceCapsLockMappingKey: @(CapsLockMapControl),
+                                      kPreferenceDisableDimmingKey: @(NO),
                                       }];
         _theme = [[Theme alloc] initWithProperties:[_defaults objectForKey:kPreferenceThemeKey]];
     }
@@ -67,6 +69,14 @@ static NSString *const kPreferenceBackgroundKey = @"Background Color";
 - (void)setTheme:(Theme *)theme {
     _theme = theme;
     [_defaults setObject:theme.properties forKey:kPreferenceThemeKey];
+}
+
+- (BOOL)shouldDisableDimming {
+    return [_defaults boolForKey:kPreferenceDisableDimmingKey];
+}
+
+- (void)setShouldDisableDimming:(BOOL)dim {
+    [_defaults setBool:dim forKey:kPreferenceDisableDimmingKey];
 }
 
 @end

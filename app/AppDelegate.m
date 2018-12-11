@@ -10,6 +10,7 @@
 #include <netdb.h>
 #import "AppDelegate.h"
 #import "TerminalViewController.h"
+#import "UserPreferences.h"
 #include "kernel/init.h"
 #include "kernel/calls.h"
 
@@ -90,7 +91,7 @@ static void ios_handle_exit(int code) {
 }
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
-    UIApplication.sharedApplication.idleTimerDisabled = YES;
+    [UserPreferences.shared addObserver:self forKeyPath:@"shouldDisableDimming" options:NSKeyValueObservingOptionInitial context:nil];
     int err = [self startThings];
     if (err < 0) {
         NSString *message = [NSString stringWithFormat:@"could not initialize"];
@@ -101,6 +102,11 @@ static void ios_handle_exit(int code) {
         NSLog(@"failed with code %d", err);
     }
     return YES;
+}
+
+- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context {
+    UIApplication.sharedApplication.idleTimerDisabled = UserPreferences.shared.shouldDisableDimming;
+    NSLog(@"idletimerdisabled %d", UIApplication.sharedApplication.idleTimerDisabled);
 }
 
 - (void)fatal:(NSString *)message subtitle:(NSString *)subtitle {

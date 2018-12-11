@@ -37,6 +37,7 @@ extern NSString *const kThemeBackgroundColor;
 
 @property (nonatomic) CapsLockMapping capsLockMapping;
 @property (nonatomic) Theme *theme;
+@property (nonatomic) BOOL shouldDisableDimming;
 @property (nonatomic, copy) NSNumber *fontSize;
 
 + (instancetype)shared;
