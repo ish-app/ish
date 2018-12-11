@@ -7,6 +7,9 @@
 dword_t syscall_stub() {
     return _ENOSYS;
 }
+dword_t syscall_success_stub() {
+    return 0;
+}
 
 #pragma GCC diagnostic ignored "-Winitializer-overrides"
 syscall_t syscall_table[] = {
@@ -134,6 +137,7 @@ syscall_t syscall_table[] = {
     [266] = (syscall_t) sys_clock_getres,
     [268] = (syscall_t) sys_statfs64,
     [269] = (syscall_t) sys_fstatfs64,
+    [272] = (syscall_t) syscall_success_stub,
     [274] = (syscall_t) sys_mbind,
     [295] = (syscall_t) sys_openat,
     [296] = (syscall_t) sys_mkdirat,
