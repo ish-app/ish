@@ -82,6 +82,7 @@ void fpu_stm80(struct cpu_state *cpu, float80 *f) {
 
 void fpu_prem(struct cpu_state *cpu) {
     ST(0) = f80_mod(ST(0), ST(1));
+    cpu->c2 = 0; // say we finished the entire remainder
 }
 
 void fpu_scale(struct cpu_state *cpu) {
