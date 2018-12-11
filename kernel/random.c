@@ -2,7 +2,8 @@
 #include "kernel/calls.h"
 
 #ifdef __APPLE__
-#include <Security/Security.h>
+#include <CommonCrypto/CommonCrypto.h>
+#include <CommonCrypto/CommonRandom.h>
 #else
 #include <unistd.h>
 #include <sys/syscall.h>
@@ -11,7 +12,7 @@
 
 int get_random(char *buf, size_t len) {
 #ifdef __APPLE__
-    return SecRandomCopyBytes(kSecRandomDefault, len, buf) != errSecSuccess;
+    return CCRandomGenerateBytes(buf, len) != kCCSuccess;
 #else
     return syscall(SYS_getrandom, buf, len, 0) < 0;
 #endif
