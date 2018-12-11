@@ -64,11 +64,7 @@
         [self.bar removeArrangedSubview:self.hideKeyboardButton];
         [self.hideKeyboardButton removeFromSuperview];
     }
-    if (UIDevice.currentDevice.userInterfaceIdiom == UIUserInterfaceIdiomPhone) {
-        self.barView.frame = CGRectMake(0, 0, 100, 48);
-    } else {
-        self.barView.frame = CGRectMake(0, 0, 100, 55);
-    }
+    self.barView.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
 }
 
 - (void)dealloc {
@@ -114,15 +110,10 @@
 - (void)keyboardDidSomething:(NSNotification *)notification {
     BOOL initialLayout = self.termView.needsUpdateConstraints;
     
-    CGFloat pad = 0;
-    if ([notification.name isEqualToString:UIKeyboardWillShowNotification]) {
-        NSValue *frame = notification.userInfo[UIKeyboardFrameEndUserInfoKey];
-        pad = frame.CGRectValue.size.height;
-    }
-    if (pad == 0) {
-        pad = self.view.safeAreaInsets.bottom;
-    }
-    self.bottomConstraint.constant = -pad;
+    self.bottomConstraint.constant = MAX(
+        self.view.safeAreaInsets.bottom,
+        [notification.userInfo[UIKeyboardFrameEndUserInfoKey] CGRectValue].size.height
+    );
     [self.view setNeedsUpdateConstraints];
     
     if (!initialLayout) {
@@ -220,6 +211,10 @@
 
 - (void)layoutSubviews {
     [self.terminalViewController resizeBar];
+}
+
+- (CGSize)intrinsicContentSize {
+    return CGSizeZero;
 }
 
 @end
