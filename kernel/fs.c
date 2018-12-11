@@ -107,19 +107,23 @@ dword_t sys_link(addr_t src_addr, addr_t dst_addr) {
     return sys_linkat(AT_FDCWD_, src_addr, AT_FDCWD_, dst_addr);
 }
 
-dword_t sys_unlinkat(fd_t at_f, addr_t path_addr) {
+#define AT_REMOVEDIR_ 0x200
+dword_t sys_unlinkat(fd_t at_f, addr_t path_addr, int_t flags) {
     char path[MAX_PATH];
     if (user_read_string(path_addr, path, sizeof(path)))
         return _EFAULT;
-    STRACE("unlinkat(%d, \"%s\")", at_f, path);
+    STRACE("unlinkat(%d, \"%s\", %d)", at_f, path, flags);
     struct fd *at = at_fd(at_f);
     if (at == NULL)
         return _EBADF;
-    return generic_unlinkat(at, path);
+    if (flags & AT_REMOVEDIR_)
+        return generic_rmdirat(at, path);
+    else
+        return generic_unlinkat(at, path);
 }
 
 dword_t sys_unlink(addr_t path_addr) {
-    return sys_unlinkat(AT_FDCWD_, path_addr);
+    return sys_unlinkat(AT_FDCWD_, path_addr, 0);
 }
 
 dword_t sys_renameat(fd_t src_at_f, addr_t src_addr, fd_t dst_at_f, addr_t dst_addr) {
