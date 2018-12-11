@@ -13,7 +13,8 @@
 @property (weak, nonatomic) IBOutlet UITableViewCell *sendFeedback;
 @property (weak, nonatomic) IBOutlet UITableViewCell *openGithub;
 @property (weak, nonatomic) IBOutlet UITableViewCell *openTwitter;
-@property (weak, nonatomic) IBOutlet UITableViewCell *fontSizeCell;
+@property (weak, nonatomic) IBOutlet UILabel *fontSizeLabel;
+@property (weak, nonatomic) IBOutlet UIStepper *fontSizeStepper;
 @property (weak, nonatomic) IBOutlet UITableViewCell *themeCell;
 @property (weak, nonatomic) IBOutlet UITableViewCell *capsLockMappingCell;
 @end
@@ -58,7 +59,8 @@
 
 - (void)_updatePreferenceUI {
     UserPreferences *prefs = [UserPreferences shared];
-    self.fontSizeCell.detailTextLabel.text = prefs.fontSize.stringValue;
+    self.fontSizeLabel.text = prefs.fontSize.stringValue;
+    self.fontSizeStepper.value = prefs.fontSize.doubleValue;
     self.themeCell.detailTextLabel.text = prefs.theme.presetName;
     NSString *capsLockMappingDescr;
     switch (prefs.capsLockMapping) {
@@ -80,32 +82,14 @@
         [UIApplication openURL:@"https://github.com/tbodt/ish"];
     } else if (cell == self.openTwitter) {
         [UIApplication openURL:@"https://twitter.com/tblodt"];
-    } else if (cell == self.fontSizeCell) {
-        [self _showInputForCell:cell];
     }
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
 }
 
-- (void)_showInputForCell:(UITableViewCell *)cell {
-    UIAlertController *alert = [UIAlertController
-                                alertControllerWithTitle:cell.textLabel.text
-                                message:nil
-                                preferredStyle:UIAlertControllerStyleAlert];
-    [alert addTextFieldWithConfigurationHandler:^(UITextField * _Nonnull textField) {
-        textField.placeholder = cell.detailTextLabel.text;
-    }];
-    [alert addAction:[UIAlertAction actionWithTitle:@"Save" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
-        
-        NSString *value = [[[alert textFields] firstObject] text];
-        UserPreferences *prefs = [UserPreferences shared];
-        NSUInteger fontSize = [value integerValue];
-        
-        if (fontSize) {
-            [prefs setFontSize:@(fontSize)];
-        }
-    }]];
-    [alert addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:nil]];
-    [self presentViewController:alert animated:YES completion:nil];
+- (IBAction)fontSizeChanged:(id)sender {
+    UserPreferences.shared.fontSize = @((int) self.fontSizeStepper.value);
+}
+
 }
 
 @end
