@@ -79,6 +79,12 @@ static void ios_handle_exit(int code) {
         fd_close(fd);
     }
     
+    // create some device nodes
+    // this will do nothing if they already exist
+    generic_mknod("/dev/tty", S_IFCHR|0666, dev_make(5, 0));
+    generic_mknod("/dev/random", S_IFCHR|0666, dev_make(1, 8));
+    generic_mknod("/dev/urandom", S_IFCHR|0666, dev_make(1, 9));
+    
     task_start(current);
     return 0;
 }
