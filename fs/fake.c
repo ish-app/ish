@@ -381,7 +381,7 @@ static ssize_t fakefs_readlink(struct mount *mount, const char *path, char *buf,
     return err;
 }
 
-int fakefs_rebuild(struct mount *mount, const char *db_path);
+int fakefs_rebuild(struct mount *mount);
 
 #if DEBUG_sql
 static int trace_callback(unsigned why, void *fuck, void *stmt, void *sql) {

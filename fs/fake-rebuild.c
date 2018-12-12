@@ -28,7 +28,7 @@ struct entry {
     struct list chain;
 };
 
-int fakefs_rebuild(struct mount *mount, const char *db_path) {
+int fakefs_rebuild(struct mount *mount) {
     int err;
 #define CHECK_ERR() \
     if (err != SQLITE_OK && err != SQLITE_ROW && err != SQLITE_DONE) \
