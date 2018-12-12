@@ -1,5 +1,12 @@
 # Changelog
 
+## Build 36 (unreleased)
+### New
+- Emacs
+- /dev/random and /dev/urandom
+### Fixed
+- I accidentally installed shadow and coreutils and everything broke. Instead of reinstalling and losing my filesystem I fixed everything.
+
 ## Build 35
 ### New
 - Server sockets
