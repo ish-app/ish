@@ -116,9 +116,6 @@ static inline int sock_opt_to_real(int fake, int level) {
         case IPPROTO_IPV6_: switch (fake) {
             case IPV6_TCLASS_: return IPV6_TCLASS;
         } break;
-        case IPPROTO_ICMPV6_: switch (fake) {
-          case ICMP6_FILTER_: return ICMP6_FILTER;
-        } break;
     }
     return -1;
 }

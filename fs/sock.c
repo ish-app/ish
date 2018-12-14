@@ -312,13 +312,13 @@ dword_t sys_setsockopt(fd_t sock_fd, dword_t level, dword_t option, addr_t value
     char value[value_len];
     if (user_read(value_addr, value, value_len))
         return _EFAULT;
-    int real_opt = sock_opt_to_real(option, level);
-    if (real_opt < 0)
-        return _EINVAL;
     // ICMP6_FILTER can only be set on real SOCK_RAW
     if (level == IPPROTO_ICMPV6_ && option == ICMP6_FILTER_) {
         return 0;
     }
+    int real_opt = sock_opt_to_real(option, level);
+    if (real_opt < 0)
+        return _EINVAL;
     int real_level = sock_level_to_real(level);
     if (real_level < 0)
         return _EINVAL;
