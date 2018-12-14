@@ -130,6 +130,7 @@
                                 </view>
                                 <button contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="infoLight" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="5dl-UV-6qh">
                                     <rect key="frame" x="420" y="0.0" width="31" height="43"/>
+                                    <accessibility key="accessibilityConfiguration" label="Settings"/>
                                     <constraints>
                                         <constraint firstAttribute="width" constant="31" id="1Ax-5U-2CI"/>
                                     </constraints>

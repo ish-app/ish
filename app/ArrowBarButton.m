@@ -14,6 +14,7 @@
 
 @property CGPoint startPoint;
 @property (nonatomic) ArrowDirection direction;
+@property BOOL accessibilityUpDown;
 @property NSTimer *timer;
 
 @end
@@ -22,13 +23,13 @@
 
 - (instancetype)initWithFrame:(CGRect)frame {
     if (self = [super initWithFrame:frame]) {
-        [self setupLayers];
+        [self setup];
     }
     return self;
 }
 - (instancetype)initWithCoder:(NSCoder *)aDecoder {
     if (self = [super initWithCoder:aDecoder]) {
-        [self setupLayers];
+        [self setup];
     }
     return self;
 }
@@ -41,7 +42,7 @@ static CGPoint anchors[] = {
     {-.05, .5}, // ArrowRight
 };
 
-- (void)setupLayers {
+- (void)setup {
     self.layer.delegate = self;
     [self addTextLayer:@"↑" direction:ArrowUp];
     [self addTextLayer:@"↓" direction:ArrowDown];
@@ -53,6 +54,41 @@ static CGPoint anchors[] = {
     self.layer.shadowOffset = CGSizeMake(0, 1);
     self.layer.shadowOpacity = 0.4;
     self.layer.shadowRadius = 0;
+    
+    self.accessibilityUpDown = YES;
+}
+
+- (BOOL)isAccessibilityElement {
+    return YES;
+}
+- (UIAccessibilityTraits)accessibilityTraits {
+    return UIAccessibilityTraitAdjustable;
+}
+- (NSString *)accessibilityLabel {
+    return self.accessibilityUpDown ? @"Arrow Keys Up or Down" : @"Arrow Keys Left or Right";
+}
+- (NSString *)accessibilityHint {
+    return @"Double tap to toggle direction";
+}
+
+- (BOOL)accessibilityActivate {
+    self.accessibilityUpDown = !self.accessibilityUpDown;
+    return TRUE;
+}
+
+- (void)accessibilityIncrement {
+    if (self.accessibilityUpDown)
+        self.direction = ArrowUp;
+    else
+        self.direction = ArrowRight; // this might be wrong in RTL
+    [self.timer invalidate];
+}
+- (void)accessibilityDecrement {
+    if (self.accessibilityUpDown)
+        self.direction = ArrowDown;
+    else
+        self.direction = ArrowLeft;
+    [self.timer invalidate];
 }
 
 - (void)addTextLayer:(NSString *)text direction:(ArrowDirection)direction {

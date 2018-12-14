@@ -20,6 +20,7 @@
     self.layer.shadowRadius = 0;
     self.backgroundColor = self.defaultColor;
     self.keyAppearance = UIKeyboardAppearanceLight;
+    self.accessibilityTraits |= UIAccessibilityTraitKeyboardKey;
 }
 
 - (UIColor *)primaryColor {
