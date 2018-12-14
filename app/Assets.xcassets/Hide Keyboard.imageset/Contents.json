@@ -2,16 +2,7 @@
   "images" : [
     {
       "idiom" : "universal",
-      "filename" : "Hide Keyboard.pdf",
-      "scale" : "1x"
-    },
-    {
-      "idiom" : "universal",
-      "scale" : "2x"
-    },
-    {
-      "idiom" : "universal",
-      "scale" : "3x"
+      "filename" : "Hide Keyboard.pdf"
     }
   ],
   "info" : {

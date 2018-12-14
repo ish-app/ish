@@ -93,7 +93,7 @@
         for (BarButton *button in self.barButtons) {
             button.keyAppearance = keyAppearance;
         }
-        self.barView.tintColor == UIKeyboardAppearanceLight ? UIColor.blackColor : UIColor.whiteColor;
+        self.barView.tintColor = keyAppearance == UIKeyboardAppearanceLight ? UIColor.blackColor : UIColor.whiteColor;
     }];
 }
 

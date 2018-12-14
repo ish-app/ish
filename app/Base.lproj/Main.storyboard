@@ -141,7 +141,7 @@
                                         <action selector="showAbout:" destination="BYZ-38-t0r" eventType="primaryActionTriggered" id="xbI-EN-avC"/>
                                     </connections>
                                 </button>
-                                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="fill" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="7qw-ie-p4d">
+                                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="7qw-ie-p4d">
                                     <rect key="frame" x="457" y="0.0" width="31" height="43"/>
                                     <color key="tintColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                     <state key="normal" image="Hide Keyboard"/>
