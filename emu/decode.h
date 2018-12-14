@@ -607,6 +607,7 @@ restart:
                     case 0xdd2: TRACE("fst mem64"); FSTM(mem_addr_real,64); break;
                     case 0xdd3: TRACE("fstp mem64"); FSTM(mem_addr_real,64); FPOP; break;
                     case 0xde1: TRACE("fimuls mem16"); FIMUL(mem_addr,16); break;
+                    case 0xde6: TRACE("fidiv mem16"); FIDIV(mem_addr,16); break;
                     case 0xde7: TRACE("fidivrs mem16"); FIDIVR(mem_addr,16); break;
                     case 0xdf0: TRACE("fild mem16"); FILD(mem_addr,16); break;
                     case 0xdf3: TRACE("fistp mem16"); FIST(mem_addr,16); FPOP; break;
