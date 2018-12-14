@@ -20,7 +20,6 @@
 @property (weak, nonatomic) IBOutlet NSLayoutConstraint *bottomConstraint;
 
 @property (weak, nonatomic) IBOutlet UIButton *controlKey;
-@property (weak, nonatomic) IBOutlet UIButton *aboutButton;
 @property (strong, nonatomic) IBOutletCollection(id) NSArray *barButtons;
 
 @property (weak, nonatomic) IBOutlet UIInputView *barView;
@@ -94,11 +93,7 @@
         for (BarButton *button in self.barButtons) {
             button.keyAppearance = keyAppearance;
         }
-        if (keyAppearance == UIKeyboardAppearanceLight) {
-            self.aboutButton.tintColor = UIColor.blackColor;
-        } else {
-            self.aboutButton.tintColor = UIColor.whiteColor;
-        }
+        self.barView.tintColor == UIKeyboardAppearanceLight ? UIColor.blackColor : UIColor.whiteColor;
     }];
 }
 
