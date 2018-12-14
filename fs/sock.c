@@ -312,6 +312,10 @@ dword_t sys_setsockopt(fd_t sock_fd, dword_t level, dword_t option, addr_t value
     char value[value_len];
     if (user_read(value_addr, value, value_len))
         return _EFAULT;
+    // ICMP6_FILTER can only be set on real SOCK_RAW
+    if (level == IPPROTO_ICMPV6_ && option == ICMP6_FILTER_) {
+        return 0;
+    }
     int real_opt = sock_opt_to_real(option, level);
     if (real_opt < 0)
         return _EINVAL;
@@ -348,10 +352,13 @@ dword_t sys_getsockopt(fd_t sock_fd, dword_t level, dword_t option, addr_t value
         return errno_map();
 
     if (level == SOL_SOCKET_ && option == SO_TYPE_) {
+        // TODO Find a way to get the socket protocol so we can return SOCK_RAW_ for
+        // our fake raw sockets (SO_PROTOCOL is not available).
+
         dword_t *type = (dword_t *) &value[0];
         switch (*type) {
-            case SOCK_STREAM_: *type = SOCK_STREAM; break;
-            case SOCK_DGRAM_: *type = SOCK_DGRAM; break;
+            case SOCK_STREAM: *type = SOCK_STREAM_; break;
+            case SOCK_DGRAM: *type = SOCK_DGRAM_; break;
         }
     }
 
