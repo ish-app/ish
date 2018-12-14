@@ -382,6 +382,7 @@ static ssize_t fakefs_readlink(struct mount *mount, const char *path, char *buf,
 }
 
 int fakefs_rebuild(struct mount *mount);
+int fakefs_migrate(struct mount *mount);
 
 #if DEBUG_sql
 static int trace_callback(unsigned why, void *fuck, void *stmt, void *sql) {
@@ -427,6 +428,10 @@ static int fakefs_mount(struct mount *mount) {
 
     // do this now so fakefs_rebuild can use mount->root_fd
     err = realfs.mount(mount);
+    if (err < 0)
+        return err;
+
+    err = fakefs_migrate(mount);
     if (err < 0)
         return err;
 

@@ -18,7 +18,7 @@ struct dev_ops *mem_devs[] = {
     // [10] = &aio_dev,
     // [11] = &kmsg_dev,
     // [12] = &oldmem_dev, // replaced by /proc/vmcore
-};   
+};
 
 // dispatch device for major device 1
 static int mem_open(int major, int minor, int type, struct fd *fd) {
