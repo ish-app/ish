@@ -442,7 +442,7 @@ static int fakefs_mount(struct mount *mount) {
         if (sqlite3_column_int64(statement, 0) != db_inode) {
             sqlite3_finalize(statement);
             statement = NULL;
-            int err = fakefs_rebuild(mount, db_path);
+            int err = fakefs_rebuild(mount);
             if (err < 0) {
                 close(mount->root_fd);
                 return err;
