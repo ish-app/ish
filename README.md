@@ -6,7 +6,7 @@
 
 <p align="center">
 <a href="https://ish.app">
-<img src="https://user-images.githubusercontent.com/27065646/48484608-dc6f3400-e816-11e8-92bb-04f56919866b.png">
+<img src="https://ish.app/assets/github-readme.png">
 </a>
 </p>
 
