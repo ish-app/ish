@@ -97,9 +97,13 @@ int_t sys_mremap(addr_t addr, dword_t old_len, dword_t new_len, dword_t flags) {
         return addr;
     }
 
-    dword_t pt_flags = mem_pt(current->mem, PAGE(addr))->flags;
+    struct pt_entry *entry = mem_pt(current->mem, PAGE(addr));
+    if (entry == NULL)
+        return _EFAULT;
+    dword_t pt_flags = entry->flags;
     for (page_t page = PAGE(addr); page < PAGE(addr) + old_pages; page++) {
-        if (mem_pt(current->mem, page)->flags != pt_flags)
+        entry = mem_pt(current->mem, page);
+        if (entry == NULL && entry->flags != pt_flags)
             return _EFAULT;
     }
     if (!(pt_flags & P_ANON)) {
