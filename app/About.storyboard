@@ -66,7 +66,7 @@
                                                     <nil key="textColor"/>
                                                     <nil key="highlightedColor"/>
                                                 </label>
-                                                <stepper opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" value="1" minimumValue="1" maximumValue="100" translatesAutoresizingMaskIntoConstraints="NO" id="YM7-vq-8vn">
+                                                <stepper opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" value="1" minimumValue="1" maximumValue="72" translatesAutoresizingMaskIntoConstraints="NO" id="YM7-vq-8vn">
                                                     <rect key="frame" x="210" y="7.5" width="94" height="29"/>
                                                     <connections>
                                                         <action selector="fontSizeChanged:" destination="yJz-O7-jlW" eventType="valueChanged" id="PJl-M7-bJa"/>
