@@ -1,3 +1,5 @@
+This build is a hotfix for buttons being the wrong color in dark mode. The release notes for the previous build are included below for your convenience.
+
 Fixed programs:
 - Emacs
 - Perl
