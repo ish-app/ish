@@ -1,17 +1,23 @@
-Now working:
-- SSH client (to make it work, you'll need to run `mknod /dev/tty c 5 0`)
-- ffmpeg (no more "Unknown encoder: 'copy'")
-- Server sockets, like now you can run python3 -m http.server and browse your files from another device
-- tar (sorry I broke it)
-- lynx (this was working in the last build too but I only just realized)
-- Ruby REPL (large programs will assert in the garbage collector though)
+Fixed programs:
+- Emacs
+- Perl
+- dialog
+- ping (thanks @wallisch)
+- I accidentally installed shadow and coreutils and everything broke. Instead of reinstalling and losing my filesystem I fixed everything.
 
-Also a bunch of general fixes:
-- Signals not being blocked while the signal handler is running
-- Orphaned processes not being reparented to init
-- Git doing strange things when it gets a signal
-- Copy button on iOS not existing
-- Segfault when trying to run a binary that requires glibc
+Not exactly a fixed program but almost as awesome:
+- /dev/random and /dev/urandom (thanks @lunixbochs)
+
+UI improvements:
+- Arrow keys being invisible to VoiceOver, as well as a couple other VoiceOver tweaks
+- Better hide keyboard button
+- Stepper for font size selection
+- Auto lock control setting
+
+Fixed bugs:
+- resolv.conf not getting truncated when overwritten
+- SIGWINCH with no handler installed interrupting blocking syscalls
+- GCJ crashing the app (it still fails for many other reasons, oh well)
 
 Send bug reports or feedback here: https://github.com/tbodt/ish/issues
 Join the Discord: https://discord.gg/SndDh5y
