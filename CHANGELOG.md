@@ -3,9 +3,19 @@
 ## Build 36 (unreleased)
 ### New
 - Emacs
-- /dev/random and /dev/urandom
+- /dev/random and /dev/urandom (thanks @lunixbochs)
+- Perl
+- dialog
+- ping (thanks @wallisch)
+- Auto lock control setting
 ### Fixed
 - I accidentally installed shadow and coreutils and everything broke. Instead of reinstalling and losing my filesystem I fixed everything.
+- Arrow keys being invisible to VoiceOver, as well as a couple other VoiceOver tweaks
+- Better hide keyboard button
+- Stepper for font size selection
+- resolv.conf not getting truncated when overwritten
+- SIGWINCH with no handler installed interrupting blocking syscalls
+- GCJ crashing the app (it still fails for many other reasons, oh well)
 
 ## Build 35
 ### New
