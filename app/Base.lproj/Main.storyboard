@@ -53,6 +53,8 @@
                         <outletCollection property="barButtons" destination="W9v-cj-FWz" id="OFf-FH-2Xy"/>
                         <outletCollection property="barButtons" destination="IPm-l0-f25" id="dHH-gh-Tzq"/>
                         <outletCollection property="barButtons" destination="VCr-TW-PIZ" id="NlS-hh-ara"/>
+                        <outletCollection property="barControls" destination="5dl-UV-6qh" id="ocU-st-RdO"/>
+                        <outletCollection property="barControls" destination="7qw-ie-p4d" id="fDV-Yg-Dec"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>

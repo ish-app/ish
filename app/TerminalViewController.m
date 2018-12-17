@@ -21,6 +21,7 @@
 
 @property (weak, nonatomic) IBOutlet UIButton *controlKey;
 @property (strong, nonatomic) IBOutletCollection(id) NSArray *barButtons;
+@property (strong, nonatomic) IBOutletCollection(id) NSArray *barControls;
 
 @property (weak, nonatomic) IBOutlet UIInputView *barView;
 @property (weak, nonatomic) IBOutlet UIStackView *bar;
@@ -93,7 +94,10 @@
         for (BarButton *button in self.barButtons) {
             button.keyAppearance = keyAppearance;
         }
-        self.barView.tintColor = keyAppearance == UIKeyboardAppearanceLight ? UIColor.blackColor : UIColor.whiteColor;
+        UIColor *tintColor = keyAppearance == UIKeyboardAppearanceLight ? UIColor.blackColor : UIColor.whiteColor;
+        for (UIControl *control in self.barControls) {
+            control.tintColor = tintColor;
+        }
     }];
 }
 
