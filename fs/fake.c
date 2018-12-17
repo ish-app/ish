@@ -296,6 +296,8 @@ static int fakefs_fstat(struct fd *fd, struct statbuf *fake_stat) {
     int err = fd->mount->fs->getpath(fd, path);
     if (err < 0)
         return err;
+    if (strcmp(path, "/") == 0)
+        path[0] = '\0';
     return fakefs_stat(fd->mount, path, fake_stat, false);
 }
 
@@ -474,6 +476,8 @@ static int fakefs_mount(struct mount *mount) {
     mount->stmt.delete_stat = db_prepare(mount, "delete from stats where inode = ?");
     mount->stmt.write_path = db_prepare(mount, "replace into paths (path, inode) values (?, ?)");
     mount->stmt.delete_path = db_prepare(mount, "delete from paths where inode = ?");
+    // used by file provider
+    mount->stmt.path_from_inode = db_prepare(mount, "select path from paths where inode = ?");
 
     return 0;
 }

@@ -5,7 +5,7 @@
 
 struct statbuf {
     qword_t dev;
-    dword_t inode;
+    qword_t inode;
     dword_t mode;
     dword_t nlink;
     dword_t uid;

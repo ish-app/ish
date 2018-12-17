@@ -8,76 +8,66 @@
 #import "FileProviderEnumerator.h"
 #import "FileProviderExtension.h"
 #import "FileProviderItem.h"
+#import "NSError+ISHErrno.h"
 #include "kernel/fs.h"
-#include "fs/fd.h"
-#include "kernel/errno.h"
+
+@interface FileProviderEnumerator ()
+
+@property FileProviderItem *item;
+
+@end
 
 @implementation FileProviderEnumerator
 
-- (instancetype)initWithEnumeratedItemIdentifier:(NSFileProviderItemIdentifier)enumeratedItemIdentifier {
+- (instancetype)initWithItem:(FileProviderItem *)item {
     if (self = [super init]) {
-        _enumeratedItemIdentifier = enumeratedItemIdentifier;
+        self.item = item;
     }
     return self;
 }
 
-- (void)invalidate {
-    // TODO: perform invalidation of server connection if necessary
-}
-
-- (NSError *)errorFromCode:(long)code {
-    if (code >= 0)
-        return nil;
-    if (code == _ENOENT)
-        return [NSError fileProviderErrorForNonExistentItemWithIdentifier:self.enumeratedItemIdentifier];
-    return [NSError errorWithDomain:@"iSHErrorDomain" code:code userInfo:@{NSLocalizedDescriptionKey: @"a bad thing happened"}];
-}
-
 - (void)enumerateItemsForObserver:(id<NSFileProviderEnumerationObserver>)observer startingAtPage:(NSFileProviderPage)page {
-    static int i;
-    i++;
-    NSString *path = self.enumeratedItemIdentifier;
-    if ([path isEqualToString:NSFileProviderWorkingSetContainerItemIdentifier]) {
+    // if we're asked to enumerate the working set
+    if (self.item == nil) {
         [observer finishEnumeratingUpToPage:page];
         return;
     }
     
-    if ([path isEqualToString:NSFileProviderRootContainerItemIdentifier])
-        path = @"/";
-    NSLog(@"enumerating %@ %d", path, i);
-    current = fake_task; // sometimes it isn't because threads are strange
-    struct fd *fd = generic_open(path.UTF8String, O_RDONLY_, 0);
-    if (IS_ERR(fd)) {
-        NSLog(@"could not open %@", path);
-        [observer finishEnumeratingWithError:[self errorFromCode:PTR_ERR(fd)]];
-        return;
-    }
-    
+    struct fd *fd = self.item.fd;
     NSMutableArray<FileProviderItem *> *items = [NSMutableArray new];
+    NSError *error;
     while (true) {
-        struct dir_entry dirent;
+        struct dir_entry dirent = {};
         int err = fd->ops->readdir(fd, &dirent);
         if (err < 0) {
-            NSLog(@"could not readdir %@", path);
-            [observer finishEnumeratingWithError:[self errorFromCode:err]];
+            NSLog(@"readdir returned %d", err);
+            [observer finishEnumeratingWithError:[NSError errorWithISHErrno:err]];
             return;
         }
         if (err == 0)
             break;
         if (strcmp(dirent.name, ".") == 0 || strcmp(dirent.name, "..") == 0)
             continue;
-        NSString *childPath = [path stringByAppendingPathComponent:[NSString stringWithUTF8String:dirent.name]];
-        NSLog(@"returning %@", childPath);
-        [items addObject:[[FileProviderItem alloc] initWithIdentifier:childPath]];
+        NSString *childIdent = [NSString stringWithFormat:@"%lu", (unsigned long) dirent.inode];
+        NSLog(@"returning %s %@", dirent.name, childIdent);
+        FileProviderItem *item = [[FileProviderItem alloc] initWithIdentifier:childIdent mount:fd->mount error:&error];
+        if (item == nil) {
+            [observer finishEnumeratingWithError:error];
+            return;
+        }
+        [items addObject:item];
     }
+    NSLog(@"returning %@", items);
     [observer didEnumerateItems:items];
     [observer finishEnumeratingUpToPage:nil];
-    fd_close(fd);
 }
 
 - (void)enumerateChangesForObserver:(id<NSFileProviderChangeObserver>)observer fromSyncAnchor:(NSFileProviderSyncAnchor)anchor {
     // TODO implement by having the sync anchor be a serialized list of files
     [observer finishEnumeratingChangesUpToSyncAnchor:anchor moreComing:NO];
+}
+
+- (void)invalidate {
 }
 
 @end

@@ -60,6 +60,10 @@ struct dir_entry {
     char name[NAME_MAX + 1];
 };
 
+#define LSEEK_SET 0
+#define LSEEK_CUR 1
+#define LSEEK_END 2
+
 struct fd_ops {
     ssize_t (*read)(struct fd *fd, void *buf, size_t bufsize);
     ssize_t (*write)(struct fd *fd, const void *buf, size_t bufsize);

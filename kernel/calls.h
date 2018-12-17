@@ -59,9 +59,6 @@ dword_t sys_madvise(addr_t addr, dword_t len, dword_t advice);
 dword_t sys_mbind(addr_t addr, dword_t len, int_t mode, addr_t nodemask, dword_t maxnode, uint_t flags);
 
 // file descriptor things
-#define LSEEK_SET 0
-#define LSEEK_CUR 1
-#define LSEEK_END 2
 #define LOCK_SH_ 1
 #define LOCK_EX_ 2
 #define LOCK_NB_ 4
