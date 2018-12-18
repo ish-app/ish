@@ -124,10 +124,12 @@ static int tty_open(int major, int minor, int type, struct fd *fd) {
 }
 
 static int tty_close(struct fd *fd) {
-    lock(&fd->tty->fds_lock);
-    list_remove(&fd->other_fds);
-    unlock(&fd->tty->fds_lock);
-    tty_release(fd->tty);
+    if (fd->tty != NULL) {
+        lock(&fd->tty->fds_lock);
+        list_remove(&fd->other_fds);
+        unlock(&fd->tty->fds_lock);
+        tty_release(fd->tty);
+    }
     return 0;
 }
 
