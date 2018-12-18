@@ -47,7 +47,7 @@ void poll_wake(struct fd *fd);
 // Waits for events on the fds in this poll, and calls the callback for each one found.
 // Returns the number of times the callback returned 1, or negative for error.
 typedef int (*poll_callback_t)(void *context, struct fd *fd, int types, union poll_fd_info info);
-int poll_wait(struct poll *poll, poll_callback_t callback, void *context, int timeout);
+int poll_wait(struct poll *poll, poll_callback_t callback, void *context, struct timespec *timeout);
 // does not lock the poll because lock ordering, you must ensure no other
 // thread will add or remove fds from this poll
 void poll_destroy(struct poll *poll);

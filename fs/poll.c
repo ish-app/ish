@@ -72,7 +72,7 @@ void poll_wake(struct fd *fd) {
     unlock(&fd->lock);
 }
 
-int poll_wait(struct poll *poll_, poll_callback_t callback, void *context, int timeout) {
+int poll_wait(struct poll *poll_, poll_callback_t callback, void *context, struct timespec *timeout) {
     int res = 0;
     // TODO this is pretty broken with regards to timeouts
     lock(&poll_->lock);
@@ -123,7 +123,10 @@ int poll_wait(struct poll *poll_, poll_callback_t callback, void *context, int t
         }
 
         unlock(&poll_->lock);
-        int err = poll(pollfds, pollfd_count, timeout);
+        int timeout_millis = -1;
+        if (timeout != NULL)
+            timeout_millis = timeout->tv_sec * 1000 + timeout->tv_nsec / 1000000;
+        int err = poll(pollfds, pollfd_count, timeout_millis);
         lock(&poll_->lock);
         if (err < 0) {
             res = errno_map();

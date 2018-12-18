@@ -151,6 +151,7 @@ syscall_t syscall_table[] = {
     [306] = (syscall_t) sys_fchmodat,
     [307] = (syscall_t) sys_faccessat,
     [308] = (syscall_t) sys_pselect,
+    [309] = (syscall_t) sys_ppoll,
     [320] = (syscall_t) sys_utimensat,
     [322] = (syscall_t) sys_timerfd_create,
     [323] = (syscall_t) sys_eventfd,
