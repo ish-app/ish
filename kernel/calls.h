@@ -196,6 +196,7 @@ struct uname {
     char domain[UNAME_LENGTH];   // lol
 };
 dword_t sys_uname(addr_t uts_addr);
+dword_t sys_sethostname(addr_t hostname_addr, dword_t hostname_len);
 
 struct sys_info {
     dword_t uptime;

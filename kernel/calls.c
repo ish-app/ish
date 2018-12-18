@@ -56,6 +56,7 @@ syscall_t syscall_table[] = {
     [64]  = (syscall_t) sys_getppid,
     [65]  = (syscall_t) sys_getpgrp,
     [66]  = (syscall_t) sys_setsid,
+    [74]  = (syscall_t) sys_sethostname,
     [75]  = (syscall_t) sys_setrlimit,
     [76]  = (syscall_t) sys_getrlimit,
     [77]  = (syscall_t) sys_getrusage,

@@ -24,6 +24,10 @@ dword_t sys_uname(addr_t uts_addr) {
     return 0;
 }
 
+dword_t sys_sethostname(addr_t hostname_addr, dword_t hostname_len) {
+    return _EPERM;
+}
+
 #if __APPLE__
 static uint64_t get_total_ram() {
     uint64_t total_ram;
