@@ -53,8 +53,9 @@ static int open_flags_real_from_fake(int flags) {
     if (flags & O_WRONLY_) real_flags |= O_WRONLY;
     if (flags & O_RDWR_) real_flags |= O_RDWR;
     if (flags & O_CREAT_) real_flags |= O_CREAT;
-    if (flags & O_APPEND_) real_flags |= O_APPEND;
     if (flags & O_TRUNC_) real_flags |= O_TRUNC;
+    if (flags & O_APPEND_) real_flags |= O_APPEND;
+    if (flags & O_NONBLOCK_) real_flags |= O_NONBLOCK;
     return real_flags;
 }
 
@@ -64,8 +65,9 @@ static int open_flags_fake_from_real(int flags) {
     if (flags & O_WRONLY) fake_flags |= O_WRONLY_;
     if (flags & O_RDWR) fake_flags |= O_RDWR_;
     if (flags & O_CREAT) fake_flags |= O_CREAT_;
-    if (flags & O_APPEND) fake_flags |= O_APPEND_;
     if (flags & O_TRUNC) fake_flags |= O_TRUNC_;
+    if (flags & O_APPEND) fake_flags |= O_APPEND_;
+    if (flags & O_NONBLOCK) fake_flags |= O_NONBLOCK_;
     return fake_flags;
 }
 
