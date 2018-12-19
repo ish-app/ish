@@ -57,6 +57,7 @@ int_t sys_mprotect(addr_t addr, uint_t len, int_t prot);
 int_t sys_mremap(addr_t addr, dword_t old_len, dword_t new_len, dword_t flags);
 dword_t sys_madvise(addr_t addr, dword_t len, dword_t advice);
 dword_t sys_mbind(addr_t addr, dword_t len, int_t mode, addr_t nodemask, dword_t maxnode, uint_t flags);
+int_t sys_mlock(addr_t addr, dword_t len);
 
 // file descriptor things
 #define LSEEK_SET 0

@@ -89,6 +89,7 @@ syscall_t syscall_table[] = {
     [146] = (syscall_t) sys_writev,
     [147] = (syscall_t) sys_getsid,
     [148] = (syscall_t) sys_fsync, // fdatasync
+    [150] = (syscall_t) sys_mlock,
     [158] = (syscall_t) sys_sched_yield,
     [162] = (syscall_t) sys_nanosleep,
     [163] = (syscall_t) sys_mremap,
