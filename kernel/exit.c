@@ -184,7 +184,7 @@ retry:
         // check if this child is a zombie
         struct task *task = pid_get_task_zombie(id);
         err = _ECHILD;
-        if (task == NULL || task->parent != current)
+        if (task == NULL || task->parent->group != current->group)
             goto error;
         if (reap_if_zombie(task, status_addr, rusage_addr))
             goto found_zombie;
