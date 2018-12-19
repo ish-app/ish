@@ -171,6 +171,9 @@ dword_t sys_wait4(dword_t id, addr_t status_addr, dword_t options, addr_t rusage
 retry:
     if (id == (dword_t) -1) {
         // look for a zombie child
+        err = _ECHILD;
+        if (list_empty(&current->children))
+            goto error;
         struct task *task;
         list_for_each_entry(&current->children, task, siblings) {
             id = task->pid;
