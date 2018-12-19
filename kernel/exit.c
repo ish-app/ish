@@ -72,6 +72,7 @@ noreturn void do_exit(int status) {
             leader->zombie = true;
             notify(&parent->group->child_exit);
             unlock(&parent->group->lock);
+            send_signal(parent, SIGCHLD_);
         }
     }
     unlock(&pids_lock);
