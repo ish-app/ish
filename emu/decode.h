@@ -791,6 +791,14 @@ restart:
                         case 0x7e: TRACEI("movq modrm, xmm");
                                    READMODRM; MOVQ(modrm_val, modrm_reg); break;
                         case 0x18 ... 0x1f: TRACEI("repz nop modrm\t"); READMODRM; break;
+
+                        // tzcnt is like bsf but the result when the input is zero is defined as the operand size
+                        // for now, it can just be an alias
+                        case 0xbc: TRACEI("~~tzcnt~~ bsf modrm, reg");
+                                   READMODRM; BSF(modrm_val, modrm_reg,oz); break;
+                        case 0xbd: TRACEI("~~lzcnt~~ bsr modrm, reg");
+                                   READMODRM; BSR(modrm_val, modrm_reg,oz); break;
+
                         default: TRACE("undefined"); UNDEFINED;
                     }
                     break;
