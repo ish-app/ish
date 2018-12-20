@@ -76,6 +76,58 @@
                 strb w10, [_cpu, CPU_of]
             .endifin
 
+            # aaaaaaaaaaaaaa
+            .ifin(\type, rcl,rcr)
+                .ifc \type,rcr
+                    ubfx w9, _tmp, \size-1, 1
+                    ldrb w10, [_cpu, CPU_cf]
+                    eor w9, w9, w10
+                    strb w9, [_cpu, CPU_of]
+                .endif
+
+                .ifnb \s
+                    uxt\s _tmp, _tmp
+                .else
+                    uxtw _xtmp, _tmp
+                .endif
+                ldr x9, [_cpu, CPU_cf]
+                lsl x9, x9, \size
+                orr _xtmp, _xtmp, x9
+                neg w9, w8
+                # so ok we mask the shift count, not too hard
+                and w8, w8, \size-1
+                and w9, w9, \size-1
+                # ...now mod by \size+1 oof
+                .if \size == 8
+                    .irp _, 123
+                        subs w10, w8, \size+1
+                        csel w8, w10, w8, gt
+                        subs w10, w9, \size+1
+                        csel w9, w10, w9, gt
+                    .endr
+                .elseif \size == 16
+                    subs w10, w8, \size+1
+                    csel w8, w10, w8, gt
+                    subs w10, w9, \size+1
+                    csel w9, w10, w9, gt
+                .endif
+                .ifc \type,rol
+                    lsl x8, _xtmp, x8
+                    lsr x9, _xtmp, x9
+                .else
+                    lsr x8, _xtmp, x8
+                    lsl x9, _xtmp, x9
+                .endif
+                orr _xtmp, x8, x9
+                ubfx x9, _xtmp, \size, 1
+                strb w9, [_cpu, CPU_cf]
+                .ifc \type,rcl
+                    ubfx w10, _tmp, \size-1, 1
+                    eor w10, w10, w9
+                    strb w10, [_cpu, CPU_of]
+                .endif
+            .endifin
+
             .ifin(\type, shl,shr,sar)
                 setf_zsp \s
                 clearf_a
@@ -89,7 +141,7 @@
     .endr
 .endm
 
-.irp type, shl,shr,sar,rol,ror
+.irp type, shl,shr,sar,rol,ror,rcl,rcr
     .irp size, 8,16,32
         ss \size, do_shift, \type
     .endr
