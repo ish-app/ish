@@ -9,7 +9,7 @@
             .endif
             testb $31, %cl
             jz 1f
-            .ifin(\op, rcl,rcr)
+            .ifin(\type, rcl,rcr)
                 btw $0, CPU_cf(%_cpu)
             .endifin
             \type\()\ss %cl, %tmp\s
