@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <fcntl.h>
 #include <stdarg.h>
 #include <string.h>
 #if LOG_HANDLER_NSLOG
@@ -153,6 +154,10 @@ void printk(const char *msg, ...) {
 #if LOG_HANDLER_DPRINTF
 #define NEWLINE "\r\n"
 static void log_line(const char *line) {
+    // glibc has a bug where dprintf to an invalid file descriptor leaks memory
+    // https://sourceware.org/bugzilla/show_bug.cgi?id=22876
+    if (fcntl(666, F_GETFL) == -1 && errno == EBADF)
+        return;
     dprintf(666, "%s" NEWLINE, line);
 }
 #elif LOG_HANDLER_NSLOG
