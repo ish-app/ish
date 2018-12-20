@@ -152,13 +152,13 @@ static inline long i2l(long v)
 #define OP ror
 #include "qemu-test-shift.h"
 
-//#define OP rcr
-//#define OP_CC
-//#include "qemu-test-shift.h"
+#define OP rcr
+#define OP_CC
+#include "qemu-test-shift.h"
 
-//#define OP rcl
-//#define OP_CC
-//#include "qemu-test-shift.h"
+#define OP rcl
+#define OP_CC
+#include "qemu-test-shift.h"
 
 #define OP shld
 #define OP_SHIFTD

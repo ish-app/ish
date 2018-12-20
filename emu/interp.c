@@ -348,6 +348,9 @@ static bool modrm_compute(struct cpu_state *cpu, struct tlb *tlb, addr_t *addr_o
         SETRESFLAGS; \
     }
 
+#define RCR(count, val,z) UNDEFINED
+#define RCL(count, val,z) UNDEFINED
+
 #define SHLD(count, extra, dst,z) \
     if (get(count,8) % z != 0) { \
         int cnt = get(count,8) % z; \

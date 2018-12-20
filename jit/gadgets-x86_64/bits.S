@@ -9,6 +9,9 @@
             .endif
             testb $31, %cl
             jz 1f
+            .ifin(\op, rcl,rcr)
+                btw $0, CPU_cf(%_cpu)
+            .endifin
             \type\()\ss %cl, %tmp\s
             setf_oc
             .ifin(\type, shl,shr,sar)
@@ -27,7 +30,7 @@
     .endr
 .endm
 
-.irp type, shl,shr,sar,rol,ror
+.irp type, shl,shr,sar,rol,ror,rcl,rcr
     .irp size, 8,16,32
         ss \size, do_shift, \type
     .endr

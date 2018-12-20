@@ -279,6 +279,8 @@ static inline bool gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 
 #define ROL(count, val,z) los(rol, count, val, z)
 #define ROR(count, val,z) los(ror, count, val, z)
+#define RCL(count, val,z) los(rcl, count, val, z)
+#define RCR(count, val,z) los(rcr, count, val, z)
 #define SHL(count, val,z) los(shl, count, val, z)
 #define SHR(count, val,z) los(shr, count, val, z)
 #define SAR(count, val,z) los(sar, count, val, z)

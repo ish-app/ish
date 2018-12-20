@@ -527,8 +527,8 @@ restart:
     switch (modrm.opcode) { \
         case 0: TRACE("rol"); ROL(count, val,z); break; \
         case 1: TRACE("ror"); ROR(count, val,z); break; \
-        case 2: TRACE("rcl"); UNDEFINED; \
-        case 3: TRACE("rcr"); UNDEFINED; \
+        case 2: TRACE("rcl"); RCL(count, val,z); \
+        case 3: TRACE("rcr"); RCR(count, val,z); \
         case 4: \
         case 6: TRACE("shl"); SHL(count, val,z); break; \
         case 5: TRACE("shr"); SHR(count, val,z); break; \
