@@ -85,33 +85,24 @@
                     strb w9, [_cpu, CPU_of]
                 .endif
 
-                .ifnb \s
-                    uxt\s _tmp, _tmp
-                .else
-                    uxtw _xtmp, _tmp
-                .endif
-                ldr x9, [_cpu, CPU_cf]
+                ldrb w9, [_cpu, CPU_cf]
                 lsl x9, x9, \size
                 orr _xtmp, _xtmp, x9
-                neg w9, w8
                 # so ok we mask the shift count, not too hard
-                and w8, w8, \size-1
-                and w9, w9, \size-1
+                and w8, w8, 31
                 # ...now mod by \size+1 oof
                 .if \size == 8
-                    .irp _, 123
+                    .irpc _, 123
                         subs w10, w8, \size+1
                         csel w8, w10, w8, gt
-                        subs w10, w9, \size+1
-                        csel w9, w10, w9, gt
                     .endr
                 .elseif \size == 16
                     subs w10, w8, \size+1
                     csel w8, w10, w8, gt
-                    subs w10, w9, \size+1
-                    csel w9, w10, w9, gt
                 .endif
-                .ifc \type,rol
+                mov w9, \size+1
+                sub w9, w9, w8
+                .ifc \type,rcl
                     lsl x8, _xtmp, x8
                     lsr x9, _xtmp, x9
                 .else
