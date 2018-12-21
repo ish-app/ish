@@ -19,6 +19,21 @@ size_t sockaddr_size(void *p);
 // result comes from malloc
 struct sockaddr *sockaddr_to_real(void *p);
 
+struct msghdr_ {
+  addr_t msg_name;
+  int_t msg_namelen;
+  addr_t msg_iov;
+  uint_t msg_iovlen;
+  addr_t msg_control;
+  uint_t msg_controllen;
+  int_t msg_flags;
+};
+
+struct iovec_ {
+  addr_t iov_base;
+  uint_t iov_len;
+};
+
 #define PF_LOCAL_ 1
 #define PF_INET_ 2
 #define PF_INET6_ 10
@@ -69,16 +84,37 @@ static inline int sock_type_to_real(int type, int protocol) {
 
 #define MSG_OOB_ 0x1
 #define MSG_PEEK_ 0x2
+#define MSG_CTRUNC_  0x8
+#define MSG_TRUNC_  0x20
+#define MSG_DONTWAIT_ 0x40
+#define MSG_EOR_    0x80
 #define MSG_WAITALL_ 0x100
 
 static inline int sock_flags_to_real(int fake) {
     int real = 0;
     if (fake & MSG_OOB_) real |= MSG_OOB;
     if (fake & MSG_PEEK_) real |= MSG_PEEK;
+    if (fake & MSG_CTRUNC_) real |= MSG_CTRUNC;
+    if (fake & MSG_TRUNC_) real |= MSG_TRUNC;
+    if (fake & MSG_DONTWAIT_) real |= MSG_DONTWAIT;
+    if (fake & MSG_EOR_) real |= MSG_EOR;
     if (fake & MSG_WAITALL_) real |= MSG_WAITALL;
-    if (fake & ~(MSG_OOB_|MSG_PEEK_|MSG_WAITALL_))
+    if (fake & ~(MSG_OOB_|MSG_PEEK_|MSG_CTRUNC_|MSG_TRUNC_|MSG_DONTWAIT_|MSG_EOR_|MSG_WAITALL_))
         TRACE("unimplemented socket flags %d\n", fake);
     return real;
+}
+static inline int sock_flags_from_real(int real) {
+  int fake = 0;
+  if (real & MSG_OOB) fake |= MSG_OOB_;
+  if (real & MSG_PEEK) fake |= MSG_PEEK_;
+  if (real & MSG_CTRUNC) fake |= MSG_CTRUNC_;
+  if (real & MSG_TRUNC) fake |= MSG_TRUNC_;
+  if (real & MSG_DONTWAIT) fake |= MSG_DONTWAIT_;
+  if (real & MSG_EOR) fake |= MSG_EOR_;
+  if (real & MSG_WAITALL) fake |= MSG_WAITALL_;
+  if (real & ~(MSG_OOB|MSG_PEEK|MSG_CTRUNC|MSG_TRUNC|MSG_DONTWAIT|MSG_EOR|MSG_WAITALL))
+      TRACE("unimplemented socket flags %d\n", real);
+  return fake;
 }
 
 #define SOL_SOCKET_ 1
@@ -93,7 +129,9 @@ static inline int sock_flags_to_real(int fake) {
 #define SO_ERROR_ 4
 #define SO_BROADCAST_ 6
 #define SO_KEEPALIVE_ 9
+#define SO_SNDBUF_ 7
 #define IP_TOS_ 1
+#define IP_TTL_ 2
 #define TCP_NODELAY_ 1
 #define IPV6_TCLASS_ 67
 #define ICMP6_FILTER_ 1
@@ -106,12 +144,14 @@ static inline int sock_opt_to_real(int fake, int level) {
             case SO_ERROR_: return SO_ERROR;
             case SO_BROADCAST_: return SO_BROADCAST;
             case SO_KEEPALIVE_: return SO_KEEPALIVE;
+            case SO_SNDBUF_: return SO_SNDBUF;
         } break;
         case IPPROTO_TCP_: switch (fake) {
             case TCP_NODELAY_: return TCP_NODELAY;
         } break;
         case IPPROTO_IP_: switch (fake) {
             case IP_TOS_: return IP_TOS;
+            case IP_TTL_: return IP_TTL;
         } break;
         case IPPROTO_IPV6_: switch (fake) {
             case IPV6_TCLASS_: return IPV6_TCLASS;
