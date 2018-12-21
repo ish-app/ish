@@ -176,6 +176,8 @@ retry:
             goto error;
         struct task *task;
         list_for_each_entry(&current->children, task, siblings) {
+            if (!task_is_leader(task))
+                continue;
             id = task->pid;
             if (reap_if_zombie(task, status_addr, rusage_addr))
                 goto found_zombie;
@@ -186,6 +188,7 @@ retry:
         err = _ECHILD;
         if (task == NULL || task->parent->group != current->group)
             goto error;
+        task = task->group->leader;
         if (reap_if_zombie(task, status_addr, rusage_addr))
             goto found_zombie;
     }
