@@ -121,6 +121,7 @@ static int copy_task(struct task *task, dword_t flags, addr_t stack, addr_t ptid
             goto fail_free_sighand;
     if (flags & CLONE_CHILD_CLEARTID_)
         task->clear_tid = ctid_addr;
+    task->exit_signal = flags & CSIGNAL_;
 
     // remember to do CLONE_SYSVSEM
     return 0;

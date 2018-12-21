@@ -52,6 +52,7 @@ struct task {
     bool vfork_done;
     cond_t vfork_cond;
     lock_t vfork_lock;
+    int exit_signal;
 
     // current condition/lock, so it can be notified in case of a signal
     cond_t *waiting_cond;
