@@ -118,11 +118,6 @@
                                     <state key="normal">
                                         <color key="titleColor" cocoaTouchSystemColor="darkTextColor"/>
                                     </state>
-                                    <userDefinedRuntimeAttributes>
-                                        <userDefinedRuntimeAttribute type="color" keyPath="highlightedBackgroundColor">
-                                            <color key="value" red="0.67450980390000004" green="0.70588235290000001" blue="0.74509803919999995" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-                                        </userDefinedRuntimeAttribute>
-                                    </userDefinedRuntimeAttributes>
                                     <connections>
                                         <action selector="pressArrow:" destination="BYZ-38-t0r" eventType="valueChanged" id="SBI-0w-nSu"/>
                                     </connections>
