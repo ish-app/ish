@@ -129,6 +129,7 @@ static inline int sock_flags_from_real(int real) {
 #define IP_TTL_ 2
 #define IP_HDRINCL_ 3
 #define TCP_NODELAY_ 1
+#define IPV6_UNICAST_HOPS_ 16
 #define IPV6_TCLASS_ 67
 #define ICMP6_FILTER_ 1
 
@@ -151,6 +152,7 @@ static inline int sock_opt_to_real(int fake, int level) {
             case IP_HDRINCL_: return IP_HDRINCL;
         } break;
         case IPPROTO_IPV6: switch (fake) {
+            case IPV6_UNICAST_HOPS_: return IPV6_UNICAST_HOPS;
             case IPV6_TCLASS_: return IPV6_TCLASS;
         } break;
     }
