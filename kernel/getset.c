@@ -138,3 +138,13 @@ int_t sys_setgroups(dword_t size, addr_t list) {
     current->ngroups = size;
     return 0;
 }
+
+// this does not really work
+int_t sys_capget(addr_t header_addr, addr_t data_addr) {
+    STRACE("capget(%#x, %#x)", header_addr, data_addr);
+    return 0;
+}
+int_t sys_capset(addr_t header_addr, addr_t data_addr) {
+    STRACE("capset(%#x, %#x)", header_addr, data_addr);
+    return 0;
+}

@@ -172,6 +172,8 @@ dword_t sys_setresuid(uid_t_ ruid, uid_t_ euid, uid_t_ suid);
 dword_t sys_setresgid(uid_t_ rgid, uid_t_ egid, uid_t_ sgid);
 int_t sys_getgroups(dword_t size, addr_t list);
 int_t sys_setgroups(dword_t size, addr_t list);
+int_t sys_capget(addr_t header_addr, addr_t data_addr);
+int_t sys_capset(addr_t header_addr, addr_t data_addr);
 dword_t sys_getcwd(addr_t buf_addr, dword_t size);
 dword_t sys_chdir(addr_t path_addr);
 dword_t sys_chroot(addr_t path_addr);
