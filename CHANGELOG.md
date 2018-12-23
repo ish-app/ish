@@ -1,6 +1,21 @@
 # Changelog
 
-## Build 36 (unreleased)
+## Build 38 (unreleased)
+### New
+- irssi
+- traceroute (thanks @wallisch)
+- mtr
+- fish
+- rcl and rcr are implemented, leaving gcc with no more known reasons to crash
+### Fixed
+- phpinfo() crashing the app
+- tar hanging after finishing extraction
+
+## Build 37
+### Fixed
+- Keyboard buttons being the wrong color in dark theme
+
+## Build 36
 ### New
 - Emacs
 - /dev/random and /dev/urandom (thanks @lunixbochs)
