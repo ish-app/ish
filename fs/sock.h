@@ -67,15 +67,15 @@ static inline int sock_family_from_real(int fake) {
 static inline int sock_type_to_real(int type, int protocol) {
     switch (type & 0xff) {
         case SOCK_STREAM_:
-            if (protocol != 0 && protocol != 6)
+            if (protocol != 0 && protocol != IPPROTO_TCP)
                 return -1;
             return SOCK_STREAM;
         case SOCK_DGRAM_:
-            if (protocol != 0 && protocol != 17)
+            if (protocol != 0 && protocol != IPPROTO_UDP)
                 return -1;
             return SOCK_DGRAM;
         case SOCK_RAW_:
-            if (protocol != 1 && protocol != 58)
+            if (protocol != IPPROTO_UDP && protocol != IPPROTO_ICMP && protocol != IPPROTO_ICMPV6 && protocol != IPPROTO_RAW)
                 return -1;
             return SOCK_DGRAM;
     }
@@ -118,11 +118,6 @@ static inline int sock_flags_from_real(int real) {
 }
 
 #define SOL_SOCKET_ 1
-#define IPPROTO_TCP_ 6
-#define IPPROTO_IP_ 0
-#define IPPROTO_IPV6_ 41
-#define IPPROTO_ICMP_ 1
-#define IPPROTO_ICMPV6_ 58
 
 #define SO_REUSEADDR_ 2
 #define SO_TYPE_ 3
@@ -132,6 +127,7 @@ static inline int sock_flags_from_real(int real) {
 #define SO_SNDBUF_ 7
 #define IP_TOS_ 1
 #define IP_TTL_ 2
+#define IP_HDRINCL_ 3
 #define TCP_NODELAY_ 1
 #define IPV6_TCLASS_ 67
 #define ICMP6_FILTER_ 1
@@ -146,14 +142,15 @@ static inline int sock_opt_to_real(int fake, int level) {
             case SO_KEEPALIVE_: return SO_KEEPALIVE;
             case SO_SNDBUF_: return SO_SNDBUF;
         } break;
-        case IPPROTO_TCP_: switch (fake) {
+        case IPPROTO_TCP: switch (fake) {
             case TCP_NODELAY_: return TCP_NODELAY;
         } break;
-        case IPPROTO_IP_: switch (fake) {
+        case IPPROTO_IP: switch (fake) {
             case IP_TOS_: return IP_TOS;
             case IP_TTL_: return IP_TTL;
+            case IP_HDRINCL_: return IP_HDRINCL;
         } break;
-        case IPPROTO_IPV6_: switch (fake) {
+        case IPPROTO_IPV6: switch (fake) {
             case IPV6_TCLASS_: return IPV6_TCLASS;
         } break;
     }
@@ -161,14 +158,9 @@ static inline int sock_opt_to_real(int fake, int level) {
 }
 
 static inline int sock_level_to_real(int fake) {
-    switch (fake) {
-        case SOL_SOCKET_: return SOL_SOCKET;
-        case IPPROTO_TCP_: return IPPROTO_TCP;
-        case IPPROTO_IP_: return IPPROTO_IP;
-        case IPPROTO_IPV6_: return IPPROTO_IPV6;
-        case IPPROTO_ICMPV6_: return IPPROTO_ICMPV6;
-    }
-    return -1;
+    if (fake == SOL_SOCKET_)
+        return SOL_SOCKET;
+    return fake;
 }
 
 #endif

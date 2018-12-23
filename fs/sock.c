@@ -30,6 +30,10 @@ dword_t sys_socket(dword_t domain, dword_t type, dword_t protocol) {
     if (real_type < 0)
         return _EINVAL;
 
+    // this hack makes mtr work
+    if (type == SOCK_RAW_ && protocol == IPPROTO_RAW)
+        protocol = IPPROTO_ICMP;
+
     int sock = socket(real_domain, real_type, protocol);
     if (sock < 0)
         return errno_map();
@@ -312,10 +316,11 @@ dword_t sys_setsockopt(fd_t sock_fd, dword_t level, dword_t option, addr_t value
     char value[value_len];
     if (user_read(value_addr, value, value_len))
         return _EFAULT;
+
     // ICMP6_FILTER can only be set on real SOCK_RAW
-    if (level == IPPROTO_ICMPV6_ && option == ICMP6_FILTER_) {
+    if (level == IPPROTO_ICMPV6 && option == ICMP6_FILTER_)
         return 0;
-    }
+
     int real_opt = sock_opt_to_real(option, level);
     if (real_opt < 0)
         return _EINVAL;
