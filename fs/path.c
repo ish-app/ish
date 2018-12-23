@@ -21,7 +21,7 @@ int path_normalize(struct fd *at, const char *path, char *out, bool follow_links
         unlock(&current->fs->lock);
         if (at != NULL) {
             char at_path[MAX_PATH];
-            int err = at->mount->fs->getpath(at, at_path);
+            int err = generic_getpath(at, at_path);
             if (err < 0)
                 return err;
             assert(path_is_normalized(at_path));
@@ -80,6 +80,7 @@ int path_normalize(struct fd *at, const char *path, char *out, bool follow_links
             struct mount *mount = find_mount_and_trim_path(possible_symlink);
             assert(path_is_normalized(possible_symlink));
             int res = mount->fs->readlink(mount, possible_symlink, c, MAX_PATH - (c - out));
+            mount_release(mount);
             if (res >= 0) {
                 // readlink does not null terminate
                 c[res] = '\0';

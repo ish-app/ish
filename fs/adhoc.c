@@ -10,6 +10,7 @@ struct fd *adhoc_fd_create() {
     struct fd *fd = fd_create();
     if (fd == NULL)
         return NULL;
+    adhoc_mount.refcount++;
     fd->mount = &adhoc_mount;
     fd->stat = (struct statbuf) {};
     return fd;

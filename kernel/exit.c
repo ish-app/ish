@@ -112,12 +112,12 @@ static void halt_system(int status) {
     }
 
     // unmount all filesystems
-    struct mount *mount = mounts;
-    while (mount) {
-        if (mount->fs->umount)
-            mount->fs->umount(mount);
-        mount = mount->next;
+    lock(&mounts_lock);
+    struct mount *mount, *tmp;
+    list_for_each_entry_safe(&mounts, mount, tmp, mounts) {
+        mount_remove(mount);
     }
+    unlock(&mounts_lock);
 
     if (exit_hook != NULL)
         exit_hook(status);

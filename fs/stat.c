@@ -36,7 +36,9 @@ int generic_statat(struct fd *at, const char *path_raw, struct statbuf *stat, bo
     if (err < 0)
         return err;
     struct mount *mount = find_mount_and_trim_path(path);
-    return mount->fs->stat(mount, path, stat, follow_links);
+    err = mount->fs->stat(mount, path, stat, follow_links);
+    mount_release(mount);
+    return err;
 }
 
 // TODO get rid of this and maybe everything else in the file

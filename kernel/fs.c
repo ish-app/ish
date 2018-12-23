@@ -367,7 +367,7 @@ dword_t sys_getcwd(addr_t buf_addr, dword_t size) {
     lock(&current->fs->lock);
     struct fd *wd = current->fs->pwd;
     char pwd[MAX_PATH];
-    int err = wd->mount->fs->getpath(wd, pwd);
+    int err = generic_getpath(wd, pwd);
     unlock(&current->fs->lock);
     if (err < 0)
         return err;
@@ -472,7 +472,10 @@ dword_t sys_statfs64(addr_t path_addr, addr_t buf_addr) {
     char path[MAX_PATH];
     if (user_read_string(path_addr, path, sizeof(path)))
         return _EFAULT;
-    return statfs_mount(find_mount(path), buf_addr);
+    struct mount *mount = mount_find(path);
+    int err = statfs_mount(mount, buf_addr);
+    mount_release(mount);
+    return err;
 }
 
 dword_t sys_fstatfs64(fd_t f, addr_t buf_addr) {
@@ -666,15 +669,7 @@ dword_t sys_sendfile(fd_t out_fd, fd_t in_fd, addr_t offset_addr, dword_t count)
 dword_t sys_sendfile64(fd_t out_fd, fd_t in_fd, addr_t offset_addr, dword_t count) {
     return _EINVAL;
 }
-dword_t sys_mount(addr_t source_addr, addr_t target_addr, addr_t type_addr, dword_t flags, addr_t data_addr) {
-    return _EINVAL; // I'm sorry, we do not support this action at this time.
-}
-dword_t sys_umount2(addr_t target_addr, dword_t flags) {
-    return _EINVAL; // I'm sorry, we do not support this action at this time.
-}
 
 dword_t sys_xattr_stub(addr_t path_addr, addr_t name_addr, addr_t value_addr, dword_t size, dword_t flags) {
     return _ENOTSUP;
 }
-
-struct mount *mounts;

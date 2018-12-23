@@ -29,6 +29,10 @@ static inline void _list_add_between(struct list *prev, struct list *next, struc
     next->prev = item;
 }
 
+static inline void list_add_before(struct list *list, struct list *item) {
+    _list_add_between(list->prev, list, item);
+}
+
 static inline void list_add(struct list *list, struct list *item) {
     _list_add_between(list, list->next, item);
 }

@@ -46,6 +46,7 @@ struct attr {
 
 struct fd *generic_open(const char *path, int flags, int mode);
 struct fd *generic_openat(struct fd *at, const char *path, int flags, int mode);
+int generic_getpath(struct fd *fd, char *buf);
 int generic_linkat(struct fd *src_at, const char *src_raw, struct fd *dst_at, const char *dst_raw);
 int generic_unlinkat(struct fd *at, const char *path);
 int generic_rmdirat(struct fd *at, const char *path);
@@ -67,7 +68,8 @@ struct mount {
     const char *point;
     const char *source;
     const struct fs_ops *fs;
-    struct mount *next;
+    unsigned refcount;
+    struct list mounts;
 
     int root_fd;
     union {
@@ -88,7 +90,17 @@ struct mount {
         };
     };
 };
-extern struct mount *mounts;
+extern lock_t mounts_lock;
+
+// returns a reference, which must be released
+struct mount *mount_find(char *path);
+void mount_release(struct mount *mount);
+
+// must hold mounts_lock while calling these, or traversing mounts
+int do_mount(const struct fs_ops *fs, const char *source, const char *point);
+int do_umount(const char *point);
+int mount_remove(struct mount *mount);
+extern struct list mounts;
 
 // open flags
 #define O_RDONLY_ 0
@@ -105,6 +117,7 @@ extern struct mount *mounts;
 #define FIONBIO_ 0x5421
 
 struct fs_ops {
+    const char *name;
     int (*mount)(struct mount *mount);
     int (*umount)(struct mount *mount);
     int (*statfs)(struct mount *mount, struct statfsbuf *stat);
@@ -131,7 +144,6 @@ struct fs_ops {
     int (*flock)(struct fd *fd, int operation);
 };
 
-struct mount *find_mount(char *path);
 struct mount *find_mount_and_trim_path(char *path);
 const char *fix_path(const char *path); // TODO reconsider
 

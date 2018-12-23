@@ -231,12 +231,10 @@ int realfs_getpath(struct fd *fd, char *buf) {
     int err = getpath(fd->real_fd, buf);
     if (err < 0)
         return err;
-    if (strcmp(fd->mount->source, "/") != 0) {
+    if (strcmp(fd->mount->source, "/") != 0 || strcmp(buf, "/") == 0) {
         size_t source_len = strlen(fd->mount->source);
         memmove(buf, buf + source_len, MAX_PATH - source_len);
     }
-    if (buf[0] == '\0')
-        strcpy(buf, "/");
     return 0;
 }
 
@@ -410,8 +408,10 @@ int realfs_setflags(struct fd *fd, dword_t flags) {
 }
 
 const struct fs_ops realfs = {
+    .name = "real",
     .mount = realfs_mount,
     .statfs = realfs_statfs,
+
     .open = realfs_open,
     .readlink = realfs_readlink,
     .link = realfs_link,
