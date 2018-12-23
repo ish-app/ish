@@ -77,8 +77,10 @@ static void itimer_notify(struct task *task) {
 }
 
 dword_t sys_setitimer(dword_t which, addr_t new_val_addr, addr_t old_val_addr) {
-    if (which != ITIMER_REAL_)
-        TODO("setitimer %d", which);
+    if (which != ITIMER_REAL_) {
+        FIXME("unimplemented setitimer %d", which);
+        return _EINVAL;
+    }
 
     struct itimerval_ val;
     if (user_get(new_val_addr, val))
