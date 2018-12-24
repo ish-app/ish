@@ -3,13 +3,15 @@
 ## Build 38 (unreleased)
 ### New
 - irssi
+- rubygems
+- fish
 - traceroute (thanks @wallisch)
 - mtr
-- fish
 - rcl and rcr are implemented, leaving gcc with no more known reasons to crash
 ### Fixed
 - phpinfo() crashing the app
 - tar hanging after finishing extraction
+- Rare crash when starting a process due to RNG failure
 
 ## Build 37
 ### Fixed
