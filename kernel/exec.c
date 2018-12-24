@@ -7,6 +7,7 @@
 
 #include "misc.h"
 #include "kernel/calls.h"
+#include "kernel/random.h"
 #include "kernel/errno.h"
 #include "fs/fd.h"
 #include "kernel/elf.h"
@@ -269,11 +270,7 @@ static int elf_exec(struct fd *fd, const char *file, char *const argv[], char *c
         goto beyond_hope;
     // 16 random bytes so no system call is needed to seed a userspace RNG
     char random[16] = {};
-    int dev_random = open("/dev/urandom", O_RDONLY);
-    if (dev_random < 0 ||
-            read(dev_random, random, sizeof(random)) != sizeof(random))
-        ERRNO_DIE("getting randomness for exec");
-    close(dev_random);
+    get_random(random, sizeof(random)); // if this fails, eh, no one's really using it
     addr_t random_addr = sp -= sizeof(random);
     if (user_put(sp, random))
         goto beyond_hope;
