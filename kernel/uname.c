@@ -15,9 +15,9 @@ void do_uname(struct uname *uts) {
     strcpy(uts->system, "Linux");
     strcpy(uts->hostname, real_uname.nodename);
     strcpy(uts->release, "3.2.0-ish");
-    strcpy(uts->version, "SUPER AWESOME");
+    strcpy(uts->version, "SUPER AWESOME compiled at " __DATE__ );
     strcpy(uts->arch, "i686");
-    strcpy(uts->domain, "compotar.me");
+    strcpy(uts->domain, "(none)");
 }
 
 dword_t sys_uname(addr_t uts_addr) {
