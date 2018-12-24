@@ -1,3 +1,4 @@
+#include <string.h>
 #include <sys/stat.h>
 #include "kernel/calls.h"
 #include "kernel/fs.h"

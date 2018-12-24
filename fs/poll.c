@@ -1,3 +1,4 @@
+#include <string.h>
 #include <poll.h>
 #include "misc.h"
 #include "util/list.h"

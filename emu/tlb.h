@@ -1,6 +1,7 @@
 #ifndef TLB_H
 #define TLB_H
 
+#include <string.h>
 #include "emu/memory.h"
 #include "debug.h"
 

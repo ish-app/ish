@@ -1,3 +1,4 @@
+#include <string.h>
 #include "debug.h"
 #include "kernel/fs.h"
 #include "fs/fd.h"

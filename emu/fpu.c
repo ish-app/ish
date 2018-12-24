@@ -1,8 +1,9 @@
 // I don't remember if the interpreter was supposed to use this in addition to the jit
+#include <math.h>
+#include <string.h>
 #include "emu/cpu.h"
 #include "emu/float80.h"
 #include "emu/fpu.h"
-#include <math.h>
 
 #define ST(i) cpu->fp[cpu->top + i]
 

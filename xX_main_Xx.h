@@ -1,5 +1,6 @@
-#include <signal.h>
+#include <string.h>
 #include <unistd.h>
+#include <signal.h>
 #include "kernel/init.h"
 #include "kernel/fs.h"
 

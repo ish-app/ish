@@ -1,6 +1,7 @@
 #include "jit/jit.h"
 #include "jit/frame.h"
 #include "emu/cpu.h"
+#include "emu/tlb.h"
 
 void cpu() {
     OFFSET(CPU, cpu_state, eax);

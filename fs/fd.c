@@ -1,4 +1,6 @@
 #include <stdlib.h>
+#include <string.h>
+#include "debug.h"
 #include "kernel/task.h"
 #include "kernel/errno.h"
 #include "kernel/resource.h"

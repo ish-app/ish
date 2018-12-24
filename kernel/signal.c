@@ -1,4 +1,5 @@
 #include "debug.h"
+#include <string.h>
 #include <signal.h>
 #include "kernel/calls.h"
 #include "kernel/signal.h"

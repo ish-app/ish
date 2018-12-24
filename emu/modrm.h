@@ -4,6 +4,7 @@
 #include "debug.h"
 #include "misc.h"
 #include "emu/cpu.h"
+#include "emu/tlb.h"
 
 #undef DEFAULT_CHANNEL
 #define DEFAULT_CHANNEL instr

@@ -5,9 +5,9 @@
 #include "misc.h"
 #include "emu/float80.h"
 #include "emu/memory.h"
-#include "emu/tlb.h"
 
 struct cpu_state;
+struct tlb;
 void cpu_run(struct cpu_state *cpu);
 int cpu_step32(struct cpu_state *cpu, struct tlb *tlb);
 int cpu_step16(struct cpu_state *cpu, struct tlb *tlb);
