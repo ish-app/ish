@@ -148,8 +148,6 @@ struct mount *find_mount_and_trim_path(char *path);
 const char *fix_path(const char *path); // TODO reconsider
 
 // real fs
-extern const struct fs_ops realfs;
-extern const struct fs_ops fakefs;
 extern const struct fd_ops realfs_fdops;
 
 int realfs_truncate(struct mount *mount, const char *path, off_t_ size);
@@ -166,5 +164,10 @@ int realfs_close(struct fd *fd);
 
 // adhoc fs
 struct fd *adhoc_fd_create(void);
+
+// filesystems
+extern const struct fs_ops realfs;
+extern const struct fs_ops procfs;
+extern const struct fs_ops fakefs;
 
 #endif

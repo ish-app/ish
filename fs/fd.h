@@ -7,16 +7,27 @@
 #include "util/bits.h"
 #include "fs/stat.h"
 
+// FIXME almost everything that uses the structs in this file does so without any kind of sane locking
+
 struct fd {
     atomic_uint refcount;
     unsigned flags;
     const struct fd_ops *ops;
     struct list poll_fds;
+    off_t_ offset;
 
     // fd data
     union {
+        // realfs/fakefs
         struct {
             DIR *dir;
+        };
+        // proc
+        struct {
+            struct proc_entry *proc_entry;
+            int proc_dir_index;
+            char *proc_data;
+            size_t proc_size;
         };
         // tty
         struct {
@@ -59,6 +70,10 @@ struct dir_entry {
     qword_t inode;
     char name[NAME_MAX + 1];
 };
+
+#define LSEEK_SET 0
+#define LSEEK_CUR 1
+#define LSEEK_END 2
 
 struct fd_ops {
     ssize_t (*read)(struct fd *fd, void *buf, size_t bufsize);

@@ -5,6 +5,7 @@
 
 const struct fs_ops *filesystems[] = {
     &realfs,
+    &procfs,
 };
 
 struct mount *mount_find(char *path) {

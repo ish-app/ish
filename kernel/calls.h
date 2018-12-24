@@ -60,9 +60,6 @@ dword_t sys_mbind(addr_t addr, dword_t len, int_t mode, addr_t nodemask, dword_t
 int_t sys_mlock(addr_t addr, dword_t len);
 
 // file descriptor things
-#define LSEEK_SET 0
-#define LSEEK_CUR 1
-#define LSEEK_END 2
 #define LOCK_SH_ 1
 #define LOCK_EX_ 2
 #define LOCK_NB_ 4
@@ -197,6 +194,7 @@ struct uname {
     char arch[UNAME_LENGTH];     // i686
     char domain[UNAME_LENGTH];   // lol
 };
+void do_uname(struct uname *uts);
 dword_t sys_uname(addr_t uts_addr);
 dword_t sys_sethostname(addr_t hostname_addr, dword_t hostname_len);
 

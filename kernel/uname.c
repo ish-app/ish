@@ -7,18 +7,22 @@
 #endif
 #include "kernel/calls.h"
 
-dword_t sys_uname(addr_t uts_addr) {
+void do_uname(struct uname *uts) {
     struct utsname real_uname;
     uname(&real_uname);
 
+    memset(uts, 0, sizeof(struct uname));
+    strcpy(uts->system, "Linux");
+    strcpy(uts->hostname, real_uname.nodename);
+    strcpy(uts->release, "3.2.0-ish");
+    strcpy(uts->version, "SUPER AWESOME");
+    strcpy(uts->arch, "i686");
+    strcpy(uts->domain, "compotar.me");
+}
+
+dword_t sys_uname(addr_t uts_addr) {
     struct uname uts;
-    memset(&uts, 0, sizeof(struct uname));
-    strcpy(uts.system, "Linux");
-    strcpy(uts.hostname, real_uname.nodename);
-    strcpy(uts.release, "3.2.0-ish");
-    strcpy(uts.version, "SUPER AWESOME");
-    strcpy(uts.arch, "i686");
-    strcpy(uts.domain, "compotar.me");
+    do_uname(&uts);
     if (user_put(uts_addr, uts))
         return _EFAULT;
     return 0;
