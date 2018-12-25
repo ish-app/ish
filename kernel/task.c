@@ -41,10 +41,10 @@ struct task *pid_get_task(dword_t id) {
 struct task *task_create_(struct task *parent) {
     lock(&pids_lock);
     static int cur_pid = 1;
-    while (!pid_empty(&pids[cur_pid])) {
+    do {
         cur_pid++;
         if (cur_pid > MAX_PID) cur_pid = 0;
-    }
+    } while (!pid_empty(&pids[cur_pid]));
     struct pid *pid = &pids[cur_pid];
     pid->id = cur_pid;
     list_init(&pid->session);
