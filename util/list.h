@@ -77,8 +77,8 @@ static inline void list_remove_safe(struct list *item) {
             &item->member != (list); \
             item = tmp, tmp = list_next_entry(item, member))
 
-static inline int list_size(struct list *list) {
-    int count = 0;
+static inline unsigned long list_size(struct list *list) {
+    unsigned long count = 0;
     struct list *item;
     list_for_each(list, item) {
         count++;

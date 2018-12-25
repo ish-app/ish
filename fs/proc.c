@@ -61,18 +61,24 @@ static int proc_fstat(struct fd *fd, struct statbuf *stat) {
     return proc_entry_stat(&fd->proc_entry, stat);
 }
 
-static void proc_refresh_data(struct fd *fd) {
+static int proc_refresh_data(struct fd *fd) {
     if (fd->proc_data == NULL) {
         fd->proc_data = malloc(4096); // FIXME choose a good number
     }
     struct proc_entry entry = fd->proc_entry;
-    fd->proc_size = entry.meta->show(&entry, fd->proc_data);
+    ssize_t size = entry.meta->show(&entry, fd->proc_data);
+    if (size < 0)
+        return size;
+    fd->proc_size = size;
+    return 0;
 }
 
 static ssize_t proc_read(struct fd *fd, void *buf, size_t bufsize) {
     if (!S_ISREG(fd->proc_entry.meta->mode))
         return _EISDIR;
-    proc_refresh_data(fd);
+    int err = proc_refresh_data(fd);
+    if (err < 0)
+        return err;
 
     const char *data = fd->proc_data;
     assert(data != NULL);
@@ -92,7 +98,9 @@ static ssize_t proc_read(struct fd *fd, void *buf, size_t bufsize) {
 static off_t_ proc_seek(struct fd *fd, off_t_ off, int whence) {
     if (!S_ISREG(fd->proc_entry.meta->mode))
         return _EISDIR;
-    proc_refresh_data(fd);
+    int err = proc_refresh_data(fd);
+    if (err < 0)
+        return err;
 
     off_t_ old_off = fd->offset;
     if (whence == LSEEK_SET)

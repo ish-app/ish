@@ -19,7 +19,7 @@ struct proc_dir_entry {
 
     // file with custom show data function
     // not worrying about buffer overflows for now
-    size_t (*show)(struct proc_entry *entry, char *buf);
+    ssize_t (*show)(struct proc_entry *entry, char *buf);
 
     // directory with static list
     struct proc_dir_entry *children;

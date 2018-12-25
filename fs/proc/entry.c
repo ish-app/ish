@@ -5,6 +5,7 @@
 int proc_entry_stat(struct proc_entry *entry, struct statbuf *stat) {
     memset(stat, 0, sizeof(*stat));
     stat->mode = entry->meta->mode;
+    stat->inode = entry->meta->inode | entry->pid << 16;
     return 0;
 }
 
@@ -24,7 +25,8 @@ bool proc_dir_read(struct proc_entry *entry, int *index, struct proc_entry *next
     if (entry->meta->children) {
         if (*index >= entry->meta->children_sizeof/sizeof(entry->meta->children[0]))
             return false;
-        *next_entry = (struct proc_entry) {&entry->meta->children[*index]};
+        next_entry->meta = &entry->meta->children[*index];
+        next_entry->pid = entry->pid;
         (*index)++;
         return true;
     }
