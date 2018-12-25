@@ -6,6 +6,7 @@
 #include "util/sync.h"
 #include "util/bits.h"
 #include "fs/stat.h"
+#include "fs/proc.h"
 
 // FIXME almost everything that uses the structs in this file does so without any kind of sane locking
 
@@ -24,7 +25,7 @@ struct fd {
         };
         // proc
         struct {
-            struct proc_entry *proc_entry;
+            struct proc_entry proc_entry;
             int proc_dir_index;
             char *proc_data;
             size_t proc_size;

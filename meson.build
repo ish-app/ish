@@ -73,7 +73,10 @@ src = [
     'fs/fake.c',
     'fs/fake-rebuild.c',
     'fs/fake-migrate.c',
+
     'fs/proc.c',
+    'fs/proc/entry.c',
+    'fs/proc/root.c',
 
     'fs/adhoc.c',
     'fs/sock.c',
