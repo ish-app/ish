@@ -29,8 +29,8 @@
 		BB88F49A2154760800A341FD /* FileProviderEnumerator.m in Sources */ = {isa = PBXBuildFile; fileRef = BB88F4992154760800A341FD /* FileProviderEnumerator.m */; };
 		BB88F49F2154760800A341FD /* iSHFileProvider.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = BB88F4902154760800A341FD /* iSHFileProvider.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		BB88F4A62154770200A341FD /* libish.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BB13F7DC200AD81D003D1C4D /* libish.a */; };
+		BBBCE7E321D2F02200CA00B3 /* About.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = BBBCE7E521D2F02200CA00B3 /* About.storyboard */; };
 		BBFB55662158644C00DFE6DE /* libresolv.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = BBFB55652158644C00DFE6DE /* libresolv.tbd */; };
-		BBFB556A215868E800DFE6DE /* About.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = BBFB5569215868E800DFE6DE /* About.storyboard */; };
 		BBFB557121586C4800DFE6DE /* UIViewController+Back.m in Sources */ = {isa = PBXBuildFile; fileRef = BBFB557021586C4800DFE6DE /* UIViewController+Back.m */; };
 		BBFB557621586F9200DFE6DE /* DismissSegue.m in Sources */ = {isa = PBXBuildFile; fileRef = BBFB557521586F9200DFE6DE /* DismissSegue.m */; };
 		BBFB5579215876CD00DFE6DE /* AboutViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = BBFB5578215876CD00DFE6DE /* AboutViewController.m */; };
@@ -247,9 +247,9 @@
 		BB88F49B2154760800A341FD /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		BB88F49C2154760800A341FD /* iSHFileProvider.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = iSHFileProvider.entitlements; sourceTree = "<group>"; };
 		BB88F4A4215476BA00A341FD /* iSH.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = iSH.entitlements; sourceTree = "<group>"; };
+		BBBCE7E421D2F02200CA00B3 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/About.storyboard; sourceTree = "<group>"; };
 		BBF124901FA7C3100088FB50 /* alpine */ = {isa = PBXFileReference; explicitFileType = folder; includeInIndex = 0; path = alpine; sourceTree = "<group>"; };
 		BBFB55652158644C00DFE6DE /* libresolv.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libresolv.tbd; path = usr/lib/libresolv.tbd; sourceTree = SDKROOT; };
-		BBFB5569215868E800DFE6DE /* About.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = About.storyboard; sourceTree = "<group>"; };
 		BBFB556F21586C4800DFE6DE /* UIViewController+Back.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "UIViewController+Back.h"; sourceTree = "<group>"; };
 		BBFB557021586C4800DFE6DE /* UIViewController+Back.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "UIViewController+Back.m"; sourceTree = "<group>"; };
 		BBFB557421586F9200DFE6DE /* DismissSegue.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DismissSegue.h; sourceTree = "<group>"; };
@@ -603,7 +603,7 @@
 		BBFB557321586C7600DFE6DE /* About */ = {
 			isa = PBXGroup;
 			children = (
-				BBFB5569215868E800DFE6DE /* About.storyboard */,
+				BBBCE7E521D2F02200CA00B3 /* About.storyboard */,
 				BBFB5577215876CD00DFE6DE /* AboutViewController.h */,
 				BBFB5578215876CD00DFE6DE /* AboutViewController.m */,
 				8632A7BD219A59FB00F02325 /* UserPreferences.h */,
@@ -793,7 +793,7 @@
 			files = (
 				BB792B5D1F96D90D00FFB7A4 /* Assets.xcassets in Resources */,
 				BB792B601F96D90D00FFB7A4 /* LaunchScreen.storyboard in Resources */,
-				BBFB556A215868E800DFE6DE /* About.storyboard in Resources */,
+				BBBCE7E321D2F02200CA00B3 /* About.storyboard in Resources */,
 				BB792B5B1F96D90D00FFB7A4 /* Main.storyboard in Resources */,
 				BB623CF91FA7C68800932047 /* alpine in Resources */,
 				BB52C03D2083DA3600104515 /* xterm-dist in Resources */,
@@ -949,6 +949,14 @@
 				BB792B5F1F96D90D00FFB7A4 /* Base */,
 			);
 			name = LaunchScreen.storyboard;
+			sourceTree = "<group>";
+		};
+		BBBCE7E521D2F02200CA00B3 /* About.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				BBBCE7E421D2F02200CA00B3 /* Base */,
+			);
+			name = About.storyboard;
 			sourceTree = "<group>";
 		};
 /* End PBXVariantGroup section */
