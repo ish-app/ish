@@ -40,7 +40,7 @@ struct task *pid_get_task(dword_t id) {
 
 struct task *task_create_(struct task *parent) {
     lock(&pids_lock);
-    static int cur_pid = 1;
+    static int cur_pid = 0;
     do {
         cur_pid++;
         if (cur_pid > MAX_PID) cur_pid = 0;
