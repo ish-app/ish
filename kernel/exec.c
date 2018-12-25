@@ -408,6 +408,14 @@ static inline int user_memset(addr_t start, byte_t val, dword_t len) {
     return 0;
 }
 
+static int format_exec(struct fd *fd, const char *file, char *const argv[], char *const envp[]) {
+    int err = elf_exec(fd, file, argv, envp);
+    if (err != _ENOEXEC)
+        return err;
+    // other formats would go here
+    return _ENOEXEC;
+}
+
 static int shebang_exec(struct fd *fd, const char *file, char *const argv[], char *const envp[]) {
     // read the first 128 bytes to get the shebang line out of
     if (fd->ops->lseek(fd, 0, SEEK_SET))
@@ -460,7 +468,11 @@ static int shebang_exec(struct fd *fd, const char *file, char *const argv[], cha
         real_argv[1] = argument;
     real_argv[args_extra - 1] = (char *) file; // maybe you'll have better luck getting rid of this cast
     memcpy(real_argv + args_extra, argv + 1, (count_args(argv)) * sizeof(argv[0]));
-    return sys_execve(interpreter, real_argv, envp);
+
+    struct fd *interpreter_fd = generic_open(interpreter, O_RDONLY_, 0);
+    int err = format_exec(interpreter_fd, interpreter, real_argv, envp);
+    fd_close(interpreter_fd);
+    return err;
 }
 
 int sys_execve(const char *file, char *const argv[], char *const envp[]) {
@@ -468,15 +480,13 @@ int sys_execve(const char *file, char *const argv[], char *const envp[]) {
     if (IS_ERR(fd))
         return PTR_ERR(fd);
 
-    int err = elf_exec(fd, file, argv, envp);
-    if (err != _ENOEXEC)
-        goto found;
-    err = shebang_exec(fd, file, argv, envp);
-    if (err != _ENOEXEC)
-        goto found;
-
-found:
+    int err = format_exec(fd, file, argv, envp);
+    if (err == _ENOEXEC)
+        err = shebang_exec(fd, file, argv, envp);
     fd_close(fd);
+    if (err < 0)
+        return err;
+
     for (fd_t f = 0; f < current->files->size; f++)
         if (f_is_cloexec(f))
             f_close(f);
@@ -493,6 +503,15 @@ found:
     }
     current->sighand->altstack = 0;
     unlock(&current->sighand->lock);
+
+    lock(&current->general_lock);
+    const char *basename = strrchr(file, '/');
+    if (basename == NULL)
+        basename = file;
+    else
+        basename++;
+    strncpy(current->comm, basename, sizeof(current->comm));
+    unlock(&current->general_lock);
 
     current->did_exec = true;
     return err;

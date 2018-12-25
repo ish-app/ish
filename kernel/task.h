@@ -27,6 +27,7 @@ struct task {
 #define MAX_GROUPS 32
     int ngroups;
     uid_t_ groups[MAX_GROUPS];
+    char comm[16];
     bool did_exec; // for that one annoying setsid edge case
 
     struct fdtable *files;
@@ -53,6 +54,10 @@ struct task {
     cond_t vfork_cond;
     lock_t vfork_lock;
     int exit_signal;
+
+    // lock for anything that needs locking but is not covered by some other lock
+    // right now, just comm
+    lock_t general_lock;
 
     // current condition/lock, so it can be notified in case of a signal
     cond_t *waiting_cond;
