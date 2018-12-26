@@ -134,8 +134,6 @@ int poll_wait(struct poll *poll_, poll_callback_t callback, void *context, struc
                     poll_types = 0;
             }
             if (poll_types) {
-                if (poll_types == 0x20)
-                    asm("int3");
                 if (callback(context, fd, poll_types, poll_fd->info) == 1)
                     res++;
             }
