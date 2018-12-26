@@ -20,44 +20,85 @@ struct poll *poll_create() {
     return poll;
 }
 
+// does not do its own locking
+static struct poll_fd *poll_find_fd(struct poll *poll, struct fd *fd) {
+    struct poll_fd *poll_fd, *tmp;
+    list_for_each_entry_safe(&poll->poll_fds, poll_fd, tmp, fds) {
+        if (poll_fd->fd == fd)
+            return poll_fd;
+    }
+    return NULL;
+}
+
 int poll_add_fd(struct poll *poll, struct fd *fd, int types, union poll_fd_info info) {
-    struct poll_fd *poll_fd = malloc(sizeof(struct poll_fd));
-    if (poll_fd == NULL)
-        return _ENOMEM;
+    int err;
+    lock(&fd->lock);
+    lock(&poll->lock);
+    struct poll_fd *poll_fd = poll_find_fd(poll, fd);
+    if (poll_fd != NULL) {
+        err = _EEXIST;
+        goto out;
+    }
+
+    poll_fd = malloc(sizeof(struct poll_fd));
+    if (poll_fd == NULL) {
+        err = _ENOMEM;
+        goto out;
+    }
     poll_fd->fd = fd;
     poll_fd->poll = poll;
     poll_fd->types = types;
     poll_fd->info = info;
 
-    lock(&fd->lock);
-    lock(&poll->lock);
     list_add(&fd->poll_fds, &poll_fd->polls);
     list_add(&poll->poll_fds, &poll_fd->fds);
+
+    err = 0;
+out:
     unlock(&poll->lock);
     unlock(&fd->lock);
-
-    return 0;
+    return err;
 }
 
 int poll_del_fd(struct poll *poll, struct fd *fd) {
-    struct poll_fd *poll_fd, *tmp;
-    int ret = _EINVAL;
-
+    int err;
     lock(&fd->lock);
     lock(&poll->lock);
-    list_for_each_entry_safe(&poll->poll_fds, poll_fd, tmp, fds) {
-        if (poll_fd->fd == fd) {
-            list_remove(&poll_fd->polls);
-            list_remove(&poll_fd->fds);
-            free(poll_fd);
-            ret = 0;
-            break;
-        }
+    struct poll_fd *poll_fd = poll_find_fd(poll, fd);
+    if (poll_fd == NULL) {
+        err = _ENOENT;
+        goto out;
     }
+
+    list_remove(&poll_fd->polls);
+    list_remove(&poll_fd->fds);
+    free(poll_fd);
+
+    err = 0;
+out:
     unlock(&poll->lock);
     unlock(&fd->lock);
+    return err;
+}
 
-    return ret;
+int poll_mod_fd(struct poll *poll, struct fd *fd, int types, union poll_fd_info info) {
+    int err;
+    lock(&fd->lock);
+    lock(&poll->lock);
+    struct poll_fd *poll_fd = poll_find_fd(poll, fd);
+    if (poll_fd == NULL) {
+        err = _ENOENT;
+        goto out;
+    }
+
+    poll_fd->types = types;
+    poll_fd->info = info;
+
+    err = 0;
+out:
+    unlock(&poll->lock);
+    unlock(&fd->lock);
+    return err;
 }
 
 void poll_wake(struct fd *fd) {
@@ -93,6 +134,8 @@ int poll_wait(struct poll *poll_, poll_callback_t callback, void *context, struc
                     poll_types = 0;
             }
             if (poll_types) {
+                if (poll_types == 0x20)
+                    asm("int3");
                 if (callback(context, fd, poll_types, poll_fd->info) == 1)
                     res++;
             }

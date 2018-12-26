@@ -89,6 +89,7 @@ src = [
 
     'fs/poll.c',
     'kernel/poll.c',
+    'kernel/epoll.c',
 
     'util/timer.c',
     'util/sync.c',

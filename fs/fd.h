@@ -37,6 +37,10 @@ struct fd {
             // locked by the tty
             struct list other_fds;
         };
+        // epoll
+        struct {
+            struct poll *poll;
+        };
         // eventfd
         struct {
             uint64_t eventfd_val;

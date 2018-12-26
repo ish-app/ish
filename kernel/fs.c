@@ -181,7 +181,7 @@ dword_t sys_read(fd_t fd_no, addr_t buf_addr, dword_t size) {
         return _ENOMEM;
     int_t res = 0;
     struct fd *fd = f_get(fd_no);
-    if (fd == NULL) {
+    if (fd == NULL || fd->ops->read == NULL) {
         res = _EBADF;
         goto out;
     }

@@ -3,18 +3,18 @@
 #include "fs/fd.h"
 #include "debug.h"
 
-static fd_t pipe_f_create(int pipe_fd) {
+static fd_t pipe_f_create(int pipe_fd, int flags) {
     struct fd *fd = adhoc_fd_create();
     if (fd == NULL)
         return _ENOMEM;
     fd->real_fd = pipe_fd;
     fd->ops = &realfs_fdops;
-    return f_install(fd);
+    return f_install_flags(fd, flags);
 }
 
 int_t sys_pipe2(addr_t pipe_addr, int_t flags) {
     STRACE("pipe2(%#x, %#x)", pipe_addr, flags);
-    if (flags & ~(O_CLOEXEC_)) {
+    if (flags & ~(O_CLOEXEC_|O_NONBLOCK_)) {
         FIXME("unsupported pipe2 flags");
         return _EINVAL;
     }
@@ -25,17 +25,12 @@ int_t sys_pipe2(addr_t pipe_addr, int_t flags) {
         return err;
 
     int fp[2];
-    err = fp[0] = pipe_f_create(p[0]);
+    err = fp[0] = pipe_f_create(p[0], flags);
     if (fp[0] < 0)
         goto close_pipe;
-    err = fp[1] = pipe_f_create(p[1]);
+    err = fp[1] = pipe_f_create(p[1], flags);
     if (fp[1] < 0)
         goto close_fake_0;
-
-    if (flags & O_CLOEXEC_) {
-        f_set_cloexec(fp[0]);
-        f_set_cloexec(fp[1]);
-    }
 
     err = _EFAULT;
     if (user_put(pipe_addr, fp))

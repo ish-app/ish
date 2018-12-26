@@ -41,6 +41,7 @@ struct poll_event {
 };
 struct poll *poll_create(void);
 int poll_add_fd(struct poll *poll, struct fd *fd, int types, union poll_fd_info info);
+int poll_mod_fd(struct poll *poll, struct fd *fd, int types, union poll_fd_info info);
 int poll_del_fd(struct poll *poll, struct fd *fd);
 // please do not call this while holding any locks you would acquire in your poll operation
 void poll_wake(struct fd *fd);
