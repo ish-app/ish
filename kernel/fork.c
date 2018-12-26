@@ -35,10 +35,8 @@ static struct tgroup *tgroup_copy(struct tgroup *old_group) {
     struct tgroup *group = malloc(sizeof(struct tgroup));
     *group = *old_group;
     list_init(&group->threads);
-    lock(&pids_lock);
     list_add(&old_group->pgroup, &group->pgroup);
     list_add(&old_group->session, &group->session);
-    unlock(&pids_lock);
     if (group->tty)
         group->tty->refcount++;
     group->has_timer = false;
@@ -97,6 +95,7 @@ static int copy_task(struct task *task, dword_t flags, addr_t stack, addr_t ptid
     }
 
     struct tgroup *old_group = task->group;
+    lock(&pids_lock);
     lock(&old_group->lock);
     if (!(flags & CLONE_THREAD_)) {
         task->group = tgroup_copy(old_group);
@@ -105,6 +104,7 @@ static int copy_task(struct task *task, dword_t flags, addr_t stack, addr_t ptid
     }
     list_add(&task->group->threads, &task->group_links);
     unlock(&old_group->lock);
+    unlock(&pids_lock);
 
     if (flags & CLONE_SETTLS_) {
         err = task_set_thread_area(task, tls_addr);

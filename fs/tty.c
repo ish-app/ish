@@ -87,16 +87,16 @@ static int tty_open(int major, int minor, int type, struct fd *fd) {
 
     struct tty *tty;
     if (major == 5 && minor == 0) {
+        lock(&ttys_lock);
         lock(&current->group->lock);
         tty = current->group->tty;
         if (tty == NULL) {
             unlock(&current->group->lock);
             return _ENXIO;
         }
-        lock(&tty->lock);
         tty->refcount++;
-        unlock(&tty->lock);
         unlock(&current->group->lock);
+        unlock(&ttys_lock);
     } else {
         if (major == 4 && minor < 64)
             type = TTY_VIRTUAL;
