@@ -110,7 +110,7 @@
                                         <action selector="pressEscape:" destination="BYZ-38-t0r" eventType="primaryActionTriggered" id="Z7i-gl-kzw"/>
                                     </connections>
                                 </button>
-                                <button contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="VCr-TW-PIZ" customClass="ArrowBarButton">
+                                <button contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="VCr-TW-PIZ" userLabel="Arrows" customClass="ArrowBarButton">
                                     <rect key="frame" x="111" y="0.0" width="31" height="43"/>
                                     <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                     <fontDescription key="fontDescription" type="system" pointSize="24"/>
@@ -125,7 +125,7 @@
                                 <view contentMode="scaleToFill" horizontalHuggingPriority="100" translatesAutoresizingMaskIntoConstraints="NO" id="qmg-M1-7W8" userLabel="Spacer">
                                     <rect key="frame" x="148" y="0.0" width="266" height="43"/>
                                 </view>
-                                <button contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="infoLight" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="5dl-UV-6qh">
+                                <button contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="infoLight" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="5dl-UV-6qh" userLabel="Info">
                                     <rect key="frame" x="420" y="0.0" width="31" height="43"/>
                                     <accessibility key="accessibilityConfiguration" label="Settings"/>
                                     <constraints>
@@ -139,6 +139,15 @@
                                         <action selector="showAbout:" destination="BYZ-38-t0r" eventType="primaryActionTriggered" id="xbI-EN-avC"/>
                                     </connections>
                                 </button>
+                                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="hmm-tv-z35" userLabel="Paste">
+                                    <rect key="frame" x="146" y="0.0" width="31" height="43"/>
+                                    <accessibility key="accessibilityConfiguration" label="Paste"/>
+                                    <color key="tintColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                    <state key="normal" image="Paste"/>
+                                    <connections>
+                                        <action selector="paste:" destination="dkx-z0-nzr" eventType="primaryActionTriggered" id="cfw-0C-OAd"/>
+                                    </connections>
+                                </button>
                                 <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="7qw-ie-p4d">
                                     <rect key="frame" x="457" y="0.0" width="31" height="43"/>
                                     <color key="tintColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
@@ -150,6 +159,7 @@
                             </subviews>
                             <constraints>
                                 <constraint firstItem="7qw-ie-p4d" firstAttribute="width" secondItem="5dl-UV-6qh" secondAttribute="width" id="5aW-YN-2vX"/>
+                                <constraint firstItem="5dl-UV-6qh" firstAttribute="width" secondItem="hmm-tv-z35" secondAttribute="width" id="Nyk-On-Tyt"/>
                                 <constraint firstItem="W9v-cj-FWz" firstAttribute="width" secondItem="5dl-UV-6qh" secondAttribute="width" id="Xdt-z5-Zdb"/>
                                 <constraint firstItem="IPm-l0-f25" firstAttribute="width" secondItem="5dl-UV-6qh" secondAttribute="width" id="ebo-yF-ffX"/>
                                 <constraint firstItem="5dl-UV-6qh" firstAttribute="width" secondItem="VCr-TW-PIZ" secondAttribute="width" id="fXl-3w-1Zj"/>
@@ -175,5 +185,6 @@
     </scenes>
     <resources>
         <image name="Hide Keyboard" width="32" height="32"/>
+        <image name="Paste" width="20" height="21"/>
     </resources>
 </document>

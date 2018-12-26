@@ -9,7 +9,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-IB_DESIGNABLE @interface BarButton : UIButton
+@interface BarButton : UIButton
 
 @property (nonatomic) UIKeyboardAppearance keyAppearance;
 @property IBInspectable BOOL secondary;
