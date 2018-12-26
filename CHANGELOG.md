@@ -8,6 +8,8 @@
 - traceroute (thanks @wallisch)
 - mtr
 - rcl and rcr are implemented, leaving gcc with no more known reasons to crash
+- Enough of /proc for ps and killall to work
+- Paste button (with bad icon, oh well)
 ### Fixed
 - phpinfo() crashing the app
 - tar hanging after finishing extraction
