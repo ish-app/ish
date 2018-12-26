@@ -91,8 +91,10 @@ int_t sys_epoll_wait(fd_t epoll_f, addr_t events_addr, int_t max_events, int_t t
 
     struct epoll_context context = {.events = events, .n = 0, .max_events = max_events};
     int res = poll_wait(epoll->poll, epoll_callback, &context, timeout == -1 ? NULL : &timeout_ts);
-    if (user_write(events_addr, events, sizeof(struct epoll_event_) * res))
-        return _EFAULT;
+    if (res >= 0)
+        if (user_write(events_addr, events, sizeof(struct epoll_event_) * res))
+            return _EFAULT;
+    return res;
 }
 
 int_t sys_epoll_pwait(fd_t epoll_f, addr_t events_addr, int_t max_events, int_t timeout, addr_t sigmask_addr, dword_t sigsetsize) {
