@@ -5,6 +5,7 @@
 struct poll {
     struct list poll_fds;
     int notify_pipe[2];
+    int waiters;
     lock_t lock;
 };
 

@@ -15,6 +15,7 @@ struct fd {
     unsigned flags;
     const struct fd_ops *ops;
     struct list poll_fds;
+    lock_t poll_lock;
     off_t_ offset;
 
     // fd data
