@@ -97,6 +97,7 @@ fd_t sys_epoll_create(int_t flags);
 fd_t sys_epoll_create0(void);
 int_t sys_epoll_ctl(fd_t epoll, int_t op, fd_t fd, addr_t event_addr);
 int_t sys_epoll_wait(fd_t epoll, addr_t events_addr, int_t max_events, int_t timeout);
+int_t sys_epoll_pwait(fd_t epoll_f, addr_t events_addr, int_t max_events, int_t timeout, addr_t sigmask_addr, dword_t sigsetsize);
 
 int_t sys_eventfd2(uint_t initval, int_t flags);
 int_t sys_eventfd(uint_t initval);
