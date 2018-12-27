@@ -53,8 +53,6 @@ noreturn void do_exit(int status) {
     // the actual freeing needs pids_lock
     lock(&pids_lock);
     struct task *leader = current->group->leader;
-    if (current != leader)
-        task_destroy(current);
 
     if (group_dead) {
         // reparent children
@@ -77,6 +75,9 @@ noreturn void do_exit(int status) {
             send_signal(parent, leader->exit_signal);
         }
     }
+
+    if (current != leader)
+        task_destroy(current);
     unlock(&pids_lock);
 
     pthread_exit(NULL);
