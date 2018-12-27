@@ -73,7 +73,7 @@ static int epoll_callback(void *context, struct fd *fd, int types, union poll_fd
 }
 
 int_t sys_epoll_wait(fd_t epoll_f, addr_t events_addr, int_t max_events, int_t timeout) {
-    STRACE("epoll_wait(%d, %#x, %d, %x)", epoll_f, events_addr, max_events, timeout);
+    STRACE("epoll_wait(%d, %#x, %d, %d)", epoll_f, events_addr, max_events, timeout);
     struct fd *epoll = f_get(epoll_f);
     if (epoll == NULL)
         return _EBADF;
