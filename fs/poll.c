@@ -214,15 +214,8 @@ void poll_destroy(struct poll *poll) {
     list_for_each_entry_safe(&poll->poll_fds, poll_fd, tmp, fds) {
         lock(&poll_fd->fd->poll_lock);
         list_remove(&poll_fd->polls);
-        unlock(&poll_fd->fd->poll_lock);
         list_remove(&poll_fd->fds);
-        free(poll_fd);
-    }
-    list_for_each_entry_safe(&poll->poll_fds, poll_fd, tmp, fds) {
-        lock(&poll_fd->fd->poll_lock);
-        list_remove(&poll_fd->polls);
         unlock(&poll_fd->fd->poll_lock);
-        list_remove(&poll_fd->fds);
         free(poll_fd);
     }
 

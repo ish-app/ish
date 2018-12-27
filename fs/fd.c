@@ -5,6 +5,7 @@
 #include "kernel/errno.h"
 #include "kernel/resource.h"
 #include "kernel/fs.h"
+#include "fs/poll.h"
 #include "fs/fd.h"
 
 struct fd *fd_create() {
@@ -28,6 +29,16 @@ struct fd *fd_retain(struct fd *fd) {
 int fd_close(struct fd *fd) {
     int err = 0;
     if (--fd->refcount == 0) {
+        lock(&fd->poll_lock);
+        struct poll_fd *poll_fd, *tmp;
+        list_for_each_entry_safe(&fd->poll_fds, poll_fd, tmp, polls) {
+            lock(&poll_fd->poll->lock);
+            list_remove(&poll_fd->polls);
+            list_remove(&poll_fd->fds);
+            unlock(&poll_fd->poll->lock);
+            free(poll_fd);
+        }
+        unlock(&fd->poll_lock);
         if (fd->ops->close)
             err = fd->ops->close(fd);
         free(fd);
