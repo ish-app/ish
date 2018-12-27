@@ -13,5 +13,6 @@ int main(int argc, char *const argv[]) {
         fprintf(stderr, "%s\n", strerror(-err));
         return err;
     }
+    do_mount(&procfs, "proc", "/proc");
     cpu_run(&current->cpu);
 }
