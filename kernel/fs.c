@@ -472,6 +472,7 @@ dword_t sys_statfs64(addr_t path_addr, addr_t buf_addr) {
     char path[MAX_PATH];
     if (user_read_string(path_addr, path, sizeof(path)))
         return _EFAULT;
+    STRACE("statfs(\"%s\", %#x)", path, buf_addr);
     struct mount *mount = mount_find(path);
     int err = statfs_mount(mount, buf_addr);
     mount_release(mount);
