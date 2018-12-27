@@ -65,6 +65,7 @@ int mount_remove(struct mount *mount) {
     list_remove(&mount->mounts);
     free((void *) mount->source);
     free((void *) mount->point);
+    free(mount);
     return 0;
 }
 
