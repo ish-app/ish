@@ -405,14 +405,6 @@ void fs_chdir(struct fs_info *fs, struct fd *fd) {
     unlock(&fs->lock);
 }
 
-static void fs_chroot(struct fs_info *fs, struct fd *fd) {
-    lock(&fs->lock);
-    fd->refcount++;
-    fd_close(fs->root);
-    fs->root = fd;
-    unlock(&fs->lock);
-}
-
 dword_t sys_chdir(addr_t path_addr) {
     char path[MAX_PATH];
     if (user_read_string(path_addr, path, sizeof(path)))
@@ -445,7 +437,10 @@ dword_t sys_chroot(addr_t path_addr) {
     struct fd *dir = open_dir(path);
     if (IS_ERR(dir))
         return PTR_ERR(dir);
-    fs_chroot(current->fs, dir);
+    lock(&current->fs->lock);
+    fd_close(current->fs->root);
+    current->fs->root = dir;
+    unlock(&current->fs->lock);
     return 0;
 }
 
