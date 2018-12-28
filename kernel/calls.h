@@ -172,6 +172,8 @@ dword_t sys_getegid32(void);
 dword_t sys_getegid(void);
 dword_t sys_setresuid(uid_t_ ruid, uid_t_ euid, uid_t_ suid);
 dword_t sys_setresgid(uid_t_ rgid, uid_t_ egid, uid_t_ sgid);
+int_t sys_getresuid(addr_t ruid_addr, addr_t euid_addr, addr_t suid_addr);
+int_t sys_getresgid(addr_t rgid_addr, addr_t egid_addr, addr_t sgid_addr);
 int_t sys_getgroups(dword_t size, addr_t list);
 int_t sys_setgroups(dword_t size, addr_t list);
 int_t sys_capget(addr_t header_addr, addr_t data_addr);

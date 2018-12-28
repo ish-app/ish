@@ -70,6 +70,17 @@ dword_t sys_setresuid(uid_t_ ruid, uid_t_ euid, uid_t_ suid) {
     return 0;
 }
 
+int_t sys_getresuid(addr_t ruid_addr, addr_t euid_addr, addr_t suid_addr) {
+    STRACE("getresuid(%#x, %#x, %#x)", ruid_addr, euid_addr, suid_addr);
+    if (user_put(ruid_addr, current->uid))
+        return _EFAULT;
+    if (user_put(euid_addr, current->euid))
+        return _EFAULT;
+    if (user_put(euid_addr, current->suid))
+        return _EFAULT;
+    return 0;
+}
+
 dword_t sys_getgid32() {
     STRACE("getgid32()");
     return current->gid;
@@ -117,6 +128,17 @@ dword_t sys_setresgid(uid_t_ rgid, uid_t_ egid, uid_t_ sgid) {
         current->egid = egid;
     if (sgid != -1)
         current->sgid = sgid;
+    return 0;
+}
+
+int_t sys_getresgid(addr_t rgid_addr, addr_t egid_addr, addr_t sgid_addr) {
+    STRACE("getresgid(%#x, %#x, %#x)", rgid_addr, egid_addr, sgid_addr);
+    if (user_put(rgid_addr, current->gid))
+        return _EFAULT;
+    if (user_put(egid_addr, current->egid))
+        return _EFAULT;
+    if (user_put(egid_addr, current->sgid))
+        return _EFAULT;
     return 0;
 }
 
