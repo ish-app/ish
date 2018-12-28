@@ -171,6 +171,7 @@ syscall_t syscall_table[] = {
     [331] = (syscall_t) sys_pipe2,
     [340] = (syscall_t) sys_prlimit,
     [355] = (syscall_t) sys_getrandom,
+    [377] = (syscall_t) sys_copy_file_range,
 };
 
 void handle_interrupt(int interrupt) {
