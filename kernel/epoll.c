@@ -51,10 +51,13 @@ int_t sys_epoll_ctl(fd_t epoll_f, int_t op, fd_t f, addr_t event_addr) {
     if (event.events & (EPOLLET_|EPOLLONESHOT_))
         return _EINVAL;
 
-    if (op == EPOLL_CTL_ADD_)
+    if (op == EPOLL_CTL_ADD_) {
+        if (poll_has_fd(epoll->poll, fd))
+            return _EEXIST;
         return poll_add_fd(epoll->poll, fd, event.events, (union poll_fd_info) event.data);
-    else
+    } else {
         return poll_mod_fd(epoll->poll, fd, event.events, (union poll_fd_info) event.data);
+    }
 }
 
 struct epoll_context {

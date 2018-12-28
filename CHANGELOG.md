@@ -1,5 +1,11 @@
 # Changelog
 
+## Build 40
+### Fixed
+- SSH not working
+- Paste button being the wrong color in dark mode
+- gem install eventmachine failing due to missing system calls
+
 ## Build 39
 ### New
 - irssi

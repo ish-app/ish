@@ -33,17 +33,16 @@ static struct poll_fd *poll_find_fd(struct poll *poll, struct fd *fd) {
     return NULL;
 }
 
+bool poll_has_fd(struct poll *poll, struct fd *fd) {
+    return poll_find_fd(poll, fd) != NULL;
+}
+
 int poll_add_fd(struct poll *poll, struct fd *fd, int types, union poll_fd_info info) {
     int err;
     lock(&fd->poll_lock);
     lock(&poll->lock);
-    struct poll_fd *poll_fd = poll_find_fd(poll, fd);
-    if (poll_fd != NULL) {
-        err = _EEXIST;
-        goto out;
-    }
 
-    poll_fd = malloc(sizeof(struct poll_fd));
+    struct poll_fd *poll_fd = malloc(sizeof(struct poll_fd));
     if (poll_fd == NULL) {
         err = _ENOMEM;
         goto out;
