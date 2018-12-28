@@ -1,25 +1,20 @@
-This build is a hotfix for buttons being the wrong color in dark mode. The release notes for the previous build are included below for your convenience.
+New stuff:
+- irssi
+- rubygems
+- fish
+- traceroute (thanks @wallisch)
+- mtr
+- rcl and rcr are implemented, leaving gcc with no more known reasons to crash
+- Enough of /proc for ps and killall to work
+- epoll (you can now install python packages with dependencies!)
 
-Fixed programs:
-- Emacs
-- Perl
-- dialog
-- ping (thanks @wallisch)
-- I accidentally installed shadow and coreutils and everything broke. Instead of reinstalling and losing my filesystem I fixed everything.
+UI stuff:
+- Paste button (with bad icon, oh well)
 
-Not exactly a fixed program but almost as awesome:
-- /dev/random and /dev/urandom (thanks @lunixbochs)
-
-UI improvements:
-- Arrow keys being invisible to VoiceOver, as well as a couple other VoiceOver tweaks
-- Better hide keyboard button
-- Stepper for font size selection
-- Auto lock control setting
-
-Fixed bugs:
-- resolv.conf not getting truncated when overwritten
-- SIGWINCH with no handler installed interrupting blocking syscalls
-- GCJ crashing the app (it still fails for many other reasons, oh well)
+Bug fixes:
+- phpinfo() crashing the app
+- tar hanging after finishing extraction
+- Rare crash when starting a process due to RNG failure
 
 Send bug reports or feedback here: https://github.com/tbodt/ish/issues
 Join the Discord: https://discord.gg/SndDh5y
