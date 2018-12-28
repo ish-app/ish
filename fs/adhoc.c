@@ -39,8 +39,9 @@ static int adhoc_fsetattr(struct fd *fd, struct attr attr) {
 }
 
 static const struct fs_ops adhoc_fs = {
+    .magic = 0x09041934, // FIXME wrong for pipes and sockets
     .fstat = adhoc_fstat,
-    .fsetattr = adhoc_fsetattr
+    .fsetattr = adhoc_fsetattr,
 };
 
 static struct mount adhoc_mount = {

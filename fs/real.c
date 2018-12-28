@@ -373,7 +373,6 @@ int realfs_flock(struct fd *fd, int operation) {
 }
 
 int realfs_statfs(struct mount *mount, struct statfsbuf *stat) {
-    stat->type = 0x7265616c;
     stat->namelen = NAME_MAX;
     stat->bsize = PAGE_SIZE;
     return 0;
@@ -408,7 +407,7 @@ int realfs_setflags(struct fd *fd, dword_t flags) {
 }
 
 const struct fs_ops realfs = {
-    .name = "real",
+    .name = "real", .magic = 0x7265616c,
     .mount = realfs_mount,
     .statfs = realfs_statfs,
 

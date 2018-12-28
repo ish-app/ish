@@ -10,6 +10,7 @@ const struct fs_ops *filesystems[] = {
 };
 
 struct mount *mount_find(char *path) {
+    assert(path_is_normalized(path));
     lock(&mounts_lock);
     struct mount *mount = NULL;
     assert(!list_empty(&mounts)); // this would mean there's no root FS mounted

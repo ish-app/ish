@@ -486,6 +486,7 @@ static int fakefs_umount(struct mount *mount) {
 }
 
 const struct fs_ops fakefs = {
+    .magic = 0x66616b65,
     .mount = fakefs_mount,
     .umount = fakefs_umount,
     .statfs = realfs_statfs,

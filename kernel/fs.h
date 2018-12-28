@@ -118,6 +118,8 @@ extern struct list mounts;
 
 struct fs_ops {
     const char *name;
+    int magic;
+
     int (*mount)(struct mount *mount);
     int (*umount)(struct mount *mount);
     int (*statfs)(struct mount *mount, struct statfsbuf *stat);

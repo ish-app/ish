@@ -456,20 +456,29 @@ dword_t sys_umask(dword_t mask) {
 
 static dword_t statfs_mount(struct mount *mount, addr_t buf_addr) {
     struct statfsbuf stat;
-    int err = mount->fs->statfs(mount, &stat);
-    if (err >= 0)
-        if (user_put(buf_addr, stat))
-            return _EFAULT;
+    int err = 0;
+    if (mount->fs->statfs) {
+        err = mount->fs->statfs(mount, &stat);
+        if (err >= 0)
+            if (user_put(buf_addr, stat))
+                return _EFAULT;
+    }
+    if (stat.type == 0)
+        stat.type = mount->fs->magic;
     return err;
 }
 
 dword_t sys_statfs64(addr_t path_addr, addr_t buf_addr) {
-    char path[MAX_PATH];
-    if (user_read_string(path_addr, path, sizeof(path)))
+    char path_raw[MAX_PATH];
+    if (user_read_string(path_addr, path_raw, sizeof(path_raw)))
         return _EFAULT;
-    STRACE("statfs(\"%s\", %#x)", path, buf_addr);
+    STRACE("statfs(\"%s\", %#x)", path_raw, buf_addr);
+    char path[MAX_PATH];
+    int err = path_normalize(AT_PWD, path_raw, path, false);
+    if (err < 0)
+        return err;
     struct mount *mount = mount_find(path);
-    int err = statfs_mount(mount, buf_addr);
+    err = statfs_mount(mount, buf_addr);
     mount_release(mount);
     return err;
 }

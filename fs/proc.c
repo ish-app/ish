@@ -151,7 +151,7 @@ static ssize_t proc_readlink(struct mount *mount, const char *path, char *buf, s
 }
 
 const struct fs_ops procfs = {
-    .name = "proc",
+    .name = "proc", .magic = 0x9fa0,
     .open = proc_open,
     .stat = proc_stat,
     .fstat = proc_fstat,
