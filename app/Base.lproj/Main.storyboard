@@ -55,6 +55,7 @@
                         <outletCollection property="barButtons" destination="VCr-TW-PIZ" id="NlS-hh-ara"/>
                         <outletCollection property="barControls" destination="5dl-UV-6qh" id="ocU-st-RdO"/>
                         <outletCollection property="barControls" destination="7qw-ie-p4d" id="fDV-Yg-Dec"/>
+                        <outletCollection property="barControls" destination="hmm-tv-z35" id="EEv-5m-po5"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
@@ -123,10 +124,10 @@
                                     </connections>
                                 </button>
                                 <view contentMode="scaleToFill" horizontalHuggingPriority="100" translatesAutoresizingMaskIntoConstraints="NO" id="qmg-M1-7W8" userLabel="Spacer">
-                                    <rect key="frame" x="148" y="0.0" width="266" height="43"/>
+                                    <rect key="frame" x="148" y="0.0" width="229" height="43"/>
                                 </view>
                                 <button contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="infoLight" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="5dl-UV-6qh" userLabel="Info">
-                                    <rect key="frame" x="420" y="0.0" width="31" height="43"/>
+                                    <rect key="frame" x="383" y="0.0" width="31" height="43"/>
                                     <accessibility key="accessibilityConfiguration" label="Settings"/>
                                     <constraints>
                                         <constraint firstAttribute="width" constant="31" id="1Ax-5U-2CI"/>
@@ -140,7 +141,7 @@
                                     </connections>
                                 </button>
                                 <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="hmm-tv-z35" userLabel="Paste">
-                                    <rect key="frame" x="146" y="0.0" width="31" height="43"/>
+                                    <rect key="frame" x="420" y="0.0" width="31" height="43"/>
                                     <accessibility key="accessibilityConfiguration" label="Paste"/>
                                     <color key="tintColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                     <state key="normal" image="Paste"/>
