@@ -30,7 +30,6 @@ static bool proc_root_readdir(struct proc_entry *entry, int *index, struct proc_
         unlock(&pids_lock);
         if (pid > MAX_PID)
             return false;
-        printk("task %d = %p", pid, pid_get_task(pid));
         assert(pid_get_task(pid) != NULL);
         *next_entry = (struct proc_entry) {&proc_pid, .pid = pid};
         *index = pid + PROC_ROOT_LEN;
