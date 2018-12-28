@@ -86,6 +86,8 @@ static void ios_handle_exit(int code) {
     generic_mknod("/dev/random", S_IFCHR|0666, dev_make(1, 8));
     generic_mknod("/dev/urandom", S_IFCHR|0666, dev_make(1, 9));
     
+    do_mount(&procfs, "proc", "/proc");
+    
     task_start(current);
     return 0;
 }
