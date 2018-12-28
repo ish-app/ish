@@ -63,8 +63,8 @@ static ssize_t proc_pid_stat_show(struct proc_entry *entry, char *buf) {
     n += sprintf(buf + n, "%d ", task->parent ? task->parent->pid : 0);
     n += sprintf(buf + n, "%d ", task->group->pgid);
     n += sprintf(buf + n, "%d ", task->group->sid);
-    n += sprintf(buf + n, "%d ", task->group->tty->num);
-    n += sprintf(buf + n, "%d ", task->group->tty->fg_group);
+    n += sprintf(buf + n, "%d ", task->group->tty ? task->group->tty->num : 0);
+    n += sprintf(buf + n, "%d ", task->group->tty ? task->group->tty->fg_group : 0);
     n += sprintf(buf + n, "%u ", 0); // flags
 
     // page faults (no data available)
