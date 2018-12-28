@@ -17,7 +17,7 @@ typedef enum : NSUInteger {
     ArrowRight,
 } ArrowDirection;
 
-IB_DESIGNABLE @interface ArrowBarButton : UIControl
+@interface ArrowBarButton : UIControl
 
 @property (nonatomic, readonly) ArrowDirection direction;
 @property (nonatomic) UIKeyboardAppearance keyAppearance;
