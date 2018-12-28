@@ -1,3 +1,5 @@
+HOTFIX for build 39: ssh was broken and the paste button was the wrong color in dark mode. Release notes for build 39 are pasted below for your convenience.
+
 New stuff:
 - irssi
 - rubygems
