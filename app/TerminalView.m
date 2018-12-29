@@ -91,6 +91,12 @@
     [self.terminal sendInput:data.bytes length:data.length];
 }
 
+- (BOOL)canPerformAction:(SEL)action withSender:(id)sender {
+    if ([NSStringFromSelector(action) hasPrefix:@"_accessibility"] && [self.terminal.webView canPerformAction:action withSender:sender])
+        return YES;
+    return [super canPerformAction:action withSender:sender];
+}
+
 - (void)paste:(id)sender {
     NSString *string = UIPasteboard.generalPasteboard.string;
     if (string) {
@@ -106,6 +112,12 @@
         }
         UIPasteboard.generalPasteboard.string = selection;
     }];
+}
+
+- (id)forwardingTargetForSelector:(SEL)selector {
+    if ([NSStringFromSelector(selector) hasPrefix:@"_accessibility"])
+        return self.terminal.webView;
+    return nil;
 }
 
 - (void)deleteBackward {
