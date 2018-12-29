@@ -77,6 +77,7 @@ src = [
     'fs/proc.c',
     'fs/proc/entry.c',
     'fs/proc/root.c',
+    'fs/proc/pid.c',
 
     'fs/adhoc.c',
     'fs/sock.c',
@@ -98,6 +99,8 @@ src = [
     'emu/tlb.c',
     'emu/fpu.c',
     'emu/float80.c',
+
+    'platform/' + host_machine.system() + '.c',
 ]
 if get_option('jit')
     gadgets = 'jit/gadgets-' + host_machine.cpu_family()
