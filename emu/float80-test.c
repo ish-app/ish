@@ -44,7 +44,6 @@ void assertf(int cond, const char *msg, ...) {
     }
 
     printf(cond ? "PASS ": "FAIL ");
-    //if (!cond) asm("int3");
     char buf[1024];
     va_list args;
     va_start(args, msg);
@@ -121,6 +120,8 @@ void test_math() {
     test(add, 1e100, 100);
     test(add, 1e-4949l, 1);
     test(add, 1e-4949l, 1e-4949l);
+    test(add, 18446744073709551616.l, 1.5);
+    test(add, INFINITY, 1);
     test(add, INFINITY, 123);
     test(add, INFINITY, INFINITY);
     test(add, NAN, 123);
