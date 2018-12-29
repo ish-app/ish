@@ -27,6 +27,8 @@ struct proc_dir_entry {
 
     // directory with dynamic contents
     bool (*readdir)(struct proc_entry *entry, int *index, struct proc_entry *next_entry);
+
+    struct proc_dir_entry *parent;
 };
 
 extern struct proc_dir_entry proc_root;

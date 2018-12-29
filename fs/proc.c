@@ -24,6 +24,11 @@ static int proc_lookup(const char *path, struct proc_entry *entry) {
         struct proc_entry next_entry;
         char entry_name[MAX_NAME];
         while (proc_dir_read(entry, &index, &next_entry)) {
+            if (next_entry.meta->parent == NULL)
+                next_entry.meta->parent = entry->meta;
+            else
+                // this asserts that an entry has a unique parent
+                assert(next_entry.meta->parent == entry->meta);
             proc_entry_getname(&next_entry, entry_name);
             if (strcmp(entry_name, component) == 0)
                 goto found;
@@ -47,6 +52,25 @@ static struct fd *proc_open(struct mount *mount, const char *path, int flags, in
     fd->proc_entry = entry;
     fd->proc_data = NULL;
     return fd;
+}
+
+static int proc_getpath(struct fd *fd, char *buf) {
+    char *p = buf + MAX_PATH - 1;
+    size_t n = 0;
+    p[0] = '\0';
+    struct proc_entry entry = fd->proc_entry;
+    while (entry.meta != &proc_root) {
+        char component[MAX_NAME];
+        proc_entry_getname(&entry, component);
+        size_t component_len = strlen(component) + 1; // plus one for the slash
+        p -= component_len;
+        n += component_len;
+        *p = '/';
+        memcpy(p + 1, component, component_len);
+        entry.meta = entry.meta->parent;
+    }
+    memmove(buf, p, n + 1); // plus one for the null
+    return 0;
 }
 
 static int proc_stat(struct mount *mount, const char *path, struct statbuf *stat, bool follow_links) {
@@ -153,6 +177,7 @@ static ssize_t proc_readlink(struct mount *mount, const char *path, char *buf, s
 const struct fs_ops procfs = {
     .name = "proc", .magic = 0x9fa0,
     .open = proc_open,
+    .getpath = proc_getpath,
     .stat = proc_stat,
     .fstat = proc_fstat,
     .readlink = proc_readlink,
