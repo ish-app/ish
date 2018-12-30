@@ -110,6 +110,8 @@
             NSLog(@"error copying: %@", err);
             return;
         }
+        // xterm uses nonbreaking spaces for no apparent reason
+        selection = [selection stringByReplacingOccurrencesOfString:@"\u00a0" withString:@" "];
         UIPasteboard.generalPasteboard.string = selection;
     }];
 }
