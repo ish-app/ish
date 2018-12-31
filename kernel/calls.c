@@ -209,6 +209,7 @@ void handle_interrupt(int interrupt) {
 }
 
 void dump_stack() {
+    printk("stack at %x\n", current->cpu.esp);
     for (int i = 0; i < 64; i++) {
         dword_t stackword;
         if (user_get(current->cpu.esp + (i * 4), stackword))
