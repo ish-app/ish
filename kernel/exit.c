@@ -127,12 +127,12 @@ static void halt_system(int status) {
 }
 
 dword_t sys_exit(dword_t status) {
-    STRACE("exit(%d)", status);
+    STRACE("exit(%d)\n", status);
     do_exit(status << 8);
 }
 
 dword_t sys_exit_group(dword_t status) {
-    STRACE("exit_group(%d)", status);
+    STRACE("exit_group(%d)\n", status);
     do_exit_group(status << 8);
 }
 
