@@ -369,6 +369,26 @@ dword_t sys_sigaltstack(addr_t ss_addr, addr_t old_ss_addr) {
     return 0;
 }
 
+int_t sys_rt_sigsuspend(addr_t mask_addr, uint_t size) {
+    if (size != sizeof(sigset_t_))
+        return _EINVAL;
+    sigset_t_ mask, oldmask;
+    if (user_get(mask_addr, mask))
+        return _EFAULT;
+    STRACE("sigsuspend(0x%llx)\n", (long long) mask);
+
+    lock(&current->sighand->lock);
+    do_sigprocmask_unlocked(SIG_SETMASK_, mask, &oldmask);
+    while (!current->pending) {
+        wait_for(&current->pause, &current->sighand->lock, NULL);
+        printk("woke %llx\n", (long long) current->pending);
+    }
+    do_sigprocmask_unlocked(SIG_SETMASK_, oldmask, NULL);
+    unlock(&current->sighand->lock);
+    printk("done with sigsuspend\n");
+    return _EINTR;
+}
+
 dword_t sys_kill(pid_t_ pid, dword_t sig) {
     STRACE("kill(%d, %d)", pid, sig);
     if (sig >= NUM_SIGS)

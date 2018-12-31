@@ -37,6 +37,7 @@ struct task {
     sigset_t_ blocked;
     sigset_t_ queued; // where blocked signals go when they're sent
     sigset_t_ pending;
+    cond_t pause; // don't ever wake this
 
     // locked by pids_lock
     struct task *parent;
