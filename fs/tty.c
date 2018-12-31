@@ -152,6 +152,28 @@ static void tty_push_char(struct tty *tty, char ch, bool flag) {
     tty->buf_flag[tty->bufsize++] = flag;
 }
 
+static int tty_input_signal(struct tty *tty, char ch) {
+    if (!(tty->termios.lflags & ISIG_))
+        return 0;
+    unsigned char *cc = tty->termios.cc;
+    if (ch == cc[VINTR_])
+        return SIGINT_;
+    return 0;
+}
+
+static bool tty_send_input_signal(struct tty *tty, char ch) {
+    int sig = tty_input_signal(tty, ch);
+    if (sig == 0)
+        return false;
+
+    if (tty->fg_group != 0) {
+        unlock(&tty->lock);
+        send_group_signal(tty->fg_group, sig);
+        lock(&tty->lock);
+    }
+    return true;
+}
+
 int tty_input(struct tty *tty, const char *input, size_t size) {
     lock(&tty->lock);
     dword_t lflags = tty->termios.lflags;
@@ -162,22 +184,6 @@ int tty_input(struct tty *tty, const char *input, size_t size) {
     (lflags & ECHOCTL_ && \
      (ch < ' ' || ch == '\x7f') && \
      !(ch == '\t' || ch == '\n' || ch == cc[VSTART_] || ch == cc[VSTOP_]))
-
-    if (lflags & ISIG_) {
-        for (size_t i = 0; i < size; i++) {
-            char ch = input[i];
-            if (ch == cc[VINTR_]) {
-                input += i + 1;
-                size -= i + 1;
-                i = 0;
-                if (tty->fg_group != 0) {
-                    unlock(&tty->lock);
-                    send_group_signal(tty->fg_group, SIGINT_);
-                    lock(&tty->lock);
-                }
-            }
-        }
-    }
 
     if (lflags & ICANON_) {
         for (size_t i = 0; i < size; i++) {
@@ -224,7 +230,8 @@ canon_wake:
                 echo = false;
                 tty_wake(tty);
             } else {
-                tty_push_char(tty, ch, false);
+                if (!tty_send_input_signal(tty, ch))
+                    tty_push_char(tty, ch, false);
             }
 
             if (echo) {
@@ -236,10 +243,13 @@ canon_wake:
             }
         }
     } else {
-        if (size > sizeof(tty->buf) - 1 - tty->bufsize)
-            size = sizeof(tty->buf) - 1 - tty->bufsize;
-        memcpy(tty->buf + tty->bufsize, input, size);
-        tty->bufsize += size;
+        for (size_t i = 0; i < size; i++) {
+            if (tty_send_input_signal(tty, input[i]))
+                continue;
+            tty->buf[tty->bufsize++] = input[i];
+            if (tty->bufsize >= sizeof(tty->buf))
+                break;
+        }
         tty_wake(tty);
     }
 
