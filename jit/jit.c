@@ -175,8 +175,8 @@ void cpu_run(struct cpu_state *cpu) {
             if (cpu->mem->changes != changes) {
                 tlb_flush(&tlb);
                 changes = cpu->mem->changes;
-                memset(cache, 0, sizeof(cache));
             }
+            memset(cache, 0, sizeof(cache));
             frame.cpu = *cpu;
             frame.last_block = NULL;
         }
