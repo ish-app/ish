@@ -21,6 +21,8 @@ NAME(jit_enter):
 jit_ret_chain:
     cmp _ip, 0
     b.lt jit_ret
+    sub x8, _ip, JIT_BLOCK_code
+    str x8, [_cpu, LOCAL_last_block]
     gret
 
 .global jit_ret

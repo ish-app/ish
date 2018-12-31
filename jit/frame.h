@@ -5,4 +5,5 @@ struct jit_frame {
     void *bp;
     addr_t value_addr;
     uint64_t value[2]; // buffer for crosspage crap
+    struct jit_block *last_block;
 };

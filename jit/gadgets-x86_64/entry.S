@@ -24,6 +24,8 @@ NAME(jit_enter):
 jit_ret_chain:
     btq $63, %_ip
     jc 1f
+    leaq -JIT_BLOCK_code(%_ip), %r10
+    mov %r10, LOCAL_last_block(%_cpu)
     gret
 1:
 .global jit_ret

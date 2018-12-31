@@ -144,6 +144,7 @@ void cpu_run(struct cpu_state *cpu) {
             cache[cache_index] = block;
             unlock(&jit->lock);
         }
+        struct jit_block *last_block = frame.last_block;
         if (last_block != NULL &&
                 (last_block->jump_ip[0] != NULL ||
                  last_block->jump_ip[1] != NULL)) {
@@ -157,7 +158,7 @@ void cpu_run(struct cpu_state *cpu) {
             }
             unlock(&jit->lock);
         }
-        last_block = block;
+        frame.last_block = block;
 
         TRACE("%d %08x --- cycle %d\n", current->pid, ip, i);
         int interrupt = jit_enter(block, &frame, &tlb);
