@@ -126,8 +126,6 @@ void cpu_run(struct cpu_state *cpu) {
     read_wrlock(&cpu->mem->lock);
     int changes = cpu->mem->changes;
 
-    struct jit_block *last_block = NULL;
-
     while (true) {
         addr_t ip = frame.cpu.eip;
         size_t cache_index = jit_cache_hash(ip);
@@ -180,6 +178,7 @@ void cpu_run(struct cpu_state *cpu) {
                 memset(cache, 0, sizeof(cache));
             }
             frame.cpu = *cpu;
+            frame.last_block = NULL;
         }
     }
 }
