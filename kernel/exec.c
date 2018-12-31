@@ -470,6 +470,8 @@ static int shebang_exec(struct fd *fd, const char *file, char *const argv[], cha
     memcpy(real_argv + args_extra, argv + 1, (count_args(argv)) * sizeof(argv[0]));
 
     struct fd *interpreter_fd = generic_open(interpreter, O_RDONLY_, 0);
+    if (IS_ERR(interpreter_fd))
+        return PTR_ERR(interpreter_fd);
     int err = format_exec(interpreter_fd, interpreter, real_argv, envp);
     fd_close(interpreter_fd);
     return err;
