@@ -46,7 +46,7 @@ struct task {
 
     addr_t clear_tid;
 
-    // locked by parent's thread group
+    // locked by pids_lock
     dword_t exit_code;
     bool zombie;
 

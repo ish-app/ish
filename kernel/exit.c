@@ -8,19 +8,15 @@ static void halt_system(int status);
 
 static bool exit_tgroup(struct task *task) {
     struct tgroup *group = task->group;
-    lock(&group->lock);
     list_remove(&task->group_links);
     bool group_dead = list_empty(&group->threads);
     if (group_dead) {
+        lock(&group->lock);
         if (group->timer)
             timer_free(group->timer);
         unlock(&group->lock);
-        lock(&pids_lock);
         list_remove(&group->pgroup);
         list_remove(&group->session);
-        unlock(&pids_lock);
-    } else {
-        unlock(&group->lock);
     }
     return group_dead;
 }
@@ -39,11 +35,9 @@ noreturn void do_exit(int status) {
     fdtable_release(current->files);
     fs_info_release(current->fs);
     sighand_release(current->sighand);
-    bool group_dead = exit_tgroup(current);
-    vfork_notify(current);
 
     // save things that our parent might be interested in
-    current->exit_code = status;
+    current->exit_code = status; // FIXME locking
     struct rusage_ rusage = rusage_get_current();
     lock(&current->group->lock);
     rusage_add(&current->group->rusage, &rusage);
@@ -53,7 +47,7 @@ noreturn void do_exit(int status) {
     lock(&pids_lock);
     struct task *leader = current->group->leader;
 
-    if (group_dead) {
+    if (exit_tgroup(current)) {
         // reparent children
         struct task *new_parent = pid_get_task(1);
         struct task *child;
@@ -75,6 +69,7 @@ noreturn void do_exit(int status) {
         }
     }
 
+    vfork_notify(current);
     if (current != leader)
         task_destroy(current);
     unlock(&pids_lock);
@@ -173,17 +168,19 @@ dword_t sys_wait4(dword_t id, addr_t status_addr, dword_t options, addr_t rusage
 retry:
     if (id == (dword_t) -1) {
         // look for a zombie child
-        err = _ECHILD;
-        if (list_empty(&current->children))
-            goto error;
-        struct task *task;
-        list_for_each_entry(&current->children, task, siblings) {
-            if (!task_is_leader(task))
-                continue;
-            id = task->pid;
-            if (reap_if_zombie(task, status_addr, rusage_addr))
-                goto found_zombie;
+        struct task *parent;
+        list_for_each_entry(&current->group->threads, parent, group_links) {
+            struct task *task;
+            list_for_each_entry(&current->children, task, siblings) {
+                if (!task_is_leader(task))
+                    continue;
+                id = task->pid;
+                if (reap_if_zombie(task, status_addr, rusage_addr))
+                    goto found_zombie;
+            }
         }
+        err = _ECHILD;
+        goto error;
     } else {
         // check if this child is a zombie
         struct task *task = pid_get_task_zombie(id);
