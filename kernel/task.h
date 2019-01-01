@@ -50,10 +50,12 @@ struct task {
     dword_t exit_code;
     bool zombie;
 
-    // I wish conditions variables were as reliable as wait queues. alas, they are not
-    bool vfork_done;
-    cond_t vfork_cond;
-    lock_t vfork_lock;
+    // this structure is allocated on the stack of the parent's clone() call
+    struct vfork_info {
+        bool done;
+        cond_t cond;
+        lock_t lock;
+    } *vfork;
     int exit_signal;
 
     // lock for anything that needs locking but is not covered by some other lock

@@ -492,10 +492,7 @@ int sys_execve(const char *file, char *const argv[], char *const envp[]) {
     for (fd_t f = 0; f < current->files->size; f++)
         if (f_is_cloexec(f))
             f_close(f);
-    lock(&current->vfork_lock);
-    current->vfork_done = true;
-    notify(&current->vfork_cond);
-    unlock(&current->vfork_lock);
+    vfork_notify(current);
 
     lock(&current->sighand->lock);
     for (int sig = 0; sig < NUM_SIGS; sig++) {
