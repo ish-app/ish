@@ -21,7 +21,10 @@ static ssize_t proc_pid_stat_show(struct proc_entry *entry, char *buf) {
     size_t n = 0;
     n += sprintf(buf + n, "%d ", task->pid);
     n += sprintf(buf + n, "(%.16s) ", task->comm);
-    n += sprintf(buf + n, "%c ", task->zombie ? 'Z' : 'R'); // I have no visibility into sleep state at the moment
+    n += sprintf(buf + n, "%c ",
+            task->zombie ? 'Z' :
+            task->group->stopped ? 'T' :
+            'R'); // I have no visibility into sleep state at the moment
     n += sprintf(buf + n, "%d ", task->parent ? task->parent->pid : 0);
     n += sprintf(buf + n, "%d ", task->group->pgid);
     n += sprintf(buf + n, "%d ", task->group->sid);
@@ -75,7 +78,7 @@ static ssize_t proc_pid_stat_show(struct proc_entry *entry, char *buf) {
     n += sprintf(buf + n, "%lu ", 0l); // wchan (wtf)
     n += sprintf(buf + n, "%lu ", 0l); // nswap
     n += sprintf(buf + n, "%lu ", 0l); // cnswap
-    n += sprintf(buf + n, "%d", task->exit_signal); // cnswap
+    n += sprintf(buf + n, "%d", task->exit_signal);
     // that's enough for now
     n += sprintf(buf + n, "\n");
 
