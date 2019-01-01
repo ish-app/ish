@@ -158,6 +158,8 @@ static int tty_input_signal(struct tty *tty, char ch) {
     unsigned char *cc = tty->termios.cc;
     if (ch == cc[VINTR_])
         return SIGINT_;
+    if (ch == cc[VSUSP_])
+        return SIGTSTP_;
     return 0;
 }
 
