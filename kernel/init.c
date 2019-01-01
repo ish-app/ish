@@ -24,6 +24,7 @@ static struct tgroup *init_tgroup() {
     list_init(&group->threads);
     lock_init(&group->lock);
     cond_init(&group->child_exit);
+    cond_init(&group->stopped_cond);
     return group;
 }
 

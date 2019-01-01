@@ -37,7 +37,6 @@ struct task {
     sigset_t_ blocked;
     sigset_t_ queued; // where blocked signals go when they're sent
     sigset_t_ pending;
-    cond_t pause; // don't ever wake this
 
     // locked by pids_lock
     struct task *parent;
@@ -92,6 +91,9 @@ struct tgroup {
     struct list session;
     struct list pgroup;
 
+    bool stopped;
+    cond_t stopped_cond;
+
     struct tty *tty;
     struct timer *timer;
 
@@ -105,6 +107,7 @@ struct tgroup {
     struct rusage_ children_rusage;
     cond_t child_exit;
 
+    // for everything in this struct not locked by something else
     lock_t lock;
 };
 

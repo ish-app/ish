@@ -206,7 +206,14 @@ void handle_interrupt(int interrupt) {
         printk("%d unhandled interrupt %d\n", current->pid, interrupt);
         sys_exit(interrupt);
     }
+
     receive_signals();
+
+    struct tgroup *group = current->group;
+    lock(&group->lock);
+    while (group->stopped)
+        wait_for_ignore_signals(&group->stopped_cond, &group->lock, NULL);
+    unlock(&group->lock);
 }
 
 void dump_stack() {

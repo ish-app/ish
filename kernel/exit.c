@@ -61,10 +61,8 @@ noreturn void do_exit(int status) {
             // init died
             halt_system(status);
         } else {
-            lock(&parent->group->lock);
             leader->zombie = true;
             notify(&parent->group->child_exit);
-            unlock(&parent->group->lock);
             send_signal(parent, leader->exit_signal);
         }
     }
@@ -130,11 +128,13 @@ dword_t sys_exit_group(dword_t status) {
     do_exit_group(status << 8);
 }
 
+#define WNOHANG_ 1
+#define WUNTRACED_ 2
+
 // returns 0 if the task cannot be reaped, returns 1 if the task was reaped
-static int reap_if_zombie(struct task *task, addr_t status_addr, addr_t rusage_addr) {
-    assert(task_is_leader(task));
+static bool reap_if_zombie(struct task *task, addr_t status_addr, addr_t rusage_addr) {
     if (!task->zombie)
-        return 0;
+        return false;
     lock(&task->group->lock);
 
     dword_t exit_code = task->exit_code;
@@ -156,10 +156,29 @@ static int reap_if_zombie(struct task *task, addr_t status_addr, addr_t rusage_a
     cond_destroy(&task->group->child_exit);
     free(task->group);
     task_destroy(task);
-    return 1;
+    return true;
 }
 
-#define WNOHANG_ 1
+static bool notify_if_stopped(struct task *task, addr_t status_addr) {
+    // FIXME the check of task->group->stopped needs locking I think
+    if (!task->group->stopped || task->group->group_exit_code == 0)
+        return false;
+    dword_t exit_code = task->group->group_exit_code;
+    task->group->group_exit_code = 0;
+    if (status_addr != 0)
+        if (user_put(status_addr, exit_code))
+            return _EFAULT;
+    return true;
+}
+
+static bool reap_if_needed(struct task *task, int_t options, addr_t status_addr, addr_t rusage_addr) {
+    assert(task_is_leader(task));
+    if (reap_if_zombie(task, status_addr, rusage_addr))
+        return true;
+    if (options & WUNTRACED_ && notify_if_stopped(task, status_addr))
+        return true;
+    return false;
+}
 
 dword_t sys_wait4(dword_t id, addr_t status_addr, dword_t options, addr_t rusage_addr) {
     STRACE("wait(%d, 0x%x, 0x%x, 0x%x)", id, status_addr, options, rusage_addr);
@@ -178,7 +197,7 @@ retry:
                     continue;
                 no_children = false;
                 id = task->pid;
-                if (reap_if_zombie(task, status_addr, rusage_addr))
+                if (reap_if_needed(task, options, status_addr, rusage_addr))
                     goto found_zombie;
             }
         }
@@ -193,7 +212,7 @@ retry:
         if (task == NULL || task->parent->group != current->group)
             goto error;
         task = task->group->leader;
-        if (reap_if_zombie(task, status_addr, rusage_addr))
+        if (reap_if_needed(task, options, status_addr, rusage_addr))
             goto found_zombie;
     }
 

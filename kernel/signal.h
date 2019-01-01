@@ -58,7 +58,8 @@ void send_signal(struct task *task, int sig);
 void deliver_signal(struct task *task, int sig);
 // send a signal to all processes in a group, could return ESRCH
 int send_group_signal(dword_t pgid, int sig);
-// check for and deliver pending signals on current, should be called from SIGUSR1 handler
+// check for and deliver pending signals on current
+// must be called without pids_lock
 void receive_signals(void);
 
 struct sighand {

@@ -16,6 +16,7 @@ static int signal_is_blockable(int sig) {
 #define SIGNAL_IGNORE 0
 #define SIGNAL_KILL 1
 #define SIGNAL_CALL_HANDLER 2
+#define SIGNAL_STOP 3
 
 static int signal_action(struct sighand *sighand, int sig) {
     if (signal_is_blockable(sig)) {
@@ -30,6 +31,9 @@ static int signal_action(struct sighand *sighand, int sig) {
         case SIGURG_: case SIGCONT_: case SIGCHLD_:
         case SIGIO_: case SIGWINCH_:
             return SIGNAL_IGNORE;
+
+        case SIGSTOP_: case SIGTSTP_: case SIGTTIN_: case SIGTTOU_:
+            return SIGNAL_STOP;
 
         default:
             return SIGNAL_KILL;
@@ -67,6 +71,7 @@ void send_signal(struct task *task, int sig) {
         return;
     if (task->zombie)
         return;
+
     struct sighand *sighand = task->sighand;
     lock(&sighand->lock);
     if (signal_action(sighand, sig) != SIGNAL_IGNORE) {
@@ -76,6 +81,13 @@ void send_signal(struct task *task, int sig) {
             deliver_signal(task, sig);
     }
     unlock(&sighand->lock);
+
+    if (sig == SIGCONT_) {
+        lock(&task->group->lock);
+        task->group->stopped = false;
+        notify(&task->group->stopped_cond);
+        unlock(&task->group->lock);
+    }
 }
 
 int send_group_signal(dword_t pgid, int sig) {
@@ -96,13 +108,21 @@ int send_group_signal(dword_t pgid, int sig) {
 static void receive_signal(struct sighand *sighand, int sig) {
     STRACE("%d receiving signal %d\n", current->pid, sig);
     current->pending &= ~(1l << sig);
+
     switch (signal_action(sighand, sig)) {
-        // signal is non-fatal
         case SIGNAL_IGNORE:
             return;
 
-        // most of the rest are fatal
-        // some stop the process, we'll leave that as unimplemented
+        case SIGNAL_STOP:
+            lock(&current->group->lock);
+            current->group->stopped = true;
+            unlock(&current->group->lock);
+            lock(&pids_lock);
+            current->group->group_exit_code = sig << 8 | 0x7f;
+            notify(&current->parent->group->child_exit);
+            unlock(&pids_lock);
+            return;
+
         case SIGNAL_KILL:
             unlock(&sighand->lock); // do_exit must be called without this lock
             do_exit_group(sig);
@@ -369,6 +389,8 @@ dword_t sys_sigaltstack(addr_t ss_addr, addr_t old_ss_addr) {
     return 0;
 }
 
+static cond_t pause_cond = PTHREAD_COND_INITIALIZER;
+
 int_t sys_rt_sigsuspend(addr_t mask_addr, uint_t size) {
     if (size != sizeof(sigset_t_))
         return _EINVAL;
@@ -380,7 +402,7 @@ int_t sys_rt_sigsuspend(addr_t mask_addr, uint_t size) {
     lock(&current->sighand->lock);
     do_sigprocmask_unlocked(SIG_SETMASK_, mask, &oldmask);
     while (!current->pending) {
-        wait_for(&current->pause, &current->sighand->lock, NULL);
+        wait_for(&pause_cond, &current->sighand->lock, NULL);
         printk("woke %llx\n", (long long) current->pending);
     }
     do_sigprocmask_unlocked(SIG_SETMASK_, oldmask, NULL);

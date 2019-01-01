@@ -71,7 +71,6 @@ struct task *task_create_(struct task *parent) {
     task->waiting_cond = NULL;
     task->waiting_lock = NULL;
     lock_init(&task->waiting_cond_lock);
-    cond_init(&task->pause);
     return task;
 }
 
