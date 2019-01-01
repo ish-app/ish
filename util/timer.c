@@ -14,6 +14,7 @@ struct timer *timer_new(timer_callback_t callback, void *data) {
 }
 
 void timer_free(struct timer *timer) {
+    timer_set(timer, (struct timer_spec) {}, NULL);
     free(timer);
 }
 

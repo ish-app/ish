@@ -12,9 +12,8 @@ static bool exit_tgroup(struct task *task) {
     list_remove(&task->group_links);
     bool group_dead = list_empty(&group->threads);
     if (group_dead) {
-        if (group->timer) {
-            timer_set(group->timer, (struct timer_spec) {}, NULL);
-        }
+        if (group->timer)
+            timer_free(group->timer);
         unlock(&group->lock);
         lock(&pids_lock);
         list_remove(&group->pgroup);
