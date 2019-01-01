@@ -145,8 +145,9 @@ static int reap_if_zombie(struct task *task, addr_t status_addr, addr_t rusage_a
             return _EFAULT;
 
     struct rusage_ rusage = task->group->rusage;
-    // current->group is already locked
+    lock(&current->group->lock);
     rusage_add(&current->group->children_rusage, &rusage);
+    unlock(&current->group->lock);
     if (rusage_addr != 0)
         if (user_put(rusage_addr, rusage))
             return _EFAULT;
