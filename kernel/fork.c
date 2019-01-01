@@ -39,7 +39,6 @@ static struct tgroup *tgroup_copy(struct tgroup *old_group) {
     list_add(&old_group->session, &group->session);
     if (group->tty)
         group->tty->refcount++;
-    group->has_timer = false;
     group->timer = NULL;
     group->doing_group_exit = false;
     group->children_rusage = (struct rusage_) {};

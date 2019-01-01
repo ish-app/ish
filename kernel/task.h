@@ -93,8 +93,6 @@ struct tgroup {
     struct list pgroup;
 
     struct tty *tty;
-
-    bool has_timer;
     struct timer *timer;
 
     struct rlimit_ limits[RLIMIT_NLIMITS_];

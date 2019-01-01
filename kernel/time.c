@@ -89,14 +89,13 @@ dword_t sys_setitimer(dword_t which, addr_t new_val_addr, addr_t old_val_addr) {
     STRACE("setitimer({%ds %dus, %ds %dus}, 0x%x)", val.value.sec, val.value.usec, val.interval.sec, val.interval.usec, old_val_addr);
     struct tgroup *group = current->group;
     lock(&group->lock);
-    if (!group->has_timer) {
+    if (!group->timer) {
         struct timer *timer = timer_new((timer_callback_t) itimer_notify, current);
         if (IS_ERR(timer)) {
             unlock(&group->lock);
             return PTR_ERR(timer);
         }
         group->timer = timer;
-        group->has_timer = true;
     }
 
     struct timer_spec spec;
