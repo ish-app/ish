@@ -23,6 +23,7 @@ typedef struct {
 typedef struct {
     pthread_cond_t cond;
 } cond_t;
+#define COND_INITIALIZER {PTHREAD_COND_INITIALIZER}
 
 // Must call before using the condition
 void cond_init(cond_t *cond);

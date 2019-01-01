@@ -389,7 +389,7 @@ dword_t sys_sigaltstack(addr_t ss_addr, addr_t old_ss_addr) {
     return 0;
 }
 
-static cond_t pause_cond = PTHREAD_COND_INITIALIZER;
+static cond_t pause_cond = COND_INITIALIZER;
 
 int_t sys_rt_sigsuspend(addr_t mask_addr, uint_t size) {
     if (size != sizeof(sigset_t_))
