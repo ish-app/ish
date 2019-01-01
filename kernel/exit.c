@@ -168,19 +168,23 @@ dword_t sys_wait4(dword_t id, addr_t status_addr, dword_t options, addr_t rusage
 retry:
     if (id == (dword_t) -1) {
         // look for a zombie child
+        bool no_children = true;
         struct task *parent;
         list_for_each_entry(&current->group->threads, parent, group_links) {
             struct task *task;
             list_for_each_entry(&current->children, task, siblings) {
                 if (!task_is_leader(task))
                     continue;
+                no_children = false;
                 id = task->pid;
                 if (reap_if_zombie(task, status_addr, rusage_addr))
                     goto found_zombie;
             }
         }
-        err = _ECHILD;
-        goto error;
+        if (no_children) {
+            err = _ECHILD;
+            goto error;
+        }
     } else {
         // check if this child is a zombie
         struct task *task = pid_get_task_zombie(id);
