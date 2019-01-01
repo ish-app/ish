@@ -1,5 +1,18 @@
 # Changelog
 
+## Build 41 (unreleased)
+### New
+- zsh
+- Background jobs (Ctrl-Z, bg, fg, etc)
+- ~10% performance improvement from correctly tracking the last JIT block
+### Fixed
+- Rounding error when adding 18446744073709551616 and 1.5
+- Crash when trying to run top
+- Selection being immediately copied to the clipboard if Speak Selection is enabled in iOS settings
+- Make a test network connection on startup, to hopefully fix network permission popup not appearing on devices sold in China
+- Crash when running a script with a #! line pointing to a nonexistent file
+- ^C not appearing when you press Ctrl-C and it kills the program
+
 ## Build 40
 ### Fixed
 - SSH not working
