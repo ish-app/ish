@@ -8,7 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		8632A7BF219A59FB00F02325 /* UserPreferences.m in Sources */ = {isa = PBXBuildFile; fileRef = 8632A7BE219A59FB00F02325 /* UserPreferences.m */; };
-		9A28E4EA219A8B670073D200 /* ThemeViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 9A28E4E9219A8B670073D200 /* ThemeViewController.m */; };
+		9A28E4EA219A8B670073D200 /* AppearanceViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 9A28E4E9219A8B670073D200 /* AppearanceViewController.m */; };
 		BB0FC5921F980A6C00803272 /* Terminal.m in Sources */ = {isa = PBXBuildFile; fileRef = BB0FC5911F980A6B00803272 /* Terminal.m */; };
 		BB13F7EA200ADCED003D1C4D /* libish.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BB13F7DC200AD81D003D1C4D /* libish.a */; };
 		BB455E111FB37F6600AFB48B /* DelayedUITask.m in Sources */ = {isa = PBXBuildFile; fileRef = BB455E101FB37F6600AFB48B /* DelayedUITask.m */; };
@@ -86,8 +86,8 @@
 /* Begin PBXFileReference section */
 		8632A7BD219A59FB00F02325 /* UserPreferences.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = UserPreferences.h; sourceTree = "<group>"; };
 		8632A7BE219A59FB00F02325 /* UserPreferences.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = UserPreferences.m; sourceTree = "<group>"; };
-		9A28E4E8219A8B670073D200 /* ThemeViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ThemeViewController.h; sourceTree = "<group>"; };
-		9A28E4E9219A8B670073D200 /* ThemeViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ThemeViewController.m; sourceTree = "<group>"; };
+		9A28E4E8219A8B670073D200 /* AppearanceViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppearanceViewController.h; sourceTree = "<group>"; };
+		9A28E4E9219A8B670073D200 /* AppearanceViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppearanceViewController.m; sourceTree = "<group>"; };
 		BB0FC5901F980A6B00803272 /* Terminal.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Terminal.h; sourceTree = "<group>"; };
 		BB0FC5911F980A6B00803272 /* Terminal.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Terminal.m; sourceTree = "<group>"; };
 		BB13F7C8200ACC24003D1C4D /* xcode-meson.sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = "xcode-meson.sh"; sourceTree = "<group>"; };
@@ -608,8 +608,8 @@
 				BBFB5578215876CD00DFE6DE /* AboutViewController.m */,
 				8632A7BD219A59FB00F02325 /* UserPreferences.h */,
 				8632A7BE219A59FB00F02325 /* UserPreferences.m */,
-				9A28E4E8219A8B670073D200 /* ThemeViewController.h */,
-				9A28E4E9219A8B670073D200 /* ThemeViewController.m */,
+				9A28E4E8219A8B670073D200 /* AppearanceViewController.h */,
+				9A28E4E9219A8B670073D200 /* AppearanceViewController.m */,
 				BB82A7FB21B4C2E8006AA5FD /* CapsLockMappingViewController.h */,
 				BB82A7FC21B4C2E8006AA5FD /* CapsLockMappingViewController.m */,
 			);
@@ -883,7 +883,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				9A28E4EA219A8B670073D200 /* ThemeViewController.m in Sources */,
+				9A28E4EA219A8B670073D200 /* AppearanceViewController.m in Sources */,
 				BB792B581F96D90D00FFB7A4 /* TerminalViewController.m in Sources */,
 				BB78AB2B1FAD22440013E782 /* TerminalView.m in Sources */,
 				BBFB557621586F9200DFE6DE /* DismissSegue.m in Sources */,

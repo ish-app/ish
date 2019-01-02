@@ -11,8 +11,6 @@
 
 @interface AboutViewController ()
 @property (weak, nonatomic) IBOutlet UITableViewCell *capsLockMappingCell;
-@property (weak, nonatomic) IBOutlet UILabel *fontSizeLabel;
-@property (weak, nonatomic) IBOutlet UIStepper *fontSizeStepper;
 @property (weak, nonatomic) IBOutlet UITableViewCell *themeCell;
 @property (weak, nonatomic) IBOutlet UISwitch *disableDimmingSwitch;
 
@@ -39,7 +37,6 @@
     
     [prefs addObserver:self forKeyPath:@"capsLockMapping" options:opts context:nil];
     [prefs addObserver:self forKeyPath:@"fontSize" options:opts context:nil];
-    [prefs addObserver:self forKeyPath:@"theme" options:opts context:nil];
 }
 
 - (void)_removeObservers {
@@ -47,7 +44,6 @@
         UserPreferences *prefs = [UserPreferences shared];
         [prefs removeObserver:self forKeyPath:@"capsLockMapping"];
         [prefs removeObserver:self forKeyPath:@"fontSize"];
-        [prefs removeObserver:self forKeyPath:@"theme"];
     } @catch (NSException * __unused exception) {}
 }
 
@@ -60,9 +56,7 @@
 }
 
 - (void)_updatePreferenceUI {
-    UserPreferences *prefs = [UserPreferences shared];
-    self.fontSizeLabel.text = prefs.fontSize.stringValue;
-    self.fontSizeStepper.value = prefs.fontSize.doubleValue;
+    UserPreferences *prefs = UserPreferences.shared;
     self.themeCell.detailTextLabel.text = prefs.theme.presetName;
     NSString *capsLockMappingDescr;
     switch (prefs.capsLockMapping) {
@@ -80,17 +74,13 @@
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     UITableViewCell *cell = [tableView cellForRowAtIndexPath:indexPath];
     if (cell == self.sendFeedback) {
-        [UIApplication openURL:@"mailto:tblodt@icloud.com"];
+        [UIApplication openURL:@"mailto:tblodt@icloud.com?subject=Feedback%20for%20iSH"];
     } else if (cell == self.openGithub) {
         [UIApplication openURL:@"https://github.com/tbodt/ish"];
     } else if (cell == self.openTwitter) {
         [UIApplication openURL:@"https://twitter.com/tblodt"];
     }
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
-}
-
-- (IBAction)fontSizeChanged:(id)sender {
-    UserPreferences.shared.fontSize = @((int) self.fontSizeStepper.value);
 }
 
 - (IBAction)disableDimmingChanged:(id)sender {
