@@ -202,10 +202,10 @@
     
 - (IBAction)pressArrow:(ArrowBarButton *)sender {
     switch (sender.direction) {
-        case ArrowUp: [self pressKey:@"\x1b[A"]; break;
-        case ArrowDown: [self pressKey:@"\x1b[B"]; break;
-        case ArrowLeft: [self pressKey:@"\x1b[D"]; break;
-        case ArrowRight: [self pressKey:@"\x1b[C"]; break;
+        case ArrowUp: [self pressKey:[self.terminal arrow:'A']]; break;
+        case ArrowDown: [self pressKey:[self.terminal arrow:'B']]; break;
+        case ArrowLeft: [self pressKey:[self.terminal arrow:'D']]; break;
+        case ArrowRight: [self pressKey:[self.terminal arrow:'C']]; break;
         case ArrowNone: break;
     }
 }

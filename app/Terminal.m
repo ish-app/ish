@@ -20,6 +20,8 @@
 @property DelayedUITask *refreshTask;
 @property DelayedUITask *scrollToBottomTask;
 
+@property BOOL applicationCursor;
+
 @end
 
 @interface CustomWebView : WKWebView
@@ -45,7 +47,7 @@ static Terminal *terminal = nil;
         WKWebViewConfiguration *config = [WKWebViewConfiguration new];
         [config.userContentController addScriptMessageHandler:self name:@"log"];
         [config.userContentController addScriptMessageHandler:self name:@"resize"];
-        [config.userContentController addScriptMessageHandler:self name:@"selectionchange"];
+        [config.userContentController addScriptMessageHandler:self name:@"propUpdate"];
         self.webView = [[CustomWebView alloc] initWithFrame:CGRectZero configuration:config];
         self.webView.scrollView.scrollEnabled = NO;
         [self.webView loadRequest:
@@ -68,6 +70,8 @@ static Terminal *terminal = nil;
         NSLog(@"%@", message.body);
     } else if ([message.name isEqualToString:@"resize"]) {
         [self syncWindowSize];
+    } else if ([message.name isEqualToString:@"propUpdate"]) {
+        [self setValue:message.body[1] forKey:message.body[0]];
     }
 }
 
@@ -102,6 +106,10 @@ static Terminal *terminal = nil;
 
 - (void)scrollToBottom {
     [self.webView evaluateJavaScript:@"term.scrollToBottom()" completionHandler:nil];
+}
+
+- (NSString *)arrow:(char)direction {
+    return [NSString stringWithFormat:@"\x1b%c%c", self.applicationCursor ? 'O' : '[', direction];
 }
 
 - (void)_addPreferenceObservers {
@@ -175,7 +183,7 @@ NSData *removeInvalidUTF8(NSData *data) {
     NSData *jsonData = [NSJSONSerialization dataWithJSONObject:@[str] options:0 error:&err];
     NSString *json = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
     NSAssert(err == nil, @"JSON serialization failed, wtf");
-    NSString *jsToEvaluate = [NSString stringWithFormat:@"term.write(%@[0])", json];
+    NSString *jsToEvaluate = [NSString stringWithFormat:@"termWrite(%@[0])", json];
     [self.webView evaluateJavaScript:jsToEvaluate completionHandler:nil];
 }
 

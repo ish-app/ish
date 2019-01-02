@@ -24,6 +24,19 @@ window.addEventListener('resize', function() {
     term.fit();
 });
 
+const props = ['applicationCursor'];
+const oldPropValues = {};
+function termWrite(data) {
+    term.write(data);
+    for (const prop of props) {
+        if (oldPropValues[prop] != term[prop]) {
+            oldPropValues[prop] = term[prop];
+            webkit.messageHandlers.propUpdate.postMessage([prop, term[prop]]);
+        }
+    }
+}
+window.termWrite = termWrite;
+
 function updateStyle({foregroundColor, backgroundColor, fontSize}) {
     const style = `
     .terminal {

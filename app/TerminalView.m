@@ -154,13 +154,13 @@
         if ([key isEqualToString:UIKeyInputEscape])
             key = @"\x1b";
         else if ([key isEqualToString:UIKeyInputUpArrow])
-            key = @"\x1b[A";
+            key = [self.terminal arrow:'A'];
         else if ([key isEqualToString:UIKeyInputDownArrow])
-            key = @"\x1b[B";
+            key = [self.terminal arrow:'B'];
         else if ([key isEqualToString:UIKeyInputLeftArrow])
-            key = @"\x1b[D";
+            key = [self.terminal arrow:'D'];
         else if ([key isEqualToString:UIKeyInputRightArrow])
-            key = @"\x1b[C";
+            key = [self.terminal arrow:'C'];
         [self insertText:key];
     } else if (command.modifierFlags & UIKeyModifierShift) {
         [self insertText:[key uppercaseString]];

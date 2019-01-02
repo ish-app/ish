@@ -830,7 +830,9 @@
 			files = (
 			);
 			inputPaths = (
-				"$(SRCROOT)/app/xtermjs",
+				"$(SRCROOT)/app/xtermjs/term.js",
+				"$(SRCROOT)/app/xtermjs/term.css",
+				"$(SRCROOT)/app/xtermjs/term.css",
 			);
 			name = "Compile JavaScript";
 			outputPaths = (
