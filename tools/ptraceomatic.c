@@ -359,20 +359,20 @@ static void step_tracing(struct cpu_state *cpu, struct tlb *tlb, int pid, int se
                 pt_copy(pid, regs.rbx, sizeof(struct pollfd_) * regs.rcx); break;
             case 183: // getcwd
                 pt_copy(pid, regs.rbx, cpu->eax); break;
-
             case 195: // stat64
             case 196: // lstat64
             case 197: // fstat64
                 pt_copy(pid, regs.rcx, sizeof(struct newstat64)); break;
-            case 300: // fstatat64
-                pt_copy(pid, regs.rdx, sizeof(struct newstat64)); break;
             case 220: // getdents64
                 pt_copy(pid, regs.rcx, cpu->eax); break;
             case 265: // clock_gettime
                 pt_copy(pid, regs.rcx, sizeof(struct timespec_)); break;
-	    case 340: // prlimit
-		if (regs.rsi != 0) pt_copy(pid, regs.rsi, sizeof(struct rlimit_)); break;
-
+            case 300: // fstatat64
+                pt_copy(pid, regs.rdx, sizeof(struct newstat64)); break;
+            case 305: // readlinkat
+                pt_copy(pid, regs.rcx, cpu->eax); break;
+            case 340: // prlimit
+                if (regs.rsi != 0) pt_copy(pid, regs.rsi, sizeof(struct rlimit_)); break;
             case 355: // getrandom
                 pt_copy(pid, regs.rbx, regs.rcx); break;
 
