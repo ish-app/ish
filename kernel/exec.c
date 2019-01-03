@@ -482,27 +482,33 @@ int sys_execve(const char *file, char *const argv[], char *const envp[]) {
     if (IS_ERR(fd))
         return PTR_ERR(fd);
 
-    int err = format_exec(fd, file, argv, envp);
+    struct statbuf stat;
+    int err = fd->mount->fs->fstat(fd, &stat);
+    if (err < 0) {
+        fd_close(fd);
+        return err;
+    }
+
+    // if nobody has permission to execute, it should be safe to not execute
+    if (!(stat.mode & 0111)) {
+        fd_close(fd);
+        return _EACCES;
+    }
+
+    err = format_exec(fd, file, argv, envp);
     if (err == _ENOEXEC)
         err = shebang_exec(fd, file, argv, envp);
     fd_close(fd);
     if (err < 0)
         return err;
 
-    for (fd_t f = 0; f < current->files->size; f++)
-        if (f_is_cloexec(f))
-            f_close(f);
-    vfork_notify(current);
+    // setuid/setgid
+    if (stat.mode & S_ISUID)
+        current->euid = stat.uid;
+    if (stat.mode & S_ISGID)
+        current->egid = stat.gid;
 
-    lock(&current->sighand->lock);
-    for (int sig = 0; sig < NUM_SIGS; sig++) {
-        struct sigaction_ *action = &current->sighand->action[sig];
-        if (action->handler != SIG_IGN_)
-            action->handler = SIG_DFL_;
-    }
-    current->sighand->altstack = 0;
-    unlock(&current->sighand->lock);
-
+    // save current->comm
     lock(&current->general_lock);
     const char *basename = strrchr(file, '/');
     if (basename == NULL)
@@ -512,8 +518,24 @@ int sys_execve(const char *file, char *const argv[], char *const envp[]) {
     strncpy(current->comm, basename, sizeof(current->comm));
     unlock(&current->general_lock);
 
+    // cloexec
+    for (fd_t f = 0; f < current->files->size; f++)
+        if (f_is_cloexec(f))
+            f_close(f);
+
+    // reset signal handlers
+    lock(&current->sighand->lock);
+    for (int sig = 0; sig < NUM_SIGS; sig++) {
+        struct sigaction_ *action = &current->sighand->action[sig];
+        if (action->handler != SIG_IGN_)
+            action->handler = SIG_DFL_;
+    }
+    current->sighand->altstack = 0;
+    unlock(&current->sighand->lock);
+
     current->did_exec = true;
-    return err;
+    vfork_notify(current);
+    return 0;
 }
 
 #define MAX_ARGS 256 // for now
