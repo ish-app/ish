@@ -45,6 +45,7 @@ static struct termios_ termios_from_real(struct termios real) {
     FLAG(l, ECHO);
     FLAG(l, ECHOE);
     FLAG(l, ECHOK);
+    FLAG(l, NOFLSH);
     FLAG(l, ECHOCTL);
 #undef FLAG
 

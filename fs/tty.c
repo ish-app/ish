@@ -152,25 +152,23 @@ static void tty_push_char(struct tty *tty, char ch, bool flag) {
     tty->buf_flag[tty->bufsize++] = flag;
 }
 
-static int tty_input_signal(struct tty *tty, char ch) {
+static bool tty_send_input_signal(struct tty *tty, char ch) {
     if (!(tty->termios.lflags & ISIG_))
         return 0;
     unsigned char *cc = tty->termios.cc;
+    int sig;
     if (ch == cc[VINTR_])
-        return SIGINT_;
-    if (ch == cc[VQUIT_])
-        return SIGQUIT_;
-    if (ch == cc[VSUSP_])
-        return SIGTSTP_;
-    return 0;
-}
-
-static bool tty_send_input_signal(struct tty *tty, char ch) {
-    int sig = tty_input_signal(tty, ch);
-    if (sig == 0)
+        sig = SIGINT_;
+    else if (ch == cc[VQUIT_])
+        sig = SIGQUIT_;
+    else if (ch == cc[VSUSP_])
+        sig = SIGTSTP_;
+    else
         return false;
 
     if (tty->fg_group != 0) {
+        if (!(tty->termios.lflags & NOFLSH_))
+            tty->bufsize = 0;
         unlock(&tty->lock);
         send_group_signal(tty->fg_group, sig);
         lock(&tty->lock);
