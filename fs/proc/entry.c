@@ -1,10 +1,19 @@
+#include <sys/stat.h>
 #include <string.h>
 #include "fs/stat.h"
 #include "fs/proc.h"
 
 int proc_entry_stat(struct proc_entry *entry, struct statbuf *stat) {
     memset(stat, 0, sizeof(*stat));
-    stat->mode = entry->meta->mode;
+    mode_t_ mode = entry->meta->mode;
+    if ((mode & S_IFMT) == 0)
+        mode |= S_IFREG;
+    if ((mode & 0777) == 0) {
+        mode |= 0444;
+        if (S_ISDIR(mode))
+            mode |= 0111;
+    }
+    stat->mode = mode;
     stat->inode = entry->meta->inode | entry->pid << 16;
     return 0;
 }

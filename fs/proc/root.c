@@ -17,8 +17,8 @@ static ssize_t proc_show_stat(struct proc_entry *entry, char *buf) {
 }
 
 struct proc_dir_entry proc_root_entries[] = {
-    {2, "version", S_IFREG | 0444, .show = proc_show_version},
-    {3, "stat", S_IFREG | 0444, .show = proc_show_stat},
+    {2, "version", .show = proc_show_version},
+    {3, "stat", .show = proc_show_stat},
 };
 #define PROC_ROOT_LEN sizeof(proc_root_entries)/sizeof(proc_root_entries[0])
 
@@ -47,4 +47,4 @@ static bool proc_root_readdir(struct proc_entry *entry, int *index, struct proc_
     return false;
 }
 
-struct proc_dir_entry proc_root = {1, NULL, S_IFDIR | 0555, .readdir = proc_root_readdir};
+struct proc_dir_entry proc_root = {1, NULL, S_IFDIR, .readdir = proc_root_readdir};

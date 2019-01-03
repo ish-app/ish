@@ -90,9 +90,9 @@ static ssize_t proc_pid_stat_show(struct proc_entry *entry, char *buf) {
 }
 
 struct proc_dir_entry proc_pid_entries[] = {
-    {2, "stat", S_IFREG | 0444, .show = proc_pid_stat_show},
+    {2, "stat", .show = proc_pid_stat_show},
 };
 
-struct proc_dir_entry proc_pid = {1, NULL, S_IFDIR | 0555,
+struct proc_dir_entry proc_pid = {1, NULL, S_IFDIR,
     .children = proc_pid_entries, .children_sizeof = sizeof(proc_pid_entries),
     .getname = proc_pid_getname};
