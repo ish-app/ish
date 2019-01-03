@@ -39,8 +39,11 @@ extern NSString *const kThemeBackgroundColor;
 @property (nonatomic) Theme *theme;
 @property (nonatomic) BOOL shouldDisableDimming;
 @property (nonatomic, copy) NSNumber *fontSize;
+@property (nonatomic) NSArray<NSString *> *launchCommand;
 
 + (instancetype)shared;
+
+- (BOOL)hasChangedLaunchCommand;
 
 @end
 

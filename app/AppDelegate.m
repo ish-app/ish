@@ -16,6 +16,8 @@
 
 @interface AppDelegate ()
 
+@property BOOL exiting;
+
 @end
 
 static void ios_handle_exit(int code) {
@@ -47,10 +49,14 @@ static void ios_handle_exit(int code) {
         return err;
     
     create_first_process();
-    char *program = "/bin/login";
-    char *argv[] = {program, "-f", "root", NULL};
+    NSArray<NSString *> *command = UserPreferences.shared.launchCommand;
+    char *argv[command.count + 1];
+    for (NSUInteger i = 0; i < command.count; i++) {
+        argv[i] = (char *) command[i].UTF8String;
+    }
+    argv[command.count] = NULL;
     char *envp[] = {"TERM=xterm-256color", NULL};
-    err = sys_execve(program, argv, envp);
+    err = sys_execve(argv[0], argv, envp);
     if (err < 0)
         return err;
     err = create_stdio(ios_tty_driver);
@@ -101,7 +107,7 @@ static void ios_handle_exit(int code) {
         NSString *subtitle = [NSString stringWithFormat:@"error code %d", err];
         if (err == _EINVAL)
             subtitle = [subtitle stringByAppendingString:@"\n(try reinstalling the app, see release notes for details)"];
-        [self fatal:message subtitle:subtitle];
+        [self showMessage:message subtitle:subtitle fatal:NO];
         NSLog(@"failed with code %d", err);
     }
     return YES;
@@ -109,17 +115,27 @@ static void ios_handle_exit(int code) {
 
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context {
     UIApplication.sharedApplication.idleTimerDisabled = UserPreferences.shared.shouldDisableDimming;
-    NSLog(@"idletimerdisabled %d", UIApplication.sharedApplication.idleTimerDisabled);
 }
 
-- (void)fatal:(NSString *)message subtitle:(NSString *)subtitle {
+- (void)showMessage:(NSString *)message subtitle:(NSString *)subtitle fatal:(BOOL)fatal {
     dispatch_async(dispatch_get_main_queue(), ^{
         UIAlertController *alert = [UIAlertController alertControllerWithTitle:message message:subtitle preferredStyle:UIAlertControllerStyleAlert];
-        [alert addAction:[UIAlertAction actionWithTitle:@"goodbye" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-            exit(0);
-        }]];
+        [alert addAction:[UIAlertAction actionWithTitle:@"k"
+                                                  style:UIAlertActionStyleDefault
+                                                handler:nil]];
         [self.window.rootViewController presentViewController:alert animated:YES completion:nil];
     });
+}
+
+- (void)exitApp {
+    self.exiting = YES;
+    id app = [UIApplication sharedApplication];
+    [app suspend];
+}
+
+- (void)applicationDidEnterBackground:(UIApplication *)application {
+    if (self.exiting)
+        exit(0);
 }
 
 @end

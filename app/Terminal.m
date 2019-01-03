@@ -76,15 +76,12 @@ static Terminal *terminal = nil;
 }
 
 - (void)syncWindowSize {
-    NSLog(@"syncing");
     [self.webView evaluateJavaScript:@"[term.cols, term.rows]" completionHandler:^(NSArray<NSNumber *> *dimensions, NSError *error) {
         if (self.tty == NULL) {
-            NSLog(@"gave up");
             return;
         }
         int cols = dimensions[0].intValue;
         int rows = dimensions[1].intValue;
-        NSLog(@"%dx%d", cols, rows);
         lock(&self.tty->lock);
         tty_set_winsize(self.tty, (struct winsize_) {.col = cols, .row = rows});
         unlock(&self.tty->lock);
@@ -196,6 +193,7 @@ NSData *removeInvalidUTF8(NSData *data) {
 static int ios_tty_open(struct tty *tty) {
     Terminal *terminal = [Terminal terminalWithType:tty->type number:tty->num];
     terminal.tty = tty;
+    tty->refcount++;
     tty->data = (void *) CFBridgingRetain(terminal);
 
     // termios

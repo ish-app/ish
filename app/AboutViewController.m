@@ -13,6 +13,7 @@
 @property (weak, nonatomic) IBOutlet UITableViewCell *capsLockMappingCell;
 @property (weak, nonatomic) IBOutlet UITableViewCell *themeCell;
 @property (weak, nonatomic) IBOutlet UISwitch *disableDimmingSwitch;
+@property (weak, nonatomic) IBOutlet UITextField *launchCommandField;
 
 @property (weak, nonatomic) IBOutlet UITableViewCell *sendFeedback;
 @property (weak, nonatomic) IBOutlet UITableViewCell *openGithub;
@@ -37,6 +38,7 @@
     
     [prefs addObserver:self forKeyPath:@"capsLockMapping" options:opts context:nil];
     [prefs addObserver:self forKeyPath:@"fontSize" options:opts context:nil];
+    [prefs addObserver:self forKeyPath:@"launchCommand" options:opts context:nil];
 }
 
 - (void)_removeObservers {
@@ -44,6 +46,7 @@
         UserPreferences *prefs = [UserPreferences shared];
         [prefs removeObserver:self forKeyPath:@"capsLockMapping"];
         [prefs removeObserver:self forKeyPath:@"fontSize"];
+        [prefs removeObserver:self forKeyPath:@"launchCommand"];
     } @catch (NSException * __unused exception) {}
 }
 
@@ -69,6 +72,7 @@
     }
     self.capsLockMappingCell.detailTextLabel.text = capsLockMappingDescr;
     self.disableDimmingSwitch.on = UserPreferences.shared.shouldDisableDimming;
+    self.launchCommandField.text = [UserPreferences.shared.launchCommand componentsJoinedByString:@" "];
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
@@ -81,6 +85,15 @@
         [UIApplication openURL:@"https://twitter.com/tblodt"];
     }
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
+}
+
+- (IBAction)launchCommandSubmit:(id)sender {
+    [sender resignFirstResponder];
+}
+
+- (IBAction)launchCommandChanged:(id)sender {
+    UserPreferences.shared.launchCommand = [self.launchCommandField.text componentsSeparatedByString:@" "];
+    NSLog(@"asdf");
 }
 
 - (IBAction)disableDimmingChanged:(id)sender {

@@ -11,8 +11,8 @@
 static NSString *const kPreferenceCapsLockMappingKey = @"Caps Lock Mapping";
 static NSString *const kPreferenceFontSizeKey = @"Font Size";
 static NSString *const kPreferenceThemeKey = @"Theme";
-static NSString *const kPreferenceBackgroundKey = @"Background Color";
 static NSString *const kPreferenceDisableDimmingKey = @"Disable Dimming";
+static NSString *const kPreferenceInitCommandKey = @"Init Command";
 
 @implementation UserPreferences {
     NSUserDefaults *_defaults;
@@ -36,6 +36,7 @@ static NSString *const kPreferenceDisableDimmingKey = @"Disable Dimming";
                                       kPreferenceThemeKey: defaultTheme.properties,
                                       kPreferenceCapsLockMappingKey: @(CapsLockMapControl),
                                       kPreferenceDisableDimmingKey: @(NO),
+                                      kPreferenceInitCommandKey: @[@"/bin/login", @"-f", @"root"],
                                       }];
         _theme = [[Theme alloc] initWithProperties:[_defaults objectForKey:kPreferenceThemeKey]];
     }
@@ -45,7 +46,6 @@ static NSString *const kPreferenceDisableDimmingKey = @"Disable Dimming";
 - (CapsLockMapping)capsLockMapping {
     return [_defaults integerForKey:kPreferenceCapsLockMappingKey];
 }
-
 - (void)setCapsLockMapping:(CapsLockMapping)capsLockMapping {
     [_defaults setInteger:capsLockMapping forKey:kPreferenceCapsLockMappingKey];
 }
@@ -53,7 +53,6 @@ static NSString *const kPreferenceDisableDimmingKey = @"Disable Dimming";
 - (NSNumber *)fontSize {
     return [_defaults objectForKey:kPreferenceFontSizeKey];
 }
-
 - (void)setFontSize:(NSNumber *)fontSize {
     [_defaults setObject:fontSize forKey:kPreferenceFontSizeKey];
 }
@@ -61,7 +60,6 @@ static NSString *const kPreferenceDisableDimmingKey = @"Disable Dimming";
 - (UIColor *)foregroundColor {
     return self.theme.foregroundColor;
 }
-
 - (UIColor *)backgroundColor {
     return self.theme.backgroundColor;
 }
@@ -74,9 +72,19 @@ static NSString *const kPreferenceDisableDimmingKey = @"Disable Dimming";
 - (BOOL)shouldDisableDimming {
     return [_defaults boolForKey:kPreferenceDisableDimmingKey];
 }
-
 - (void)setShouldDisableDimming:(BOOL)dim {
     [_defaults setBool:dim forKey:kPreferenceDisableDimmingKey];
+}
+
+- (NSArray<NSString *> *)launchCommand {
+    return [_defaults stringArrayForKey:kPreferenceInitCommandKey];
+}
+- (void)setLaunchCommand:(NSArray<NSString *> *)launchCommand {
+    [_defaults setObject:launchCommand forKey:kPreferenceInitCommandKey];
+}
+- (BOOL)hasChangedLaunchCommand {
+    NSArray *defaultLaunchCommand = [[[NSUserDefaults alloc] initWithSuiteName:NSRegistrationDomain] stringArrayForKey:kPreferenceInitCommandKey];
+    return ![self.launchCommand isEqual:defaultLaunchCommand];
 }
 
 @end
