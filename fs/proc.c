@@ -86,8 +86,13 @@ static int proc_fstat(struct fd *fd, struct statbuf *stat) {
 }
 
 static int proc_refresh_data(struct fd *fd) {
+    mode_t_ mode = proc_entry_mode(&fd->proc_entry);
+    if (S_ISDIR(mode))
+        return _EISDIR;
+    assert(S_ISREG(mode));
+
     if (fd->proc_data == NULL) {
-        fd->proc_data = malloc(4096); // FIXME choose a good number
+        fd->proc_data = malloc(4096); // TODO choose a good number
     }
     struct proc_entry entry = fd->proc_entry;
     ssize_t size = entry.meta->show(&entry, fd->proc_data);
@@ -98,8 +103,6 @@ static int proc_refresh_data(struct fd *fd) {
 }
 
 static ssize_t proc_read(struct fd *fd, void *buf, size_t bufsize) {
-    if (!S_ISREG(fd->proc_entry.meta->mode))
-        return _EISDIR;
     int err = proc_refresh_data(fd);
     if (err < 0)
         return err;
@@ -120,8 +123,6 @@ static ssize_t proc_read(struct fd *fd, void *buf, size_t bufsize) {
 }
 
 static off_t_ proc_seek(struct fd *fd, off_t_ off, int whence) {
-    if (!S_ISREG(fd->proc_entry.meta->mode))
-        return _EISDIR;
     int err = proc_refresh_data(fd);
     if (err < 0)
         return err;

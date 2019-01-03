@@ -3,8 +3,7 @@
 #include "fs/stat.h"
 #include "fs/proc.h"
 
-int proc_entry_stat(struct proc_entry *entry, struct statbuf *stat) {
-    memset(stat, 0, sizeof(*stat));
+mode_t_ proc_entry_mode(struct proc_entry *entry) {
     mode_t_ mode = entry->meta->mode;
     if ((mode & S_IFMT) == 0)
         mode |= S_IFREG;
@@ -13,7 +12,12 @@ int proc_entry_stat(struct proc_entry *entry, struct statbuf *stat) {
         if (S_ISDIR(mode))
             mode |= 0111;
     }
-    stat->mode = mode;
+    return mode;
+}
+
+int proc_entry_stat(struct proc_entry *entry, struct statbuf *stat) {
+    memset(stat, 0, sizeof(*stat));
+    stat->mode = proc_entry_mode(entry);
     stat->inode = entry->meta->inode | entry->pid << 16;
     return 0;
 }

@@ -34,6 +34,7 @@ struct proc_dir_entry {
 extern struct proc_dir_entry proc_root;
 extern struct proc_dir_entry proc_pid;
 
+mode_t_ proc_entry_mode(struct proc_entry *entry);
 void proc_entry_getname(struct proc_entry *entry, char *buf);
 int proc_entry_stat(struct proc_entry *entry, struct statbuf *stat);
 
