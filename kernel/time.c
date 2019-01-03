@@ -204,7 +204,7 @@ fd_t sys_timerfd_create(int_t clockid, int_t flags) {
     fd->ops = &timerfd_ops;
 
     fd->timer = timer_new((timer_callback_t) timerfd_callback, fd);
-    return f_install_flags(fd, flags);
+    return f_install(fd, flags);
 }
 
 static ssize_t timerfd_read(struct fd *fd, void *buf, size_t bufsize) {

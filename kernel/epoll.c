@@ -13,7 +13,7 @@ fd_t sys_epoll_create(int_t flags) {
         return _ENOMEM;
     fd->ops = &epoll_ops;
     fd->poll = poll_create();
-    return f_install_flags(fd, flags);
+    return f_install(fd, flags);
 }
 fd_t sys_epoll_create0() {
     return sys_epoll_create(0);

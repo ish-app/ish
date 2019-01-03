@@ -119,22 +119,19 @@ struct fdtable {
     unsigned size;
     struct fd **files;
     bits_t *cloexec;
+    lock_t lock;
 };
 
 struct fdtable *fdtable_new(unsigned size);
 void fdtable_release(struct fdtable *table);
-int fdtable_resize(struct fdtable *table, unsigned size);
 struct fdtable *fdtable_copy(struct fdtable *table);
 void fdtable_free(struct fdtable *table);
+void fdtable_do_cloexec(struct fdtable *table);
 
 struct fd *f_get(fd_t f);
-bool f_is_cloexec(fd_t f);
-void f_set_cloexec(fd_t f);
-void f_put(fd_t f, struct fd *fd);
 // steals a reference to the fd, gives it to the table on success and destroys it on error
-fd_t f_install(struct fd *fd);
-// like f_install but handles O_CLOEXEC and O_NONBLOCK
-fd_t f_install_flags(struct fd *fd, int flags);
+// flags is checked for O_CLOEXEC and O_NONBLOCK
+fd_t f_install(struct fd *fd, int flags);
 int f_close(fd_t f);
 
 #endif

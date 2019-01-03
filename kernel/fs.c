@@ -54,10 +54,7 @@ fd_t sys_openat(fd_t at_f, addr_t path_addr, dword_t flags, mode_t_ mode) {
     struct fd *fd = generic_openat(at, path, flags, mode);
     if (IS_ERR(fd))
         return PTR_ERR(fd);
-    fd_t f = f_install(fd);
-    if (f >= 0 && (flags & O_CLOEXEC_))
-        f_set_cloexec(f);
-    return f;
+    return f_install(fd, flags);
 }
 
 fd_t sys_open(addr_t path_addr, dword_t flags, mode_t_ mode) {
@@ -187,6 +184,8 @@ dword_t sys_read(fd_t fd_no, addr_t buf_addr, dword_t size) {
     }
     res = fd->ops->read(fd, buf, size);
     if (res >= 0) {
+        buf[res] = '\0';
+        STRACE(" \"%.99s\"", buf);
         if (user_write(buf_addr, buf, res))
             res = _EFAULT;
     }

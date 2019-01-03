@@ -523,9 +523,8 @@ int sys_execve(const char *file, char *const argv[], char *const envp[]) {
     unlock(&current->general_lock);
 
     // cloexec
-    for (fd_t f = 0; f < current->files->size; f++)
-        if (f_is_cloexec(f))
-            f_close(f);
+    // consider putting this in fd.c?
+    fdtable_do_cloexec(current->files);
 
     // reset signal handlers
     lock(&current->sighand->lock);

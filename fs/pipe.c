@@ -9,7 +9,7 @@ static fd_t pipe_f_create(int pipe_fd, int flags) {
         return _ENOMEM;
     fd->real_fd = pipe_fd;
     fd->ops = &realfs_fdops;
-    return f_install_flags(fd, flags);
+    return f_install(fd, flags);
 }
 
 int_t sys_pipe2(addr_t pipe_addr, int_t flags) {

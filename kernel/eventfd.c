@@ -14,7 +14,7 @@ int_t sys_eventfd2(uint_t initval, int_t flags) {
         return _ENOMEM;
     fd->ops = &eventfd_ops;
     fd->eventfd_val = initval;
-    return f_install_flags(fd, flags);
+    return f_install(fd, flags);
 }
 int_t sys_eventfd(uint_t initval) {
     return sys_eventfd2(initval, 0);

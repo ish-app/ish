@@ -15,11 +15,7 @@ static fd_t sock_fd_create(int sock_fd, int flags) {
     fd->stat.mode = S_IFSOCK | 0666;
     fd->real_fd = sock_fd;
     fd->ops = &socket_fdops;
-    fd_t f = f_install(fd);
-    if (f >= 0)
-        if (flags & SOCK_CLOEXEC_)
-            f_set_cloexec(f);
-    return f;
+    return f_install(fd, flags);
 }
 
 dword_t sys_socket(dword_t domain, dword_t type, dword_t protocol) {
