@@ -45,7 +45,7 @@ struct fd *generic_openat(struct fd *at, const char *path_raw, int flags, int mo
     struct statbuf stat;
     err = fd->mount->fs->fstat(fd, &stat);
     if (err >= 0) {
-        assert(!S_ISLNK(stat.mode));
+        assert(!S_ISLNK(stat.mode)); // would mean path_normalize didn't do its job
         if (S_ISBLK(stat.mode) || S_ISCHR(stat.mode)) {
             int type;
             if (S_ISBLK(stat.mode))

@@ -16,9 +16,16 @@ static ssize_t proc_show_stat(struct proc_entry *entry, char *buf) {
     return n;
 }
 
+static int proc_readlink_self(struct proc_entry *entry, char *buf) {
+    sprintf(buf, "%d/", current->pid);
+    return 0;
+}
+
+// in no particular order
 struct proc_dir_entry proc_root_entries[] = {
     {2, "version", .show = proc_show_version},
     {3, "stat", .show = proc_show_stat},
+    {10, "self", S_IFLNK, .readlink = proc_readlink_self},
 };
 #define PROC_ROOT_LEN sizeof(proc_root_entries)/sizeof(proc_root_entries[0])
 

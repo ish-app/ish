@@ -365,7 +365,7 @@ dword_t sys_getcwd(addr_t buf_addr, dword_t size) {
     STRACE("getcwd(%#x, %#x)", buf_addr, size);
     lock(&current->fs->lock);
     struct fd *wd = current->fs->pwd;
-    char pwd[MAX_PATH];
+    char pwd[MAX_PATH + 1];
     int err = generic_getpath(wd, pwd);
     unlock(&current->fs->lock);
     if (err < 0)

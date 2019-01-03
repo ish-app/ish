@@ -18,7 +18,7 @@ mode_t_ proc_entry_mode(struct proc_entry *entry) {
 int proc_entry_stat(struct proc_entry *entry, struct statbuf *stat) {
     memset(stat, 0, sizeof(*stat));
     stat->mode = proc_entry_mode(entry);
-    stat->inode = entry->meta->inode | entry->pid << 16;
+    stat->inode = entry->meta->inode | entry->pid << 16 | (uint64_t) entry->fd << 48;
     return 0;
 }
 

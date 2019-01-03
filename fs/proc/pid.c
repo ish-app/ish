@@ -1,6 +1,7 @@
 #include <sys/stat.h>
 #include "kernel/calls.h"
 #include "fs/proc.h"
+#include "fs/fd.h"
 #include "fs/tty.h"
 
 static void proc_pid_getname(struct proc_entry *entry, char *buf) {
@@ -89,10 +90,53 @@ static ssize_t proc_pid_stat_show(struct proc_entry *entry, char *buf) {
     return n;
 }
 
+static struct proc_dir_entry proc_pid_fd;
+
+static bool proc_pid_fd_readdir(struct proc_entry *entry, int *index, struct proc_entry *next_entry) {
+    lock(&pids_lock);
+    struct task *task = pid_get_task(entry->pid);
+    if (task == NULL) {
+        unlock(&pids_lock);
+        return _ESRCH;
+    }
+    lock(&task->files->lock);
+    while (task->files->files[*index] == NULL && *index < task->files->size)
+        (*index)++;
+    fd_t f = (*index)++;
+    bool any_left = f < task->files->size;
+    unlock(&task->files->lock);
+    unlock(&pids_lock);
+    *next_entry = (struct proc_entry) {&proc_pid_fd, .pid = entry->pid, .fd = f};
+    return any_left;
+}
+
+static void proc_pid_fd_getname(struct proc_entry *entry, char *buf) {
+    sprintf(buf, "%d", entry->fd);
+}
+
+static int proc_pid_fd_readlink(struct proc_entry *entry, char *buf) {
+    lock(&pids_lock);
+    struct task *task = pid_get_task(entry->pid);
+    if (task == NULL) {
+        unlock(&pids_lock);
+        return _ESRCH;
+    }
+    lock(&task->files->lock);
+    struct fd *fd = fdtable_get(task->files, entry->fd);
+    generic_getpath(fd, buf);
+    unlock(&task->files->lock);
+    unlock(&pids_lock);
+    return 0;
+}
+
 struct proc_dir_entry proc_pid_entries[] = {
     {2, "stat", .show = proc_pid_stat_show},
+    {3, "fd", S_IFDIR, .readdir = proc_pid_fd_readdir},
 };
 
 struct proc_dir_entry proc_pid = {1, NULL, S_IFDIR,
     .children = proc_pid_entries, .children_sizeof = sizeof(proc_pid_entries),
     .getname = proc_pid_getname};
+
+static struct proc_dir_entry proc_pid_fd = {0, NULL, S_IFLNK,
+    .getname = proc_pid_fd_getname, .readlink = proc_pid_fd_readlink};

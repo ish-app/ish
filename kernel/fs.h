@@ -138,7 +138,7 @@ struct fs_ops {
     int (*setattr)(struct mount *mount, const char *path, struct attr attr);
     int (*fsetattr)(struct fd *fd, struct attr attr);
     int (*utime)(struct mount *mount, const char *path, struct timespec atime, struct timespec mtime);
-    // Returns the path of the file descriptor, buf must be at least MAX_PATH
+    // Returns the path of the file descriptor, null terminated, buf must be at least MAX_PATH+1
     int (*getpath)(struct fd *fd, char *buf);
 
     int (*mkdir)(struct mount *mount, const char *path, mode_t_ mode);

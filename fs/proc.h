@@ -7,6 +7,7 @@
 struct proc_entry {
     struct proc_dir_entry *meta;
     pid_t_ pid;
+    sdword_t fd; // typedef might not have been read yet
 };
 
 struct proc_dir_entry {
@@ -20,6 +21,9 @@ struct proc_dir_entry {
     // file with custom show data function
     // not worrying about buffer overflows for now
     ssize_t (*show)(struct proc_entry *entry, char *buf);
+
+    // symlink
+    int (*readlink)(struct proc_entry *entry, char *buf);
 
     // directory with static list
     struct proc_dir_entry *children;

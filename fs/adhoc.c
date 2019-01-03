@@ -1,3 +1,4 @@
+#include <string.h>
 #include <sys/stat.h>
 #include "debug.h"
 #include "kernel/fs.h"
@@ -38,12 +39,23 @@ static int adhoc_fsetattr(struct fd *fd, struct attr attr) {
     return 0;
 }
 
+static int adhoc_getpath(struct fd *fd, char *buf) {
+    const char *type = "unknown"; // TODO allow this to be customized
+    if (fd->stat.inode == 0)
+        sprintf(buf, "anon_inode:[%s]", type);
+    else
+        sprintf(buf, "%s:[%lu]", type, (unsigned long) fd->stat.inode);
+    return 0;
+}
+
 static const struct fs_ops adhoc_fs = {
     .magic = 0x09041934, // FIXME wrong for pipes and sockets
     .fstat = adhoc_fstat,
     .fsetattr = adhoc_fsetattr,
+    .getpath = adhoc_getpath,
 };
 
 static struct mount adhoc_mount = {
     .fs = &adhoc_fs,
+    .point = "",
 };

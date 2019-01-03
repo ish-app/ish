@@ -6,9 +6,9 @@
 
 static int proc_lookup(const char *path, struct proc_entry *entry) {
     entry->meta = &proc_root;
-    char component[MAX_NAME] = {};
+    char component[MAX_NAME + 1] = {};
     while (*path != '\0') {
-        if (!S_ISDIR(entry->meta->mode))
+        if (!S_ISDIR(proc_entry_mode(entry)))
             return _ENOTDIR;
 
         assert(*path == '/');
@@ -16,9 +16,10 @@ static int proc_lookup(const char *path, struct proc_entry *entry) {
         char *c = component;
         while (*path != '/' && *path != '\0') {
             *c++ = *path++;
-            if (c - component >= sizeof(component))
+            if (c - component >= MAX_NAME)
                 return _ENAMETOOLONG;
         }
+        *c = '\0';
 
         int index = 0;
         struct proc_entry next_entry;
@@ -172,7 +173,21 @@ const struct fd_ops procfs_fdops = {
 };
 
 static ssize_t proc_readlink(struct mount *mount, const char *path, char *buf, size_t bufsize) {
-    return _EINVAL;
+    struct proc_entry entry;
+    int err = proc_lookup(path, &entry);
+    if (err < 0)
+        return err;
+    if (!S_ISLNK(proc_entry_mode(&entry)))
+        return _EINVAL;
+
+    char target[MAX_PATH + 1];
+    err = entry.meta->readlink(&entry, target);
+    if (err < 0)
+        return err;
+    if (bufsize > strlen(target))
+        bufsize = strlen(target);
+    memcpy(buf, target, bufsize);
+    return bufsize;
 }
 
 const struct fs_ops procfs = {
