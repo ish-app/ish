@@ -503,10 +503,14 @@ int sys_execve(const char *file, char *const argv[], char *const envp[]) {
         return err;
 
     // setuid/setgid
-    if (stat.mode & S_ISUID)
+    if (stat.mode & S_ISUID) {
+        current->suid = current->euid;
         current->euid = stat.uid;
-    if (stat.mode & S_ISGID)
+    }
+    if (stat.mode & S_ISGID) {
+        current->sgid = current->egid;
         current->egid = stat.gid;
+    }
 
     // save current->comm
     lock(&current->general_lock);
