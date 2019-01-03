@@ -84,6 +84,7 @@ dword_t sys_rt_sigreturn(dword_t sig);
 typedef uint64_t sigset_t_;
 int do_sigprocmask(dword_t how, sigset_t_ set, sigset_t_ *oldset);
 dword_t sys_rt_sigprocmask(dword_t how, addr_t set, addr_t oldset, dword_t size);
+int_t sys_rt_sigpending(addr_t set_addr);
 
 struct stack_t_ {
     addr_t stack;
