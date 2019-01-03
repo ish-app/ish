@@ -351,6 +351,7 @@ dword_t sys_rt_sigprocmask(dword_t how, addr_t set_addr, addr_t oldset_addr, dwo
 }
 
 int_t sys_rt_sigpending(addr_t set_addr) {
+    STRACE("rt_sigpending(%#x)");
     if (user_put(set_addr, current->pending))
         return _EFAULT;
     return 0;
