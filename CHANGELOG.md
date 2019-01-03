@@ -5,6 +5,7 @@
 - zsh
 - Background jobs (Ctrl-Z, bg, fg, etc)
 - ~10% performance improvement from correctly tracking the last JIT block
+- Option in settings to change launch command (also general settings reorganization)
 ### Fixed
 - Rounding error when adding 18446744073709551616 and 1.5
 - Crash when trying to run top
@@ -12,6 +13,7 @@
 - Make a test network connection on startup, to hopefully fix network permission popup not appearing on devices sold in China
 - Crash when running a script with a #! line pointing to a nonexistent file
 - ^C not appearing when you press Ctrl-C and it kills the program
+- Arrow keys not working in some programs
 
 ## Build 40
 ### Fixed
