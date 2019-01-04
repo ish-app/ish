@@ -370,7 +370,7 @@ static void step_tracing(struct cpu_state *cpu, struct tlb *tlb, int pid, int se
             case 300: // fstatat64
                 pt_copy(pid, regs.rdx, sizeof(struct newstat64)); break;
             case 305: // readlinkat
-                pt_copy(pid, regs.rcx, cpu->eax); break;
+                if (cpu->eax < 0xffff000) pt_copy(pid, regs.rdx, cpu->eax); break;
             case 340: // prlimit
                 if (regs.rsi != 0) pt_copy(pid, regs.rsi, sizeof(struct rlimit_)); break;
             case 355: // getrandom
@@ -393,6 +393,7 @@ static void step_tracing(struct cpu_state *cpu, struct tlb *tlb, int pid, int se
             case 174: // rt_sigaction
             case 175: // rt_sigprocmask
             case 243: // set_thread_area
+                //regs.rax = cpu->eax;
                 goto do_step;
         }
         regs.rax = cpu->eax;
@@ -454,7 +455,10 @@ static void prepare_tracee(int pid) {
 }
 
 int main(int argc, char *const argv[]) {
-    int err = xX_main_Xx(argc, argv, NULL);
+    char *const *envp = NULL;
+    if (getenv("TERM"))
+        envp = (char *[]) {getenv("TERM") - strlen("TERM") - 1, NULL};
+    int err = xX_main_Xx(argc, argv, envp);
     if (err < 0) {
         fprintf(stderr, "%s\n", strerror(-err));
         return err;
