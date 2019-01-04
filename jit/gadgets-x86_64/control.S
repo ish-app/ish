@@ -66,7 +66,7 @@
 .macro do_jump cond, target
     # please tell me if you know a better way
     .ifc \cond,o
-        cmpb $0, CPU_cf(%_cpu)
+        cmpb $0, CPU_of(%_cpu)
         jnz \target
     .else; .ifc \cond,c
         check_cf
