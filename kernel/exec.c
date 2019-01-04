@@ -159,8 +159,9 @@ static int elf_exec(struct fd *fd, const char *file, char *const argv[], char *c
     // from this point on, if any error occurs the process will have to be
     // killed before it even starts. please don't be too sad about it, it's
     // just a process.
-    mem_release(current->mem);
-    current->mem = current->cpu.mem = mem_new();
+    mm_release(current->mm);
+    current->mm = mm_new();
+    current->mem = current->cpu.mem = &current->mm->mem;
     write_wrlock(&current->mem->lock);
 
     addr_t load_addr; // used for AX_PHDR
@@ -186,8 +187,8 @@ static int elf_exec(struct fd *fd, const char *file, char *const argv[], char *c
 
         // we have to know where the brk starts
         addr_t brk = bias + ph[i].vaddr + ph[i].memsize;
-        if (brk > current->mem->start_brk)
-            current->mem->start_brk = current->mem->brk = BYTES_ROUND_UP(brk);
+        if (brk > current->mm->start_brk)
+            current->mm->start_brk = current->mm->brk = BYTES_ROUND_UP(brk);
     }
 
     addr_t entry = bias + header.entry_point;
@@ -229,8 +230,8 @@ static int elf_exec(struct fd *fd, const char *file, char *const argv[], char *c
         goto beyond_hope;
     if ((err = pt_map(current->mem, vdso_page, vdso_pages, (void *) vdso_data, 0)) < 0)
         goto beyond_hope;
-    current->mem->vdso = vdso_page << PAGE_BITS;
-    addr_t vdso_entry = current->mem->vdso + ((struct elf_header *) vdso_data)->entry_point;
+    current->mm->vdso = vdso_page << PAGE_BITS;
+    addr_t vdso_entry = current->mm->vdso + ((struct elf_header *) vdso_data)->entry_point;
 
     // map 3 empty "vvar" pages to satisfy ptraceomatic
     page_t vvar_page = pt_find_hole(current->mem, 3);
@@ -282,7 +283,7 @@ static int elf_exec(struct fd *fd, const char *file, char *const argv[], char *c
     // declare elf aux now so we can know how big it is
     struct aux_ent aux[] = {
         {AX_SYSINFO, vdso_entry},
-        {AX_SYSINFO_EHDR, current->mem->vdso},
+        {AX_SYSINFO_EHDR, current->mm->vdso},
         {AX_HWCAP, 0x00000000}, // suck that
         {AX_PAGESZ, PAGE_SIZE},
         {AX_CLKTCK, 0x64},

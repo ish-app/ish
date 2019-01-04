@@ -3,6 +3,7 @@
 
 #include <pthread.h>
 #include "emu/cpu.h"
+#include "kernel/mm.h"
 #include "kernel/fs.h"
 #include "kernel/signal.h"
 #include "kernel/resource.h"
@@ -14,7 +15,8 @@
 // locking, unless otherwise specified
 struct task {
     struct cpu_state cpu;
-    struct mem *mem;
+    struct mm *mm;
+    struct mem *mem; // copy of cpu.mem, for convenience
     pthread_t thread;
     uint64_t threadid;
 

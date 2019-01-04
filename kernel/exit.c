@@ -1,6 +1,7 @@
 #include <pthread.h>
 #include <signal.h>
 #include "kernel/calls.h"
+#include "kernel/mm.h"
 #include "kernel/futex.h"
 #include "fs/fd.h"
 
@@ -22,7 +23,7 @@ static bool exit_tgroup(struct task *task) {
 }
 
 noreturn void do_exit(int status) {
-    // has to happen before mem_release
+    // has to happen before mm_release
     addr_t clear_tid = current->clear_tid;
     if (clear_tid) {
         pid_t_ zero = 0;
@@ -31,7 +32,7 @@ noreturn void do_exit(int status) {
     }
 
     // release all our resources
-    mem_release(current->mem);
+    mm_release(current->mm);
     fdtable_release(current->files);
     fs_info_release(current->fs);
     sighand_release(current->sighand);

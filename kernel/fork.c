@@ -3,6 +3,7 @@
 #include "fs/fd.h"
 #include "kernel/calls.h"
 #include "fs/tty.h"
+#include "kernel/mm.h"
 
 #define CSIGNAL_ 0x000000ff
 #define CLONE_VM_ 0x00000100
@@ -54,17 +55,18 @@ static int copy_task(struct task *task, dword_t flags, addr_t stack, addr_t ptid
         task->cpu.esp = stack;
 
     int err;
-    struct mem *mem = task->mem;
+    struct mm *mm = task->mm;
     if (flags & CLONE_VM_) {
-        mem_retain(mem);
+        mm_retain(mm);
     } else {
-        task->mem = task->cpu.mem = mem_new();
-        task->mem->vdso = mem->vdso;
-        task->mem->brk = mem->brk;
-        task->mem->start_brk = mem->start_brk;
-        write_wrlock(&mem->lock);
-        pt_copy_on_write(mem, 0, task->mem, 0, MEM_PAGES);
-        write_wrunlock(&mem->lock);
+        task->mm = mm_new();
+        task->mem = task->cpu.mem = &task->mm->mem;
+        task->mm->vdso = mm->vdso;
+        task->mm->brk = mm->brk;
+        task->mm->start_brk = mm->start_brk;
+        write_wrlock(&mm->mem.lock);
+        pt_copy_on_write(&mm->mem, 0, task->mem, 0, MEM_PAGES);
+        write_wrunlock(&mm->mem.lock);
     }
 
     if (flags & CLONE_FILES_) {
@@ -133,7 +135,7 @@ fail_free_fs:
 fail_free_files:
     fdtable_release(task->files);
 fail_free_mem:
-    mem_release(task->mem);
+    mm_release(task->mm);
     return err;
 }
 

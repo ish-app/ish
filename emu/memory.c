@@ -14,42 +14,29 @@
 // increment the change count
 static void mem_changed(struct mem *mem);
 
-struct mem *mem_new() {
-    struct mem *mem = malloc(sizeof(struct mem));
-    if (mem == NULL)
-        return NULL;
-    mem->refcount = 1;
+void mem_init(struct mem *mem) {
     mem->pgdir = calloc(MEM_PGDIR_SIZE, sizeof(struct pt_entry *));
     mem->pgdir_used = 0;
     mem->changes = 0;
-    mem->start_brk = mem->brk = 0; // should get overwritten by exec
 #if JIT
     mem->jit = jit_new(mem);
 #endif
     wrlock_init(&mem->lock);
-    return mem;
 }
 
-void mem_retain(struct mem *mem) {
-    mem->refcount++;
-}
-
-void mem_release(struct mem *mem) {
-    if (--mem->refcount == 0) {
-        write_wrlock(&mem->lock);
-        pt_unmap(mem, 0, MEM_PAGES, PT_FORCE);
+void mem_destroy(struct mem *mem) {
+    write_wrlock(&mem->lock);
+    pt_unmap(mem, 0, MEM_PAGES, PT_FORCE);
 #if JIT
-        jit_free(mem->jit);
+    jit_free(mem->jit);
 #endif
-        for (int i = 0; i < MEM_PGDIR_SIZE; i++) {
-            if (mem->pgdir[i] != NULL)
-                free(mem->pgdir[i]);
-        }
-        free(mem->pgdir);
-        write_wrunlock(&mem->lock);
-        wrlock_destroy(&mem->lock);
-        free(mem);
+    for (int i = 0; i < MEM_PGDIR_SIZE; i++) {
+        if (mem->pgdir[i] != NULL)
+            free(mem->pgdir[i]);
     }
+    free(mem->pgdir);
+    write_wrunlock(&mem->lock);
+    wrlock_destroy(&mem->lock);
 }
 
 #define PGDIR_TOP(page) ((page) >> 10)

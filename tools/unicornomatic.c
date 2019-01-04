@@ -164,7 +164,7 @@ static void _mem_sync(struct tlb *tlb, uc_engine *uc, addr_t addr, dword_t size)
 #define mem_sync(addr, size) _mem_sync(tlb, uc, addr, size)
 void step_tracing(struct cpu_state *cpu, struct tlb *tlb, uc_engine *uc) {
     // step ish
-    addr_t old_brk = current->mem->brk; // this is important
+    addr_t old_brk = current->mm->brk; // this is important
     int changes = cpu->mem->changes;
     int interrupt = cpu_step32(cpu, tlb);
     if (interrupt != INT_NONE) {
@@ -309,11 +309,11 @@ void step_tracing(struct cpu_state *cpu, struct tlb *tlb, uc_engine *uc) {
                 break;
 
             case 45: // brk
-                // matches up with the login in kernel/mmap.c
-                if (current->mem->brk > old_brk) {
-                    uc_map(uc, BYTES_ROUND_UP(old_brk), BYTES_ROUND_UP(current->mem->brk) - BYTES_ROUND_UP(old_brk));
-                } else if (current->mem->brk < old_brk) {
-                    uc_unmap(uc, BYTES_ROUND_DOWN(current->mem->brk), BYTES_ROUND_DOWN(old_brk) - BYTES_ROUND_DOWN(current->mem->brk));
+                // matches up with the logic in kernel/mmap.c
+                if (current->mm->brk > old_brk) {
+                    uc_map(uc, BYTES_ROUND_UP(old_brk), BYTES_ROUND_UP(current->mm->brk) - BYTES_ROUND_UP(old_brk));
+                } else if (current->mm->brk < old_brk) {
+                    uc_unmap(uc, BYTES_ROUND_DOWN(current->mm->brk), BYTES_ROUND_DOWN(old_brk) - BYTES_ROUND_DOWN(current->mm->brk));
                 }
                 break;
 
@@ -450,7 +450,7 @@ int main(int argc, char *const argv[]) {
     }
 
     // create a unicorn and set it up exactly the same as the current process
-    uc_engine *uc = start_unicorn(&current->cpu, current->mem);
+    uc_engine *uc = start_unicorn(&current->cpu, &current->mm->mem);
 
     struct cpu_state *cpu = &current->cpu;
     struct tlb tlb;

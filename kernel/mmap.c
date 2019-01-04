@@ -4,6 +4,28 @@
 #include "kernel/task.h"
 #include "fs/fd.h"
 #include "emu/memory.h"
+#include "kernel/mm.h"
+
+struct mm *mm_new() {
+    struct mm *mm = malloc(sizeof(struct mm));
+    if (mm == NULL)
+        return NULL;
+    mem_init(&mm->mem);
+    mm->start_brk = mm->brk = 0; // should get overwritten by exec
+    mm->refcount = 1;
+    return mm;
+}
+
+void mm_retain(struct mm *mm) {
+    mm->refcount++;
+}
+
+void mm_release(struct mm *mm) {
+    if (--mm->refcount == 0) {
+        mem_destroy(&mm->mem);
+        free(mm);
+    }
+}
 
 static addr_t do_mmap(addr_t addr, dword_t len, dword_t prot, dword_t flags, fd_t fd_no, dword_t offset) {
     int err;
@@ -148,34 +170,34 @@ int_t sys_mlock(addr_t addr, dword_t len) {
 
 addr_t sys_brk(addr_t new_brk) {
     STRACE("brk(0x%x)", new_brk);
-    struct mem *mem = current->mem;
+    struct mm *mm = current->mm;
 
-    if (new_brk != 0 && new_brk < mem->start_brk)
+    if (new_brk != 0 && new_brk < mm->start_brk)
         return _EINVAL;
-    write_wrlock(&mem->lock);
-    addr_t old_brk = mem->brk;
+    write_wrlock(&mm->mem.lock);
+    addr_t old_brk = mm->brk;
     if (new_brk == 0) {
-        write_wrunlock(&mem->lock);
+        write_wrunlock(&mm->mem.lock);
         return old_brk;
     }
     // TODO check for not going too high
 
     if (new_brk > old_brk) {
         // expand heap: map region from old_brk to new_brk
-        int err = pt_map_nothing(mem, PAGE_ROUND_UP(old_brk),
+        int err = pt_map_nothing(&mm->mem, PAGE_ROUND_UP(old_brk),
                 PAGE_ROUND_UP(new_brk) - PAGE_ROUND_UP(old_brk), P_WRITE);
         if (err < 0) {
-            write_wrunlock(&mem->lock);
+            write_wrunlock(&mm->mem.lock);
             return err;
         }
     } else if (new_brk < old_brk) {
         // shrink heap: unmap region from new_brk to old_brk
         // first page to unmap is PAGE(new_brk)
         // last page to unmap is PAGE(old_brk)
-        pt_unmap(mem, PAGE(new_brk), PAGE(old_brk), PT_FORCE);
+        pt_unmap(&mm->mem, PAGE(new_brk), PAGE(old_brk), PT_FORCE);
     }
 
-    mem->brk = new_brk;
-    write_wrunlock(&mem->lock);
+    mm->brk = new_brk;
+    write_wrunlock(&mm->mem.lock);
     return new_brk;
 }

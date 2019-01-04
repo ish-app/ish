@@ -153,7 +153,7 @@ static void receive_signal(struct sighand *sighand, int sig) {
     if (sigreturn_addr == 0) {
         die("sigreturn not found in vdso, this should never happen");
     }
-    frame.pretcode = current->mem->vdso + sigreturn_addr;
+    frame.pretcode = current->mm->vdso + sigreturn_addr;
     // for legacy purposes
     frame.retcode.popmov = 0xb858;
     frame.retcode.nr_sigreturn = 173; // rt_sigreturn
