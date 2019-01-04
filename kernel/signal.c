@@ -165,7 +165,7 @@ static void receive_signal(struct sighand *sighand, int sig) {
 
     dword_t sp = cpu->esp;
     if (sighand->altstack) {
-        sp = sighand->altstack;
+        sp = sighand->altstack + sighand->altstack_size;
         sighand->on_altstack = true;
     }
     if (xsave_extra) {
