@@ -332,21 +332,24 @@ dword_t sys_rt_sigprocmask(dword_t how, addr_t set_addr, addr_t oldset_addr, dwo
     if (size != sizeof(sigset_t_))
         return _EINVAL;
 
-    sigset_t_ set, oldset;
-    if (user_get(set_addr, set))
-        return _EFAULT;
-    STRACE("rt_sigprocmask(%s, 0x%llx, 0x%x, %d)",
+    sigset_t_ set;
+    if (set_addr != 0)
+        if (user_get(set_addr, set))
+            return _EFAULT;
+    STRACE("rt_sigprocmask(%s, %#llx, %#x, %d)",
             how == SIG_BLOCK_ ? "SIG_BLOCK" :
             how == SIG_UNBLOCK_ ? "SIG_UNBLOCK" :
             how == SIG_SETMASK_ ? "SIG_SETMASK" : "??",
-            (long long) set, oldset_addr, size);
+            set_addr != 0 ? (long long) set : -1, oldset_addr, size);
 
-    int err = do_sigprocmask(how, set, &oldset);
-    if (err < 0)
-        return err;
     if (oldset_addr != 0)
-        if (user_put(oldset_addr, oldset))
+        if (user_put(oldset_addr, current->blocked))
             return _EFAULT;
+    if (set_addr != 0) {
+        int err = do_sigprocmask(how, set, NULL);
+        if (err < 0)
+            return err;
+    }
     return 0;
 }
 
