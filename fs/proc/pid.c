@@ -100,7 +100,7 @@ static bool proc_pid_fd_readdir(struct proc_entry *entry, int *index, struct pro
         return _ESRCH;
     }
     lock(&task->files->lock);
-    while (task->files->files[*index] == NULL && *index < task->files->size)
+    while (*index < task->files->size && task->files->files[*index] == NULL)
         (*index)++;
     fd_t f = (*index)++;
     bool any_left = f < task->files->size;
