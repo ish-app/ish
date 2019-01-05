@@ -130,13 +130,13 @@ static int proc_pid_fd_readlink(struct proc_entry *entry, char *buf) {
 }
 
 struct proc_dir_entry proc_pid_entries[] = {
-    {2, "stat", .show = proc_pid_stat_show},
-    {3, "fd", S_IFDIR, .readdir = proc_pid_fd_readdir},
+    {"stat", .show = proc_pid_stat_show},
+    {"fd", S_IFDIR, .readdir = proc_pid_fd_readdir},
 };
 
-struct proc_dir_entry proc_pid = {1, NULL, S_IFDIR,
+struct proc_dir_entry proc_pid = {NULL, S_IFDIR,
     .children = proc_pid_entries, .children_sizeof = sizeof(proc_pid_entries),
     .getname = proc_pid_getname};
 
-static struct proc_dir_entry proc_pid_fd = {0, NULL, S_IFLNK,
+static struct proc_dir_entry proc_pid_fd = {NULL, S_IFLNK | 0777,
     .getname = proc_pid_fd_getname, .readlink = proc_pid_fd_readlink};

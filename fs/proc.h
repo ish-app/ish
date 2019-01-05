@@ -11,7 +11,6 @@ struct proc_entry {
 };
 
 struct proc_dir_entry {
-    int inode;
     const char *name;
     mode_t_ mode;
 
@@ -33,6 +32,7 @@ struct proc_dir_entry {
     bool (*readdir)(struct proc_entry *entry, int *index, struct proc_entry *next_entry);
 
     struct proc_dir_entry *parent;
+    int inode;
 };
 
 extern struct proc_dir_entry proc_root;

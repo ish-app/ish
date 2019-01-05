@@ -23,9 +23,9 @@ static int proc_readlink_self(struct proc_entry *entry, char *buf) {
 
 // in no particular order
 struct proc_dir_entry proc_root_entries[] = {
-    {2, "version", .show = proc_show_version},
-    {3, "stat", .show = proc_show_stat},
-    {10, "self", S_IFLNK, .readlink = proc_readlink_self},
+    {"version", .show = proc_show_version},
+    {"stat", .show = proc_show_stat},
+    {"self", S_IFLNK, .readlink = proc_readlink_self},
 };
 #define PROC_ROOT_LEN sizeof(proc_root_entries)/sizeof(proc_root_entries[0])
 
@@ -54,4 +54,4 @@ static bool proc_root_readdir(struct proc_entry *entry, int *index, struct proc_
     return false;
 }
 
-struct proc_dir_entry proc_root = {1, NULL, S_IFDIR, .readdir = proc_root_readdir};
+struct proc_dir_entry proc_root = {NULL, S_IFDIR, .readdir = proc_root_readdir};
