@@ -8,13 +8,21 @@ static void proc_pid_getname(struct proc_entry *entry, char *buf) {
     sprintf(buf, "%d", entry->pid);
 }
 
-static ssize_t proc_pid_stat_show(struct proc_entry *entry, char *buf) {
+static struct task *proc_get_task(struct proc_entry *entry) {
     lock(&pids_lock);
     struct task *task = pid_get_task(entry->pid);
-    if (task == NULL) {
+    if (task == NULL)
         unlock(&pids_lock);
+    return task;
+}
+static void proc_put_task(struct task *task) {
+    unlock(&pids_lock);
+}
+
+static ssize_t proc_pid_stat_show(struct proc_entry *entry, char *buf) {
+    struct task *task = proc_get_task(entry);
+    if (task == NULL)
         return _ESRCH;
-    }
     lock(&task->general_lock);
     lock(&task->group->lock);
     lock(&task->sighand->lock);
@@ -86,26 +94,34 @@ static ssize_t proc_pid_stat_show(struct proc_entry *entry, char *buf) {
     unlock(&task->sighand->lock);
     unlock(&task->group->lock);
     unlock(&task->general_lock);
-    unlock(&pids_lock);
+    proc_put_task(task);
     return n;
+}
+
+static ssize_t proc_pid_cmdline_show(struct proc_entry *entry, char *buf) {
+    struct task *task = proc_get_task(entry);
+    if (task == NULL)
+        return _ESRCH;
+    size_t size = task->mm->argv_end - task->mm->argv_start;
+    if (user_read_task(task, task->mm->argv_start, buf, size))
+        return 0;
+    proc_put_task(task);
+    return size;
 }
 
 static struct proc_dir_entry proc_pid_fd;
 
 static bool proc_pid_fd_readdir(struct proc_entry *entry, int *index, struct proc_entry *next_entry) {
-    lock(&pids_lock);
-    struct task *task = pid_get_task(entry->pid);
-    if (task == NULL) {
-        unlock(&pids_lock);
+    struct task *task = proc_get_task(entry);
+    if (task == NULL)
         return _ESRCH;
-    }
     lock(&task->files->lock);
     while (*index < task->files->size && task->files->files[*index] == NULL)
         (*index)++;
     fd_t f = (*index)++;
     bool any_left = f < task->files->size;
     unlock(&task->files->lock);
-    unlock(&pids_lock);
+    proc_put_task(task);
     *next_entry = (struct proc_entry) {&proc_pid_fd, .pid = entry->pid, .fd = f};
     return any_left;
 }
@@ -115,28 +131,36 @@ static void proc_pid_fd_getname(struct proc_entry *entry, char *buf) {
 }
 
 static int proc_pid_fd_readlink(struct proc_entry *entry, char *buf) {
-    lock(&pids_lock);
-    struct task *task = pid_get_task(entry->pid);
-    if (task == NULL) {
-        unlock(&pids_lock);
+    struct task *task = proc_get_task(entry);
+    if (task == NULL)
         return _ESRCH;
-    }
     lock(&task->files->lock);
     struct fd *fd = fdtable_get(task->files, entry->fd);
-    generic_getpath(fd, buf);
+    int err = generic_getpath(fd, buf);
     unlock(&task->files->lock);
-    unlock(&pids_lock);
-    return 0;
+    proc_put_task(task);
+    return err;
+}
+
+static int proc_pid_exe_readlink(struct proc_entry *entry, char *buf) {
+    struct task *task = proc_get_task(entry);
+    if (task == NULL)
+        return _ESRCH;
+    int err = generic_getpath(task->mm->exefile, buf);
+    proc_put_task(task);
+    return err;
 }
 
 struct proc_dir_entry proc_pid_entries[] = {
     {"stat", .show = proc_pid_stat_show},
+    {"cmdline", .show = proc_pid_cmdline_show},
     {"fd", S_IFDIR, .readdir = proc_pid_fd_readdir},
+    {"exe", S_IFLNK, .readlink = proc_pid_exe_readlink},
 };
 
 struct proc_dir_entry proc_pid = {NULL, S_IFDIR,
     .children = proc_pid_entries, .children_sizeof = sizeof(proc_pid_entries),
     .getname = proc_pid_getname};
 
-static struct proc_dir_entry proc_pid_fd = {NULL, S_IFLNK | 0777,
+static struct proc_dir_entry proc_pid_fd = {NULL, S_IFLNK,
     .getname = proc_pid_fd_getname, .readlink = proc_pid_fd_readlink};

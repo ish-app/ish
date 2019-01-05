@@ -8,9 +8,12 @@ mode_t_ proc_entry_mode(struct proc_entry *entry) {
     if ((mode & S_IFMT) == 0)
         mode |= S_IFREG;
     if ((mode & 0777) == 0) {
-        mode |= 0444;
-        if (S_ISDIR(mode))
-            mode |= 0111;
+        if (S_ISREG(mode))
+            mode |= 0444;
+        else if (S_ISDIR(mode))
+            mode |= 0555;
+        else if (S_ISLNK(mode))
+            mode |= 0777;
     }
     return mode;
 }

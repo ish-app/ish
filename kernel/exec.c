@@ -164,6 +164,8 @@ static int elf_exec(struct fd *fd, const char *file, char *const argv[], char *c
     current->mem = current->cpu.mem = &current->mm->mem;
     write_wrlock(&current->mem->lock);
 
+    current->mm->exefile = fd_retain(fd);
+
     addr_t load_addr; // used for AX_PHDR
     bool load_addr_set = false;
     addr_t bias = 0; // offset for loading shared libraries as executables
@@ -261,9 +263,11 @@ static int elf_exec(struct fd *fd, const char *file, char *const argv[], char *c
     addr_t envp_addr = sp = copy_strings(sp, envp);
     if (sp == 0)
         goto beyond_hope;
+    current->mm->argv_end = sp;
     addr_t argv_addr = sp = copy_strings(sp, argv);
     if (sp == 0)
         goto beyond_hope;
+    current->mm->argv_start = sp;
     sp = align_stack(sp);
 
     addr_t platform_addr = sp = copy_string(sp, "i686");

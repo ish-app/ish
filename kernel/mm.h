@@ -12,6 +12,13 @@ struct mm {
     addr_t vdso; // immutable
     addr_t start_brk; // immutable
     addr_t brk;
+
+    // crap for procfs
+    addr_t argv_start;
+    addr_t argv_end;
+    addr_t env_start;
+    addr_t env_end;
+    struct fd *exefile;
 };
 
 // Create a new address space
