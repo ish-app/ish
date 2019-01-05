@@ -21,7 +21,7 @@ struct select_context {
     char *writefds;
     char *exceptfds;
 };
-static int select_event_callback(void *context, struct fd *fd, int types, union poll_fd_info info) {
+static int select_event_callback(void *context, int types, union poll_fd_info info) {
     struct select_context *c = context;
     if (types & SELECT_READ)
         bit_set(info.fd, c->readfds);
@@ -100,13 +100,13 @@ struct poll_context {
     int nfds;
 };
 #define POLL_ALWAYS_LISTENING (POLL_ERR|POLL_HUP|POLL_NVAL)
-static int poll_event_callback(void *context, struct fd *fd, int types, union poll_fd_info info) {
+static int poll_event_callback(void *context, int types, union poll_fd_info info) {
     struct poll_context *c = context;
     struct pollfd_ *polls = c->polls;
     int nfds = c->nfds;
     int res = 0;
     for (int i = 0; i < nfds; i++) {
-        if (f_get(polls[i].fd) == fd) {
+        if (f_get(polls[i].fd) == info.ptr) {
             polls[i].revents = types & (polls[i].events | POLL_ALWAYS_LISTENING);
             res = 1;
         }
@@ -149,7 +149,7 @@ dword_t sys_poll(addr_t fds, dword_t nfds, dword_t timeout) {
             }
         }
 
-        poll_add_fd(poll, fd, events | POLL_ALWAYS_LISTENING, (union poll_fd_info) 0);
+        poll_add_fd(poll, fd, events | POLL_ALWAYS_LISTENING, (union poll_fd_info) (void *) fd);
     }
 
     for (int i = 0; i < nfds; i++) {

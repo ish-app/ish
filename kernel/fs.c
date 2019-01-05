@@ -325,7 +325,7 @@ out:
 static int fd_ioctl(struct fd *fd, dword_t cmd, dword_t arg) {
     if (!fd->ops->ioctl_size)
         return _EINVAL;
-    ssize_t size = fd->ops->ioctl_size(fd, cmd);
+    ssize_t size = fd->ops->ioctl_size(cmd);
     if (size < 0) {
         printk("unknown ioctl %x\n", cmd);
         return _EINVAL;

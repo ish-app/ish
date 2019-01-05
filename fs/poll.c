@@ -148,7 +148,7 @@ int poll_wait(struct poll *poll_, poll_callback_t callback, void *context, struc
             if (poll_types) {
                 // POLLNVAL should only be returned by poll() when given a bad fd
                 assert(!(poll_types & POLL_NVAL));
-                if (callback(context, fd, poll_types, poll_fd->info) == 1)
+                if (callback(context, poll_types, poll_fd->info) == 1)
                     res++;
             }
         }

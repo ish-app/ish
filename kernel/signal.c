@@ -220,7 +220,7 @@ struct sighand *sighand_copy(struct sighand *sighand) {
 }
 
 void sighand_release(struct sighand *sighand) {
-    if (--sighand->refcount== 0) {
+    if (--sighand->refcount == 0) {
         free(sighand);
     }
 }

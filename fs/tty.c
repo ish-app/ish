@@ -73,13 +73,13 @@ void tty_release(struct tty *tty) {
 }
 
 static void tty_set_controlling(struct tgroup *group, struct tty *tty) {
-    lock(&current->group->lock);
-    if (current->group->tty == NULL) {
-        current->group->tty = tty;
-        tty->session = current->group->sid;
-        tty->fg_group = current->group->pgid;
+    lock(&group->lock);
+    if (group->tty == NULL) {
+        group->tty = tty;
+        tty->session = group->sid;
+        tty->fg_group = group->pgid;
     }
-    unlock(&current->group->lock);
+    unlock(&group->lock);
 }
 
 static int tty_open(int major, int minor, int type, struct fd *fd) {
@@ -375,7 +375,7 @@ static int tty_poll(struct fd *fd) {
 #define TCOFLUSH_ 1
 #define TCIOFLUSH_ 2
 
-static ssize_t tty_ioctl_size(struct fd *fd, int cmd) {
+static ssize_t tty_ioctl_size(int cmd) {
     switch (cmd) {
         case TCGETS_: case TCSETS_: case TCSETSF_: case TCSETSW_:
             return sizeof(struct termios_);

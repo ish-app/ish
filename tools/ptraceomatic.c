@@ -310,7 +310,7 @@ static void step_tracing(struct cpu_state *cpu, struct tlb *tlb, int pid, int se
             case 54: { // ioctl (god help us)
                 struct fd *fd = f_get(cpu->ebx);
                 if (fd && fd->ops->ioctl_size) {
-                    ssize_t ioctl_size = fd->ops->ioctl_size(fd, cpu->ecx);
+                    ssize_t ioctl_size = fd->ops->ioctl_size(cpu->ecx);
                     if (ioctl_size >= 0)
                         pt_copy(pid, regs.rdx, ioctl_size);
                 }

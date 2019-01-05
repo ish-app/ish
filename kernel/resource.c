@@ -11,7 +11,7 @@
 #include "kernel/calls.h"
 
 struct rlimit_ rlimit_get(struct task *task, int resource) {
-    struct tgroup *group = current->group;
+    struct tgroup *group = task->group;
     lock(&group->lock);
     struct rlimit_ limit = group->limits[resource];
     unlock(&group->lock);
@@ -19,7 +19,7 @@ struct rlimit_ rlimit_get(struct task *task, int resource) {
 }
 
 void rlimit_set(struct task *task, int resource, struct rlimit_ limit) {
-    struct tgroup *group = current->group;
+    struct tgroup *group = task->group;
     lock(&group->lock);
     group->limits[resource] = limit;
     unlock(&group->lock);

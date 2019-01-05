@@ -66,7 +66,7 @@ struct epoll_context {
     int max_events;
 };
 
-static int epoll_callback(void *context, struct fd *fd, int types, union poll_fd_info info) {
+static int epoll_callback(void *context, int types, union poll_fd_info info) {
     struct epoll_context *c = context;
     if (c->n >= c->max_events)
         return 0;

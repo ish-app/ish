@@ -101,7 +101,7 @@ struct fd_ops {
 
     // returns the size needed for the output of ioctl, 0 if the arg is not a
     // pointer, -1 for invalid command
-    ssize_t (*ioctl_size)(struct fd *fd, int cmd);
+    ssize_t (*ioctl_size)(int cmd);
     // if ioctl_size returns non-zero, arg must point to ioctl_size valid bytes
     int (*ioctl)(struct fd *fd, int cmd, void *arg);
 
