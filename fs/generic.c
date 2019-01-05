@@ -81,7 +81,7 @@ int generic_getpath(struct fd *fd, char *buf) {
     return 0;
 }
 
-int generic_accessat(struct fd *dirfd, const char *path_raw, int mode) {
+int generic_accessat(struct fd *dirfd, const char *path_raw, int UNUSED(mode)) {
     char path[MAX_PATH];
     int err = path_normalize(dirfd, path_raw, path, true);
     if (err < 0)

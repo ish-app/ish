@@ -333,12 +333,12 @@ void step_tracing(struct cpu_state *cpu, struct tlb *tlb, uc_engine *uc) {
     }
 }
 
-static void uc_interrupt_callback(uc_engine *uc, uint32_t interrupt, void *user_data) {
+static void uc_interrupt_callback(uc_engine *uc, uint32_t interrupt, void *UNUSED(user_data)) {
     uc_interrupt = interrupt;
     uc_emu_stop(uc);
 }
 
-static bool uc_unmapped_callback(uc_engine *uc, uc_mem_type type, uint64_t address, int size, int64_t value, void *user_data) {
+static bool uc_unmapped_callback(uc_engine *uc, uc_mem_type UNUSED(type), uint64_t address, int size, int64_t UNUSED(value), void *UNUSED(user_data)) {
     struct pt_entry *pt = mem_pt(current->mem, PAGE(address));
     // handle stack growing
     if (pt != NULL && pt->flags & P_GROWSDOWN) {

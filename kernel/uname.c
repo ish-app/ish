@@ -28,7 +28,7 @@ dword_t sys_uname(addr_t uts_addr) {
     return 0;
 }
 
-dword_t sys_sethostname(addr_t hostname_addr, dword_t hostname_len) {
+dword_t sys_sethostname(addr_t UNUSED(hostname_addr), dword_t UNUSED(hostname_len)) {
     return _EPERM;
 }
 

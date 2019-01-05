@@ -273,7 +273,7 @@ static int realfs_symlink(struct mount *mount, const char *target, const char *l
     return err;
 }
 
-static int realfs_mknod(struct mount *mount, const char *path, mode_t_ mode, dev_t_ dev) {
+static int realfs_mknod(struct mount *mount, const char *path, mode_t_ mode, dev_t_ UNUSED(dev)) {
     int err;
     if (S_ISFIFO(mode)) {
         lock_fchdir(mount->root_fd);
@@ -372,7 +372,7 @@ int realfs_flock(struct fd *fd, int operation) {
     return flock(fd->real_fd, real_op);
 }
 
-int realfs_statfs(struct mount *mount, struct statfsbuf *stat) {
+int realfs_statfs(struct mount *UNUSED(mount), struct statfsbuf *stat) {
     stat->namelen = NAME_MAX;
     stat->bsize = PAGE_SIZE;
     return 0;

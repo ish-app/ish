@@ -225,7 +225,7 @@ void sighand_release(struct sighand *sighand) {
     }
 }
 
-dword_t sys_rt_sigreturn(dword_t sig) {
+dword_t sys_rt_sigreturn(dword_t UNUSED(sig)) {
     struct cpu_state *cpu = &current->cpu;
     struct sigframe_ frame;
     // skip the first two fields of the frame

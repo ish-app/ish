@@ -68,7 +68,7 @@ dword_t sys_clock_getres(dword_t clock, addr_t res_addr) {
     return 0;
 }
 
-dword_t sys_clock_settime(dword_t clock, addr_t tp) {
+dword_t sys_clock_settime(dword_t UNUSED(clock), addr_t UNUSED(tp)) {
     return _EPERM;
 }
 
@@ -177,7 +177,7 @@ dword_t sys_gettimeofday(addr_t tv, addr_t tz) {
     return 0;
 }
 
-dword_t sys_settimeofday(addr_t tv, addr_t tz) {
+dword_t sys_settimeofday(addr_t UNUSED(tv), addr_t UNUSED(tz)) {
     return _EPERM;
 }
 

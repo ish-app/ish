@@ -105,7 +105,7 @@ notty:
     return 0;
 }
 
-ssize_t real_tty_write(struct tty *tty, const void *buf, size_t len) {
+ssize_t real_tty_write(struct tty *UNUSED(tty), const void *buf, size_t len) {
     return write(STDOUT_FILENO, buf, len);
 }
 

@@ -15,7 +15,7 @@ static struct task *proc_get_task(struct proc_entry *entry) {
         unlock(&pids_lock);
     return task;
 }
-static void proc_put_task(struct task *task) {
+static void proc_put_task(struct task *UNUSED(task)) {
     unlock(&pids_lock);
 }
 

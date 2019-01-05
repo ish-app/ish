@@ -47,7 +47,7 @@ found:
 
 extern const struct fd_ops procfs_fdops;
 
-static struct fd *proc_open(struct mount *mount, const char *path, int flags, int mode) {
+static struct fd *proc_open(struct mount *UNUSED(mount), const char *path, int UNUSED(flags), int UNUSED(mode)) {
     struct proc_entry entry;
     int err = proc_lookup(path, &entry);
     if (err < 0)
@@ -78,7 +78,7 @@ static int proc_getpath(struct fd *fd, char *buf) {
     return 0;
 }
 
-static int proc_stat(struct mount *mount, const char *path, struct statbuf *stat, bool follow_links) {
+static int proc_stat(struct mount *UNUSED(mount), const char *path, struct statbuf *stat, bool UNUSED(follow_links)) {
     struct proc_entry entry;
     int err = proc_lookup(path, &entry);
     if (err < 0)
@@ -176,7 +176,7 @@ const struct fd_ops procfs_fdops = {
     .seekdir = proc_seekdir,
 };
 
-static ssize_t proc_readlink(struct mount *mount, const char *path, char *buf, size_t bufsize) {
+static ssize_t proc_readlink(struct mount *UNUSED(mount), const char *path, char *buf, size_t bufsize) {
     struct proc_entry entry;
     int err = proc_lookup(path, &entry);
     if (err < 0)

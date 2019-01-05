@@ -38,13 +38,13 @@ struct dev_ops mem_dev = {
 };
 
 // begin inline devices
-static int null_open(int major, int minor, int type, struct fd *fd) {
+static int null_open(int UNUSED(major), int UNUSED(minor), int UNUSED(type), struct fd *UNUSED(fd)) {
     return 0;
 }
-static ssize_t null_read(struct fd *fd, void *buf, size_t bufsize) {
+static ssize_t null_read(struct fd *UNUSED(fd), void *UNUSED(buf), size_t UNUSED(bufsize)) {
     return 0;
 }
-static ssize_t null_write(struct fd *fd, const void *buf, size_t bufsize) {
+static ssize_t null_write(struct fd *UNUSED(fd), const void *UNUSED(buf), size_t bufsize) {
     return bufsize;
 }
 struct dev_ops null_dev = {
@@ -53,11 +53,11 @@ struct dev_ops null_dev = {
     .fd.write = null_write,
 };
 
-static ssize_t zero_read(struct fd *fd, void *buf, size_t bufsize) {
+static ssize_t zero_read(struct fd *UNUSED(fd), void *buf, size_t bufsize) {
     memset(buf, 0, bufsize);
     return bufsize;
 }
-static ssize_t zero_write(struct fd *fd, const void *buf, size_t bufsize) {
+static ssize_t zero_write(struct fd *UNUSED(fd), const void *UNUSED(buf), size_t bufsize) {
     return bufsize;
 }
 struct dev_ops zero_dev = {
@@ -66,7 +66,7 @@ struct dev_ops zero_dev = {
     .fd.write = zero_write,
 };
 
-static ssize_t full_write(struct fd *fd, const void *buf, size_t bufsize) {
+static ssize_t full_write(struct fd *UNUSED(fd), const void *UNUSED(buf), size_t UNUSED(bufsize)) {
     return _ENOSPC;
 }
 struct dev_ops full_dev = {
@@ -75,7 +75,7 @@ struct dev_ops full_dev = {
     .fd.write = full_write,
 };
 
-static ssize_t random_read(struct fd *fd, void *buf, size_t bufsize) {
+static ssize_t random_read(struct fd *UNUSED(fd), void *buf, size_t bufsize) {
     get_random(buf, bufsize);
     return bufsize;
 }
