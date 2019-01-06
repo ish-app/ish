@@ -1,3 +1,5 @@
+HOTFIX for zsh and a few others causing crashes, because my ring buffer was a little more segfaulty than I thought. Release notes for the last build are pasted below for your convenience.
+
 New stuff:
 - zsh
 - Background jobs (Ctrl-Z, bg, fg, etc)
