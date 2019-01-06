@@ -1,6 +1,11 @@
 # Changelog
 
-## Build 41 (unreleased)
+## Build 44
+### Fixed
+- Ring buffer sometimes segfaulting when it overflowed
+- zsh sometimes hanging in sigsuspend
+
+## Build 42
 ### New
 - zsh
 - Background jobs (Ctrl-Z, bg, fg, etc)
