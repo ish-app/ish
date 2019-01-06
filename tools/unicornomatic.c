@@ -165,7 +165,7 @@ static void _mem_sync(struct tlb *tlb, uc_engine *uc, addr_t addr, dword_t size)
 void step_tracing(struct cpu_state *cpu, struct tlb *tlb, uc_engine *uc) {
     // step ish
     addr_t old_brk = current->mm->brk; // this is important
-    int changes = cpu->mem->changes;
+    unsigned changes = cpu->mem->changes;
     int interrupt = cpu_step32(cpu, tlb);
     if (interrupt != INT_NONE) {
         cpu->trapno = interrupt;

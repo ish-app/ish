@@ -87,8 +87,8 @@ struct tty {
     int type;
     int num;
 
-    dword_t session;
-    dword_t fg_group;
+    pid_t_ session;
+    pid_t_ fg_group;
 
     struct list fds;
     // only locks fds, to keep the lock order

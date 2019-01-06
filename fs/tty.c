@@ -267,7 +267,7 @@ static void tty_read_into_buf(struct tty *tty, void *buf, size_t bufsize) {
     memmove(tty->buf_flag, tty->buf_flag + bufsize, tty->bufsize);
 }
 
-static ssize_t tty_canon_size(struct tty *tty) {
+static size_t tty_canon_size(struct tty *tty) {
     bool *flag_ptr = memchr(tty->buf_flag, true, tty->bufsize);
     if (flag_ptr == NULL)
         return -1;
@@ -281,8 +281,8 @@ static ssize_t tty_read(struct fd *fd, void *buf, size_t bufsize) {
     struct tty *tty = fd->tty;
     lock(&tty->lock);
     if (tty->termios.lflags & ICANON_) {
-        ssize_t canon_size = -1;
-        while ((canon_size = tty_canon_size(tty)) == -1) {
+        size_t canon_size = -1;
+        while ((canon_size = tty_canon_size(tty)) == (size_t) -1) {
             if (wait_for(&tty->produced, &tty->lock, NULL))
                 goto eintr;
         }
@@ -351,7 +351,7 @@ static int tty_poll(struct fd *fd) {
     lock(&tty->lock);
     int types = POLL_WRITE;
     if (tty->termios.lflags & ICANON_) {
-        if (tty_canon_size(tty) != -1)
+        if (tty_canon_size(tty) != (size_t) -1)
             types |= POLL_READ;
     } else {
         if (tty->bufsize > 0)

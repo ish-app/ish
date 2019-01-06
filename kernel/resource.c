@@ -79,7 +79,7 @@ struct rusage_ rusage_get_current() {
 #elif __APPLE__
     thread_basic_info_data_t info;
     mach_msg_type_number_t count = THREAD_BASIC_INFO_COUNT;
-    int err = thread_info(mach_thread_self(), THREAD_BASIC_INFO, (thread_info_t) &info, &count);
+    thread_info(mach_thread_self(), THREAD_BASIC_INFO, (thread_info_t) &info, &count);
     rusage.utime.sec = info.user_time.seconds;
     rusage.utime.usec = info.user_time.microseconds;
     rusage.stime.sec = info.system_time.seconds;
@@ -130,11 +130,11 @@ dword_t sys_sched_getaffinity(pid_t_ pid, dword_t cpusetsize, addr_t cpuset_addr
             return _ESRCH;
     }
 
-    int cpus = sysconf(_SC_NPROCESSORS_ONLN);
+    unsigned cpus = sysconf(_SC_NPROCESSORS_ONLN);
     if (cpus > cpusetsize * 8)
         cpus = cpusetsize * 8;
     char cpuset[cpusetsize];
-    for (int i = 0; i < cpus; i++)
+    for (unsigned i = 0; i < cpus; i++)
         bit_set(i, cpuset);
     if (user_write(cpuset_addr, cpuset, cpusetsize))
         return _EFAULT;

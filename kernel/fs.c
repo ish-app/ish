@@ -199,7 +199,7 @@ dword_t sys_readv(fd_t fd_no, addr_t iovec_addr, dword_t iovec_count) {
     struct io_vec *iovecs = malloc(iovec_size);
     if (iovecs == NULL)
         return _ENOMEM;
-    dword_t res = 0;
+    int res = 0;
     if (user_read(iovec_addr, iovecs, iovec_size)) {
         res = _EFAULT;
         goto err;
@@ -210,7 +210,7 @@ dword_t sys_readv(fd_t fd_no, addr_t iovec_addr, dword_t iovec_count) {
         if (res < 0)
             goto err;
         count += res;
-        if (res < iovecs[i].len)
+        if ((unsigned) res < iovecs[i].len)
             break;
     }
     free(iovecs);
@@ -259,7 +259,7 @@ dword_t sys_writev(fd_t fd_no, addr_t iovec_addr, dword_t iovec_count) {
         if (res < 0)
             goto err;
         count += res;
-        if (res < iovecs[i].len)
+        if ((unsigned) res < iovecs[i].len)
             break;
     }
     free(iovecs);
@@ -553,17 +553,17 @@ dword_t sys_chmod(addr_t path_addr, dword_t mode) {
     return sys_fchmodat(AT_FDCWD_, path_addr, mode, 0);
 }
 
-dword_t sys_fchown32(fd_t f, dword_t owner, dword_t group) {
+dword_t sys_fchown32(fd_t f, uid_t_ owner, uid_t_ group) {
     struct fd *fd = f_get(f);
     if (fd == NULL)
         return _EBADF;
     int err;
-    if (owner != -1) {
+    if (owner != (uid_t) -1) {
         err = fd->mount->fs->fsetattr(fd, make_attr(uid, owner));
         if (err < 0)
             return err;
     }
-    if (group != -1) {
+    if (group != (uid_t) -1) {
         err = fd->mount->fs->fsetattr(fd, make_attr(gid, group));
         if (err < 0)
             return err;
@@ -581,12 +581,12 @@ dword_t sys_fchownat(fd_t at_f, addr_t path_addr, dword_t owner, dword_t group, 
         return _EBADF;
     int err;
     bool follow_links = flags & AT_SYMLINK_NOFOLLOW_ ? false : true;
-    if (owner != -1) {
+    if (owner != (uid_t) -1) {
         err = generic_setattrat(at, path, make_attr(uid, owner), follow_links);
         if (err < 0)
             return err;
     }
-    if (group != -1) {
+    if (group != (uid_t) -1) {
         err = generic_setattrat(at, path, make_attr(gid, group), follow_links);
         if (err < 0)
             return err;
@@ -628,7 +628,7 @@ dword_t sys_fallocate(fd_t f, dword_t UNUSED(mode), dword_t offset_low, dword_t 
     int err = fd->mount->fs->fstat(fd, &statbuf);
     if (err < 0)
         return err;
-    if (offset + len > statbuf.size)
+    if ((uint64_t) offset + (uint64_t) len > statbuf.size)
         return fd->mount->fs->fsetattr(fd, make_attr(size, offset + len));
     return 0;
 }

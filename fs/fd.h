@@ -27,7 +27,7 @@ struct fd {
         // proc
         struct {
             struct proc_entry proc_entry;
-            int proc_dir_index;
+            unsigned proc_dir_index;
             char *proc_data;
             size_t proc_size;
         };
@@ -116,13 +116,13 @@ struct fd_ops {
 
 struct fdtable {
     atomic_uint refcount;
-    unsigned size;
+    int size;
     struct fd **files;
     bits_t *cloexec;
     lock_t lock;
 };
 
-struct fdtable *fdtable_new(unsigned size);
+struct fdtable *fdtable_new(int size);
 void fdtable_release(struct fdtable *table);
 struct fdtable *fdtable_copy(struct fdtable *table);
 void fdtable_free(struct fdtable *table);

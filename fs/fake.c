@@ -444,7 +444,7 @@ static int fakefs_mount(struct mount *mount) {
     ino_t db_inode = statbuf.st_ino;
     statement = db_prepare(mount, "select db_inode from meta");
     if (sqlite3_step(statement) == SQLITE_ROW) {
-        if (sqlite3_column_int64(statement, 0) != db_inode) {
+        if ((uint64_t) sqlite3_column_int64(statement, 0) != db_inode) {
             sqlite3_finalize(statement);
             statement = NULL;
             int err = fakefs_rebuild(mount);
@@ -459,7 +459,7 @@ static int fakefs_mount(struct mount *mount) {
 
     // save current inode
     statement = db_prepare(mount, "update meta set db_inode = ?");
-    sqlite3_bind_int64(statement, 1, db_inode);
+    sqlite3_bind_int64(statement, 1, (int64_t) db_inode);
     db_check_error(mount);
     sqlite3_step(statement);
     db_check_error(mount);

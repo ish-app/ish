@@ -27,7 +27,7 @@ struct task {
     uid_t_ euid, egid;
     uid_t_ suid, sgid;
 #define MAX_GROUPS 32
-    int ngroups;
+    unsigned ngroups;
     uid_t_ groups[MAX_GROUPS];
     char comm[16];
     bool did_exec; // for that one annoying setsid edge case

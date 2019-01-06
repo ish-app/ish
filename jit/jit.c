@@ -124,7 +124,7 @@ void cpu_run(struct cpu_state *cpu) {
 
     int i = 0;
     read_wrlock(&cpu->mem->lock);
-    int changes = cpu->mem->changes;
+    unsigned changes = cpu->mem->changes;
 
     while (true) {
         addr_t ip = frame.cpu.eip;

@@ -46,9 +46,9 @@ int fd_close(struct fd *fd) {
     return err;
 }
 
-static int fdtable_resize(struct fdtable *table, unsigned size);
+static int fdtable_resize(struct fdtable *table, int size);
 
-struct fdtable *fdtable_new(unsigned size) {
+struct fdtable *fdtable_new(int size) {
     struct fdtable *fdt = malloc(sizeof(struct fdtable));
     if (fdt == NULL)
         return ERR_PTR(_ENOMEM);
@@ -81,7 +81,7 @@ void fdtable_release(struct fdtable *table) {
     }
 }
 
-static int fdtable_resize(struct fdtable *table, unsigned size) {
+static int fdtable_resize(struct fdtable *table, int size) {
     // currently the only legitimate use of this is to expand the table
     assert(size > table->size);
 
@@ -111,7 +111,7 @@ static int fdtable_resize(struct fdtable *table, unsigned size) {
 
 struct fdtable *fdtable_copy(struct fdtable *table) {
     lock(&table->lock);
-    unsigned size = table->size;
+    int size = table->size;
     struct fdtable *new_table = fdtable_new(size);
     if (IS_ERR(new_table)) {
         unlock(&table->lock);
@@ -127,10 +127,10 @@ struct fdtable *fdtable_copy(struct fdtable *table) {
 }
 
 static int fdtable_expand(struct fdtable *table, fd_t max) {
-    unsigned size = max + 1;
+    int size = max + 1;
     if (table->size >= size)
         return 0;
-    if (size > rlimit(RLIMIT_NOFILE_))
+    if (size > (int) rlimit(RLIMIT_NOFILE_))
         return _EMFILE;
     return fdtable_resize(table, max + 1);
 }
@@ -151,7 +151,7 @@ struct fd *f_get(fd_t f) {
 
 static fd_t f_install_start(struct fd *fd, fd_t start) {
     struct fdtable *table = current->files;
-    unsigned size = rlimit(RLIMIT_NOFILE_);
+    int size = rlimit(RLIMIT_NOFILE_);
     if (size > table->size)
         size = table->size;
 

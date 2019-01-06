@@ -21,7 +21,7 @@ static int proc_lookup(const char *path, struct proc_entry *entry) {
         }
         *c = '\0';
 
-        int index = 0;
+        unsigned index = 0;
         struct proc_entry next_entry;
         char entry_name[MAX_NAME];
         while (proc_dir_read(entry, &index, &next_entry)) {
@@ -116,7 +116,7 @@ static ssize_t proc_read(struct fd *fd, void *buf, size_t bufsize) {
     assert(data != NULL);
 
     size_t remaining = fd->proc_size - fd->offset;
-    if (fd->offset > fd->proc_size)
+    if ((size_t) fd->offset > fd->proc_size)
         remaining = 0;
     size_t n = bufsize;
     if (n > remaining)

@@ -418,7 +418,7 @@ dword_t sys_recvmsg(fd_t sock_fd, addr_t msghdr_addr, dword_t flags) {
     if (user_get(msg_fake.msg_iov, msg_iov_fake))
         return _EFAULT;
 
-    for (int i = 0; i < msg_fake.msg_iovlen; i++) {
+    for (uint_t i = 0; i < msg_fake.msg_iovlen; i++) {
         char iov_base[msg_iov_fake[i].iov_len];
         memset(&iov_base, 0, sizeof(iov_base));
 

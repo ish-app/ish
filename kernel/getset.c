@@ -1,14 +1,14 @@
 #include "kernel/calls.h"
 
-dword_t sys_getpid() {
+pid_t_ sys_getpid() {
     STRACE("getpid()");
     return current->tgid;
 }
-dword_t sys_gettid() {
+pid_t_ sys_gettid() {
     STRACE("gettid()");
     return current->pid;
 }
-dword_t sys_getppid() {
+pid_t_ sys_getppid() {
     STRACE("getppid()");
     pid_t_ ppid;
     lock(&pids_lock);
@@ -53,19 +53,19 @@ int_t sys_setuid(uid_t_ uid) {
 dword_t sys_setresuid(uid_t_ ruid, uid_t_ euid, uid_t_ suid) {
     STRACE("setresuid(%d, %d, %d)", ruid, euid, suid);
     if (!superuser()) {
-        if (ruid != -1 && ruid != current->uid && ruid != current->euid && ruid != current->suid)
+        if (ruid != (uid_t) -1 && ruid != current->uid && ruid != current->euid && ruid != current->suid)
             return _EPERM;
-        if (euid != -1 && euid != current->uid && euid != current->euid && euid != current->suid)
+        if (euid != (uid_t) -1 && euid != current->uid && euid != current->euid && euid != current->suid)
             return _EPERM;
-        if (suid != -1 && suid != current->uid && suid != current->euid && suid != current->suid)
+        if (suid != (uid_t) -1 && suid != current->uid && suid != current->euid && suid != current->suid)
             return _EPERM;
     }
 
-    if (ruid != -1)
+    if (ruid != (uid_t) -1)
         current->uid = ruid;
-    if (euid != -1)
+    if (euid != (uid_t) -1)
         current->euid = euid;
-    if (suid != -1)
+    if (suid != (uid_t) -1)
         current->suid = suid;
     return 0;
 }
@@ -114,19 +114,19 @@ int_t sys_setgid(uid_t_ gid) {
 dword_t sys_setresgid(uid_t_ rgid, uid_t_ egid, uid_t_ sgid) {
     STRACE("setresgid(%d, %d, %d)", rgid, egid, sgid);
     if (!superuser()) {
-        if (rgid != -1 && rgid != current->gid && rgid != current->egid && rgid != current->sgid)
+        if (rgid != (uid_t) -1 && rgid != current->gid && rgid != current->egid && rgid != current->sgid)
             return _EPERM;
-        if (egid != -1 && egid != current->gid && egid != current->egid && egid != current->sgid)
+        if (egid != (uid_t) -1 && egid != current->gid && egid != current->egid && egid != current->sgid)
             return _EPERM;
-        if (sgid != -1 && sgid != current->gid && sgid != current->egid && sgid != current->sgid)
+        if (sgid != (uid_t) -1 && sgid != current->gid && sgid != current->egid && sgid != current->sgid)
             return _EPERM;
     }
 
-    if (rgid != -1)
+    if (rgid != (uid_t) -1)
         current->gid = rgid;
-    if (egid != -1)
+    if (egid != (uid_t) -1)
         current->egid = egid;
-    if (sgid != -1)
+    if (sgid != (uid_t) -1)
         current->sgid = sgid;
     return 0;
 }

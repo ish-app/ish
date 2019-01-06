@@ -113,7 +113,7 @@ static int poll_event_callback(void *context, int types, union poll_fd_info info
     }
     return res;
 }
-dword_t sys_poll(addr_t fds, dword_t nfds, dword_t timeout) {
+dword_t sys_poll(addr_t fds, dword_t nfds, int_t timeout) {
     STRACE("poll(0x%x, %d, %d)", fds, nfds, timeout);
     struct pollfd_ polls[nfds];
     if (fds != 0 || nfds != 0)
@@ -124,13 +124,13 @@ dword_t sys_poll(addr_t fds, dword_t nfds, dword_t timeout) {
         return _ENOMEM;
 
     // clear revents, which is reused to mark whether a pollfd has been added or not
-    for (int i = 0; i < nfds; i++) {
+    for (unsigned i = 0; i < nfds; i++) {
         polls[i].revents = 0;
     }
 
     // convert polls array into poll_add_fd calls
     // FIXME this is quadratic
-    for (int i = 0; i < nfds; i++) {
+    for (unsigned i = 0; i < nfds; i++) {
         if (polls[i].fd < 0 || polls[i].revents)
             continue;
 
@@ -140,7 +140,7 @@ dword_t sys_poll(addr_t fds, dword_t nfds, dword_t timeout) {
         polls[i].revents = 1;
         if (fd == NULL)
             continue;
-        for (int j = 0; j < nfds; j++) {
+        for (unsigned j = 0; j < nfds; j++) {
             if (polls[j].revents)
                 continue;
             if (fd == f_get(polls[j].fd)) {
@@ -152,7 +152,7 @@ dword_t sys_poll(addr_t fds, dword_t nfds, dword_t timeout) {
         poll_add_fd(poll, fd, events | POLL_ALWAYS_LISTENING, (union poll_fd_info) (void *) fd);
     }
 
-    for (int i = 0; i < nfds; i++) {
+    for (unsigned i = 0; i < nfds; i++) {
         polls[i].revents = 0;
         if (f_get(polls[i].fd) == NULL)
             polls[i].revents = POLL_NVAL;

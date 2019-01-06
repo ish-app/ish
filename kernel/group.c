@@ -2,7 +2,7 @@
 #include "kernel/calls.h"
 #include "kernel/task.h"
 
-dword_t sys_setpgid(dword_t id, dword_t pgid) {
+dword_t sys_setpgid(pid_t_ id, pid_t_ pgid) {
     STRACE("setpgid(%d, %d)", id, pgid);
     int err;
     if (id == 0)
@@ -56,7 +56,7 @@ dword_t sys_setpgrp() {
     return sys_setpgid(0, 0);
 }
 
-dword_t sys_getpgid(dword_t pid) {
+pid_t_ sys_getpgid(pid_t_ pid) {
     STRACE("getpgid(%d)", pid);
     if (pid != 0)
         return _EPERM;
@@ -65,7 +65,7 @@ dword_t sys_getpgid(dword_t pid) {
     unlock(&pids_lock);
     return pgid;
 }
-dword_t sys_getpgrp() {
+pid_t_ sys_getpgrp() {
     return sys_getpgid(0);
 }
 

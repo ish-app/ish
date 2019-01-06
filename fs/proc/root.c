@@ -29,7 +29,7 @@ struct proc_dir_entry proc_root_entries[] = {
 };
 #define PROC_ROOT_LEN sizeof(proc_root_entries)/sizeof(proc_root_entries[0])
 
-static bool proc_root_readdir(struct proc_entry *UNUSED(entry), int *index, struct proc_entry *next_entry) {
+static bool proc_root_readdir(struct proc_entry *UNUSED(entry), unsigned *index, struct proc_entry *next_entry) {
     if (*index < PROC_ROOT_LEN) {
         *next_entry = (struct proc_entry) {&proc_root_entries[*index], 0, 0};
         (*index)++;
