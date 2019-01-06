@@ -7,13 +7,14 @@
 #endif
 #include "kernel/calls.h"
 #include "util/sync.h"
+#include "util/fifo.h"
 #include "kernel/task.h"
 #include "misc.h"
 
 #define LOG_BUF_SHIFT 20
-static char log_buf[1 << LOG_BUF_SHIFT];
-static size_t log_head = 0;
-static size_t log_size = 0;
+static char log_buffer[1 << LOG_BUF_SHIFT];
+static struct fifo log_buf = FIFO_INIT(log_buffer);
+static size_t log_max_since_clear = 0;
 static lock_t log_lock = LOCK_INITIALIZER;
 
 #define SYSLOG_ACTION_CLOSE_ 0
@@ -28,55 +29,44 @@ static lock_t log_lock = LOCK_INITIALIZER;
 #define SYSLOG_ACTION_SIZE_UNREAD_ 9
 #define SYSLOG_ACTION_SIZE_BUFFER_ 10
 
-static int syslog_read(size_t start, addr_t buf_addr, int_t total) {
-    if (total > log_size)
-        total = log_size;
-    size_t remaining = total;
-    size_t log_p = log_head;
-    char buf[total];
-    char *b = buf;
-    while (remaining > 0) {
-        size_t len = remaining;
-        if (len > sizeof(log_buf) - log_head)
-            len = sizeof(log_buf) - log_head;
-        memcpy(b, &log_buf[log_p], len);
-        log_p = (log_p + len) % sizeof(log_buf);
-        b += len;
-        remaining -= len;
+static int syslog_read(addr_t buf_addr, int_t len, int flags) {
+    if (len < 0)
+        return _EINVAL;
+    if (flags & FIFO_LAST) {
+        if ((size_t) len > log_max_since_clear)
+            len = log_max_since_clear;
+    } else {
+        if ((size_t) len > fifo_capacity(&log_buf))
+            len = fifo_capacity(&log_buf);
     }
-    if (user_write(buf_addr, buf, total))
-        return -1;
-    return total;
-}
-static int syslog_read_all(addr_t buf_addr, addr_t len) {
-    if (len > log_size)
-        len = log_size;
-    return syslog_read((log_head + log_size - len) % sizeof(log_buf), buf_addr, len);
+    char buf[len];
+    fifo_read(&log_buf, buf, len, flags);
+    if (user_write(buf_addr, buf, len))
+        return _EFAULT;
+    return len;
 }
 
 static int do_syslog(int type, addr_t buf_addr, int_t len) {
+    int res;
     switch (type) {
         case SYSLOG_ACTION_READ_:
-            len = syslog_read(log_head, buf_addr, len);
-            if (len < 0)
-                return _EFAULT;
-            log_head = (log_head + len) % sizeof(log_buf);
-            log_size -= len;
-            return len;
+            return syslog_read(buf_addr, len, 0);
         case SYSLOG_ACTION_READ_ALL_:
-            return syslog_read_all(buf_addr, len);
+            return syslog_read(buf_addr, len, FIFO_LAST | FIFO_PEEK);
+
         case SYSLOG_ACTION_READ_CLEAR_:
-            len = syslog_read_all(buf_addr, len);
-            log_head = log_size = 0;
-            return len;
+            res = syslog_read(buf_addr, len, FIFO_LAST | FIFO_PEEK);
+            if (res < 0)
+                return res;
+            // fallthrough
         case SYSLOG_ACTION_CLEAR_:
-            log_head = log_size = 0;
+            log_max_since_clear = 0;
             return 0;
 
         case SYSLOG_ACTION_SIZE_UNREAD_:
-            return log_size;
+            return fifo_size(&log_buf);
         case SYSLOG_ACTION_SIZE_BUFFER_:
-            return sizeof(log_buf);
+            return fifo_capacity(&log_buf);
 
         case SYSLOG_ACTION_CLOSE_:
         case SYSLOG_ACTION_OPEN_:
@@ -96,23 +86,10 @@ int_t sys_syslog(int_t type, addr_t buf_addr, int_t len) {
 }
 
 static void log_buf_append(const char *msg) {
-    size_t log_p = (log_head + log_size) % sizeof(log_buf);
-    size_t remaining = strlen(msg);
-    while (*msg != '\0') {
-        size_t log_tail = (log_head + log_size) % sizeof(log_buf);
-        size_t len = sizeof(log_buf) - log_tail;
-        if (len > remaining)
-            len = remaining;
-        memcpy(&log_buf[log_p], msg, len);
-        log_size += len;
-        if (log_size > sizeof(log_buf)) {
-            log_head = (log_head + log_size - sizeof(log_buf)) % sizeof(log_buf);
-            log_size = sizeof(log_buf);
-        }
-        log_p = (log_p + len) % sizeof(log_buf);
-        msg += len;
-        remaining -= len;
-    }
+    fifo_write(&log_buf, msg, strlen(msg), FIFO_OVERWRITE);
+    log_max_since_clear += strlen(msg);
+    if (log_max_since_clear > fifo_capacity(&log_buf))
+        log_max_since_clear = fifo_capacity(&log_buf);
 }
 static void log_line(const char *line);
 static void output_line(const char *line) {

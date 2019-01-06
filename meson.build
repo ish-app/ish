@@ -94,6 +94,7 @@ src = [
 
     'util/timer.c',
     'util/sync.c',
+    'util/fifo.c',
 
     'emu/memory.c',
     'emu/tlb.c',
