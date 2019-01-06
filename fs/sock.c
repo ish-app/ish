@@ -501,6 +501,7 @@ static struct fd_ops socket_fdops = {
     .setflags = realfs_setflags,
 };
 
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 static struct socket_call {
     syscall_t func;
     int args;

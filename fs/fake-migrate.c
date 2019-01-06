@@ -4,6 +4,7 @@
 
 // The value of the user_version pragma is used to decide what needs migrating.
 
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 static struct migration {
     const char *sql;
     void (*migrate)(struct mount *mount);
