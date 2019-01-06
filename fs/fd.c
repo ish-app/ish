@@ -75,6 +75,7 @@ void fdtable_release(struct fdtable *table) {
             fdtable_close(table, f);
         free(table->files);
         free(table->cloexec);
+        unlock(&table->lock);
         free(table);
     } else {
         unlock(&table->lock);

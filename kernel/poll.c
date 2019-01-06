@@ -97,6 +97,7 @@ dword_t sys_select(fd_t nfds, addr_t readfds_addr, addr_t writefds_addr, addr_t 
 
 struct poll_context {
     struct pollfd_ *polls;
+    struct fd **files;
     int nfds;
 };
 #define POLL_ALWAYS_LISTENING (POLL_ERR|POLL_HUP|POLL_NVAL)
@@ -106,7 +107,7 @@ static int poll_event_callback(void *context, int types, union poll_fd_info info
     int nfds = c->nfds;
     int res = 0;
     for (int i = 0; i < nfds; i++) {
-        if (f_get(polls[i].fd) == info.ptr) {
+        if (c->files[i] == info.ptr) {
             polls[i].revents = types & (polls[i].events | POLL_ALWAYS_LISTENING);
             res = 1;
         }
@@ -123,8 +124,13 @@ dword_t sys_poll(addr_t fds, dword_t nfds, int_t timeout) {
     if (poll == NULL)
         return _ENOMEM;
 
-    // clear revents, which is reused to mark whether a pollfd has been added or not
+    struct fd *files[nfds];
     for (unsigned i = 0; i < nfds; i++) {
+        files[i] = f_get(polls[i].fd);
+        if (files[i] != NULL)
+            // FIXME it might have been closed by now by another thread
+            fd_retain(files[i]);
+        // clear revents, which is reused to mark whether a pollfd has been added or not
         polls[i].revents = 0;
     }
 
@@ -136,20 +142,19 @@ dword_t sys_poll(addr_t fds, dword_t nfds, int_t timeout) {
 
         // if the same fd is listed more than once, merge the events bits together
         int events = polls[i].events;
-        struct fd *fd = f_get(polls[i].fd);
         polls[i].revents = 1;
-        if (fd == NULL)
+        if (files[i] == NULL)
             continue;
         for (unsigned j = 0; j < nfds; j++) {
             if (polls[j].revents)
                 continue;
-            if (fd == f_get(polls[j].fd)) {
+            if (files[i] == files[j]) {
                 events |= polls[j].events;
                 polls[j].revents = 1;
             }
         }
 
-        poll_add_fd(poll, fd, events | POLL_ALWAYS_LISTENING, (union poll_fd_info) (void *) fd);
+        poll_add_fd(poll, files[i], events | POLL_ALWAYS_LISTENING, (union poll_fd_info) (void *) files[i]);
     }
 
     for (unsigned i = 0; i < nfds; i++) {
@@ -157,7 +162,7 @@ dword_t sys_poll(addr_t fds, dword_t nfds, int_t timeout) {
         if (f_get(polls[i].fd) == NULL)
             polls[i].revents = POLL_NVAL;
     }
-    struct poll_context context = {polls, nfds};
+    struct poll_context context = {polls, files, nfds};
     struct timespec timeout_ts;
     if (timeout != -1) {
         timeout_ts.tv_sec = timeout / 1000;
