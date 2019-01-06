@@ -6,6 +6,7 @@
 - Background jobs (Ctrl-Z, bg, fg, etc)
 - ~10% performance improvement from correctly tracking the last JIT block
 - Option in settings to change launch command (also general settings reorganization)
+- top runs (though it's useless since CPU usage is always displayed as 0%)
 ### Fixed
 - Rounding error when adding 18446744073709551616 and 1.5
 - Crash when trying to run top
