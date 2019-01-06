@@ -31,10 +31,11 @@ int fifo_write(struct fifo *fifo, const void *data, size_t size, int flags) {
         fifo->size -= excess;
     }
 
-    size_t first_copy_size = fifo->capacity - fifo->start - fifo->size;
+    size_t tail = (fifo->start + fifo->size) % fifo->capacity;;
+    size_t first_copy_size = fifo->capacity - tail;
     if (first_copy_size > size)
         first_copy_size = size;
-    memcpy(&fifo->buf[fifo->start + fifo->size], data, first_copy_size);
+    memcpy(&fifo->buf[tail], data, first_copy_size);
     memcpy(&fifo->buf[0], (char *) data + first_copy_size, size - first_copy_size);
     fifo->size += size;
     return 0;
