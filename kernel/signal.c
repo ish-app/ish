@@ -411,10 +411,8 @@ int_t sys_rt_sigsuspend(addr_t mask_addr, uint_t size) {
 
     lock(&current->sighand->lock);
     do_sigprocmask_unlocked(SIG_SETMASK_, mask, &oldmask);
-    while (!current->pending) {
+    while (!current->pending)
         wait_for(&pause_cond, &current->sighand->lock, NULL);
-        printk("woke %llx\n", (long long) current->pending);
-    }
     do_sigprocmask_unlocked(SIG_SETMASK_, oldmask, NULL);
     unlock(&current->sighand->lock);
     printk("done with sigsuspend\n");
