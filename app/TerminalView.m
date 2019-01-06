@@ -130,6 +130,10 @@
     return YES; // it's always ok to send a "delete"
 }
 
+- (void)clearScreen:(UIKeyCommand *)command {
+    [self.terminal.webView evaluateJavaScript:@"term.clear()" completionHandler:nil];
+}
+
 - (UITextSmartDashesType)smartDashesType API_AVAILABLE(ios(11)) {
     return UITextSmartDashesTypeNo;
 }
@@ -198,6 +202,10 @@ static const char *controlKeys = "abcdefghijklmnopqrstuvwxyz26-=[]\\";
         [self addKeys:alphabet withModifiers:UIKeyModifierShift];
         [self addKey:@"" withModifiers:UIKeyModifierAlphaShift]; // otherwise tap of caps lock can switch layouts
     }
+    [_keyCommands addObject:[UIKeyCommand keyCommandWithInput:@"k"
+                                                modifierFlags:UIKeyModifierCommand
+                                                       action:@selector(clearScreen:)
+                                         discoverabilityTitle:@"Clear Screen"]];
     return _keyCommands;
 }
 
