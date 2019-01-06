@@ -52,6 +52,7 @@ struct timer {
     timer_callback_t callback;
     void *data;
     lock_t lock;
+    bool dead;
 };
 
 struct timer *timer_new(timer_callback_t callback, void *data);
