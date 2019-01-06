@@ -399,8 +399,6 @@ dword_t sys_sigaltstack(addr_t ss_addr, addr_t old_ss_addr) {
     return 0;
 }
 
-static cond_t pause_cond = COND_INITIALIZER;
-
 int_t sys_rt_sigsuspend(addr_t mask_addr, uint_t size) {
     if (size != sizeof(sigset_t_))
         return _EINVAL;
@@ -412,10 +410,9 @@ int_t sys_rt_sigsuspend(addr_t mask_addr, uint_t size) {
     lock(&current->sighand->lock);
     do_sigprocmask_unlocked(SIG_SETMASK_, mask, &oldmask);
     while (!current->pending)
-        wait_for(&pause_cond, &current->sighand->lock, NULL);
+        wait_for(&current->pause, &current->sighand->lock, NULL);
     do_sigprocmask_unlocked(SIG_SETMASK_, oldmask, NULL);
     unlock(&current->sighand->lock);
-    printk("done with sigsuspend\n");
     return _EINTR;
 }
 
