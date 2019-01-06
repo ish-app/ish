@@ -13,7 +13,9 @@
 - Make a test network connection on startup, to hopefully fix network permission popup not appearing on devices sold in China
 - Crash when running a script with a #! line pointing to a nonexistent file
 - ^C not appearing when you press Ctrl-C and it kills the program
+- ^C not flushing the input buffer
 - Arrow keys not working in some programs
+- Emacs and Ruby summoning nasal demons after receiving a signal
 
 ## Build 40
 ### Fixed
