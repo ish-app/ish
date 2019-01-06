@@ -11,4 +11,12 @@ struct cpu_usage {
 };
 struct cpu_usage get_cpu_usage(void);
 
+struct mem_usage {
+    uint64_t total;
+    uint64_t free;
+    uint64_t active;
+    uint64_t inactive;
+};
+struct mem_usage get_mem_usage(void);
+
 #endif

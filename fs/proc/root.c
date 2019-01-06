@@ -1,4 +1,5 @@
 #include <sys/stat.h>
+#include <inttypes.h>
 #include "kernel/calls.h"
 #include "fs/proc.h"
 #include "platform/platform.h"
@@ -16,6 +17,30 @@ static ssize_t proc_show_stat(struct proc_entry *UNUSED(entry), char *buf) {
     return n;
 }
 
+static void show_kb(char *buf, size_t *n, const char *name, uint64_t value) {
+    *n += sprintf(buf + *n, "%s%8"PRIu64" kB\n", name, value / 1000);
+}
+
+static ssize_t proc_show_meminfo(struct proc_entry *UNUSED(entry), char *buf) {
+    struct mem_usage usage = get_mem_usage();
+    size_t n = 0;
+    show_kb(buf, &n, "MemTotal:       ", usage.total);
+    show_kb(buf, &n, "MemFree:        ", usage.free);
+    show_kb(buf, &n, "MemShared:      ", usage.free);
+    // a bunch of crap busybox top needs to see or else it gets stack garbage
+    show_kb(buf, &n, "Shmem:          ", 0);
+    show_kb(buf, &n, "Buffers:        ", 0);
+    show_kb(buf, &n, "Cached:         ", 0);
+    show_kb(buf, &n, "SwapTotal:      ", 0);
+    show_kb(buf, &n, "SwapFree:       ", 0);
+    show_kb(buf, &n, "Dirty:          ", 0);
+    show_kb(buf, &n, "Writeback:      ", 0);
+    show_kb(buf, &n, "AnonPages:      ", 0);
+    show_kb(buf, &n, "Mapped:         ", 0);
+    show_kb(buf, &n, "Slab:           ", 0);
+    return n;
+}
+
 static int proc_readlink_self(struct proc_entry *UNUSED(entry), char *buf) {
     sprintf(buf, "%d/", current->pid);
     return 0;
@@ -25,6 +50,7 @@ static int proc_readlink_self(struct proc_entry *UNUSED(entry), char *buf) {
 struct proc_dir_entry proc_root_entries[] = {
     {"version", .show = proc_show_version},
     {"stat", .show = proc_show_stat},
+    {"meminfo", .show = proc_show_meminfo},
     {"self", S_IFLNK, .readlink = proc_readlink_self},
 };
 #define PROC_ROOT_LEN sizeof(proc_root_entries)/sizeof(proc_root_entries[0])
