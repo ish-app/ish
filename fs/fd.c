@@ -137,10 +137,9 @@ static int fdtable_expand(struct fdtable *table, fd_t max) {
 }
 
 struct fd *fdtable_get(struct fdtable *table, fd_t f) {
-    struct fd *fd = NULL;
-    if (f < current->files->size)
-        fd = table->files[f];
-    return fd;
+    if (f < 0 || f >= current->files->size)
+        return NULL;
+    return table->files[f];
 }
 
 struct fd *f_get(fd_t f) {

@@ -210,7 +210,7 @@ retry:
         // check if this child is a zombie
         struct task *task = pid_get_task_zombie(id);
         err = _ECHILD;
-        if (task == NULL || task->parent->group != current->group)
+        if (task == NULL || task->parent == NULL || task->parent->group != current->group)
             goto error;
         task = task->group->leader;
         if (reap_if_needed(task, options, status_addr, rusage_addr))
