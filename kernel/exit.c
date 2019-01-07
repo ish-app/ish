@@ -185,6 +185,7 @@ dword_t sys_wait4(dword_t id, addr_t status_addr, dword_t options, addr_t rusage
     STRACE("wait(%d, 0x%x, 0x%x, 0x%x)", id, status_addr, options, rusage_addr);
     lock(&pids_lock);
     int err;
+    pid_t_ out_id;
 
 retry:
     if (id == (dword_t) -1) {
@@ -197,7 +198,7 @@ retry:
                 if (!task_is_leader(task))
                     continue;
                 no_children = false;
-                id = task->pid;
+                out_id = task->pid;
                 if (reap_if_needed(task, options, status_addr, rusage_addr))
                     goto found_zombie;
             }
@@ -213,6 +214,7 @@ retry:
         if (task == NULL || task->parent == NULL || task->parent->group != current->group)
             goto error;
         task = task->group->leader;
+        out_id = id;
         if (reap_if_needed(task, options, status_addr, rusage_addr))
             goto found_zombie;
     }
@@ -229,7 +231,7 @@ retry:
 
 found_zombie:
     unlock(&pids_lock);
-    return id;
+    return out_id;
 error:
     unlock(&pids_lock);
     return err;
