@@ -82,7 +82,7 @@ void send_signal(struct task *task, int sig) {
     }
     unlock(&sighand->lock);
 
-    if (sig == SIGCONT_) {
+    if (sig == SIGCONT_ || sig == SIGKILL_) {
         lock(&task->group->lock);
         task->group->stopped = false;
         notify(&task->group->stopped_cond);
@@ -190,15 +190,17 @@ static void receive_signal(struct sighand *sighand, int sig) {
     (void) user_put(sp, frame);
 }
 
-void receive_signals() {
+bool receive_signals() {
     struct sighand *sighand = current->sighand;
     lock(&sighand->lock);
-    if (current->pending) {
+    bool any_left = current->pending != 0;
+    if (any_left) {
         for (int sig = 0; sig < NUM_SIGS; sig++)
             if (current->pending & (1l << sig))
                 receive_signal(sighand, sig);
     }
     unlock(&sighand->lock);
+    return any_left;
 }
 
 struct sighand *sighand_new() {

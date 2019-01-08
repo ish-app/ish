@@ -89,7 +89,9 @@ noreturn void do_exit_group(int status) {
     // kill everyone else in the group
     struct task *task;
     list_for_each_entry(&group->threads, task, group_links) {
-        send_signal(task, SIGKILL_);
+        deliver_signal(task, SIGKILL_);
+        task->group->stopped = false;
+        notify(&task->group->stopped_cond);
     }
 
     unlock(&group->lock);
@@ -174,9 +176,9 @@ static bool notify_if_stopped(struct task *task, addr_t status_addr) {
 
 static bool reap_if_needed(struct task *task, int_t options, addr_t status_addr, addr_t rusage_addr) {
     assert(task_is_leader(task));
-    if (reap_if_zombie(task, status_addr, rusage_addr))
-        return true;
     if (options & WUNTRACED_ && notify_if_stopped(task, status_addr))
+        return true;
+    if (reap_if_zombie(task, status_addr, rusage_addr))
         return true;
     return false;
 }
