@@ -67,6 +67,15 @@ void test_int_convert() {
     test(9489919999192); test(-9489919999192);
     test(INT64_MIN); test(INT64_MAX);
 #undef test
+
+#define test(x) \
+    u.f = f80_from_double(x); \
+    i = f80_to_int(u.f); \
+    assertf(i == (int64_t)round(x), "f80_to_int(f80_from_double(%.20Le)) = %ld", u.ld, i)
+
+    test(0.75); test(-0.75);
+#undef test
+
     suite_end();
 }
 

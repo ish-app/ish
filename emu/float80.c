@@ -81,11 +81,7 @@ static float80 f80_shift_left(float80 f, int shift) {
 
 // may lose precision
 static float80 f80_shift_right(float80 f, int shift) {
-    if (shift > 63)
-        // shifts beyond the size of the type are undefined behavior
-        f.signif = 0;
-    else
-        f.signif = u128_shift_right_round(f.signif, shift, f.sign);
+    f.signif = u128_shift_right_round(f.signif, shift, f.sign);
     f.exp += shift;
     return f;
 }
