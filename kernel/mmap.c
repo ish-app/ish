@@ -12,6 +12,7 @@ struct mm *mm_new() {
         return NULL;
     mem_init(&mm->mem);
     mm->start_brk = mm->brk = 0; // should get overwritten by exec
+    mm->exefile = NULL;
     mm->refcount = 1;
     return mm;
 }
@@ -22,6 +23,8 @@ void mm_retain(struct mm *mm) {
 
 void mm_release(struct mm *mm) {
     if (--mm->refcount == 0) {
+        if (mm->exefile != NULL)
+            fd_close(mm->exefile);
         mem_destroy(&mm->mem);
         free(mm);
     }
