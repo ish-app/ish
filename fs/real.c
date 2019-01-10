@@ -106,10 +106,15 @@ static void copy_stat(struct statbuf *fake_stat, struct stat *real_stat) {
     fake_stat->atime = real_stat->st_atime;
     fake_stat->mtime = real_stat->st_mtime;
     fake_stat->ctime = real_stat->st_ctime;
-    // TODO this representation of nanosecond timestamps is linux-specific
-    /* fake_stat->atime_nsec = real_stat->st_atim.tv_nsec; */
-    /* fake_stat->mtime_nsec = real_stat->st_mtim.tv_nsec; */
-    /* fake_stat->ctime_nsec = real_stat->st_ctim.tv_nsec; */
+#if __APPLE__
+#define TIMESPEC(x) st_##x##timespec
+#elif __linux__
+#define TIMESPEC(x) st_##x##tim
+#endif
+    fake_stat->atime_nsec = real_stat->TIMESPEC(a).tv_nsec;
+    fake_stat->mtime_nsec = real_stat->TIMESPEC(m).tv_nsec;
+    fake_stat->ctime_nsec = real_stat->TIMESPEC(c).tv_nsec;
+#undef TIMESPEC
 }
 
 static int realfs_stat(struct mount *mount, const char *path, struct statbuf *fake_stat, bool follow_links) {
