@@ -23,6 +23,8 @@ struct mm {
 
 // Create a new address space
 struct mm *mm_new(void);
+// Clone (COW) the address space
+struct mm *mm_copy(struct mm *mm);
 // Increment the refcount
 void mm_retain(struct mm *mem);
 // Decrement the refcount, destroy everything in the space if 0

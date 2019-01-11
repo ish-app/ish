@@ -17,6 +17,19 @@ struct mm *mm_new() {
     return mm;
 }
 
+struct mm *mm_copy(struct mm *mm) {
+    struct mm *new_mm = malloc(sizeof(struct mm));
+    if (new_mm == NULL)
+        return NULL;
+    *new_mm = *mm;
+    mem_init(&new_mm->mem);
+    fd_retain(new_mm->exefile);
+    read_wrlock(&mm->mem.lock);
+    pt_copy_on_write(&mm->mem, 0, &new_mm->mem, 0, MEM_PAGES);
+    read_wrunlock(&mm->mem.lock);
+    return new_mm;
+}
+
 void mm_retain(struct mm *mm) {
     mm->refcount++;
 }
