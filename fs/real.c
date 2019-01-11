@@ -425,6 +425,7 @@ const struct fs_ops realfs = {
     .symlink = realfs_symlink,
     .mknod = realfs_mknod,
 
+    .close = realfs_close,
     .stat = realfs_stat,
     .fstat = realfs_fstat,
     .setattr = realfs_setattr,

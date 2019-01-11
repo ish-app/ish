@@ -498,6 +498,7 @@ const struct fs_ops fakefs = {
     .symlink = fakefs_symlink,
     .mknod = fakefs_mknod,
 
+    .close = realfs_close,
     .stat = fakefs_stat,
     .fstat = fakefs_fstat,
     .flock = realfs_flock,

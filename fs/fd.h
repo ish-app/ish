@@ -20,10 +20,6 @@ struct fd {
 
     // fd data
     union {
-        // realfs/fakefs
-        struct {
-            DIR *dir;
-        };
         // proc
         struct {
             struct proc_entry proc_entry;
@@ -55,8 +51,8 @@ struct fd {
 
     // fs/inode data
     struct mount *mount;
-    // seeks on this fd require the lock
-    int real_fd;
+    int real_fd; // seeks on this fd require the lock
+    DIR *dir;
     struct statbuf stat; // for adhoc fs
 
     // these are used for a variety of things related to the fd

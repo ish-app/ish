@@ -41,6 +41,12 @@ int fd_close(struct fd *fd) {
         unlock(&fd->poll_lock);
         if (fd->ops->close)
             err = fd->ops->close(fd);
+        // see comment in close in kernel/fs.h
+        if (fd->mount->fs->close && fd->mount->fs->close != fd->ops->close) {
+            int new_err = fd->mount->fs->close(fd);
+            if (new_err < 0)
+                err = new_err;
+        }
         free(fd);
     }
     return err;
@@ -241,8 +247,7 @@ dword_t sys_dup2(fd_t f, fd_t new_f) {
     if (err < 0)
         return err;
     f_close(new_f);
-    fd->refcount++;
-    table->files[new_f] = fd;
+    table->files[new_f] = fd_retain(fd);
     return new_f;
 }
 

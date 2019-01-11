@@ -133,6 +133,12 @@ struct fs_ops {
     int (*symlink)(struct mount *mount, const char *target, const char *link);
     int (*mknod)(struct mount *mount, const char *path, mode_t_ mode, dev_t_ dev);
 
+    // There's a close function in both the fs and fd to handle device files
+    // where, for instance, there's a real_fd needed for getpath and also a tty
+    // reference, and both need to be released when the fd is closed.
+    // If they are the same function, it will only be called once.
+    int (*close)(struct fd *fd);
+
     int (*stat)(struct mount *mount, const char *path, struct statbuf *stat, bool follow_links);
     int (*fstat)(struct fd *fd, struct statbuf *stat);
     int (*setattr)(struct mount *mount, const char *path, struct attr attr);
