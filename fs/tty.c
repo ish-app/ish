@@ -72,6 +72,7 @@ void tty_release(struct tty *tty) {
     unlock(&ttys_lock);
 }
 
+// must call with tty lock
 static void tty_set_controlling(struct tgroup *group, struct tty *tty) {
     lock(&group->lock);
     if (group->tty == NULL) {
@@ -114,11 +115,12 @@ static int tty_open(int major, int minor, int type, struct fd *fd) {
     list_add(&tty->fds, &fd->other_fds);
     unlock(&tty->fds_lock);
 
+    lock(&tty->lock);
     lock(&pids_lock);
-    if (current->group->sid == current->pid) {
+    if (current->group->sid == current->pid)
         tty_set_controlling(current->group, tty);
-    }
     unlock(&pids_lock);
+    unlock(&tty->lock);
 
     return 0;
 }
