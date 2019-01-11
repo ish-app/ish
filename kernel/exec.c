@@ -566,7 +566,7 @@ dword_t _sys_execve(addr_t filename_addr, addr_t argv_addr, addr_t envp_addr) {
         argv[i] = malloc(MAX_PATH);
         if (user_read_string(arg, argv[i], MAX_PATH))
             return _EFAULT;
-        STRACE("\"%s\", ", argv[i]);
+        STRACE("\"%.100s\", ", argv[i]);
     }
     argv[i] = NULL;
     char *envp[MAX_ARGS];
@@ -581,7 +581,7 @@ dword_t _sys_execve(addr_t filename_addr, addr_t argv_addr, addr_t envp_addr) {
         envp[i] = malloc(MAX_PATH);
         if (user_read_string(arg, envp[i], MAX_PATH))
             return _EFAULT;
-        STRACE("\"%s\", ", envp[i]);
+        STRACE("\"%.100s\", ", envp[i]);
     }
     envp[i] = NULL;
     STRACE("})");
