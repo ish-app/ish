@@ -169,9 +169,7 @@ static bool tty_send_input_signal(struct tty *tty, char ch) {
     if (tty->fg_group != 0) {
         if (!(tty->termios.lflags & NOFLSH_))
             tty->bufsize = 0;
-        unlock(&tty->lock);
         send_group_signal(tty->fg_group, sig);
-        lock(&tty->lock);
     }
     return true;
 }
@@ -502,11 +500,8 @@ static int tty_ioctl(struct fd *fd, int cmd, void *arg) {
 
 void tty_set_winsize(struct tty *tty, struct winsize_ winsize) {
     tty->winsize = winsize;
-    if (tty->fg_group != 0) {
-        unlock(&tty->lock);
+    if (tty->fg_group != 0)
         send_group_signal(tty->fg_group, SIGWINCH_);
-        lock(&tty->lock);
-    }
 }
 
 struct dev_ops tty_dev = {
