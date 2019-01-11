@@ -1,18 +1,14 @@
 #include "kernel/calls.h"
 
 int user_read_task(struct task *task, addr_t addr, void *buf, size_t count) {
-    read_wrlock(&task->mem->lock);
     char *cbuf = (char *) buf;
     size_t i = 0;
     while (i < count) {
         char *ptr = mem_ptr(task->mem, addr + i, MEM_READ);
-        if (ptr == NULL) {
-            read_wrunlock(&task->mem->lock);
+        if (ptr == NULL)
             return 1;
-        }
         cbuf[i++] = *ptr;
     }
-    read_wrunlock(&task->mem->lock);
     return 0;
 }
 
@@ -21,18 +17,14 @@ int user_read(addr_t addr, void *buf, size_t count) {
 }
 
 int user_write_task(struct task *task, addr_t addr, const void *buf, size_t count) {
-    read_wrlock(&task->mem->lock);
     const char *cbuf = (const char *) buf;
     size_t i = 0;
     while (i < count) {
         char *ptr = mem_ptr(task->mem, addr + i, MEM_WRITE);
-        if (ptr == NULL) {
-            read_wrunlock(&task->mem->lock);
+        if (ptr == NULL)
             return 1;
-        }
         *ptr = cbuf[i++];
     }
-    read_wrunlock(&task->mem->lock);
     return 0;
 }
 
