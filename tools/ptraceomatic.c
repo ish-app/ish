@@ -365,6 +365,8 @@ static void step_tracing(struct cpu_state *cpu, struct tlb *tlb, int pid, int se
                 pt_copy(pid, regs.rcx, sizeof(struct newstat64)); break;
             case 220: // getdents64
                 pt_copy(pid, regs.rcx, cpu->eax); break;
+            case 242: // sched_getaffinity
+                pt_copy(pid, regs.rdx, regs.rcx); break;
             case 265: // clock_gettime
                 pt_copy(pid, regs.rcx, sizeof(struct timespec_)); break;
             case 300: // fstatat64
