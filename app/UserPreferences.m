@@ -148,16 +148,16 @@ static UIColor *UnarchiveColor(id data) {
 
 NSDictionary<NSString *, Theme *> *presetThemes;
 + (void)initialize {
-    presetThemes = @{@"Light":         [self _themeWithForegroundColor:UIColor.blackColor
+    presetThemes = @{@"Light": [self _themeWithForegroundColor:UIColor.blackColor
                                                backgroundColor:UIColor.whiteColor],
-                     @"Dark":          [self _themeWithForegroundColor:UIColor.whiteColor
+                     @"Dark":  [self _themeWithForegroundColor:UIColor.whiteColor
                                                backgroundColor:UIColor.blackColor],
-                     @"Green on Dark": [self _themeWithForegroundColor:UIColor.greenColor
+                     @"1337":  [self _themeWithForegroundColor:UIColor.greenColor
                                                backgroundColor:UIColor.blackColor]};
 }
 
 + (NSArray<NSString *> *)presetNames {
-    return @[@"Light", @"Dark"];
+    return @[@"Light", @"Dark", @"1337"];
 }
 + (instancetype)presetThemeNamed:(NSString *)name {
     return presetThemes[name];
