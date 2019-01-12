@@ -113,7 +113,7 @@ void test_math() {
     ua.ld = a; ub.ld = b; \
     u.f = f80_##op(ua.f, ub.f); \
     expected = (long double) a cop_##op (long double) b; \
-    assertf(bitwise_eq(u.ld, expected), "f80_"#op"(%Le, %Le) = %Le", ua.ld, ub.ld, u.ld)
+    assertf(bitwise_eq(u.ld, expected), "f80_"#op"(%Le, %Le) = %Le (%Le)", ua.ld, ub.ld, u.ld, expected)
 #define test(op, a, b) \
     _test(op, a, b); \
     _test(op, -a, b); \
@@ -129,6 +129,7 @@ void test_math() {
     test(add, 1e100, 100);
     test(add, 1e-4949l, 1);
     test(add, 1e-4949l, 1e-4949l);
+    test(add, 1e-4949l, 2e-4949l);
     test(add, 18446744073709551616.l, 1.5);
     test(add, INFINITY, 1);
     test(add, INFINITY, 123);

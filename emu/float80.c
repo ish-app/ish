@@ -143,6 +143,8 @@ static float80 u128_normalize_round(uint128_t signif, int exp, int sign) {
     if (exp - shift < unbias(EXP_MIN)) {
         if (exp > unbias(EXP_MIN))
             signif <<= exp - unbias(EXP_MIN);
+        else
+            signif >>= unbias(EXP_MIN) - exp;
         exp = unbias(EXP_DENORMAL);
     } else {
         signif <<= shift;
@@ -302,7 +304,7 @@ float80 f80_add(float80 a, float80 b) {
     b_signif = u128_shift_right_round(b_signif, a.exp - b.exp, a.sign);
 
     int sign = a.sign;
-    int exp = unbias(a.exp);
+    int exp = unbias_denormal(a.exp);
     uint128_t signif = a_signif;
     if (!b.sign) {
         // b is postive, so add
