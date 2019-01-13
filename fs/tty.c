@@ -295,15 +295,23 @@ static ssize_t tty_read(struct fd *fd, void *buf, size_t bufsize) {
     } else {
         dword_t min = tty->termios.cc[VMIN_];
         dword_t time = tty->termios.cc[VTIME_];
-        if (min == 0 && time == 0) {
-            // no need to wait for anything
-        } else if (min > 0 && time == 0) {
-            while (tty->bufsize < min) {
-                if (wait_for(&tty->produced, &tty->lock, NULL))
-                    goto eintr;
-            }
-        } else {
-            TODO("VTIME != 0");
+
+        struct timespec timeout;
+        // time is in tenths of a second
+        timeout.tv_sec = time / 10;
+        timeout.tv_nsec = (time % 10) * 100000000;
+        struct timespec *timeout_ptr = &timeout;
+        if (time == 0)
+            timeout_ptr = NULL;
+
+        while (tty->bufsize < min) {
+            printk("waiting for %d tenths for %d bytes (at %d bytes)\n", time, min, tty->bufsize);
+            // there should be no timeout for the first character read
+            int err = wait_for(&tty->produced, &tty->lock, tty->bufsize == 0 ? NULL : timeout_ptr);
+            if (err == _ETIMEDOUT)
+                break;
+            if (err == _EINTR)
+                goto eintr;
         }
     }
 
