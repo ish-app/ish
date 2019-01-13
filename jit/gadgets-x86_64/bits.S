@@ -81,30 +81,37 @@
     .endr
 .endr
 
-.macro do_bt arg
-    andl $(32-1), %tmpd
-    btl %tmpd, \arg
+.macro do_bt_op op, arg, size, s, ss
+    and\ss $(\size-1), %tmp\s
+    \op\ss %tmp\s, \arg
     setf_c
 .endm
 
-.gadget bt32_mem
-    movl %tmpd, %r14d
-    andl $~(32-1), %r14d
-    shrl $3, %r14d
-    addl %r14d, %_addr
-    read_prep 32, bt32_mem
-    do_bt (%_addrq)
-    gret 1
+.macro do_bt op, size, s, ss
+    .gadget \op\size\()_mem
+        mov\ss %tmp\s, %r14\s
+        andl $~(\size-1), %r14d
+        shrl $3, %r14d
+        addl %r14d, %_addr
+        read_prep \size, \op\size\()_mem
+        do_bt_op \op, (%_addrq), \size, \s, \ss
+        gret 1
 
-.macro x name reg
-    .gadget bt32_\name
-        do_bt %\reg
-        gret
+    .macro x name reg
+        .gadget \op\size\()_\name
+            do_bt_op \op, %\reg, \size, \s, \ss
+            gret
+    .endm
+    .each_reg_size \size, x
+    .purgem x
 .endm
-.each_reg x
-.purgem x
 
-.gadget_array bt
+.irp op, bt,btc,bts,btr
+    .irp size, 16,32
+        ss \size, do_bt, \op
+    .endr
+    .gadget_array \op
+.endr
 
 .macro x name reg
     .gadget bswap_\name

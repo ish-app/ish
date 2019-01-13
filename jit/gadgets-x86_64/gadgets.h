@@ -77,17 +77,28 @@ crosspage_store_\id :
 .popsection
 .endm
 
-.macro _invoke reg, post, macro:vararg
-    \macro reg_\reg, e\reg\post
+.macro _invoke size, reg, post, macro:vararg
+    .if \size == 32
+        \macro reg_\reg, e\reg\post
+    .else
+        \macro reg_\reg, \reg\post
+    .endif
 .endm
-.macro .each_reg macro:vararg
+.macro .each_reg_size size, macro:vararg
     .irp reg, a,b,c,d
-        _invoke \reg, x, \macro
+        _invoke \size, \reg, x, \macro
     .endr
     .irp reg, si,di,bp
-        _invoke \reg, , \macro
+        _invoke \size, \reg, , \macro
     .endr
-    \macro reg_sp, _esp
+    .if \size == 32
+        \macro reg_sp, _esp
+    .else
+        \macro reg_sp, _sp
+    .endif
+.endm
+.macro .each_reg macro:vararg
+    .each_reg_size 32, \macro
 .endm
 
 .macro ss size, macro, args:vararg

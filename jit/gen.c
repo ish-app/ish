@@ -297,9 +297,9 @@ static inline bool gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
     store(dst,z)
 
 #define BT(bit, val,z) lo(bt, val, bit, z)
-#define BTC(bit, val,z) UNDEFINED
-#define BTS(bit, val,z) UNDEFINED
-#define BTR(bit, val,z) UNDEFINED
+#define BTC(bit, val,z) lo(btc, val, bit, z)
+#define BTS(bit, val,z) lo(bts, val, bit, z)
+#define BTR(bit, val,z) lo(btr, val, bit, z)
 #define BSF(src, dst,z) los(bsf, src, dst, z)
 #define BSR(src, dst,z) los(bsr, src, dst, z)
 
