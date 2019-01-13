@@ -5,9 +5,7 @@
 #include "fs/dev.h"
 
 // this file handles major device number 1, minor device numbers are mapped in table below
-#pragma GCC diagnostic ignored "-Winitializer-overrides"
-struct dev_ops *mem_devs[] = {
-    [0 ... 255] = NULL,
+struct dev_ops *mem_devs[256] = {
     // [1] = &prog_mem_dev,
     // [2] = &kmem_dev, // (not really applicable)
     [3] = &null_dev,

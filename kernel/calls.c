@@ -11,10 +11,7 @@ dword_t syscall_success_stub() {
     return 0;
 }
 
-#pragma GCC diagnostic ignored "-Winitializer-overrides"
 syscall_t syscall_table[] = {
-    [0 ... NUM_SYSCALLS] = NULL,
-
     [1]   = (syscall_t) sys_exit,
     [2]   = (syscall_t) sys_fork,
     [3]   = (syscall_t) sys_read,

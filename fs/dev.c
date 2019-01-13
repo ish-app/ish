@@ -4,12 +4,10 @@
 #include "fs/mem.h"
 #include "fs/tty.h"
 
-#pragma GCC diagnostic ignored "-Winitializer-overrides"
-struct dev_ops *block_devs[] = {
-    [0 ... 255] = NULL,
+struct dev_ops *block_devs[256] = {
+    // no block devices yet
 };
-struct dev_ops *char_devs[] = {
-    [0 ... 255] = NULL,
+struct dev_ops *char_devs[256] = {
     [1] = &mem_dev,
     [4] = &tty_dev,
     [5] = &tty_dev,
