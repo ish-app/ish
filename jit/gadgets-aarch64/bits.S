@@ -185,32 +185,74 @@
     .endr
 .endr
 
-.macro do_bt_w8
-    and _tmp, _tmp, 0x1f
-    lsr w8, w8, _tmp
-    and w8, w8, 1
-    strb w8, [_cpu, CPU_cf]
+.macro do_bt_op op, arg, size, s
+    .ifc \op,bt
+        .ifnc \arg, w8
+            mov w8, \arg
+        .endif
+        and _tmp, _tmp, \size-1
+        lsr w8, w8, _tmp
+        and w8, w8, 1
+        strb w8, [_cpu, CPU_cf]
+    .else
+        mov w9, 1
+        and _tmp, _tmp, \size-1
+        lsl w9, w9, _tmp
+        tst \arg, w9
+        .ifc \op,btc
+            eor \arg, \arg, w9
+        .else N .ifc \op,bts
+            orr \arg, \arg, w9
+        .else N .ifc \op,btr
+            bic \arg, \arg, w9
+        .endif N .endif N .endif
+        cset w9, ne
+        strb w9, [_cpu, CPU_cf]
+    .endif
 .endm
 
-.gadget bt32_mem
-    bic w8, _tmp, 0x1f
-    add _addr, _addr, w8, lsr 3
-    read_prep 32, bt32_mem
-    ldr w8, [_xaddr]
-    do_bt_w8
-    gret 1
-    read_bullshit 32, bt32_mem
+.macro do_bt op, size, s
+    .gadget \op\size\()_mem
+        bic w8, _tmp, 0x1f
+        add _addr, _addr, w8, lsr 3
+        # hell {{{
+        .ifin(\op, bt)
+            read_prep \size, \op\size\()_mem
+        .endifin
+        .ifin(\op, btc,bts,btr)
+            write_prep \size, \op\size\()_mem
+        .endifin
+        # }}}
+        ldr w8, [_xaddr]
+        do_bt_op \op, w8, \size, \s
+        .ifin(\op, btc,bts,btr)
+            write_done \size, \op\size\()_mem
+        .endifin
+        gret 1
+        # also hell {{{
+        .ifin(\op, bt)
+            read_bullshit \size, \op\size\()_mem
+        .endifin
+        .ifin(\op, btc,bts,btr)
+            write_bullshit \size, \op\size\()_mem
+        .endifin
+        # }}}
 
-.macro x name reg
-    .gadget bt32_\name
-        mov w8, \reg
-        do_bt_w8
-        gret
+    .macro x name, reg
+        .gadget \op\size\()_\name
+            do_bt_op \op, \reg, \size, \s
+            gret
+    .endm
+    .each_reg x
+    .purgem x
 .endm
-.each_reg x
-.purgem x
 
-.gadget_array bt
+.irp op, bt,btc,bts,btr
+    .irp size, 16,32
+        ss \size, do_bt, \op
+    .endr
+    .gadget_array \op
+.endr
 
 .macro x name reg
     .gadget bswap_\name
