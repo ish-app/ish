@@ -70,13 +70,13 @@ dword_t sys_readlinkat(fd_t at_f, addr_t path_addr, addr_t buf_addr, dword_t buf
     if (at == NULL)
         return _EBADF;
     char buf[bufsize];
-    int err = generic_readlinkat(at, path, buf, bufsize);
-    if (err >= 0) {
-        STRACE(" \"%.*s\"", bufsize, buf);
-        if (user_write_string(buf_addr, buf))
+    ssize_t size = generic_readlinkat(at, path, buf, bufsize);
+    if (size >= 0) {
+        STRACE(" \"%.*s\"", size, buf);
+        if (user_write(buf_addr, buf, size))
             return _EFAULT;
     }
-    return err;
+    return size;
 }
 
 dword_t sys_readlink(addr_t path_addr, addr_t buf_addr, dword_t bufsize) {
