@@ -66,18 +66,23 @@ static void ios_handle_exit(int code) {
     
     // configure dns
     struct __res_state res;
-    err = res_ninit(&res);
+    if (EXIT_SUCCESS != res_ninit(&res)) {
+        exit(2);
+    }
     NSMutableString *resolvConf = [NSMutableString new];
     for (int i = 0; res.dnsrch[i] != NULL; i++) {
         [resolvConf appendFormat:@"search %s\n", res.dnsrch[i]];
     }
-    for (int i = 0; i < res.nscount; i++) {
-        if (res.nsaddr_list[i].sin_len == 0)
+    union res_sockaddr_union servers[NI_MAXSERV];
+    int serversFound = res_getservers(&res, servers, NI_MAXSERV);
+    char address[NI_MAXHOST];
+    for (int i = 0; i < serversFound; i ++) {
+        union res_sockaddr_union s = servers[i];
+        if (s.sin.sin_len == 0)
             continue;
-        char address[100];
-        getnameinfo((struct sockaddr *) &res.nsaddr_list[i],
-                    sizeof(res.nsaddr_list[i]), address,
-                    sizeof(address), NULL, 0, NI_NUMERICHOST);
+        getnameinfo((struct sockaddr *) &s.sin, s.sin.sin_len,
+                    address, sizeof(address),
+                    NULL, 0, NI_NUMERICHOST);
         [resolvConf appendFormat:@"nameserver %s\n", address];
     }
     struct fd *fd = generic_open("/etc/resolv.conf", O_WRONLY_ | O_CREAT_ | O_TRUNC_, 0666);
