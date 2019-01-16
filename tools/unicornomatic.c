@@ -80,31 +80,52 @@ struct uc_regs {
     dword_t esp;
     dword_t eip;
     dword_t eflags;
+    word_t fpcw;
+    word_t fpsw;
+    float80 fp[8];
+};
+static int uc_regs_ids[] = {
+    UC_X86_REG_EAX, UC_X86_REG_EBX, UC_X86_REG_ECX, UC_X86_REG_EDX,
+    UC_X86_REG_ESI, UC_X86_REG_EDI, UC_X86_REG_EBP, UC_X86_REG_ESP,
+    UC_X86_REG_EIP, UC_X86_REG_EFLAGS,
+    UC_X86_REG_FPCW, UC_X86_REG_FPSW,
+    UC_X86_REG_FP0, UC_X86_REG_FP1, UC_X86_REG_FP2, UC_X86_REG_FP3,
+    UC_X86_REG_FP4, UC_X86_REG_FP5, UC_X86_REG_FP6, UC_X86_REG_FP7,
 };
 void uc_getregs(uc_engine *uc, struct uc_regs *regs) {
-    static int uc_regs_ids[] = {
-        UC_X86_REG_EAX, UC_X86_REG_EBX, UC_X86_REG_ECX, UC_X86_REG_EDX,
-        UC_X86_REG_ESI, UC_X86_REG_EDI, UC_X86_REG_EBP, UC_X86_REG_ESP,
-        UC_X86_REG_EIP, UC_X86_REG_EFLAGS,
-    };
     void *ptrs[sizeof(uc_regs_ids)/sizeof(uc_regs_ids[0])] = {
         &regs->eax, &regs->ebx, &regs->ecx, &regs->edx,
         &regs->esi, &regs->edi, &regs->ebp, &regs->esp,
         &regs->eip, &regs->eflags,
+        &regs->fpcw, &regs->fpsw,
+        &regs->fp[0], &regs->fp[1], &regs->fp[2], &regs->fp[3],
+        &regs->fp[4], &regs->fp[5], &regs->fp[6], &regs->fp[7],
     };
     uc_trycall(uc_reg_read_batch(uc, uc_regs_ids, ptrs, sizeof(ptrs)/sizeof(ptrs[0])), "uc_reg_read_batch");
 }
+void uc_setregs(uc_engine *uc, struct uc_regs *regs) {
+    void *const ptrs[sizeof(uc_regs_ids)/sizeof(uc_regs_ids[0])] = {
+        &regs->eax, &regs->ebx, &regs->ecx, &regs->edx,
+        &regs->esi, &regs->edi, &regs->ebp, &regs->esp,
+        &regs->eip, &regs->eflags,
+        &regs->fpcw, &regs->fpsw,
+        &regs->fp[0], &regs->fp[1], &regs->fp[2], &regs->fp[3],
+        &regs->fp[4], &regs->fp[5], &regs->fp[6], &regs->fp[7],
+    };
+    uc_trycall(uc_reg_write_batch(uc, uc_regs_ids, ptrs, sizeof(ptrs)/sizeof(ptrs[0])), "uc_reg_write_batch");
+}
 
 int compare_cpus(struct cpu_state *cpu, struct tlb *tlb, uc_engine *uc, int undefined_flags) {
+    int res = 0;
     struct uc_regs regs;
     uc_getregs(uc, &regs);
     collapse_flags(cpu);
 
 #define CHECK(uc, ish, name) \
     if ((uc) != (ish)) { \
-        printk(name ": uc 0x%llx, ish 0x%llx\n", (unsigned long long) (uc), (unsigned long long) (ish)); \
-        debugger; \
-        return -1; \
+        printk("check failed: " name ": uc 0x%llx, ish 0x%llx\n", (unsigned long long) (uc), (unsigned long long) (ish)); \
+        res = -1; \
+        ish = uc; \
     }
 
 #define CHECK_REG(reg) \
@@ -128,11 +149,30 @@ int compare_cpus(struct cpu_state *cpu, struct tlb *tlb, uc_engine *uc, int unde
 #undef f
 #define f(x,n) ((cpu->eflags & (1 << n)) ? #x : "-"),
                 cpu->eflags, f(o,11)f(d,10)f(i,9)f(t,8)f(s,7)f(z,6)f(a,4)f(p,2)f(c,0)0);
-        debugger;
-        return -1;
+        res = -1;
+        cpu->eflags = regs.eflags;
     }
     // sync up the flags so undefined flags won't error out next time
-    uc_setreg(uc, UC_X86_REG_EFLAGS, regs.eflags);
+
+#define FSW_MASK 0x7d00 // only look at top, c0, c2, c3
+    regs.fpsw &= FSW_MASK;
+    cpu->fsw &= FSW_MASK;
+    CHECK(regs.fpsw, cpu->fsw, "fsw");
+    CHECK(regs.fpcw, cpu->fcw, "fcw");
+
+#define CHECK_FPREG(i) \
+    CHECK(regs.fp[i].signif, cpu->fp[i].signif, "fp"#i" signif"); \
+    CHECK(regs.fp[i].signExp, cpu->fp[i].signExp, "fp"#i" signExp")
+    CHECK_FPREG(0);
+    CHECK_FPREG(1);
+    CHECK_FPREG(2);
+    CHECK_FPREG(3);
+    CHECK_FPREG(4);
+    CHECK_FPREG(5);
+    CHECK_FPREG(6);
+    CHECK_FPREG(7);
+
+    uc_setregs(uc, &regs);
 
     // compare pages marked dirty
     if (tlb->dirty_page != TLB_PAGE_EMPTY) {
@@ -149,7 +189,7 @@ int compare_cpus(struct cpu_state *cpu, struct tlb *tlb, uc_engine *uc, int unde
         tlb->dirty_page = TLB_PAGE_EMPTY;
     }
 
-    return 0;
+    return res;
 }
 
 static int uc_interrupt;
@@ -413,6 +453,7 @@ uc_engine *start_unicorn(struct cpu_state *cpu, struct mem *mem) {
     uc_setreg(uc, UC_X86_REG_ESP, cpu->esp);
     uc_setreg(uc, UC_X86_REG_EIP, cpu->eip);
     uc_setreg(uc, UC_X86_REG_EFLAGS, cpu->eflags);
+    uc_setreg(uc, UC_X86_REG_FPCW, cpu->fcw);
 
     // copy memory
     // XXX unicorn has a ?bug? where setting up 334 mappings takes five
@@ -477,3 +518,4 @@ void dump_memory(uc_engine *uc, const char *file, addr_t start, size_t size) {
     fwrite(buf, 1, sizeof(buf), f);
     fclose(f);
 }
+
