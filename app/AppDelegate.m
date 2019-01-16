@@ -65,31 +65,34 @@ static void ios_handle_exit(int code) {
     exit_hook = ios_handle_exit;
     
     // configure dns
-    struct __res_state res;
-    err = res_ninit(&res);
+    res_state _state;
+    _state = malloc(sizeof(struct __res_state));
+    if (EXIT_SUCCESS != res_ninit(_state)) {
+        free(_state);
+        exit(2);
+    }
     NSMutableString *resolvConf = [NSMutableString new];
-    for (int i = 0; res.dnsrch[i] != NULL; i++) {
-        [resolvConf appendFormat:@"search %s\n", res.dnsrch[i]];
+    
+    union res_sockaddr_union servers[NI_MAXSERV];
+    int serversFound = res_9_getservers(_state, servers, NI_MAXSERV);
+    
+    char address[NI_MAXHOST];
+    for (int i = 0; i < serversFound; i ++) {
+        union res_sockaddr_union s = servers[i];
+        if (s.sin.sin_len > 0) {
+            getnameinfo((struct sockaddr *)&s.sin,
+                        (socklen_t)s.sin.sin_len,
+                        (char *)&address,
+                        sizeof(address),
+                        nil,
+                        0,
+                        NI_NUMERICHOST);
+            
+            [resolvConf appendFormat:@"nameserver %s\n", address];
+        }
     }
     
-    int ns_count = 0;
-    
-    for (int i = 0; i < res.nscount; i++) {
-        if (res.nsaddr_list[i].sin_len == 0)
-            continue;
-        char address[100];
-        getnameinfo((struct sockaddr *) &res.nsaddr_list[i],
-                    sizeof(res.nsaddr_list[i]), address,
-                    sizeof(address), NULL, 0, NI_NUMERICHOST);
-        [resolvConf appendFormat:@"nameserver %s\n", address];
-        ns_count++;
-    }
-    
-    // Use default nameservers if none were found
-    if (ns_count == 0) {
-        [resolvConf appendFormat:@"nameserver 1.1.1.1\n"];
-        [resolvConf appendFormat:@"nameserver 1.0.0.1\n"];
-    }
+    free(_state);
     
     struct fd *fd = generic_open("/etc/resolv.conf", O_WRONLY_ | O_CREAT_ | O_TRUNC_, 0666);
     if (!IS_ERR(fd)) {
