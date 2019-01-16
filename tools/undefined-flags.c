@@ -38,7 +38,7 @@ skip:
                     break;
                 }
                 case 0xaf: return S|Z|A|P; // imul
-                case 0xbc: return O|S|A|P|C; // bsf
+                case 0xbd: case 0xbc: return O|S|A|P|C; // bsr/bsf
             }
             break;
 
