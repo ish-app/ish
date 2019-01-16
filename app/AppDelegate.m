@@ -71,6 +71,9 @@ static void ios_handle_exit(int code) {
     for (int i = 0; res.dnsrch[i] != NULL; i++) {
         [resolvConf appendFormat:@"search %s\n", res.dnsrch[i]];
     }
+    
+    int ns_count = 0;
+    
     for (int i = 0; i < res.nscount; i++) {
         if (res.nsaddr_list[i].sin_len == 0)
             continue;
@@ -79,7 +82,15 @@ static void ios_handle_exit(int code) {
                     sizeof(res.nsaddr_list[i]), address,
                     sizeof(address), NULL, 0, NI_NUMERICHOST);
         [resolvConf appendFormat:@"nameserver %s\n", address];
+        ns_count++;
     }
+    
+    // Use default nameservers if none were found
+    if (ns_count == 0) {
+        [resolvConf appendFormat:@"nameserver 1.1.1.1\n"];
+        [resolvConf appendFormat:@"nameserver 1.0.0.1\n"];
+    }
+    
     struct fd *fd = generic_open("/etc/resolv.conf", O_WRONLY_ | O_CREAT_ | O_TRUNC_, 0666);
     if (!IS_ERR(fd)) {
         fd->ops->write(fd, resolvConf.UTF8String, [resolvConf lengthOfBytesUsingEncoding:NSUTF8StringEncoding]);
