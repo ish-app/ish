@@ -117,5 +117,6 @@ do_helper 2
 .endr
 
 .gadget fstsw_ax
-    ldrh eax, [_cpu, CPU_fsw]
+    ldrh w10, [_cpu, CPU_fsw]
+    movs eax, w10, h
     gret
