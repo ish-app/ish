@@ -13,20 +13,14 @@
 struct fd {
     atomic_uint refcount;
     unsigned flags;
+    mode_t_ type; // just the S_IFMT part, it can't change
     const struct fd_ops *ops;
     struct list poll_fds;
     lock_t poll_lock;
-    off_t_ offset;
+    unsigned long offset;
 
     // fd data
     union {
-        // proc
-        struct {
-            struct proc_entry proc_entry;
-            unsigned proc_dir_index;
-            char *proc_data;
-            size_t proc_size;
-        };
         // tty
         struct {
             struct tty *tty;
@@ -48,6 +42,20 @@ struct fd {
             uint64_t expirations;
         };
     };
+    // fs data
+    union {
+        // proc
+        struct {
+            struct proc_entry proc_entry;
+            unsigned proc_dir_index;
+            char *proc_data;
+            size_t proc_size;
+        };
+        // devpts
+        struct {
+            int pty_num;
+        };
+    };
 
     // fs/inode data
     struct mount *mount;
@@ -63,7 +71,7 @@ struct fd {
 typedef sdword_t fd_t;
 #define AT_FDCWD_ -100
 
-struct fd *fd_create(void);
+struct fd *fd_create(const struct fd_ops *ops);
 struct fd *fd_retain(struct fd *fd);
 int fd_close(struct fd *fd);
 
@@ -78,16 +86,21 @@ struct dir_entry {
 #define LSEEK_END 2
 
 struct fd_ops {
+    // required for files
+    // TODO make optional for non-files
     ssize_t (*read)(struct fd *fd, void *buf, size_t bufsize);
     ssize_t (*write)(struct fd *fd, const void *buf, size_t bufsize);
     off_t_ (*lseek)(struct fd *fd, off_t_ off, int whence);
 
     // Reads a directory entry from the stream
+    // required for directories
     int (*readdir)(struct fd *fd, struct dir_entry *entry);
     // Return an opaque value representing the current point in the directory stream
-    long (*telldir)(struct fd *fd);
+    // optional, fd->offset will be used instead
+    unsigned long (*telldir)(struct fd *fd);
     // Seek to the location represented by a pointer returned from telldir
-    int (*seekdir)(struct fd *fd, long ptr);
+    // optional, fd->offset will be used instead
+    void (*seekdir)(struct fd *fd, unsigned long ptr);
 
     // map the file
     int (*mmap)(struct fd *fd, struct mem *mem, page_t start, pages_t pages, off_t offset, int prot, int flags);

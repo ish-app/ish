@@ -11,6 +11,8 @@ struct dev_ops *char_devs[256] = {
     [1] = &mem_dev,
     [4] = &tty_dev,
     [5] = &tty_dev,
+    [TTY_PSEUDO_MASTER_MAJOR] = &tty_dev,
+    [TTY_PSEUDO_SLAVE_MAJOR] = &tty_dev,
 };
 
 int dev_open(int major, int minor, int type, struct fd *fd) {
@@ -20,5 +22,5 @@ int dev_open(int major, int minor, int type, struct fd *fd) {
     fd->ops = &dev->fd;
     if (!dev->open)
         return 0;
-    return dev->open(major, minor, type, fd);
+    return dev->open(major, minor, fd);
 }

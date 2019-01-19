@@ -4,11 +4,10 @@
 #include "debug.h"
 
 static fd_t pipe_f_create(int pipe_fd, int flags) {
-    struct fd *fd = adhoc_fd_create();
+    struct fd *fd = adhoc_fd_create(&realfs_fdops);
     if (fd == NULL)
         return _ENOMEM;
     fd->real_fd = pipe_fd;
-    fd->ops = &realfs_fdops;
     return f_install(fd, flags);
 }
 

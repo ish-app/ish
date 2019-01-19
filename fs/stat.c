@@ -36,6 +36,7 @@ int generic_statat(struct fd *at, const char *path_raw, struct statbuf *stat, bo
     if (err < 0)
         return err;
     struct mount *mount = find_mount_and_trim_path(path);
+    memset(stat, 0, sizeof(*stat));
     err = mount->fs->stat(mount, path, stat, follow_links);
     mount_release(mount);
     return err;
@@ -83,7 +84,7 @@ dword_t sys_fstat64(fd_t fd_no, addr_t statbuf_addr) {
     struct fd *fd = f_get(fd_no);
     if (fd == NULL)
         return _EBADF;
-    struct statbuf stat;
+    struct statbuf stat = {};
     int err = fd->mount->fs->fstat(fd, &stat);
     if (err < 0)
         return err;

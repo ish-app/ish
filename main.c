@@ -14,5 +14,6 @@ int main(int argc, char *const argv[]) {
         return err;
     }
     do_mount(&procfs, "proc", "/proc");
+    do_mount(&devptsfs, "devpts", "/dev/pts");
     cpu_run(&current->cpu);
 }

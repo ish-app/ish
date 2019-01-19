@@ -107,6 +107,7 @@ extern struct list mounts;
 #define O_WRONLY_ (1 << 0)
 #define O_RDWR_ (1 << 1)
 #define O_CREAT_ (1 << 6)
+#define O_NOCTTY_ (1 << 8)
 #define O_TRUNC_ (1 << 9)
 #define O_APPEND_ (1 << 10)
 #define O_NONBLOCK_ (1 << 11)
@@ -124,14 +125,16 @@ struct fs_ops {
     int (*umount)(struct mount *mount);
     int (*statfs)(struct mount *mount, struct statfsbuf *stat);
 
-    struct fd *(*open)(struct mount *mount, const char *path, int flags, int mode);
+    struct fd *(*open)(struct mount *mount, const char *path, int flags, int mode); // required
     ssize_t (*readlink)(struct mount *mount, const char *path, char *buf, size_t bufsize);
+    // TODO make these optional (EROFS probably)
     int (*link)(struct mount *mount, const char *src, const char *dst);
     int (*unlink)(struct mount *mount, const char *path);
     int (*rmdir)(struct mount *mount, const char *path);
     int (*rename)(struct mount *mount, const char *src, const char *dst);
     int (*symlink)(struct mount *mount, const char *target, const char *link);
     int (*mknod)(struct mount *mount, const char *path, mode_t_ mode, dev_t_ dev);
+    int (*mkdir)(struct mount *mount, const char *path, mode_t_ mode);
 
     // There's a close function in both the fs and fd to handle device files
     // where, for instance, there's a real_fd needed for getpath and also a tty
@@ -146,8 +149,6 @@ struct fs_ops {
     int (*utime)(struct mount *mount, const char *path, struct timespec atime, struct timespec mtime);
     // Returns the path of the file descriptor, null terminated, buf must be at least MAX_PATH+1
     int (*getpath)(struct fd *fd, char *buf);
-
-    int (*mkdir)(struct mount *mount, const char *path, mode_t_ mode);
 
     int (*flock)(struct fd *fd, int operation);
 };
@@ -166,16 +167,18 @@ int realfs_flock(struct fd *fd, int operation);
 int realfs_getpath(struct fd *fd, char *buf);
 ssize_t realfs_read(struct fd *fd, void *buf, size_t bufsize);
 ssize_t realfs_write(struct fd *fd, const void *buf, size_t bufsize);
+int realfs_poll(struct fd *fd);
 int realfs_getflags(struct fd *fd);
 int realfs_setflags(struct fd *fd, dword_t arg);
 int realfs_close(struct fd *fd);
 
 // adhoc fs
-struct fd *adhoc_fd_create(void);
+struct fd *adhoc_fd_create(const struct fd_ops *ops);
 
 // filesystems
 extern const struct fs_ops realfs;
 extern const struct fs_ops procfs;
 extern const struct fs_ops fakefs;
+extern const struct fs_ops devptsfs;
 
 #endif

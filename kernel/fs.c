@@ -182,6 +182,10 @@ dword_t sys_read(fd_t fd_no, addr_t buf_addr, dword_t size) {
         res = _EBADF;
         goto out;
     }
+    if (S_ISDIR(fd->type)) {
+        res = _EISDIR;
+        goto out;
+    }
     res = fd->ops->read(fd, buf, size);
     if (res >= 0) {
         buf[res] = '\0';
@@ -222,6 +226,7 @@ err:
 }
 
 dword_t sys_write(fd_t fd_no, addr_t buf_addr, dword_t size) {
+    // FIXME this is a DOS vector
     char *buf = malloc(size + 1);
     if (buf == NULL)
         return _ENOMEM;

@@ -9,12 +9,11 @@
 static struct fd_ops socket_fdops;
 
 static fd_t sock_fd_create(int sock_fd, int flags) {
-    struct fd *fd = adhoc_fd_create();
+    struct fd *fd = adhoc_fd_create(&socket_fdops);
     if (fd == NULL)
         return _ENOMEM;
     fd->stat.mode = S_IFSOCK | 0666;
     fd->real_fd = sock_fd;
-    fd->ops = &socket_fdops;
     return f_install(fd, flags);
 }
 
@@ -497,6 +496,7 @@ static struct fd_ops socket_fdops = {
     .read = realfs_read,
     .write = realfs_write,
     .close = realfs_close,
+    .poll = realfs_poll,
     .getflags = realfs_getflags,
     .setflags = realfs_setflags,
 };

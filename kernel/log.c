@@ -161,5 +161,7 @@ void die(const char *msg, ...) {
 
 // fun little utility function
 int current_pid() {
-    return current->pid;
+    if (current)
+        return current->pid;
+    return -1;
 }

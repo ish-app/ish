@@ -8,10 +8,9 @@ fd_t sys_epoll_create(int_t flags) {
     if (flags & ~(O_CLOEXEC_))
         return _EINVAL;
 
-    struct fd *fd = adhoc_fd_create();
+    struct fd *fd = adhoc_fd_create(&epoll_ops);
     if (fd == NULL)
         return _ENOMEM;
-    fd->ops = &epoll_ops;
     fd->poll = poll_create();
     return f_install(fd, flags);
 }

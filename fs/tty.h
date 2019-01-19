@@ -57,22 +57,53 @@ struct termios_ {
 #define ONOCR_ (1 << 4)
 #define ONLRET_ (1 << 5)
 
-#define TTY_VIRTUAL 0
-#define TTY_PSEUDO 1
+#define TTY_CONSOLE_MAJOR 4
+#define TTY_PSEUDO_MASTER_MAJOR 128
+#define TTY_PSEUDO_SLAVE_MAJOR 136
+
+#define TCGETS_ 0x5401
+#define TCSETS_ 0x5402
+#define TCSETSW_ 0x5403
+#define TCSETSF_ 0x5404
+#define TCFLSH_ 0x540b
+#define TIOCSCTTY_ 0x540e
+#define TIOCGPRGP_ 0x540f
+#define TIOCSPGRP_ 0x5410
+#define TIOCGWINSZ_ 0x5413
+#define TIOCSWINSZ_ 0x5414
+#define TIOCSPTLCK_ 0x40045431
+#define TIOCGPTN_ 0x80045430
+
+#define TCIFLUSH_ 0
+#define TCOFLUSH_ 1
+#define TCIOFLUSH_ 2
 
 struct tty_driver {
-    int (*open)(struct tty *tty);
-    ssize_t (*write)(struct tty *tty, const void *buf, size_t len);
-    void (*close)(struct tty *tty);
+    const struct tty_driver_ops *ops;
+    struct tty **ttys;
+    unsigned limit;
 };
 
-// TODO remove magic number
-extern struct tty_driver tty_drivers[2];
+#define DEFINE_TTY_DRIVER(name, driver_ops, size) \
+    static struct tty *name##_ttys[size]; \
+    struct tty_driver name = {.ops = driver_ops, .ttys = name##_ttys, .limit = size}
+
+struct tty_driver_ops {
+    int (*init)(struct tty *tty);
+    int (*open)(struct tty *tty);
+    int (*write)(struct tty *tty, const void *buf, size_t len, bool blocking);
+    int (*ioctl)(struct tty *tty, int cmd, void *arg);
+    void (*cleanup)(struct tty *tty);
+};
+
+// indexed by major number
+extern struct tty_driver *tty_drivers[256];
 extern struct tty_driver real_tty_driver;
 
 struct tty {
     unsigned refcount;
     struct tty_driver *driver;
+    bool hung_up;
 
 #define TTY_BUF_SIZE 4096
     char buf[TTY_BUF_SIZE];
@@ -81,6 +112,7 @@ struct tty {
     bool buf_flag[TTY_BUF_SIZE];
     size_t bufsize;
     cond_t produced;
+    cond_t consumed;
 
     struct winsize_ winsize;
     struct termios_ termios;
@@ -94,21 +126,36 @@ struct tty {
     // only locks fds, to keep the lock order
     lock_t fds_lock;
 
+    // this never nests with itself, except in pty_is_half_closed_master
     lock_t lock;
 
     union {
-        // for real tty driver
-        pthread_t thread;
+        pthread_t thread; // for real tty driver
+        struct {
+            struct tty *other;
+            mode_t_ perms;
+            uid_t_ uid;
+            uid_t_ gid;
+            bool locked;
+        } pty;
         void *data;
     };
 };
 
-int tty_input(struct tty *tty, const char *input, size_t len);
+// if blocking, may return _EINTR, otherwise, may return _EAGAIN
+int tty_input(struct tty *tty, const char *input, size_t len, bool blocking);
 void tty_set_winsize(struct tty *tty, struct winsize_ winsize);
+void tty_hangup(struct tty *tty);
+
+// public for the benefit of ptys
+struct tty *tty_get(struct tty_driver *driver, int num);
+struct tty *tty_alloc(struct tty_driver *driver, int num);
+extern lock_t ttys_lock;
+void tty_release(struct tty *tty); // must be called with ttys_lock
 
 extern struct dev_ops tty_dev;
 extern struct dev_ops ptmx_dev;
-extern struct fd_ops tty_master_fd;
-extern struct fd_ops tty_slave_fd;
+
+int ptmx_open(struct fd *fd);
 
 #endif

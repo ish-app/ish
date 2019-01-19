@@ -8,6 +8,7 @@
 #include <sys/mman.h>
 #include <sys/xattr.h>
 #include <sys/file.h>
+#include <poll.h>
 
 #include "kernel/errno.h"
 #include "kernel/calls.h"
@@ -76,10 +77,9 @@ static struct fd *realfs_open(struct mount *mount, const char *path, int flags, 
     int fd_no = openat(mount->root_fd, fix_path(path), real_flags, mode);
     if (fd_no < 0)
         return ERR_PTR(errno_map());
-    struct fd *fd = fd_create();
+    struct fd *fd = fd_create(&realfs_fdops);
     fd->real_fd = fd_no;
     fd->dir = NULL;
-    fd->ops = &realfs_fdops;
     return fd;
 }
 
@@ -147,22 +147,17 @@ ssize_t realfs_write(struct fd *fd, const void *buf, size_t bufsize) {
     return res;
 }
 
-static int realfs_opendir(struct fd *fd) {
+static void realfs_opendir(struct fd *fd) {
     if (fd->dir == NULL) {
         int dirfd = dup(fd->real_fd);
         fd->dir = fdopendir(dirfd);
-        if (fd->dir == NULL) {
-            close(dirfd);
-            return errno_map();
-        }
+        // this should never get called on a non-directory
+        assert(fd->dir != NULL);
     }
-    return 0;
 }
 
 int realfs_readdir(struct fd *fd, struct dir_entry *entry) {
-    int err = realfs_opendir(fd);
-    if (err < 0)
-        return err;
+    realfs_opendir(fd);
     errno = 0;
     struct dirent *dirent = readdir(fd->dir);
     if (dirent == NULL) {
@@ -176,19 +171,14 @@ int realfs_readdir(struct fd *fd, struct dir_entry *entry) {
     return 1;
 }
 
-long realfs_telldir(struct fd *fd) {
-    int err = realfs_opendir(fd);
-    if (err < 0)
-        return err;
+unsigned long realfs_telldir(struct fd *fd) {
+    realfs_opendir(fd);
     return telldir(fd->dir);
 }
 
-int realfs_seekdir(struct fd *fd, long ptr) {
-    int err = realfs_opendir(fd);
-    if (err < 0)
-        return err;
+void realfs_seekdir(struct fd *fd, unsigned long ptr) {
+    realfs_opendir(fd);
     seekdir(fd->dir, ptr);
-    return 0;
 }
 
 off_t realfs_lseek(struct fd *fd, off_t offset, int whence) {
@@ -204,6 +194,19 @@ off_t realfs_lseek(struct fd *fd, off_t offset, int whence) {
     if (res < 0)
         return errno_map();
     return res;
+}
+
+int realfs_poll(struct fd *fd) {
+    struct pollfd p = {.fd = fd->real_fd, .events = POLLPRI};
+    // prevent POLLNVAL
+    int flags = fcntl(fd->real_fd, F_GETFL, 0);
+    if ((flags & O_ACCMODE) != O_WRONLY)
+        p.events |= POLLIN;
+    if ((flags & O_ACCMODE) != O_RDONLY)
+        p.events |= POLLOUT;
+    if (poll(&p, 1, 0) <= 0)
+        return 0;
+    return p.revents;
 }
 
 int realfs_mmap(struct fd *fd, struct mem *mem, page_t start, pages_t pages, off_t offset, int prot, int flags) {
@@ -445,6 +448,7 @@ const struct fd_ops realfs_fdops = {
     .seekdir = realfs_seekdir,
     .lseek = realfs_lseek,
     .mmap = realfs_mmap,
+    .poll = realfs_poll,
     .fsync = realfs_fsync,
     .close = realfs_close,
     .getflags = realfs_getflags,

@@ -8,12 +8,16 @@
 #include "fs/poll.h"
 #include "fs/fd.h"
 
-struct fd *fd_create() {
+struct fd *fd_create(const struct fd_ops *ops) {
     struct fd *fd = malloc(sizeof(struct fd));
+    if (fd == NULL)
+        return NULL;
     *fd = (struct fd) {};
+    fd->ops = ops;
     fd->refcount = 1;
     fd->flags = 0;
     fd->mount = NULL;
+    fd->offset = 0;
     list_init(&fd->poll_fds);
     lock_init(&fd->poll_lock);
     lock_init(&fd->lock);
@@ -251,6 +255,12 @@ dword_t sys_dup2(fd_t f, fd_t new_f) {
     return new_f;
 }
 
+#define FD_ALLOWED_FLAGS (O_APPEND_ | O_NONBLOCK_)
+static int fd_setflags(struct fd *fd, int flags) {
+    fd->flags = (fd->flags & ~FD_ALLOWED_FLAGS) | (flags & FD_ALLOWED_FLAGS);
+    return 0;
+}
+
 dword_t sys_fcntl64(fd_t f, dword_t cmd, dword_t arg) {
     struct fdtable *table = current->files;
     struct fd *fd = f_get(f);
@@ -280,11 +290,8 @@ dword_t sys_fcntl64(fd_t f, dword_t cmd, dword_t arg) {
             return fd->ops->getflags(fd);
         case F_SETFL_:
             STRACE("fcntl(%d, F_SETFL, %#x)", f, arg);
-            if (fd->ops->setflags == NULL) {
-                arg &= O_APPEND_ | O_NONBLOCK_;
-                fd->flags = arg;
-                return 0;
-            }
+            if (fd->ops->setflags == NULL)
+                return fd_setflags(fd, arg);
             return fd->ops->setflags(fd, arg);
 
         default:

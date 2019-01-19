@@ -46,7 +46,7 @@ int poll_add_fd(struct poll *poll, struct fd *fd, int types, union poll_fd_info 
 int poll_mod_fd(struct poll *poll, struct fd *fd, int types, union poll_fd_info info);
 int poll_del_fd(struct poll *poll, struct fd *fd);
 // please do not call this while holding any locks you would acquire in your poll operation
-void poll_wake(struct fd *fd);
+void poll_wakeup(struct fd *fd);
 // Waits for events on the fds in this poll, and calls the callback for each one found.
 // Returns the number of times the callback returned 1, or negative for error.
 typedef int (*poll_callback_t)(void *context, int types, union poll_fd_info info);

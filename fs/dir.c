@@ -1,9 +1,23 @@
+#include <sys/stat.h>
 #include <string.h>
 
 #include "kernel/calls.h"
 #include "kernel/errno.h"
 #include "kernel/fs.h"
 #include "fs/fd.h"
+
+static unsigned long fd_telldir(struct fd *fd) {
+    unsigned long off = fd->offset;
+    if (fd->ops->telldir)
+        off = fd->ops->telldir(fd);
+    return off;
+}
+
+static void fd_seekdir(struct fd *fd, unsigned long off) {
+    fd->offset = off;
+    if (fd->ops->seekdir)
+        fd->ops->seekdir(fd, off);
+}
 
 struct linux_dirent64 {
     qword_t inode;
@@ -18,7 +32,7 @@ int_t sys_getdents64(fd_t f, addr_t dirents, dword_t count) {
     struct fd *fd = f_get(f);
     if (fd == NULL)
         return _EBADF;
-    if (fd->ops->readdir == NULL)
+    if (!S_ISDIR(fd->type) || fd->ops->readdir == NULL)
         return _ENOTDIR;
 
     dword_t orig_count = count;
@@ -27,7 +41,7 @@ int_t sys_getdents64(fd_t f, addr_t dirents, dword_t count) {
     int err;
     int printed = 0;
     while (true) {
-        ptr = fd->ops->telldir(fd);
+        ptr = fd_telldir(fd);
         struct dir_entry entry;
         err = fd->ops->readdir(fd, &entry);
         if (err < 0)
@@ -40,7 +54,7 @@ int_t sys_getdents64(fd_t f, addr_t dirents, dword_t count) {
         char dirent_data[reclen];
         struct linux_dirent64 *dirent = (struct linux_dirent64 *) dirent_data;
         dirent->inode = entry.inode;
-        dirent->offset = fd->ops->telldir(fd);
+        dirent->offset = fd_telldir(fd);
         dirent->reclen = reclen;
         dirent->type = 0;
         strcpy(dirent->name, entry.name);
@@ -58,6 +72,6 @@ int_t sys_getdents64(fd_t f, addr_t dirents, dword_t count) {
         count -= reclen;
     }
 
-    fd->ops->seekdir(fd, ptr);
+    fd_seekdir(fd, ptr);
     return orig_count - count;
 }

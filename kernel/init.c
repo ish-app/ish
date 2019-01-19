@@ -62,12 +62,12 @@ void create_first_process() {
     sys_setsid();
 }
 
-int create_stdio(struct tty_driver driver) {
+int create_stdio(struct tty_driver *driver) {
     // I can't wait for when init and udev works and I don't need to do this
-    tty_drivers[TTY_VIRTUAL] = driver;
+    tty_drivers[TTY_CONSOLE_MAJOR] = driver;
 
     // FIXME use generic_open (or something) to avoid this mess
-    struct fd *fd = adhoc_fd_create();
+    struct fd *fd = adhoc_fd_create(NULL);
     fd->stat.rdev = dev_make(4, 0);
     fd->stat.mode = S_IFCHR | S_IRUSR;
     fd->flags = O_RDWR_;

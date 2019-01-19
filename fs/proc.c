@@ -21,7 +21,7 @@ static int proc_lookup(const char *path, struct proc_entry *entry) {
         }
         *c = '\0';
 
-        unsigned index = 0;
+        unsigned long index = 0;
         struct proc_entry next_entry;
         char entry_name[MAX_NAME];
         while (proc_dir_read(entry, &index, &next_entry)) {
@@ -52,8 +52,7 @@ static struct fd *proc_open(struct mount *UNUSED(mount), const char *path, int U
     int err = proc_lookup(path, &entry);
     if (err < 0)
         return ERR_PTR(err);
-    struct fd *fd = fd_create();
-    fd->ops = &procfs_fdops;
+    struct fd *fd = fd_create(&procfs_fdops);
     fd->proc_entry = entry;
     fd->proc_data = NULL;
     return fd;
@@ -151,7 +150,7 @@ static off_t_ proc_seek(struct fd *fd, off_t_ off, int whence) {
 
 static int proc_readdir(struct fd *fd, struct dir_entry *entry) {
     struct proc_entry proc_entry;
-    bool any_left = proc_dir_read(&fd->proc_entry, &fd->proc_dir_index, &proc_entry);
+    bool any_left = proc_dir_read(&fd->proc_entry, &fd->offset, &proc_entry);
     if (!any_left)
         return 0;
     proc_entry_getname(&proc_entry, entry->name);
@@ -159,21 +158,11 @@ static int proc_readdir(struct fd *fd, struct dir_entry *entry) {
     return 1;
 }
 
-static long proc_telldir(struct fd *fd) {
-    return fd->proc_dir_index;
-}
-static int proc_seekdir(struct fd *fd, long ptr) {
-    fd->proc_dir_index = ptr;
-    return 0;
-}
-
 const struct fd_ops procfs_fdops = {
     .read = proc_read,
     .lseek = proc_seek,
 
     .readdir = proc_readdir,
-    .telldir = proc_telldir,
-    .seekdir = proc_seekdir,
 };
 
 static ssize_t proc_readlink(struct mount *UNUSED(mount), const char *path, char *buf, size_t bufsize) {

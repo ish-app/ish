@@ -7,6 +7,7 @@
 const struct fs_ops *filesystems[] = {
     &realfs,
     &procfs,
+    &devptsfs,
 };
 
 struct mount *mount_find(char *path) {

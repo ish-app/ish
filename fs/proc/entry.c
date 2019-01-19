@@ -34,7 +34,7 @@ void proc_entry_getname(struct proc_entry *entry, char *buf) {
         assert(!"missing name in proc entry");
 }
 
-bool proc_dir_read(struct proc_entry *entry, unsigned *index, struct proc_entry *next_entry) {
+bool proc_dir_read(struct proc_entry *entry, unsigned long *index, struct proc_entry *next_entry) {
     if (entry->meta->readdir)
         return entry->meta->readdir(entry, index, next_entry);
 

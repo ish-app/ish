@@ -29,7 +29,7 @@ struct proc_dir_entry {
     size_t children_sizeof;
 
     // directory with dynamic contents
-    bool (*readdir)(struct proc_entry *entry, unsigned *index, struct proc_entry *next_entry);
+    bool (*readdir)(struct proc_entry *entry, unsigned long *index, struct proc_entry *next_entry);
 
     struct proc_dir_entry *parent;
     int inode;
@@ -42,6 +42,6 @@ mode_t_ proc_entry_mode(struct proc_entry *entry);
 void proc_entry_getname(struct proc_entry *entry, char *buf);
 int proc_entry_stat(struct proc_entry *entry, struct statbuf *stat);
 
-bool proc_dir_read(struct proc_entry *entry, unsigned *index, struct proc_entry *next_entry);
+bool proc_dir_read(struct proc_entry *entry, unsigned long *index, struct proc_entry *next_entry);
 
 #endif

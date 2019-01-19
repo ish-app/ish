@@ -111,7 +111,7 @@ static ssize_t proc_pid_cmdline_show(struct proc_entry *entry, char *buf) {
 
 static struct proc_dir_entry proc_pid_fd;
 
-static bool proc_pid_fd_readdir(struct proc_entry *entry, unsigned *index, struct proc_entry *next_entry) {
+static bool proc_pid_fd_readdir(struct proc_entry *entry, unsigned long *index, struct proc_entry *next_entry) {
     struct task *task = proc_get_task(entry);
     if (task == NULL)
         return _ESRCH;

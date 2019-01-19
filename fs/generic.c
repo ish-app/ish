@@ -44,23 +44,31 @@ struct fd *generic_openat(struct fd *at, const char *path_raw, int flags, int mo
 
     struct statbuf stat;
     err = fd->mount->fs->fstat(fd, &stat);
-    if (err >= 0) {
-        assert(!S_ISLNK(stat.mode)); // would mean path_normalize didn't do its job
-        if (S_ISBLK(stat.mode) || S_ISCHR(stat.mode)) {
-            int type;
-            if (S_ISBLK(stat.mode))
-                type = DEV_BLOCK;
-            else
-                type = DEV_CHAR;
-            int major = dev_major(stat.rdev);
-            int minor = dev_minor(stat.rdev);
-            err = dev_open(major, minor, type, fd);
-            if (err < 0) {
-                fd_close(fd);
-                return ERR_PTR(err);
-            }
+    if (err < 0) {
+        fd_close(fd);
+        return ERR_PTR(err);
+    }
+    fd->type = stat.mode & S_IFMT;
+    fd->flags = flags;
+
+    assert(!S_ISLNK(fd->type)); // would mean path_normalize didn't do its job
+    if (S_ISBLK(fd->type) || S_ISCHR(fd->type)) {
+        int type;
+        if (S_ISBLK(fd->type))
+            type = DEV_BLOCK;
+        else
+            type = DEV_CHAR;
+        err = dev_open(dev_major(stat.rdev), dev_minor(stat.rdev), type, fd);
+        if (err < 0) {
+            fd_close(fd);
+            return ERR_PTR(err);
         }
     }
+    if (S_ISDIR(fd->type) && flags & (O_RDWR_ | O_WRONLY_)) {
+        fd_close(fd);
+        return ERR_PTR(_EISDIR);
+    }
+
     return fd;
 }
 
@@ -88,7 +96,7 @@ int generic_accessat(struct fd *dirfd, const char *path_raw, int UNUSED(mode)) {
         return err;
 
     struct mount *mount = find_mount_and_trim_path(path);
-    struct statbuf stat;
+    struct statbuf stat = {};
     err = mount->fs->stat(mount, path, &stat, true);
     mount_release(mount);
     if (err < 0)
@@ -208,7 +216,9 @@ ssize_t generic_readlinkat(struct fd *at, const char *path_raw, char *buf, size_
     if (err < 0)
         return err;
     struct mount *mount = find_mount_and_trim_path(path);
-    err = mount->fs->readlink(mount, path, buf, bufsize);
+    err = _EINVAL;
+    if (mount->fs->readlink)
+        err = mount->fs->readlink(mount, path, buf, bufsize);
     mount_release(mount);
     return err;
 }

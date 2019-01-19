@@ -88,16 +88,16 @@ static Terminal *terminal = nil;
     }];
 }
 
-- (size_t)write:(const void *)buf length:(size_t)len {
+- (int)write:(const void *)buf length:(size_t)len {
     @synchronized (self) {
         [self.pendingData appendData:[NSData dataWithBytes:buf length:len]];
         [self.refreshTask schedule];
     }
-    return len;
+    return 0;
 }
 
 - (void)sendInput:(const char *)buf length:(size_t)len {
-    tty_input(self.tty, buf, len);
+    tty_input(self.tty, buf, len, 0);
     [self.scrollToBottomTask schedule];
 }
 
@@ -229,7 +229,7 @@ NSData *removeInvalidUTF8(NSData *data) {
 
 @end
 
-static int ios_tty_open(struct tty *tty) {
+static int ios_tty_init(struct tty *tty) {
     Terminal *terminal = [Terminal terminalWithType:tty->type number:tty->num];
     terminal.tty = tty;
     tty->refcount++;
@@ -264,12 +264,12 @@ static ssize_t ios_tty_write(struct tty *tty, const void *buf, size_t len) {
     return [terminal write:buf length:len];
 }
 
-static void ios_tty_close(struct tty *tty) {
+static void ios_tty_cleanup(struct tty *tty) {
     CFBridgingRelease(tty->data);
 }
 
 struct tty_driver ios_tty_driver = {
-    .open = ios_tty_open,
+    .init = ios_tty_init,
     .write = ios_tty_write,
-    .close = ios_tty_close,
+    .cleanup = ios_tty_cleanup,
 };

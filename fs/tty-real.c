@@ -23,7 +23,7 @@ static void real_tty_read_thread(struct tty *tty) {
             // ^\ (so ^C still works for emulated SIGINT)
             raise(SIGINT);
         }
-        tty_input(tty, &ch, 1);
+        tty_input(tty, &ch, 1, 0);
     }
 }
 
@@ -72,7 +72,7 @@ static struct termios_ termios_from_real(struct termios real) {
 }
 
 static struct termios old_termios;
-int real_tty_open(struct tty *tty) {
+int real_tty_init(struct tty *tty) {
     struct winsize winsz;
     if (ioctl(STDIN_FILENO, TIOCGWINSZ, &winsz) < 0) {
         if (errno == ENOTTY)
@@ -105,18 +105,19 @@ notty:
     return 0;
 }
 
-ssize_t real_tty_write(struct tty *UNUSED(tty), const void *buf, size_t len) {
+int real_tty_write(struct tty *UNUSED(tty), const void *buf, size_t len, bool UNUSED(blocking)) {
     return write(STDOUT_FILENO, buf, len);
 }
 
-void real_tty_close(struct tty *tty) {
+void real_tty_cleanup(struct tty *tty) {
     if (tcsetattr(STDIN_FILENO, TCSANOW, &old_termios) < 0 && errno != ENOTTY)
         ERRNO_DIE("failed to reset terminal");
     pthread_cancel(tty->thread);
 }
 
-struct tty_driver real_tty_driver = {
-    .open = real_tty_open,
+struct tty_driver_ops real_tty_ops = {
+    .init = real_tty_init,
     .write = real_tty_write,
-    .close = real_tty_close,
+    .cleanup = real_tty_cleanup,
 };
+DEFINE_TTY_DRIVER(real_tty_driver, &real_tty_ops, 1);

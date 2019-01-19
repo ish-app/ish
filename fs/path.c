@@ -79,7 +79,9 @@ int path_normalize(struct fd *at, const char *path, char *out, bool follow_links
             strcpy(possible_symlink, out);
             struct mount *mount = find_mount_and_trim_path(possible_symlink);
             assert(path_is_normalized(possible_symlink));
-            int res = mount->fs->readlink(mount, possible_symlink, c, MAX_PATH - (c - out));
+            int res = _EINVAL;
+            if (mount->fs->readlink)
+                res = mount->fs->readlink(mount, possible_symlink, c, MAX_PATH - (c - out));
             mount_release(mount);
             if (res >= 0) {
                 // readlink does not null terminate

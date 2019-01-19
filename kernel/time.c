@@ -188,7 +188,7 @@ static void timerfd_callback(struct fd *fd) {
     fd->expirations++;
     notify(&fd->cond);
     unlock(&fd->lock);
-    poll_wake(fd);
+    poll_wakeup(fd);
 }
 
 fd_t sys_timerfd_create(int_t clockid, int_t flags) {
@@ -198,10 +198,9 @@ fd_t sys_timerfd_create(int_t clockid, int_t flags) {
         return _EINVAL;
     }
 
-    struct fd *fd = adhoc_fd_create();
+    struct fd *fd = adhoc_fd_create(&timerfd_ops);
     if (fd == NULL)
         return _ENOMEM;
-    fd->ops = &timerfd_ops;
 
     fd->timer = timer_new((timer_callback_t) timerfd_callback, fd);
     return f_install(fd, flags);

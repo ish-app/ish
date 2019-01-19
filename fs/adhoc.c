@@ -7,8 +7,8 @@
 
 static struct mount adhoc_mount;
 
-struct fd *adhoc_fd_create() {
-    struct fd *fd = fd_create();
+struct fd *adhoc_fd_create(const struct fd_ops *ops) {
+    struct fd *fd = fd_create(ops);
     if (fd == NULL)
         return NULL;
     adhoc_mount.refcount++;

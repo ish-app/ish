@@ -20,7 +20,7 @@ struct dev_ops *mem_devs[256] = {
 };
 
 // dispatch device for major device 1
-static int mem_open(int major, int minor, int type, struct fd *fd) {
+static int mem_open(int major, int minor, struct fd *fd) {
     struct dev_ops *dev = mem_devs[minor];
     if (dev == NULL) {
         return _ENXIO;
@@ -28,7 +28,7 @@ static int mem_open(int major, int minor, int type, struct fd *fd) {
     fd->ops = &dev->fd;
     if (!dev->open)
         return 0;
-    return dev->open(major, minor, type, fd);
+    return dev->open(major, minor, fd);
 }
 
 struct dev_ops mem_dev = {
@@ -36,7 +36,7 @@ struct dev_ops mem_dev = {
 };
 
 // begin inline devices
-static int null_open(int UNUSED(major), int UNUSED(minor), int UNUSED(type), struct fd *UNUSED(fd)) {
+static int null_open(int UNUSED(major), int UNUSED(minor), struct fd *UNUSED(fd)) {
     return 0;
 }
 static ssize_t null_read(struct fd *UNUSED(fd), void *UNUSED(buf), size_t UNUSED(bufsize)) {

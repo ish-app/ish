@@ -103,7 +103,7 @@ out:
     return err;
 }
 
-void poll_wake(struct fd *fd) {
+void poll_wakeup(struct fd *fd) {
     struct poll_fd *poll_fd;
     lock(&fd->poll_lock);
     list_for_each_entry(&fd->poll_fds, poll_fd, polls) {
@@ -135,19 +135,13 @@ int poll_wait(struct poll *poll_, poll_callback_t callback, void *context, struc
         struct poll_fd *poll_fd;
         list_for_each_entry(&poll_->poll_fds, poll_fd, fds) {
             struct fd *fd = poll_fd->fd;
-            int poll_types;
-            if (fd->ops->poll) {
-                poll_types = fd->ops->poll(fd) & poll_fd->types;
-            } else {
-                struct pollfd p = {.fd = fd->real_fd, .events = poll_fd->types};
-                if (poll(&p, 1, 0) > 0)
-                    poll_types = p.revents;
-                else
-                    poll_types = 0;
-            }
+            int poll_types = 0;
+            if (fd->ops->poll)
+                poll_types = fd->ops->poll(fd);
+            // POLLNVAL should only be returned by poll() when given a bad fd
+            assert(!(poll_types & POLL_NVAL));
+            poll_types &= poll_fd->types;
             if (poll_types) {
-                // POLLNVAL should only be returned by poll() when given a bad fd
-                assert(!(poll_types & POLL_NVAL));
                 if (callback(context, poll_types, poll_fd->info) == 1)
                     res++;
             }
@@ -158,7 +152,7 @@ int poll_wait(struct poll *poll_, poll_callback_t callback, void *context, struc
         // wait for a ready notification
         size_t pollfd_count = 1;
         list_for_each_entry(&poll_->poll_fds, poll_fd, fds) {
-            if (poll_fd->fd->ops->poll == NULL)
+            if (poll_fd->fd->ops->poll == realfs_poll)
                 pollfd_count++;
         }
         struct pollfd pollfds[pollfd_count];
@@ -166,7 +160,7 @@ int poll_wait(struct poll *poll_, poll_callback_t callback, void *context, struc
         pollfds[0].events = POLLIN;
         int i = 1;
         list_for_each_entry(&poll_->poll_fds, poll_fd, fds) {
-            if (poll_fd->fd->ops->poll)
+            if (poll_fd->fd->ops->poll != realfs_poll)
                 continue;
             pollfds[i].fd = poll_fd->fd->real_fd;
             // TODO translate flags

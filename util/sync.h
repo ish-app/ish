@@ -11,10 +11,12 @@
 typedef struct {
     pthread_mutex_t m;
     pthread_t owner;
+    const char *file;
+    int line;
 } lock_t;
 #define lock_init(lock) pthread_mutex_init(&(lock)->m, NULL)
-#define LOCK_INITIALIZER {PTHREAD_MUTEX_INITIALIZER, 0}
-#define lock(lock) do { pthread_mutex_lock(&(lock)->m); (lock)->owner = pthread_self(); } while (0)
+#define LOCK_INITIALIZER {PTHREAD_MUTEX_INITIALIZER, 0, 0, 0}
+#define lock(lock) do { pthread_mutex_lock(&(lock)->m); (lock)->owner = pthread_self(); (lock)->line = __LINE__; (lock)->file = __FILE__; } while (0)
 #define unlock(lock) pthread_mutex_unlock(&(lock)->m)
 
 // conditions, implemented using pthread conditions but hacked so you can also
