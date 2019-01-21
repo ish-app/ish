@@ -538,19 +538,19 @@ dword_t sys_fchmod(fd_t f, dword_t mode) {
     return fd->mount->fs->fsetattr(fd, make_attr(mode, mode));
 }
 
-dword_t sys_fchmodat(fd_t at_f, addr_t path_addr, dword_t mode, int flags) {
+dword_t sys_fchmodat(fd_t at_f, addr_t path_addr, dword_t mode) {
     char path[MAX_PATH];
     if (user_read_string(path_addr, path, sizeof(path)))
         return _EFAULT;
     struct fd *at = at_fd(at_f);
     if (at == NULL)
         return _EBADF;
-    bool follow_links = flags & AT_SYMLINK_NOFOLLOW_ ? false : true;
-    return generic_setattrat(at, path, make_attr(mode, mode), follow_links);
+    mode &= ~S_IFMT;
+    return generic_setattrat(at, path, make_attr(mode, mode), true);
 }
 
 dword_t sys_chmod(addr_t path_addr, dword_t mode) {
-    return sys_fchmodat(AT_FDCWD_, path_addr, mode, 0);
+    return sys_fchmodat(AT_FDCWD_, path_addr, mode);
 }
 
 dword_t sys_fchown32(fd_t f, uid_t_ owner, uid_t_ group) {

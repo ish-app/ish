@@ -126,7 +126,7 @@ dword_t sys_lstat64(addr_t path_addr, addr_t statbuf_addr);
 dword_t sys_fstat64(fd_t fd_no, addr_t statbuf_addr);
 dword_t sys_fstatat64(fd_t at, addr_t path_addr, addr_t statbuf_addr, dword_t flags);
 dword_t sys_fchmod(fd_t f, dword_t mode);
-dword_t sys_fchmodat(fd_t at_f, addr_t path_addr, dword_t mode, int flags);
+dword_t sys_fchmodat(fd_t at_f, addr_t path_addr, dword_t mode);
 dword_t sys_chmod(addr_t path_addr, dword_t mode);
 dword_t sys_fchown32(fd_t f, dword_t owner, dword_t group);
 dword_t sys_fchownat(fd_t at_f, addr_t path_addr, dword_t owner, dword_t group, int flags);
