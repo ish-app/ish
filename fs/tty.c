@@ -90,9 +90,7 @@ void tty_release(struct tty *tty) {
         free(tty);
     } else {
         // bit of a hack
-        if (tty->driver == &pty_slave) debugger;
         if (tty->driver == &pty_slave && tty->refcount == 1) {
-            printk("half closed woot\n");
             struct tty *master = tty->pty.other;
             lock(&master->lock);
             tty_poll_wakeup(master);
