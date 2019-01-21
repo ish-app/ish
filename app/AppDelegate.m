@@ -59,7 +59,7 @@ static void ios_handle_exit(int code) {
     err = sys_execve(argv[0], argv, envp);
     if (err < 0)
         return err;
-    err = create_stdio(ios_tty_driver);
+    err = create_stdio(&ios_tty_driver);
     if (err < 0)
         return err;
     exit_hook = ios_handle_exit;

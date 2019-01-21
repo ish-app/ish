@@ -259,7 +259,7 @@ static int ios_tty_init(struct tty *tty) {
     return 0;
 }
 
-static ssize_t ios_tty_write(struct tty *tty, const void *buf, size_t len) {
+static int ios_tty_write(struct tty *tty, const void *buf, size_t len, bool blocking) {
     Terminal *terminal = (__bridge Terminal *) tty->data;
     return [terminal write:buf length:len];
 }
@@ -268,8 +268,9 @@ static void ios_tty_cleanup(struct tty *tty) {
     CFBridgingRelease(tty->data);
 }
 
-struct tty_driver ios_tty_driver = {
+struct tty_driver_ops ios_tty_ops = {
     .init = ios_tty_init,
     .write = ios_tty_write,
     .cleanup = ios_tty_cleanup,
 };
+DEFINE_TTY_DRIVER(ios_tty_driver, &ios_tty_ops, 1);

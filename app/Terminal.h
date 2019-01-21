@@ -12,7 +12,7 @@
 
 + (Terminal *)terminalWithType:(int)type number:(int)number;
 
-- (size_t)write:(const void *)buf length:(size_t)len;
+- (int)write:(const void *)buf length:(size_t)len;
 - (void)sendInput:(const char *)buf length:(size_t)len;
 
 - (NSString *)arrow:(char)direction;
