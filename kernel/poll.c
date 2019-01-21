@@ -170,6 +170,10 @@ dword_t sys_poll(addr_t fds, dword_t nfds, int_t timeout) {
     }
     int res = poll_wait(poll, poll_event_callback, &context, timeout == -1 ? NULL : &timeout_ts);
     poll_destroy(poll);
+    for (unsigned i = 0; i < nfds; i++) {
+        if (files[i] != NULL)
+            fd_close(files[i]);
+    }
 
     if (res < 0)
         return res;
