@@ -179,6 +179,34 @@ static void devpts_stat_num(int pty_num, struct statbuf *stat) {
     }
 }
 
+static int devpts_setattr_num(int pty_num, struct attr attr) {
+    if (pty_num == -1)
+        return _EROFS;
+    if (attr.type == attr_size)
+        return _EINVAL;
+
+    lock(&ttys_lock);
+    struct tty *tty = pty_slave.ttys[pty_num];
+    assert(tty != NULL);
+    lock(&tty->lock);
+
+    switch (attr.type) {
+        case attr_uid:
+            tty->pty.uid = attr.uid;
+            break;
+        case attr_gid:
+            tty->pty.gid = attr.gid;
+            break;
+        case attr_mode:
+            tty->pty.perms = attr.mode;
+            break;
+    }
+
+    unlock(&tty->lock);
+    unlock(&ttys_lock);
+    return 0;
+}
+
 static int devpts_fstat(struct fd *fd, struct statbuf *stat) {
     devpts_stat_num(fd->pty_num, stat);
     return 0;
@@ -189,6 +217,19 @@ static int devpts_stat(struct mount *UNUSED(mount), const char *path, struct sta
     if (pty_num == _ENOENT)
         return _ENOENT;
     devpts_stat_num(pty_num, stat);
+    return 0;
+}
+
+static int devpts_setattr(struct mount *UNUSED(mount), const char *path, struct attr attr) {
+    int pty_num = devpts_get_pty_num(path);
+    if (pty_num == _ENOENT)
+        return _ENOENT;
+    devpts_setattr_num(pty_num, attr);
+    return 0;
+}
+
+static int devpts_fsetattr(struct fd *fd, struct attr attr) {
+    devpts_setattr_num(fd->pty_num, attr);
     return 0;
 }
 
@@ -212,6 +253,8 @@ const struct fs_ops devptsfs = {
     .getpath = devpts_getpath,
     .stat = devpts_stat,
     .fstat = devpts_fstat,
+    .setattr = devpts_setattr,
+    .fsetattr = devpts_fsetattr,
 };
 
 static const struct fd_ops devpts_fdops = {
