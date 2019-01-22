@@ -92,11 +92,13 @@ void tty_release(struct tty *tty) {
         // bit of a hack
         if (tty->driver == &pty_slave && tty->refcount == 1) {
             struct tty *master = tty->pty.other;
+            unlock(&tty->lock);
             lock(&master->lock);
             tty_poll_wakeup(master);
             unlock(&master->lock);
+        } else {
+            unlock(&tty->lock);
         }
-        unlock(&tty->lock);
     }
 }
 
@@ -153,12 +155,12 @@ static int tty_open(int major, int minor, struct fd *fd) {
     unlock(&tty->fds_lock);
 
     if (!(fd->flags & O_NOCTTY_)) {
-        lock(&tty->lock);
         lock(&pids_lock);
+        lock(&tty->lock);
         if (current->group->sid == current->pid)
             tty_set_controlling(current->group, tty);
-        unlock(&pids_lock);
         unlock(&tty->lock);
+        unlock(&pids_lock);
     }
 
     return 0;
@@ -500,7 +502,11 @@ static bool tty_is_current(struct tty *tty) {
 
 static int tiocsctty(struct tty *tty, int force) {
     int err = 0;
+    unlock(&tty->lock); //aaaaaaaa
+    // it's safe because literally nothing happens between that unlock and the last lock, and repulsive for the same reason
+    // locking is ***hard**
     lock(&pids_lock);
+    lock(&tty->lock);
     // do nothing if this is already our controlling tty
     if (current->group->sid == current->pid && current->group->sid == tty->session)
         goto out;
@@ -582,7 +588,10 @@ static int tty_ioctl(struct fd *fd, int cmd, void *arg) {
             STRACE("tty group = %d\n", tty->fg_group);
             *(dword_t *) arg = tty->fg_group; break;
         case TIOCSPGRP_:
+            // see "aaaaaaaa" comment above
+            unlock(&tty->lock);
             lock(&pids_lock);
+            lock(&tty->lock);
             pid_t_ sid = current->group->sid;
             unlock(&pids_lock);
             if (!tty_is_current(tty) || sid != tty->session) {
