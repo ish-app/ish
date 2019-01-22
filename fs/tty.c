@@ -125,9 +125,12 @@ static int tty_open(int major, int minor, struct fd *fd) {
             lock(&ttys_lock);
             lock(&current->group->lock);
             tty = current->group->tty;
-            if (tty != NULL)
-                tty->refcount++;
             unlock(&current->group->lock);
+            if (tty != NULL) {
+                lock(&tty->lock);
+                tty->refcount++;
+                unlock(&tty->lock);
+            }
             unlock(&ttys_lock);
             if (tty == NULL)
                 return _ENXIO;
