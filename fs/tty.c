@@ -95,14 +95,14 @@ void tty_release(struct tty *tty) {
         free(tty);
     } else {
         // bit of a hack
-        if (tty->driver == &pty_slave && tty->refcount == 1) {
-            struct tty *master = tty->pty.other;
-            unlock(&tty->lock);
+        struct tty *master = NULL;
+        if (tty->driver == &pty_slave && tty->refcount == 1)
+            master = tty->pty.other;
+        unlock(&tty->lock);
+        if (master != NULL) {
             lock(&master->lock);
             tty_poll_wakeup(master);
             unlock(&master->lock);
-        } else {
-            unlock(&tty->lock);
         }
     }
 }
