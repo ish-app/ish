@@ -44,12 +44,15 @@ struct termios_ {
 #define ECHO_ (1 << 3)
 #define ECHOE_ (1 << 4)
 #define ECHOK_ (1 << 5)
+#define ECHOKE_ (1 << 6)
 #define NOFLSH_ (1 << 7)
 #define ECHOCTL_ (1 << 9)
+#define IEXTEN_ (1 << 15)
 
 #define INLCR_ (1 << 6)
 #define IGNCR_ (1 << 7)
 #define ICRNL_ (1 << 8)
+#define IXON_ (1 << 10)
 
 #define OPOST_ (1 << 0)
 #define ONLCR_ (1 << 2)

@@ -11,6 +11,10 @@ extern struct tty_driver pty_slave;
 // when the master cleans up it hangs up the slave, making any operation that references the master unreachable
 
 static int pty_master_init(struct tty *tty) {
+    tty->termios.iflags = 0;
+    tty->termios.oflags = 0;
+    tty->termios.lflags = 0;
+
     struct tty *slave = tty_alloc(&pty_slave, tty->num);
     slave->refcount = 1;
     pty_slave.ttys[tty->num] = slave;
@@ -37,7 +41,7 @@ static int pty_slave_open(struct tty *tty) {
     return 0;
 }
 
-static int pty_ioctl(struct tty *tty, int cmd, void *arg) {
+static int pty_master_ioctl(struct tty *tty, int cmd, void *arg) {
     struct tty *slave = tty->pty.other;
     switch (cmd) {
         case TIOCSPTLCK_:
@@ -47,7 +51,7 @@ static int pty_ioctl(struct tty *tty, int cmd, void *arg) {
             *(dword_t *) arg = slave->num;
             break;
         default:
-            return _EINVAL;
+            return _ENOTTY;
     }
     return 0;
 }
@@ -66,7 +70,7 @@ const struct tty_driver_ops pty_master_ops = {
     .init = pty_master_init,
     .open = pty_return_eio,
     .write = pty_write,
-    .ioctl = pty_ioctl,
+    .ioctl = pty_master_ioctl,
     .cleanup = pty_master_cleanup,
 };
 DEFINE_TTY_DRIVER(pty_master, &pty_master_ops, MAX_PTYS);

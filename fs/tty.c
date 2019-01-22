@@ -29,8 +29,13 @@ struct tty *tty_alloc(struct tty_driver *driver, int num) {
     tty->session = 0;
     tty->fg_group = 0;
     list_init(&tty->fds);
-    // TODO default termios
+
+    tty->termios.iflags = ICRNL_ | IXON_;
+    tty->termios.oflags = OPOST_ | ONLCR_;
+    tty->termios.cflags = 0;
+    tty->termios.lflags = ISIG_ | ICANON_ | ECHO_ | ECHOE_ | ECHOK_ | ECHOCTL_ | ECHOKE_ | IEXTEN_;
     memset(&tty->winsize, 0, sizeof(tty->winsize));
+
     lock_init(&tty->lock);
     lock_init(&tty->fds_lock);
     cond_init(&tty->produced);
@@ -246,6 +251,8 @@ int tty_input(struct tty *tty, const char *input, size_t size, bool blocking) {
                 continue;
 
             if (ch == cc[VERASE_] || ch == cc[VKILL_]) {
+                // FIXME ECHOE and ECHOK are supposed to enable these
+                // ECHOKE enables erasing the line instead of echoing the kill char and outputting a newline
                 echo = lflags & ECHOK_;
                 int count = tty->bufsize;
                 if (ch == cc[VERASE_] && tty->bufsize > 0) {
@@ -538,15 +545,14 @@ out:
     return err;
 }
 
-static int tty_ioctl(struct fd *fd, int cmd, void *arg) {
+// These ioctls are separated out because they have to operate on the slave
+// side of a pseudoterminal pair even if the master is specified
+static int tty_mode_ioctl(struct tty *in_tty, int cmd, void *arg) {
     int err = 0;
-    struct tty *tty = fd->tty;
-    lock(&tty->lock);
-    if (tty->hung_up) {
-        unlock(&tty->lock);
-        if (cmd == TIOCSPGRP_)
-            return _ENOTTY;
-        return _EIO;
+    struct tty *tty = in_tty;
+    if (in_tty->driver == &pty_master) {
+        tty = in_tty->pty.other;
+        lock(&tty->lock);
     }
 
     switch (cmd) {
@@ -561,6 +567,35 @@ static int tty_ioctl(struct fd *fd, int cmd, void *arg) {
             tty->termios = *(struct termios_ *) arg;
             break;
 
+        case TIOCGWINSZ_:
+            *(struct winsize_ *) arg = tty->winsize;
+            break;
+        case TIOCSWINSZ_:
+            tty_set_winsize(tty, *(struct winsize_ *) arg);
+            break;
+
+        default:
+            err = _ENOTTY;
+            break;
+    }
+
+    if (in_tty->driver == &pty_master)
+        unlock(&tty->lock);
+    return err;
+}
+
+static int tty_ioctl(struct fd *fd, int cmd, void *arg) {
+    int err = 0;
+    struct tty *tty = fd->tty;
+    lock(&tty->lock);
+    if (tty->hung_up) {
+        unlock(&tty->lock);
+        if (cmd == TIOCSPGRP_)
+            return _ENOTTY;
+        return _EIO;
+    }
+
+    switch (cmd) {
         case TCFLSH_:
             // only input flushing is currently useful
             switch ((dword_t) arg) {
@@ -603,20 +638,13 @@ static int tty_ioctl(struct fd *fd, int cmd, void *arg) {
             STRACE("tty group set to = %d\n", tty->fg_group);
             break;
 
-        case TIOCGWINSZ_:
-            *(struct winsize_ *) arg = fd->tty->winsize;
-            break;
-        case TIOCSWINSZ_:
-            tty_set_winsize(fd->tty, *(struct winsize_ *) arg);
-            break;
-
         case FIONREAD_:
             *(dword_t *) arg = tty->bufsize;
             break;
 
         default:
-            err = _EINVAL;
-            if (tty->driver->ops->ioctl)
+            err = tty_mode_ioctl(tty, cmd, arg);
+            if (err == _ENOTTY && tty->driver->ops->ioctl)
                 err = tty->driver->ops->ioctl(tty, cmd, arg);
     }
 
