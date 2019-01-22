@@ -207,7 +207,7 @@ static void tty_echo(struct tty *tty, const char *data, size_t size) {
     tty->driver->ops->write(tty, data, size, false);
 }
 
-static bool tty_send_input_signal(struct tty *tty, char ch) {
+static bool tty_send_input_signal(struct tty *tty, char ch, sigset_t_ *queue) {
     if (!(tty->termios.lflags & ISIG_))
         return 0;
     unsigned char *cc = tty->termios.cc;
@@ -224,7 +224,7 @@ static bool tty_send_input_signal(struct tty *tty, char ch) {
     if (tty->fg_group != 0) {
         if (!(tty->termios.lflags & NOFLSH_))
             tty->bufsize = 0;
-        send_group_signal(tty->fg_group, sig);
+        *queue |= 1l << sig;
     }
     return true;
 }
@@ -235,6 +235,7 @@ int tty_input(struct tty *tty, const char *input, size_t size, bool blocking) {
     dword_t lflags = tty->termios.lflags;
     dword_t iflags = tty->termios.iflags;
     unsigned char *cc = tty->termios.cc;
+    sigset_t_ queue = 0; // to prevent having to lock tty->lock and pids_lock at the same time
 
 #define SHOULD_ECHOCTL(ch) \
     (lflags & ECHOCTL_ && \
@@ -290,7 +291,7 @@ canon_wake:
                 echo = false;
                 tty_input_wakeup(tty);
             } else {
-                if (!tty_send_input_signal(tty, ch)) {
+                if (!tty_send_input_signal(tty, ch, &queue)) {
                     err = tty_push_char(tty, ch, /*flag*/false, blocking);
                     if (err < 0)
                         break;
@@ -307,7 +308,7 @@ canon_wake:
         }
     } else {
         for (size_t i = 0; i < size; i++) {
-            if (tty_send_input_signal(tty, input[i]))
+            if (tty_send_input_signal(tty, input[i], &queue))
                 continue;
             tty->buf[tty->bufsize++] = input[i];
             while (tty->bufsize >= sizeof(tty->buf)) {
@@ -322,7 +323,16 @@ canon_wake:
         tty_input_wakeup(tty);
     }
 
+    pid_t_ fg_group = tty->fg_group;
     unlock(&tty->lock);
+
+    if (fg_group != 0) {
+        for (int sig = 0; sig < NUM_SIGS; sig++) {
+            if (queue & (1l << sig))
+                send_group_signal(fg_group, sig);
+        }
+    }
+
     return err;
 }
 

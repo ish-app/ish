@@ -117,6 +117,7 @@ static void receive_signal(struct sighand *sighand, int sig) {
             lock(&current->group->lock);
             current->group->stopped = true;
             unlock(&current->group->lock);
+            // FIXME ordering between pids_lock and sighand->lock
             lock(&pids_lock);
             current->group->group_exit_code = sig << 8 | 0x7f;
             notify(&current->parent->group->child_exit);
