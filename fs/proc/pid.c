@@ -103,9 +103,10 @@ static ssize_t proc_pid_cmdline_show(struct proc_entry *entry, char *buf) {
     if (task == NULL)
         return _ESRCH;
     size_t size = task->mm->argv_end - task->mm->argv_start;
-    if (user_read_task(task, task->mm->argv_start, buf, size))
-        return 0;
+    int fail = user_read_task(task, task->mm->argv_start, buf, size);
     proc_put_task(task);
+    if (fail)
+        return 0;
     return size;
 }
 
