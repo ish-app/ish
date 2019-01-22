@@ -94,17 +94,21 @@ static void ios_handle_exit(int code) {
     // create some device nodes
     // this will do nothing if they already exist
     generic_mknod("/dev/tty", S_IFCHR|0666, dev_make(5, 0));
+    generic_mknod("/dev/ptmx", S_IFCHR|0666, dev_make(5, 2));
     generic_mknod("/dev/random", S_IFCHR|0666, dev_make(1, 8));
     generic_mknod("/dev/urandom", S_IFCHR|0666, dev_make(1, 9));
-    
+
     do_mount(&procfs, "proc", "/proc");
-    
+    do_mount(&devptsfs, "devpts", "/dev/pts");
+
     task_start(current);
     return 0;
 }
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+    // get the network permissions popup to appear on chinese devices
     [[NSURLSession.sharedSession dataTaskWithURL:[NSURL URLWithString:@"http://captive.apple.com"]] resume];
+    
     [UserPreferences.shared addObserver:self forKeyPath:@"shouldDisableDimming" options:NSKeyValueObservingOptionInitial context:nil];
     int err = [self startThings];
     if (err < 0) {
