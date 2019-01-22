@@ -236,12 +236,12 @@ static int devpts_fsetattr(struct fd *fd, struct attr attr) {
 static int devpts_readdir(struct fd *fd, struct dir_entry *entry) {
     assert(fd->pty_num == -1); // there shouldn't be anything to list but the root
 
-    int pty_num = fd->offset - 1;
-    do {
+    int pty_num = fd->offset;
+    while (pty_num < MAX_PTYS && !devpts_pty_exists(pty_num))
         pty_num++;
-    } while (pty_num < MAX_PTYS && !devpts_pty_exists(pty_num));
     if (pty_num >= MAX_PTYS)
         return 0;
+    fd->offset = pty_num + 1;
     sprintf(entry->name, "%d", pty_num);
     entry->inode = pty_num + 3;
     return 1;
