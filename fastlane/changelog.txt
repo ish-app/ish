@@ -1,24 +1,24 @@
-HOTFIX for zsh and a few others causing crashes, because my ring buffer was a little more segfaulty than I thought. Release notes for the last build are pasted below for your convenience.
-
 New stuff:
-- zsh
-- Background jobs (Ctrl-Z, bg, fg, etc)
-- ~10% performance improvement from correctly tracking the last JIT block
-- top runs (though it's useless since CPU usage is always displayed as 0%)
-
-UI stuff:
-- Option in settings to change launch command (also general settings reorganization)
+- pseudoterminals (in other words, you can now ssh into your phone)
+- 1337 h4x0r colorscheme
+- Command-K clears the screen
+- bit testing instructions implemented
 
 Bug fixes:
-- Rounding error when adding 18446744073709551616 and 1.5
-- Crash when trying to run top
-- Selection being immediately copied to the clipboard if Speak Selection is enabled in iOS settings
-- Make a test network connection on startup, to hopefully fix network permission popup not appearing on devices sold in China
-- Crash when running a script with a #! line pointing to a nonexistent file
-- ^C not appearing when you press Ctrl-C and it kills the program
-- Ctrl-C not flushing the input buffer
-- Arrow keys not working in some programs
-- Emacs and Ruby summoning nasal demons after receiving a signal
+- DNS configuration not working for IPv6 servers
+- [invalid utf8]
+- Crash when attempting to use negative file descriptors
+- Various other memory leaks and segfaults
+
+Here's a quick step by step guide for running an ssh server.
+1. apk add openssh
+2. ssh-keygen -A
+3. passwd
+4. type a password
+5. /usr/sbin/sshd
+You should now be able to ssh to your device with username root and the password you typed.
+
+If you switch to another app and switch back, the ssh server will stop responding even though it's still running. Fixing this is actually really hard; help would be appreciated.
 
 Send bug reports or feedback here: https://github.com/tbodt/ish/issues (or by email, if you prefer)
 Follow iSH on Twitter: https://twitter.com/iSH_app
