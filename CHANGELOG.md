@@ -1,5 +1,17 @@
 # Changelog
 
+## Build 45
+### New
+- pseudoterminals (in other words, you can now ssh into your phone)
+- 1337 h4x0r colorscheme
+- Command-K clears the screen
+- bit testing instructions implemented
+### Fixed
+- DNS configuration not working for IPv6 servers
+- [invalid utf8]
+- Crash when attempting to use negative file descriptors
+- Various other memory leaks and segfaults
+
 ## Build 44
 ### Fixed
 - Ring buffer sometimes segfaulting when it overflowed
