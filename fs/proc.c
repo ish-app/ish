@@ -158,11 +158,17 @@ static int proc_readdir(struct fd *fd, struct dir_entry *entry) {
     return 1;
 }
 
+static int proc_close(struct fd *fd) {
+    if (fd->proc_data != NULL)
+        free(fd->proc_data);
+    return 0;
+}
+
 const struct fd_ops procfs_fdops = {
     .read = proc_read,
     .lseek = proc_seek,
-
     .readdir = proc_readdir,
+    .close = proc_close,
 };
 
 static ssize_t proc_readlink(struct mount *UNUSED(mount), const char *path, char *buf, size_t bufsize) {
