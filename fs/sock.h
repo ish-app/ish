@@ -128,6 +128,7 @@ static inline int sock_flags_from_real(int real) {
 #define IP_TOS_ 1
 #define IP_TTL_ 2
 #define IP_HDRINCL_ 3
+#define IP_MTU_DISCOVER_ 10
 #define TCP_NODELAY_ 1
 #define IPV6_UNICAST_HOPS_ 16
 #define IPV6_V6ONLY_ 26

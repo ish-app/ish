@@ -316,6 +316,9 @@ dword_t sys_setsockopt(fd_t sock_fd, dword_t level, dword_t option, addr_t value
     // ICMP6_FILTER can only be set on real SOCK_RAW
     if (level == IPPROTO_ICMPV6 && option == ICMP6_FILTER_)
         return 0;
+    // IP_MTU_DISCOVER has no equivalent on Darwin
+    if (level == IPPROTO_IP && option == IP_MTU_DISCOVER_)
+        return 0;
 
     int real_opt = sock_opt_to_real(option, level);
     if (real_opt < 0)
