@@ -75,6 +75,9 @@ struct fd *fd_create(const struct fd_ops *ops);
 struct fd *fd_retain(struct fd *fd);
 int fd_close(struct fd *fd);
 
+int fd_getflags(struct fd *fd);
+int fd_setflags(struct fd *fd, int flags);
+
 #define NAME_MAX 255
 struct dir_entry {
     qword_t inode;

@@ -255,8 +255,16 @@ dword_t sys_dup2(fd_t f, fd_t new_f) {
     return new_f;
 }
 
+int fd_getflags(struct fd *fd) {
+    if (fd->ops->getflags)
+        return fd->ops->getflags(fd);
+    return fd->flags;
+}
+
 #define FD_ALLOWED_FLAGS (O_APPEND_ | O_NONBLOCK_)
-static int fd_setflags(struct fd *fd, int flags) {
+int fd_setflags(struct fd *fd, int flags) {
+    if (fd->ops->setflags)
+        return fd->ops->setflags(fd, flags);
     fd->flags = (fd->flags & ~FD_ALLOWED_FLAGS) | (flags & FD_ALLOWED_FLAGS);
     return 0;
 }
@@ -285,14 +293,10 @@ dword_t sys_fcntl64(fd_t f, dword_t cmd, dword_t arg) {
 
         case F_GETFL_:
             STRACE("fcntl(%d, F_GETFL)", f);
-            if (fd->ops->getflags == NULL)
-                return fd->flags;
-            return fd->ops->getflags(fd);
+            return fd_getflags(fd);
         case F_SETFL_:
             STRACE("fcntl(%d, F_SETFL, %#x)", f, arg);
-            if (fd->ops->setflags == NULL)
-                return fd_setflags(fd, arg);
-            return fd->ops->setflags(fd, arg);
+            return fd_setflags(fd, arg);
 
         default:
             STRACE("fcntl(%d, %d)", f, cmd);

@@ -358,8 +358,7 @@ dword_t sys_ioctl(fd_t f, dword_t cmd, dword_t arg) {
 
     switch (cmd) {
         case FIONBIO_:
-            fd->flags |= O_NONBLOCK_;
-            break;
+            return fd_setflags(fd, fd_getflags(fd) | O_NONBLOCK_);
         default:
             return fd_ioctl(fd, cmd, arg);
     }
