@@ -1,5 +1,7 @@
+#define _GNU_SOURCE
 #include <unistd.h>
 #include <fcntl.h>
+#include <pthread.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -526,6 +528,16 @@ int sys_execve(const char *file, char *const argv[], char *const envp[]) {
         basename++;
     strncpy(current->comm, basename, sizeof(current->comm));
     unlock(&current->general_lock);
+
+    // set the thread name
+    char threadname[16];
+    strncpy(threadname, current->comm, sizeof(threadname)-1);
+    threadname[15] = '\0';
+#if __APPLE__
+    pthread_setname_np(threadname);
+#else
+    pthread_setname_np(pthread_self(), threadname);
+#endif
 
     // cloexec
     // consider putting this in fd.c?
