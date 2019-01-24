@@ -116,12 +116,8 @@ static void receive_signal(struct sighand *sighand, int sig) {
         case SIGNAL_STOP:
             lock(&current->group->lock);
             current->group->stopped = true;
-            unlock(&current->group->lock);
-            // FIXME ordering between pids_lock and sighand->lock
-            lock(&pids_lock);
             current->group->group_exit_code = sig << 8 | 0x7f;
-            notify(&current->parent->group->child_exit);
-            unlock(&pids_lock);
+            unlock(&current->group->lock);
             return;
 
         case SIGNAL_KILL:
@@ -192,6 +188,10 @@ static void receive_signal(struct sighand *sighand, int sig) {
 }
 
 bool receive_signals() {
+    lock(&current->group->lock);
+    bool was_stopped = current->group->stopped;
+    unlock(&current->group->lock);
+
     struct sighand *sighand = current->sighand;
     lock(&sighand->lock);
     bool any_left = current->pending != 0;
@@ -201,6 +201,20 @@ bool receive_signals() {
                 receive_signal(sighand, sig);
     }
     unlock(&sighand->lock);
+
+    // this got moved out of the switch case in receive_signal to fix locking problems
+    if (!was_stopped) {
+        lock(&current->group->lock);
+        bool now_stopped = current->group->stopped;
+        unlock(&current->group->lock);
+        if (now_stopped) {
+            lock(&pids_lock);
+            notify(&current->parent->group->child_exit);
+            unlock(&pids_lock);
+            send_signal(current->parent, current->group->leader->exit_signal);
+        }
+    }
+
     return any_left;
 }
 
