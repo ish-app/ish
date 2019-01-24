@@ -34,6 +34,8 @@ struct tty *tty_alloc(struct tty_driver *driver, int num) {
     tty->termios.oflags = OPOST_ | ONLCR_;
     tty->termios.cflags = 0;
     tty->termios.lflags = ISIG_ | ICANON_ | ECHO_ | ECHOE_ | ECHOK_ | ECHOCTL_ | ECHOKE_ | IEXTEN_;
+    // from include/asm-generic/termios.h
+    memcpy(tty->termios.cc, "\003\034\177\025\004\0\1\0\021\023\032\0\022\017\027\026\0\0\0", 19);
     memset(&tty->winsize, 0, sizeof(tty->winsize));
 
     lock_init(&tty->lock);
