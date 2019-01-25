@@ -39,9 +39,11 @@ static int syslog_read(addr_t buf_addr, int_t len, int flags) {
         if ((size_t) len > fifo_capacity(&log_buf))
             len = fifo_capacity(&log_buf);
     }
-    char buf[len];
+    char *buf = malloc(len);
     fifo_read(&log_buf, buf, len, flags);
-    if (user_write(buf_addr, buf, len))
+    int fail = user_write(buf_addr, buf, len);
+    free(buf);
+    if (fail)
         return _EFAULT;
     return len;
 }
