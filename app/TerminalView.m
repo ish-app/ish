@@ -130,6 +130,14 @@
     return YES; // it's always ok to send a "delete"
 }
 
+- (void)backwardWord:(UIKeyCommand *)command {
+    [self insertText:@"\x1b" @"b"];
+}
+
+- (void)forwardWord:(UIKeyCommand *)command {
+    [self insertText:@"\x1b" @"f"];
+}
+
 - (void)clearScreen:(UIKeyCommand *)command {
     [self.terminal.webView evaluateJavaScript:@"term.clear()" completionHandler:nil];
 }
@@ -202,6 +210,14 @@ static const char *controlKeys = "abcdefghijklmnopqrstuvwxyz26-=[]\\";
         [self addKeys:alphabet withModifiers:UIKeyModifierShift];
         [self addKey:@"" withModifiers:UIKeyModifierAlphaShift]; // otherwise tap of caps lock can switch layouts
     }
+    [_keyCommands addObject:[UIKeyCommand keyCommandWithInput:UIKeyInputLeftArrow
+                                                modifierFlags:UIKeyModifierAlternate
+                                                       action:@selector(backwardWord:)
+                                         discoverabilityTitle:@"Move to Begin of Word"]];
+    [_keyCommands addObject:[UIKeyCommand keyCommandWithInput:UIKeyInputRightArrow
+                                                modifierFlags:UIKeyModifierAlternate
+                                                       action:@selector(forwardWord:)
+                                         discoverabilityTitle:@"Move to End of Word"]];
     [_keyCommands addObject:[UIKeyCommand keyCommandWithInput:@"k"
                                                 modifierFlags:UIKeyModifierCommand
                                                        action:@selector(clearScreen:)
