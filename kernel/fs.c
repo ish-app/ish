@@ -350,6 +350,18 @@ static int fd_ioctl(struct fd *fd, dword_t cmd, dword_t arg) {
     return res;
 }
 
+static int set_nonblock(struct fd *fd, addr_t nb_addr) {
+    dword_t nonblock;
+    if (user_get(nb_addr, nonblock))
+        return _EFAULT;
+    int flags = fd_getflags(fd);
+    if (nonblock)
+        flags |= O_NONBLOCK_;
+    else
+        flags &= ~O_NONBLOCK_;
+    return fd_setflags(fd, flags);
+}
+
 dword_t sys_ioctl(fd_t f, dword_t cmd, dword_t arg) {
     STRACE("ioctl(%d, 0x%x, 0x%x)", f, cmd, arg);
     struct fd *fd = f_get(f);
@@ -358,7 +370,7 @@ dword_t sys_ioctl(fd_t f, dword_t cmd, dword_t arg) {
 
     switch (cmd) {
         case FIONBIO_:
-            return fd_setflags(fd, fd_getflags(fd) | O_NONBLOCK_);
+            return set_nonblock(fd, arg);
         default:
             return fd_ioctl(fd, cmd, arg);
     }
