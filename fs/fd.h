@@ -7,6 +7,7 @@
 #include "util/bits.h"
 #include "fs/stat.h"
 #include "fs/proc.h"
+#include "fs/sockrestart.h"
 
 // FIXME almost everything that uses the structs in this file does so without any kind of sane locking
 
@@ -62,6 +63,7 @@ struct fd {
     int real_fd; // seeks on this fd require the lock
     DIR *dir;
     struct statbuf stat; // for adhoc fs
+    struct fd_sockrestart sockrestart; // argh
 
     // these are used for a variety of things related to the fd
     lock_t lock;

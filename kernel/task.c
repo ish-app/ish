@@ -68,6 +68,9 @@ struct task *task_create_(struct task *parent) {
         list_add(&parent->children, &task->siblings);
     }
 
+    task->sockrestart = (struct task_sockrestart) {};
+    list_init(&task->sockrestart.listen);
+
     task->waiting_cond = NULL;
     task->waiting_lock = NULL;
     lock_init(&task->waiting_cond_lock);

@@ -14,6 +14,8 @@ static inline void list_init(struct list *list) {
     list->prev = list;
 }
 
+#define LIST_INITIALIZER(x) {.prev = &x, .next = &x}
+
 static inline bool list_null(struct list *list) {
     return list->next == NULL && list->prev == NULL;
 }

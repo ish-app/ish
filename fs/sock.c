@@ -6,7 +6,7 @@
 #include "fs/sock.h"
 #include "debug.h"
 
-static struct fd_ops socket_fdops;
+const struct fd_ops socket_fdops;
 
 static fd_t sock_fd_create(int sock_fd, int flags) {
     struct fd *fd = adhoc_fd_create(&socket_fdops);
@@ -36,6 +36,8 @@ dword_t sys_socket(dword_t domain, dword_t type, dword_t protocol) {
     fd_t f = sock_fd_create(sock, type);
     if (f < 0)
         close(sock);
+    if (f >= 0)
+        f_get(f)->sockrestart.proto = protocol;
     return f;
 }
 
@@ -122,6 +124,7 @@ dword_t sys_listen(fd_t sock_fd, int_t backlog) {
     int err = listen(sock->real_fd, backlog);
     if (err < 0)
         return errno_map();
+    sockrestart_begin_listen(sock);
     return err;
 }
 
@@ -135,7 +138,13 @@ dword_t sys_accept(fd_t sock_fd, addr_t sockaddr_addr, addr_t sockaddr_len_addr)
         return _EFAULT;
 
     char sockaddr[sockaddr_len];
-    int client = accept(sock->real_fd, (void *) sockaddr, &sockaddr_len);
+    int client;
+    do {
+        sockrestart_begin_listen_wait(sock);
+        errno = 0;
+        client = accept(sock->real_fd, (void *) sockaddr, &sockaddr_len);
+        sockrestart_end_listen_wait(sock);
+    } while (sockrestart_should_restart_listen_wait() && errno == EINTR);
     if (client < 0)
         return errno_map();
 
@@ -495,10 +504,15 @@ dword_t sys_recvmsg(fd_t sock_fd, addr_t msghdr_addr, dword_t flags) {
     return res;
 }
 
-static struct fd_ops socket_fdops = {
+static int sock_close(struct fd *fd) {
+    sockrestart_end_listen(fd);
+    return realfs_close(fd);
+}
+
+const struct fd_ops socket_fdops = {
     .read = realfs_read,
     .write = realfs_write,
-    .close = realfs_close,
+    .close = sock_close,
     .poll = realfs_poll,
     .getflags = realfs_getflags,
     .setflags = realfs_setflags,

@@ -7,6 +7,7 @@
 #include "kernel/fs.h"
 #include "kernel/signal.h"
 #include "kernel/resource.h"
+#include "fs/sockrestart.h"
 #include "util/list.h"
 #include "util/timer.h"
 #include "util/sync.h"
@@ -63,6 +64,8 @@ struct task {
     // lock for anything that needs locking but is not covered by some other lock
     // right now, just comm
     lock_t general_lock;
+
+    struct task_sockrestart sockrestart;
 
     // current condition/lock, so it can be notified in case of a signal
     cond_t *waiting_cond;

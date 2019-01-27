@@ -8,6 +8,7 @@
 #include "kernel/fs.h"
 #include "fs/fd.h"
 #include "fs/poll.h"
+#include "fs/sockrestart.h"
 
 // lock order: fd, then poll
 
@@ -163,8 +164,8 @@ int poll_wait(struct poll *poll_, poll_callback_t callback, void *context, struc
             if (poll_fd->fd->ops->poll != realfs_poll)
                 continue;
             pollfds[i].fd = poll_fd->fd->real_fd;
-            // TODO translate flags
             pollfds[i].events = poll_fd->types;
+            sockrestart_begin_listen_wait(poll_fd->fd);
             i++;
         }
 
@@ -172,8 +173,14 @@ int poll_wait(struct poll *poll_, poll_callback_t callback, void *context, struc
         int timeout_millis = -1;
         if (timeout != NULL)
             timeout_millis = timeout->tv_sec * 1000 + timeout->tv_nsec / 1000000;
-        int err = poll(pollfds, pollfd_count, timeout_millis);
+        int err;
+        do {
+            err = poll(pollfds, pollfd_count, timeout_millis);
+        } while (sockrestart_should_restart_listen_wait() && errno == EINTR);
         lock(&poll_->lock);
+        list_for_each_entry(&poll_->poll_fds, poll_fd, fds) {
+            sockrestart_end_listen_wait(poll_fd->fd);
+        }
         if (err < 0) {
             res = errno_map();
             break;
