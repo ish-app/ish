@@ -1,4 +1,6 @@
 #include <string.h>
+#include <signal.h>
+#include <pthread.h>
 #include "fs/sockrestart.h"
 #include "fs/fd.h"
 #include "fs/sock.h"
