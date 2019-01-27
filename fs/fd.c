@@ -46,7 +46,7 @@ int fd_close(struct fd *fd) {
         if (fd->ops->close)
             err = fd->ops->close(fd);
         // see comment in close in kernel/fs.h
-        if (fd->mount->fs->close && fd->mount->fs->close != fd->ops->close) {
+        if (fd->mount && fd->mount->fs->close && fd->mount->fs->close != fd->ops->close) {
             int new_err = fd->mount->fs->close(fd);
             if (new_err < 0)
                 err = new_err;

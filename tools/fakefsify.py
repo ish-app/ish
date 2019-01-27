@@ -46,24 +46,24 @@ def extract_member(archive, db, member):
     else:
         path.touch()
 
-    inode = path.stat().st_ino
+    cursor = db.cursor()
     if member.islnk():
         # a hard link shares its target's inode
         target_path = data/(member.linkname)
         inode = target_path.stat().st_ino
+    else:
+        statblob = memoryview(struct.pack(
+            '=iiii',
+            mode,
+            member.uid,
+            member.gid,
+            rdev,
+        ))
+        cursor.execute('insert into stats (stat) values (?)', (statblob,))
+        inode = cursor.lastrowid
     meta_path = path.relative_to(data)
     meta_path = b'/' + bytes(meta_path) if meta_path.parts else b''
-    db.execute('insert into paths values (?, ?)', (meta_path, inode))
-    if member.islnk():
-        return
-    statblob = memoryview(struct.pack(
-        '=iiii',
-        mode,
-        member.uid,
-        member.gid,
-        rdev,
-    ))
-    db.execute('insert into stats values (?, ?)', (inode, statblob))
+    cursor.execute('insert into paths values (?, ?)', (meta_path, inode))
 
 def extract_archive(archive, db):
     for member in archive.getmembers():
@@ -97,4 +97,4 @@ with open(archive_path, 'rb') as archive:
         db.executescript(SCHEMA)
         extract_archive(archive, db)
         db.execute('update meta set db_inode = ?', (db_path.stat().st_ino,))
-        db.execute('commit')
+        db.commit()
