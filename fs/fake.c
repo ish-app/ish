@@ -139,6 +139,9 @@ static void path_rename(struct mount *mount, const char *src, const char *dst) {
     db_exec_reset(mount, mount->stmt.path_rename);
 }
 
+// this exists only to override readdir to fix the returned inode numbers
+static struct fd_ops fakefs_fdops;
+
 static struct fd *fakefs_open(struct mount *mount, const char *path, int flags, int mode) {
     struct fd *fd = realfs.open(mount, path, flags, 0666);
     if (IS_ERR(fd))
@@ -163,6 +166,31 @@ static struct fd *fakefs_open(struct mount *mount, const char *path, int flags, 
         fd_close(fd);
         return ERR_PTR(_ENOENT);
     }
+    fd->ops = &fakefs_fdops;
+    return fd;
+}
+
+// WARNING: giant hack, just for file providerws
+struct fd *fakefs_open_inode(struct mount *mount, ino_t inode) {
+    db_begin(mount);
+    sqlite3_stmt *stmt = mount->stmt.path_from_inode;
+    sqlite3_bind_int64(stmt, 1, inode);
+step:
+    if (!db_exec(mount, stmt)) {
+        db_reset(mount, stmt);
+        db_rollback(mount);
+        return ERR_PTR(_ENOENT);
+    }
+    const char *path = (const char *) sqlite3_column_text(stmt, 0);
+    struct fd *fd = realfs.open(mount, path, O_RDWR_, 0);
+    if (PTR_ERR(fd) == _EISDIR)
+        fd = realfs.open(mount, path, O_RDONLY_, 0);
+    if (PTR_ERR(fd) == _ENOENT)
+        goto step;
+    db_reset(mount, stmt);
+    db_commit(mount);
+    fd->fake_inode = inode;
+    fd->ops = &fakefs_fdops;
     return fd;
 }
 
@@ -393,6 +421,38 @@ static ssize_t fakefs_readlink(struct mount *mount, const char *path, char *buf,
     return err;
 }
 
+static int fakefs_readdir(struct fd *fd, struct dir_entry *entry) {
+    assert(fd->ops == &fakefs_fdops);
+    int res = realfs_fdops.readdir(fd, entry);
+    if (res <= 0)
+        return res;
+
+    // this is annoying
+    char entry_path[MAX_PATH + 1];
+    realfs_getpath(fd, entry_path);
+    if (strcmp(entry->name, "..") == 0) {
+        if (strcmp(entry_path, "") != 0) {
+            *strrchr(entry_path, '/') = '\0';
+        }
+    } else if (strcmp(entry->name, ".") != 0) {
+        // god I don't know what to do if this would overflow
+        strcat(entry_path, "/");
+        strcat(entry_path, entry->name);
+    }
+    
+    db_begin(fd->mount);
+    entry->inode = path_get_inode(fd->mount, entry_path);
+    db_commit(fd->mount);
+    assert(entry->inode != 0);
+    return res;
+}
+
+static struct fd_ops fakefs_fdops;
+static void __attribute__((constructor)) init_fake_fdops() {
+    fakefs_fdops = realfs_fdops;
+    fakefs_fdops.readdir = fakefs_readdir;
+}
+
 int fakefs_rebuild(struct mount *mount);
 int fakefs_migrate(struct mount *mount);
 
@@ -497,6 +557,8 @@ static int fakefs_mount(struct mount *mount) {
     mount->stmt.path_link = db_prepare(mount, "insert into paths (path, inode) values (?, ?)");
     mount->stmt.path_unlink = db_prepare(mount, "delete from paths where path = ?");
     mount->stmt.path_rename = db_prepare(mount, "update or replace paths set path = ? where path = ?;");
+    // used by file provider
+    mount->stmt.path_from_inode = db_prepare(mount, "select path from paths where inode = ?");
 
     return 0;
 }
@@ -533,3 +595,4 @@ const struct fs_ops fakefs = {
     .mkdir = fakefs_mkdir,
     .rmdir = fakefs_rmdir,
 };
+

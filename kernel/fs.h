@@ -89,6 +89,7 @@ struct mount {
                 sqlite3_stmt *path_link;
                 sqlite3_stmt *path_unlink;
                 sqlite3_stmt *path_rename;
+                sqlite3_stmt *path_from_inode;
             } stmt;
             lock_t lock;
         };

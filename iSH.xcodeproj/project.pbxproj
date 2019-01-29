@@ -29,6 +29,7 @@
 		BB88F49A2154760800A341FD /* FileProviderEnumerator.m in Sources */ = {isa = PBXBuildFile; fileRef = BB88F4992154760800A341FD /* FileProviderEnumerator.m */; };
 		BB88F49F2154760800A341FD /* iSHFileProvider.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = BB88F4902154760800A341FD /* iSHFileProvider.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		BB88F4A62154770200A341FD /* libish.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BB13F7DC200AD81D003D1C4D /* libish.a */; };
+		BBBFE94921C5CFF100509DD5 /* NSError+ISHErrno.m in Sources */ = {isa = PBXBuildFile; fileRef = BB13F4DD21C5770000343E17 /* NSError+ISHErrno.m */; };
 		BBBCE7E321D2F02200CA00B3 /* About.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = BBBCE7E521D2F02200CA00B3 /* About.storyboard */; };
 		BBFB55662158644C00DFE6DE /* libresolv.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = BBFB55652158644C00DFE6DE /* libresolv.tbd */; };
 		BBFB557121586C4800DFE6DE /* UIViewController+Back.m in Sources */ = {isa = PBXBuildFile; fileRef = BBFB557021586C4800DFE6DE /* UIViewController+Back.m */; };
@@ -90,6 +91,8 @@
 		9A28E4E9219A8B670073D200 /* AppearanceViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppearanceViewController.m; sourceTree = "<group>"; };
 		BB0FC5901F980A6B00803272 /* Terminal.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Terminal.h; sourceTree = "<group>"; };
 		BB0FC5911F980A6B00803272 /* Terminal.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Terminal.m; sourceTree = "<group>"; };
+		BB13F4DC21C5770000343E17 /* NSError+ISHErrno.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSError+ISHErrno.h"; sourceTree = "<group>"; };
+		BB13F4DD21C5770000343E17 /* NSError+ISHErrno.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSError+ISHErrno.m"; sourceTree = "<group>"; };
 		BB13F7C8200ACC24003D1C4D /* xcode-meson.sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = "xcode-meson.sh"; sourceTree = "<group>"; };
 		BB13F7DC200AD81D003D1C4D /* libish.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libish.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		BB455E0F1FB37F6600AFB48B /* DelayedUITask.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DelayedUITask.h; sourceTree = "<group>"; };
@@ -579,6 +582,8 @@
 				BB88F4962154760800A341FD /* FileProviderItem.m */,
 				BB88F4982154760800A341FD /* FileProviderEnumerator.h */,
 				BB88F4992154760800A341FD /* FileProviderEnumerator.m */,
+				BB13F4DC21C5770000343E17 /* NSError+ISHErrno.h */,
+				BB13F4DD21C5770000343E17 /* NSError+ISHErrno.m */,
 				BB88F49B2154760800A341FD /* Info.plist */,
 				BB88F49C2154760800A341FD /* iSHFileProvider.entitlements */,
 			);
@@ -906,6 +911,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				BB88F49A2154760800A341FD /* FileProviderEnumerator.m in Sources */,
+				BBBFE94921C5CFF100509DD5 /* NSError+ISHErrno.m in Sources */,
 				BB88F4942154760800A341FD /* FileProviderExtension.m in Sources */,
 				BB88F4972154760800A341FD /* FileProviderItem.m in Sources */,
 			);

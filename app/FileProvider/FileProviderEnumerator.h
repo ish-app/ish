@@ -6,12 +6,11 @@
 //
 
 #import <FileProvider/FileProvider.h>
+#import "FileProviderItem.h"
 
 @interface FileProviderEnumerator : NSObject <NSFileProviderEnumerator>
 
 - (instancetype)init NS_UNAVAILABLE;
-- (instancetype)initWithEnumeratedItemIdentifier:(NSFileProviderItemIdentifier)enumeratedItemIdentifier;
-
-@property (nonatomic, readonly, strong) NSFileProviderItemIdentifier enumeratedItemIdentifier;
+- (instancetype)initWithItem:(FileProviderItem *)item;
 
 @end
