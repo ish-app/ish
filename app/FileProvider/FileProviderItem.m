@@ -116,7 +116,7 @@ struct fd *fakefs_open_inode(struct mount *mount, ino_t inode);
     NSString *uti = CFBridgingRelease(UTTypeCreatePreferredIdentifierForTag(kUTTagClassFilenameExtension,
                                                                             (__bridge CFStringRef _Nonnull) self.path.pathExtension, nil));
     if ([uti hasPrefix:@"dyn."])
-        uti = @"public.text";
+        uti = (NSString *) kUTTypePlainText;
     NSLog(@"uti of %@ is %@", self.path, uti);
     return uti;
 }
