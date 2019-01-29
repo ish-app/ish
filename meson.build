@@ -65,6 +65,7 @@ src = [
     'kernel/fs_info.c',
     'fs/mount.c',
     'fs/fd.c',
+    'fs/inode.c',
     'fs/stat.c',
     'fs/dir.c',
     'fs/generic.c',

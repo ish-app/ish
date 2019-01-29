@@ -4,6 +4,7 @@
 
 #include "kernel/fs.h"
 #include "fs/fd.h"
+#include "fs/inode.h"
 #include "fs/path.h"
 #include "fs/dev.h"
 #include "kernel/task.h"
@@ -38,8 +39,12 @@ struct fd *generic_openat(struct fd *at, const char *path_raw, int flags, int mo
         return ERR_PTR(err);
     struct mount *mount = find_mount_and_trim_path(path);
     struct fd *fd = mount->fs->open(mount, path, flags, mode);
-    if (IS_ERR(fd))
+    if (IS_ERR(fd)) {
+        // if an error happens after this point, fd_close will release the
+        // mount, but right now we need to do it manually
+        mount_release(mount);
         return fd;
+    }
     fd->mount = mount;
 
     struct statbuf stat;
@@ -48,6 +53,7 @@ struct fd *generic_openat(struct fd *at, const char *path_raw, int flags, int mo
         fd_close(fd);
         return ERR_PTR(err);
     }
+    fd->inode = inode_get(mount, stat.inode);
     fd->type = stat.mode & S_IFMT;
     fd->flags = flags;
 

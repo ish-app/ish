@@ -7,6 +7,7 @@
 #include "kernel/fs.h"
 #include "fs/poll.h"
 #include "fs/fd.h"
+#include "fs/inode.h"
 
 struct fd *fd_create(const struct fd_ops *ops) {
     struct fd *fd = malloc(sizeof(struct fd));
@@ -51,6 +52,11 @@ int fd_close(struct fd *fd) {
             if (new_err < 0)
                 err = new_err;
         }
+
+        if (fd->inode)
+            inode_release(fd->inode);
+        if (fd->mount)
+            mount_release(fd->mount);
         free(fd);
     }
     return err;

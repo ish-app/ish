@@ -99,6 +99,7 @@ extern lock_t mounts_lock;
 
 // returns a reference, which must be released
 struct mount *mount_find(char *path);
+void mount_retain(struct mount *mount);
 void mount_release(struct mount *mount);
 
 // must hold mounts_lock while calling these, or traversing mounts

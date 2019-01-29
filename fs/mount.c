@@ -25,6 +25,12 @@ struct mount *mount_find(char *path) {
     return mount;
 }
 
+void mount_retain(struct mount *mount) {
+    lock(&mounts_lock);
+    mount->refcount++;
+    unlock(&mounts_lock);
+}
+
 void mount_release(struct mount *mount) {
     lock(&mounts_lock);
     mount->refcount--;
