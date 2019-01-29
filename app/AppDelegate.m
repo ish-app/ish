@@ -34,6 +34,15 @@ static void ios_handle_exit(int code) {
       withIntermediateDirectories:YES
                        attributes:@{}
                             error:nil];
+    
+#if 0
+    // copy the files to the app container so I can more easily get them out
+    NSURL *documents = [NSFileManager.defaultManager URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask][0];
+    [NSFileManager.defaultManager copyItemAtURL:[container URLByAppendingPathComponent:@"roots"]
+                                          toURL:[documents URLByAppendingPathComponent:@"roots copy"]
+                                          error:nil];
+#endif
+    
     if (![manager fileExistsAtPath:alpineRoot.path]) {
         NSURL *alpineMaster = [NSBundle.mainBundle URLForResource:@"alpine" withExtension:nil];
         NSError *error = nil;
