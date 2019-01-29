@@ -61,7 +61,7 @@ struct fd {
     // fs/inode data
     struct mount *mount;
     int real_fd; // seeks on this fd require the lock
-    int fake_inode;
+    ino_t fake_inode;
     DIR *dir;
     struct statbuf stat; // for adhoc fs
     struct fd_sockrestart sockrestart; // argh
