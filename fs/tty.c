@@ -384,6 +384,9 @@ static ssize_t tty_read(struct fd *fd, void *buf, size_t bufsize) {
             err = _EIO;
             if (pty_is_half_closed_master(tty))
                 goto out;
+            err = _EAGAIN;
+            if (fd->flags & O_NONBLOCK_)
+                goto out;
             err = wait_for(&tty->produced, &tty->lock, NULL);
             if (err < 0)
                 goto out;
@@ -409,6 +412,9 @@ static ssize_t tty_read(struct fd *fd, void *buf, size_t bufsize) {
         while (tty->bufsize < min) {
             err = _EIO;
             if (pty_is_half_closed_master(tty))
+                goto out;
+            err = _EAGAIN;
+            if (fd->flags & O_NONBLOCK_)
                 goto out;
             // there should be no timeout for the first character read
             err = wait_for(&tty->produced, &tty->lock, tty->bufsize == 0 ? NULL : timeout_ptr);
