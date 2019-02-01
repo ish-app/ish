@@ -104,6 +104,24 @@ static int load_entry(struct prg_header ph, addr_t bias, struct fd *fd) {
     return 0;
 }
 
+static addr_t find_hole_for_elf(struct elf_header *header, struct prg_header *ph) {
+    struct prg_header *first = NULL, *last = NULL;
+    for (int i = 0; i < header->phent_count; i++) {
+        if (ph[i].type == PT_LOAD) {
+            if (first == NULL)
+                first = &ph[i];
+            last = &ph[i];
+        }
+    }
+    pages_t size = 0;
+    if (first != NULL) {
+        pages_t a = PAGE_ROUND_UP(last->vaddr + last->memsize);
+        pages_t b = PAGE(first->vaddr);
+        size = a - b;
+    }
+    return pt_find_hole(current->mem, size) << PAGE_BITS;
+}
+
 static int elf_exec(struct fd *fd, const char *file, char *const argv[], char *const envp[]) {
     int err = 0;
 
@@ -177,8 +195,13 @@ static int elf_exec(struct fd *fd, const char *file, char *const argv[], char *c
         if (ph[i].type != PT_LOAD)
             continue;
 
-        if (!load_addr_set && header.type == ELF_DYNAMIC)
-            bias = 0x56555000; // I've no idea why
+        if (!load_addr_set && header.type == ELF_DYNAMIC) {
+            // see giant comment in linux/fs/binfmt_elf.c, around line 950
+            if (interp_name)
+                bias = 0x56555000; // I have no idea how this number was arrived at
+            else
+                bias = find_hole_for_elf(&header, ph);
+        }
 
         if ((err = load_entry(ph[i], bias, fd)) < 0)
             goto beyond_hope;
@@ -196,34 +219,18 @@ static int elf_exec(struct fd *fd, const char *file, char *const argv[], char *c
     }
 
     addr_t entry = bias + header.entry_point;
-    addr_t interp_addr = 0;
+    addr_t interp_base = 0;
 
     if (interp_name) {
         // map dat shit! interpreter edition
-        // but first, a brief intermission to find out just how big the interpreter is
-        struct prg_header *interp_first = NULL, *interp_last = NULL;
-        for (int i = 0; i < interp_header.phent_count; i++) {
-            if (interp_ph[i].type == PT_LOAD) {
-                if (interp_first == NULL)
-                    interp_first = &interp_ph[i];
-                interp_last = &interp_ph[i];
-            }
-        }
-        pages_t interp_size = 0;
-        if (interp_first != NULL) {
-            pages_t a = PAGE_ROUND_UP(interp_last->vaddr + interp_last->memsize);
-            pages_t b = PAGE(interp_first->vaddr);
-            interp_size = a - b;
-        }
-        interp_addr = pt_find_hole(current->mem, interp_size) << PAGE_BITS;
-        // now back to map dat shit! interpreter edition
+        interp_base = find_hole_for_elf(&interp_header, interp_ph);
         for (int i = interp_header.phent_count - 1; i >= 0; i--) {
             if (interp_ph[i].type != PT_LOAD)
                 continue;
-            if ((err = load_entry(interp_ph[i], interp_addr, interp_fd)) < 0)
+            if ((err = load_entry(interp_ph[i], interp_base, interp_fd)) < 0)
                 goto beyond_hope;
         }
-        entry = interp_addr + interp_header.entry_point;
+        entry = interp_base + interp_header.entry_point;
     }
 
     // map vdso
@@ -296,7 +303,7 @@ static int elf_exec(struct fd *fd, const char *file, char *const argv[], char *c
         {AX_PHDR, load_addr + header.prghead_off},
         {AX_PHENT, sizeof(struct prg_header)},
         {AX_PHNUM, header.phent_count},
-        {AX_BASE, interp_addr},
+        {AX_BASE, interp_base},
         {AX_FLAGS, 0},
         {AX_ENTRY, bias + header.entry_point},
         {AX_UID, 0},
