@@ -180,7 +180,7 @@ static int tty_open(int major, int minor, struct fd *fd) {
 static int tty_close(struct fd *fd) {
     if (fd->tty != NULL) {
         lock(&fd->tty->fds_lock);
-        list_remove(&fd->other_fds);
+        list_remove_safe(&fd->other_fds);
         unlock(&fd->tty->fds_lock);
         lock(&ttys_lock);
         tty_release(fd->tty);
