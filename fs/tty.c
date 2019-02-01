@@ -283,7 +283,7 @@ int tty_input(struct tty *tty, const char *input, size_t size, bool blocking) {
             } else if (ch == cc[VEOF_]) {
                 ch = '\0';
                 goto canon_wake;
-            } else if (ch == '\n' || ch == cc[VEOL_]) {
+            } else if (ch == '\n' || (cc[VEOL_] != '\0' && ch == cc[VEOL_])) {
                 // echo it now, before the read call goes through
                 if (echo)
                     tty_echo(tty, "\r\n", 2);
