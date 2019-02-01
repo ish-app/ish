@@ -46,10 +46,12 @@ int path_normalize(struct fd *at, const char *path, char *out, bool follow_links
                 continue;
             } else if (p[1] == '.' && (p[2] == '\0' || p[2] == '/')) {
                 // double dot path component, delete the last component
-                do {
-                    o--;
-                    n++;
-                } while (*o != '/');
+                if (*o != '\0') {
+                    do {
+                        o--;
+                        n++;
+                    } while (*o != '/');
+                }
                 p += 2;
                 while (*p == '/')
                     p++;
