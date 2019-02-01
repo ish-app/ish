@@ -406,6 +406,9 @@ static ssize_t tty_read(struct fd *fd, void *buf, size_t bufsize) {
             timeout_ptr = NULL;
 
         while (tty->bufsize < min) {
+            err = _EIO;
+            if (pty_is_half_closed_master(tty))
+                goto out;
             // there should be no timeout for the first character read
             err = wait_for(&tty->produced, &tty->lock, tty->bufsize == 0 ? NULL : timeout_ptr);
             if (err == _ETIMEDOUT)
