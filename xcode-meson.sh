@@ -43,7 +43,7 @@ log=$ISH_LOG
 log_handler=nslog
 jit=true
 for var in buildtype log b_ndebug b_sanitize log_handler jit; do
-    old_value=$(jq -r ".[] | select(.name==\"$var\") | .value" <<< $config)
+    old_value=$(python3 -c "import sys, json; v = next(x['value'] for x in json.load(sys.stdin) if x['name'] == '$var'); print(str(v).lower() if isinstance(v, bool) else v)" <<< $config)
     new_value=${!var}
     if [[ $old_value != $new_value ]]; then
         meson configure "-D$var=$new_value"
