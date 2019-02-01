@@ -4,6 +4,7 @@
 #include "kernel/mm.h"
 #include "kernel/futex.h"
 #include "fs/fd.h"
+#include "fs/tty.h"
 
 static void halt_system(int status);
 
@@ -15,6 +16,11 @@ static bool exit_tgroup(struct task *task) {
         lock(&group->lock);
         if (group->timer)
             timer_free(group->timer);
+        if (group->tty) {
+            lock(&ttys_lock);
+            tty_release(group->tty);
+            unlock(&ttys_lock);
+        }
         unlock(&group->lock);
         list_remove(&group->pgroup);
         list_remove(&group->session);

@@ -113,6 +113,7 @@ void tty_release(struct tty *tty) {
 static void tty_set_controlling(struct tgroup *group, struct tty *tty) {
     lock(&group->lock);
     if (group->tty == NULL) {
+        tty->refcount++;
         group->tty = tty;
         tty->session = group->sid;
         tty->fg_group = group->pgid;
@@ -548,7 +549,10 @@ static int tiocsctty(struct tty *tty, int force) {
             struct tgroup *tgroup;
             list_for_each_entry(&pid->session, tgroup, session) {
                 lock(&tgroup->lock);
-                tgroup->tty = NULL;
+                if (tgroup->tty == tty) {
+                    tgroup->tty = NULL;
+                    tty->refcount--;
+                }
                 unlock(&tgroup->lock);
             }
         } else {
