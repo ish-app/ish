@@ -227,7 +227,7 @@ retry:
             goto found_zombie;
     }
 
-    err = _ECHILD;
+    err = 0;
     if (options & WNOHANG_)
         goto error;
 
