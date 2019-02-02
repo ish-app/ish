@@ -30,6 +30,7 @@ c_args = ['-arch', '$arch']
 needs_exe_wrapper = true
 EOF
     meson $SRCROOT --cross-file $crossfile
+    config=$(meson introspect --buildoptions)
 fi
 
 buildtype=debug
