@@ -571,7 +571,7 @@ dword_t _sys_execve(addr_t filename_addr, addr_t argv_addr, addr_t envp_addr) {
     char filename[MAX_PATH];
     if (user_read_string(filename_addr, filename, sizeof(filename)))
         return _EFAULT;
-    char *argv[MAX_ARGS];
+    char *argv[MAX_ARGS + 1];
     int i;
     addr_t arg;
     STRACE("execve(\"%s\", {", filename);
@@ -591,7 +591,7 @@ dword_t _sys_execve(addr_t filename_addr, addr_t argv_addr, addr_t envp_addr) {
             STRACE("...");
     }
     argv[i] = NULL;
-    char *envp[MAX_ARGS];
+    char *envp[MAX_ARGS + 1];
     STRACE("}, {");
     for (i = 0; ; i++) {
         if (user_get(envp_addr + i * 4, arg))
