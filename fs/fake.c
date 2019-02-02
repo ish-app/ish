@@ -133,9 +133,24 @@ static void path_unlink(struct mount *mount, const char *path) {
     db_exec_reset(mount, mount->stmt.path_unlink);
 }
 static void path_rename(struct mount *mount, const char *src, const char *dst) {
-    // update or replace paths set path = ? [dst] where path = ? [src];
-    bind_path(mount->stmt.path_rename, 1, dst);
-    bind_path(mount->stmt.path_rename, 2, src);
+    // update or replace paths set path = change_prefix(path, ? [len(src)], ? [dst])
+    //  where (path >= ? [src plus /] and path < [src plus 0]) or path = ? [src]
+    // arguments:
+    // 1. length of src
+    // 2. dst
+    // 3. src plus /
+    // 4. src plus 0
+    // 5. src
+    size_t src_len = strlen(src);
+    sqlite3_bind_int64(mount->stmt.path_rename, 1, src_len);
+    bind_path(mount->stmt.path_rename, 2, dst);
+    char src_extra[src_len + 1];
+    memcpy(src_extra, src, src_len);
+    src_extra[src_len] = '/';
+    sqlite3_bind_blob(mount->stmt.path_rename, 3, src_extra, src_len + 1, SQLITE_TRANSIENT);
+    src_extra[src_len] = '0';
+    sqlite3_bind_blob(mount->stmt.path_rename, 4, src_extra, src_len + 1, SQLITE_TRANSIENT);
+    sqlite3_bind_blob(mount->stmt.path_rename, 5, src_extra, src_len, SQLITE_TRANSIENT);
     db_exec_reset(mount, mount->stmt.path_rename);
 }
 
@@ -439,7 +454,7 @@ static int fakefs_readdir(struct fd *fd, struct dir_entry *entry) {
         strcat(entry_path, "/");
         strcat(entry_path, entry->name);
     }
-    
+
     db_begin(fd->mount);
     entry->inode = path_get_inode(fd->mount, entry_path);
     db_commit(fd->mount);
@@ -462,6 +477,20 @@ static int trace_callback(unsigned why, void *fuck, void *stmt, void *sql) {
     return 0;
 }
 #endif
+
+static void sqlite_func_change_prefix(sqlite3_context *context, int argc, sqlite3_value **args) {
+    assert(argc == 3);
+    const void *in_blob = sqlite3_value_blob(args[0]);
+    size_t in_size = sqlite3_value_bytes(args[0]);
+    size_t start = sqlite3_value_int64(args[1]);
+    const void *replacement = sqlite3_value_blob(args[2]);
+    size_t replacement_size = sqlite3_value_bytes(args[2]);
+    size_t out_size = in_size - start + replacement_size;
+    char *out_blob = sqlite3_malloc(out_size);
+    memcpy(out_blob, replacement, replacement_size);
+    memcpy(out_blob + replacement_size, in_blob + start, in_size - start);
+    sqlite3_result_blob(context, out_blob, out_size, sqlite3_free);
+}
 
 static int fakefs_mount(struct mount *mount) {
     char db_path[PATH_MAX];
@@ -486,6 +515,8 @@ static int fakefs_mount(struct mount *mount) {
         sqlite3_close(mount->db);
         return _EINVAL;
     }
+    sqlite3_create_function(mount->db, "change_prefix", 3, SQLITE_UTF8 | SQLITE_DETERMINISTIC, NULL, sqlite_func_change_prefix, NULL, NULL);
+    db_check_error(mount);
 
     // let's do WAL mode
     sqlite3_stmt *statement = db_prepare(mount, "pragma journal_mode=wal");
@@ -556,8 +587,8 @@ static int fakefs_mount(struct mount *mount) {
     mount->stmt.inode_write_stat = db_prepare(mount, "update stats set stat = ? where inode = ?");
     mount->stmt.path_link = db_prepare(mount, "insert into paths (path, inode) values (?, ?)");
     mount->stmt.path_unlink = db_prepare(mount, "delete from paths where path = ?");
-    mount->stmt.path_rename = db_prepare(mount, "update or replace paths set path = ? where path = ?;");
-    // used by file provider
+    mount->stmt.path_rename = db_prepare(mount, "update or replace paths set path = change_prefix(path, ?, ?) "
+            "where (path >= ? and path < ?) or path = ?");
     mount->stmt.path_from_inode = db_prepare(mount, "select path from paths where inode = ?");
 
     return 0;
