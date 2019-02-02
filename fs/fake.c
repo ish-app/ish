@@ -438,7 +438,9 @@ static ssize_t fakefs_readlink(struct mount *mount, const char *path, char *buf,
 
 static int fakefs_readdir(struct fd *fd, struct dir_entry *entry) {
     assert(fd->ops == &fakefs_fdops);
-    int res = realfs_fdops.readdir(fd, entry);
+    int res;
+retry:
+    res = realfs_fdops.readdir(fd, entry);
     if (res <= 0)
         return res;
 
@@ -458,7 +460,10 @@ static int fakefs_readdir(struct fd *fd, struct dir_entry *entry) {
     db_begin(fd->mount);
     entry->inode = path_get_inode(fd->mount, entry_path);
     db_commit(fd->mount);
-    assert(entry->inode != 0);
+    // it's quite possible that due to some mishap there's no metadata for this file
+    // so just skip this entry, instead of crashing the program, so there's hope for recovery
+    if (entry->inode == 0)
+        goto retry;
     return res;
 }
 
