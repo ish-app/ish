@@ -441,13 +441,6 @@ out:
     return err;
 }
 
-static ssize_t tty_driver_write(struct tty *tty, const char *data, size_t size, bool blocking) {
-    int err = tty->driver->ops->write(tty, data, size, blocking);
-    if (err < 0)
-        return err;
-    return size;
-}
-
 static ssize_t tty_write(struct fd *fd, const void *buf, size_t bufsize) {
     struct tty *tty = fd->tty;
     lock(&tty->lock);
@@ -464,7 +457,11 @@ static ssize_t tty_write(struct fd *fd, const void *buf, size_t bufsize) {
     unlock(&tty->lock);
 
     int err = 0;
+    char *postbuf = NULL;
+    size_t postbufsize = bufsize;
     if (oflags & OPOST_) {
+        postbuf = malloc(bufsize * 2);
+        postbufsize = 0;
         const char *cbuf = buf;
         for (size_t i = 0; i < bufsize; i++) {
             char ch = cbuf[i];
@@ -472,18 +469,15 @@ static ssize_t tty_write(struct fd *fd, const void *buf, size_t bufsize) {
                 continue;
             else if (ch == '\r' && oflags & OCRNL_)
                 ch = '\n';
-            else if (ch == '\n' && oflags & ONLCR_) {
-                err = tty_driver_write(tty, "\r", 1, blocking);
-                if (err < 0)
-                    break;
-            }
-            err = tty_driver_write(tty, &ch, 1, blocking);
-            if (err < 0)
-                break;
+            else if (ch == '\n' && oflags & ONLCR_)
+                postbuf[postbufsize++] = '\r';
+            postbuf[postbufsize++] = ch;
         }
-    } else {
-        err = tty_driver_write(tty, buf, bufsize, blocking);
+        buf = postbuf;
     }
+    err = tty->driver->ops->write(tty, buf, postbufsize, blocking);
+    if (postbuf)
+        free(postbuf);
     if (err < 0)
         return err;
     return bufsize;
