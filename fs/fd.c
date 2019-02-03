@@ -1,8 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "debug.h"
-#include "kernel/task.h"
-#include "kernel/errno.h"
+#include "kernel/calls.h"
 #include "kernel/resource.h"
 #include "kernel/fs.h"
 #include "fs/poll.h"
@@ -207,6 +206,8 @@ static int fdtable_close(struct fdtable *table, fd_t f) {
     struct fd *fd = fdtable_get(table, f);
     if (fd == NULL)
         return _EBADF;
+    if (fd->inode != NULL) // temporary hack for files like sockets that right now don't have inodes but will eventually
+        file_lock_remove_owned_by(fd, table);
     int err = fd_close(fd);
     table->files[f] = NULL;
     bit_clear(f, table->cloexec);
@@ -238,6 +239,13 @@ void fdtable_do_cloexec(struct fdtable *table) {
 #define F_SETFD_ 2
 #define F_GETFL_ 3
 #define F_SETFL_ 4
+
+#define F_GETLK_ 5
+#define F_SETLK_ 6
+#define F_SETLKW_ 7
+#define F_GETLK64_ 12
+#define F_SETLK64_ 13
+#define F_SETLKW64_ 14
 
 dword_t sys_dup(fd_t f) {
     struct fd *fd = f_get(f);
@@ -280,6 +288,9 @@ dword_t sys_fcntl64(fd_t f, dword_t cmd, dword_t arg) {
     struct fd *fd = f_get(f);
     if (fd == NULL)
         return _EBADF;
+    struct flock32_ flock32;
+    struct flock_ flock;
+    int err;
     switch (cmd) {
         case F_DUPFD_:
             STRACE("fcntl(%d, F_DUPFD, %d)", f, arg);
@@ -303,6 +314,56 @@ dword_t sys_fcntl64(fd_t f, dword_t cmd, dword_t arg) {
         case F_SETFL_:
             STRACE("fcntl(%d, F_SETFL, %#x)", f, arg);
             return fd_setflags(fd, arg);
+
+        case F_GETLK_:
+            STRACE("fcntl(%d, F_GETLK, %#x)", f, arg);
+            if (user_read(arg, &flock32, sizeof(flock32)))
+                return _EFAULT;
+            flock.type = flock32.type;
+            flock.whence = flock32.whence;
+            flock.start = flock32.start;
+            flock.len = flock32.len;
+            flock.pid = flock32.pid;
+            err = fcntl_getlk(fd, &flock);
+            if (err >= 0) {
+                flock32.type = flock.type;
+                flock32.whence = flock.whence;
+                flock32.start = flock.start;
+                flock32.len = flock.len;
+                flock32.pid = flock.pid;
+                if (user_write(arg, &flock32, sizeof(flock32)))
+                    return _EFAULT;
+            }
+            return err;
+
+        case F_GETLK64_:
+            STRACE("fcntl(%d, F_GETLK64, %#x)", f, arg);
+            if (user_read(arg, &flock, sizeof(flock)))
+                return _EFAULT;
+            err = fcntl_getlk(fd, &flock);
+            if (err >= 0)
+                if (user_write(arg, &flock, sizeof(flock)))
+                    return _EFAULT;
+            return err;
+
+        case F_SETLK_:
+        case F_SETLKW_:
+            STRACE("fcntl(%d, F_SETLK%*s, %#x)", f, cmd == F_SETLKW_, "W", arg);
+            if (user_read(arg, &flock32, sizeof(flock32)))
+                return _EFAULT;
+            flock.type = flock32.type;
+            flock.whence = flock32.whence;
+            flock.start = flock32.start;
+            flock.len = flock32.len;
+            flock.pid = flock32.pid;
+            return fcntl_setlk(fd, &flock, cmd == F_SETLKW64_);
+
+        case F_SETLK64_:
+        case F_SETLKW64_:
+            STRACE("fcntl(%d, F_SETLK%*s64, %#x)", f, cmd == F_SETLKW_, "W", arg);
+            if (user_read(arg, &flock, sizeof(flock)))
+                return _EFAULT;
+            return fcntl_setlk(fd, &flock, cmd == F_SETLKW_);
 
         default:
             STRACE("fcntl(%d, %d)", f, cmd);

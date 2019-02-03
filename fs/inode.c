@@ -23,8 +23,11 @@ struct inode_data *inode_get(struct mount *mount, ino_t ino) {
     inode->number = ino;
     mount_retain(mount);
     inode->mount = mount;
+    cond_init(&inode->posix_unlock);
+    list_init(&inode->posix_locks);
     list_init(&inode->chain);
     lock_init(&inode->lock);
+    list_add(&inodes_hash[index], &inode->chain);
 
 out:
     lock(&inode->lock);

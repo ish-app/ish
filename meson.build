@@ -84,6 +84,7 @@ src = [
     'fs/sock.c',
     'fs/pipe.c',
     'fs/sockrestart.c',
+    'fs/lock.c',
 
     'fs/dev.c',
     'fs/mem.c',
