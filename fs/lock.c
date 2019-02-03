@@ -135,7 +135,7 @@ static int file_lock_acquire(struct inode_data *inode, struct file_lock *request
     return 0;
 }
 
-#define OFF_T_MAX LONG_LONG_MAX // good enough for now lol
+#define OFF_T_MAX ~(1l << (sizeof(off_t) * 8 - 1))
 
 static int file_lock_from_flock(struct fd *fd, struct flock_ *flock, struct file_lock *lock) {
     off_t_ offset;
