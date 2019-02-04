@@ -32,6 +32,7 @@ syscall_t syscall_table[] = {
     [23]  = (syscall_t) sys_setuid,
     [24]  = (syscall_t) sys_getuid,
     [33]  = (syscall_t) sys_access,
+    [36]  = (syscall_t) syscall_success_stub, // sync
     [37]  = (syscall_t) sys_kill,
     [38]  = (syscall_t) sys_rename,
     [39]  = (syscall_t) sys_mkdir,
