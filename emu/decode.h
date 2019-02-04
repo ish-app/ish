@@ -283,6 +283,8 @@ restart:
         MAKE_OP(0x30, XOR, "xor");
         MAKE_OP(0x38, CMP, "cmp");
 
+        case 0x3e: TRACEI("segment ds (useless)"); goto restart;
+
         case 0x40: TRACEI("inc oax"); INC(reg_a,oz); break;
         case 0x41: TRACEI("inc ocx"); INC(reg_c,oz); break;
         case 0x42: TRACEI("inc odx"); INC(reg_d,oz); break;
