@@ -70,7 +70,7 @@ static int file_lock_acquire(struct inode_data *inode, struct file_lock *request
     struct file_lock *tmp;
     list_for_each_entry_safe(&inode->posix_locks, lock, tmp, locks) {
         // To speed up looping over all of our locks, the locks are grouped by owner.
-        if (found_our_locks) {
+        if (!found_our_locks) {
             if (lock->owner != request->owner)
                 continue;
             found_our_locks = true;
