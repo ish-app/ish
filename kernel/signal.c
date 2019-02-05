@@ -40,7 +40,7 @@ static int signal_action(struct sighand *sighand, int sig) {
     }
 }
 
-void deliver_signal(struct task *task, int sig) {
+static void deliver_signal_unlocked(struct task *task, int sig) {
     task->pending |= 1l << sig;
     if (task != current) {
         // actual madness, I hope to god it's correct
@@ -65,6 +65,12 @@ retry:
     }
 }
 
+void deliver_signal(struct task *task, int sig) {
+    lock(&task->sighand->lock);
+    deliver_signal_unlocked(task, sig);
+    unlock(&task->sighand->lock);
+}
+
 void send_signal(struct task *task, int sig) {
     // signal zero is for testing whether a process exists
     if (sig == 0)
@@ -78,7 +84,7 @@ void send_signal(struct task *task, int sig) {
         if (task->blocked & (1l << sig) && signal_is_blockable(sig))
             task->queued |= (1l << sig);
         else
-            deliver_signal(task, sig);
+            deliver_signal_unlocked(task, sig);
     }
     unlock(&sighand->lock);
 
@@ -210,8 +216,8 @@ bool receive_signals() {
         if (now_stopped) {
             lock(&pids_lock);
             notify(&current->parent->group->child_exit);
-            unlock(&pids_lock);
             send_signal(current->parent, current->group->leader->exit_signal);
+            unlock(&pids_lock);
         }
     }
 

@@ -53,6 +53,7 @@ struct sigaction_ {
 #define SIGUNUSED_ 31
 
 // send a signal
+// you better make sure the task isn't gonna get freed under me (pids_lock or current)
 void send_signal(struct task *task, int sig);
 // send a signal without regard for whether the signal is blocked or ignored
 void deliver_signal(struct task *task, int sig);

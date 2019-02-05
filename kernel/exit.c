@@ -13,15 +13,17 @@ static bool exit_tgroup(struct task *task) {
     list_remove(&task->group_links);
     bool group_dead = list_empty(&group->threads);
     if (group_dead) {
-        lock(&group->lock);
+        // don't need to lock the group since the only pointers it come from:
+        // - other threads current->group, but the other threads have accessed it
+        // - locking pids_lock first, which do_exit did
         if (group->timer)
             timer_free(group->timer);
         if (group->tty) {
             lock(&ttys_lock);
             tty_release(group->tty);
+            group->tty = NULL;
             unlock(&ttys_lock);
         }
-        unlock(&group->lock);
         list_remove(&group->pgroup);
         list_remove(&group->session);
     }
@@ -41,7 +43,8 @@ noreturn void do_exit(int status) {
     mm_release(current->mm);
     fdtable_release(current->files);
     fs_info_release(current->fs);
-    sighand_release(current->sighand);
+    // sighand must be released below so it can be protected by pids_lock
+    // since it can be accessed by other threads
 
     // save things that our parent might be interested in
     current->exit_code = status; // FIXME locking
@@ -52,6 +55,8 @@ noreturn void do_exit(int status) {
 
     // the actual freeing needs pids_lock
     lock(&pids_lock);
+    // release the skkkkkkkk
+    sighand_release(current->sighand);
     struct task *leader = current->group->leader;
 
     if (exit_tgroup(current)) {
