@@ -13,10 +13,9 @@ static void jit_block_free(struct jit_block *block);
 
 struct jit *jit_new(struct mem *mem) {
     struct jit *jit = malloc(sizeof(struct jit));
+    memset(jit, 0, sizeof(struct jit));
     jit->mem = mem;
     jit->mem_used = 0;
-    for (int i = 0; i < JIT_HASH_SIZE; i++)
-        list_init(&jit->hash[i]);
     lock_init(&jit->lock);
     return jit;
 }
@@ -24,6 +23,8 @@ struct jit *jit_new(struct mem *mem) {
 void jit_free(struct jit *jit) {
     for (int i = 0; i < JIT_HASH_SIZE; i++) {
         struct jit_block *block, *tmp;
+        if (list_null(&jit->hash[i]))
+            continue;
         list_for_each_entry_safe(&jit->hash[i], block, tmp, chain) {
             jit_block_free(block);
         }
@@ -51,7 +52,7 @@ void jit_invalidate_page(struct jit *jit, page_t page) {
 
 static void jit_insert(struct jit *jit, struct jit_block *block) {
     jit->mem_used += block->used;
-    list_add(&jit->hash[block->addr % JIT_HASH_SIZE], &block->chain);
+    list_init_add(&jit->hash[block->addr % JIT_HASH_SIZE], &block->chain);
     if (mem_pt(jit->mem, PAGE(block->addr)) == NULL)
         return;
     list_init_add(blocks_list(jit, PAGE(block->addr), 0), &block->page[0]);
@@ -60,8 +61,11 @@ static void jit_insert(struct jit *jit, struct jit_block *block) {
 }
 
 static struct jit_block *jit_lookup(struct jit *jit, addr_t addr) {
+    struct list *bucket = &jit->hash[addr % JIT_HASH_SIZE];
+    if (list_null(bucket))
+        return NULL;
     struct jit_block *block;
-    list_for_each_entry(&jit->hash[addr % JIT_HASH_SIZE], block, chain) {
+    list_for_each_entry(bucket, block, chain) {
         if (block->addr == addr)
             return block;
     }
