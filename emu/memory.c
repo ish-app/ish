@@ -67,6 +67,14 @@ static void mem_pt_del(struct mem *mem, page_t page) {
         entry->data = NULL;
 }
 
+static void next_page(struct mem *mem, page_t *page) {
+    (*page)++;
+    if (*page >= MEM_PAGES)
+        return;
+    while (*page < MEM_PAGES && mem->pgdir[PGDIR_TOP(*page)] == NULL)
+        *page = (*page - PGDIR_BOTTOM(*page)) + MEM_PGDIR_SIZE;
+}
+
 page_t pt_find_hole(struct mem *mem, pages_t size) {
     page_t hole_end;
     bool in_hole = false;
@@ -121,18 +129,18 @@ int pt_unmap(struct mem *mem, page_t start, pages_t pages, int force) {
             if (mem_pt(mem, page) == NULL)
                 return -1;
 
-    for (page_t page = start; page < start + pages; page++) {
+    for (page_t page = start; page < start + pages; next_page(mem, &page)) {
         struct pt_entry *pt = mem_pt(mem, page);
-        if (pt != NULL) {
+        if (pt == NULL)
+            continue;
 #if JIT
-            jit_invalidate_page(mem->jit, page);
+        jit_invalidate_page(mem->jit, page);
 #endif
-            struct data *data = pt->data;
-            mem_pt_del(mem, page);
-            if (--data->refcount == 0) {
-                munmap(data->data, data->size);
-                free(data);
-            }
+        struct data *data = pt->data;
+        mem_pt_del(mem, page);
+        if (--data->refcount == 0) {
+            munmap(data->data, data->size);
+            free(data);
         }
     }
     mem_changed(mem);
@@ -169,23 +177,21 @@ int pt_set_flags(struct mem *mem, page_t start, pages_t pages, int flags) {
     return 0;
 }
 
-int pt_copy_on_write(struct mem *src, page_t src_start, struct mem *dst, page_t dst_start, page_t pages) {
-    for (page_t src_page = src_start, dst_page = dst_start;
-            src_page < src_start + pages;
-            src_page++, dst_page++) {
-        struct pt_entry *entry = mem_pt(src, src_page);
-        if (entry != NULL) {
-            if (pt_unmap(dst, dst_page, 1, PT_FORCE) < 0)
-                return -1;
-            // TODO skip shared mappings
-            entry->flags |= P_COW;
-            entry->flags &= ~P_COMPILED;
-            entry->data->refcount++;
-            struct pt_entry *dst_entry = mem_pt_new(dst, dst_page);
-            dst_entry->data = entry->data;
-            dst_entry->offset = entry->offset;
-            dst_entry->flags = entry->flags;
-        }
+int pt_copy_on_write(struct mem *src, struct mem *dst, page_t start, page_t pages) {
+    for (page_t page = start; page < start + pages; next_page(src, &page)) {
+        struct pt_entry *entry = mem_pt(src, page);
+        if (entry == NULL)
+            continue;
+        if (pt_unmap(dst, page, 1, PT_FORCE) < 0)
+            return -1;
+        // TODO skip shared mappings
+        entry->flags |= P_COW;
+        entry->flags &= ~P_COMPILED;
+        entry->data->refcount++;
+        struct pt_entry *dst_entry = mem_pt_new(dst, page);
+        dst_entry->data = entry->data;
+        dst_entry->offset = entry->offset;
+        dst_entry->flags = entry->flags;
     }
     mem_changed(src);
     mem_changed(dst);

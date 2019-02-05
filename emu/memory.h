@@ -89,7 +89,7 @@ int pt_unmap(struct mem *mem, page_t start, pages_t pages, int force);
 // Set the flags on memory
 int pt_set_flags(struct mem *mem, page_t start, pages_t pages, int flags);
 // Copy pages from src memory to dst memory using copy-on-write
-int pt_copy_on_write(struct mem *src, page_t src_start, struct mem *dst, page_t dst_start, page_t pages);
+int pt_copy_on_write(struct mem *src, struct mem *dst, page_t start, page_t pages);
 
 #define MEM_READ 0
 #define MEM_WRITE 1
