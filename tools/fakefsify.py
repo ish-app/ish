@@ -9,8 +9,15 @@ import sqlite3
 SCHEMA = """
 create table meta (id integer unique default 0, db_inode integer);
 insert into meta (db_inode) values (0);
-create table paths (path blob primary key, inode integer);
 create table stats (inode integer primary key, stat blob);
+create table paths (path blob primary key, inode integer references stats(inode));
+create index inode_to_path on paths (inode, path);
+create trigger delete_path after delete on paths
+when not exists (select 1 from paths where inode = old.inode)
+begin
+    delete from stats where not exists (select 1 from paths where inode = old.inode) and inode = old.inode;
+end;
+pragma user_version=2;
 """
 # no index is needed on stats, because the rows are ordered by the primary key
 

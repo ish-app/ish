@@ -13,6 +13,19 @@ static struct migration {
     {
         "create index inode_to_path on paths (inode, path);"
     },
+    // version 1 to version 2
+    {
+        "create table paths_new (path blob primary key, inode integer references stats(inode));"
+        "insert into paths_new select * from paths where exists (select 1 from stats where inode = paths.inode);"
+        "drop table paths; alter table paths_new rename to paths;"
+        "create index inode_to_path on paths (inode, path);"
+        "delete from stats where not exists (select 1 from paths where inode = stats.inode);"
+        "create trigger delete_path after delete on paths "
+        "when not exists (select 1 from paths where inode = old.inode) "
+        "begin "
+            "delete from stats where not exists (select 1 from paths where inode = old.inode) and inode = old.inode; "
+        "end;"
+    },
 };
 
 int fakefs_migrate(struct mount *mount) {

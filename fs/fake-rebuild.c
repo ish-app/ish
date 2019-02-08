@@ -55,11 +55,12 @@ int fakefs_rebuild(struct mount *mount) {
     CHECK_ERR()
 
     EXEC("begin");
-    EXEC("alter table paths rename to paths_old");
-    EXEC("alter table stats rename to stats_old");
-    EXEC("create table paths (path blob primary key, inode integer)");
-    EXEC("create table stats (inode integer primary key, stat blob)");
-
+    EXEC("create table paths_old (path blob primary key, inode integer)");
+    EXEC("create table stats_old (inode integer primary key, stat blob)");
+    EXEC("insert into paths_old select * from paths");
+    EXEC("insert into stats_old select * from stats");
+    EXEC("delete from paths");
+    EXEC("delete from stats");
     sqlite3_stmt *get_paths = PREPARE("select path, inode from paths_old");
     sqlite3_stmt *read_stat = PREPARE("select stat from stats_old where inode = ?");
     sqlite3_stmt *write_path = PREPARE("insert into paths (path, inode) values (?, ?)");
@@ -110,14 +111,14 @@ int fakefs_rebuild(struct mount *mount) {
         size_t stat_data_size = sqlite3_column_bytes(read_stat, 0);
 
         // store all the information in the new database
-        err = sqlite3_bind_blob(write_path, 1, path, strlen(path), SQLITE_TRANSIENT); CHECK_ERR();
-        err = sqlite3_bind_int64(write_path, 2, real_inode); CHECK_ERR();
-        STEP(write_path);
-        RESET(write_path);
         err = sqlite3_bind_int64(write_stat, 1, real_inode); CHECK_ERR();
         err = sqlite3_bind_blob(write_stat, 2, stat_data, stat_data_size, SQLITE_TRANSIENT);
         STEP(write_stat);
         RESET(write_stat);
+        err = sqlite3_bind_blob(write_path, 1, path, strlen(path), SQLITE_TRANSIENT); CHECK_ERR();
+        err = sqlite3_bind_int64(write_path, 2, real_inode); CHECK_ERR();
+        STEP(write_path);
+        RESET(write_path);
 
         RESET(read_stat);
     }

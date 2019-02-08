@@ -530,6 +530,12 @@ static int fakefs_mount(struct mount *mount) {
     db_check_error(mount);
     sqlite3_finalize(statement);
 
+    statement = db_prepare(mount, "pragma foreign_keys=true");
+    db_check_error(mount);
+    sqlite3_step(statement);
+    db_check_error(mount);
+    sqlite3_finalize(statement);
+
 #if DEBUG_sql
     sqlite3_trace_v2(mount->db, SQLITE_TRACE_STMT, trace_callback, NULL);
 #endif
@@ -568,13 +574,6 @@ static int fakefs_mount(struct mount *mount) {
     // save current inode
     statement = db_prepare(mount, "update meta set db_inode = ?");
     sqlite3_bind_int64(statement, 1, (int64_t) db_inode);
-    db_check_error(mount);
-    sqlite3_step(statement);
-    db_check_error(mount);
-    sqlite3_finalize(statement);
-
-    // delete orphaned stats
-    statement = db_prepare(mount, "delete from stats where not exists (select 1 from paths where inode = stats.inode)");
     db_check_error(mount);
     sqlite3_step(statement);
     db_check_error(mount);
