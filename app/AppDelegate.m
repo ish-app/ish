@@ -60,13 +60,15 @@ static void ios_handle_exit(int code) {
     
     create_first_process();
     NSArray<NSString *> *command = UserPreferences.shared.launchCommand;
-    char *argv[command.count + 1];
+    char argv[4096];
+    size_t p = 0;
     for (NSUInteger i = 0; i < command.count; i++) {
-        argv[i] = (char *) command[i].UTF8String;
+        strcpy(&argv[p], command[i].UTF8String);
+        p += [command[i] lengthOfBytesUsingEncoding:NSUTF8StringEncoding] + 1;
     }
-    argv[command.count] = NULL;
-    char *envp[] = {"TERM=xterm-256color", NULL};
-    err = sys_execve(argv[0], argv, envp);
+    argv[p] = '\0';
+    const char *envp = "TERM=xterm-256color\0";
+    err = sys_execve(argv, argv, envp);
     if (err < 0)
         return err;
     err = create_stdio(&ios_tty_driver);
