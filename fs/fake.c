@@ -520,6 +520,7 @@ static int fakefs_mount(struct mount *mount) {
         sqlite3_close(mount->db);
         return _EINVAL;
     }
+    sqlite3_busy_timeout(mount->db, 1000);
     sqlite3_create_function(mount->db, "change_prefix", 3, SQLITE_UTF8 | SQLITE_DETERMINISTIC, NULL, sqlite_func_change_prefix, NULL, NULL);
     db_check_error(mount);
 
