@@ -457,9 +457,9 @@ static void prepare_tracee(int pid) {
 }
 
 int main(int argc, char *const argv[]) {
-    char *const *envp = NULL;
+    char envp[100] = {0};
     if (getenv("TERM"))
-        envp = (char *[]) {getenv("TERM") - strlen("TERM") - 1, NULL};
+        strcpy(envp, getenv("TERM") - strlen("TERM") - 1);
     int err = xX_main_Xx(argc, argv, envp);
     if (err < 0) {
         fprintf(stderr, "%s\n", strerror(-err));

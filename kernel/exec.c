@@ -19,8 +19,9 @@ static inline dword_t align_stack(dword_t sp);
 static inline ssize_t user_strlen(dword_t p);
 static inline int user_memset(addr_t start, byte_t val, dword_t len);
 static inline dword_t copy_string(dword_t sp, const char *string);
-static inline dword_t copy_strings(dword_t sp, char *const strings[]);
-static unsigned count_args(char *const args[]);
+static inline dword_t copy_strings(dword_t sp, const char *strings);
+static size_t strings_size(const char *args);
+static unsigned strings_count(const char *args);
 
 static int read_header(struct fd *fd, struct elf_header *header) {
     int err;
@@ -122,7 +123,7 @@ static addr_t find_hole_for_elf(struct elf_header *header, struct prg_header *ph
     return pt_find_hole(current->mem, size) << PAGE_BITS;
 }
 
-static int elf_exec(struct fd *fd, const char *file, char *const argv[], char *const envp[]) {
+static int elf_exec(struct fd *fd, const char *file, const char *argv, const char *envp) {
     int err = 0;
 
     // read the headers
@@ -317,8 +318,8 @@ static int elf_exec(struct fd *fd, const char *file, char *const argv[], char *c
         {AX_PLATFORM, platform_addr},
         {0, 0}
     };
-    dword_t argc = count_args(argv);
-    dword_t envc = count_args(envp);
+    dword_t argc = strings_count(argv);
+    dword_t envc = strings_count(envp);
     sp -= ((argc + 1) + (envc + 1) + 1) * sizeof(dword_t);
     sp -= sizeof(aux);
     sp &=~ 0xf;
@@ -377,11 +378,24 @@ beyond_hope:
     goto out_free_interp;
 }
 
-static unsigned count_args(char *const args[]) {
-    unsigned i;
-    for (i = 0; args[i] != NULL; i++)
-        ;
-    return i;
+// Returns the total memory needed to store the arguments, including all the terminating nulls
+static size_t strings_size(const char *args) {
+    const char *args_end = args;
+    size_t arg_len;
+    do {
+        arg_len = strlen(args_end);
+        args_end += arg_len + 1;
+    } while (arg_len != 0);
+    return args_end - args;
+}
+
+static unsigned strings_count(const char *args) {
+    unsigned n = 0;
+    while (*args != '\0') {
+        args += strlen(args) + 1;
+        n++;
+    }
+    return n;
 }
 
 static inline dword_t align_stack(addr_t sp) {
@@ -395,12 +409,11 @@ static inline dword_t copy_string(addr_t sp, const char *string) {
     return sp;
 }
 
-static inline dword_t copy_strings(addr_t sp, char *const strings[]) {
-    for (unsigned i = count_args(strings); i > 0; i--) {
-        sp = copy_string(sp, strings[i - 1]);
-        if (sp == 0)
-            return 0;
-    }
+static inline dword_t copy_strings(addr_t sp, const char *strings) {
+    size_t size = strings_size(strings);
+    sp -= size;
+    if (user_write(sp, strings, size))
+        return 0;
     return sp;
 }
 
@@ -422,7 +435,7 @@ static inline int user_memset(addr_t start, byte_t val, dword_t len) {
     return 0;
 }
 
-static int format_exec(struct fd *fd, const char *file, char *const argv[], char *const envp[]) {
+static int format_exec(struct fd *fd, const char *file, const char *argv, const char *envp) {
     int err = elf_exec(fd, file, argv, envp);
     if (err != _ENOEXEC)
         return err;
@@ -430,7 +443,7 @@ static int format_exec(struct fd *fd, const char *file, char *const argv[], char
     return _ENOEXEC;
 }
 
-static int shebang_exec(struct fd *fd, const char *file, char *const argv[], char *const envp[]) {
+static int shebang_exec(struct fd *fd, const char *file, const char *argv, const char *envp) {
     // read the first 128 bytes to get the shebang line out of
     if (fd->ops->lseek(fd, 0, SEEK_SET))
         return _EIO;
@@ -473,15 +486,22 @@ static int shebang_exec(struct fd *fd, const char *file, char *const argv[], cha
     if (*argument == '\0')
         argument = NULL;
 
-    int args_extra = 2;
+    size_t args_size = strings_size(argv);
+    size_t extra_args_size = strlen(interpreter) + 1 + strlen(file) + 1;
     if (argument)
-        args_extra++;
-    char *real_argv[count_args(argv) + args_extra];
-    real_argv[0] = interpreter;
-    if (argument)
-        real_argv[1] = argument;
-    real_argv[args_extra - 1] = (char *) file; // maybe you'll have better luck getting rid of this cast
-    memcpy(real_argv + args_extra, argv + 1, (count_args(argv)) * sizeof(argv[0]));
+        extra_args_size += strlen(argument) + 1;
+    if (args_size + extra_args_size >= 4096)
+        return _E2BIG;
+
+    char real_argv[4096];
+    size_t n = 0;
+    strcpy(real_argv, interpreter);
+    n += strlen(interpreter) + 1;
+    if (argument) {
+        strcpy(real_argv + n, argument);
+        n += strlen(argument) + 1;
+    }
+    strcpy(real_argv + n, file);
 
     struct fd *interpreter_fd = generic_open(interpreter, O_RDONLY_, 0);
     if (IS_ERR(interpreter_fd))
@@ -491,7 +511,7 @@ static int shebang_exec(struct fd *fd, const char *file, char *const argv[], cha
     return err;
 }
 
-int sys_execve(const char *file, char *const argv[], char *const envp[]) {
+int sys_execve(const char *file, const char *argv, const char *envp) {
     struct fd *fd = generic_open(file, O_RDONLY, 0);
     if (IS_ERR(fd))
         return PTR_ERR(fd);
@@ -565,52 +585,60 @@ int sys_execve(const char *file, char *const argv[], char *const envp[]) {
     return 0;
 }
 
+static int user_read_string_array(addr_t addr, char *buf, size_t max) {
+    size_t i = 0;
+    size_t p = 0;
+    for (;;) {
+        addr_t str_addr;
+        if (user_get(addr + i * sizeof(addr_t), str_addr))
+            return _EFAULT;
+        if (str_addr == 0)
+            break;
+        size_t str_p = 0;
+        for (;;) {
+            if (p >= max)
+                return _E2BIG;
+            if (user_get(str_addr + str_p, buf[p]))
+                return _EFAULT;
+            str_p++;
+            p++;
+            if (buf[p - 1] == '\0')
+                break;
+        }
+        i++;
+    }
+    if (p >= max)
+        return _E2BIG;
+    buf[p] = '\0';
+    return 0;
+}
+
 #define MAX_ARGS 256 // for now
 dword_t _sys_execve(addr_t filename_addr, addr_t argv_addr, addr_t envp_addr) {
-    // TODO this code is shit, fix it
     char filename[MAX_PATH];
     if (user_read_string(filename_addr, filename, sizeof(filename)))
         return _EFAULT;
-    char *argv[MAX_ARGS + 1];
-    int i;
-    addr_t arg;
+    char argv[4096];
+    int err = user_read_string_array(argv_addr, argv, sizeof(argv));
+    if (err < 0)
+        return err;
+    char envp[4096];
+    err = user_read_string_array(envp_addr, envp, sizeof(envp));
+    if (err < 0)
+        return err;
+
     STRACE("execve(\"%s\", {", filename);
-    for (i = 0; ; i++) {
-        if (user_get(argv_addr + i * 4, arg))
-            return _EFAULT;
-        if (arg == 0)
-            break;
-        if (i >= MAX_ARGS)
-            return _E2BIG;
-        argv[i] = malloc(MAX_PATH);
-        if (user_read_string(arg, argv[i], MAX_PATH))
-            return _EFAULT;
-        if (i < 16)
-            STRACE("\"%.100s\", ", argv[i]);
-        else if (i == 16)
-            STRACE("...");
+    const char *args = argv;
+    while (*args != '\0') {
+        STRACE("\"%s\", ", args);
+        args += strlen(args) + 1;
     }
-    argv[i] = NULL;
-    char *envp[MAX_ARGS + 1];
-    STRACE("}, {");
-    for (i = 0; ; i++) {
-        if (user_get(envp_addr + i * 4, arg))
-            return _EFAULT;
-        if (arg == 0)
-            break;
-        if (i >= MAX_ARGS)
-            return _E2BIG;
-        envp[i] = malloc(MAX_PATH);
-        if (user_read_string(arg, envp[i], MAX_PATH))
-            return _EFAULT;
-        STRACE("\"%.100s\", ", envp[i]);
+    args = envp;
+    while (*args != '\0') {
+        STRACE("\"%s\", ", args);
+        args += strlen(args) + 1;
     }
-    envp[i] = NULL;
     STRACE("})");
-    int res = sys_execve(filename, argv, envp);
-    for (i = 0; argv[i] != NULL; i++)
-        free(argv[i]);
-    for (i = 0; envp[i] != NULL; i++)
-        free(envp[i]);
-    return res;
+
+    return sys_execve(filename, argv, envp);
 }
