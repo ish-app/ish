@@ -132,7 +132,7 @@ struct fd_ops {
 
 struct fdtable {
     atomic_uint refcount;
-    int size;
+    unsigned size;
     struct fd **files;
     bits_t *cloexec;
     lock_t lock;

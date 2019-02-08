@@ -61,7 +61,7 @@ int fd_close(struct fd *fd) {
     return err;
 }
 
-static int fdtable_resize(struct fdtable *table, int size);
+static int fdtable_resize(struct fdtable *table, unsigned size);
 
 struct fdtable *fdtable_new(int size) {
     struct fdtable *fdt = malloc(sizeof(struct fdtable));
@@ -86,7 +86,7 @@ static int fdtable_close(struct fdtable *table, fd_t f);
 void fdtable_release(struct fdtable *table) {
     lock(&table->lock);
     if (--table->refcount == 0) {
-        for (fd_t f = 0; f < table->size; f++)
+        for (fd_t f = 0; (unsigned) f < table->size; f++)
             fdtable_close(table, f);
         free(table->files);
         free(table->cloexec);
@@ -97,7 +97,7 @@ void fdtable_release(struct fdtable *table) {
     }
 }
 
-static int fdtable_resize(struct fdtable *table, int size) {
+static int fdtable_resize(struct fdtable *table, unsigned size) {
     // currently the only legitimate use of this is to expand the table
     assert(size > table->size);
 
@@ -143,16 +143,16 @@ struct fdtable *fdtable_copy(struct fdtable *table) {
 }
 
 static int fdtable_expand(struct fdtable *table, fd_t max) {
-    int size = max + 1;
+    unsigned size = max + 1;
     if (table->size >= size)
         return 0;
-    if (size > (int) rlimit(RLIMIT_NOFILE_))
+    if (size > rlimit(RLIMIT_NOFILE_))
         return _EMFILE;
     return fdtable_resize(table, max + 1);
 }
 
 struct fd *fdtable_get(struct fdtable *table, fd_t f) {
-    if (f < 0 || f >= current->files->size)
+    if (f < 0 || (unsigned) f >= current->files->size)
         return NULL;
     return table->files[f];
 }
@@ -165,16 +165,17 @@ struct fd *f_get(fd_t f) {
 }
 
 static fd_t f_install_start(struct fd *fd, fd_t start) {
+    assert(start >= 0);
     struct fdtable *table = current->files;
-    int size = rlimit(RLIMIT_NOFILE_);
+    unsigned size = rlimit(RLIMIT_NOFILE_);
     if (size > table->size)
         size = table->size;
 
     fd_t f;
-    for (f = start; f < size; f++)
+    for (f = start; (unsigned) f < size; f++)
         if (table->files[f] == NULL)
             break;
-    if (f >= size) {
+    if ((unsigned) f >= size) {
         int err = fdtable_expand(table, f);
         if (err < 0)
             f = err;
@@ -228,7 +229,7 @@ dword_t sys_close(fd_t f) {
 
 void fdtable_do_cloexec(struct fdtable *table) {
     lock(&table->lock);
-    for (fd_t f = 0; f < table->size; f++)
+    for (fd_t f = 0; (unsigned) f < table->size; f++)
         if (bit_test(f, table->cloexec))
             fdtable_close(table, f);
     unlock(&table->lock);
