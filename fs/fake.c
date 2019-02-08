@@ -262,17 +262,17 @@ static int fakefs_symlink(struct mount *mount, const char *target, const char *l
     // create a file containing the target
     int fd = openat(mount->root_fd, fix_path(link), O_WRONLY | O_CREAT | O_EXCL, 0666);
     if (fd < 0) {
+        int err = errno_map();
         db_rollback(mount);
-        return errno_map();
+        return err;
     }
     ssize_t res = write(fd, target, strlen(target));
     close(fd);
     if (res < 0) {
-        int saved_errno = errno;
+        int err = errno_map();
         unlinkat(mount->root_fd, fix_path(link), 0);
         db_rollback(mount);
-        errno = saved_errno;
-        return errno_map();
+        return err;
     }
 
     // customize the stat info so it looks like a link
