@@ -138,6 +138,7 @@
                                     </state>
                                     <connections>
                                         <action selector="showAbout:" destination="BYZ-38-t0r" eventType="primaryActionTriggered" id="xbI-EN-avC"/>
+                                        <outletCollection property="gestureRecognizers" destination="reB-As-gYu" appends="YES" id="ehk-hz-UIY"/>
                                     </connections>
                                 </button>
                                 <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="hmm-tv-z35" userLabel="Paste">
@@ -180,6 +181,11 @@
                         <outlet property="terminalViewController" destination="BYZ-38-t0r" id="Pog-Oc-1za"/>
                     </connections>
                 </view>
+                <pongPressGestureRecognizer allowableMovement="20" minimumPressDuration="5" id="reB-As-gYu" userLabel="Debug Panel Trigger">
+                    <connections>
+                        <action selector="showAbout:" destination="BYZ-38-t0r" id="UDK-Ol-mdv"/>
+                    </connections>
+                </pongPressGestureRecognizer>
             </objects>
             <point key="canvasLocation" x="32.799999999999997" y="32.833583208395808"/>
         </scene>

@@ -11,6 +11,7 @@
 #import "BarButton.h"
 #import "ArrowBarButton.h"
 #import "UserPreferences.h"
+#import "AboutViewController.h"
 
 @interface TerminalViewController () <UIGestureRecognizerDelegate>
 
@@ -156,8 +157,17 @@
 #pragma mark Bar
 
 - (IBAction)showAbout:(id)sender {
-    UIViewController *aboutViewController = [[UIStoryboard storyboardWithName:@"About" bundle:nil] instantiateInitialViewController];
-    [self presentViewController:aboutViewController animated:YES completion:nil];
+    UINavigationController *navigationController = [[UIStoryboard storyboardWithName:@"About" bundle:nil] instantiateInitialViewController];
+    if ([sender isKindOfClass:[UIGestureRecognizer class]]) {
+        UIGestureRecognizer *recognizer = sender;
+        if (recognizer.state == UIGestureRecognizerStateBegan) {
+            AboutViewController *aboutViewController = (AboutViewController *) navigationController.topViewController;
+            aboutViewController.includeDebugPanel = YES;
+        } else {
+            return;
+        }
+    }
+    [self presentViewController:navigationController animated:YES completion:nil];
 }
 
 - (void)resizeBar {

@@ -19,6 +19,9 @@
 @property (weak, nonatomic) IBOutlet UITableViewCell *openGithub;
 @property (weak, nonatomic) IBOutlet UITableViewCell *openTwitter;
 @property (weak, nonatomic) IBOutlet UITableViewCell *openDiscord;
+
+@property (weak, nonatomic) IBOutlet UITableViewCell *exportContainerCell;
+
 @end
 
 @implementation AboutViewController
@@ -86,8 +89,23 @@
         [UIApplication openURL:@"https://twitter.com/tblodt"];
     } else if (cell == self.openDiscord) {
         [UIApplication openURL:@"https://discord.gg/SndDh5y"];
+    } else if (cell == self.exportContainerCell) {
+        // copy the files to the app container so they can be extracted from iTunes file sharing
+        NSURL *container = [NSFileManager.defaultManager containerURLForSecurityApplicationGroupIdentifier:@"group.app.ish.iSH"];
+        NSURL *documents = [NSFileManager.defaultManager URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask][0];
+        [NSFileManager.defaultManager removeItemAtURL:[documents URLByAppendingPathComponent:@"roots copy"] error:nil];
+        [NSFileManager.defaultManager copyItemAtURL:[container URLByAppendingPathComponent:@"roots"]
+                                              toURL:[documents URLByAppendingPathComponent:@"roots copy"]
+                                              error:nil];
     }
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
+}
+
+- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
+    NSInteger sections = [super numberOfSectionsInTableView:tableView];
+    if (!self.includeDebugPanel)
+        sections--;
+    return sections;
 }
 
 - (IBAction)launchCommandSubmit:(id)sender {
