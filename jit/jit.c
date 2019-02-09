@@ -9,24 +9,28 @@
 #include "util/list.h"
 #include "kernel/calls.h"
 
-static void jit_block_free(struct jit_block *block);
+static void jit_block_free(struct jit *jit, struct jit_block *block);
+static void jit_resize_hash(struct jit *jit, size_t new_size);
 
 struct jit *jit_new(struct mem *mem) {
     struct jit *jit = malloc(sizeof(struct jit));
     memset(jit, 0, sizeof(struct jit));
     jit->mem = mem;
     jit->mem_used = 0;
+    jit->num_blocks = 0;
+    jit->hash_size = 0;
+    jit_resize_hash(jit, JIT_INITIAL_HASH_SIZE);
     lock_init(&jit->lock);
     return jit;
 }
 
 void jit_free(struct jit *jit) {
-    for (int i = 0; i < JIT_HASH_SIZE; i++) {
+    for (size_t i = 0; i < jit->hash_size; i++) {
         struct jit_block *block, *tmp;
         if (list_null(&jit->hash[i]))
             continue;
         list_for_each_entry_safe(&jit->hash[i], block, tmp, chain) {
-            jit_block_free(block);
+            jit_block_free(jit, block);
         }
     }
     free(jit);
@@ -44,15 +48,36 @@ void jit_invalidate_page(struct jit *jit, page_t page) {
         if (list_null(blocks))
             continue;
         list_for_each_entry_safe(blocks, block, tmp, page[i]) {
-            jit_block_free(block);
+            jit_block_free(jit, block);
         }
     }
     unlock(&jit->lock);
 }
 
+static void jit_resize_hash(struct jit *jit, size_t new_size) {
+    printk("resizing to %d\n");
+    struct list *new_hash = calloc(new_size, sizeof(struct list));
+    for (size_t i = 0; i < jit->hash_size; i++) {
+        if (list_null(&jit->hash[i]))
+            continue;
+        struct jit_block *block, *tmp;
+        list_for_each_entry_safe(&jit->hash[i], block, tmp, chain) {
+            list_remove(&block->chain);
+            list_init_add(&new_hash[block->addr % new_size], &block->chain);
+        }
+    }
+    jit->hash = new_hash;
+    jit->hash_size = new_size;
+}
+
 static void jit_insert(struct jit *jit, struct jit_block *block) {
     jit->mem_used += block->used;
-    list_init_add(&jit->hash[block->addr % JIT_HASH_SIZE], &block->chain);
+    jit->num_blocks++;
+    // target an average hash chain length of 1-2
+    if (jit->num_blocks >= jit->hash_size * 2)
+        jit_resize_hash(jit, jit->hash_size * 2);
+
+    list_init_add(&jit->hash[block->addr % jit->hash_size], &block->chain);
     if (mem_pt(jit->mem, PAGE(block->addr)) == NULL)
         return;
     list_init_add(blocks_list(jit, PAGE(block->addr), 0), &block->page[0]);
@@ -61,7 +86,7 @@ static void jit_insert(struct jit *jit, struct jit_block *block) {
 }
 
 static struct jit_block *jit_lookup(struct jit *jit, addr_t addr) {
-    struct list *bucket = &jit->hash[addr % JIT_HASH_SIZE];
+    struct list *bucket = &jit->hash[addr % jit->hash_size];
     if (list_null(bucket))
         return NULL;
     struct jit_block *block;
@@ -95,7 +120,11 @@ static struct jit_block *jit_block_compile(addr_t ip, struct tlb *tlb) {
     return state.block;
 }
 
-static void jit_block_free(struct jit_block *block) {
+static void jit_block_free(struct jit *jit, struct jit_block *block) {
+    if (jit != NULL) {
+        jit->mem_used -= block->used;
+        jit->num_blocks--;
+    }
     list_remove(&block->chain);
     for (int i = 0; i <= 1; i++) {
         list_remove(&block->page[i]);
@@ -230,6 +259,6 @@ int cpu_step32(struct cpu_state *cpu, struct tlb *tlb) {
     struct jit_frame frame = {.cpu = *cpu};
     int interrupt = jit_enter(block, &frame, tlb);
     *cpu = frame.cpu;
-    jit_block_free(block);
+    jit_block_free(NULL, block);
     return interrupt;
 }

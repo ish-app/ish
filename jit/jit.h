@@ -6,14 +6,16 @@
 
 #if JIT
 
-#define JIT_HASH_SIZE (1 << 12)
+#define JIT_INITIAL_HASH_SIZE (1 << 10)
 #define JIT_CACHE_SIZE (1 << 10)
 
 struct jit {
     // there is one jit per address space
     struct mem *mem;
     size_t mem_used;
-    struct list hash[JIT_HASH_SIZE];
+    size_t num_blocks;
+    struct list *hash;
+    size_t hash_size;
     lock_t lock;
 };
 
