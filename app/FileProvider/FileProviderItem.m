@@ -17,6 +17,9 @@
 
 @interface FileProviderItem ()
 
+@property (readonly) NSFileProviderItemIdentifier identifier;
+@property (readonly) struct mount *mount;
+@property (readonly) struct fd *fd;
 @property (readonly) BOOL isRoot;
 
 @end
@@ -25,26 +28,36 @@
 
 - (instancetype)initWithIdentifier:(NSFileProviderItemIdentifier)identifier mount:(struct mount *)mount error:(NSError *__autoreleasing  _Nullable *)error {
     if (self = [super init]) {
-        struct fd *fd;
-        if ([identifier isEqualToString:NSFileProviderRootContainerItemIdentifier]) {
-            _isRoot = YES;
-            fd = mount->fs->open(mount, "", O_RDONLY_, 0);
-        } else {
-            ino_t inode = identifier.longLongValue;
-            fd = fakefs_open_inode(mount, inode);
-        }
-        if (IS_ERR(fd)) {
-            NSLog(@"opening %@ failed: %ld", identifier, PTR_ERR(fd));
-            if (PTR_ERR(fd) == _ENOENT)
-                *error = [NSError fileProviderErrorForNonExistentItemWithIdentifier:identifier];
-            else
-                *error = [NSError errorWithISHErrno:PTR_ERR(fd)];
-            return nil;
-        }
-        fd->mount = mount;
-        _fd = fd;
+        _identifier = identifier;
+        _mount = mount;
+        _fd = [self openNewFDWithError:error];
     }
     return self;
+}
+
+- (BOOL)isRoot {
+    return [self.identifier isEqualToString:NSFileProviderRootContainerItemIdentifier];
+}
+
+- (struct fd *)openNewFDWithError:(NSError *__autoreleasing  _Nullable *)error {
+    struct fd *fd;
+    if (self.isRoot) {
+        fd = self.mount->fs->open(self.mount, "", O_RDONLY_, 0);
+    } else {
+        fd = fakefs_open_inode(self.mount, self.identifier.longLongValue);
+    }
+    if (IS_ERR(fd)) {
+        NSLog(@"opening %@ failed: %ld", self.identifier, PTR_ERR(fd));
+        if (error != nil) {
+            if (PTR_ERR(fd) == _ENOENT)
+                *error = [NSError fileProviderErrorForNonExistentItemWithIdentifier:self.identifier];
+            else
+                *error = [NSError errorWithISHErrno:PTR_ERR(fd)];
+        }
+        return NULL;
+    }
+    fd->mount = self.mount;
+    return fd;
 }
 
 - (NSString *)path {
@@ -114,6 +127,27 @@
 
 - (NSNumber *)documentSize {
     return [NSNumber numberWithUnsignedLongLong:self.stat.size];
+}
+
+- (NSNumber *)childItemCount {
+    if (!S_ISDIR(self.stat.mode))
+        return @0;
+    struct fd *fd = [self openNewFDWithError:nil];
+    if (fd == NULL)
+        return @0;
+    unsigned n = 0;
+    struct dir_entry dirent;
+    while (fd->ops->readdir(fd, &dirent)) {
+        if (strcmp(dirent.name, ".") == 0 || strcmp(dirent.name, "..") == 0)
+            continue;
+        n++;
+    }
+    return @(n);
+}
+
+- (NSDate *)contentModificationDate {
+    struct statbuf stat = self.stat;
+    return [NSDate dateWithTimeIntervalSince1970:stat.mtime + (NSTimeInterval) stat.mtime_nsec / 1000000000];
 }
 
 - (NSString *)typeIdentifier {

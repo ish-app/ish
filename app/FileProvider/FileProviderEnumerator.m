@@ -40,17 +40,20 @@
         return;
     }
     
-    struct fd *fd = self.item.fd;
-    fd->ops->seekdir(fd, 0);
-    rewinddir(fd->dir);
-    NSMutableArray<FileProviderItem *> *items = [NSMutableArray new];
     NSError *error;
+    struct fd *fd = [self.item openNewFDWithError:&error];
+    if (fd == NULL) {
+        [observer finishEnumeratingWithError:error];
+        return;
+    }
+    NSMutableArray<FileProviderItem *> *items = [NSMutableArray new];
     while (true) {
         struct dir_entry dirent = {};
         int err = fd->ops->readdir(fd, &dirent);
         if (err < 0) {
             NSLog(@"readdir returned %d", err);
             [observer finishEnumeratingWithError:[NSError errorWithISHErrno:err]];
+            fd_close(fd);
             return;
         }
         if (err == 0)
@@ -62,10 +65,12 @@
         FileProviderItem *item = [[FileProviderItem alloc] initWithIdentifier:childIdent mount:fd->mount error:&error];
         if (item == nil) {
             [observer finishEnumeratingWithError:error];
+            fd_close(fd);
             return;
         }
         [items addObject:item];
     }
+    fd_close(fd);
     NSLog(@"returning %@", items);
     [observer didEnumerateItems:items];
     [observer finishEnumeratingUpToPage:nil];

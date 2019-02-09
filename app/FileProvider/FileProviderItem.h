@@ -13,8 +13,8 @@
 - (instancetype)initWithIdentifier:(NSFileProviderItemIdentifier)identifier mount:(struct mount *)mount error:(NSError *_Nullable *)err;
 - (void)loadToURL:(NSURL *)url;
 - (void)saveFromURL:(NSURL *)url;
+- (struct fd *)openNewFDWithError:(NSError *_Nullable *)err;
 
-@property (readonly) struct fd *fd;
 @property (readonly) NSURL *URL;
 @property (readonly) NSString *path;
 @property (readonly) struct statbuf stat;
