@@ -216,7 +216,7 @@ static int fakefs_link(struct mount *mount, const char *src, const char *dst) {
     return 0;
 }
 
-static int fakefs_unlink(struct mount *mount, const char *path) {
+int fakefs_unlink(struct mount *mount, const char *path) {
     db_begin(mount);
     int err = realfs.unlink(mount, path);
     if (err < 0) {
@@ -228,7 +228,7 @@ static int fakefs_unlink(struct mount *mount, const char *path) {
     return 0;
 }
 
-static int fakefs_rmdir(struct mount *mount, const char *path) {
+int fakefs_rmdir(struct mount *mount, const char *path) {
     db_begin(mount);
     int err = realfs.rmdir(mount, path);
     if (err < 0) {

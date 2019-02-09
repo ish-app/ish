@@ -24,5 +24,7 @@ bool path_read_stat(struct mount *mount, const char *path, struct ish_stat *stat
 void path_create(struct mount *mount, const char *path, struct ish_stat *stat);
 
 struct fd *fakefs_open_inode(struct mount *mount, ino_t inode);
+int fakefs_unlink(struct mount *mount, const char *path);
+int fakefs_rmdir(struct mount *mount, const char *path);
 
 #endif

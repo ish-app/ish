@@ -231,6 +231,49 @@ struct task *fake_task;
         completionHandler(item, nil);
 }
 
+- (NSString *)pathFromURL:(NSURL *)url {
+    NSURL *root = [NSURL fileURLWithPath:[NSString stringWithUTF8String:self.mount->source]];
+    assert([url.path hasPrefix:root.path]);
+    NSString *path = [url.path substringFromIndex:root.path.length];
+    assert([path hasPrefix:@"/"]);
+    if ([path hasSuffix:@"/"])
+        path = [path substringToIndex:path.length - 1];
+    return path;
+}
+
+- (BOOL)doDelete:(NSString *)path itemIdentifier:(NSFileProviderItemIdentifier)identifier error:(NSError **)error {
+    NSURL *url = [[NSURL fileURLWithPath:[NSString stringWithUTF8String:self.mount->source]] URLByAppendingPathComponent:path];
+    NSDirectoryEnumerator<NSURL *> *enumerator = [NSFileManager.defaultManager enumeratorAtURL:url
+                                                                    includingPropertiesForKeys:nil
+                                                                                       options:NSDirectoryEnumerationSkipsSubdirectoryDescendants
+                                                                                  errorHandler:nil];
+    for (NSURL *suburl in enumerator) {
+        if (![self doDelete:[self pathFromURL:suburl] itemIdentifier:identifier error:error])
+            return NO;
+    }
+    int err = fakefs_unlink(self.mount, path.fileSystemRepresentation);
+    if (err < 0)
+        err = fakefs_rmdir(self.mount, path.fileSystemRepresentation);
+    if (err < 0) {
+        *error = [NSError errorWithISHErrno:err itemIdentifier:identifier];
+        return NO;
+    }
+    return YES;
+}
+
+- (void)deleteItemWithIdentifier:(NSFileProviderItemIdentifier)itemIdentifier completionHandler:(void (^)(NSError * _Nullable))completionHandler {
+    NSError *error;
+    NSString *path = [self pathOfItemWithIdentifier:itemIdentifier error:&error];
+    if (path == nil) {
+        completionHandler(error);
+        return;
+    }
+    if (![self doDelete:path itemIdentifier:itemIdentifier error:&error])
+        completionHandler(error);
+    else
+        completionHandler(nil);
+}
+
 #pragma mark - Enumeration
 
 - (nullable id<NSFileProviderEnumerator>)enumeratorForContainerItemIdentifier:(NSFileProviderItemIdentifier)containerItemIdentifier error:(NSError **)error {

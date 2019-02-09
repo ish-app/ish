@@ -11,7 +11,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface NSError (ISHErrno)
 
-+ (NSError *)errorWithISHErrno:(long)err;
++ (NSError *)errorWithISHErrno:(long)err itemIdentifier:(NSFileProviderItemIdentifier)identifier;
 
 @end
 

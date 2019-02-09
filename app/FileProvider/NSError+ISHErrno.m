@@ -11,16 +11,14 @@
 
 @implementation NSError (ISHErrno)
 
-+ (NSError *)errorWithISHErrno:(long)err {
++ (NSError *)errorWithISHErrno:(long)err itemIdentifier:(nonnull NSFileProviderItemIdentifier)identifier {
     switch (err) {
         case _ENOENT:
-            return [NSError errorWithDomain:NSFileProviderErrorDomain
-                                       code:NSFileProviderErrorNoSuchItem
-                                   userInfo:nil];
+            return [NSError fileProviderErrorForNonExistentItemWithIdentifier:identifier];
     }
     return [NSError errorWithDomain:ISHErrnoDomain
                                code:err
-                           userInfo:@{NSLocalizedDescriptionKey: [NSString stringWithFormat:@"error code %d", err]}];
+                           userInfo:@{NSLocalizedDescriptionKey: [NSString stringWithFormat:@"error code %ld", err]}];
 }
 
 @end

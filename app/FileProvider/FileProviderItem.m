@@ -49,10 +49,7 @@
     if (IS_ERR(fd)) {
         NSLog(@"opening %@ failed: %ld", self.identifier, PTR_ERR(fd));
         if (error != nil) {
-            if (PTR_ERR(fd) == _ENOENT)
-                *error = [NSError fileProviderErrorForNonExistentItemWithIdentifier:self.identifier];
-            else
-                *error = [NSError errorWithISHErrno:PTR_ERR(fd)];
+            *error = [NSError errorWithISHErrno:PTR_ERR(fd) itemIdentifier:self.identifier];
         }
         return NULL;
     }
@@ -114,7 +111,8 @@
     else if (S_ISDIR(self.stat.mode))
         return
         NSFileProviderItemCapabilitiesAllowsAddingSubItems |
-        NSFileProviderItemCapabilitiesAllowsContentEnumerating;
+        NSFileProviderItemCapabilitiesAllowsContentEnumerating |
+        NSFileProviderItemCapabilitiesAllowsDeleting;
     else
         return 0;
 }

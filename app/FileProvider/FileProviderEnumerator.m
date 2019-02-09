@@ -52,7 +52,7 @@
         int err = fd->ops->readdir(fd, &dirent);
         if (err < 0) {
             NSLog(@"readdir returned %d", err);
-            [observer finishEnumeratingWithError:[NSError errorWithISHErrno:err]];
+            [observer finishEnumeratingWithError:[NSError errorWithISHErrno:err itemIdentifier:self.item.itemIdentifier]];
             fd_close(fd);
             return;
         }
