@@ -103,18 +103,14 @@
 }
 
 - (NSFileProviderItemCapabilities)capabilities {
+    NSFileProviderItemCapabilities caps = NSFileProviderItemCapabilitiesAllowsDeleting | NSFileProviderItemCapabilitiesAllowsRenaming | NSFileProviderItemCapabilitiesAllowsReparenting;
     if (S_ISREG(self.stat.mode))
-        return
-        NSFileProviderItemCapabilitiesAllowsReading |
-        NSFileProviderItemCapabilitiesAllowsWriting |
-        NSFileProviderItemCapabilitiesAllowsDeleting;
+        caps |= NSFileProviderItemCapabilitiesAllowsReading | NSFileProviderItemCapabilitiesAllowsWriting;
     else if (S_ISDIR(self.stat.mode))
-        return
-        NSFileProviderItemCapabilitiesAllowsAddingSubItems |
-        NSFileProviderItemCapabilitiesAllowsContentEnumerating |
-        NSFileProviderItemCapabilitiesAllowsDeleting;
+        caps |= NSFileProviderItemCapabilitiesAllowsAddingSubItems | NSFileProviderItemCapabilitiesAllowsContentEnumerating;
     else
         return 0;
+    return caps;
 }
 
 - (NSString *)filename {

@@ -28,6 +28,7 @@
 }
 
 - (void)enumerateItemsForObserver:(id<NSFileProviderEnumerationObserver>)observer startingAtPage:(NSFileProviderPage)page {
+    NSLog(@"enumeration start %@", self.item.itemIdentifier);
     // if we're asked to enumerate the working set
     if (self.item == nil) {
         [observer finishEnumeratingUpToPage:page];

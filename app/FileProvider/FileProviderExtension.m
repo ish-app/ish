@@ -251,9 +251,9 @@ struct task *fake_task;
         if (![self doDelete:[self pathFromURL:suburl] itemIdentifier:identifier error:error])
             return NO;
     }
-    int err = fakefs_unlink(self.mount, path.fileSystemRepresentation);
+    int err = fakefs.unlink(self.mount, path.fileSystemRepresentation);
     if (err < 0)
-        err = fakefs_rmdir(self.mount, path.fileSystemRepresentation);
+        err = fakefs.rmdir(self.mount, path.fileSystemRepresentation);
     if (err < 0) {
         *error = [NSError errorWithISHErrno:err itemIdentifier:identifier];
         return NO;
@@ -272,6 +272,51 @@ struct task *fake_task;
         completionHandler(error);
     else
         completionHandler(nil);
+}
+
+- (BOOL)doRename:(NSString *)src to:(NSString *)dst itemIdentifier:(NSFileProviderItemIdentifier)identifier error:(NSError **)error {
+    int err = fakefs.rename(self.mount, src.fileSystemRepresentation, dst.fileSystemRepresentation);
+    if (err < 0) {
+        *error = [NSError errorWithISHErrno:err itemIdentifier:identifier];
+        return NO;
+    }
+    return YES;
+}
+
+- (void)renameItemWithIdentifier:(NSFileProviderItemIdentifier)itemIdentifier toName:(NSString *)itemName completionHandler:(void (^)(NSFileProviderItem _Nullable, NSError * _Nullable))completionHandler {
+    NSError *error;
+    FileProviderItem *item = [self itemForIdentifier:itemIdentifier error:&error];
+    if (item == nil) {
+        completionHandler(nil, error);
+        return;
+    }
+    NSString *dstPath = [item.path.stringByDeletingLastPathComponent stringByAppendingPathComponent:itemName];
+    if (![self doRename:item.path to:dstPath itemIdentifier:itemIdentifier error:&error]) {
+        completionHandler(nil, error);
+        return;
+    }
+    completionHandler(item, nil);
+}
+
+- (void)reparentItemWithIdentifier:(NSFileProviderItemIdentifier)itemIdentifier toParentItemWithIdentifier:(NSFileProviderItemIdentifier)parentItemIdentifier newName:(NSString *)newName completionHandler:(void (^)(NSFileProviderItem _Nullable, NSError * _Nullable))completionHandler {
+    NSError *error;
+    FileProviderItem *item = [self itemForIdentifier:itemIdentifier error:&error];
+    if (item == nil) {
+        completionHandler(nil, error);
+        return;
+    }
+    FileProviderItem *parent = [self itemForIdentifier:parentItemIdentifier error:&error];
+    if (parent == nil) {
+        completionHandler(nil, error);
+        return;
+    }
+    if (newName == nil)
+        newName = item.path.lastPathComponent;
+    if (![self doRename:item.path to:[parent.path stringByAppendingPathComponent:newName] itemIdentifier:itemIdentifier error:&error]) {
+        completionHandler(nil, error);
+        return;
+    }
+    completionHandler(item, nil);
 }
 
 #pragma mark - Enumeration
