@@ -1,5 +1,10 @@
 # Changelog
 
+## Build 47
+### Fixed
+- Failure to pass arguments to #! scripts
+- Performance regression
+
 ## Build 46
 ### New
 - Beta quality read/write Files app support
