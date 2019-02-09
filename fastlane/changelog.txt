@@ -1,24 +1,27 @@
 New stuff:
-- pseudoterminals (in other words, you can now ssh into your phone)
-- 1337 h4x0r colorscheme
-- Command-K clears the screen
-- bit testing instructions implemented
+- Beta quality read/write Files app support
+- File locking
+- Forking and exiting is now 10x faster
+- Probably more that I missed
 
-Bug fixes:
-- DNS configuration not working for IPv6 servers
-- [invalid utf8]
-- Crash when attempting to use negative file descriptors
-- Various other memory leaks and segfaults
+Bug fixes
+- Error when running a program with more than 256 arguments
+- `RLIM_INFINITY` on `RLIMIT_NOFILE` being interpreted as -1
+- Zero bytes on a terminal being interpreted as newlines
+- Crash when running dmesg and the log buffer is too big
+- Various problems with pty semantics, to get zpty working better
+- lld showing incorrect output
+- Very serious problems caused by renaming directories
+- Crash when dealing with a path such as /../..
 
-Here's a quick step by step guide for running an ssh server.
-1. apk add openssh
-2. ssh-keygen -A
-3. passwd
-4. type a password
-5. /usr/sbin/sshd
-You should now be able to ssh to your device with username root and the password you typed.
+About the security content of iSH build 46
+==========================================
 
-If you switch to another app and switch back, the ssh server will stop responding even though it's still running. Fixing this is actually really hard; help would be appreciated.
+Impact: A malicious user may be able to execute arbitrary code on their own device
+
+Description: A memory corruption issue was addressed with improved memory handling.
+
+CVE-2019-XXXX: Saagar Jha
 
 Send bug reports or feedback here: https://github.com/tbodt/ish/issues (or by email, if you prefer)
 Follow iSH on Twitter: https://twitter.com/iSH_app
