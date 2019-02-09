@@ -24,6 +24,14 @@ static void ios_handle_exit(int code) {
     [[NSNotificationCenter defaultCenter] postNotificationName:ISHExitedNotification object:nil];
 }
 
+// Put the abort message in the thread name so it gets included in the crash dump
+static void ios_handle_die(const char *msg) {
+    char name[17];
+    pthread_getname_np(pthread_self(), name, sizeof(name));
+    NSString *newName = [NSString stringWithFormat:@"%s died: %s", name, msg];
+    pthread_setname_np(newName.UTF8String);
+}
+
 @implementation AppDelegate
 
 - (int)startThings {
@@ -80,6 +88,7 @@ static void ios_handle_exit(int code) {
     if (err < 0)
         return err;
     exit_hook = ios_handle_exit;
+    die_handler = ios_handle_die;
     
     // configure dns
     struct __res_state res;
