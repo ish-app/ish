@@ -486,7 +486,8 @@ static int shebang_exec(struct fd *fd, const char *file, const char *argv, const
     if (*argument == '\0')
         argument = NULL;
 
-    size_t args_size = strings_size(argv);
+    const char *argv_rest = argv + strlen(argv) + 1;
+    size_t args_size = strings_size(argv_rest);
     size_t extra_args_size = strlen(interpreter) + 1 + strlen(file) + 1;
     if (argument)
         extra_args_size += strlen(argument) + 1;
@@ -502,6 +503,8 @@ static int shebang_exec(struct fd *fd, const char *file, const char *argv, const
         n += strlen(argument) + 1;
     }
     strcpy(real_argv + n, file);
+    n += strlen(file) + 1;
+    memcpy(real_argv + n, argv_rest, args_size);
 
     struct fd *interpreter_fd = generic_open(interpreter, O_RDONLY_, 0);
     if (IS_ERR(interpreter_fd))
