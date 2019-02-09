@@ -1,5 +1,22 @@
 # Changelog
 
+## Build 46
+### New
+- Beta quality read/write Files app support
+- File locking
+- Forking and exiting is now 10x faster
+- Probably more that I missed
+### Fixed
+- Error when running a program with more than 256 arguments
+- `RLIM_INFINITY` on `RLIMIT_NOFILE` being interpreted as -1
+- Zero bytes on a terminal being interpreted as newlines
+- Crash when running dmesg and the log buffer is too big
+- Various problems with pty semantics, to get zpty working better
+- lld showing incorrect output
+- Very serious problems caused by renaming directories
+- Crash when dealing with a path such as /../..
+- A memory corruption issue was addressed with improved memory handling.
+
 ## Build 45
 ### New
 - pseudoterminals (in other words, you can now ssh into your phone)
