@@ -8,7 +8,10 @@
 #import "FileProviderExtension.h"
 #import "FileProviderItem.h"
 #import "FileProviderEnumerator.h"
+#import "NSError+ISHErrno.h"
 #include "kernel/fs.h"
+#define ISH_INTERNAL
+#include "fs/fake.h"
 
 struct task *fake_task;
 
@@ -112,6 +115,65 @@ struct task *fake_task;
                                            error:nil];
 }
 
+#pragma mark - Action helpers
+
+// FIXME: not dry enough
+- (BOOL)doCreateDirectoryAt:(NSString *)path inode:(ino_t *)inode error:(NSError **)error {
+    NSURL *url = [[NSURL fileURLWithPath:[NSString stringWithUTF8String:self.mount->source]] URLByAppendingPathComponent:path];
+    db_begin(self.mount);
+    if (![NSFileManager.defaultManager createDirectoryAtURL:url
+                                withIntermediateDirectories:NO
+                                                 attributes:@{NSFilePosixPermissions: @0777}
+                                                      error:error]) {
+        db_rollback(self.mount);
+        return nil;
+    }
+    struct ish_stat stat;
+    NSString *parentPath = [path substringToIndex:[path rangeOfString:@"/" options:NSBackwardsSearch].location];
+    if (!path_read_stat(self.mount, parentPath.fileSystemRepresentation, &stat, NULL)) {
+        db_rollback(self.mount);
+        *error = [NSError errorWithDomain:NSFileProviderErrorDomain code:NSFileProviderErrorNoSuchItem userInfo:nil];
+        return nil;
+    }
+    stat.mode = (stat.mode & ~S_IFMT) | S_IFDIR;
+    path_create(self.mount, path.fileSystemRepresentation, &stat);
+    if (inode != NULL)
+        *inode = path_get_inode(self.mount, path.fileSystemRepresentation);
+    db_commit(self.mount);
+    return YES;
+}
+
+- (BOOL)doCreateFileAt:(NSString *)path importFrom:(NSURL *)importURL inode:(ino_t *)inode error:(NSError **)error {
+    NSURL *url = [[NSURL fileURLWithPath:[NSString stringWithUTF8String:self.mount->source]] URLByAppendingPathComponent:path];
+    db_begin(self.mount);
+    if (![NSFileManager.defaultManager copyItemAtURL:importURL
+                                               toURL:url
+                                               error:error]) {
+        db_rollback(self.mount);
+        return nil;
+    }
+    struct ish_stat stat;
+    NSString *parentPath = [path substringToIndex:[path rangeOfString:@"/" options:NSBackwardsSearch].location];
+    if (!path_read_stat(self.mount, parentPath.fileSystemRepresentation, &stat, NULL)) {
+        db_rollback(self.mount);
+        *error = [NSError errorWithDomain:NSFileProviderErrorDomain code:NSFileProviderErrorNoSuchItem userInfo:nil];
+        return nil;
+    }
+    stat.mode = (stat.mode & ~S_IFMT & ~0111) | S_IFREG;
+    path_create(self.mount, path.fileSystemRepresentation, &stat);
+    if (inode != NULL)
+        *inode = path_get_inode(self.mount, path.fileSystemRepresentation);
+    db_commit(self.mount);
+    return YES;
+}
+
+- (NSString *)pathOfItemWithIdentifier:(NSFileProviderItemIdentifier)identifier error:(NSError **)error {
+    FileProviderItem *parent = [self itemForIdentifier:identifier error:error];
+    if (parent == nil)
+        return nil;
+    return parent.path;
+}
+
 #pragma mark - Actions
 
 /* TODO: implement the actions for items here
@@ -120,6 +182,54 @@ struct task *fake_task;
  - schedule a server request as a background task to inform the server of the change
  - call the completion block with the modified item in its post-modification state
  */
+
+- (void)createDirectoryWithName:(NSString *)directoryName inParentItemIdentifier:(NSFileProviderItemIdentifier)parentItemIdentifier completionHandler:(void (^)(NSFileProviderItem _Nullable, NSError * _Nullable))completionHandler {
+    NSError *error;
+    NSString *parentPath = [self pathOfItemWithIdentifier:parentItemIdentifier error:&error];
+    if (parentPath == nil) {
+        completionHandler(nil, error);
+        return;
+    }
+    ino_t inode;
+    if (![self doCreateDirectoryAt:[parentPath stringByAppendingFormat:@"/%@", directoryName] inode:&inode error:&error]) {
+        completionHandler(nil, error);
+        return;
+    }
+    FileProviderItem *item = [self itemForIdentifier:[NSString stringWithFormat:@"%lu", (unsigned long) inode] error:&error];
+    if (item == nil)
+        completionHandler(nil, error);
+    else
+        completionHandler(item, nil);
+}
+
+- (void)importDocumentAtURL:(NSURL *)fileURL toParentItemIdentifier:(NSFileProviderItemIdentifier)parentItemIdentifier completionHandler:(void (^)(NSFileProviderItem _Nullable, NSError * _Nullable))completionHandler {
+    NSError *error;
+    NSString *parentPath = [self pathOfItemWithIdentifier:parentItemIdentifier error:&error];
+    if (parentPath == nil) {
+        completionHandler(nil, error);
+        return;
+    }
+    
+    [fileURL startAccessingSecurityScopedResource];
+    BOOL isDir;
+    assert([NSFileManager.defaultManager fileExistsAtPath:fileURL.path isDirectory:&isDir] && !isDir);
+    ino_t inode;
+    BOOL worked = [self doCreateFileAt:[parentPath stringByAppendingFormat:@"/%@", fileURL.lastPathComponent]
+                            importFrom:fileURL
+                                 inode:&inode
+                                 error:&error];
+    [fileURL stopAccessingSecurityScopedResource];
+    if (!worked) {
+        completionHandler(nil, error);
+        return;
+    }
+    
+    FileProviderItem *item = [self itemForIdentifier:[NSString stringWithFormat:@"%lu", (unsigned long) inode] error:&error];
+    if (item == nil)
+        completionHandler(nil, error);
+    else
+        completionHandler(item, nil);
+}
 
 #pragma mark - Enumeration
 
@@ -136,4 +246,3 @@ struct task *fake_task;
 }
 
 @end
-

@@ -15,5 +15,8 @@
 - (void)saveFromURL:(NSURL *)url;
 
 @property (readonly) struct fd *fd;
+@property (readonly) NSURL *URL;
+@property (readonly) NSString *path;
+@property (readonly) struct statbuf stat;
 
 @end

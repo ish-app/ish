@@ -11,15 +11,10 @@
 #include "kernel/task.h"
 #include "fs/fd.h"
 #include "fs/dev.h"
+#define ISH_INTERNAL
+#include "fs/fake.h"
 
 // TODO document database
-
-struct ish_stat {
-    dword_t mode;
-    dword_t uid;
-    dword_t gid;
-    dword_t rdev;
-};
 
 static void db_check_error(struct mount *mount) {
     int errcode = sqlite3_errcode(mount->db);
@@ -55,15 +50,15 @@ static void db_exec_reset(struct mount *mount, sqlite3_stmt *stmt) {
     db_reset(mount, stmt);
 }
 
-static void db_begin(struct mount *mount) {
+void db_begin(struct mount *mount) {
     lock(&mount->lock);
     db_exec_reset(mount, mount->stmt.begin);
 }
-static void db_commit(struct mount *mount) {
+void db_commit(struct mount *mount) {
     db_exec_reset(mount, mount->stmt.commit);
     unlock(&mount->lock);
 }
-static void db_rollback(struct mount *mount) {
+void db_rollback(struct mount *mount) {
     db_exec_reset(mount, mount->stmt.rollback);
     unlock(&mount->lock);
 }
@@ -72,7 +67,7 @@ static void bind_path(sqlite3_stmt *stmt, int i, const char *path) {
     sqlite3_bind_blob(stmt, i, path, strlen(path), SQLITE_TRANSIENT);
 }
 
-static ino_t path_get_inode(struct mount *mount, const char *path) {
+ino_t path_get_inode(struct mount *mount, const char *path) {
     // select inode from paths where path = ?
     bind_path(mount->stmt.path_get_inode, 1, path);
     ino_t inode = 0;
@@ -81,7 +76,7 @@ static ino_t path_get_inode(struct mount *mount, const char *path) {
     db_reset(mount, mount->stmt.path_get_inode);
     return inode;
 }
-static bool path_read_stat(struct mount *mount, const char *path, struct ish_stat *stat, ino_t *inode) {
+bool path_read_stat(struct mount *mount, const char *path, struct ish_stat *stat, ino_t *inode) {
     // select inode, stat from stats natural join paths where path = ?
     bind_path(mount->stmt.path_read_stat, 1, path);
     bool exists = db_exec(mount, mount->stmt.path_read_stat);
@@ -94,7 +89,7 @@ static bool path_read_stat(struct mount *mount, const char *path, struct ish_sta
     db_reset(mount, mount->stmt.path_read_stat);
     return exists;
 }
-static void path_create(struct mount *mount, const char *path, struct ish_stat *stat) {
+void path_create(struct mount *mount, const char *path, struct ish_stat *stat) {
     // insert into stats (stat) values (?)
     sqlite3_bind_blob(mount->stmt.path_create_stat, 1, stat, sizeof(*stat), SQLITE_TRANSIENT);
     db_exec_reset(mount, mount->stmt.path_create_stat);
@@ -247,12 +242,12 @@ static int fakefs_rmdir(struct mount *mount, const char *path) {
 
 static int fakefs_rename(struct mount *mount, const char *src, const char *dst) {
     db_begin(mount);
+    path_rename(mount, src, dst);
     int err = realfs.rename(mount, src, dst);
     if (err < 0) {
         db_rollback(mount);
         return err;
     }
-    path_rename(mount, src, dst);
     db_commit(mount);
     return 0;
 }
@@ -262,17 +257,17 @@ static int fakefs_symlink(struct mount *mount, const char *target, const char *l
     // create a file containing the target
     int fd = openat(mount->root_fd, fix_path(link), O_WRONLY | O_CREAT | O_EXCL, 0666);
     if (fd < 0) {
-        int err = errno_map();
         db_rollback(mount);
-        return err;
+        return errno_map();
     }
     ssize_t res = write(fd, target, strlen(target));
     close(fd);
     if (res < 0) {
-        int err = errno_map();
+        int saved_errno = errno;
         unlinkat(mount->root_fd, fix_path(link), 0);
         db_rollback(mount);
-        return err;
+        errno = saved_errno;
+        return errno_map();
     }
 
     // customize the stat info so it looks like a link
@@ -477,8 +472,9 @@ int fakefs_rebuild(struct mount *mount);
 int fakefs_migrate(struct mount *mount);
 
 #if DEBUG_sql
-static int trace_callback(unsigned why, void *fuck, void *stmt, void *sql) {
-    printk("sql trace: %s\n", sqlite3_expanded_sql(stmt));
+static int trace_callback(unsigned UNUSED(why), void *UNUSED(fuck), void *stmt, void *_sql) {
+    char *sql = _sql;
+    printk("sql trace: %s %s\n", sqlite3_expanded_sql(stmt), sql[0] == '-' ? sql : "");
     return 0;
 }
 #endif

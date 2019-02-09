@@ -41,6 +41,8 @@
     }
     
     struct fd *fd = self.item.fd;
+    fd->ops->seekdir(fd, 0);
+    rewinddir(fd->dir);
     NSMutableArray<FileProviderItem *> *items = [NSMutableArray new];
     NSError *error;
     while (true) {

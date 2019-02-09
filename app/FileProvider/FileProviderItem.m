@@ -5,18 +5,18 @@
 //  Created by Theodore Dubois on 9/20/18.
 //
 
+#include <sys/stat.h>
 #import <MobileCoreServices/MobileCoreServices.h>
 #import "FileProviderExtension.h"
 #import "FileProviderItem.h"
 #import "NSError+ISHErrno.h"
 #include "kernel/fs.h"
+#define ISH_INTERNAL
+#include "fs/fake.h"
 #include "kernel/errno.h"
-
-struct fd *fakefs_open_inode(struct mount *mount, ino_t inode);
 
 @interface FileProviderItem ()
 
-@property (readonly) NSString *path;
 @property (readonly) BOOL isRoot;
 
 @end
@@ -35,7 +35,10 @@ struct fd *fakefs_open_inode(struct mount *mount, ino_t inode);
         }
         if (IS_ERR(fd)) {
             NSLog(@"opening %@ failed: %ld", identifier, PTR_ERR(fd));
-            *error = [NSError errorWithISHErrno:PTR_ERR(fd)];
+            if (PTR_ERR(fd) == _ENOENT)
+                *error = [NSError fileProviderErrorForNonExistentItemWithIdentifier:identifier];
+            else
+                *error = [NSError errorWithISHErrno:PTR_ERR(fd)];
             return nil;
         }
         fd->mount = mount;
@@ -90,7 +93,17 @@ struct fd *fakefs_open_inode(struct mount *mount, ino_t inode);
 }
 
 - (NSFileProviderItemCapabilities)capabilities {
-    return NSFileProviderItemCapabilitiesAllowsReading;
+    if (S_ISREG(self.stat.mode))
+        return
+        NSFileProviderItemCapabilitiesAllowsReading |
+        NSFileProviderItemCapabilitiesAllowsWriting |
+        NSFileProviderItemCapabilitiesAllowsDeleting;
+    else if (S_ISDIR(self.stat.mode))
+        return
+        NSFileProviderItemCapabilitiesAllowsAddingSubItems |
+        NSFileProviderItemCapabilitiesAllowsContentEnumerating;
+    else
+        return 0;
 }
 
 - (NSString *)filename {
