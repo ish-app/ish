@@ -166,8 +166,25 @@
                                             </subviews>
                                         </tableViewCellContentView>
                                     </tableViewCell>
-                                    <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="default" accessoryType="disclosureIndicator" indentationWidth="10" textLabel="wyO-AY-ccm" style="IBUITableViewCellStyleDefault" id="bge-GA-6p8">
+                                    <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="default" accessoryType="disclosureIndicator" indentationWidth="10" textLabel="xMw-wC-igF" style="IBUITableViewCellStyleDefault" id="K5r-jy-Dzl">
                                         <rect key="frame" x="0.0" y="355.5" width="320" height="44"/>
+                                        <autoresizingMask key="autoresizingMask"/>
+                                        <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" preservesSuperviewLayoutMargins="YES" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="K5r-jy-Dzl" id="UIr-IB-yu1">
+                                            <rect key="frame" x="0.0" y="0.0" width="286" height="43.5"/>
+                                            <autoresizingMask key="autoresizingMask"/>
+                                            <subviews>
+                                                <label opaque="NO" multipleTouchEnabled="YES" contentMode="left" insetsLayoutMarginsFromSafeArea="NO" text="iSH Discord Server" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="xMw-wC-igF">
+                                                    <rect key="frame" x="16" y="0.0" width="269" height="43.5"/>
+                                                    <autoresizingMask key="autoresizingMask"/>
+                                                    <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                                    <nil key="textColor"/>
+                                                    <nil key="highlightedColor"/>
+                                                </label>
+                                            </subviews>
+                                        </tableViewCellContentView>
+                                    </tableViewCell>
+                                    <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="default" accessoryType="disclosureIndicator" indentationWidth="10" textLabel="wyO-AY-ccm" style="IBUITableViewCellStyleDefault" id="bge-GA-6p8">
+                                        <rect key="frame" x="0.0" y="399.5" width="320" height="44"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" preservesSuperviewLayoutMargins="YES" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="bge-GA-6p8" id="JXA-Ff-hkB">
                                             <rect key="frame" x="0.0" y="0.0" width="286" height="43.5"/>
@@ -205,6 +222,7 @@
                         <outlet property="capsLockMappingCell" destination="31N-0g-RhF" id="UjF-21-3df"/>
                         <outlet property="disableDimmingSwitch" destination="cPj-sQ-qsh" id="Kjp-xA-A0Y"/>
                         <outlet property="launchCommandField" destination="gDx-hv-hhV" id="RQn-gk-Dx8"/>
+                        <outlet property="openDiscord" destination="K5r-jy-Dzl" id="b4l-Vr-6l8"/>
                         <outlet property="openGithub" destination="F4i-eC-hQ6" id="66M-sQ-RJR"/>
                         <outlet property="openTwitter" destination="bge-GA-6p8" id="r0A-lN-0e0"/>
                         <outlet property="sendFeedback" destination="gMm-4C-5X3" id="nhX-ZH-zyP"/>

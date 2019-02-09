@@ -18,6 +18,7 @@
 @property (weak, nonatomic) IBOutlet UITableViewCell *sendFeedback;
 @property (weak, nonatomic) IBOutlet UITableViewCell *openGithub;
 @property (weak, nonatomic) IBOutlet UITableViewCell *openTwitter;
+@property (weak, nonatomic) IBOutlet UITableViewCell *openDiscord;
 @end
 
 @implementation AboutViewController
@@ -83,6 +84,8 @@
         [UIApplication openURL:@"https://github.com/tbodt/ish"];
     } else if (cell == self.openTwitter) {
         [UIApplication openURL:@"https://twitter.com/tblodt"];
+    } else if (cell == self.openDiscord) {
+        [UIApplication openURL:@"https://discord.gg/SndDh5y"];
     }
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
 }
