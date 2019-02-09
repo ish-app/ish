@@ -5,12 +5,13 @@ lane :beta do
     build_number = latest_testflight_build_number + 1
     increment_build_number(build_number: build_number)
     commit_version_bump(
+        xcodeproj: 'iSH.xcodeproj',
         message: "Release build #{build_number} to testflight",
         include: "fastlane/changelog.txt",
         force: true,
     )
 
-    build_app
+    build_app(project: 'iSH.xcodeproj')
     upload_to_testflight(
         changelog: changelog,
         wait_for_uploaded_build: true,
