@@ -61,12 +61,17 @@ static void ios_handle_exit(int code) {
     create_first_process();
     NSArray<NSString *> *command = UserPreferences.shared.launchCommand;
     char argv[4096];
-    size_t p = 0;
-    for (NSUInteger i = 0; i < command.count; i++) {
-        strcpy(&argv[p], command[i].UTF8String);
-        p += [command[i] lengthOfBytesUsingEncoding:NSUTF8StringEncoding] + 1;
+    char *p = argv;
+    for (NSString *cmd in command) {
+        const char *c = cmd.UTF8String;
+        // Save space for the final NUL byte in argv
+        while (p < argv + sizeof(argv) - 1 && (*p++ = *c++));
+        // If we reach the end of the buffer, the last string still needs to be
+        // NUL terminated
+        *p = '\0';
     }
-    argv[p] = '\0';
+    // Add the final NUL byte to argv
+    *++p = '\0';
     const char *envp = "TERM=xterm-256color\0";
     err = sys_execve(argv, argv, envp);
     if (err < 0)
