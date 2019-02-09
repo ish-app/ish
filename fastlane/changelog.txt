@@ -1,3 +1,9 @@
+HOTFIX:
+- Passing arguments to #! scripts like youtube-dl didn't work
+- youtube-dl was 50% slower than it used to be
+- There is now extra debugging code so I can fix that weird crash when doing things like apk upgrade
+Release notes for previous build are included below.
+
 New stuff:
 - Beta quality read/write Files app support
 - File locking
