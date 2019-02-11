@@ -31,6 +31,8 @@
         _identifier = identifier;
         _mount = mount;
         _fd = [self openNewFDWithError:error];
+        if (_fd == NULL)
+            return nil;
     }
     return self;
 }
@@ -163,6 +165,7 @@
 }
 
 // locking on these keeps the remove/copy operation atomic
+// or at least tries to
 
 - (void)loadToURL:(NSURL *)url {
     NSLog(@"copying %@ to %@", self.path, url);

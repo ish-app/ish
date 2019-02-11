@@ -54,15 +54,34 @@ struct task *fake_task;
 }
 
 - (nullable NSURL *)URLForItemWithPersistentIdentifier:(NSFileProviderItemIdentifier)identifier {
-    NSURL *url = [NSFileProviderManager.defaultManager.documentStorageURL URLByAppendingPathComponent:identifier isDirectory:NO];
+    FileProviderItem *item = [self itemForIdentifier:identifier error:nil];
+    if (item == nil)
+        return nil;
+    NSURL *storage = NSFileProviderManager.defaultManager.documentStorageURL;
+    NSURL *url = [storage URLByAppendingPathComponent:identifier isDirectory:YES];
+    url = [url URLByAppendingPathComponent:item.path.lastPathComponent isDirectory:NO];
     NSLog(@"url for id %@ = %@", identifier, url);
     return url;
 }
 
 - (nullable NSFileProviderItemIdentifier)persistentIdentifierForItemAtURL:(NSURL *)url {
-    NSString *identifier = url.lastPathComponent;
+    NSString *identifier = url.pathComponents[url.pathComponents.count - 2];
+    if (identifier.longLongValue == 0)
+        return nil; // something must be screwed I guess
     NSLog(@"id for url %@ = %@", url, identifier);
     return identifier;
+}
+
+- (BOOL)enhanceSanityOfURL:(NSURL *)url error:(NSError **)error {
+    NSURL *dir = url.URLByDeletingLastPathComponent;
+    NSFileManager *manager = NSFileManager.defaultManager;
+    BOOL isDir;
+    if ([manager fileExistsAtPath:dir.path isDirectory:&isDir] && !isDir)
+        [manager removeItemAtURL:dir error:nil];
+    return [manager createDirectoryAtURL:dir
+             withIntermediateDirectories:YES
+                              attributes:nil
+                                   error:error];
 }
 
 - (void)providePlaceholderAtURL:(NSURL *)url completionHandler:(void (^)(NSError * _Nullable error))completionHandler {
@@ -72,10 +91,13 @@ struct task *fake_task;
         completionHandler(err);
         return;
     }
-    BOOL res = [NSFileProviderManager writePlaceholderAtURL:[NSFileProviderManager placeholderURLForURL:url]
-                                               withMetadata:item
-                                                      error:&err];
-    if (!res) {
+    if (![self enhanceSanityOfURL:url error:&err]) {
+        completionHandler(err);
+        return;
+    }
+    if (![NSFileProviderManager writePlaceholderAtURL:[NSFileProviderManager placeholderURLForURL:url]
+                                         withMetadata:item
+                                                error:&err]) {
         completionHandler(err);
         return;
     }
@@ -90,10 +112,11 @@ struct task *fake_task;
         completionHandler(err);
         return;
     }
-    NSFileManager *manager = NSFileManager.defaultManager;
-    if (![manager fileExistsAtPath:url.path]) {
-        [item loadToURL:url];
+    if (![self enhanceSanityOfURL:url error:&err]) {
+        completionHandler(err);
+        return;
     }
+    [item loadToURL:url];
     completionHandler(nil);
 }
 
