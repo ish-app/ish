@@ -113,6 +113,7 @@ dword_t sys_unlinkat(fd_t at_f, addr_t path_addr, int_t flags);
 dword_t sys_rmdir(addr_t path_addr);
 dword_t sys_rename(addr_t src_addr, addr_t dst_addr);
 dword_t sys_renameat(fd_t src_at_f, addr_t src_addr, fd_t dst_at_f, addr_t dst_addr);
+dword_t sys_renameat2(fd_t src_at_f, addr_t src_addr, fd_t dst_at_f, addr_t dst_addr, int_t flags);
 dword_t sys_symlink(addr_t target_addr, addr_t link_addr);
 dword_t sys_symlinkat(addr_t target_addr, fd_t at_f, addr_t link_addr);
 dword_t sys_mknod(addr_t path_addr, mode_t_ mode, dev_t_ dev);

@@ -170,6 +170,7 @@ syscall_t syscall_table[] = {
     [329] = (syscall_t) sys_epoll_create,
     [331] = (syscall_t) sys_pipe2,
     [340] = (syscall_t) sys_prlimit,
+    [353] = (syscall_t) sys_renameat2,
     [355] = (syscall_t) sys_getrandom,
     [377] = (syscall_t) sys_copy_file_range,
 };

@@ -123,7 +123,9 @@ dword_t sys_unlink(addr_t path_addr) {
     return sys_unlinkat(AT_FDCWD_, path_addr, 0);
 }
 
-dword_t sys_renameat(fd_t src_at_f, addr_t src_addr, fd_t dst_at_f, addr_t dst_addr) {
+dword_t sys_renameat2(fd_t src_at_f, addr_t src_addr, fd_t dst_at_f, addr_t dst_addr, int_t flags) {
+    if (flags != 0)
+        return _EINVAL;
     char src[MAX_PATH];
     if (user_read_string(src_addr, src, sizeof(src)))
         return _EFAULT;
@@ -140,8 +142,12 @@ dword_t sys_renameat(fd_t src_at_f, addr_t src_addr, fd_t dst_at_f, addr_t dst_a
     return generic_renameat(src_at, src, dst_at, dst);
 }
 
+dword_t sys_renameat(fd_t src_at_f, addr_t src_addr, fd_t dst_at_f, addr_t dst_addr) {
+    return sys_renameat2(src_at_f, src_addr, dst_at_f, dst_addr, 0);
+}
+
 dword_t sys_rename(addr_t src_addr, addr_t dst_addr) {
-    return sys_renameat(AT_FDCWD_, src_addr, AT_FDCWD_, dst_addr);
+    return sys_renameat2(AT_FDCWD_, src_addr, AT_FDCWD_, dst_addr, 0);
 }
 
 dword_t sys_symlinkat(addr_t target_addr, fd_t at_f, addr_t link_addr) {
