@@ -1,5 +1,9 @@
 # Changelog
 
+## Build 48
+### Fixed
+- Files opened from the Files app having random numbers as names, preventing them from being syntax highlighted in some apps and opening at all in other apps
+
 ## Build 47
 ### Fixed
 - Failure to pass arguments to #! scripts
