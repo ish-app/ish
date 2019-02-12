@@ -93,7 +93,7 @@ void path_create(struct mount *mount, const char *path, struct ish_stat *stat) {
     // insert into stats (stat) values (?)
     sqlite3_bind_blob(mount->stmt.path_create_stat, 1, stat, sizeof(*stat), SQLITE_TRANSIENT);
     db_exec_reset(mount, mount->stmt.path_create_stat);
-    // insert into paths values (?, last_insert_rowid())
+    // insert or replace into paths values (?, last_insert_rowid())
     bind_path(mount->stmt.path_create_path, 1, path);
     db_exec_reset(mount, mount->stmt.path_create_path);
 }
@@ -117,7 +117,7 @@ static void path_link(struct mount *mount, const char *src, const char *dst) {
     ino_t inode = path_get_inode(mount, src);
     if (inode == 0)
         die("fakefs link(%s, %s): nonexistent src path", src, dst);
-    // insert into paths (path, inode) values (?, ?)
+    // insert or replace into paths (path, inode) values (?, ?)
     bind_path(mount->stmt.path_link, 1, dst);
     sqlite3_bind_int64(mount->stmt.path_link, 2, inode);
     db_exec_reset(mount, mount->stmt.path_link);
@@ -583,10 +583,10 @@ static int fakefs_mount(struct mount *mount) {
     mount->stmt.path_get_inode = db_prepare(mount, "select inode from paths where path = ?");
     mount->stmt.path_read_stat = db_prepare(mount, "select inode, stat from stats natural join paths where path = ?");
     mount->stmt.path_create_stat = db_prepare(mount, "insert into stats (stat) values (?)");
-    mount->stmt.path_create_path = db_prepare(mount, "insert into paths values (?, last_insert_rowid())");
+    mount->stmt.path_create_path = db_prepare(mount, "insert or replace into paths values (?, last_insert_rowid())");
     mount->stmt.inode_read_stat = db_prepare(mount, "select stat from stats where inode = ?");
     mount->stmt.inode_write_stat = db_prepare(mount, "update stats set stat = ? where inode = ?");
-    mount->stmt.path_link = db_prepare(mount, "insert into paths (path, inode) values (?, ?)");
+    mount->stmt.path_link = db_prepare(mount, "insert or replace into paths (path, inode) values (?, ?)");
     mount->stmt.path_unlink = db_prepare(mount, "delete from paths where path = ?");
     mount->stmt.path_rename = db_prepare(mount, "update or replace paths set path = change_prefix(path, ?, ?) "
             "where (path >= ? and path < ?) or path = ?");
