@@ -2,10 +2,7 @@
 #include "kernel/calls.h"
 #include "fs/path.h"
 
-#define __NO_AT (struct fd *) 1
-
-int path_normalize(struct fd *at, const char *path, char *out, bool follow_links) {
-    assert(at != NULL);
+static int __path_normalize(const char *at_path, const char *path, char *out, bool follow_links, int levels) {
     const char *p = path;
     char *o = out;
     *o = '\0';
@@ -14,26 +11,10 @@ int path_normalize(struct fd *at, const char *path, char *out, bool follow_links
     if (strcmp(path, "") == 0)
         return _ENOENT;
 
-    if (at != __NO_AT) {
-        // start with root or cwd, depending on whether it starts with a slash
-        lock(&current->fs->lock);
-        if (*p == '/')
-            at = current->fs->root;
-        else if (at == AT_PWD)
-            at = current->fs->pwd;
-        unlock(&current->fs->lock);
-        if (at != NULL) {
-            char at_path[MAX_PATH];
-            int err = generic_getpath(at, at_path);
-            if (err < 0)
-                return err;
-            assert(path_is_normalized(at_path));
-            if (strcmp(at_path, "/") != 0) {
-                strcpy(o, at_path);
-                n -= strlen(at_path);
-                o += strlen(at_path);
-            }
-        }
+    if (at_path != NULL && strcmp(at_path, "/") != 0) {
+        strcpy(o, at_path);
+        n -= strlen(at_path);
+        o += strlen(at_path);
     }
 
     while (*p == '/')
@@ -89,6 +70,8 @@ int path_normalize(struct fd *at, const char *path, char *out, bool follow_links
                 res = mount->fs->readlink(mount, possible_symlink, c, MAX_PATH - (c - out));
             mount_release(mount);
             if (res >= 0) {
+                if (levels >= 5)
+                    return _ELOOP;
                 // readlink does not null terminate
                 c[res] = '\0';
                 // if we should restart from the root, copy down
@@ -96,11 +79,9 @@ int path_normalize(struct fd *at, const char *path, char *out, bool follow_links
                     memmove(out, c, strlen(c) + 1);
                 char *expanded_path = possible_symlink;
                 strcpy(expanded_path, out);
-                // if (*p) {
-                    strcat(expanded_path, "/");
-                    strcat(expanded_path, p);
-                // }
-                return path_normalize(__NO_AT, expanded_path, out, follow_links);
+                strcat(expanded_path, "/");
+                strcat(expanded_path, p);
+                return __path_normalize(NULL, expanded_path, out, follow_links, levels + 1);
             }
         }
     }
@@ -109,6 +90,30 @@ int path_normalize(struct fd *at, const char *path, char *out, bool follow_links
     assert(path_is_normalized(out));
     return 0;
 }
+
+int path_normalize(struct fd *at, const char *path, char *out, bool follow_links) {
+    assert(at != NULL);
+    if (strcmp(path, "") == 0)
+        return _ENOENT;
+
+    // start with root or cwd, depending on whether it starts with a slash
+    lock(&current->fs->lock);
+    if (path[0] == '/')
+        at = current->fs->root;
+    else if (at == AT_PWD)
+        at = current->fs->pwd;
+    unlock(&current->fs->lock);
+    char at_path[MAX_PATH];
+    if (at != NULL) {
+        int err = generic_getpath(at, at_path);
+        if (err < 0)
+            return err;
+        assert(path_is_normalized(at_path));
+    }
+
+    return __path_normalize(at != NULL ? at_path : NULL, path, out, follow_links, 0);
+}
+
 
 bool path_is_normalized(const char *path) {
     while (*path != '\0') {
