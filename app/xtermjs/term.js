@@ -12,6 +12,8 @@ Terminal.prototype.blur = function() {
 };
 
 window.term = new Terminal();
+// there is no public interface to disable linkifying
+term.linkifier._linkMatchers = [];
 term.open(document.getElementById('terminal'), true);
 term.on('focus', function() {
     webkit.messageHandlers.focus.postMessage('focus');
