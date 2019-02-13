@@ -155,14 +155,6 @@ static CGPoint anchors[] = {
     self.direction = ArrowNone;
 }
 
-- (void)chooseBackground {
-    if (self.selected || self.highlighted) {
-        self.backgroundColor = self.highlightedColor;
-    } else {
-        self.backgroundColor = self.defaultColor;
-    }
-}
-
 - (void)animateLayerUpdates {
     [UIView animateWithDuration:0.25 animations:^{
         for (int d = ArrowUp; d <= ArrowRight; d++) {
@@ -219,7 +211,9 @@ static CGPoint anchors[] = {
     if (self.selected) {
         self.backgroundColor = self.highlightedColor;
     } else {
-        self.backgroundColor = self.defaultColor;
+        [UIView animateWithDuration:0 delay:0.1 options:UIViewAnimationOptionAllowUserInteraction animations:^{
+            self.backgroundColor = self.defaultColor;
+        } completion:nil];
     }
     for (int d = ArrowUp; d <= ArrowRight; d++) {
         CATextLayer *layer = (CATextLayer *) arrowLayers[d];

@@ -50,7 +50,9 @@
     if (self.selected || self.highlighted) {
         self.backgroundColor = self.highlightedColor;
     } else {
-        self.backgroundColor = self.defaultColor;
+        [UIView animateWithDuration:0 delay:0.1 options:UIViewAnimationOptionAllowUserInteraction animations:^{
+            self.backgroundColor = self.defaultColor;
+        } completion:nil];
     }
     if (self.keyAppearance == UIKeyboardAppearanceLight) {
         [self setTitleColor:UIColor.blackColor forState:UIControlStateNormal];
