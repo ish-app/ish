@@ -7,6 +7,7 @@ html, body, #terminal {
 
 body {
     background: transparent;
+    overflow: hidden;
 }
 
 #terminal {

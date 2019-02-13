@@ -26,6 +26,10 @@
     
     _terminal = terminal;
     WKWebView *webView = terminal.webView;
+    webView.scrollView.scrollEnabled = NO;
+    webView.scrollView.delaysContentTouches = NO;
+    webView.scrollView.canCancelContentTouches = NO;
+    webView.scrollView.panGestureRecognizer.enabled = NO;
     [webView.configuration.userContentController addScriptMessageHandler:self name:@"focus"];
     webView.frame = self.frame;
     self.opaque = webView.opaque = NO;
