@@ -7,6 +7,8 @@
 
 #import <UIKit/UIKit.h>
 
+#define kGroupName @"group.app.ish.iSH"
+
 @interface AppDelegate : UIResponder <UIApplicationDelegate>
 
 @property (strong, nonatomic) UIWindow *window;

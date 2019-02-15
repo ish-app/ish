@@ -5,6 +5,8 @@
 //  Created by Theodore Dubois on 10/17/17.
 //
 
+#import <Foundation/Foundation.h>
+
 #include <resolv.h>
 #include <arpa/inet.h>
 #include <netdb.h>
@@ -13,6 +15,9 @@
 #import "UserPreferences.h"
 #include "kernel/init.h"
 #include "kernel/calls.h"
+
+#import "IOSGateway.h"
+
 
 @interface AppDelegate ()
 
@@ -36,7 +41,7 @@ static void ios_handle_die(const char *msg) {
 
 - (int)startThings {
     NSFileManager *manager = [NSFileManager defaultManager];
-    NSURL *container = [manager containerURLForSecurityApplicationGroupIdentifier:@"group.app.ish.iSH"];
+    NSURL *container = [manager containerURLForSecurityApplicationGroupIdentifier:kGroupName];
     NSURL *alpineRoot = [container URLByAppendingPathComponent:@"roots/alpine"];
     [manager createDirectoryAtURL:[container URLByAppendingPathComponent:@"roots"]
       withIntermediateDirectories:YES
@@ -124,6 +129,9 @@ static void ios_handle_die(const char *msg) {
     generic_mknod("/dev/random", S_IFCHR|0666, dev_make(1, 8));
     generic_mknod("/dev/urandom", S_IFCHR|0666, dev_make(1, 9));
 
+    generic_mknod("/dev/iac", S_IFCHR|0666, dev_make(1, 99));
+
+    
     do_mount(&procfs, "proc", "/proc");
     do_mount(&devptsfs, "devpts", "/dev/pts");
 
@@ -134,6 +142,8 @@ static void ios_handle_die(const char *msg) {
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     // get the network permissions popup to appear on chinese devices
     [[NSURLSession.sharedSession dataTaskWithURL:[NSURL URLWithString:@"http://captive.apple.com"]] resume];
+    
+    [[IOSGateway sharedSession] setup];
     
     [UserPreferences.shared addObserver:self forKeyPath:@"shouldDisableDimming" options:NSKeyValueObservingOptionInitial context:nil];
     int err = [self startThings];
@@ -146,6 +156,14 @@ static void ios_handle_die(const char *msg) {
         NSLog(@"failed with code %d", err);
     }
     return YES;
+}
+
+- (BOOL)application:(UIApplication *)application openURL:(NSURL *)url sourceApplication:(NSString *)sourceApplication annotation:(id)annotation
+{    
+    if ([[IOSGateway sharedSession] handleOpenURL:url]) {
+        return YES;
+    }
+    return NO;
 }
 
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context {

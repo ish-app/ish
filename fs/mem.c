@@ -4,6 +4,9 @@
 #include "fs/mem.h"
 #include "fs/dev.h"
 
+extern size_t iac_read(void *buf, size_t bufsize);
+extern size_t iac_write(const void *buf, size_t bufsize);
+
 // this file handles major device number 1, minor device numbers are mapped in table below
 struct dev_ops *mem_devs[256] = {
     // [1] = &prog_mem_dev,
@@ -17,6 +20,8 @@ struct dev_ops *mem_devs[256] = {
     // [10] = &aio_dev,
     // [11] = &kmsg_dev,
     // [12] = &oldmem_dev, // replaced by /proc/vmcore
+    [99] = &iac_dev,
+
 };
 
 // dispatch device for major device 1
@@ -36,6 +41,21 @@ struct dev_ops mem_dev = {
 };
 
 // begin inline devices
+static int iac_open(int UNUSED(major), int UNUSED(minor), struct fd *UNUSED(fd)) {
+    return 0;
+}
+static ssize_t _iac_read(struct fd *UNUSED(fd), void *buf, size_t bufsize) {
+    return iac_read(buf, bufsize); // Defined in IOSGateway.m
+}
+static ssize_t _iac_write(struct fd *UNUSED(fd), const void *buf, size_t bufsize) {
+    return iac_write(buf, bufsize); // Defined in IOSGateway.m
+}
+struct dev_ops iac_dev = {
+    .open = iac_open,
+    .fd.read = _iac_read,
+    .fd.write = _iac_write,
+};
+
 static int null_open(int UNUSED(major), int UNUSED(minor), struct fd *UNUSED(fd)) {
     return 0;
 }
