@@ -5,7 +5,6 @@
 //  Created by Theodore Dubois on 10/17/17.
 //
 
-#import <Foundation/Foundation.h>
 
 #include <resolv.h>
 #include <arpa/inet.h>
@@ -160,7 +159,7 @@ static void ios_handle_die(const char *msg) {
 
 - (BOOL)application:(UIApplication *)application openURL:(NSURL *)url sourceApplication:(NSString *)sourceApplication annotation:(id)annotation
 {    
-    if ([[IOSGateway sharedSession] handleOpenURL:url]) {
+    if ([[IOSGateway sharedSession] canHandleOpeningURL:url]) {
         return YES;
     }
     return NO;

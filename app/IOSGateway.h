@@ -11,10 +11,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface IOSGateway : NSObject
 
-+ (IOSGateway *_Nullable ) sharedSession;
++ (IOSGateway *)sharedSession;
 
 - (void)setup;
-- (BOOL)handleOpenURL:(NSURL *)url;
+- (BOOL)canHandleOpeningURL:(NSURL *)url;
 
 @end
 

@@ -12,21 +12,17 @@
 static IOSGateway *iOSGateway = nil;
 
 @interface IOSGateway ()
-{
-}
 
 @property (copy, nonatomic) NSData *iacResult;
 
 @end
 
 @implementation IOSGateway
-{
-}
 
-+ (IOSGateway *_Nullable)sharedSession
++ (IOSGateway *)sharedSession
 {
     if (iOSGateway == nil) {
-        iOSGateway = [[IOSGateway alloc] init];
+        iOSGateway = [IOSGateway new];
     }
 
     return iOSGateway;
@@ -60,7 +56,7 @@ static IOSGateway *iOSGateway = nil;
 #endif
 }
 
-- (BOOL)handleOpenURL:(NSURL *)url
+- (BOOL)canHandleOpeningURL:(NSURL *)url
 {
 #ifndef TARGET_IS_EXTENSION
     return [[IACManager sharedManager] handleOpenURL:url];
@@ -82,7 +78,7 @@ extern size_t iac_write(const void *buf, size_t bufsize)
         NSString *cmdString = [command stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
 
         ic.iacResult = [[NSData alloc] init];      // Reset result
-        
+
         [UIApplication openURL:cmdString];
     });
 
@@ -97,19 +93,10 @@ extern size_t iac_read(void *buf, size_t bufsize)
 
     IOSGateway *ic = [IOSGateway sharedSession];
 
-    if (bufsize < [ic.iacResult length]) {
-        memcpy(buf, [ic.iacResult bytes], bufsize);
-
-        ic.iacResult = [ic.iacResult subdataWithRange:NSMakeRange(bufsize, [ic.iacResult length] - bufsize)];
-
-        return bufsize;
-    }
-
-    NSUInteger length = [ic.iacResult length];
-
+    NSUInteger length = (bufsize < [ic.iacResult length]) ? bufsize : [ic.iacResult length];
     memcpy(buf, [ic.iacResult bytes], length);
 
-    ic.iacResult = [[NSData alloc] init];
+    ic.iacResult = [ic.iacResult subdataWithRange:NSMakeRange(bufsize, [ic.iacResult length] - length)];
 
     return length;
 
