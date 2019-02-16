@@ -4,6 +4,8 @@
 #include "fs/proc.h"
 #include "platform/platform.h"
 
+bool proc_net_readdir(struct proc_entry * UNUSED(entry), unsigned long *index, struct proc_entry *next_entry);
+
 static ssize_t proc_show_version(struct proc_entry *UNUSED(entry), char *buf) {
     struct uname uts;
     do_uname(&uts);
@@ -51,6 +53,7 @@ struct proc_dir_entry proc_root_entries[] = {
     {"version", .show = proc_show_version},
     {"stat", .show = proc_show_stat},
     {"meminfo", .show = proc_show_meminfo},
+    {"net", S_IFDIR, .readdir= proc_net_readdir},
     {"self", S_IFLNK, .readlink = proc_readlink_self},
 };
 #define PROC_ROOT_LEN sizeof(proc_root_entries)/sizeof(proc_root_entries[0])
