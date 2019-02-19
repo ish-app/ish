@@ -65,6 +65,8 @@ noreturn void do_exit(int status) {
         struct task *child;
         list_for_each_entry(&current->children, child, siblings) {
             child->parent = new_parent;
+            list_remove(&child->siblings);
+            list_add(&new_parent->children, &child->siblings);
         }
 
         // notify parent that we died
