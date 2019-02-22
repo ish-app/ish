@@ -13,12 +13,8 @@ static void jit_block_free(struct jit *jit, struct jit_block *block);
 static void jit_resize_hash(struct jit *jit, size_t new_size);
 
 struct jit *jit_new(struct mem *mem) {
-    struct jit *jit = malloc(sizeof(struct jit));
-    memset(jit, 0, sizeof(struct jit));
+    struct jit *jit = calloc(1, sizeof(struct jit));
     jit->mem = mem;
-    jit->mem_used = 0;
-    jit->num_blocks = 0;
-    jit->hash_size = 0;
     jit_resize_hash(jit, JIT_INITIAL_HASH_SIZE);
     lock_init(&jit->lock);
     return jit;
@@ -33,6 +29,7 @@ void jit_free(struct jit *jit) {
             jit_block_free(jit, block);
         }
     }
+    free(jit->hash);
     free(jit);
 }
 
@@ -66,6 +63,7 @@ static void jit_resize_hash(struct jit *jit, size_t new_size) {
             list_init_add(&new_hash[block->addr % new_size], &block->chain);
         }
     }
+    free(jit->hash);
     jit->hash = new_hash;
     jit->hash_size = new_size;
 }
