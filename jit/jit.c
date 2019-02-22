@@ -33,6 +33,7 @@ void jit_free(struct jit *jit) {
             jit_block_free(jit, block);
         }
     }
+    free(jit->hash);
     free(jit);
 }
 
@@ -66,6 +67,7 @@ static void jit_resize_hash(struct jit *jit, size_t new_size) {
             list_init_add(&new_hash[block->addr % new_size], &block->chain);
         }
     }
+    free(jit->hash);
     jit->hash = new_hash;
     jit->hash_size = new_size;
 }
