@@ -242,7 +242,7 @@ int tty_input(struct tty *tty, const char *input, size_t size, bool blocking) {
 
 #define SHOULD_ECHOCTL(ch) \
     (lflags & ECHOCTL_ && \
-     (ch < ' ' || ch == '\x7f') && \
+     ((0 <= ch && ch < ' ') || ch == '\x7f') && \
      !(ch == '\t' || ch == '\n' || ch == cc[VSTART_] || ch == cc[VSTOP_]))
 
     if (lflags & ICANON_) {
