@@ -651,7 +651,7 @@ restart:
                     default: switch (insn << 8 | modrm.opcode << 4 | modrm.rm_opcode) {
                     case 0xd940: TRACE("fchs"); FCHS(); break;
                     case 0xd941: TRACE("fabs"); FABS(); break;
-                    case 0xd944: TRACE("fchs"); FCHS(); break;
+                    case 0xd944: TRACE("ftst"); FTST(); break;
                     case 0xd945: TRACE("fxam"); FXAM(); break;
                     case 0xd950: TRACE("fld1"); FLDC(one); break;
                     case 0xd951: TRACE("fldl2t"); FLDC(log2t); break;
