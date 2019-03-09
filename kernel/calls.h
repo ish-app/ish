@@ -64,7 +64,7 @@ int_t sys_mlock(addr_t addr, dword_t len);
 #define LOCK_EX_ 2
 #define LOCK_NB_ 4
 #define LOCK_UN_ 8
-struct io_vec {
+struct iovec_ {
     addr_t base;
     uint_t len;
 };

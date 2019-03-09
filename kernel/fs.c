@@ -205,8 +205,8 @@ out:
 }
 
 dword_t sys_readv(fd_t fd_no, addr_t iovec_addr, dword_t iovec_count) {
-    dword_t iovec_size = sizeof(struct io_vec) * iovec_count;
-    struct io_vec *iovecs = malloc(iovec_size);
+    dword_t iovec_size = sizeof(struct iovec_) * iovec_count;
+    struct iovec_ *iovecs = malloc(iovec_size);
     if (iovecs == NULL)
         return _ENOMEM;
     int res = 0;
@@ -255,8 +255,8 @@ out:
 }
 
 dword_t sys_writev(fd_t fd_no, addr_t iovec_addr, dword_t iovec_count) {
-    dword_t iovec_size = sizeof(struct io_vec) * iovec_count;
-    struct io_vec *iovecs = malloc(iovec_size);
+    dword_t iovec_size = sizeof(struct iovec_) * iovec_count;
+    struct iovec_ *iovecs = malloc(iovec_size);
     if (iovecs == NULL)
         return _ENOMEM;
     int res = 0;

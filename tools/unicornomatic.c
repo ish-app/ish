@@ -291,7 +291,7 @@ void step_tracing(struct cpu_state *cpu, struct tlb *tlb, uc_engine *uc) {
             case 140: // _llseek
                 mem_sync(regs.esi, 8); break;
             case 145: { // readv
-                struct io_vec vecs[regs.edx];
+                struct iovec_ vecs[regs.edx];
                 (void) user_get(regs.ecx, vecs);
                 for (unsigned i = 0; i < regs.edx; i++)
                     mem_sync(vecs[i].base, vecs[i].len);

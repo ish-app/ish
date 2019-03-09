@@ -20,18 +20,13 @@ size_t sockaddr_size(void *p);
 struct sockaddr *sockaddr_to_real(void *p);
 
 struct msghdr_ {
-  addr_t msg_name;
-  int_t msg_namelen;
-  addr_t msg_iov;
-  uint_t msg_iovlen;
-  addr_t msg_control;
-  uint_t msg_controllen;
-  int_t msg_flags;
-};
-
-struct iovec_ {
-  addr_t iov_base;
-  uint_t iov_len;
+    addr_t msg_name;
+    int_t msg_namelen;
+    addr_t msg_iov;
+    uint_t msg_iovlen;
+    addr_t msg_control;
+    uint_t msg_controllen;
+    int_t msg_flags;
 };
 
 #define PF_LOCAL_ 1
@@ -104,17 +99,17 @@ static inline int sock_flags_to_real(int fake) {
     return real;
 }
 static inline int sock_flags_from_real(int real) {
-  int fake = 0;
-  if (real & MSG_OOB) fake |= MSG_OOB_;
-  if (real & MSG_PEEK) fake |= MSG_PEEK_;
-  if (real & MSG_CTRUNC) fake |= MSG_CTRUNC_;
-  if (real & MSG_TRUNC) fake |= MSG_TRUNC_;
-  if (real & MSG_DONTWAIT) fake |= MSG_DONTWAIT_;
-  if (real & MSG_EOR) fake |= MSG_EOR_;
-  if (real & MSG_WAITALL) fake |= MSG_WAITALL_;
-  if (real & ~(MSG_OOB|MSG_PEEK|MSG_CTRUNC|MSG_TRUNC|MSG_DONTWAIT|MSG_EOR|MSG_WAITALL))
-      TRACE("unimplemented socket flags %d\n", real);
-  return fake;
+    int fake = 0;
+    if (real & MSG_OOB) fake |= MSG_OOB_;
+    if (real & MSG_PEEK) fake |= MSG_PEEK_;
+    if (real & MSG_CTRUNC) fake |= MSG_CTRUNC_;
+    if (real & MSG_TRUNC) fake |= MSG_TRUNC_;
+    if (real & MSG_DONTWAIT) fake |= MSG_DONTWAIT_;
+    if (real & MSG_EOR) fake |= MSG_EOR_;
+    if (real & MSG_WAITALL) fake |= MSG_WAITALL_;
+    if (real & ~(MSG_OOB|MSG_PEEK|MSG_CTRUNC|MSG_TRUNC|MSG_DONTWAIT|MSG_EOR|MSG_WAITALL))
+        TRACE("unimplemented socket flags %d\n", real);
+    return fake;
 }
 
 #define SOL_SOCKET_ 1

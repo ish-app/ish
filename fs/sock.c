@@ -430,7 +430,7 @@ dword_t sys_recvmsg(fd_t sock_fd, addr_t msghdr_addr, dword_t flags) {
         return _EFAULT;
 
     for (uint_t i = 0; i < msg_fake.msg_iovlen; i++) {
-        char iov_base[msg_iov_fake[i].iov_len];
+        char iov_base[msg_iov_fake[i].len];
         memset(&iov_base, 0, sizeof(iov_base));
 
         msg_iov[i].iov_base = (void *)&iov_base;
@@ -483,10 +483,10 @@ dword_t sys_recvmsg(fd_t sock_fd, addr_t msghdr_addr, dword_t flags) {
 
     // msg_iovec (changed)
     for (int i = 0; i < msg.msg_iovlen; i++) {
-        if (user_write(msg_iov_fake[i].iov_base, msg_iov[i].iov_base, msg_iov[i].iov_len))
+        if (user_write(msg_iov_fake[i].base, msg_iov[i].iov_base, msg_iov[i].iov_len))
             return _EFAULT;
 
-        msg_iov_fake[i].iov_len = msg_iov[i].iov_len;
+        msg_iov_fake[i].len = msg_iov[i].iov_len;
     }
 
     if (user_put(msg_fake.msg_iov, msg_iov_fake))
