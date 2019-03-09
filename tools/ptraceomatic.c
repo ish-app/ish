@@ -347,7 +347,7 @@ static void step_tracing(struct cpu_state *cpu, struct tlb *tlb, int pid, int se
             case 140: // _llseek
                 pt_copy(pid, regs.rsi, 8); break;
             case 145: { // readv
-                struct io_vec vecs[regs.rdx];
+                struct iovec_ vecs[regs.rdx];
                 (void) user_get(regs.rcx, vecs);
                 for (unsigned i = 0; i < regs.rdx; i++)
                     pt_copy(pid, vecs[i].base, vecs[i].len);
