@@ -265,8 +265,9 @@ dword_t sys_dup2(fd_t f, fd_t new_f) {
     int err = fdtable_expand(table, new_f);
     if (err < 0)
         return err;
+    fd_retain(fd);
     f_close(new_f);
-    table->files[new_f] = fd_retain(fd);
+    table->files[new_f] = fd;
     return new_f;
 }
 
