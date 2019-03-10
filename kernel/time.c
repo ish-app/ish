@@ -19,6 +19,10 @@ dword_t sys_time(addr_t time_out) {
     return now;
 }
 
+dword_t sys_stime(addr_t time) {
+    return _EPERM;
+}
+
 dword_t sys_clock_gettime(dword_t clock, addr_t tp) {
     STRACE("clock_gettime(%d, 0x%x)", clock, tp);
 
