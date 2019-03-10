@@ -3,6 +3,7 @@
 #include "misc.h"
 
 dword_t sys_time(addr_t time_out);
+dword_t sys_stime(addr_t time);
 #define CLOCK_REALTIME_ 0
 #define CLOCK_MONOTONIC_ 1
 #define CLOCK_PROCESS_CPUTIME_ID_ 2
@@ -40,7 +41,7 @@ struct tms_ {
 
 dword_t sys_getitimer(dword_t which, addr_t val);
 dword_t sys_setitimer(dword_t which, addr_t new_val, addr_t old_val);
-dword_t sys_times( addr_t tbuf);
+dword_t sys_times(addr_t tbuf);
 dword_t sys_nanosleep(addr_t req, addr_t rem);
 dword_t sys_gettimeofday(addr_t tv, addr_t tz);
 dword_t sys_settimeofday(addr_t tv, addr_t tz);

@@ -31,6 +31,7 @@ syscall_t syscall_table[] = {
     [21]  = (syscall_t) sys_mount,
     [23]  = (syscall_t) sys_setuid,
     [24]  = (syscall_t) sys_getuid,
+    [25]  = (syscall_t) sys_stime,
     [33]  = (syscall_t) sys_access,
     [36]  = (syscall_t) syscall_success_stub, // sync
     [37]  = (syscall_t) sys_kill,
