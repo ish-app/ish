@@ -55,7 +55,7 @@ noreturn void do_exit(int status) {
 
     // the actual freeing needs pids_lock
     lock(&pids_lock);
-    // release the skkkkkkkk
+    // release the sighand
     sighand_release(current->sighand);
     struct task *leader = current->group->leader;
 
