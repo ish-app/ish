@@ -74,6 +74,10 @@ struct fd *generic_openat(struct fd *at, const char *path_raw, int flags, int mo
         fd_close(fd);
         return ERR_PTR(_EISDIR);
     }
+    if (!S_ISDIR(fd->type) && flags & O_DIRECTORY_) {
+        fd_close(fd);
+        return ERR_PTR(_ENOTDIR);
+    }
 
     return fd;
 }

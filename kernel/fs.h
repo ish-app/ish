@@ -117,6 +117,7 @@ extern struct list mounts;
 #define O_TRUNC_ (1 << 9)
 #define O_APPEND_ (1 << 10)
 #define O_NONBLOCK_ (1 << 11)
+#define O_DIRECTORY_ (1 << 16)
 #define O_CLOEXEC_ (1 << 19)
 
 // generic ioctls
