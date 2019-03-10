@@ -739,6 +739,7 @@ restart:
                                    READMODRM_MEM; ATOMIC_XADD(modrm_reg, modrm_val,8); break;
                         case 0xc1: TRACEI("lock xadd reg, modrm");
                                    READMODRM_MEM; ATOMIC_XADD(modrm_reg, modrm_val,oz); break;
+                        default: TRACE("undefined"); UNDEFINED;
                     }
                     break;
 
