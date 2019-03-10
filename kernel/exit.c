@@ -62,8 +62,8 @@ noreturn void do_exit(int status) {
     if (exit_tgroup(current)) {
         // reparent children
         struct task *new_parent = pid_get_task(1);
-        struct task *child;
-        list_for_each_entry(&current->children, child, siblings) {
+        struct task *child, *tmp;
+        list_for_each_entry_safe(&current->children, child, tmp, siblings) {
             child->parent = new_parent;
             list_remove(&child->siblings);
             list_add(&new_parent->children, &child->siblings);
