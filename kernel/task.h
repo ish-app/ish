@@ -59,6 +59,7 @@ struct task {
     dword_t exit_code;
     bool zombie;
     bool exiting;
+    bool traced;
 
     // this structure is allocated on the stack of the parent's clone() call
     struct vfork_info {
@@ -126,7 +127,7 @@ struct tgroup {
     dword_t group_exit_code;
 
     struct rusage_ children_rusage;
-    cond_t child_exit;
+    cond_t child_cond;
 
     // for everything in this struct not locked by something else
     lock_t lock;

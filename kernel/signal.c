@@ -40,6 +40,9 @@ static int signal_action(struct sighand *sighand, int sig) {
         case SIGSTOP_: case SIGTSTP_: case SIGTTIN_: case SIGTTOU_:
             return SIGNAL_STOP;
 
+        case SIGTRAP_:
+            return current->traced ? SIGNAL_STOP : SIGNAL_KILL;
+            
         default:
             return SIGNAL_KILL;
     }
@@ -218,10 +221,11 @@ static void receive_signal(struct sighand *sighand, struct siginfo_ *info) {
     switch (signal_action(sighand, sig)) {
         case SIGNAL_IGNORE:
             return;
-
+            
         case SIGNAL_STOP:
             lock(&current->group->lock);
-            current->group->stopped = true;
+            current->cpu.stopped = true;
+            notify(&current->group->stopped_cond);
             current->group->group_exit_code = sig << 8 | 0x7f;
             unlock(&current->group->lock);
             return;
@@ -326,7 +330,7 @@ void receive_signals() {
         unlock(&current->group->lock);
         if (now_stopped) {
             lock(&pids_lock);
-            notify(&current->parent->group->child_exit);
+            notify(&current->parent->group->child_cond);
             // TODO add siginfo
             send_signal(current->parent, current->group->leader->exit_signal, SIGINFO_NIL);
             unlock(&pids_lock);

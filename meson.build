@@ -49,6 +49,7 @@ src = [
     'kernel/fork.c',
     'kernel/exec.c',
     'kernel/exit.c',
+    'kernel/ptrace.c',
     'kernel/time.c',
     'kernel/mmap.c',
     'kernel/uname.c',

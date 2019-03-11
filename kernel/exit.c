@@ -99,6 +99,8 @@ noreturn void do_exit(int status) {
             };
             if (leader->exit_signal != 0)
                 send_signal(parent, leader->exit_signal, info);
+            notify(&parent->group->child_cond);
+            send_signal(parent, leader->exit_signal);
         }
 
         if (exit_hook != NULL)
@@ -191,7 +193,7 @@ static bool reap_if_zombie(struct task *task, addr_t status_addr, addr_t rusage_
             return _EFAULT;
 
     unlock(&task->group->lock);
-    cond_destroy(&task->group->child_exit);
+    cond_destroy(&task->group->child_cond);
     free(task->group);
     task_destroy(task);
     return true;
@@ -229,8 +231,8 @@ retry:
         // look for a zombie child
         bool no_children = true;
         struct task *parent;
+        struct task *task;
         list_for_each_entry(&current->group->threads, parent, group_links) {
-            struct task *task;
             list_for_each_entry(&current->children, task, siblings) {
                 if (!task_is_leader(task))
                     continue;
@@ -243,6 +245,15 @@ retry:
                 if (reap_if_needed(task, options, status_addr, rusage_addr))
                     goto found_zombie;
             }
+        }
+        list_for_each_entry(&current->children, task, siblings) {
+            lock(&task->group->lock);
+            if (task->group->stopped) {
+                out_id = task->pid;
+                unlock(&task->group->lock);
+                goto found_stopped;
+            }
+            unlock(&task->group->lock);
         }
         if (no_children) {
             err = _ECHILD;
@@ -266,12 +277,20 @@ retry:
 
     // no matching zombie found, wait for one
     err = _EINTR;
-    if (wait_for(&current->group->child_exit, &pids_lock, NULL))
+    if (wait_for(&current->group->child_cond, &pids_lock, NULL))
         goto error;
     goto retry;
 
-found_zombie:
+    dword_t status;
+found_stopped:
+    status = 383; // Something that WISTOPPED accepts
     unlock(&pids_lock);
+    user_put(status_addr, status);
+    return out_id;
+found_zombie:
+    status = 0;
+    unlock(&pids_lock);
+    user_put(status_addr, status);
     return out_id;
 error:
     unlock(&pids_lock);

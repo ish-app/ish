@@ -12,6 +12,7 @@
 #include "fs/sock.h"
 #include "kernel/time.h"
 #include "kernel/resource.h"
+#include "kernel/ptrace.h"
 
 void handle_interrupt(int interrupt);
 

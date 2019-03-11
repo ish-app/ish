@@ -102,6 +102,8 @@
 		650B337222EA235C00B4C03E /* Pasteboard.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Pasteboard.h; sourceTree = "<group>"; };
 		650B337322EA235C00B4C03E /* Pasteboard.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Pasteboard.m; sourceTree = "<group>"; };
 		650B337522EA728B00B4C03E /* devices.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = devices.h; sourceTree = "<group>"; };
+		49A6B906223633D50092A736 /* ptrace.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ptrace.h; sourceTree = "<group>"; };
+		49A6B907223633D50092A736 /* ptrace.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ptrace.c; sourceTree = "<group>"; };
 		8632A7BD219A59FB00F02325 /* UserPreferences.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = UserPreferences.h; sourceTree = "<group>"; };
 		8632A7BE219A59FB00F02325 /* UserPreferences.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = UserPreferences.m; sourceTree = "<group>"; };
 		9A28E4E8219A8B670073D200 /* AboutAppearanceViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AboutAppearanceViewController.h; sourceTree = "<group>"; };
@@ -464,6 +466,8 @@
 				BB7D93522087C2880008DA78 /* signal.h */,
 				BB7D93532087C2880008DA78 /* task.c */,
 				BB7D93542087C2880008DA78 /* task.h */,
+				49A6B906223633D50092A736 /* ptrace.h */,
+				49A6B907223633D50092A736 /* ptrace.c */,
 				BB7D93552087C2880008DA78 /* time.c */,
 				BB7D93562087C2880008DA78 /* time.h */,
 				BB7D93572087C2880008DA78 /* tls.c */,

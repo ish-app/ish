@@ -160,9 +160,9 @@ int cpu_run(struct cpu_state *cpu) {
     
     read_wrlock(&cpu->mem->lock);
 
+    lock(&cpu->step_lock);
     while (true) {
-//        int interrupt = cpu->stopped ? cpu_step(cpu, &tlb) : cpu_multistep(cpu, &tlb);
-        int interrupt = cpu_multistep(cpu, &tlb);
+        int interrupt = cpu->stopped ? cpu_step(cpu, &tlb) : cpu_multistep(cpu, &tlb);
         if (interrupt == INT_NONE && ++i % (1 << 10) == 0)
             interrupt = INT_TIMER;
         if (interrupt != INT_NONE) {
@@ -180,7 +180,19 @@ int cpu_run(struct cpu_state *cpu) {
                 changes = cpu->mem->changes;
             }
         }
+        lock(&pids_lock);
+        lock(&current->group->lock);
+        if (cpu->stopped) {
+            current->group->stopped = true;
+            notify(&current->parent->group->child_cond);
+        }
+        unlock(&current->group->lock);
+        unlock(&pids_lock);
+        while (cpu->stopped && !cpu->should_step) {
+            wait_for(&cpu->step_cond, &cpu->step_lock, NULL);
+        }
     }
+    unlock(&cpu->step_lock);
 }
 
 int cpu_multistep(struct cpu_state *cpu, struct tlb *tlb) {
@@ -268,5 +280,7 @@ int cpu_step(struct cpu_state *cpu, struct tlb *tlb) {
     int interrupt = jit_enter(block, &frame, tlb);
     *cpu = frame.cpu;
     jit_block_free(NULL, block);
+    cpu->should_step = false;
+    
     return interrupt;
 }

@@ -56,7 +56,7 @@ static struct task *construct_task(struct task *parent) {
     *group = (struct tgroup) {};
     list_init(&group->threads);
     lock_init(&group->lock);
-    cond_init(&group->child_exit);
+    cond_init(&group->child_cond);
     cond_init(&group->stopped_cond);
     memcpy(group->limits, init_rlimits, sizeof(init_rlimits));
     group->leader = task;

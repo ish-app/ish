@@ -30,6 +30,7 @@ syscall_t syscall_table[] = {
     [23]  = (syscall_t) sys_setuid,
     [24]  = (syscall_t) sys_getuid,
     [25]  = (syscall_t) sys_stime,
+    [26]  = (syscall_t) sys_ptrace,
     [27]  = (syscall_t) sys_alarm,
     [29]  = (syscall_t) sys_pause,
     [30]  = (syscall_t) sys_utime,
