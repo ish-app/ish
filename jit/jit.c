@@ -146,7 +146,7 @@ static inline size_t jit_cache_hash(addr_t ip) {
     return (ip ^ (ip >> 12)) % JIT_CACHE_SIZE;
 }
 
-void cpu_run(struct cpu_state *cpu) {
+int cpu_run(struct cpu_state *cpu) {
     struct tlb tlb;
     tlb_init(&tlb, cpu->mem);
     struct jit *jit = cpu->mem->jit;
@@ -156,54 +156,21 @@ void cpu_run(struct cpu_state *cpu) {
         frame.ret_cache[i] = 0;
 
     int i = 0;
-    read_wrlock(&cpu->mem->lock);
     unsigned changes = cpu->mem->changes;
+    
+    read_wrlock(&cpu->mem->lock);
 
     while (true) {
-        addr_t ip = frame.cpu.eip;
-        size_t cache_index = jit_cache_hash(ip);
-        struct jit_block *block = cache[cache_index];
-        if (block == NULL || block->addr != ip) {
-            lock(&jit->lock);
-            block = jit_lookup(jit, ip);
-            if (block == NULL) {
-                block = jit_block_compile(ip, &tlb);
-                jit_insert(jit, block);
-            } else {
-                TRACE("%d %08x --- missed cache\n", current->pid, ip);
-            }
-            cache[cache_index] = block;
-            unlock(&jit->lock);
-        }
-        struct jit_block *last_block = frame.last_block;
-        if (last_block != NULL &&
-                (last_block->jump_ip[0] != NULL ||
-                 last_block->jump_ip[1] != NULL)) {
-            lock(&jit->lock);
-            for (int i = 0; i <= 1; i++) {
-                if (last_block->jump_ip[i] != NULL &&
-                        (*last_block->jump_ip[i] & 0xffffffff) == block->addr) {
-                    *last_block->jump_ip[i] = (unsigned long) block->code;
-                    list_add(&block->jumps_from[i], &last_block->jumps_from_links[i]);
-                }
-            }
-            unlock(&jit->lock);
-        }
-        frame.last_block = block;
-
-        TRACE("%d %08x --- cycle %d\n", current->pid, ip, i);
-        int interrupt = jit_enter(block, &frame, &tlb);
+//        int interrupt = cpu->stopped ? cpu_step(cpu, &tlb) : cpu_multistep(cpu, &tlb);
+        int interrupt = cpu_multistep(cpu, &tlb);
         if (interrupt == INT_NONE && ++i % (1 << 10) == 0)
             interrupt = INT_TIMER;
         if (interrupt != INT_NONE) {
-            *cpu = frame.cpu;
             cpu->trapno = interrupt;
             read_wrunlock(&cpu->mem->lock);
             handle_interrupt(interrupt);
             read_wrlock(&cpu->mem->lock);
-
-            jit = cpu->mem->jit;
-            last_block = NULL;
+            
             tlb.mem = cpu->mem;
             if (cpu->mem->changes != changes) {
                 tlb_flush(&tlb);
@@ -212,23 +179,62 @@ void cpu_run(struct cpu_state *cpu) {
                     frame.ret_cache[i] = 0;
                 changes = cpu->mem->changes;
             }
-            memset(cache, 0, sizeof(cache));
-            frame.cpu = *cpu;
-            frame.last_block = NULL;
         }
     }
 }
 
+int cpu_multistep(struct cpu_state *cpu, struct tlb *tlb) {
+    struct jit_block *cache[JIT_CACHE_SIZE] = {};
+    struct jit_frame frame = {.cpu = *cpu};
+    struct jit *jit = cpu->mem->jit;
+
+    addr_t ip = frame.cpu.eip;
+    size_t cache_index = jit_cache_hash(ip);
+    struct jit_block *block = cache[cache_index];
+    if (block == NULL || block->addr != ip) {
+        lock(&jit->lock);
+        block = jit_lookup(jit, ip);
+        if (block == NULL) {
+            block = jit_block_compile(ip, tlb);
+            jit_insert(jit, block);
+        } else {
+            TRACE("%d %08x --- missed cache\n", current->pid, ip);
+        }
+        cache[cache_index] = block;
+        unlock(&jit->lock);
+    }
+    struct jit_block *last_block = frame.last_block;
+    if (last_block != NULL &&
+            (last_block->jump_ip[0] != NULL ||
+             last_block->jump_ip[1] != NULL)) {
+        lock(&jit->lock);
+        for (int i = 0; i <= 1; i++) {
+            if (last_block->jump_ip[i] != NULL &&
+                    (*last_block->jump_ip[i] & 0xffffffff) == block->addr) {
+                *last_block->jump_ip[i] = (unsigned long) block->code;
+                list_add(&block->jumps_from[i], &last_block->jumps_from_links[i]);
+            }
+        }
+        unlock(&jit->lock);
+    }
+    frame.last_block = block;
+    
+    TRACE("%d %08x --- cycle %d\n", current->pid, ip, i);
+    int interrupt = jit_enter(block, &frame, tlb);
+    *cpu = frame.cpu;
+    return interrupt;
+}
+
 #else
 
-void cpu_run(struct cpu_state *cpu) {
+int cpu_run(struct cpu_state *cpu) {
     int i = 0;
     struct tlb tlb = {.mem = cpu->mem};
     tlb_flush(&tlb);
     read_wrlock(&cpu->mem->lock);
     int changes = cpu->mem->changes;
     while (true) {
-        int interrupt = cpu_step32(cpu, &tlb);
+        int interrupt = cpu_step(cpu, &tlb);
         if (interrupt == INT_NONE && i++ >= 100000) {
             i = 0;
             interrupt = INT_TIMER;
@@ -250,8 +256,7 @@ void cpu_run(struct cpu_state *cpu) {
 
 #endif
 
-// really only here for ptraceomatic
-int cpu_step32(struct cpu_state *cpu, struct tlb *tlb) {
+int cpu_step(struct cpu_state *cpu, struct tlb *tlb) {
     struct gen_state state;
     gen_start(cpu->eip, &state);
     gen_step32(&state, tlb);

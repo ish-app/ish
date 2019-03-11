@@ -256,7 +256,7 @@ static void step_tracing(struct cpu_state *cpu, struct tlb *tlb, int pid, int se
     // step fake cpu
     cpu->tf = 1;
     unsigned changes = cpu->mem->changes;
-    int interrupt = cpu_step32(cpu, tlb);
+    int interrupt = cpu_step(cpu, tlb);
     if (interrupt != INT_NONE) {
         cpu->trapno = interrupt;
         // hack to clean up before the exit syscall
@@ -492,7 +492,7 @@ int main(int argc, char *const argv[]) {
             printk("failure: resetting cpu\n");
             *cpu = old_cpu;
             __asm__("int3");
-            cpu_step32(cpu, &tlb);
+            cpu_step(cpu, &tlb);
         }
         undefined_flags = undefined_flags_mask(cpu, &tlb);
         old_cpu = *cpu;
