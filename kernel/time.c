@@ -19,7 +19,7 @@ dword_t sys_time(addr_t time_out) {
     return now;
 }
 
-dword_t sys_stime(addr_t time) {
+dword_t sys_stime(addr_t UNUSED(time)) {
     return _EPERM;
 }
 
