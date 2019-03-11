@@ -559,6 +559,9 @@ static bool modrm_compute(struct cpu_state *cpu, struct tlb *tlb, addr_t *addr_o
 #define ATOMIC_DEC DEC
 #define ATOMIC_CMPXCHG CMPXCHG
 #define ATOMIC_XADD XADD
+#define ATOMIC_BTS BTS
+#define ATOMIC_BTR BTR
+#define ATOMIC_BTC BTC
 #include "emu/interp/sse.h"
 #include "emu/interp/fpu.h"
 

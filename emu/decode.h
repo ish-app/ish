@@ -210,7 +210,7 @@ restart:
                            READMODRM; MOVZX(modrm_val, modrm_reg,16,oz); break;
 
 #define GRP8(bit, val,z) \
-    switch(modrm.opcode) { \
+    switch (modrm.opcode) { \
         case 4: TRACEI("bt"); BT(bit, val,z); break; \
         case 5: TRACEI("bts"); BTS(bit, val,z); break; \
         case 6: TRACEI("btr"); BTR(bit, val,z); break; \
@@ -732,6 +732,24 @@ restart:
                 case 0x0f:
                     READINSN;
                     switch (insn) {
+                        case 0xab: TRACEI("lock bts reg, modrm");
+                                   READMODRM; ATOMIC_BTS(modrm_reg, modrm_val,oz); break;
+                        case 0xb3: TRACEI("lock btr reg, modrm");
+                                   READMODRM; ATOMIC_BTR(modrm_reg, modrm_val,oz); break;
+                        case 0xbb: TRACEI("lock btc reg, modrm");
+                                   READMODRM; ATOMIC_BTC(modrm_reg, modrm_val,oz); break;
+
+#define GRP8_ATOMIC(bit, val,z) \
+    switch (modrm.opcode) { \
+        case 5: TRACEI("bts"); ATOMIC_BTS(bit, val,z); break; \
+        case 6: TRACEI("btr"); ATOMIC_BTR(bit, val,z); break; \
+        case 7: TRACEI("btc"); ATOMIC_BTC(bit, val,z); break; \
+        default: UNDEFINED; \
+    }
+                        case 0xba: TRACEI("lock grp8 imm8, modrm");
+                                   READMODRM; READIMM8; GRP8_ATOMIC(imm, modrm_val,oz); break;
+#undef GRP8_ATOMIC
+
                         case 0xb1: TRACEI("lock cmpxchg reg, modrm");
                                    READMODRM_MEM; ATOMIC_CMPXCHG(modrm_reg, modrm_val,oz); break;
 

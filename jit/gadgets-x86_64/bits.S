@@ -113,6 +113,28 @@
     .gadget_array \op
 .endr
 
+# atomic versions of the above
+
+.macro do_bt_atomic op, size, s, ss
+    .gadget atomic_\op\size\()_mem
+        mov\ss %tmp\s, %r14\s
+        andl $~(\size-1), %r14d
+        shrl $3, %r14d
+        addl %r14d, %_addr
+        read_prep \size, atomic_\op\size\()_mem
+        and\ss $(\size-1), %tmp\s
+        lock \op\ss %tmp\s, (%_addrq)
+        setf_c
+        gret 1
+.endm
+
+.irp op, btc,bts,btr
+    .irp size, 16,32
+        ss \size, do_bt_atomic, \op
+    .endr
+    .gadget_array atomic_\op
+.endr
+
 .macro x name reg
     .gadget bswap_\name
         bswap %\reg

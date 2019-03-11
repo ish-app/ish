@@ -331,6 +331,9 @@ void helper_rdtsc(struct cpu_state *cpu);
 #define ATOMIC_DEC(val,z) op(atomic_dec, val, z)
 #define ATOMIC_CMPXCHG(src, dst,z) atomic_op(cmpxchg, src, dst, z)
 #define ATOMIC_XADD(src, dst,z) load(src, z); op(atomic_xadd, dst, z); store(src, z)
+#define ATOMIC_BTC(bit, val,z) lo(atomic_btc, val, bit, z)
+#define ATOMIC_BTS(bit, val,z) lo(atomic_bts, val, bit, z)
+#define ATOMIC_BTR(bit, val,z) lo(atomic_btr, val, bit, z)
 
 // sse
 #define XORP(src, dst) UNDEFINED
