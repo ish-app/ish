@@ -29,7 +29,7 @@ endian = 'little'
 c_args = ['-arch', '$arch']
 needs_exe_wrapper = true
 EOF
-    meson $SRCROOT --cross-file $crossfile
+    meson $SRCROOT --cross-file $crossfile || exit $?
     config=$(meson introspect --buildoptions)
 fi
 
