@@ -504,14 +504,39 @@ dword_t sys_recvmsg(fd_t sock_fd, addr_t msghdr_addr, dword_t flags) {
     return res;
 }
 
+static void sock_translate_err(struct fd *fd, int *err) {
+    // on ios, when the device goes to sleep, all connected sockets are killed.
+    // reads/writes return ENOTCONN, which I'm pretty sure is a violation of
+    // posix. so instead, detect this and return ECONNRESET.
+    if (*err == _ENOTCONN) {
+        struct sockaddr addr;
+        socklen_t len = sizeof(addr);
+        if (getpeername(fd->real_fd, &addr, &len) < 0 && errno == EINVAL) {
+            *err = _ECONNRESET;
+        }
+    }
+}
+
+static int sock_read(struct fd *fd, void *buf, size_t size) {
+    int err = realfs_read(fd, buf, size);
+    sock_translate_err(fd, &err);
+    return err;
+}
+
+static int sock_write(struct fd *fd, const void *buf, size_t size) {
+    int err = realfs_write(fd, buf, size);
+    sock_translate_err(fd, &err);
+    return err;
+}
+
 static int sock_close(struct fd *fd) {
     sockrestart_end_listen(fd);
     return realfs_close(fd);
 }
 
 const struct fd_ops socket_fdops = {
-    .read = realfs_read,
-    .write = realfs_write,
+    .read = sock_read,
+    .write = sock_write,
     .close = sock_close,
     .poll = realfs_poll,
     .getflags = realfs_getflags,
