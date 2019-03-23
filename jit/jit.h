@@ -17,6 +17,7 @@ struct jit {
     struct list *hash;
     size_t hash_size;
     lock_t lock;
+    char comm[16];
 };
 
 // this is roughly the average number of instructions in a basic block according to anonymous sources

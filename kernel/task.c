@@ -94,6 +94,11 @@ void (*task_run_hook)(void) = NULL;
 
 static void *task_run(void *task) {
     current = task;
+#if __APPLE__
+    pthread_setname_np(current->comm);
+#else
+    pthread_setname_np(pthread_self(), current->comm);
+#endif
     if (task_run_hook)
         task_run_hook();
     else
