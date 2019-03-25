@@ -66,12 +66,26 @@ static inline int sock_type_to_real(int type, int protocol) {
                 return -1;
             return SOCK_STREAM;
         case SOCK_DGRAM_:
-            if (protocol != 0 && protocol != IPPROTO_UDP)
-                return -1;
+            switch (protocol) {
+                default:
+                    return -1;
+                case 0:
+                case IPPROTO_UDP:
+                case IPPROTO_ICMP:
+                case IPPROTO_ICMPV6:
+                    break;
+            }
             return SOCK_DGRAM;
         case SOCK_RAW_:
-            if (protocol != IPPROTO_UDP && protocol != IPPROTO_ICMP && protocol != IPPROTO_ICMPV6 && protocol != IPPROTO_RAW)
-                return -1;
+            switch (protocol) {
+                default:
+                    return -1;
+                case IPPROTO_RAW:
+                case IPPROTO_UDP:
+                case IPPROTO_ICMP:
+                case IPPROTO_ICMPV6:
+                    break;
+            }
             return SOCK_DGRAM;
     }
     return -1;
