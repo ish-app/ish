@@ -52,7 +52,7 @@ void jit_invalidate_page(struct jit *jit, page_t page) {
 }
 
 static void jit_resize_hash(struct jit *jit, size_t new_size) {
-    printk("resizing to %d\n");
+    TRACE("%d resizing hash to %lu, using %lu bytes for gadgets\n", current->pid, new_size, jit->mem_used);
     struct list *new_hash = calloc(new_size, sizeof(struct list));
     for (size_t i = 0; i < jit->hash_size; i++) {
         if (list_null(&jit->hash[i]))
