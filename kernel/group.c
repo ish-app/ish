@@ -58,7 +58,7 @@ dword_t sys_setpgrp() {
 
 pid_t_ sys_getpgid(pid_t_ pid) {
     STRACE("getpgid(%d)", pid);
-    if (pid != 0)
+    if (pid != 0 && pid != current->pid)
         return _EPERM;
     lock(&pids_lock);
     pid_t_ pgid = current->group->pgid;
