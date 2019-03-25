@@ -21,7 +21,7 @@ struct jit {
 
 // this is roughly the average number of instructions in a basic block according to anonymous sources
 // times 4, roughly the average number of gadgets/parameters in an instruction, according to anonymous sources
-#define JIT_BLOCK_INITIAL_CAPACITY 32
+#define JIT_BLOCK_INITIAL_CAPACITY 16
 
 struct jit_block {
     addr_t addr;
