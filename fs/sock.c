@@ -517,13 +517,13 @@ static void sock_translate_err(struct fd *fd, int *err) {
     }
 }
 
-static int sock_read(struct fd *fd, void *buf, size_t size) {
+static ssize_t sock_read(struct fd *fd, void *buf, size_t size) {
     int err = realfs_read(fd, buf, size);
     sock_translate_err(fd, &err);
     return err;
 }
 
-static int sock_write(struct fd *fd, const void *buf, size_t size) {
+static ssize_t sock_write(struct fd *fd, const void *buf, size_t size) {
     int err = realfs_write(fd, buf, size);
     sock_translate_err(fd, &err);
     return err;
