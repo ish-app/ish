@@ -50,7 +50,6 @@ struct sigaction_ {
 #define	SIGIO_     29
 #define	SIGPWR_    30
 #define SIGSYS_    31
-#define SIGUNUSED_ 31
 
 // send a signal
 // you better make sure the task isn't gonna get freed under me (pids_lock or current)
@@ -98,6 +97,7 @@ struct stack_t_ {
 dword_t sys_sigaltstack(addr_t ss, addr_t old_ss);
 
 int_t sys_rt_sigsuspend(addr_t mask_addr, uint_t size);
+int_t sys_pause(void);
 
 dword_t sys_kill(pid_t_ pid, dword_t sig);
 dword_t sys_tkill(pid_t_ tid, dword_t sig);

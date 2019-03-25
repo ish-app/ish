@@ -439,6 +439,14 @@ int_t sys_rt_sigsuspend(addr_t mask_addr, uint_t size) {
     return _EINTR;
 }
 
+int_t sys_pause() {
+    lock(&current->sighand->lock);
+    while (!current->pending)
+        wait_for(&current->pause, &current->sighand->lock, NULL);
+    unlock(&current->sighand->lock);
+    return _EINTR;
+}
+
 dword_t sys_kill(pid_t_ pid, dword_t sig) {
     STRACE("kill(%d, %d)", pid, sig);
     if (sig >= NUM_SIGS)
