@@ -132,12 +132,15 @@ static inline int sock_flags_from_real(int real) {
 #define SO_TYPE_ 3
 #define SO_ERROR_ 4
 #define SO_BROADCAST_ 6
-#define SO_KEEPALIVE_ 9
 #define SO_SNDBUF_ 7
+#define SO_KEEPALIVE_ 9
+#define SO_TIMESTAMP_ 29
 #define IP_TOS_ 1
 #define IP_TTL_ 2
 #define IP_HDRINCL_ 3
+#define IP_RETOPTS_ 7
 #define IP_MTU_DISCOVER_ 10
+#define IP_RECVTTL_ 12
 #define TCP_NODELAY_ 1
 #define IPV6_UNICAST_HOPS_ 16
 #define IPV6_V6ONLY_ 26
@@ -153,6 +156,7 @@ static inline int sock_opt_to_real(int fake, int level) {
             case SO_BROADCAST_: return SO_BROADCAST;
             case SO_KEEPALIVE_: return SO_KEEPALIVE;
             case SO_SNDBUF_: return SO_SNDBUF;
+            case SO_TIMESTAMP_: return SO_TIMESTAMP;
         } break;
         case IPPROTO_TCP: switch (fake) {
             case TCP_NODELAY_: return TCP_NODELAY;
@@ -161,6 +165,8 @@ static inline int sock_opt_to_real(int fake, int level) {
             case IP_TOS_: return IP_TOS;
             case IP_TTL_: return IP_TTL;
             case IP_HDRINCL_: return IP_HDRINCL;
+            case IP_RETOPTS_: return IP_RETOPTS;
+            case IP_RECVTTL_: return IP_RECVTTL;
         } break;
         case IPPROTO_IPV6: switch (fake) {
             case IPV6_UNICAST_HOPS_: return IPV6_UNICAST_HOPS;
