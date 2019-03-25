@@ -382,86 +382,57 @@ dword_t sys_getsockopt(fd_t sock_fd, dword_t level, dword_t option, addr_t value
     return 0;
 }
 
-dword_t sys_recvmsg(fd_t sock_fd, addr_t msghdr_addr, dword_t flags) {
+dword_t sys_recvmsg(fd_t sock_fd, addr_t msghdr_addr, int_t flags) {
     STRACE("recvmsg(%d, 0x%x, %d)", sock_fd, msghdr_addr, flags);
     struct fd *sock = sock_getfd(sock_fd);
     if (sock == NULL)
         return _EBADF;
 
     struct msghdr msg;
-    memset(&msg, 0, sizeof(msg));
-
     struct msghdr_ msg_fake;
-    if (user_get(msghdr_addr, msg_fake)) {
+    if (user_get(msghdr_addr, msg_fake))
         return _EFAULT;
-    }
 
     // msg_name
-    struct sockaddr msg_name;
-    memset(&msg_name, 0, sizeof(msg_name));
-
-    struct sockaddr_ msg_name_fake;
-    if (msg_fake.msg_name != 0 && msg_fake.msg_namelen != 0) {
-        if (user_get(msg_fake.msg_name, msg_name_fake))
-            return _EFAULT;
-#ifdef __APPLE__
-        msg_name.sa_len = sizeof(msg_name);
-#endif
-        msg_name.sa_family = msg_name_fake.family;
-        memcpy(&msg_name.sa_data, msg_name_fake.data, sizeof(msg_name_fake.data));
-
-        msg.msg_name = (void *)&msg_name;
+    char msg_name[msg_fake.msg_namelen];
+    if (msg_fake.msg_name != 0) {
+        msg.msg_name = msg_name;
         msg.msg_namelen = sizeof(msg_name);
+    } else {
+        msg.msg_name = NULL;
+        msg.msg_namelen = 0;
     }
 
     // msg_control (no initial content)
     char msg_control[msg_fake.msg_controllen];
-    memset(&msg_control, 0, sizeof(msg_control));
-
-    msg.msg_control = (void *)&msg_control;
+    msg.msg_control = msg_control;
     msg.msg_controllen = sizeof(msg_control);
 
     // msg_iovec (no initial content)
-    struct iovec msg_iov[msg_fake.msg_iovlen];
-    memset(&msg_iov, 0, sizeof(msg_iov));
-
     struct iovec_ msg_iov_fake[msg_fake.msg_iovlen];
     if (user_get(msg_fake.msg_iov, msg_iov_fake))
         return _EFAULT;
-
-    for (uint_t i = 0; i < msg_fake.msg_iovlen; i++) {
-        char iov_base[msg_iov_fake[i].len];
-        memset(&iov_base, 0, sizeof(iov_base));
-
-        msg_iov[i].iov_base = (void *)&iov_base;
-        msg_iov[i].iov_len = sizeof(iov_base);
+    struct iovec msg_iov[msg_fake.msg_iovlen];
+    msg.msg_iov = msg_iov;
+    msg.msg_iovlen = sizeof(msg_iov) / sizeof(msg_iov[0]);
+    for (int i = 0; i < msg.msg_iovlen; i++) {
+        msg.msg_iov[i].iov_len = msg_iov_fake[i].len;
+        msg.msg_iov[i].iov_base = malloc(msg_iov_fake[i].len);
     }
-
-    msg.msg_iov = (void *)&msg_iov;
-    msg.msg_iovlen = msg_fake.msg_iovlen;
-
-    // msg_flags (no initial content)
-    msg.msg_flags = sock_flags_to_real(msg_fake.msg_flags);
 
     int real_flags = sock_flags_to_real(flags);
     if (real_flags < 0)
         return _EINVAL;
 
     ssize_t res = recvmsg(sock->real_fd, &msg, real_flags);
+    if (res < 0)
+        return errno_map();
 
     // msg_name (changed)
-    memset(&msg_name_fake, 0, sizeof(msg_name_fake));
-
-    if (msg.msg_name != 0 && msg.msg_namelen != 0) {
-        struct sockaddr *msg_name = msg.msg_name;
-
-        msg_name_fake.family = msg_name->sa_family;
-        memcpy(&msg_name_fake.data, msg_name->sa_data, sizeof(msg_name->sa_data));
-
-        if (user_put(msg_fake.msg_name, msg_name_fake)) {
+    if (msg.msg_name != 0) {
+        int err = sockaddr_write(msg_fake.msg_name, msg.msg_name, msg_fake.msg_namelen);
+        if (err < 0)
             return _EFAULT;
-        }
-        msg_fake.msg_namelen = sizeof(msg_name_fake);
     }
 
     // msg_control (changed)
@@ -482,22 +453,26 @@ dword_t sys_recvmsg(fd_t sock_fd, addr_t msghdr_addr, dword_t flags) {
     msg_fake.msg_controllen = message_offset;
 
     // msg_iovec (changed)
+    // copy as many bytes as were received, according to the return value
+    size_t n = res;
+    if (res < 0)
+        n = 0;
     for (int i = 0; i < msg.msg_iovlen; i++) {
-        if (user_write(msg_iov_fake[i].base, msg_iov[i].iov_base, msg_iov[i].iov_len))
-            return _EFAULT;
-
-        msg_iov_fake[i].len = msg_iov[i].iov_len;
+        size_t chunk_size = msg_iov[i].iov_len;
+        if (chunk_size > n)
+            chunk_size = n;
+        if (chunk_size > 0)
+            if (user_write(msg_iov_fake[i].base, msg_iov[i].iov_base, chunk_size))
+                return _EFAULT;
+        n -= chunk_size;
+        free(msg_iov[i].iov_base);
     }
-
-    if (user_put(msg_fake.msg_iov, msg_iov_fake))
-        return _EFAULT;
 
     // msg_flags (changed)
     msg_fake.msg_flags = sock_flags_from_real(msg.msg_flags);
 
-    if (user_put(msghdr_addr, msg_fake)) {
+    if (user_put(msghdr_addr, msg_fake))
         return _EFAULT;
-    }
 
     if (res < 0)
         return errno_map();
