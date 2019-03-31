@@ -90,6 +90,7 @@ struct mount {
                 sqlite3_stmt *path_unlink;
                 sqlite3_stmt *path_rename;
                 sqlite3_stmt *path_from_inode;
+                sqlite3_stmt *try_cleanup_inode;
             } stmt;
             lock_t lock;
         };
@@ -158,6 +159,10 @@ struct fs_ops {
     int (*getpath)(struct fd *fd, char *buf);
 
     int (*flock)(struct fd *fd, int operation);
+
+    // If present, called when all references to an inode_data for this
+    // filesystem go away.
+    void (*inode_orphaned)(struct mount *mount, struct inode_data *inode);
 };
 
 struct mount *find_mount_and_trim_path(char *path);
