@@ -1,7 +1,8 @@
-Just one bug fix in this build:
-- Files opened from the Files app having random numbers as names, preventing them from being syntax highlighted in some apps and opening at all in other apps
-
-Also, if you clean install this build, you'll get Alpine 3.9.0 instead of 3.8.2.
+- Fixed everything that I know about that broke with the upgrade to Alpine 3.9
+- Fixed issue with makefile globbing
+- Dig no longer fails
+- Bunch of other bug fixes
+- Nothing else really worth writing about
 
 Send bug reports or feedback here: https://github.com/tbodt/ish/issues (or by email, if you prefer)
 Follow iSH on Twitter: https://twitter.com/iSH_app
