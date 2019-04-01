@@ -15,7 +15,7 @@ command = command.split()[:-9] + ['-MD', '-MQ', '$output', '-MF', '$dep']
 print(' '.join(command))
 END
 )
-$flags $input -include $(dirname $0)/staticdefine.h -S -o - | \
+$flags $input -include "$(dirname $0)/staticdefine.h" -S -o - | \
 sed -ne 's:^[[:space:]]*\.ascii[[:space:]]*"\(.*\)".*:\1:;
          /^->/{s:->#\(.*\):/* \1 */:;
          s:^->\([^ ]*\) [\$$#]*\([^ ]*\) \(.*\):#define \1 \2 /* \3 */:;
