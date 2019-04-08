@@ -66,6 +66,7 @@ syscall_t syscall_table[] = {
     [81]  = (syscall_t) sys_setgroups,
     [83]  = (syscall_t) sys_symlink,
     [85]  = (syscall_t) sys_readlink,
+    [88]  = (syscall_t) sys_reboot,
     [90]  = (syscall_t) sys_mmap,
     [91]  = (syscall_t) sys_munmap,
     [94]  = (syscall_t) sys_fchmod,
