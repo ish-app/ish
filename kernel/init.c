@@ -62,18 +62,22 @@ void create_first_process() {
     sys_setsid();
 }
 
-int create_stdio(struct tty_driver *driver) {
-    // I can't wait for when init and udev works and I don't need to do this
+int create_stdio(const char *file, struct tty_driver *driver) {
     tty_drivers[TTY_CONSOLE_MAJOR] = driver;
 
-    // FIXME use generic_open (or something) to avoid this mess
-    struct fd *fd = adhoc_fd_create(NULL);
-    fd->stat.rdev = dev_make(4, 0);
-    fd->stat.mode = S_IFCHR | S_IRUSR;
-    fd->flags = O_RDWR_;
-    int err = dev_open(4, 0, DEV_CHAR, fd);
-    if (err < 0)
-        return err;
+    struct fd *fd = generic_open(file, O_RDWR_, 0);
+    if (fd == ERR_PTR(_ENOENT)) {
+        // fallback to adhoc files for stdio
+        fd = adhoc_fd_create(NULL);
+        fd->stat.rdev = dev_make(4, 0);
+        fd->stat.mode = S_IFCHR | S_IRUSR;
+        fd->flags = O_RDWR_;
+        int err = dev_open(4, 0, DEV_CHAR, fd);
+        if (err < 0)
+            return err;
+    }
+    if (IS_ERR(fd))
+        return PTR_ERR(fd);
 
     fd->refcount = 3;
     current->files->files[0] = fd;

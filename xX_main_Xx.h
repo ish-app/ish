@@ -20,7 +20,8 @@ static inline int xX_main_Xx(int argc, char *const argv[], const char *envp) {
     const char *root = "";
     bool has_root = false;
     const struct fs_ops *fs = &realfs;
-    while ((opt = getopt(argc, argv, "+r:f:")) != -1) {
+    const char *console = "/dev/tty1";
+    while ((opt = getopt(argc, argv, "+r:f:c:")) != -1) {
         switch (opt) {
             case 'r':
             case 'f':
@@ -28,6 +29,9 @@ static inline int xX_main_Xx(int argc, char *const argv[], const char *envp) {
                 has_root = true;
                 if (opt == 'f')
                     fs = &fakefs;
+                break;
+            case 'c':
+                console = optarg;
                 break;
         }
     }
@@ -63,7 +67,7 @@ static inline int xX_main_Xx(int argc, char *const argv[], const char *envp) {
     err = sys_execve(argv[optind], argv_copy, envp == NULL ? "\0" : envp);
     if (err < 0)
         return err;
-    err = create_stdio(&real_tty_driver);
+    err = create_stdio(console, &real_tty_driver);
     if (err < 0)
         return err;
     exit_hook = exit_handler;

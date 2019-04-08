@@ -273,4 +273,4 @@ struct tty_driver_ops ios_tty_ops = {
     .write = ios_tty_write,
     .cleanup = ios_tty_cleanup,
 };
-DEFINE_TTY_DRIVER(ios_tty_driver, &ios_tty_ops, 1);
+DEFINE_TTY_DRIVER(ios_tty_driver, &ios_tty_ops, 2);
