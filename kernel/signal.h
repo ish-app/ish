@@ -56,6 +56,9 @@ struct sigaction_ {
 void send_signal(struct task *task, int sig);
 // send a signal without regard for whether the signal is blocked or ignored
 void deliver_signal(struct task *task, int sig);
+// send a signal to current if it's not blocked or ignored, return whether that worked
+// exists specifically for sending SIGTTIN/SIGTTOU
+bool try_self_signal(int sig);
 // send a signal to all processes in a group, could return ESRCH
 int send_group_signal(dword_t pgid, int sig);
 // check for and deliver pending signals on current

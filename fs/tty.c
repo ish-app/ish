@@ -373,9 +373,22 @@ static ssize_t tty_read(struct fd *fd, void *buf, size_t bufsize) {
 
     int err = 0;
     struct tty *tty = fd->tty;
+    lock(&pids_lock);
     lock(&tty->lock);
-    if (tty->hung_up)
+    if (tty->hung_up) {
+        unlock(&pids_lock);
         goto out;
+    }
+
+    pid_t_ current_pgid = current->group->pgid;
+    unlock(&pids_lock);
+    if (current_pgid != tty->fg_group) {
+        if (!try_self_signal(SIGTTIN_))
+            err = _EIO;
+        else
+            err = _EINTR;
+        goto out;
+    }
 
     // wait loop(s)
     if (tty->termios.lflags & ICANON_) {

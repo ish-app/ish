@@ -96,6 +96,17 @@ void send_signal(struct task *task, int sig) {
     }
 }
 
+bool try_self_signal(int sig) {
+    struct sighand *sighand = current->sighand;
+    lock(&sighand->lock);
+    bool can_send = signal_action(sighand, sig) != SIGNAL_IGNORE &&
+        !(current->blocked & (1l << sig));
+    if (can_send)
+        deliver_signal_unlocked(current, sig);
+    unlock(&sighand->lock);
+    return can_send;
+}
+
 int send_group_signal(dword_t pgid, int sig) {
     lock(&pids_lock);
     struct pid *pid = pid_get(pgid);
