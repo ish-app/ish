@@ -35,7 +35,7 @@ dword_t sys_socket(dword_t domain, dword_t type, dword_t protocol) {
         return errno_map();
 
 #ifdef __APPLE__
-    if (real_domain == AF_INET && real_type == SOCK_DGRAM) {
+    if (domain == AF_INET_ && type == SOCK_DGRAM_) {
         // in some cases, such as ICMP, datagram sockets on mac can default to
         // including the IP header like raw sockets
         int one = 1;
