@@ -249,6 +249,7 @@ void fdtable_do_cloexec(struct fdtable *table) {
 #define F_SETLKW64_ 14
 
 dword_t sys_dup(fd_t f) {
+    STRACE("dup(%d)", f);
     struct fd *fd = f_get(f);
     if (fd == NULL)
         return _EBADF;
@@ -257,7 +258,7 @@ dword_t sys_dup(fd_t f) {
 }
 
 dword_t sys_dup2(fd_t f, fd_t new_f) {
-    STRACE("dup2(%d, %d)\n", f, new_f);
+    STRACE("dup2(%d, %d)", f, new_f);
     struct fdtable *table = current->files;
     struct fd *fd = f_get(f);
     if (fd == NULL)
