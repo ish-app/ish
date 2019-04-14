@@ -14,7 +14,7 @@ void do_uname(struct uname *uts) {
     memset(uts, 0, sizeof(struct uname));
     strcpy(uts->system, "Linux");
     strcpy(uts->hostname, real_uname.nodename);
-    strcpy(uts->release, "3.2.0-ish");
+    strcpy(uts->release, "3.8.0-ish");
     strcpy(uts->version, "SUPER AWESOME compiled on " __DATE__ );
     strcpy(uts->arch, "i686");
     strcpy(uts->domain, "(none)");
