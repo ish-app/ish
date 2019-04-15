@@ -39,6 +39,11 @@ struct fd {
             struct timer *timer;
             uint64_t expirations;
         } timerfd;
+        struct {
+            int domain;
+            int type;
+            int protocol;
+        } socket;
     };
     // fs data
     union {

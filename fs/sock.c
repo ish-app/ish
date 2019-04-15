@@ -6,15 +6,20 @@
 #include "fs/sock.h"
 #include "debug.h"
 
+#define SOCKET_TYPE_MASK 0xf
+
 const struct fd_ops socket_fdops;
 
-static fd_t sock_fd_create(int sock_fd, int flags) {
+static fd_t sock_fd_create(int sock_fd, int domain, int type, int protocol) {
     struct fd *fd = adhoc_fd_create(&socket_fdops);
     if (fd == NULL)
         return _ENOMEM;
     fd->stat.mode = S_IFSOCK | 0666;
     fd->real_fd = sock_fd;
-    return f_install(fd, flags);
+    fd->socket.domain = domain;
+    fd->socket.type = type & SOCKET_TYPE_MASK;
+    fd->socket.protocol = protocol;
+    return f_install(fd, type & ~SOCKET_TYPE_MASK);
 }
 
 dword_t sys_socket(dword_t domain, dword_t type, dword_t protocol) {
@@ -43,11 +48,9 @@ dword_t sys_socket(dword_t domain, dword_t type, dword_t protocol) {
     }
 #endif
 
-    fd_t f = sock_fd_create(sock, type);
+    fd_t f = sock_fd_create(sock, domain, type, protocol);
     if (f < 0)
         close(sock);
-    if (f >= 0)
-        f_get(f)->sockrestart.proto = protocol;
     return f;
 }
 
@@ -164,7 +167,8 @@ dword_t sys_accept(fd_t sock_fd, addr_t sockaddr_addr, addr_t sockaddr_len_addr)
     if (user_put(sockaddr_len_addr, sockaddr_len))
         return _EFAULT;
 
-    fd_t client_f = sock_fd_create(client, 0);
+    fd_t client_f = sock_fd_create(client,
+            sock->socket.domain, sock->socket.type, sock->socket.protocol);
     if (client_f < 0)
         close(client);
     return client_f;
@@ -229,10 +233,10 @@ dword_t sys_socketpair(dword_t domain, dword_t type, dword_t protocol, addr_t so
         return errno_map();
 
     int fake_sockets[2];
-    err = fake_sockets[0] = sock_fd_create(sockets[0], type);
+    err = fake_sockets[0] = sock_fd_create(sockets[0], domain, type, protocol);
     if (fake_sockets[0] < 0)
         goto close_sockets;
-    err = fake_sockets[1] = sock_fd_create(sockets[1], type);
+    err = fake_sockets[1] = sock_fd_create(sockets[1], domain, type, protocol);
     if (fake_sockets[1] < 0)
         goto close_fake_0;
 
@@ -363,26 +367,28 @@ dword_t sys_getsockopt(fd_t sock_fd, dword_t level, dword_t option, addr_t value
     char value[value_len];
     if (user_read(value_addr, value, value_len))
         return _EFAULT;
-    int real_opt = sock_opt_to_real(option, level);
-    if (real_opt < 0)
-        return _EINVAL;
-    int real_level = sock_level_to_real(level);
-    if (real_level < 0)
-        return _EINVAL;
 
-    int err = getsockopt(sock->real_fd, real_level, real_opt, value, &value_len);
-    if (err < 0)
-        return errno_map();
+    if (level == SOL_SOCKET_ && (option == SO_DOMAIN_ || option == SO_TYPE_ || option == SO_PROTOCOL_)) {
+        dword_t *value_p = (dword_t *) value;
+        if (value_len != sizeof(*value_p))
+            return _EINVAL;
+        if (option == SO_DOMAIN_)
+            *value_p = sock->socket.domain;
+        else if (option == SO_TYPE_)
+            *value_p = sock->socket.type;
+        else if (option == SO_PROTOCOL_)
+            *value_p = sock->socket.protocol;
+    } else {
+        int real_opt = sock_opt_to_real(option, level);
+        if (real_opt < 0)
+            return _EINVAL;
+        int real_level = sock_level_to_real(level);
+        if (real_level < 0)
+            return _EINVAL;
 
-    if (level == SOL_SOCKET_ && option == SO_TYPE_) {
-        // TODO Find a way to get the socket protocol so we can return SOCK_RAW_ for
-        // our fake raw sockets (SO_PROTOCOL is not available).
-
-        dword_t *type = (dword_t *) &value[0];
-        switch (*type) {
-            case SOCK_STREAM: *type = SOCK_STREAM_; break;
-            case SOCK_DGRAM: *type = SOCK_DGRAM_; break;
-        }
+        int err = getsockopt(sock->real_fd, real_level, real_opt, value, &value_len);
+        if (err < 0)
+            return errno_map();
     }
 
     if (user_put(len_addr, value_len))

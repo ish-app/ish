@@ -82,7 +82,7 @@ void sockrestart_on_suspend() {
         if (saved == NULL)
             continue; // better than a crash
         saved->sock = fd_retain(sock);
-        saved->proto = sock->sockrestart.proto;
+        saved->proto = sock->socket.protocol;
         unsigned size = sizeof(saved->type);
         getsockopt(sock->real_fd, SOL_SOCKET, SO_TYPE, &saved->type, &size);
         assert(size == sizeof(saved->type));
