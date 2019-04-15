@@ -189,7 +189,7 @@ static struct fd_ops timerfd_ops;
 
 static void timerfd_callback(struct fd *fd) {
     lock(&fd->lock);
-    fd->expirations++;
+    fd->timerfd.expirations++;
     notify(&fd->cond);
     unlock(&fd->lock);
     poll_wakeup(fd);
@@ -206,7 +206,7 @@ fd_t sys_timerfd_create(int_t clockid, int_t flags) {
     if (fd == NULL)
         return _ENOMEM;
 
-    fd->timer = timer_new((timer_callback_t) timerfd_callback, fd);
+    fd->timerfd.timer = timer_new((timer_callback_t) timerfd_callback, fd);
     return f_install(fd, flags);
 }
 
@@ -214,7 +214,7 @@ static ssize_t timerfd_read(struct fd *fd, void *buf, size_t bufsize) {
     if (bufsize < sizeof(uint64_t))
         return _EINVAL;
     lock(&fd->lock);
-    while (fd->expirations == 0) {
+    while (fd->timerfd.expirations == 0) {
         if (fd->flags & O_NONBLOCK_) {
             unlock(&fd->lock);
             return _EAGAIN;
@@ -222,21 +222,21 @@ static ssize_t timerfd_read(struct fd *fd, void *buf, size_t bufsize) {
         wait_for(&fd->cond, &fd->lock, NULL);
     }
 
-    *(uint64_t *) buf = fd->expirations;
-    fd->expirations = 0;
+    *(uint64_t *) buf = fd->timerfd.expirations;
+    fd->timerfd.expirations = 0;
     unlock(&fd->lock);
     return sizeof(uint64_t);
 }
 static int timerfd_poll(struct fd *fd) {
     int res = 0;
     lock(&fd->lock);
-    if (fd->expirations == 0)
+    if (fd->timerfd.expirations == 0)
         res |= POLL_READ;
     unlock(&fd->lock);
     return res;
 }
 static int timerfd_close(struct fd *fd) {
-    timer_free(fd->timer);
+    timer_free(fd->timerfd.timer);
     return 0;
 }
 

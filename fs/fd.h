@@ -27,35 +27,31 @@ struct fd {
             struct tty *tty;
             // links together fds pointing to the same tty
             // locked by the tty
-            struct list other_fds;
+            struct list tty_other_fds;
         };
-        // epoll
         struct {
             struct poll *poll;
-        };
-        // eventfd
+        } epollfd;
         struct {
-            uint64_t eventfd_val;
-        };
-        // timerfd
+            uint64_t val;
+        } eventfd;
         struct {
             struct timer *timer;
             uint64_t expirations;
-        };
+        } timerfd;
     };
     // fs data
     union {
-        // proc
         struct {
-            struct proc_entry proc_entry;
-            unsigned proc_dir_index;
-            char *proc_data;
-            size_t proc_size;
-        };
+            struct proc_entry entry;
+            unsigned dir_index;
+            char *data;
+            size_t size;
+        } proc;
         // devpts
         struct {
-            int pty_num;
-        };
+            int num;
+        } devpts;
     };
 
     // fs/inode data

@@ -99,7 +99,7 @@ int ptmx_open(struct fd *fd) {
 
     fd->tty = tty;
     lock(&tty->fds_lock);
-    list_add(&tty->fds, &fd->other_fds);
+    list_add(&tty->fds, &fd->tty_other_fds);
     unlock(&tty->fds_lock);
     return 0;
 }
@@ -149,15 +149,15 @@ static struct fd *devpts_open(struct mount *UNUSED(mount), const char *path, int
     if (pty_num == _ENOENT)
         return ERR_PTR(_ENOENT);
     struct fd *fd = fd_create(&devpts_fdops);
-    fd->pty_num = pty_num;
+    fd->devpts.num = pty_num;
     return fd;
 }
 
 static int devpts_getpath(struct fd *fd, char *buf) {
-    if (fd->pty_num == -1)
+    if (fd->devpts.num == -1)
         strcpy(buf, "");
     else
-        sprintf(buf, "/%d", fd->pty_num);
+        sprintf(buf, "/%d", fd->devpts.num);
     return 0;
 }
 
@@ -212,7 +212,7 @@ static int devpts_setattr_num(int pty_num, struct attr attr) {
 }
 
 static int devpts_fstat(struct fd *fd, struct statbuf *stat) {
-    devpts_stat_num(fd->pty_num, stat);
+    devpts_stat_num(fd->devpts.num, stat);
     return 0;
 }
 
@@ -233,12 +233,12 @@ static int devpts_setattr(struct mount *UNUSED(mount), const char *path, struct 
 }
 
 static int devpts_fsetattr(struct fd *fd, struct attr attr) {
-    devpts_setattr_num(fd->pty_num, attr);
+    devpts_setattr_num(fd->devpts.num, attr);
     return 0;
 }
 
 static int devpts_readdir(struct fd *fd, struct dir_entry *entry) {
-    assert(fd->pty_num == -1); // there shouldn't be anything to list but the root
+    assert(fd->devpts.num == -1); // there shouldn't be anything to list but the root
 
     int pty_num = fd->offset;
     while (pty_num < MAX_PTYS && !devpts_pty_exists(pty_num))

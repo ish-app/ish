@@ -11,7 +11,7 @@ fd_t sys_epoll_create(int_t flags) {
     struct fd *fd = adhoc_fd_create(&epoll_ops);
     if (fd == NULL)
         return _ENOMEM;
-    fd->poll = poll_create();
+    fd->epollfd.poll = poll_create();
     return f_install(fd, flags);
 }
 fd_t sys_epoll_create0() {
@@ -41,7 +41,7 @@ int_t sys_epoll_ctl(fd_t epoll_f, int_t op, fd_t f, addr_t event_addr) {
         return _EBADF;
 
     if (op == EPOLL_CTL_DEL_)
-        return poll_del_fd(epoll->poll, fd);
+        return poll_del_fd(epoll->epollfd.poll, fd);
 
     struct epoll_event_ event;
     if (user_get(event_addr, event))
@@ -51,11 +51,11 @@ int_t sys_epoll_ctl(fd_t epoll_f, int_t op, fd_t f, addr_t event_addr) {
         return _EINVAL;
 
     if (op == EPOLL_CTL_ADD_) {
-        if (poll_has_fd(epoll->poll, fd))
+        if (poll_has_fd(epoll->epollfd.poll, fd))
             return _EEXIST;
-        return poll_add_fd(epoll->poll, fd, event.events, (union poll_fd_info) event.data);
+        return poll_add_fd(epoll->epollfd.poll, fd, event.events, (union poll_fd_info) event.data);
     } else {
-        return poll_mod_fd(epoll->poll, fd, event.events, (union poll_fd_info) event.data);
+        return poll_mod_fd(epoll->epollfd.poll, fd, event.events, (union poll_fd_info) event.data);
     }
 }
 
@@ -92,7 +92,7 @@ int_t sys_epoll_wait(fd_t epoll_f, addr_t events_addr, int_t max_events, int_t t
     struct epoll_event_ events[max_events];
 
     struct epoll_context context = {.events = events, .n = 0, .max_events = max_events};
-    int res = poll_wait(epoll->poll, epoll_callback, &context, timeout == -1 ? NULL : &timeout_ts);
+    int res = poll_wait(epoll->epollfd.poll, epoll_callback, &context, timeout == -1 ? NULL : &timeout_ts);
     if (res >= 0)
         if (user_write(events_addr, events, sizeof(struct epoll_event_) * res))
             return _EFAULT;
@@ -117,7 +117,7 @@ int_t sys_epoll_pwait(fd_t epoll_f, addr_t events_addr, int_t max_events, int_t 
 }
 
 static int epoll_close(struct fd *fd) {
-    poll_destroy(fd->poll);
+    poll_destroy(fd->epollfd.poll);
     return 0;
 }
 

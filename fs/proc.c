@@ -53,8 +53,8 @@ static struct fd *proc_open(struct mount *UNUSED(mount), const char *path, int U
     if (err < 0)
         return ERR_PTR(err);
     struct fd *fd = fd_create(&procfs_fdops);
-    fd->proc_entry = entry;
-    fd->proc_data = NULL;
+    fd->proc.entry = entry;
+    fd->proc.data = NULL;
     return fd;
 }
 
@@ -62,7 +62,7 @@ static int proc_getpath(struct fd *fd, char *buf) {
     char *p = buf + MAX_PATH - 1;
     size_t n = 0;
     p[0] = '\0';
-    struct proc_entry entry = fd->proc_entry;
+    struct proc_entry entry = fd->proc.entry;
     while (entry.meta != &proc_root) {
         char component[MAX_NAME];
         proc_entry_getname(&entry, component);
@@ -86,23 +86,23 @@ static int proc_stat(struct mount *UNUSED(mount), const char *path, struct statb
 }
 
 static int proc_fstat(struct fd *fd, struct statbuf *stat) {
-    return proc_entry_stat(&fd->proc_entry, stat);
+    return proc_entry_stat(&fd->proc.entry, stat);
 }
 
 static int proc_refresh_data(struct fd *fd) {
-    mode_t_ mode = proc_entry_mode(&fd->proc_entry);
+    mode_t_ mode = proc_entry_mode(&fd->proc.entry);
     if (S_ISDIR(mode))
         return _EISDIR;
     assert(S_ISREG(mode));
 
-    if (fd->proc_data == NULL) {
-        fd->proc_data = malloc(4096); // TODO choose a good number
+    if (fd->proc.data == NULL) {
+        fd->proc.data = malloc(4096); // TODO choose a good number
     }
-    struct proc_entry entry = fd->proc_entry;
-    ssize_t size = entry.meta->show(&entry, fd->proc_data);
+    struct proc_entry entry = fd->proc.entry;
+    ssize_t size = entry.meta->show(&entry, fd->proc.data);
     if (size < 0)
         return size;
-    fd->proc_size = size;
+    fd->proc.size = size;
     return 0;
 }
 
@@ -111,11 +111,11 @@ static ssize_t proc_read(struct fd *fd, void *buf, size_t bufsize) {
     if (err < 0)
         return err;
 
-    const char *data = fd->proc_data;
+    const char *data = fd->proc.data;
     assert(data != NULL);
 
-    size_t remaining = fd->proc_size - fd->offset;
-    if ((size_t) fd->offset > fd->proc_size)
+    size_t remaining = fd->proc.size - fd->offset;
+    if ((size_t) fd->offset > fd->proc.size)
         remaining = 0;
     size_t n = bufsize;
     if (n > remaining)
@@ -137,7 +137,7 @@ static off_t_ proc_seek(struct fd *fd, off_t_ off, int whence) {
     else if (whence == LSEEK_CUR)
         fd->offset += off;
     else if (whence == LSEEK_END)
-        fd->offset = fd->proc_size + off;
+        fd->offset = fd->proc.size + off;
     else
         return _EINVAL;
 
@@ -150,7 +150,7 @@ static off_t_ proc_seek(struct fd *fd, off_t_ off, int whence) {
 
 static int proc_readdir(struct fd *fd, struct dir_entry *entry) {
     struct proc_entry proc_entry;
-    bool any_left = proc_dir_read(&fd->proc_entry, &fd->offset, &proc_entry);
+    bool any_left = proc_dir_read(&fd->proc.entry, &fd->offset, &proc_entry);
     if (!any_left)
         return 0;
     proc_entry_getname(&proc_entry, entry->name);
@@ -159,8 +159,8 @@ static int proc_readdir(struct fd *fd, struct dir_entry *entry) {
 }
 
 static int proc_close(struct fd *fd) {
-    if (fd->proc_data != NULL)
-        free(fd->proc_data);
+    if (fd->proc.data != NULL)
+        free(fd->proc.data);
     return 0;
 }
 
