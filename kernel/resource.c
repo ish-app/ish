@@ -1,3 +1,6 @@
+#include <limits.h>
+#include "kernel/calls.h"
+
 #if __linux__
 // pull in RUSAGE_THREAD
 #define _GNU_SOURCE
@@ -8,7 +11,6 @@
 #else
 #error
 #endif
-#include "kernel/calls.h"
 
 struct rlimit_ rlimit_get(struct task *task, int resource) {
     struct tgroup *group = task->group;
@@ -31,7 +33,21 @@ rlim_t_ rlimit(int resource) {
 
 dword_t sys_getrlimit(dword_t resource, addr_t rlim_addr) {
     struct rlimit_ rlimit = rlimit_get(current, resource);
-    STRACE("getrlimit(%d, {cur=%#x, max=%#x}", resource, rlimit.cur, rlimit.max);
+    STRACE("getrlimit(%d, {cur=%#x, max=%#x})", resource, rlimit.cur, rlimit.max);
+    if (user_put(rlim_addr, rlimit))
+        return _EFAULT;
+    return 0;
+}
+
+dword_t sys_getrlimit32(dword_t resource, addr_t rlim_addr) {
+    struct rlimit_ rlimit = rlimit_get(current, resource);
+    // This version of the call is for programs that aren't aware of rlim_t
+    // being 64 bit. RLIM_INFINITY looks like -1 when truncated to 32 bits.
+    if (rlimit.cur > INT_MAX)
+        rlimit.cur = INT_MAX;
+    if (rlimit.max > INT_MAX)
+        rlimit.max = INT_MAX;
+    STRACE("getrlimit32(%d, {cur=%#x, max=%#x})", resource, rlimit.cur, rlimit.max);
     if (user_put(rlim_addr, rlimit))
         return _EFAULT;
     return 0;
@@ -41,7 +57,7 @@ dword_t sys_setrlimit(dword_t resource, addr_t rlim_addr) {
     struct rlimit_ rlimit;
     if (user_get(rlim_addr, rlimit))
         return _EFAULT;
-    STRACE("setrlimit(%d, {cur=%#x, max=%#x}", resource, rlimit.cur, rlimit.max);
+    STRACE("setrlimit(%d, {cur=%#x, max=%#x})", resource, rlimit.cur, rlimit.max);
     // TODO check permissions
     rlimit_set(current, resource, rlimit);
     return 0;
