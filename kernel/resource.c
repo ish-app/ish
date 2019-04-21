@@ -1,6 +1,3 @@
-#include <limits.h>
-#include "kernel/calls.h"
-
 #if __linux__
 // pull in RUSAGE_THREAD
 #define _GNU_SOURCE
@@ -11,6 +8,9 @@
 #else
 #error
 #endif
+
+#include <limits.h>
+#include "kernel/calls.h"
 
 struct rlimit_ rlimit_get(struct task *task, int resource) {
     struct tgroup *group = task->group;
