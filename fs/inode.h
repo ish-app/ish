@@ -15,6 +15,9 @@ struct inode_data {
 
     struct list posix_locks;
     cond_t posix_unlock;
+
+    uint32_t socket_id;
+
     lock_t lock;
 };
 

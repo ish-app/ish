@@ -294,7 +294,7 @@ static int fakefs_symlink(struct mount *mount, const char *target, const char *l
 
 static int fakefs_mknod(struct mount *mount, const char *path, mode_t_ mode, dev_t_ dev) {
     mode_t_ real_mode = 0666;
-    if (S_ISBLK(mode) || S_ISCHR(mode))
+    if (S_ISBLK(mode) || S_ISCHR(mode) || S_ISSOCK(mode))
         real_mode |= S_IFREG;
     else
         real_mode |= mode & S_IFMT;

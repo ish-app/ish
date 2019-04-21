@@ -14,6 +14,10 @@ struct sockaddr_ {
     uint16_t family;
     char data[14];
 };
+struct sockaddr_max_ {
+    uint16_t family;
+    char data[108];
+};
 
 size_t sockaddr_size(void *p);
 // result comes from malloc
@@ -21,7 +25,7 @@ struct sockaddr *sockaddr_to_real(void *p);
 
 struct msghdr_ {
     addr_t msg_name;
-    int_t msg_namelen;
+    uint_t msg_namelen;
     addr_t msg_iov;
     uint_t msg_iovlen;
     addr_t msg_control;

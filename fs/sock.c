@@ -1,8 +1,11 @@
 #include <string.h>
 #include <sys/socket.h>
+#include <sys/un.h>
 #include <sys/stat.h>
 #include "kernel/calls.h"
 #include "fs/fd.h"
+#include "fs/inode.h"
+#include "fs/path.h"
 #include "fs/sock.h"
 #include "debug.h"
 
@@ -54,6 +57,11 @@ dword_t sys_socket(dword_t domain, dword_t type, dword_t protocol) {
     return f;
 }
 
+static void inode_release_if_exist(struct inode_data *inode) {
+    if (inode != NULL)
+        inode_release(inode);
+}
+
 static struct fd *sock_getfd(fd_t sock_fd) {
     struct fd *sock = f_get(sock_fd);
     if (sock == NULL || sock->ops != &socket_fdops)
@@ -61,71 +69,197 @@ static struct fd *sock_getfd(fd_t sock_fd) {
     return sock;
 }
 
-static int sockaddr_read(addr_t sockaddr_addr, void *sockaddr, size_t sockaddr_len) {
-    if (user_read(sockaddr_addr, sockaddr, sockaddr_len))
+static struct inode_data *unix_socket_get(const char *path_raw, int flag) {
+    char path[MAX_PATH];
+    int err = path_normalize(AT_PWD, path_raw, path, true);
+    if (err < 0)
+        return ERR_PTR(err);
+    struct mount *mount = find_mount_and_trim_path(path);
+    struct statbuf stat;
+    err = mount->fs->stat(mount, path, &stat, true);
+
+    // If bind was called, there are some funny semantics.
+    if (flag & O_CREAT_) {
+        // If the file exists, fail.
+        if (err == 0) {
+            err = _EADDRINUSE;
+            goto out;
+        }
+        // If the file can't be found, try to create it as a socket.
+        if (err < 0) {
+            mode_t_ mode = 0777;
+            struct fs_info *fs = current->fs;
+            lock(&fs->lock);
+            mode &= ~fs->umask;
+            unlock(&fs->lock);
+            err = mount->fs->mknod(mount, path, S_IFSOCK | mode, 0);
+            if (err < 0)
+                goto out;
+            err = mount->fs->stat(mount, path, &stat, true);
+            if (err < 0)
+                goto out;
+        }
+    }
+
+    // If something other than bind was called, just do the obvious thing and
+    // fail if stat failed.
+    if (!(flag & O_CREAT_) && err < 0)
+        goto out;
+
+    if (!S_ISSOCK(stat.mode)) {
+        err = _ENOTSOCK;
+        goto out;
+    }
+
+    // Look up the socket ID for the inode number.
+    struct inode_data *inode = inode_get(mount, stat.inode);
+    lock(&inode->lock);
+    if (inode->socket_id == 0) {
+        static uint32_t next_socket_id = 0;
+        static lock_t next_socket_id_lock = LOCK_INITIALIZER;
+        lock(&next_socket_id_lock);
+        inode->socket_id = ++next_socket_id;
+        unlock(&next_socket_id_lock);
+    }
+    unlock(&inode->lock);
+
+    mount_release(mount);
+    return inode;
+
+out:
+    mount_release(mount);
+    return ERR_PTR(err);
+}
+
+static int sockaddr_read_get_inode(addr_t sockaddr_addr, void *sockaddr, uint_t *sockaddr_len, struct inode_data **inode_out, int flag) {
+    // Make sure we can read things without overflowing buffers
+    if (*sockaddr_len < sizeof(socklen_t))
+        return _EINVAL;
+    if (*sockaddr_len > sizeof(struct sockaddr_max_))
+        return _EINVAL;
+
+    if (user_read(sockaddr_addr, sockaddr, *sockaddr_len))
         return _EFAULT;
     struct sockaddr *real_addr = sockaddr;
     struct sockaddr_ *fake_addr = sockaddr;
     real_addr->sa_family = sock_family_to_real(fake_addr->family);
+
     switch (real_addr->sa_family) {
         case PF_INET:
-        case PF_INET6:
+            if (*sockaddr_len < sizeof(struct sockaddr_in))
+                return _EINVAL;
             break;
-        case PF_LOCAL:
-            return _ENOENT; // lol
+        case PF_INET6:
+            if (*sockaddr_len < sizeof(struct sockaddr_in6))
+                return _EINVAL;
+            break;
+
+        case PF_LOCAL: {
+            // First pull out the path, being careful to not overflow anything.
+            char path[sizeof(struct sockaddr_max_) - offsetof(struct sockaddr_max_, data) + 1]; // big enough
+            size_t addr_path_size = *sockaddr_len - offsetof(struct sockaddr_, data);
+            memcpy(path, fake_addr->data, addr_path_size);
+            path[addr_path_size] = '\0';
+
+            struct inode_data *inode = unix_socket_get(path, flag);
+            if (IS_ERR(inode))
+                return PTR_ERR(inode);
+            *inode_out = inode;
+
+            struct sockaddr_un *real_addr_un = sockaddr;
+            size_t path_len = sprintf(real_addr_un->sun_path, "%s%d", "/tmp/ishsock", inode->socket_id);
+            // The call to real bind will fail if the backing socket already
+            // exists from a previous run or something. We already checked that
+            // the fake file doesn't exist in unix_socket_get, so try a simple
+            // solution.
+            if (flag & O_CREAT_)
+                unlink(real_addr_un->sun_path);
+            *sockaddr_len = offsetof(struct sockaddr_un, sun_path) + path_len;
+            break;
+        }
         default:
             return _EINVAL;
     }
     return 0;
 }
 
-static int sockaddr_write(addr_t sockaddr_addr, void *sockaddr, size_t sockaddr_len) {
+static int sockaddr_read(addr_t sockaddr_addr, void *sockaddr, uint_t *sockaddr_len) {
+    struct inode_data *inode = NULL;
+    int err = sockaddr_read_get_inode(sockaddr_addr, sockaddr, sockaddr_len, &inode, 0);
+    inode_release_if_exist(inode);
+    return err;
+}
+
+static int sockaddr_write(addr_t sockaddr_addr, void *sockaddr, uint_t *sockaddr_len) {
     struct sockaddr *real_addr = sockaddr;
     struct sockaddr_ *fake_addr = sockaddr;
     fake_addr->family = sock_family_from_real(real_addr->sa_family);
+    size_t len = sizeof(struct sockaddr_);
     switch (fake_addr->family) {
         case PF_INET_:
-        case PF_INET6_:
+            len = sizeof(struct sockaddr_in);
             break;
-        case PF_LOCAL_:
-            return _ENOENT; // lol
+        case PF_INET6_:
+            len = sizeof(struct sockaddr_in6);
+            break;
+        case PF_LOCAL_: {
+            // Most callers of sockaddr_write use it to return a peer name, and
+            // since we don't know the peer name in this case, just return the
+            // default peer name, which is the null address.
+            static struct sockaddr_ unix_domain_null = {.family = PF_LOCAL_};
+            sockaddr = &unix_domain_null;
+            break;
+        }
         default:
             return _EINVAL;
     }
-    if (user_write(sockaddr_addr, sockaddr, sockaddr_len))
+
+    if (*sockaddr_len > len)
+        *sockaddr_len = len;
+    // The address is supposed to be truncated if the specified length is too
+    // short, instead of returning an error.
+    if (user_write(sockaddr_addr, sockaddr, *sockaddr_len))
         return _EFAULT;
     return 0;
 }
 
-dword_t sys_bind(fd_t sock_fd, addr_t sockaddr_addr, dword_t sockaddr_len) {
+dword_t sys_bind(fd_t sock_fd, addr_t sockaddr_addr, uint_t sockaddr_len) {
     STRACE("bind(%d, 0x%x, %d)", sock_fd, sockaddr_addr, sockaddr_len);
     struct fd *sock = sock_getfd(sock_fd);
     if (sock == NULL)
         return _EBADF;
-    char sockaddr[sockaddr_len];
-    int err = sockaddr_read(sockaddr_addr, sockaddr, sockaddr_len);
+    struct sockaddr_max_ sockaddr;
+    struct inode_data *inode = NULL;
+    int err = sockaddr_read_get_inode(sockaddr_addr, &sockaddr, &sockaddr_len, &inode, O_CREAT_);
     if (err < 0)
         return err;
 
-    err = bind(sock->real_fd, (void *) sockaddr, sockaddr_len);
-    if (err < 0)
+    err = bind(sock->real_fd, (void *) &sockaddr, sockaddr_len);
+    if (err < 0) {
+        inode_release_if_exist(inode);
         return errno_map();
+    }
+    sock->socket.unix_name_inode = inode;
     return 0;
 }
 
-dword_t sys_connect(fd_t sock_fd, addr_t sockaddr_addr, dword_t sockaddr_len) {
+dword_t sys_connect(fd_t sock_fd, addr_t sockaddr_addr, uint_t sockaddr_len) {
     STRACE("connect(%d, 0x%x, %d)", sock_fd, sockaddr_addr, sockaddr_len);
     struct fd *sock = sock_getfd(sock_fd);
     if (sock == NULL)
         return _EBADF;
-    char sockaddr[sockaddr_len];
-    int err = sockaddr_read(sockaddr_addr, sockaddr, sockaddr_len);
+    struct sockaddr_max_ sockaddr;
+    struct inode_data *inode = NULL;
+    int err = sockaddr_read_get_inode(sockaddr_addr, &sockaddr, &sockaddr_len, &inode, 0);
     if (err < 0)
         return err;
 
-    err = connect(sock->real_fd, (void *) sockaddr, sockaddr_len);
-    if (err < 0)
+    err = connect(sock->real_fd, (void *) &sockaddr, sockaddr_len);
+    if (err < 0) {
+        inode_release_if_exist(inode);
         return errno_map();
+    }
+    sock->socket.unix_peer_inode = inode;
     return err;
 }
 
@@ -161,7 +295,7 @@ dword_t sys_accept(fd_t sock_fd, addr_t sockaddr_addr, addr_t sockaddr_len_addr)
     if (client < 0)
         return errno_map();
 
-    int err = sockaddr_write(sockaddr_addr, sockaddr, sockaddr_len);
+    int err = sockaddr_write(sockaddr_addr, sockaddr, &sockaddr_len);
     if (err < 0)
         return client;
     if (user_put(sockaddr_len_addr, sockaddr_len))
@@ -188,7 +322,7 @@ dword_t sys_getsockname(fd_t sock_fd, addr_t sockaddr_addr, addr_t sockaddr_len_
     if (res < 0)
         return errno_map();
 
-    int err = sockaddr_write(sockaddr_addr, sockaddr, sockaddr_len);
+    int err = sockaddr_write(sockaddr_addr, sockaddr, &sockaddr_len);
     if (err < 0)
         return err;
     if (user_put(sockaddr_len_addr, sockaddr_len))
@@ -210,7 +344,7 @@ dword_t sys_getpeername(fd_t sock_fd, addr_t sockaddr_addr, addr_t sockaddr_len_
     if (res < 0)
         return errno_map();
 
-    int err = sockaddr_write(sockaddr_addr, sockaddr, sockaddr_len);
+    int err = sockaddr_write(sockaddr_addr, sockaddr, &sockaddr_len);
     if (err < 0)
         return err;
     if (user_put(sockaddr_len_addr, sockaddr_len))
@@ -268,15 +402,15 @@ dword_t sys_sendto(fd_t sock_fd, addr_t buffer_addr, dword_t len, dword_t flags,
     int real_flags = sock_flags_to_real(flags);
     if (real_flags < 0)
         return _EINVAL;
-    char sockaddr[sockaddr_len];
+    struct sockaddr_max_ sockaddr;
     if (sockaddr_addr) {
-        int err = sockaddr_read(sockaddr_addr, sockaddr, sockaddr_len);
+        int err = sockaddr_read(sockaddr_addr, &sockaddr, &sockaddr_len);
         if (err < 0)
             return err;
     }
 
     ssize_t res = sendto(sock->real_fd, buffer, len, real_flags,
-            sockaddr_addr ? (void *) sockaddr : NULL, sockaddr_len);
+            sockaddr_addr ? (void *) &sockaddr : NULL, sockaddr_len);
     if (res < 0)
         return errno_map();
     return res;
@@ -290,7 +424,7 @@ dword_t sys_recvfrom(fd_t sock_fd, addr_t buffer_addr, dword_t len, dword_t flag
     int real_flags = sock_flags_to_real(flags);
     if (real_flags < 0)
         return _EINVAL;
-    dword_t sockaddr_len = 0;
+    uint_t sockaddr_len = 0;
     if (sockaddr_len_addr != 0)
         if (user_get(sockaddr_len_addr, sockaddr_len))
             return _EFAULT;
@@ -306,7 +440,7 @@ dword_t sys_recvfrom(fd_t sock_fd, addr_t buffer_addr, dword_t len, dword_t flag
     if (user_write(buffer_addr, buffer, len))
         return _EFAULT;
     if (sockaddr_addr != 0) {
-        int err = sockaddr_write(sockaddr_addr, sockaddr, sockaddr_len);
+        int err = sockaddr_write(sockaddr_addr, sockaddr, &sockaddr_len);
         if (err < 0)
             return err;
     }
@@ -411,12 +545,12 @@ dword_t sys_sendmsg(fd_t sock_fd, addr_t msghdr_addr, int_t flags) {
         return _EFAULT;
 
     // msg_name
-    char msg_name[msg_fake.msg_namelen];
+    struct sockaddr_max_ msg_name;
     if (msg_fake.msg_name != 0) {
-        int err = sockaddr_read(msg_fake.msg_name, msg_name, msg_fake.msg_namelen);
+        int err = sockaddr_read(msg_fake.msg_name, &msg_name, &msg_fake.msg_namelen);
         if (err < 0)
             return err;
-        msg.msg_name = msg_name;
+        msg.msg_name = &msg_name;
         msg.msg_namelen = msg_fake.msg_namelen;
     }
 
@@ -534,7 +668,7 @@ dword_t sys_recvmsg(fd_t sock_fd, addr_t msghdr_addr, int_t flags) {
 
     // msg_name (changed)
     if (msg.msg_name != 0) {
-        int err = sockaddr_write(msg_fake.msg_name, msg.msg_name, msg_fake.msg_namelen);
+        int err = sockaddr_write(msg_fake.msg_name, msg.msg_name, &msg_fake.msg_namelen);
         if (err < 0)
             return err;
     }
@@ -584,6 +718,8 @@ static ssize_t sock_write(struct fd *fd, const void *buf, size_t size) {
 
 static int sock_close(struct fd *fd) {
     sockrestart_end_listen(fd);
+    inode_release_if_exist(fd->socket.unix_name_inode);
+    inode_release_if_exist(fd->socket.unix_peer_inode);
     return realfs_close(fd);
 }
 

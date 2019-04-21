@@ -28,6 +28,7 @@ struct inode_data *inode_get(struct mount *mount, ino_t ino) {
         inode->number = ino;
         mount_retain(mount);
         inode->mount = mount;
+        inode->socket_id = 0;
         cond_init(&inode->posix_unlock);
         list_init(&inode->posix_locks);
         list_init(&inode->chain);

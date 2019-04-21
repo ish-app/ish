@@ -43,6 +43,8 @@ struct fd {
             int domain;
             int type;
             int protocol;
+            struct inode_data *unix_name_inode;
+            struct inode_data *unix_peer_inode;
         } socket;
     };
     // fs data
