@@ -358,7 +358,20 @@ static int elf_exec(struct fd *fd, const char *file, const char *argv, const cha
     current->cpu.esp = sp;
     current->cpu.eip = entry;
     current->cpu.fcw = 0x37f;
+
+    // This code was written when I discovered that the glibc entry point
+    // interprets edx as the address of a function to call on exit, as
+    // specified in the ABI. This register is normally set by the dynamic
+    // linker, so everything works fine until you run a static executable.
+    current->cpu.eax = 0;
+    current->cpu.ebx = 0;
+    current->cpu.ecx = 0;
+    current->cpu.edx = 0;
+    current->cpu.esi = 0;
+    current->cpu.edi = 0;
+    current->cpu.ebp = 0;
     collapse_flags(&current->cpu);
+    current->cpu.eflags = 0;
 
     err = 0;
 out_free_interp:
