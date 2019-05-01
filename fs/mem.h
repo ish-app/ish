@@ -9,6 +9,7 @@ extern struct dev_ops
     null_dev,
     zero_dev,
     full_dev,
-    random_dev;
+    random_dev,
+    iac_dev;
 
 #endif
