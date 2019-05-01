@@ -522,34 +522,56 @@ static struct timespec convert_timespec(struct timespec_ t) {
     return ts;
 }
 
-dword_t sys_utimensat(fd_t at_f, addr_t path_addr, addr_t times_addr, dword_t flags) {
-    struct timespec_ times[2];
-    if (times_addr == 0) {
-        // if times is NULL, set both times to the current time
-        struct timespec now;
-        int err = clock_gettime(CLOCK_REALTIME, &now);
-        if (err < 0)
-            return errno_map();
-        times[0] = times[1] = (struct timespec_) {.sec = now.tv_sec, .nsec = now.tv_nsec};
-    } else {
-        if (user_get(times_addr, times))
-            return _EFAULT;
-    }
+static struct timespec convert_timeval(struct timeval_ t) {
+    struct timespec ts;
+    ts.tv_sec = t.sec;
+    ts.tv_nsec = t.usec * 1000;
+    return ts;
+}
 
+static dword_t sys_utime_common(fd_t at_f, addr_t path_addr, struct timespec atime, struct timespec mtime, dword_t flags) {
     char path[MAX_PATH];
     if (path_addr != 0)
         if (user_read_string(path_addr, path, sizeof(path)))
             return _EFAULT;
     STRACE("utimensat(%d, %s, {{%d, %d}, {%d, %d}}, %d)", at_f, path,
-            times[0].sec, times[0].nsec, times[1].sec, times[1].nsec, flags);
+            atime.tv_sec, atime.tv_nsec, mtime.tv_sec, mtime.tv_nsec, flags);
     struct fd *at = at_fd(at_f);
     if (at == NULL)
         return _EBADF;
 
-    struct timespec atime = convert_timespec(times[0]);
-    struct timespec mtime = convert_timespec(times[1]);
     bool follow_links = flags & AT_SYMLINK_NOFOLLOW_ ? false : true;
     return generic_utime(at, path_addr != 0 ? path : ".", atime, mtime, follow_links); // TODO implement
+}
+
+dword_t sys_utimensat(fd_t at_f, addr_t path_addr, addr_t times_addr, dword_t flags) {
+    struct timespec atime;
+    struct timespec mtime;
+    if (times_addr == 0) {
+        atime = mtime = timespec_now();
+    } else {
+        struct timespec_ times[2];
+        if (user_get(times_addr, times))
+            return _EFAULT;
+        atime = convert_timespec(times[0]);
+        mtime = convert_timespec(times[1]);
+    }
+    return sys_utime_common(at_f, path_addr, atime, mtime, flags);
+}
+
+dword_t sys_utimes(addr_t path_addr, addr_t times_addr) {
+    struct timespec atime;
+    struct timespec mtime;
+    if (times_addr == 0) {
+        atime = mtime = timespec_now();
+    } else {
+        struct timeval_ times[2];
+        if (user_get(times_addr, times))
+            return _EFAULT;
+        atime = convert_timeval(times[0]);
+        mtime = convert_timeval(times[1]);
+    }
+    return sys_utime_common(AT_FDCWD_, path_addr, atime, mtime, 0);
 }
 
 dword_t sys_fchmod(fd_t f, dword_t mode) {
