@@ -1,8 +1,14 @@
 #include <string.h>
 #include <unistd.h>
 #include <signal.h>
+#include <errno.h>
 #include "kernel/init.h"
 #include "kernel/fs.h"
+#ifdef __APPLE__
+#include <sys/resource.h>
+#define IOPOL_TYPE_VFS_HFS_CASE_SENSITIVITY 1
+#define IOPOL_VFS_HFS_CASE_SENSITIVITY_FORCE_CASE_SENSITIVE 1
+#endif
 
 static void exit_handler(int code) {
     if (code & 0xff)
@@ -15,6 +21,22 @@ static void exit_handler(int code) {
 // data structures. thanks programming discussions discord server for the name.
 // https://discord.gg/9zT7NHP
 static inline int xX_main_Xx(int argc, char *const argv[], const char *envp) {
+#ifdef __APPLE__
+    // Enable case-sensitive filesystem mode on macOS, if possible.
+    // In order for this to succeed, either we need to be running as root, or
+    // be given the com.apple.private.iopol.case_sensitivity entitlement. The
+    // second option isn't possible so you'll need to give iSH the setuid root
+    // bit. In that case it's important to drop root permissions ASAP.
+    // https://worthdoingbadly.com/casesensitive-iossim/
+    int iopol_err = setiopolicy_np(IOPOL_TYPE_VFS_HFS_CASE_SENSITIVITY,
+            IOPOL_SCOPE_PROCESS,
+            IOPOL_VFS_HFS_CASE_SENSITIVITY_FORCE_CASE_SENSITIVE);
+    if (iopol_err != 0 && errno != EPERM)
+        perror("could not enable case sensitivity");
+    setgid(getgid());
+    setuid(getuid());
+#endif
+
     // parse cli options
     int opt;
     const char *root = "";
