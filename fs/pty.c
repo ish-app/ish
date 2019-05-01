@@ -15,7 +15,7 @@ static int pty_master_init(struct tty *tty) {
     tty->termios.oflags = 0;
     tty->termios.lflags = 0;
 
-    struct tty *slave = tty_alloc(&pty_slave, tty->num);
+    struct tty *slave = tty_alloc(&pty_slave, TTY_PSEUDO_SLAVE_MAJOR, tty->num);
     slave->refcount = 1;
     pty_slave.ttys[tty->num] = slave;
     tty->pty.other = slave;
@@ -93,7 +93,7 @@ int ptmx_open(struct fd *fd) {
     if (pty_num == MAX_PTYS)
         return _ENOSPC;
 
-    struct tty *tty = tty_get(&pty_master, pty_num);
+    struct tty *tty = tty_get(&pty_master, TTY_PSEUDO_MASTER_MAJOR, pty_num);
     if (IS_ERR(tty))
         return PTR_ERR(tty);
 

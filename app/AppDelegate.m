@@ -66,15 +66,23 @@ static void ios_handle_die(const char *msg) {
     if (err < 0)
         return err;
     
+    // need to do this first so that we can have a valid current for the generic_mknod calls
+    create_first_process();
+    
     // create some device nodes
     // this will do nothing if they already exist
+    generic_mknod("/dev/console", S_IFCHR|0666, dev_make(5, 1));
     generic_mknod("/dev/tty1", S_IFCHR|0666, dev_make(4, 1));
+    generic_mknod("/dev/tty2", S_IFCHR|0666, dev_make(4, 2));
+    generic_mknod("/dev/tty3", S_IFCHR|0666, dev_make(4, 3));
+    generic_mknod("/dev/tty4", S_IFCHR|0666, dev_make(4, 4));
+    generic_mknod("/dev/tty5", S_IFCHR|0666, dev_make(4, 5));
+    generic_mknod("/dev/tty6", S_IFCHR|0666, dev_make(4, 6));
     generic_mknod("/dev/tty", S_IFCHR|0666, dev_make(5, 0));
     generic_mknod("/dev/ptmx", S_IFCHR|0666, dev_make(5, 2));
     generic_mknod("/dev/random", S_IFCHR|0666, dev_make(1, 8));
     generic_mknod("/dev/urandom", S_IFCHR|0666, dev_make(1, 9));
-
-    create_first_process();
+    
     NSArray<NSString *> *command = UserPreferences.shared.launchCommand;
     char argv[4096];
     char *p = argv;
@@ -92,7 +100,8 @@ static void ios_handle_die(const char *msg) {
     err = sys_execve(argv, argv, envp);
     if (err < 0)
         return err;
-    err = create_stdio("/dev/tty1", &ios_tty_driver);
+    set_console_device(4, 1);
+    err = create_stdio("/dev/console", &ios_tty_driver);
     if (err < 0)
         return err;
     exit_hook = ios_handle_exit;

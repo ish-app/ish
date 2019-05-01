@@ -34,11 +34,14 @@
 
 @implementation Terminal
 
-static Terminal *terminal = nil;
+static NSMutableDictionary<NSNumber *, Terminal *> *terminals;
 
-- (instancetype)init {
+- (instancetype)initWithType:(int)type number:(int)num {
+    NSNumber *key = @(dev_make(type, num));
+    Terminal *terminal = [terminals objectForKey:key];
     if (terminal)
         return terminal;
+    
     if (self = [super init]) {
         self.pendingData = [NSMutableData new];
         self.refreshTask = [[DelayedUITask alloc] initWithTarget:self action:@selector(refresh)];
@@ -55,7 +58,8 @@ static Terminal *terminal = nil;
           [NSBundle.mainBundle URLForResource:@"xterm-dist/term" withExtension:@"html"]]];
         [self.webView addObserver:self forKeyPath:@"loading" options:0 context:NULL];
         [self _addPreferenceObservers];
-        terminal = self;
+        
+        [terminals setObject:self forKey:key];
     }
     return self;
 }
@@ -224,16 +228,26 @@ NSData *removeInvalidUTF8(NSData *data) {
 }
 
 + (Terminal *)terminalWithType:(int)type number:(int)number {
-    return [Terminal new];
+    return [[Terminal alloc] initWithType:type number:number];
+}
+
++ (void)initialize {
+    terminals = [NSMutableDictionary new];
 }
 
 @end
 
 static int ios_tty_init(struct tty *tty) {
-    Terminal *terminal = [Terminal terminalWithType:tty->type number:tty->num];
-    terminal.tty = tty;
     tty->refcount++;
-    tty->data = (void *) CFBridgingRetain(terminal);
+    void (^init_block)(void) = ^{
+        Terminal *terminal = [Terminal terminalWithType:tty->type number:tty->num];
+        tty->data = (void *) CFBridgingRetain(terminal);
+        terminal.tty = tty;
+    };
+    if ([NSThread isMainThread])
+        init_block();
+    else
+        dispatch_sync(dispatch_get_main_queue(), init_block);
 
     // termios
     tty->termios.lflags = ISIG_ | ICANON_ | ECHO_ | ECHOE_ | ECHOCTL_;
@@ -273,4 +287,4 @@ struct tty_driver_ops ios_tty_ops = {
     .write = ios_tty_write,
     .cleanup = ios_tty_cleanup,
 };
-DEFINE_TTY_DRIVER(ios_tty_driver, &ios_tty_ops, 2);
+DEFINE_TTY_DRIVER(ios_tty_driver, &ios_tty_ops, 64);

@@ -17,13 +17,14 @@ struct tty_driver *tty_drivers[256] = {
 // lock this before locking a tty
 lock_t ttys_lock = LOCK_INITIALIZER;
 
-struct tty *tty_alloc(struct tty_driver *driver, int num) {
+struct tty *tty_alloc(struct tty_driver *driver, int type, int num) {
     struct tty *tty = malloc(sizeof(struct tty));
     if (tty == NULL)
         return NULL;
 
     tty->refcount = 0;
     tty->driver = driver;
+    tty->type = type;
     tty->num = num;
     tty->hung_up = false;
     tty->session = 0;
@@ -48,11 +49,11 @@ struct tty *tty_alloc(struct tty_driver *driver, int num) {
     return tty;
 }
 
-struct tty *tty_get(struct tty_driver *driver, int num) {
+struct tty *tty_get(struct tty_driver *driver, int type, int num) {
     lock(&ttys_lock);
     struct tty *tty = driver->ttys[num];
     if (tty == NULL) {
-        tty = tty_alloc(driver, num);
+        tty = tty_alloc(driver, type, num);
         if (tty == NULL) {
             unlock(&ttys_lock);
             return NULL;
@@ -121,6 +122,10 @@ static void tty_set_controlling(struct tgroup *group, struct tty *tty) {
     unlock(&group->lock);
 }
 
+// by default, /dev/console is /dev/tty1
+int console_major = 4;
+int console_minor = 1;
+
 static int tty_open(int major, int minor, struct fd *fd) {
     struct tty *tty;
     if (major == 5) {
@@ -137,6 +142,8 @@ static int tty_open(int major, int minor, struct fd *fd) {
             unlock(&ttys_lock);
             if (tty == NULL)
                 return _ENXIO;
+        } else if (minor == 1) {
+            return tty_open(console_major, console_minor, fd);
         } else if (minor == 2) {
             return ptmx_open(fd);
         } else {
@@ -145,7 +152,7 @@ static int tty_open(int major, int minor, struct fd *fd) {
     } else {
         struct tty_driver *driver = tty_drivers[major];
         assert(driver != NULL);
-        tty = tty_get(driver, minor);
+        tty = tty_get(driver, major, minor);
         if (IS_ERR(tty))
             return PTR_ERR(tty);
     }

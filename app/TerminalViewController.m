@@ -39,7 +39,7 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    self.terminal = [Terminal terminalWithType:0 number:1];
+    self.terminal = [Terminal terminalWithType:4 number:1];
     self.termView.terminal = self.terminal;
     [self.termView becomeFirstResponder];
 

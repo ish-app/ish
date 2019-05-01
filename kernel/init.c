@@ -62,6 +62,13 @@ void create_first_process() {
     sys_setsid();
 }
 
+extern int console_major;
+extern int console_minor;
+void set_console_device(int major, int minor) {
+    console_major = major;
+    console_minor = minor;
+}
+
 int create_stdio(const char *file, struct tty_driver *driver) {
     tty_drivers[TTY_CONSOLE_MAJOR] = driver;
 
@@ -69,10 +76,10 @@ int create_stdio(const char *file, struct tty_driver *driver) {
     if (fd == ERR_PTR(_ENOENT)) {
         // fallback to adhoc files for stdio
         fd = adhoc_fd_create(NULL);
-        fd->stat.rdev = dev_make(4, 0);
+        fd->stat.rdev = dev_make(4, 1);
         fd->stat.mode = S_IFCHR | S_IRUSR;
         fd->flags = O_RDWR_;
-        int err = dev_open(4, 0, DEV_CHAR, fd);
+        int err = dev_open(4, 1, DEV_CHAR, fd);
         if (err < 0)
             return err;
     }

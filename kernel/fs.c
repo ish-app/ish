@@ -664,6 +664,7 @@ dword_t sys_mkdirat(fd_t at_f, addr_t path_addr, mode_t_ mode) {
     if (at == NULL)
         return _EBADF;
     apply_umask(&mode);
+    mode &= 0777;
     return generic_mkdirat(at, path, mode);
 }
 

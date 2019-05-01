@@ -9,6 +9,9 @@
 #include "kernel/calls.h"
 #include "fs/tty.h"
 
+// Only /dev/tty1 will be connected, the rest will go to a black hole.
+#define REAL_TTY_NUM 1
+
 static void real_tty_read_thread(struct tty *tty) {
     char ch;
     for (;;) {
@@ -73,6 +76,9 @@ static struct termios_ termios_from_real(struct termios real) {
 
 static struct termios old_termios;
 int real_tty_init(struct tty *tty) {
+    if (tty->num != REAL_TTY_NUM)
+        return 0;
+
     struct winsize winsz;
     if (ioctl(STDIN_FILENO, TIOCGWINSZ, &winsz) < 0) {
         if (errno == ENOTTY)
@@ -105,11 +111,15 @@ notty:
     return 0;
 }
 
-int real_tty_write(struct tty *UNUSED(tty), const void *buf, size_t len, bool UNUSED(blocking)) {
+int real_tty_write(struct tty *tty, const void *buf, size_t len, bool UNUSED(blocking)) {
+    if (tty->num != REAL_TTY_NUM)
+        return len;
     return write(STDOUT_FILENO, buf, len);
 }
 
 void real_tty_cleanup(struct tty *tty) {
+    if (tty->num != REAL_TTY_NUM)
+        return;
     if (tcsetattr(STDIN_FILENO, TCSANOW, &old_termios) < 0 && errno != ENOTTY)
         ERRNO_DIE("failed to reset terminal");
     pthread_cancel(tty->thread);
