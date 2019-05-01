@@ -450,6 +450,14 @@ int_t sys_recvfrom(fd_t sock_fd, addr_t buffer_addr, dword_t len, dword_t flags,
     return res;
 }
 
+int_t sys_send(fd_t sock_fd, addr_t buf, dword_t len, int_t flags) {
+    return sys_sendto(sock_fd, buf, len, flags, 0, 0);
+}
+
+int_t sys_recv(fd_t sock_fd, addr_t buf, dword_t len, int_t flags) {
+    return sys_recvfrom(sock_fd, buf, len, flags, 0, 0);
+}
+
 int_t sys_shutdown(fd_t sock_fd, dword_t how) {
     STRACE("shutdown(%d, %d)", sock_fd, how);
     struct fd *sock = sock_getfd(sock_fd);
@@ -779,8 +787,8 @@ static struct socket_call {
     {(syscall_t) sys_getsockname, 3},
     {(syscall_t) sys_getpeername, 3},
     {(syscall_t) sys_socketpair, 4},
-    {NULL}, // send
-    {NULL}, // recv
+    {(syscall_t) sys_send, 4}, // send
+    {(syscall_t) sys_recv, 4}, // recv
     {(syscall_t) sys_sendto, 6},
     {(syscall_t) sys_recvfrom, 6},
     {(syscall_t) sys_shutdown, 2},
