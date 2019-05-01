@@ -176,6 +176,7 @@ syscall_t syscall_table[] = {
     [353] = (syscall_t) sys_renameat2,
     [355] = (syscall_t) sys_getrandom,
     [377] = (syscall_t) sys_copy_file_range,
+    [384] = (syscall_t) sys_arch_prctl,
 };
 
 #define NUM_SYSCALLS (sizeof(syscall_table) / sizeof(syscall_table[0]))

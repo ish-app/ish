@@ -13,6 +13,11 @@ int_t sys_prctl(dword_t option, uint_t UNUSED(arg2), uint_t UNUSED(arg3), uint_t
     }
 }
 
+int_t sys_arch_prctl(int_t code, addr_t addr) {
+    STRACE("arch_prctl(%#x, %#x)", code, addr);
+    return _EINVAL;
+}
+
 #define REBOOT_MAGIC1 0xfee1dead
 #define REBOOT_MAGIC2 672274793
 #define REBOOT_MAGIC2A 85072278
