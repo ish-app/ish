@@ -2,8 +2,6 @@
 #include "kernel/calls.h"
 #include "emu/interrupt.h"
 
-#define NUM_SYSCALLS 400
-
 dword_t syscall_stub() {
     return _ENOSYS;
 }
@@ -180,11 +178,13 @@ syscall_t syscall_table[] = {
     [377] = (syscall_t) sys_copy_file_range,
 };
 
+#define NUM_SYSCALLS (sizeof(syscall_table) / sizeof(syscall_table[0]))
+
 void handle_interrupt(int interrupt) {
     TRACE_(instr, "\n");
     struct cpu_state *cpu = &current->cpu;
     if (interrupt == INT_SYSCALL) {
-        int syscall_num = cpu->eax;
+        unsigned syscall_num = cpu->eax;
         if (syscall_num >= NUM_SYSCALLS || syscall_table[syscall_num] == NULL) {
             printk("%d missing syscall %d\n", current->pid, syscall_num);
             send_signal(current, SIGSYS_);
