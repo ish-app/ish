@@ -48,6 +48,7 @@ struct task {
     struct list siblings;
 
     addr_t clear_tid;
+    addr_t robust_list;
 
     // locked by pids_lock
     dword_t exit_code;

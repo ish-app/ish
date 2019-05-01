@@ -118,3 +118,33 @@ dword_t sys_futex(addr_t uaddr, dword_t op, dword_t val, addr_t timeout_or_val2,
     FIXME("unsupported futex operation %d", op);
     return _ENOSYS;
 }
+
+struct robust_list_head_ {
+    addr_t list;
+    dword_t offset;
+    addr_t list_op_pending;
+};
+
+int_t sys_set_robust_list(addr_t robust_list, dword_t len) {
+    STRACE("set_robust_list(%#x, %d)", robust_list, len);
+    if (len != sizeof(struct robust_list_head_))
+        return _EINVAL;
+    current->robust_list = robust_list;
+    return 0;
+}
+
+int_t sys_get_robust_list(pid_t_ pid, addr_t robust_list_ptr, addr_t len_ptr) {
+    STRACE("get_robust_list(%d, %#x, %#x)", pid, robust_list_ptr, len_ptr);
+
+    lock(&pids_lock);
+    struct task *task = pid_get_task(pid);
+    if (task != current)
+        return _EPERM;
+    unlock(&pids_lock);
+
+    if (user_put(robust_list_ptr, current->robust_list))
+        return _EFAULT;
+    if (user_put(len_ptr, (int[]) {sizeof(struct robust_list_head_)}))
+        return _EFAULT;
+    return 0;
+}
