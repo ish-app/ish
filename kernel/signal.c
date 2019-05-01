@@ -458,7 +458,7 @@ int_t sys_pause() {
     return _EINTR;
 }
 
-dword_t sys_kill(pid_t_ pid, dword_t sig) {
+int do_kill(pid_t_ pid, dword_t sig, pid_t_ tgid) {
     STRACE("kill(%d, %d)", pid, sig);
     if (sig >= NUM_SIGS)
         return _EINVAL;
@@ -474,11 +474,29 @@ dword_t sys_kill(pid_t_ pid, dword_t sig) {
         unlock(&pids_lock);
         return _ESRCH;
     }
+
+    // If tgid is nonzero, it must be correct
+    if (tgid != 0 && task->tgid != tgid) {
+        unlock(&pids_lock);
+        return _ESRCH;
+    }
+
     send_signal(task, sig);
     unlock(&pids_lock);
     return 0;
 }
 
-dword_t sys_tkill(pid_t_ tid, dword_t sig) {
-    return sys_kill(tid, sig);
+dword_t sys_kill(pid_t_ pid, dword_t sig) {
+    return do_kill(pid, sig, 0);
 }
+dword_t sys_tgkill(pid_t_ tgid, pid_t_ tid, dword_t sig) {
+    if (tid <= 0 || tgid <= 0)
+        return _EINVAL;
+    return do_kill(tid, sig, tgid);
+}
+dword_t sys_tkill(pid_t_ tid, dword_t sig) {
+    if (tid <= 0)
+        return _EINVAL;
+    return do_kill(tid, sig, 0);
+}
+

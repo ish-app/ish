@@ -104,6 +104,7 @@ int_t sys_pause(void);
 
 dword_t sys_kill(pid_t_ pid, dword_t sig);
 dword_t sys_tkill(pid_t_ tid, dword_t sig);
+dword_t sys_tgkill(pid_t_ tgid, pid_t_ tid, dword_t sig);
 
 // signal frame structs. There's a good chance this should go in its own header file
 
