@@ -121,6 +121,7 @@ dword_t sys_access(addr_t path_addr, dword_t mode);
 dword_t sys_faccessat(fd_t at_f, addr_t path, mode_t_ mode, dword_t flags);
 dword_t sys_readlink(addr_t path, addr_t buf, dword_t bufsize);
 dword_t sys_readlinkat(fd_t at_f, addr_t path, addr_t buf, dword_t bufsize);
+int_t sys_getdents(fd_t f, addr_t dirents, dword_t count);
 int_t sys_getdents64(fd_t f, addr_t dirents, dword_t count);
 dword_t sys_stat64(addr_t path_addr, addr_t statbuf_addr);
 dword_t sys_lstat64(addr_t path_addr, addr_t statbuf_addr);
