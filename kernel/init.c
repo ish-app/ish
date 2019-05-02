@@ -10,7 +10,7 @@ int mount_root(const struct fs_ops *fs, const char *source) {
     char source_realpath[MAX_PATH + 1];
     if (realpath(source, source_realpath) == NULL)
         return errno_map();
-    int err = do_mount(fs, source_realpath, "");
+    int err = do_mount(fs, source_realpath, "", 0);
     if (err < 0)
         return err;
     return 0;

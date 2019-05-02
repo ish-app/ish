@@ -67,6 +67,7 @@ int generic_mkdirat(struct fd *at, const char *path, mode_t_ mode);
 struct mount {
     const char *point;
     const char *source;
+    int flags;
     const struct fs_ops *fs;
     unsigned refcount;
     struct list mounts;
@@ -104,7 +105,7 @@ void mount_retain(struct mount *mount);
 void mount_release(struct mount *mount);
 
 // must hold mounts_lock while calling these, or traversing mounts
-int do_mount(const struct fs_ops *fs, const char *source, const char *point);
+int do_mount(const struct fs_ops *fs, const char *source, const char *point, int flags);
 int do_umount(const char *point);
 int mount_remove(struct mount *mount);
 extern struct list mounts;

@@ -134,8 +134,8 @@ static void ios_handle_die(const char *msg) {
         fd_close(fd);
     }
 
-    do_mount(&procfs, "proc", "/proc");
-    do_mount(&devptsfs, "devpts", "/dev/pts");
+    do_mount(&procfs, "proc", "/proc", 0);
+    do_mount(&devptsfs, "devpts", "/dev/pts", 0);
 
     task_start(current);
     return 0;
