@@ -275,7 +275,7 @@
                 cset w9, ne
             .endif
             strb w9, [_cpu, CPU_of]
-            setf_zsp \s
+            setf_zsp \s, val=w8
         .endifin
 
     2:
