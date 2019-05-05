@@ -390,7 +390,7 @@ static ssize_t tty_read(struct fd *fd, void *buf, size_t bufsize) {
 
     pid_t_ current_pgid = current->group->pgid;
     unlock(&pids_lock);
-    if (current_pgid != tty->fg_group) {
+    if (tty->fg_group != 0 && current_pgid != tty->fg_group) {
         if (!try_self_signal(SIGTTIN_))
             err = _EIO;
         else
