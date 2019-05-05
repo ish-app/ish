@@ -109,6 +109,7 @@ struct tty {
     unsigned refcount;
     struct tty_driver *driver;
     bool hung_up;
+    bool ever_opened;
 
 #define TTY_BUF_SIZE 4096
     char buf[TTY_BUF_SIZE];

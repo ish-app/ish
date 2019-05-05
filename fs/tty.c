@@ -27,6 +27,7 @@ struct tty *tty_alloc(struct tty_driver *driver, int type, int num) {
     tty->type = type;
     tty->num = num;
     tty->hung_up = false;
+    tty->ever_opened = false;
     tty->session = 0;
     tty->fg_group = 0;
     list_init(&tty->fds);
@@ -71,6 +72,7 @@ struct tty *tty_get(struct tty_driver *driver, int type, int num) {
     }
     lock(&tty->lock);
     tty->refcount++;
+    tty->ever_opened = true;
     unlock(&tty->lock);
     unlock(&ttys_lock);
     return tty;
@@ -369,7 +371,7 @@ static bool pty_is_half_closed_master(struct tty *tty) {
     struct tty *slave = tty->pty.other;
     // only time one tty lock is nested in another
     lock(&slave->lock);
-    bool half_closed = slave->refcount == 1;
+    bool half_closed = slave->ever_opened && slave->refcount == 1;
     unlock(&slave->lock);
     return half_closed;
 }
