@@ -35,11 +35,13 @@ extern NSString *const kThemeBackgroundColor;
 
 @interface UserPreferences : NSObject
 
-@property (nonatomic) CapsLockMapping capsLockMapping;
+@property CapsLockMapping capsLockMapping;
 @property (nonatomic) Theme *theme;
-@property (nonatomic) BOOL shouldDisableDimming;
-@property (nonatomic, copy) NSNumber *fontSize;
-@property (nonatomic) NSArray<NSString *> *launchCommand;
+@property BOOL shouldDisableDimming;
+@property NSNumber *fontSize;
+@property NSArray<NSString *> *launchCommand;
+@property NSArray<NSString *> *bootCommand;
+@property BOOL bootEnabled;
 
 + (instancetype)shared;
 

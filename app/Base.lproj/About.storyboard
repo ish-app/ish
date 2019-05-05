@@ -178,20 +178,20 @@
                                             <rect key="frame" x="0.0" y="0.0" width="320" height="43.5"/>
                                             <autoresizingMask key="autoresizingMask"/>
                                             <subviews>
-                                                <label opaque="NO" multipleTouchEnabled="YES" contentMode="left" horizontalHuggingPriority="1000" insetsLayoutMarginsFromSafeArea="NO" text="Init Command" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="G8D-8d-aOp">
-                                                    <rect key="frame" x="8" y="11.5" width="106.5" height="21"/>
+                                                <label opaque="NO" multipleTouchEnabled="YES" contentMode="left" horizontalHuggingPriority="1000" insetsLayoutMarginsFromSafeArea="NO" text="Launch cmd" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="G8D-8d-aOp">
+                                                    <rect key="frame" x="16" y="11.5" width="94.5" height="21"/>
                                                     <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                                     <nil key="textColor"/>
                                                     <nil key="highlightedColor"/>
                                                 </label>
                                                 <textField opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" text="/bin/login -f root" adjustsFontSizeToFit="NO" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="gDx-hv-hhV">
-                                                    <rect key="frame" x="126.5" y="13.5" width="185.5" height="17"/>
+                                                    <rect key="frame" x="122.5" y="13.5" width="181.5" height="17"/>
                                                     <nil key="textColor"/>
                                                     <fontDescription key="fontDescription" name="Menlo-Regular" family="Menlo" pointSize="14"/>
                                                     <textInputTraits key="textInputTraits" autocorrectionType="no" spellCheckingType="no" keyboardType="alphabet" returnKeyType="done" smartDashesType="no" smartInsertDeleteType="no" smartQuotesType="no"/>
                                                     <connections>
                                                         <action selector="launchCommandChanged:" destination="yJz-O7-jlW" eventType="editingDidEnd" id="y9m-tQ-j9F"/>
-                                                        <action selector="launchCommandSubmit:" destination="yJz-O7-jlW" eventType="primaryActionTriggered" id="h6w-ui-Xc7"/>
+                                                        <action selector="textBoxSubmit:" destination="yJz-O7-jlW" eventType="primaryActionTriggered" id="Dyo-E6-Kdv"/>
                                                     </connections>
                                                 </textField>
                                             </subviews>
@@ -204,15 +204,76 @@
                                             </constraints>
                                         </tableViewCellContentView>
                                     </tableViewCell>
-                                    <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="blue" indentationWidth="10" textLabel="83j-2z-XRR" style="IBUITableViewCellStyleDefault" id="OIE-9g-Btx" userLabel="Export">
+                                    <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="none" indentationWidth="10" id="Xc7-9V-RXm" userLabel="Boot Command">
                                         <rect key="frame" x="0.0" y="507" width="320" height="44"/>
+                                        <autoresizingMask key="autoresizingMask"/>
+                                        <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" preservesSuperviewLayoutMargins="YES" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="Xc7-9V-RXm" id="IEt-PC-8fZ">
+                                            <rect key="frame" x="0.0" y="0.0" width="320" height="43.5"/>
+                                            <autoresizingMask key="autoresizingMask"/>
+                                            <subviews>
+                                                <label opaque="NO" multipleTouchEnabled="YES" contentMode="left" horizontalHuggingPriority="1000" insetsLayoutMarginsFromSafeArea="NO" text="Boot cmd" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Ivg-bB-NKL">
+                                                    <rect key="frame" x="8" y="11.5" width="74" height="21"/>
+                                                    <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                                    <nil key="textColor"/>
+                                                    <nil key="highlightedColor"/>
+                                                </label>
+                                                <textField opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" text="/bin/login -f root" adjustsFontSizeToFit="NO" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="bKw-tV-nX1">
+                                                    <rect key="frame" x="94" y="13.5" width="218" height="17"/>
+                                                    <nil key="textColor"/>
+                                                    <fontDescription key="fontDescription" name="Menlo-Regular" family="Menlo" pointSize="14"/>
+                                                    <textInputTraits key="textInputTraits" autocorrectionType="no" spellCheckingType="no" keyboardType="alphabet" returnKeyType="done" smartDashesType="no" smartInsertDeleteType="no" smartQuotesType="no"/>
+                                                    <connections>
+                                                        <action selector="bootCommandChanged:" destination="yJz-O7-jlW" eventType="editingDidEnd" id="ejb-CC-17T"/>
+                                                        <action selector="textBoxSubmit:" destination="yJz-O7-jlW" eventType="primaryActionTriggered" id="yMs-ke-b76"/>
+                                                    </connections>
+                                                </textField>
+                                            </subviews>
+                                            <constraints>
+                                                <constraint firstAttribute="trailingMargin" secondItem="bKw-tV-nX1" secondAttribute="trailing" id="CvM-TM-j0U"/>
+                                                <constraint firstItem="Ivg-bB-NKL" firstAttribute="centerY" secondItem="IEt-PC-8fZ" secondAttribute="centerY" id="Exg-3t-5dt"/>
+                                                <constraint firstItem="Ivg-bB-NKL" firstAttribute="leading" secondItem="IEt-PC-8fZ" secondAttribute="leadingMargin" id="Qck-mT-DsJ"/>
+                                                <constraint firstItem="bKw-tV-nX1" firstAttribute="centerY" secondItem="IEt-PC-8fZ" secondAttribute="centerY" id="RgS-ZD-0gA"/>
+                                                <constraint firstItem="bKw-tV-nX1" firstAttribute="leading" secondItem="Ivg-bB-NKL" secondAttribute="trailing" constant="12" id="o1M-2S-D93"/>
+                                            </constraints>
+                                        </tableViewCellContentView>
+                                    </tableViewCell>
+                                    <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="none" indentationWidth="10" id="GpH-bG-hOP" userLabel="Boot enabled">
+                                        <rect key="frame" x="0.0" y="551" width="320" height="44"/>
+                                        <autoresizingMask key="autoresizingMask"/>
+                                        <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" preservesSuperviewLayoutMargins="YES" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="GpH-bG-hOP" id="i8u-Ts-DqN">
+                                            <rect key="frame" x="0.0" y="0.0" width="320" height="43.5"/>
+                                            <autoresizingMask key="autoresizingMask"/>
+                                            <subviews>
+                                                <label opaque="NO" multipleTouchEnabled="YES" contentMode="left" insetsLayoutMarginsFromSafeArea="NO" text="Use boot command" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="zKE-s4-Csc">
+                                                    <rect key="frame" x="8" y="11.5" width="151" height="21"/>
+                                                    <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                                    <nil key="textColor"/>
+                                                    <nil key="highlightedColor"/>
+                                                </label>
+                                                <switch opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" on="YES" translatesAutoresizingMaskIntoConstraints="NO" id="BWY-qW-iul">
+                                                    <rect key="frame" x="263" y="6.5" width="51" height="31"/>
+                                                    <connections>
+                                                        <action selector="bootEnabledChanged:" destination="yJz-O7-jlW" eventType="valueChanged" id="nCx-Dp-Eq9"/>
+                                                    </connections>
+                                                </switch>
+                                            </subviews>
+                                            <constraints>
+                                                <constraint firstItem="BWY-qW-iul" firstAttribute="centerY" secondItem="i8u-Ts-DqN" secondAttribute="centerY" id="9Sf-ri-BeM"/>
+                                                <constraint firstItem="zKE-s4-Csc" firstAttribute="centerY" secondItem="i8u-Ts-DqN" secondAttribute="centerY" id="Ycc-hI-V4E"/>
+                                                <constraint firstAttribute="trailingMargin" secondItem="BWY-qW-iul" secondAttribute="trailing" id="ZxU-cq-oNi"/>
+                                                <constraint firstItem="zKE-s4-Csc" firstAttribute="leading" secondItem="i8u-Ts-DqN" secondAttribute="leadingMargin" id="wZz-M3-Bli"/>
+                                            </constraints>
+                                        </tableViewCellContentView>
+                                    </tableViewCell>
+                                    <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="blue" indentationWidth="10" textLabel="83j-2z-XRR" style="IBUITableViewCellStyleDefault" id="OIE-9g-Btx" userLabel="Export">
+                                        <rect key="frame" x="0.0" y="595" width="320" height="44"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" preservesSuperviewLayoutMargins="YES" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="OIE-9g-Btx" id="uY3-tT-dwz">
                                             <rect key="frame" x="0.0" y="0.0" width="320" height="43.5"/>
                                             <autoresizingMask key="autoresizingMask"/>
                                             <subviews>
                                                 <label opaque="NO" multipleTouchEnabled="YES" contentMode="left" insetsLayoutMarginsFromSafeArea="NO" text="Export container" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="83j-2z-XRR">
-                                                    <rect key="frame" x="16" y="0.0" width="288" height="43.5"/>
+                                                    <rect key="frame" x="15" y="0.0" width="290" height="43.5"/>
                                                     <autoresizingMask key="autoresizingMask"/>
                                                     <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                                     <nil key="textColor"/>
@@ -240,6 +301,8 @@
                         </connections>
                     </navigationItem>
                     <connections>
+                        <outlet property="bootCommandField" destination="bKw-tV-nX1" id="MVz-gk-QE7"/>
+                        <outlet property="bootEnabledSwitch" destination="BWY-qW-iul" id="vMW-zz-Ryk"/>
                         <outlet property="capsLockMappingCell" destination="31N-0g-RhF" id="UjF-21-3df"/>
                         <outlet property="disableDimmingSwitch" destination="cPj-sQ-qsh" id="Kjp-xA-A0Y"/>
                         <outlet property="exportContainerCell" destination="OIE-9g-Btx" id="qxo-l5-0Mq"/>

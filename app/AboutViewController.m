@@ -14,6 +14,8 @@
 @property (weak, nonatomic) IBOutlet UITableViewCell *themeCell;
 @property (weak, nonatomic) IBOutlet UISwitch *disableDimmingSwitch;
 @property (weak, nonatomic) IBOutlet UITextField *launchCommandField;
+@property (weak, nonatomic) IBOutlet UITextField *bootCommandField;
+@property (weak, nonatomic) IBOutlet UISwitch *bootEnabledSwitch;
 
 @property (weak, nonatomic) IBOutlet UITableViewCell *sendFeedback;
 @property (weak, nonatomic) IBOutlet UITableViewCell *openGithub;
@@ -43,6 +45,8 @@
     [prefs addObserver:self forKeyPath:@"capsLockMapping" options:opts context:nil];
     [prefs addObserver:self forKeyPath:@"fontSize" options:opts context:nil];
     [prefs addObserver:self forKeyPath:@"launchCommand" options:opts context:nil];
+    [prefs addObserver:self forKeyPath:@"bootCommand" options:opts context:nil];
+    [prefs addObserver:self forKeyPath:@"bootEnabled" options:opts context:nil];
 }
 
 - (void)_removeObservers {
@@ -51,6 +55,8 @@
         [prefs removeObserver:self forKeyPath:@"capsLockMapping"];
         [prefs removeObserver:self forKeyPath:@"fontSize"];
         [prefs removeObserver:self forKeyPath:@"launchCommand"];
+        [prefs removeObserver:self forKeyPath:@"bootCommand"];
+        [prefs removeObserver:self forKeyPath:@"bootEnabled"];
     } @catch (NSException * __unused exception) {}
 }
 
@@ -77,6 +83,8 @@
     self.capsLockMappingCell.detailTextLabel.text = capsLockMappingDescr;
     self.disableDimmingSwitch.on = UserPreferences.shared.shouldDisableDimming;
     self.launchCommandField.text = [UserPreferences.shared.launchCommand componentsJoinedByString:@" "];
+    self.bootCommandField.text = [UserPreferences.shared.bootCommand componentsJoinedByString:@" "];
+    self.bootEnabledSwitch.on = UserPreferences.shared.bootEnabled;
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
@@ -108,17 +116,24 @@
     return sections;
 }
 
-- (IBAction)launchCommandSubmit:(id)sender {
+- (IBAction)disableDimmingChanged:(id)sender {
+    UserPreferences.shared.shouldDisableDimming = self.disableDimmingSwitch.on;
+}
+
+- (IBAction)textBoxSubmit:(id)sender {
     [sender resignFirstResponder];
 }
 
 - (IBAction)launchCommandChanged:(id)sender {
     UserPreferences.shared.launchCommand = [self.launchCommandField.text componentsSeparatedByString:@" "];
-    NSLog(@"asdf");
 }
 
-- (IBAction)disableDimmingChanged:(id)sender {
-    UserPreferences.shared.shouldDisableDimming = self.disableDimmingSwitch.on;
+- (IBAction)bootCommandChanged:(id)sender {
+    UserPreferences.shared.bootCommand = [self.bootCommandField.text componentsSeparatedByString:@" "];
+}
+
+- (IBAction)bootEnabledChanged:(id)sender {
+    UserPreferences.shared.bootEnabled = self.bootEnabledSwitch.on;
 }
 
 @end
