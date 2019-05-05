@@ -1,6 +1,7 @@
 #include <string.h>
 #include "kernel/errno.h"
 #include "kernel/random.h"
+#include "fs/poll.h"
 #include "fs/mem.h"
 #include "fs/dev.h"
 
@@ -35,6 +36,10 @@ struct dev_ops mem_dev = {
     .open = mem_open,
 };
 
+static int ready_poll(struct fd *UNUSED(fd)) {
+    return POLL_READ | POLL_WRITE;
+}
+
 // begin inline devices
 static int null_open(int UNUSED(major), int UNUSED(minor), struct fd *UNUSED(fd)) {
     return 0;
@@ -49,6 +54,7 @@ struct dev_ops null_dev = {
     .open = null_open,
     .fd.read = null_read,
     .fd.write = null_write,
+    .fd.poll = ready_poll,
 };
 
 static ssize_t zero_read(struct fd *UNUSED(fd), void *buf, size_t bufsize) {
@@ -62,6 +68,7 @@ struct dev_ops zero_dev = {
     .open = null_open,
     .fd.read = zero_read,
     .fd.write = zero_write,
+    .fd.poll = ready_poll,
 };
 
 static ssize_t full_write(struct fd *UNUSED(fd), const void *UNUSED(buf), size_t UNUSED(bufsize)) {
@@ -71,6 +78,7 @@ struct dev_ops full_dev = {
     .open = null_open,
     .fd.read = zero_read,
     .fd.write = full_write,
+    .fd.poll = ready_poll,
 };
 
 static ssize_t random_read(struct fd *UNUSED(fd), void *buf, size_t bufsize) {
@@ -81,4 +89,5 @@ struct dev_ops random_dev = {
     .open = null_open,
     .fd.read = random_read,
     .fd.write = null_write,
+    .fd.poll = ready_poll,
 };
