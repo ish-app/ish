@@ -586,6 +586,7 @@ dword_t sys_fchmodat(fd_t at_f, addr_t path_addr, dword_t mode) {
     char path[MAX_PATH];
     if (user_read_string(path_addr, path, sizeof(path)))
         return _EFAULT;
+    STRACE("fchmodat(%d, \"%s\", %o)", at_f, path, mode);
     struct fd *at = at_fd(at_f);
     if (at == NULL)
         return _EBADF;
@@ -619,7 +620,7 @@ dword_t sys_fchownat(fd_t at_f, addr_t path_addr, dword_t owner, dword_t group, 
     char path[MAX_PATH];
     if (user_read_string(path_addr, path, sizeof(path)))
         return _EFAULT;
-    STRACE("fchownat(%d, %s, %d, %d, %d)", at_f, path, owner, group, flags);
+    STRACE("fchownat(%d, \"%s\", %d, %d, %d)", at_f, path, owner, group, flags);
     struct fd *at = at_fd(at_f);
     if (at == NULL)
         return _EBADF;
