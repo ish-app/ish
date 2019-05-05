@@ -51,7 +51,9 @@ static NSMutableDictionary<NSNumber *, Terminal *> *terminals;
         [config.userContentController addScriptMessageHandler:self name:@"log"];
         [config.userContentController addScriptMessageHandler:self name:@"resize"];
         [config.userContentController addScriptMessageHandler:self name:@"propUpdate"];
-        self.webView = [[CustomWebView alloc] initWithFrame:CGRectZero configuration:config];
+        // Make the web view really big so that if a program tries to write to the terminal before it's displayed, the text probably won't wrap too badly.
+        CGRect webviewSize = CGRectMake(0, 0, 10000, 10000);
+        self.webView = [[CustomWebView alloc] initWithFrame:webviewSize configuration:config];
         self.webView.scrollView.scrollEnabled = NO;
         [self.webView loadRequest:
          [NSURLRequest requestWithURL:
