@@ -376,6 +376,28 @@ static bool pty_is_half_closed_master(struct tty *tty) {
     return half_closed;
 }
 
+static bool tty_is_current(struct tty *tty) {
+    lock(&current->group->lock);
+    bool is_current = current->group->tty == tty;
+    unlock(&current->group->lock);
+    return is_current;
+}
+
+static int tty_signal_if_background(struct tty *tty, pid_t_ current_pgid, int sig) {
+    // you can apparently access a terminal that's not your controlling
+    // terminal all you want
+    if (!tty_is_current(tty))
+        return 0;
+    // check if we're in the foreground
+    if (tty->fg_group == 0 || current_pgid == tty->fg_group)
+        return 0;
+
+    if (!try_self_signal(sig))
+        return _EIO;
+    else
+        return _EINTR;
+}
+
 static ssize_t tty_read(struct fd *fd, void *buf, size_t bufsize) {
     // important because otherwise we'll block
     if (bufsize == 0)
@@ -392,13 +414,9 @@ static ssize_t tty_read(struct fd *fd, void *buf, size_t bufsize) {
 
     pid_t_ current_pgid = current->group->pgid;
     unlock(&pids_lock);
-    if (tty->fg_group != 0 && current_pgid != tty->fg_group) {
-        if (!try_self_signal(SIGTTIN_))
-            err = _EIO;
-        else
-            err = _EINTR;
+    err = tty_signal_if_background(tty, current_pgid, SIGTTIN_);
+    if (err < 0)
         goto out;
-    }
 
     int bufsize_extra = 0;
     if (tty->driver == &pty_master && tty->pty.packet_mode) {
@@ -558,13 +576,6 @@ static ssize_t tty_ioctl_size(int cmd) {
             return 0;
     }
     return -1;
-}
-
-static bool tty_is_current(struct tty *tty) {
-    lock(&current->group->lock);
-    bool is_current = current->group->tty == tty;
-    unlock(&current->group->lock);
-    return is_current;
 }
 
 static int tiocsctty(struct tty *tty, int force) {
