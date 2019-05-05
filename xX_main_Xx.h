@@ -69,7 +69,8 @@ static inline int xX_main_Xx(int argc, char *const argv[], const char *envp) {
     if (err < 0)
         return err;
 
-    create_first_process();
+    become_first_process();
+    current->thread = pthread_self();
     if (!has_root) {
         char cwd[MAX_PATH + 1];
         getcwd(cwd, sizeof(cwd));
@@ -89,7 +90,8 @@ static inline int xX_main_Xx(int argc, char *const argv[], const char *envp) {
     err = sys_execve(argv[optind], argv_copy, envp == NULL ? "\0" : envp);
     if (err < 0)
         return err;
-    err = create_stdio(console, &real_tty_driver);
+    tty_drivers[TTY_CONSOLE_MAJOR] = &real_tty_driver;
+    err = create_stdio(console);
     if (err < 0)
         return err;
     exit_hook = exit_handler;

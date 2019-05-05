@@ -15,7 +15,6 @@
 
 @interface TerminalViewController () <UIGestureRecognizerDelegate>
 
-@property Terminal *terminal;
 @property UITapGestureRecognizer *tapRecognizer;
 @property (weak, nonatomic) IBOutlet TerminalView *termView;
 @property (weak, nonatomic) IBOutlet NSLayoutConstraint *bottomConstraint;
@@ -39,8 +38,11 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    self.terminal = [Terminal terminalWithType:4 number:1];
-    self.termView.terminal = self.terminal;
+    if (UserPreferences.shared.bootEnabled) {
+        self.terminal = [Terminal terminalWithType:4 number:7];
+    } else {
+        self.terminal = [Terminal terminalWithType:4 number:1];
+    }
     [self.termView becomeFirstResponder];
 
     NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
@@ -221,6 +223,30 @@
         case ArrowRight: [self pressKey:[self.terminal arrow:'C']]; break;
         case ArrowNone: break;
     }
+}
+
+- (void)switchTerminal:(UIKeyCommand *)sender {
+    unsigned i = (unsigned) sender.input.integerValue;
+    self.terminal = [Terminal terminalWithType:4 number:i];
+}
+
+- (NSArray<UIKeyCommand *> *)keyCommands {
+    static NSMutableArray<UIKeyCommand *> *commands = nil;
+    if (commands == nil) {
+        commands = [NSMutableArray new];
+        for (unsigned i = 1; i <= 7; i++) {
+            [commands addObject:
+             [UIKeyCommand keyCommandWithInput:[NSString stringWithFormat:@"%d", i]
+                                 modifierFlags:UIKeyModifierCommand|UIKeyModifierAlternate|UIKeyModifierShift
+                                        action:@selector(switchTerminal:)]];
+        }
+    }
+    return commands;
+}
+
+- (void)setTerminal:(Terminal *)terminal {
+    _terminal = terminal;
+    self.termView.terminal = self.terminal;
 }
 
 @end

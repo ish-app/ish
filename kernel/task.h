@@ -78,6 +78,11 @@ struct task {
 // if I have to stop using __thread, current will become a macro
 extern __thread struct task *current;
 
+static inline void task_set_mm(struct task *task, struct mm *mm) {
+    task->mm = mm;
+    task->mem = task->cpu.mem = &task->mm->mem;
+}
+
 // Creates a new process, initializes most fields from the parent. Specify
 // parent as NULL to create the init process. Returns NULL if out of memory.
 // Ends with an underscore because there's a mach function by the same name
@@ -85,7 +90,9 @@ struct task *task_create_(struct task *parent);
 // Removes the process from the process table and frees it. Must be called with pids_lock.
 void task_destroy(struct task *task);
 
+// misc
 void vfork_notify(struct task *task);
+pid_t_ task_setsid(struct task *task);
 
 // struct thread_group is way too long to type comfortably
 struct tgroup {

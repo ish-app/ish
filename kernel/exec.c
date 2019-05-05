@@ -181,8 +181,7 @@ static int elf_exec(struct fd *fd, const char *file, const char *argv, const cha
     // killed before it even starts. please don't be too sad about it, it's
     // just a process.
     mm_release(current->mm);
-    current->mm = mm_new();
-    current->mem = current->cpu.mem = &current->mm->mem;
+    task_set_mm(current, mm_new());
     write_wrlock(&current->mem->lock);
 
     current->mm->exefile = fd_retain(fd);

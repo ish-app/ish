@@ -69,16 +69,16 @@ pid_t_ sys_getpgrp() {
     return sys_getpgid(0);
 }
 
-dword_t sys_setsid() {
+pid_t_ task_setsid(struct task *task) {
     lock(&pids_lock);
-    struct tgroup *group = current->group;
+    struct tgroup *group = task->group;
     pid_t_ new_sid = group->leader->pid;
     if (group->pgid == new_sid || group->sid == new_sid) {
         unlock(&pids_lock);
         return _EPERM;
     }
 
-    struct pid *pid = pid_get(current->pid);
+    struct pid *pid = pid_get(task->pid);
     list_remove_safe(&group->session);
     list_add(&pid->session, &group->session);
     group->sid = new_sid;
@@ -94,7 +94,13 @@ dword_t sys_setsid() {
     return new_sid;
 }
 
+dword_t sys_setsid() {
+    STRACE("setsid()");
+    return task_setsid(current);
+}
+
 dword_t sys_getsid() {
+    STRACE("getsid()");
     lock(&pids_lock);
     pid_t_ sid = current->group->sid;
     unlock(&pids_lock);

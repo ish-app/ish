@@ -16,19 +16,7 @@ int mount_root(const struct fs_ops *fs, const char *source) {
     return 0;
 }
 
-static struct tgroup *init_tgroup() {
-    struct tgroup *group = malloc(sizeof(struct tgroup));
-    if (group == NULL)
-        return NULL;
-    *group = (struct tgroup) {};
-    list_init(&group->threads);
-    lock_init(&group->lock);
-    cond_init(&group->child_exit);
-    cond_init(&group->stopped_cond);
-    return group;
-}
-
-void create_first_process() {
+static void establish_signal_handlers() {
     extern void sigusr1_handler(int sig);
     struct sigaction sigact;
     sigact.sa_handler = sigusr1_handler;
@@ -37,29 +25,89 @@ void create_first_process() {
     sigaddset(&sigact.sa_mask, SIGUSR1);
     sigaction(SIGUSR1, &sigact, NULL);
     signal(SIGPIPE, SIG_IGN);
+}
 
-    current = task_create_(NULL);
-    current->mm = mm_new();
-    current->mem = current->cpu.mem = &current->mm->mem;
-    struct tgroup *group = init_tgroup();
-    list_add(&group->threads, &current->group_links);
-    group->leader = current;
-    current->group = group;
-    current->tgid = current->pid;
+// copied from include/asm-generic/resource.h in the kernel
+static struct rlimit_ init_rlimits[16] = {
+    [RLIMIT_CPU_]        = {RLIM_INFINITY, RLIM_INFINITY},
+    [RLIMIT_FSIZE_]      = {RLIM_INFINITY, RLIM_INFINITY},
+    [RLIMIT_DATA_]       = {RLIM_INFINITY, RLIM_INFINITY},
+    [RLIMIT_STACK_]      = {8*1024*1024, RLIM_INFINITY},
+    [RLIMIT_CORE_]       = {0, RLIM_INFINITY},
+    [RLIMIT_RSS_]        = {RLIM_INFINITY, RLIM_INFINITY},
+    [RLIMIT_NPROC_]      = {0, 0},
+    [RLIMIT_NOFILE_]     = {1024, 4096},
+    [RLIMIT_MEMLOCK_]    = {64*1024, 64*1024},
+    [RLIMIT_AS_]         = {RLIM_INFINITY, RLIM_INFINITY},
+    [RLIMIT_LOCKS_]      = {RLIM_INFINITY, RLIM_INFINITY},
+    [RLIMIT_SIGPENDING_] = {0, 0},
+    [RLIMIT_MSGQUEUE_]   = {819200, 819200},
+    [RLIMIT_NICE_]       = {0, 0},
+    [RLIMIT_RTPRIO_]     = {0, 0},
+    [RLIMIT_RTTIME_]     = {RLIM_INFINITY, RLIM_INFINITY},
+};
 
-    struct fs_info *fs = fs_info_new();
-    current->fs = fs;
-    fs->pwd = fs->root = generic_open("/", O_RDONLY_, 0);
-    fs->pwd->refcount = 2;
-    fs->umask = 0022;
-    current->files = fdtable_new(3);
-    current->sighand = sighand_new();
-    for (int i = 0; i < RLIMIT_NLIMITS_; i++)
-        group->limits[i].cur = group->limits[i].max = RLIM_INFINITY_;
-    // python subprocess uses this limit as a way to close every open file
-    group->limits[RLIMIT_NOFILE_].cur = 1024;
-    current->thread = pthread_self();
-    sys_setsid();
+// TODO error propagation
+static struct task *construct_task(struct task *parent) {
+    struct task *task = task_create_(parent);
+
+    struct tgroup *group = malloc(sizeof(struct tgroup));
+    *group = (struct tgroup) {};
+    list_init(&group->threads);
+    lock_init(&group->lock);
+    cond_init(&group->child_exit);
+    cond_init(&group->stopped_cond);
+    memcpy(group->limits, init_rlimits, sizeof(init_rlimits));
+    group->leader = task;
+    list_add(&group->threads, &task->group_links);
+    task->group = group;
+    task->tgid = task->pid;
+    task_setsid(task);
+
+    task_set_mm(task, mm_new());
+    task->sighand = sighand_new();
+    task->files = fdtable_new(3); // why is there a 3 here
+
+    task->fs = fs_info_new();
+    task->fs->umask = 0022;
+    // we'll need to have current set to do the open call
+    struct task *old_current = current;
+    current = task;
+    task->fs->root = generic_open("/", O_RDONLY_, 0);
+    task->fs->pwd = fd_retain(task->fs->root);
+    current = old_current;
+
+    return task;
+}
+
+int become_first_process() {
+    // now seems like a nice time
+    establish_signal_handlers();
+
+    struct task *task = construct_task(NULL);
+    if (IS_ERR(task))
+        return PTR_ERR(task);
+
+    current = task;
+    return 0;
+}
+
+int become_new_init_child() {
+    // locking? who needs locking?!
+    struct task *init = pid_get_task(1);
+    assert(init != NULL);
+
+    struct task *task = construct_task(init);
+    if (IS_ERR(task))
+        return PTR_ERR(task);
+
+    // these are things we definitely don't want to inherit
+    task->clear_tid = 0;
+    task->vfork = NULL;
+    // TODO: think about whether it would be a good idea to inherit fs_info
+
+    current = task;
+    return 0;
 }
 
 extern int console_major;
@@ -69,9 +117,7 @@ void set_console_device(int major, int minor) {
     console_minor = minor;
 }
 
-int create_stdio(const char *file, struct tty_driver *driver) {
-    tty_drivers[TTY_CONSOLE_MAJOR] = driver;
-
+int create_stdio(const char *file) {
     struct fd *fd = generic_open(file, O_RDWR_, 0);
     if (fd == ERR_PTR(_ENOENT)) {
         // fallback to adhoc files for stdio
@@ -86,10 +132,9 @@ int create_stdio(const char *file, struct tty_driver *driver) {
     if (IS_ERR(fd))
         return PTR_ERR(fd);
 
-    fd->refcount = 3;
-    current->files->files[0] = fd;
-    current->files->files[1] = fd;
-    current->files->files[2] = fd;
+    fd->refcount = 0;
+    current->files->files[0] = fd_retain(fd);
+    current->files->files[1] = fd_retain(fd);
+    current->files->files[2] = fd_retain(fd);
     return 0;
 }
-

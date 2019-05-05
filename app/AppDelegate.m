@@ -67,7 +67,9 @@ static void ios_handle_die(const char *msg) {
         return err;
     
     // need to do this first so that we can have a valid current for the generic_mknod calls
-    create_first_process();
+    err = become_first_process();
+    if (err < 0)
+        return err;
     
     // create some device nodes
     // this will do nothing if they already exist
@@ -78,34 +80,14 @@ static void ios_handle_die(const char *msg) {
     generic_mknod("/dev/tty4", S_IFCHR|0666, dev_make(4, 4));
     generic_mknod("/dev/tty5", S_IFCHR|0666, dev_make(4, 5));
     generic_mknod("/dev/tty6", S_IFCHR|0666, dev_make(4, 6));
+    generic_mknod("/dev/tty7", S_IFCHR|0666, dev_make(4, 7));
     generic_mknod("/dev/tty", S_IFCHR|0666, dev_make(5, 0));
     generic_mknod("/dev/ptmx", S_IFCHR|0666, dev_make(5, 2));
     generic_mknod("/dev/random", S_IFCHR|0666, dev_make(1, 8));
     generic_mknod("/dev/urandom", S_IFCHR|0666, dev_make(1, 9));
     
-    NSArray<NSString *> *command = UserPreferences.shared.launchCommand;
-    char argv[4096];
-    char *p = argv;
-    for (NSString *cmd in command) {
-        const char *c = cmd.UTF8String;
-        // Save space for the final NUL byte in argv
-        while (p < argv + sizeof(argv) - 1 && (*p++ = *c++));
-        // If we reach the end of the buffer, the last string still needs to be
-        // NUL terminated
-        *p = '\0';
-    }
-    // Add the final NUL byte to argv
-    *++p = '\0';
-    const char *envp = "TERM=xterm-256color\0";
-    err = sys_execve(argv, argv, envp);
-    if (err < 0)
-        return err;
-    set_console_device(4, 1);
-    err = create_stdio("/dev/console", &ios_tty_driver);
-    if (err < 0)
-        return err;
-    exit_hook = ios_handle_exit;
-    die_handler = ios_handle_die;
+    do_mount(&procfs, "proc", "/proc", 0);
+    do_mount(&devptsfs, "devpts", "/dev/pts", 0);
     
     // configure dns
     struct __res_state res;
@@ -122,7 +104,7 @@ static void ios_handle_die(const char *msg) {
     for (int i = 0; i < serversFound; i ++) {
         union res_sockaddr_union s = servers[i];
         if (s.sin.sin_len == 0)
-            continue;
+        continue;
         getnameinfo((struct sockaddr *) &s.sin, s.sin.sin_len,
                     address, sizeof(address),
                     NULL, 0, NI_NUMERICHOST);
@@ -133,12 +115,62 @@ static void ios_handle_die(const char *msg) {
         fd->ops->write(fd, resolvConf.UTF8String, [resolvConf lengthOfBytesUsingEncoding:NSUTF8StringEncoding]);
         fd_close(fd);
     }
-
-    do_mount(&procfs, "proc", "/proc", 0);
-    do_mount(&devptsfs, "devpts", "/dev/pts", 0);
-
+    
+    exit_hook = ios_handle_exit;
+    die_handler = ios_handle_die;
+    
+    tty_drivers[TTY_CONSOLE_MAJOR] = &ios_tty_driver;
+    set_console_device(TTY_CONSOLE_MAJOR, 1);
+    err = create_stdio("/dev/console");
+    if (err < 0)
+        return err;
+    
+    NSArray<NSString *> *command;
+    if (UserPreferences.shared.bootEnabled) {
+        command = UserPreferences.shared.bootCommand;
+    } else {
+        command = UserPreferences.shared.launchCommand;
+    }
+    NSLog(@"%@", command);
+    char argv[4096];
+    [self convertCommand:command toArgs:argv limitSize:sizeof(argv)];
+    const char *envp = "TERM=xterm-256color\0";
+    err = sys_execve(argv, argv, envp);
+    if (err < 0)
+        return err;
     task_start(current);
+    
+    if (UserPreferences.shared.bootEnabled) {
+        err = become_new_init_child();
+        if (err < 0)
+            return err;
+        err = create_stdio("/dev/tty7");
+        if (err < 0)
+            return err;
+        char argv[4096];
+        [self convertCommand:UserPreferences.shared.launchCommand toArgs:argv limitSize:sizeof(argv)];
+        const char *envp = "TERM=xterm-256color\0";
+        err = sys_execve(argv, argv, envp);
+        if (err < 0)
+            return err;
+        task_start(current);
+    }
+    
     return 0;
+}
+
+- (void)convertCommand:(NSArray<NSString *> *)command toArgs:(char *)argv limitSize:(size_t)maxSize {
+    char *p = argv;
+    for (NSString *cmd in command) {
+        const char *c = cmd.UTF8String;
+        // Save space for the final NUL byte in argv
+        while (p < argv + maxSize - 1 && (*p++ = *c++));
+        // If we reach the end of the buffer, the last string still needs to be
+        // NUL terminated
+        *p = '\0';
+    }
+    // Add the final NUL byte to argv
+    *++p = '\0';
 }
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {

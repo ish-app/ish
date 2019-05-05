@@ -10,7 +10,7 @@
 
 @interface TerminalViewController : UIViewController
 
-@property (readonly) Terminal *terminal;
+@property (nonatomic) Terminal *terminal;
 
 @end
 
