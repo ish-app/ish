@@ -144,10 +144,10 @@ struct fdtable *fdtable_copy(struct fdtable *table) {
 
 static int fdtable_expand(struct fdtable *table, fd_t max) {
     unsigned size = max + 1;
-    if (table->size >= size)
-        return 0;
     if (size > rlimit(RLIMIT_NOFILE_))
         return _EMFILE;
+    if (table->size >= size)
+        return 0;
     return fdtable_resize(table, max + 1);
 }
 
