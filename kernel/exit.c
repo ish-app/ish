@@ -20,6 +20,7 @@ static bool exit_tgroup(struct task *task) {
             timer_free(group->timer);
         if (group->tty) {
             lock(&ttys_lock);
+            group->tty->session = 0;
             tty_release(group->tty);
             group->tty = NULL;
             unlock(&ttys_lock);

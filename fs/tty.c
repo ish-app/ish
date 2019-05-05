@@ -176,9 +176,12 @@ static int tty_open(int major, int minor, struct fd *fd) {
     unlock(&tty->fds_lock);
 
     if (!(fd->flags & O_NOCTTY_)) {
+        // Make this our controlling terminal if:
+        // - the terminal doesn't already have a session
+        // - we're a session leader
         lock(&pids_lock);
         lock(&tty->lock);
-        if (current->group->sid == current->pid)
+        if (tty->session == 0 && current->group->sid == current->pid)
             tty_set_controlling(current->group, tty);
         unlock(&tty->lock);
         unlock(&pids_lock);
