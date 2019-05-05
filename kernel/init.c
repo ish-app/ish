@@ -29,22 +29,22 @@ static void establish_signal_handlers() {
 
 // copied from include/asm-generic/resource.h in the kernel
 static struct rlimit_ init_rlimits[16] = {
-    [RLIMIT_CPU_]        = {RLIM_INFINITY, RLIM_INFINITY},
-    [RLIMIT_FSIZE_]      = {RLIM_INFINITY, RLIM_INFINITY},
-    [RLIMIT_DATA_]       = {RLIM_INFINITY, RLIM_INFINITY},
-    [RLIMIT_STACK_]      = {8*1024*1024, RLIM_INFINITY},
+    [RLIMIT_CPU_]        = {RLIM_INFINITY_, RLIM_INFINITY_},
+    [RLIMIT_FSIZE_]      = {RLIM_INFINITY_, RLIM_INFINITY_},
+    [RLIMIT_DATA_]       = {RLIM_INFINITY_, RLIM_INFINITY_},
+    [RLIMIT_STACK_]      = {8*1024*1024, RLIM_INFINITY_},
     [RLIMIT_CORE_]       = {0, RLIM_INFINITY},
-    [RLIMIT_RSS_]        = {RLIM_INFINITY, RLIM_INFINITY},
+    [RLIMIT_RSS_]        = {RLIM_INFINITY_, RLIM_INFINITY_},
     [RLIMIT_NPROC_]      = {0, 0},
     [RLIMIT_NOFILE_]     = {1024, 4096},
     [RLIMIT_MEMLOCK_]    = {64*1024, 64*1024},
-    [RLIMIT_AS_]         = {RLIM_INFINITY, RLIM_INFINITY},
-    [RLIMIT_LOCKS_]      = {RLIM_INFINITY, RLIM_INFINITY},
+    [RLIMIT_AS_]         = {RLIM_INFINITY_, RLIM_INFINITY_},
+    [RLIMIT_LOCKS_]      = {RLIM_INFINITY_, RLIM_INFINITY_},
     [RLIMIT_SIGPENDING_] = {0, 0},
     [RLIMIT_MSGQUEUE_]   = {819200, 819200},
     [RLIMIT_NICE_]       = {0, 0},
     [RLIMIT_RTPRIO_]     = {0, 0},
-    [RLIMIT_RTTIME_]     = {RLIM_INFINITY, RLIM_INFINITY},
+    [RLIMIT_RTTIME_]     = {RLIM_INFINITY_, RLIM_INFINITY_},
 };
 
 // TODO error propagation
