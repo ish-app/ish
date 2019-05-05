@@ -2,6 +2,7 @@
 #include <limits.h>
 #include <sys/stat.h>
 #include <ctype.h>
+#include "kernel/task.h"
 #include "kernel/errno.h"
 #include "fs/tty.h"
 
@@ -21,6 +22,12 @@ static int pty_master_init(struct tty *tty) {
     tty->pty.other = slave;
     slave->pty.other = tty;
     slave->pty.locked = true;
+
+    slave->pty.uid = current->euid;
+    // TODO make these mount options
+    slave->pty.gid = current->egid;
+    slave->pty.perms = 0620;
+
     return 0;
 }
 
