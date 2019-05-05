@@ -55,11 +55,6 @@
                    name:UIKeyboardWillHideNotification
                  object:nil];
 
-    [center addObserver:self
-               selector:@selector(ishExited:)
-                   name:ISHExitedNotification
-                 object:nil];
-    
     [self _updateStyleFromPreferences:NO];
     [[UserPreferences shared] addObserver:self forKeyPath:@"theme" options:NSKeyValueObservingOptionNew context:nil];
     

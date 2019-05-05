@@ -10,7 +10,9 @@
 #define IOPOL_VFS_HFS_CASE_SENSITIVITY_FORCE_CASE_SENSITIVE 1
 #endif
 
-static void exit_handler(int code) {
+static void exit_handler(struct task *task, int code) {
+    if (task->parent != NULL)
+        return;
     if (code & 0xff)
         raise(code & 0xff);
     else

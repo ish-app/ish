@@ -16,12 +16,23 @@
 
 @interface AppDelegate ()
 
+@property int sessionPid;
+
 @property BOOL exiting;
 
 @end
 
-static void ios_handle_exit(int code) {
-    [[NSNotificationCenter defaultCenter] postNotificationName:ISHExitedNotification object:nil];
+static void ios_handle_exit(struct task *task, int code) {
+    // we are interested in init and in children of init
+    // this is called with pids_lock as an implementation side effect, please do not cite as an example of good API design
+    if (task->parent != NULL && task->parent->parent != NULL)
+        return;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [[NSNotificationCenter defaultCenter] postNotificationName:ProcessExitedNotification
+                                                            object:nil
+                                                          userInfo:@{@"pid": @(task->pid),
+                                                                     @"code": @(code)}];
+    });
 }
 
 // Put the abort message in the thread name so it gets included in the crash dump
@@ -141,21 +152,29 @@ static void ios_handle_die(const char *msg) {
     task_start(current);
     
     if (UserPreferences.shared.bootEnabled) {
-        err = become_new_init_child();
+        err = [self startSession];
         if (err < 0)
             return err;
-        err = create_stdio("/dev/tty7");
-        if (err < 0)
-            return err;
-        char argv[4096];
-        [self convertCommand:UserPreferences.shared.launchCommand toArgs:argv limitSize:sizeof(argv)];
-        const char *envp = "TERM=xterm-256color\0";
-        err = sys_execve(argv, argv, envp);
-        if (err < 0)
-            return err;
-        task_start(current);
     }
     
+    return 0;
+}
+
+- (int)startSession {
+    int err = become_new_init_child();
+    if (err < 0)
+        return err;
+    err = create_stdio("/dev/tty7");
+    if (err < 0)
+        return err;
+    char argv[4096];
+    [self convertCommand:UserPreferences.shared.launchCommand toArgs:argv limitSize:sizeof(argv)];
+    const char *envp = "TERM=xterm-256color\0";
+    err = sys_execve(argv, argv, envp);
+    if (err < 0)
+        return err;
+    self.sessionPid = current->pid;
+    task_start(current);
     return 0;
 }
 
@@ -178,6 +197,12 @@ static void ios_handle_die(const char *msg) {
     [[NSURLSession.sharedSession dataTaskWithURL:[NSURL URLWithString:@"http://captive.apple.com"]] resume];
     
     [UserPreferences.shared addObserver:self forKeyPath:@"shouldDisableDimming" options:NSKeyValueObservingOptionInitial context:nil];
+    
+    [NSNotificationCenter.defaultCenter addObserver:self
+                                           selector:@selector(processExited:)
+                                               name:ProcessExitedNotification
+                                             object:nil];
+    
     int err = [self startThings];
     if (err < 0) {
         NSString *message = [NSString stringWithFormat:@"could not initialize"];
@@ -192,6 +217,13 @@ static void ios_handle_die(const char *msg) {
 
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context {
     UIApplication.sharedApplication.idleTimerDisabled = UserPreferences.shared.shouldDisableDimming;
+}
+
+- (void)processExited:(NSNotification *)notif {
+    int pid = [notif.userInfo[@"pid"] intValue];
+    if (pid == self.sessionPid) {
+        [self startSession];
+    }
 }
 
 - (void)showMessage:(NSString *)message subtitle:(NSString *)subtitle fatal:(BOOL)fatal {
@@ -217,4 +249,4 @@ static void ios_handle_die(const char *msg) {
 
 @end
 
-NSString *const ISHExitedNotification = @"ISHExitedNotification";
+NSString *const ProcessExitedNotification = @"ProcessExitedNotification";

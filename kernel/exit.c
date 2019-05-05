@@ -30,6 +30,8 @@ static bool exit_tgroup(struct task *task) {
     return group_dead;
 }
 
+void (*exit_hook)(struct task *task, int code) = NULL;
+
 noreturn void do_exit(int status) {
     // has to happen before mm_release
     addr_t clear_tid = current->clear_tid;
@@ -79,6 +81,9 @@ noreturn void do_exit(int status) {
             notify(&parent->group->child_exit);
             send_signal(parent, leader->exit_signal);
         }
+
+        if (exit_hook != NULL)
+            exit_hook(current, status);
     }
 
     vfork_notify(current);
@@ -111,9 +116,8 @@ noreturn void do_exit_group(int status) {
     do_exit(status);
 }
 
-void (*exit_hook)(int code) = NULL;
 // always called from init process
-static void halt_system(int status) {
+static void halt_system() {
     // brutally murder everything
     // which will leave everything in an inconsistent state. I will solve this problem later.
     for (int i = 2; i < MAX_PID; i++) {
@@ -129,9 +133,6 @@ static void halt_system(int status) {
         mount_remove(mount);
     }
     unlock(&mounts_lock);
-
-    if (exit_hook != NULL)
-        exit_hook(status);
 }
 
 dword_t sys_exit(dword_t status) {

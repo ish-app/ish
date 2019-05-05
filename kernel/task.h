@@ -150,7 +150,7 @@ extern void (*task_run_hook)(void);
 // TODO document
 void task_start(struct task *task);
 
-extern void (*exit_hook)(int code);
+extern void (*exit_hook)(struct task *task, int code);
 
 #define superuser() (current != NULL && current->euid == 0)
 
