@@ -45,6 +45,7 @@ struct tty *tty_alloc(struct tty_driver *driver, int type, int num) {
     cond_init(&tty->consumed);
     memset(tty->buf_flag, false, sizeof(tty->buf_flag));
     tty->bufsize = 0;
+    tty->packet_flags = 0;
 
     return tty;
 }
@@ -397,6 +398,21 @@ static ssize_t tty_read(struct fd *fd, void *buf, size_t bufsize) {
         goto out;
     }
 
+    int bufsize_extra = 0;
+    if (tty->driver == &pty_master && tty->pty.packet_mode) {
+        char *cbuf = buf;
+        *cbuf++ = tty->packet_flags;
+        bufsize--;
+        bufsize_extra++;
+        buf = cbuf;
+        if (tty->packet_flags != 0)
+            return bufsize_extra;
+
+        // check again in case bufsize was 1
+        if (bufsize == 0)
+            return bufsize_extra;
+    }
+
     // wait loop(s)
     if (tty->termios.lflags & ICANON_) {
         size_t canon_size;
@@ -455,7 +471,7 @@ static ssize_t tty_read(struct fd *fd, void *buf, size_t bufsize) {
     }
 
     unlock(&tty->lock);
-    return bufsize;
+    return bufsize + bufsize_extra;
 out:
     unlock(&tty->lock);
     return err;
@@ -519,6 +535,8 @@ static int tty_poll(struct fd *fd) {
         if (tty->bufsize > 0)
             types |= POLL_READ;
     }
+    if (tty->driver == &pty_master && tty->packet_flags != 0)
+        types |= POLL_PRI;
     unlock(&tty->lock);
     return types;
 }
@@ -531,6 +549,7 @@ static ssize_t tty_ioctl_size(int cmd) {
             return sizeof(struct winsize_);
         case TIOCGPRGP_: case TIOCSPGRP_:
         case TIOCSPTLCK_: case TIOCGPTN_:
+        case TIOCPKT_: case TIOCGPKT_:
         case FIONREAD_:
             return sizeof(dword_t);
         case TCFLSH_: case TIOCSCTTY_:

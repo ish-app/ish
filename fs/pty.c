@@ -50,6 +50,12 @@ static int pty_master_ioctl(struct tty *tty, int cmd, void *arg) {
         case TIOCGPTN_:
             *(dword_t *) arg = slave->num;
             break;
+        case TIOCPKT_:
+            tty->pty.packet_mode = !!*(dword_t *) arg;
+            break;
+        case TIOCGPKT_:
+            *(dword_t *) arg = tty->pty.packet_mode;
+            break;
         default:
             return _ENOTTY;
     }
