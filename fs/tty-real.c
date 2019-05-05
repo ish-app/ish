@@ -130,4 +130,4 @@ struct tty_driver_ops real_tty_ops = {
     .write = real_tty_write,
     .cleanup = real_tty_cleanup,
 };
-DEFINE_TTY_DRIVER(real_tty_driver, &real_tty_ops, 2);
+DEFINE_TTY_DRIVER(real_tty_driver, &real_tty_ops, 64);
