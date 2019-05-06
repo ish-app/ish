@@ -1,3 +1,5 @@
+HOTFIX for annoying bug where threads totally broke and git clone just hangs. Release notes for build 50 are pasted below.
+
 - Unix sockets work (until you try to send a file descriptor)
 - Screen works (until you try to reattach, which needs to send a file descriptor)
 - The entry point is now /sbin/init, which is the first step to making background services possible
