@@ -560,6 +560,8 @@ int_t sys_sendmsg(fd_t sock_fd, addr_t msghdr_addr, int_t flags) {
             return err;
         msg.msg_name = &msg_name;
         msg.msg_namelen = msg_fake.msg_namelen;
+    } else {
+        msg.msg_name = NULL;
     }
 
     // msg_iovec
