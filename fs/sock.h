@@ -209,4 +209,6 @@ static inline int sock_level_to_real(int fake) {
     return fake;
 }
 
+extern const char *sock_tmp_prefix;
+
 #endif

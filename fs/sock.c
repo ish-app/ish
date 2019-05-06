@@ -131,6 +131,8 @@ out:
     return ERR_PTR(err);
 }
 
+const char *sock_tmp_prefix = "/tmp/ishsock";
+
 static int sockaddr_read_get_inode(addr_t sockaddr_addr, void *sockaddr, uint_t *sockaddr_len, struct inode_data **inode_out, int flag) {
     // Make sure we can read things without overflowing buffers
     if (*sockaddr_len < sizeof(socklen_t))
@@ -167,7 +169,7 @@ static int sockaddr_read_get_inode(addr_t sockaddr_addr, void *sockaddr, uint_t 
             *inode_out = inode;
 
             struct sockaddr_un *real_addr_un = sockaddr;
-            size_t path_len = sprintf(real_addr_un->sun_path, "%s%d", "/tmp/ishsock", inode->socket_id);
+            size_t path_len = sprintf(real_addr_un->sun_path, "%s%d", sock_tmp_prefix, inode->socket_id);
             // The call to real bind will fail if the backing socket already
             // exists from a previous run or something. We already checked that
             // the fake file doesn't exist in unix_socket_get, so try a simple
