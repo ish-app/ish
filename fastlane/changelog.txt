@@ -1,8 +1,9 @@
-- Fixed everything that I know about that broke with the upgrade to Alpine 3.9
-- Fixed issue with makefile globbing
-- Dig no longer fails
-- Bunch of other bug fixes
-- Nothing else really worth writing about
+- Unix sockets work (until you try to send a file descriptor)
+- Screen works (until you try to reattach, which needs to send a file descriptor)
+- The entry point is now /sbin/init, which is the first step to making background services possible
+- Inform 7 should work
+- I managed to create an arch linux chroot once
+- Fixed issue with fontconfig on arm devices
 
 Send bug reports or feedback here: https://github.com/tbodt/ish/issues (or by email, if you prefer)
 Follow iSH on Twitter: https://twitter.com/iSH_app
