@@ -132,18 +132,6 @@ fail_free_mem:
     return err;
 }
 
-struct task *fork_task(struct task *parent) {
-    struct task *task = task_create_(parent);
-    if (task == NULL)
-        return ERR_PTR(_ENOMEM);
-    int err = copy_task(task, SIGCHLD_, 0, 0, 0, 0);
-    if (err < 0) {
-        task_destroy(task);
-        return ERR_PTR(err);
-    }
-    return task;
-}
-
 dword_t sys_clone(dword_t flags, addr_t stack, addr_t ptid, addr_t tls, addr_t ctid) {
     STRACE("clone(0x%x, 0x%x, 0x%x, 0x%x, 0x%x)", flags, stack, ptid, tls, ctid);
     if (flags & ~CSIGNAL_ & ~IMPLEMENTED_FLAGS) {
@@ -155,9 +143,14 @@ dword_t sys_clone(dword_t flags, addr_t stack, addr_t ptid, addr_t tls, addr_t c
     if (flags & CLONE_THREAD_ && !(flags & CLONE_SIGHAND_))
         return _EINVAL;
 
-    struct task *task = fork_task(current);
-    if (IS_ERR(task))
-        return PTR_ERR(task);
+    struct task *task = task_create_(current);
+    if (task == NULL)
+        return _ENOMEM;
+    int err = copy_task(task, flags, stack, ptid, tls, ctid);
+    if (err < 0) {
+        task_destroy(task);
+        return err;
+    }
     task->cpu.eax = 0;
 
     struct vfork_info vfork;
