@@ -1,6 +1,7 @@
 #include "util/list.h"
 #include "kernel/calls.h"
 #include "kernel/task.h"
+#include "fs/tty.h"
 
 dword_t sys_setpgid(pid_t_ id, pid_t_ pgid) {
     STRACE("setpgid(%d, %d)", id, pgid);
@@ -69,6 +70,23 @@ pid_t_ sys_getpgrp() {
     return sys_getpgid(0);
 }
 
+// Must lock pids_lock and task->group->lock
+void task_leave_session(struct task *task) {
+    struct tgroup *group = task->group;
+    list_remove_safe(&group->session);
+    if (group->tty) {
+        lock(&ttys_lock);
+        if (list_empty(&pid_get(group->sid)->session)) {
+            lock(&group->tty->lock);
+            group->tty->session = 0;
+            unlock(&group->tty->lock);
+        }
+        tty_release(group->tty);
+        group->tty = NULL;
+        unlock(&ttys_lock);
+    }
+}
+
 pid_t_ task_setsid(struct task *task) {
     lock(&pids_lock);
     struct tgroup *group = task->group;
@@ -78,17 +96,14 @@ pid_t_ task_setsid(struct task *task) {
         return _EPERM;
     }
 
+    task_leave_session(task);
     struct pid *pid = pid_get(task->pid);
-    list_remove_safe(&group->session);
     list_add(&pid->session, &group->session);
     group->sid = new_sid;
+
     list_remove_safe(&group->pgroup);
     list_add(&pid->pgroup, &group->pgroup);
     group->pgid = new_sid;
-
-    lock(&group->lock);
-    group->tty = NULL;
-    unlock(&group->lock);
 
     unlock(&pids_lock);
     return new_sid;

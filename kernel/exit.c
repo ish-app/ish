@@ -18,15 +18,8 @@ static bool exit_tgroup(struct task *task) {
         // - locking pids_lock first, which do_exit did
         if (group->timer)
             timer_free(group->timer);
-        if (group->tty) {
-            lock(&ttys_lock);
-            group->tty->session = 0;
-            tty_release(group->tty);
-            group->tty = NULL;
-            unlock(&ttys_lock);
-        }
+        task_leave_session(task);
         list_remove(&group->pgroup);
-        list_remove(&group->session);
     }
     return group_dead;
 }

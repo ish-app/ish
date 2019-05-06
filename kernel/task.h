@@ -93,6 +93,7 @@ void task_destroy(struct task *task);
 // misc
 void vfork_notify(struct task *task);
 pid_t_ task_setsid(struct task *task);
+void task_leave_session(struct task *task);
 
 // struct thread_group is way too long to type comfortably
 struct tgroup {
