@@ -40,7 +40,7 @@ static NSString *const kPreferenceBootEnabledKey = @"Boot Enabled";
                                       kPreferenceDisableDimmingKey: @(NO),
                                       kPreferenceLaunchCommandKey: @[@"/bin/login", @"-f", @"root"],
                                       kPreferenceBootCommandKey: @[@"/sbin/init"],
-                                      kPreferenceBootEnabledKey: @(NO),
+                                      kPreferenceBootEnabledKey: @(YES),
                                       }];
         _theme = [[Theme alloc] initWithProperties:[_defaults objectForKey:kPreferenceThemeKey]];
     }
