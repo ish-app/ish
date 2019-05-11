@@ -23,7 +23,7 @@
 	<key>NSExtension</key>
 	<dict>
 		<key>NSExtensionFileProviderDocumentGroup</key>
-		<string>group.app.ish.iSH</string>
+		<string>$(PRODUCT_APP_GROUP_IDENTIFIER)</string>
 		<key>NSExtensionFileProviderSupportsEnumeration</key>
 		<true/>
 		<key>NSExtensionPointIdentifier</key>

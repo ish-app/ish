@@ -29,7 +29,7 @@ struct task *fake_task;
             return nil;
         self.mount->fs = &fakefs;
         NSFileManager *manager = NSFileManager.defaultManager;
-        NSURL *container = [manager containerURLForSecurityApplicationGroupIdentifier:@"group.app.ish.iSH"];
+        NSURL *container = [manager containerURLForSecurityApplicationGroupIdentifier:PRODUCT_APP_GROUP_IDENTIFIER];
         _root = [container URLByAppendingPathComponent:@"roots/alpine/data"];
         self.mount->source = strdup(self.root.fileSystemRepresentation);
         int err = self.mount->fs->mount(self.mount);

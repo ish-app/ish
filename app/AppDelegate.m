@@ -47,7 +47,7 @@ static void ios_handle_die(const char *msg) {
 
 - (int)startThings {
     NSFileManager *manager = [NSFileManager defaultManager];
-    NSURL *container = [manager containerURLForSecurityApplicationGroupIdentifier:@"group.app.ish.iSH"];
+    NSURL *container = [manager containerURLForSecurityApplicationGroupIdentifier:PRODUCT_APP_GROUP_IDENTIFIER];
     NSURL *alpineRoot = [container URLByAppendingPathComponent:@"roots/alpine"];
     [manager createDirectoryAtURL:[container URLByAppendingPathComponent:@"roots"]
       withIntermediateDirectories:YES
