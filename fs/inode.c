@@ -60,14 +60,15 @@ void inode_release(struct inode_data *inode) {
     lock(&inodes_lock);
     lock(&inode->lock);
     if (--inode->refcount == 0) {
-        if (inode->mount->fs->inode_orphaned)
-            inode->mount->fs->inode_orphaned(inode->mount, inode);
         unlock(&inode->lock);
         list_remove(&inode->chain);
+        unlock(&inodes_lock);
+        if (inode->mount->fs->inode_orphaned)
+            inode->mount->fs->inode_orphaned(inode->mount, inode);
         mount_release(inode->mount);
         free(inode);
     } else {
         unlock(&inode->lock);
+        unlock(&inodes_lock);
     }
-    unlock(&inodes_lock);
 }
