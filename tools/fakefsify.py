@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import os
 import sys
 from pathlib import Path
 import struct
@@ -12,14 +13,10 @@ insert into meta (db_inode) values (0);
 create table stats (inode integer primary key, stat blob);
 create table paths (path blob primary key, inode integer references stats(inode));
 create index inode_to_path on paths (inode, path);
-create trigger delete_path after delete on paths
-when not exists (select 1 from paths where inode = old.inode)
-begin
-    delete from stats where not exists (select 1 from paths where inode = old.inode) and inode = old.inode;
-end;
-pragma user_version=2;
+pragma user_version=3;
 """
 # no index is needed on stats, because the rows are ordered by the primary key
+
 
 def extract_member(archive, db, member):
     path = data/(member.name)
@@ -44,8 +41,14 @@ def extract_member(archive, db, member):
     else:
         raise ValueError('unrecognized tar entry type')
 
+    if path != data and not path.parent.exists():
+        parent_member = tarfile.TarInfo(os.path.dirname(member.name))
+        parent_member.type = tarfile.DIRTYPE
+        parent_member.mode = 0o755
+        extract_member(archive, db, parent_member)
+
     if member.isdir():
-        path.mkdir(parents=True, exist_ok=True)
+        path.mkdir()
     elif member.issym():
         path.write_text(member.linkname)
     elif member.isfile():
@@ -53,11 +56,16 @@ def extract_member(archive, db, member):
     else:
         path.touch()
 
+    def meta_path(path):
+        path = path.relative_to(data)
+        return b'/' + bytes(path) if path.parts else b''
+
     cursor = db.cursor()
     if member.islnk():
         # a hard link shares its target's inode
         target_path = data/(member.linkname)
-        inode = target_path.stat().st_ino
+        cursor.execute('select inode from paths where path = ?', (meta_path(target_path),))
+        inode, = cursor.fetchone()
     else:
         statblob = memoryview(struct.pack(
             '=iiii',
@@ -68,23 +76,11 @@ def extract_member(archive, db, member):
         ))
         cursor.execute('insert into stats (stat) values (?)', (statblob,))
         inode = cursor.lastrowid
-    meta_path = path.relative_to(data)
-    meta_path = b'/' + bytes(meta_path) if meta_path.parts else b''
-    cursor.execute('insert into paths values (?, ?)', (meta_path, inode))
+    cursor.execute('insert into paths values (?, ?)', (meta_path(path), inode))
 
 def extract_archive(archive, db):
     for member in archive.getmembers():
-        # hack
-        if member.name == './etc/securetty':
-            continue
         extract_member(archive, db, member)
-
-    devtty = tarfile.TarInfo('./dev/tty')
-    devtty.mode = 0o666
-    devtty.type = b'3'
-    devtty.devmajor = 5
-    devtty.devminor = 0
-    extract_member(archive, db, devtty)
 
 try:
     _, archive_path, fs = sys.argv
