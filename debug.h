@@ -12,8 +12,8 @@ void vprintk(const char *msg, va_list args);
 #ifndef DEBUG_all
 #define DEBUG_all 0
 #endif
-#ifndef DEBUG_default
-#define DEBUG_default DEBUG_all
+#ifndef DEBUG_verbose
+#define DEBUG_verbose DEBUG_all
 #endif
 #ifndef DEBUG_instr
 #define DEBUG_instr DEBUG_all
@@ -28,10 +28,10 @@ void vprintk(const char *msg, va_list args);
 #define DEBUG_memory DEBUG_all
 #endif
 
-#if DEBUG_default
-#define TRACE_default TRACE__
+#if DEBUG_verbose
+#define TRACE_verbose TRACE__
 #else
-#define TRACE_default TRACE__NOP
+#define TRACE_verbose TRACE__NOP
 #endif
 #if DEBUG_instr
 #define TRACE_instr TRACE__
@@ -65,7 +65,7 @@ extern int log_override;
 #define TRACE_(chan, msg, ...) glue(TRACE_, chan)(msg, ##__VA_ARGS__)
 #define TRACE(msg, ...) TRACE_(DEFAULT_CHANNEL, msg, ##__VA_ARGS__)
 #ifndef DEFAULT_CHANNEL
-#define DEFAULT_CHANNEL default
+#define DEFAULT_CHANNEL verbose
 #endif
 
 #define TODO(msg, ...) die("TODO: " msg, ##__VA_ARGS__)
