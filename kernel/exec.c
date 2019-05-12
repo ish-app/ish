@@ -236,19 +236,24 @@ static int elf_exec(struct fd *fd, const char *file, const char *argv, const cha
     // map vdso
     err = _ENOMEM;
     pages_t vdso_pages = sizeof(vdso_data) >> PAGE_BITS;
-    page_t vdso_page = pt_find_hole(current->mem, vdso_pages);
+    // FIXME disgusting hack: musl's dynamic linker has a one-page hole, and
+    // I'd rather not put the vdso in that hole. so find a two-page hole and
+    // add one.
+    page_t vdso_page = pt_find_hole(current->mem, vdso_pages + 1);
     if (vdso_page == BAD_PAGE)
         goto beyond_hope;
+    vdso_page += 1;
     if ((err = pt_map(current->mem, vdso_page, vdso_pages, (void *) vdso_data, 0)) < 0)
         goto beyond_hope;
     current->mm->vdso = vdso_page << PAGE_BITS;
     addr_t vdso_entry = current->mm->vdso + ((struct elf_header *) vdso_data)->entry_point;
 
     // map 3 empty "vvar" pages to satisfy ptraceomatic
-    page_t vvar_page = pt_find_hole(current->mem, 3);
+#define NUM_VVAR 3
+    page_t vvar_page = pt_find_hole(current->mem, NUM_VVAR);
     if (vvar_page == BAD_PAGE)
         goto beyond_hope;
-    if ((err = pt_map_nothing(current->mem, vvar_page, 3, 0)) < 0)
+    if ((err = pt_map_nothing(current->mem, vvar_page, NUM_VVAR, 0)) < 0)
         goto beyond_hope;
 
     // STACK TIME!
