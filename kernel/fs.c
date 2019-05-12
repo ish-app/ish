@@ -475,21 +475,62 @@ dword_t sys_umask(dword_t mask) {
     return old_umask;
 }
 
-static dword_t statfs_mount(struct mount *mount, addr_t buf_addr) {
-    struct statfsbuf stat;
+static int mount_statfs(struct mount *mount, struct statfsbuf *stat) {
     int err = 0;
-    if (mount->fs->statfs) {
-        err = mount->fs->statfs(mount, &stat);
-        if (err >= 0)
-            if (user_put(buf_addr, stat))
-                return _EFAULT;
-    }
-    if (stat.type == 0)
-        stat.type = mount->fs->magic;
+    if (mount->fs->statfs)
+        err = mount->fs->statfs(mount, stat);
+    if (stat->type == 0)
+        stat->type = mount->fs->magic;
     return err;
 }
 
-dword_t sys_statfs64(addr_t path_addr, addr_t buf_addr) {
+static int_t statfs_mount(struct mount *mount, addr_t buf_addr) {
+    struct statfsbuf buf;
+    int err = mount_statfs(mount, &buf);
+    if (err < 0)
+        return err;
+    struct statfs_ out_buf = {
+        .type = buf.type,
+        .bsize = buf.bsize,
+        .blocks = buf.blocks,
+        .bfree = buf.bfree,
+        .bavail = buf.bavail,
+        .files = buf.files,
+        .ffree = buf.ffree,
+        .fsid = buf.fsid,
+        .namelen = buf.namelen,
+        .frsize = buf.frsize,
+        .flags = buf.flags,
+    };
+    if (user_put(buf_addr, out_buf))
+        return _EFAULT;
+    return 0;
+}
+
+static int_t statfs64_mount(struct mount *mount, addr_t buf_addr) {
+    struct statfsbuf buf;
+    int err = mount_statfs(mount, &buf);
+    if (err < 0)
+        return err;
+    struct statfs64_ out_buf = {
+        .type = buf.type,
+        .bsize = buf.bsize,
+        .blocks = buf.blocks,
+        .bfree = buf.bfree,
+        .bavail = buf.bavail,
+        .files = buf.files,
+        .ffree = buf.ffree,
+        .fsid = buf.fsid,
+        .namelen = buf.namelen,
+        .frsize = buf.frsize,
+        .flags = buf.flags,
+    };
+    if (user_put(buf_addr, out_buf))
+        return _EFAULT;
+    return 0;
+}
+
+dword_t sys_statfs(addr_t path_addr, addr_t buf_addr) {
     char path_raw[MAX_PATH];
     if (user_read_string(path_addr, path_raw, sizeof(path_raw)))
         return _EFAULT;
@@ -504,8 +545,27 @@ dword_t sys_statfs64(addr_t path_addr, addr_t buf_addr) {
     return err;
 }
 
-dword_t sys_fstatfs64(fd_t f, addr_t buf_addr) {
+dword_t sys_statfs64(addr_t path_addr, addr_t buf_addr) {
+    char path_raw[MAX_PATH];
+    if (user_read_string(path_addr, path_raw, sizeof(path_raw)))
+        return _EFAULT;
+    STRACE("statfs64(\"%s\", %#x)", path_raw, buf_addr);
+    char path[MAX_PATH];
+    int err = path_normalize(AT_PWD, path_raw, path, false);
+    if (err < 0)
+        return err;
+    struct mount *mount = mount_find(path);
+    err = statfs64_mount(mount, buf_addr);
+    mount_release(mount);
+    return err;
+}
+
+dword_t sys_fstatfs(fd_t f, addr_t buf_addr) {
     return statfs_mount(f_get(f)->mount, buf_addr);
+}
+
+dword_t sys_fstatfs64(fd_t f, addr_t buf_addr) {
+    return statfs64_mount(f_get(f)->mount, buf_addr);
 }
 
 dword_t sys_flock(fd_t f, dword_t operation) {
