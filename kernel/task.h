@@ -53,6 +53,7 @@ struct task {
     // locked by pids_lock
     dword_t exit_code;
     bool zombie;
+    bool exiting;
 
     // this structure is allocated on the stack of the parent's clone() call
     struct vfork_info {
