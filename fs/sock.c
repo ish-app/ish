@@ -574,7 +574,7 @@ int_t sys_sendmsg(fd_t sock_fd, addr_t msghdr_addr, int_t flags) {
     memset(msg_iov, 0, sizeof(msg_iov));
     msg.msg_iov = msg_iov;
     msg.msg_iovlen = sizeof(msg_iov) / sizeof(msg_iov[0]);
-    for (int i = 0; i < msg.msg_iovlen; i++) {
+    for (size_t i = 0; i < msg.msg_iovlen; i++) {
         msg_iov[i].iov_len = msg_iov_fake[i].len;
         msg_iov[i].iov_base = malloc(msg_iov_fake[i].len);
         err = _EFAULT;
@@ -608,7 +608,7 @@ int_t sys_sendmsg(fd_t sock_fd, addr_t msghdr_addr, int_t flags) {
 out_free_control:
     free(msg_control);
 out_free_iov:
-    for (int i = 0; i < msg.msg_iovlen; i++)
+    for (size_t i = 0; i < msg.msg_iovlen; i++)
         free(msg_iov[i].iov_base);
     return err;
 }
@@ -650,7 +650,7 @@ int_t sys_recvmsg(fd_t sock_fd, addr_t msghdr_addr, int_t flags) {
     struct iovec msg_iov[msg_fake.msg_iovlen];
     msg.msg_iov = msg_iov;
     msg.msg_iovlen = sizeof(msg_iov) / sizeof(msg_iov[0]);
-    for (int i = 0; i < msg.msg_iovlen; i++) {
+    for (size_t i = 0; i < msg.msg_iovlen; i++) {
         msg_iov[i].iov_len = msg_iov_fake[i].len;
         msg_iov[i].iov_base = malloc(msg_iov_fake[i].len);
     }
@@ -663,7 +663,7 @@ int_t sys_recvmsg(fd_t sock_fd, addr_t msghdr_addr, int_t flags) {
     size_t n = res;
     if (res < 0)
         n = 0;
-    for (int i = 0; i < msg.msg_iovlen; i++) {
+    for (size_t i = 0; i < msg.msg_iovlen; i++) {
         size_t chunk_size = msg_iov[i].iov_len;
         if (chunk_size > n)
             chunk_size = n;

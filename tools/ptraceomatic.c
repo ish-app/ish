@@ -254,7 +254,7 @@ static void pt_copy_to_real(int pid, addr_t start, size_t size) {
 static void step_tracing(struct cpu_state *cpu, struct tlb *tlb, int pid, int sender, int receiver) {
     // step fake cpu
     cpu->tf = 1;
-    int changes = cpu->mem->changes;
+    unsigned changes = cpu->mem->changes;
     int interrupt = cpu_step32(cpu, tlb);
     if (interrupt != INT_NONE) {
         cpu->trapno = interrupt;
