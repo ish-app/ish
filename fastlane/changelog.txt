@@ -1,11 +1,7 @@
-HOTFIX for annoying bug where threads totally broke and git clone just hangs. Release notes for build 50 are pasted below.
-
-- Unix sockets work (until you try to send a file descriptor)
-- Screen works (until you try to reattach, which needs to send a file descriptor)
-- The entry point is now /sbin/init, which is the first step to making background services possible
-- Inform 7 should work
-- I managed to create an arch linux chroot once
-- Fixed issue with fontconfig on arm devices
+Bug fixes with no improvements. Specifically, these are fixed:
+- ssh and screen being completely broken for people who installed the app fresh instead of updating from a previous version
+- Segfault when a non-main thread forks and then exits and the child exits afterwards
+- Deadlock that hangs the app once in a while
 
 Send bug reports or feedback here: https://github.com/tbodt/ish/issues (or by email, if you prefer)
 Follow iSH on Twitter: https://twitter.com/iSH_app
