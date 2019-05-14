@@ -5,14 +5,36 @@
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include "kernel/errno.h"
+#include "fs/fd.h"
 #include "misc.h"
 #include "debug.h"
 
-dword_t sys_socketcall(dword_t call_num, addr_t args_addr);
+int_t sys_socketcall(dword_t call_num, addr_t args_addr);
+
+int_t sys_socket(dword_t domain, dword_t type, dword_t protocol);
+int_t sys_bind(fd_t sock_fd, addr_t sockaddr_addr, uint_t sockaddr_len);
+int_t sys_connect(fd_t sock_fd, addr_t sockaddr_addr, uint_t sockaddr_len);
+int_t sys_listen(fd_t sock_fd, int_t backlog);
+int_t sys_accept(fd_t sock_fd, addr_t sockaddr_addr, addr_t sockaddr_len_addr);
+int_t sys_getsockname(fd_t sock_fd, addr_t sockaddr_addr, addr_t sockaddr_len_addr);
+int_t sys_getpeername(fd_t sock_fd, addr_t sockaddr_addr, addr_t sockaddr_len_addr);
+int_t sys_socketpair(dword_t domain, dword_t type, dword_t protocol, addr_t sockets_addr);
+int_t sys_sendto(fd_t sock_fd, addr_t buffer_addr, dword_t len, dword_t flags, addr_t sockaddr_addr, dword_t sockaddr_len);
+int_t sys_recvfrom(fd_t sock_fd, addr_t buffer_addr, dword_t len, dword_t flags, addr_t sockaddr_addr, addr_t sockaddr_len_addr);
+int_t sys_shutdown(fd_t sock_fd, dword_t how);
+int_t sys_setsockopt(fd_t sock_fd, dword_t level, dword_t option, addr_t value_addr, dword_t value_len);
+int_t sys_getsockopt(fd_t sock_fd, dword_t level, dword_t option, addr_t value_addr, dword_t len_addr);
+int_t sys_sendmsg(fd_t sock_fd, addr_t msghdr_addr, int_t flags);
+int_t sys_recvmsg(fd_t sock_fd, addr_t msghdr_addr, int_t flags);
+int_t sys_sendmmsg(fd_t sock_fd, addr_t msgvec_addr, uint_t msgvec_len, int_t flags);
 
 struct sockaddr_ {
     uint16_t family;
     char data[14];
+};
+struct sockaddr_max_ {
+    uint16_t family;
+    char data[108];
 };
 
 size_t sockaddr_size(void *p);
@@ -21,7 +43,7 @@ struct sockaddr *sockaddr_to_real(void *p);
 
 struct msghdr_ {
     addr_t msg_name;
-    int_t msg_namelen;
+    uint_t msg_namelen;
     addr_t msg_iov;
     uint_t msg_iovlen;
     addr_t msg_control;
@@ -66,12 +88,26 @@ static inline int sock_type_to_real(int type, int protocol) {
                 return -1;
             return SOCK_STREAM;
         case SOCK_DGRAM_:
-            if (protocol != 0 && protocol != IPPROTO_UDP)
-                return -1;
+            switch (protocol) {
+                default:
+                    return -1;
+                case 0:
+                case IPPROTO_UDP:
+                case IPPROTO_ICMP:
+                case IPPROTO_ICMPV6:
+                    break;
+            }
             return SOCK_DGRAM;
         case SOCK_RAW_:
-            if (protocol != IPPROTO_UDP && protocol != IPPROTO_ICMP && protocol != IPPROTO_ICMPV6 && protocol != IPPROTO_RAW)
-                return -1;
+            switch (protocol) {
+                default:
+                    return -1;
+                case IPPROTO_RAW:
+                case IPPROTO_UDP:
+                case IPPROTO_ICMP:
+                case IPPROTO_ICMPV6:
+                    break;
+            }
             return SOCK_DGRAM;
     }
     return -1;
@@ -118,12 +154,18 @@ static inline int sock_flags_from_real(int real) {
 #define SO_TYPE_ 3
 #define SO_ERROR_ 4
 #define SO_BROADCAST_ 6
-#define SO_KEEPALIVE_ 9
 #define SO_SNDBUF_ 7
+#define SO_KEEPALIVE_ 9
+#define SO_TIMESTAMP_ 29
+#define SO_PROTOCOL_ 38
+#define SO_DOMAIN_ 39
 #define IP_TOS_ 1
 #define IP_TTL_ 2
 #define IP_HDRINCL_ 3
+#define IP_RETOPTS_ 7
 #define IP_MTU_DISCOVER_ 10
+#define IP_RECVTTL_ 12
+#define IP_RECVTOS_ 13
 #define TCP_NODELAY_ 1
 #define IPV6_UNICAST_HOPS_ 16
 #define IPV6_V6ONLY_ 26
@@ -139,6 +181,7 @@ static inline int sock_opt_to_real(int fake, int level) {
             case SO_BROADCAST_: return SO_BROADCAST;
             case SO_KEEPALIVE_: return SO_KEEPALIVE;
             case SO_SNDBUF_: return SO_SNDBUF;
+            case SO_TIMESTAMP_: return SO_TIMESTAMP;
         } break;
         case IPPROTO_TCP: switch (fake) {
             case TCP_NODELAY_: return TCP_NODELAY;
@@ -147,6 +190,9 @@ static inline int sock_opt_to_real(int fake, int level) {
             case IP_TOS_: return IP_TOS;
             case IP_TTL_: return IP_TTL;
             case IP_HDRINCL_: return IP_HDRINCL;
+            case IP_RETOPTS_: return IP_RETOPTS;
+            case IP_RECVTTL_: return IP_RECVTTL;
+            case IP_RECVTOS_: return IP_RECVTOS;
         } break;
         case IPPROTO_IPV6: switch (fake) {
             case IPV6_UNICAST_HOPS_: return IPV6_UNICAST_HOPS;
@@ -162,5 +208,7 @@ static inline int sock_level_to_real(int fake) {
         return SOL_SOCKET;
     return fake;
 }
+
+extern const char *sock_tmp_prefix;
 
 #endif

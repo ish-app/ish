@@ -1,7 +1,7 @@
-Just one bug fix in this build:
-- Files opened from the Files app having random numbers as names, preventing them from being syntax highlighted in some apps and opening at all in other apps
-
-Also, if you clean install this build, you'll get Alpine 3.9.0 instead of 3.8.2.
+Bug fixes with no improvements. Specifically, these are fixed:
+- ssh and screen being completely broken for people who installed the app fresh instead of updating from a previous version
+- Segfault when a non-main thread forks and then exits and the child exits afterwards
+- Deadlock that hangs the app once in a while
 
 Send bug reports or feedback here: https://github.com/tbodt/ish/issues (or by email, if you prefer)
 Follow iSH on Twitter: https://twitter.com/iSH_app

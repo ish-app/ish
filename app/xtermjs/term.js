@@ -1,5 +1,4 @@
 import Terminal from 'xterm';
-import 'xterm/lib/addons/fit/fit';
 import 'xterm/dist/xterm.css';
 import './term.css';
 
@@ -21,9 +20,39 @@ term.on('focus', function() {
 term.on('resize', function(size) {
     webkit.messageHandlers.resize.postMessage('resize');
 });
-term.fit();
+
+// copied from the fit addon, but without subtracting 17 pixels for a nonexistent scrollbar
+function fit() {
+    // find the size of the box
+    const {
+        width: parentWidth,
+        height: parentHeight,
+        paddingTop,
+        paddingBottom,
+        paddingLeft,
+        paddingRight,
+    } = window.getComputedStyle(term.element.parentElement);
+    const boxWidth = parseFloat(parentWidth) - parseFloat(paddingLeft) - parseFloat(paddingRight);
+    const boxHeight = parseFloat(parentHeight) - parseFloat(paddingTop) - parseFloat(paddingBottom);
+    
+    // find the size of a character
+    const subjectRow = term.rowContainer.firstElementChild;
+    const origContent = subjectRow.innerHTML;
+    subjectRow.style.display = 'inline';
+    subjectRow.innerText = 'W';
+    const charWidth = subjectRow.getBoundingClientRect().width;
+    subjectRow.style.display = '';
+    const charHeight = subjectRow.getBoundingClientRect().height;
+    subjectRow.innerHTML = origContent;
+    
+    term.resize(Math.floor(boxWidth / charWidth),
+                Math.floor(boxHeight / charHeight));
+}
+window.fit=fit
+
+fit();
 window.addEventListener('resize', function() {
-    term.fit();
+    fit();
 });
 
 const props = ['applicationCursor'];
@@ -54,8 +83,8 @@ function updateStyle({foregroundColor, backgroundColor, fontSize}) {
     }
     `;
     document.getElementById('style').textContent = style;
-    term.fit();
-    term.fit(); // have to do a second time for it to correctly detect available space initially
+    fit();
+    fit(); // have to do a second time for it to correctly detect available space initially
 }
 window.updateStyle = updateStyle;
 

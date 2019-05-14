@@ -1,3 +1,4 @@
+#include <fcntl.h>
 #include <unistd.h>
 #include <sys/mman.h>
 #include <string.h>
@@ -246,4 +247,34 @@ void *mem_ptr(struct mem *mem, addr_t addr, int type) {
 size_t real_page_size;
 __attribute__((constructor)) static void get_real_page_size() {
     real_page_size = sysconf(_SC_PAGESIZE);
+}
+
+void mem_coredump(struct mem *mem, const char *file) {
+    int fd = open(file, O_CREAT | O_RDWR | O_TRUNC, 0666);
+    if (fd < 0) {
+        perror("open");
+        return;
+    }
+    if (ftruncate(fd, 0xffffffff) < 0) {
+        perror("ftruncate");
+        return;
+    }
+
+    int pages = 0;
+    for (page_t page = 0; page < MEM_PAGES; page++) {
+        struct pt_entry *entry = mem_pt(mem, page);
+        if (entry == NULL)
+            continue;
+        pages++;
+        if (lseek(fd, page << PAGE_BITS, SEEK_SET) < 0) {
+            perror("lseek");
+            return;
+        }
+        if (write(fd, entry->data->data, PAGE_SIZE) < 0) {
+            perror("write");
+            return;
+        }
+    }
+    printk("dumped %d pages\n", pages);
+    close(fd);
 }

@@ -181,8 +181,7 @@ static int elf_exec(struct fd *fd, const char *file, const char *argv, const cha
     // killed before it even starts. please don't be too sad about it, it's
     // just a process.
     mm_release(current->mm);
-    current->mm = mm_new();
-    current->mem = current->cpu.mem = &current->mm->mem;
+    task_set_mm(current, mm_new());
     write_wrlock(&current->mem->lock);
 
     current->mm->exefile = fd_retain(fd);
@@ -237,19 +236,24 @@ static int elf_exec(struct fd *fd, const char *file, const char *argv, const cha
     // map vdso
     err = _ENOMEM;
     pages_t vdso_pages = sizeof(vdso_data) >> PAGE_BITS;
-    page_t vdso_page = pt_find_hole(current->mem, vdso_pages);
+    // FIXME disgusting hack: musl's dynamic linker has a one-page hole, and
+    // I'd rather not put the vdso in that hole. so find a two-page hole and
+    // add one.
+    page_t vdso_page = pt_find_hole(current->mem, vdso_pages + 1);
     if (vdso_page == BAD_PAGE)
         goto beyond_hope;
+    vdso_page += 1;
     if ((err = pt_map(current->mem, vdso_page, vdso_pages, (void *) vdso_data, 0)) < 0)
         goto beyond_hope;
     current->mm->vdso = vdso_page << PAGE_BITS;
     addr_t vdso_entry = current->mm->vdso + ((struct elf_header *) vdso_data)->entry_point;
 
     // map 3 empty "vvar" pages to satisfy ptraceomatic
-    page_t vvar_page = pt_find_hole(current->mem, 3);
+#define NUM_VVAR 3
+    page_t vvar_page = pt_find_hole(current->mem, NUM_VVAR);
     if (vvar_page == BAD_PAGE)
         goto beyond_hope;
-    if ((err = pt_map_nothing(current->mem, vvar_page, 3, 0)) < 0)
+    if ((err = pt_map_nothing(current->mem, vvar_page, NUM_VVAR, 0)) < 0)
         goto beyond_hope;
 
     // STACK TIME!
@@ -358,7 +362,20 @@ static int elf_exec(struct fd *fd, const char *file, const char *argv, const cha
     current->cpu.esp = sp;
     current->cpu.eip = entry;
     current->cpu.fcw = 0x37f;
+
+    // This code was written when I discovered that the glibc entry point
+    // interprets edx as the address of a function to call on exit, as
+    // specified in the ABI. This register is normally set by the dynamic
+    // linker, so everything works fine until you run a static executable.
+    current->cpu.eax = 0;
+    current->cpu.ebx = 0;
+    current->cpu.ecx = 0;
+    current->cpu.edx = 0;
+    current->cpu.esi = 0;
+    current->cpu.edi = 0;
+    current->cpu.ebp = 0;
     collapse_flags(&current->cpu);
+    current->cpu.eflags = 0;
 
     err = 0;
 out_free_interp:

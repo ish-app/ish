@@ -11,6 +11,7 @@
 #include "kernel/task.h"
 #include "fs/fd.h"
 #include "fs/dev.h"
+#include "fs/inode.h"
 #define ISH_INTERNAL
 #include "fs/fake.h"
 
@@ -65,6 +66,11 @@ void db_rollback(struct mount *mount) {
 
 static void bind_path(sqlite3_stmt *stmt, int i, const char *path) {
     sqlite3_bind_blob(stmt, i, path, strlen(path), SQLITE_TRANSIENT);
+}
+
+static void try_cleanup_inode(struct mount *mount, ino_t inode) {
+    sqlite3_bind_int64(mount->stmt.try_cleanup_inode, 1, inode);
+    db_exec_reset(mount, mount->stmt.try_cleanup_inode);
 }
 
 ino_t path_get_inode(struct mount *mount, const char *path) {
@@ -123,9 +129,14 @@ static void path_link(struct mount *mount, const char *src, const char *dst) {
     db_exec_reset(mount, mount->stmt.path_link);
 }
 static void path_unlink(struct mount *mount, const char *path) {
+    ino_t inode = path_get_inode(mount, path);
+    if (inode == 0)
+        die("path_unlink(%s): nonexistent path", path);
     // delete from paths where path = ?
     bind_path(mount->stmt.path_unlink, 1, path);
     db_exec_reset(mount, mount->stmt.path_unlink);
+    if (inode_is_orphaned(mount, inode))
+        try_cleanup_inode(mount, inode);
 }
 static void path_rename(struct mount *mount, const char *src, const char *dst) {
     // update or replace paths set path = change_prefix(path, ? [len(src)], ? [dst])
@@ -283,7 +294,7 @@ static int fakefs_symlink(struct mount *mount, const char *target, const char *l
 
 static int fakefs_mknod(struct mount *mount, const char *path, mode_t_ mode, dev_t_ dev) {
     mode_t_ real_mode = 0666;
-    if (S_ISBLK(mode) || S_ISCHR(mode))
+    if (S_ISBLK(mode) || S_ISCHR(mode) || S_ISSOCK(mode))
         real_mode |= S_IFREG;
     else
         real_mode |= mode & S_IFMT;
@@ -576,6 +587,13 @@ static int fakefs_mount(struct mount *mount) {
     db_check_error(mount);
     sqlite3_finalize(statement);
 
+    // delete orphaned stats
+    statement = db_prepare(mount, "delete from stats where not exists (select 1 from paths where inode = stats.inode)");
+    db_check_error(mount);
+    sqlite3_step(statement);
+    db_check_error(mount);
+    sqlite3_finalize(statement);
+
     lock_init(&mount->lock);
     mount->stmt.begin = db_prepare(mount, "begin");
     mount->stmt.commit = db_prepare(mount, "commit");
@@ -591,6 +609,7 @@ static int fakefs_mount(struct mount *mount) {
     mount->stmt.path_rename = db_prepare(mount, "update or replace paths set path = change_prefix(path, ?, ?) "
             "where (path >= ? and path < ?) or path = ?");
     mount->stmt.path_from_inode = db_prepare(mount, "select path from paths where inode = ?");
+    mount->stmt.try_cleanup_inode = db_prepare(mount, "delete from stats where inode = ? and not exists (select 1 from paths where inode = stats.inode)");
 
     return 0;
 }
@@ -600,6 +619,12 @@ static int fakefs_umount(struct mount *mount) {
         sqlite3_close(mount->db);
     /* return realfs.umount(mount); */
     return 0;
+}
+
+static void fakefs_inode_orphaned(struct mount *mount, struct inode_data *inode) {
+    db_begin(mount);
+    try_cleanup_inode(mount, inode->number);
+    db_commit(mount);
 }
 
 const struct fs_ops fakefs = {
@@ -626,5 +651,6 @@ const struct fs_ops fakefs = {
 
     .mkdir = fakefs_mkdir,
     .rmdir = fakefs_rmdir,
-};
 
+    .inode_orphaned = fakefs_inode_orphaned,
+};

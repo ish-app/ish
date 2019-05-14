@@ -39,8 +39,8 @@ struct tms_ {
     dword_t tms_cstime; /* system time of children */
 };
 
-dword_t sys_getitimer(dword_t which, addr_t val);
-dword_t sys_setitimer(dword_t which, addr_t new_val, addr_t old_val);
+int_t sys_setitimer(int_t which, addr_t new_val, addr_t old_val);
+uint_t sys_alarm(uint_t seconds);
 dword_t sys_times(addr_t tbuf);
 dword_t sys_nanosleep(addr_t req, addr_t rem);
 dword_t sys_gettimeofday(addr_t tv, addr_t tz);

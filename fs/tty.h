@@ -74,8 +74,10 @@ struct termios_ {
 #define TIOCSPGRP_ 0x5410
 #define TIOCGWINSZ_ 0x5413
 #define TIOCSWINSZ_ 0x5414
-#define TIOCSPTLCK_ 0x40045431
+#define TIOCPKT_ 0x5420
 #define TIOCGPTN_ 0x80045430
+#define TIOCSPTLCK_ 0x40045431
+#define TIOCGPKT_ 0x80045438
 
 #define TCIFLUSH_ 0
 #define TCOFLUSH_ 1
@@ -107,6 +109,7 @@ struct tty {
     unsigned refcount;
     struct tty_driver *driver;
     bool hung_up;
+    bool ever_opened;
 
 #define TTY_BUF_SIZE 4096
     char buf[TTY_BUF_SIZE];
@@ -114,6 +117,7 @@ struct tty {
     // are created by EOL and EOF characters. You can't backspace past a flag.
     bool buf_flag[TTY_BUF_SIZE];
     size_t bufsize;
+    uint8_t packet_flags;
     cond_t produced;
     cond_t consumed;
 
@@ -140,6 +144,7 @@ struct tty {
             uid_t_ uid;
             uid_t_ gid;
             bool locked;
+            bool packet_mode;
         } pty;
         void *data;
     };
@@ -151,8 +156,8 @@ void tty_set_winsize(struct tty *tty, struct winsize_ winsize);
 void tty_hangup(struct tty *tty);
 
 // public for the benefit of ptys
-struct tty *tty_get(struct tty_driver *driver, int num);
-struct tty *tty_alloc(struct tty_driver *driver, int num);
+struct tty *tty_get(struct tty_driver *driver, int type, int num);
+struct tty *tty_alloc(struct tty_driver *driver, int type, int num);
 extern lock_t ttys_lock;
 void tty_release(struct tty *tty); // must be called with ttys_lock
 

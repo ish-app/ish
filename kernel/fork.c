@@ -59,8 +59,7 @@ static int copy_task(struct task *task, dword_t flags, addr_t stack, addr_t ptid
     if (flags & CLONE_VM_) {
         mm_retain(mm);
     } else {
-        task->mm = mm_copy(mm);
-        task->mem = task->cpu.mem = &task->mm->mem;
+        task_set_mm(task, mm_copy(mm));
     }
 
     if (flags & CLONE_FILES_) {

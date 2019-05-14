@@ -475,21 +475,62 @@ dword_t sys_umask(dword_t mask) {
     return old_umask;
 }
 
-static dword_t statfs_mount(struct mount *mount, addr_t buf_addr) {
-    struct statfsbuf stat;
+static int mount_statfs(struct mount *mount, struct statfsbuf *stat) {
     int err = 0;
-    if (mount->fs->statfs) {
-        err = mount->fs->statfs(mount, &stat);
-        if (err >= 0)
-            if (user_put(buf_addr, stat))
-                return _EFAULT;
-    }
-    if (stat.type == 0)
-        stat.type = mount->fs->magic;
+    if (mount->fs->statfs)
+        err = mount->fs->statfs(mount, stat);
+    if (stat->type == 0)
+        stat->type = mount->fs->magic;
     return err;
 }
 
-dword_t sys_statfs64(addr_t path_addr, addr_t buf_addr) {
+static int_t statfs_mount(struct mount *mount, addr_t buf_addr) {
+    struct statfsbuf buf;
+    int err = mount_statfs(mount, &buf);
+    if (err < 0)
+        return err;
+    struct statfs_ out_buf = {
+        .type = buf.type,
+        .bsize = buf.bsize,
+        .blocks = buf.blocks,
+        .bfree = buf.bfree,
+        .bavail = buf.bavail,
+        .files = buf.files,
+        .ffree = buf.ffree,
+        .fsid = buf.fsid,
+        .namelen = buf.namelen,
+        .frsize = buf.frsize,
+        .flags = buf.flags,
+    };
+    if (user_put(buf_addr, out_buf))
+        return _EFAULT;
+    return 0;
+}
+
+static int_t statfs64_mount(struct mount *mount, addr_t buf_addr) {
+    struct statfsbuf buf;
+    int err = mount_statfs(mount, &buf);
+    if (err < 0)
+        return err;
+    struct statfs64_ out_buf = {
+        .type = buf.type,
+        .bsize = buf.bsize,
+        .blocks = buf.blocks,
+        .bfree = buf.bfree,
+        .bavail = buf.bavail,
+        .files = buf.files,
+        .ffree = buf.ffree,
+        .fsid = buf.fsid,
+        .namelen = buf.namelen,
+        .frsize = buf.frsize,
+        .flags = buf.flags,
+    };
+    if (user_put(buf_addr, out_buf))
+        return _EFAULT;
+    return 0;
+}
+
+dword_t sys_statfs(addr_t path_addr, addr_t buf_addr) {
     char path_raw[MAX_PATH];
     if (user_read_string(path_addr, path_raw, sizeof(path_raw)))
         return _EFAULT;
@@ -504,8 +545,27 @@ dword_t sys_statfs64(addr_t path_addr, addr_t buf_addr) {
     return err;
 }
 
-dword_t sys_fstatfs64(fd_t f, addr_t buf_addr) {
+dword_t sys_statfs64(addr_t path_addr, addr_t buf_addr) {
+    char path_raw[MAX_PATH];
+    if (user_read_string(path_addr, path_raw, sizeof(path_raw)))
+        return _EFAULT;
+    STRACE("statfs64(\"%s\", %#x)", path_raw, buf_addr);
+    char path[MAX_PATH];
+    int err = path_normalize(AT_PWD, path_raw, path, false);
+    if (err < 0)
+        return err;
+    struct mount *mount = mount_find(path);
+    err = statfs64_mount(mount, buf_addr);
+    mount_release(mount);
+    return err;
+}
+
+dword_t sys_fstatfs(fd_t f, addr_t buf_addr) {
     return statfs_mount(f_get(f)->mount, buf_addr);
+}
+
+dword_t sys_fstatfs64(fd_t f, addr_t buf_addr) {
+    return statfs64_mount(f_get(f)->mount, buf_addr);
 }
 
 dword_t sys_flock(fd_t f, dword_t operation) {
@@ -522,34 +582,56 @@ static struct timespec convert_timespec(struct timespec_ t) {
     return ts;
 }
 
-dword_t sys_utimensat(fd_t at_f, addr_t path_addr, addr_t times_addr, dword_t flags) {
-    struct timespec_ times[2];
-    if (times_addr == 0) {
-        // if times is NULL, set both times to the current time
-        struct timespec now;
-        int err = clock_gettime(CLOCK_REALTIME, &now);
-        if (err < 0)
-            return errno_map();
-        times[0] = times[1] = (struct timespec_) {.sec = now.tv_sec, .nsec = now.tv_nsec};
-    } else {
-        if (user_get(times_addr, times))
-            return _EFAULT;
-    }
+static struct timespec convert_timeval(struct timeval_ t) {
+    struct timespec ts;
+    ts.tv_sec = t.sec;
+    ts.tv_nsec = t.usec * 1000;
+    return ts;
+}
 
+static dword_t sys_utime_common(fd_t at_f, addr_t path_addr, struct timespec atime, struct timespec mtime, dword_t flags) {
     char path[MAX_PATH];
     if (path_addr != 0)
         if (user_read_string(path_addr, path, sizeof(path)))
             return _EFAULT;
     STRACE("utimensat(%d, %s, {{%d, %d}, {%d, %d}}, %d)", at_f, path,
-            times[0].sec, times[0].nsec, times[1].sec, times[1].nsec, flags);
+            atime.tv_sec, atime.tv_nsec, mtime.tv_sec, mtime.tv_nsec, flags);
     struct fd *at = at_fd(at_f);
     if (at == NULL)
         return _EBADF;
 
-    struct timespec atime = convert_timespec(times[0]);
-    struct timespec mtime = convert_timespec(times[1]);
     bool follow_links = flags & AT_SYMLINK_NOFOLLOW_ ? false : true;
     return generic_utime(at, path_addr != 0 ? path : ".", atime, mtime, follow_links); // TODO implement
+}
+
+dword_t sys_utimensat(fd_t at_f, addr_t path_addr, addr_t times_addr, dword_t flags) {
+    struct timespec atime;
+    struct timespec mtime;
+    if (times_addr == 0) {
+        atime = mtime = timespec_now();
+    } else {
+        struct timespec_ times[2];
+        if (user_get(times_addr, times))
+            return _EFAULT;
+        atime = convert_timespec(times[0]);
+        mtime = convert_timespec(times[1]);
+    }
+    return sys_utime_common(at_f, path_addr, atime, mtime, flags);
+}
+
+dword_t sys_utimes(addr_t path_addr, addr_t times_addr) {
+    struct timespec atime;
+    struct timespec mtime;
+    if (times_addr == 0) {
+        atime = mtime = timespec_now();
+    } else {
+        struct timeval_ times[2];
+        if (user_get(times_addr, times))
+            return _EFAULT;
+        atime = convert_timeval(times[0]);
+        mtime = convert_timeval(times[1]);
+    }
+    return sys_utime_common(AT_FDCWD_, path_addr, atime, mtime, 0);
 }
 
 dword_t sys_fchmod(fd_t f, dword_t mode) {
@@ -564,6 +646,7 @@ dword_t sys_fchmodat(fd_t at_f, addr_t path_addr, dword_t mode) {
     char path[MAX_PATH];
     if (user_read_string(path_addr, path, sizeof(path)))
         return _EFAULT;
+    STRACE("fchmodat(%d, \"%s\", %o)", at_f, path, mode);
     struct fd *at = at_fd(at_f);
     if (at == NULL)
         return _EBADF;
@@ -597,7 +680,7 @@ dword_t sys_fchownat(fd_t at_f, addr_t path_addr, dword_t owner, dword_t group, 
     char path[MAX_PATH];
     if (user_read_string(path_addr, path, sizeof(path)))
         return _EFAULT;
-    STRACE("fchownat(%d, %s, %d, %d, %d)", at_f, path, owner, group, flags);
+    STRACE("fchownat(%d, \"%s\", %d, %d, %d)", at_f, path, owner, group, flags);
     struct fd *at = at_fd(at_f);
     if (at == NULL)
         return _EBADF;
@@ -664,6 +747,7 @@ dword_t sys_mkdirat(fd_t at_f, addr_t path_addr, mode_t_ mode) {
     if (at == NULL)
         return _EBADF;
     apply_umask(&mode);
+    mode &= 0777;
     return generic_mkdirat(at, path, mode);
 }
 

@@ -121,6 +121,7 @@ dword_t sys_access(addr_t path_addr, dword_t mode);
 dword_t sys_faccessat(fd_t at_f, addr_t path, mode_t_ mode, dword_t flags);
 dword_t sys_readlink(addr_t path, addr_t buf, dword_t bufsize);
 dword_t sys_readlinkat(fd_t at_f, addr_t path, addr_t buf, dword_t bufsize);
+int_t sys_getdents(fd_t f, addr_t dirents, dword_t count);
 int_t sys_getdents64(fd_t f, addr_t dirents, dword_t count);
 dword_t sys_stat64(addr_t path_addr, addr_t statbuf_addr);
 dword_t sys_lstat64(addr_t path_addr, addr_t statbuf_addr);
@@ -138,6 +139,7 @@ dword_t sys_ftruncate64(fd_t f, dword_t size_low, dword_t size_high);
 dword_t sys_fallocate(fd_t f, dword_t mode, dword_t offset_low, dword_t offset_high, dword_t len_low, dword_t len_high);
 dword_t sys_mkdir(addr_t path_addr, mode_t_ mode);
 dword_t sys_mkdirat(fd_t at_f, addr_t path_addr, mode_t_ mode);
+dword_t sys_utimes(addr_t path_addr, addr_t times_addr);
 dword_t sys_utimensat(fd_t at_f, addr_t path_addr, addr_t times_addr, dword_t flags);
 dword_t sys_times( addr_t tbuf);
 dword_t sys_umask(dword_t mask);
@@ -146,7 +148,9 @@ dword_t sys_sendfile(fd_t out_fd, fd_t in_fd, addr_t offset_addr, dword_t count)
 dword_t sys_sendfile64(fd_t out_fd, fd_t in_fd, addr_t offset_addr, dword_t count);
 dword_t sys_copy_file_range(fd_t in_fd, addr_t in_off, fd_t out_fd, addr_t out_off, dword_t len, uint_t flags);
 
+dword_t sys_statfs(addr_t path_addr, addr_t buf_addr);
 dword_t sys_statfs64(addr_t path_addr, addr_t buf_addr);
+dword_t sys_fstatfs(fd_t f, addr_t buf_addr);
 dword_t sys_fstatfs64(fd_t f, addr_t buf_addr);
 
 dword_t sys_mount(addr_t source_addr, addr_t target_addr, addr_t type_addr, dword_t flags, addr_t data_addr);
@@ -192,6 +196,8 @@ dword_t sys_getsid(void);
 
 int_t sys_sched_yield(void);
 int_t sys_prctl(dword_t option, uint_t arg2, uint_t arg3, uint_t arg4, uint_t arg5);
+int_t sys_arch_prctl(int_t code, addr_t addr);
+int_t sys_reboot(int_t magic, int_t magic2, int_t cmd);
 
 // system information
 #define UNAME_LENGTH 65
@@ -225,9 +231,11 @@ struct sys_info {
 dword_t sys_sysinfo(addr_t info_addr);
 
 // futexes
+dword_t sys_futex(addr_t uaddr, dword_t op, dword_t val, addr_t timeout_or_val2, addr_t uaddr2, dword_t val3);
+int_t sys_set_robust_list(addr_t robust_list, dword_t len);
+int_t sys_get_robust_list(pid_t_ pid, addr_t robust_list_ptr, addr_t len_ptr);
 
 // misc
-dword_t sys_futex(addr_t uaddr, dword_t op, dword_t val, addr_t timeout_or_val2, addr_t uaddr2, dword_t val3);
 dword_t sys_getrandom(addr_t buf_addr, dword_t len, dword_t flags);
 int_t sys_syslog(int_t type, addr_t buf_addr, int_t len);
 

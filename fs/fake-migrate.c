@@ -9,11 +9,11 @@ static struct migration {
     const char *sql;
     void (*migrate)(struct mount *mount);
 } migrations[] = {
-    // version 0 to version 1
+    // version 1: add another index
     {
         "create index inode_to_path on paths (inode, path);"
     },
-    // version 1 to version 2
+    // version 2: add foreign key constraint on paths, create trigger to automatically cleanup stats
     {
         "create table paths_new (path blob primary key, inode integer references stats(inode));"
         "insert into paths_new select * from paths where exists (select 1 from stats where inode = paths.inode);"
@@ -25,6 +25,10 @@ static struct migration {
         "begin "
             "delete from stats where not exists (select 1 from paths where inode = old.inode) and inode = old.inode; "
         "end;"
+    },
+    // version 3: the trigger was a mistake
+    {
+        "drop trigger delete_path"
     },
 };
 

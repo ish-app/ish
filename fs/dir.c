@@ -19,7 +19,14 @@ static void fd_seekdir(struct fd *fd, unsigned long off) {
         fd->ops->seekdir(fd, off);
 }
 
-struct linux_dirent64 {
+struct linux_dirent_ {
+    dword_t inode;
+    dword_t offset;
+    word_t reclen;
+    char name[];
+} __attribute__((packed));
+
+struct linux_dirent64_ {
     qword_t inode;
     qword_t offset;
     word_t reclen;
@@ -27,8 +34,33 @@ struct linux_dirent64 {
     char name[];
 } __attribute__((packed));
 
-int_t sys_getdents64(fd_t f, addr_t dirents, dword_t count) {
-    STRACE("getdents64(%d, %#x, %#x)", f, dirents, count);
+#define MAX_RECLEN sizeof(struct linux_dirent64_) + NAME_MAX + 
+
+size_t fill_dirent_32(void *dirent_data, ino_t inode, off_t_ offset, const char *name, int type) {
+    struct linux_dirent_ *dirent = dirent_data;
+    dirent->inode = inode;
+    dirent->offset = offset;
+    dirent->reclen = offsetof(struct linux_dirent_, name) +
+        strlen(name) + 2; // name, null terminator, type
+    strcpy(dirent->name, name);
+    *((char *) dirent + dirent->reclen - 1) = type;
+    return dirent->reclen;
+}
+
+size_t fill_dirent_64(void *dirent_data, ino_t inode, off_t_ offset, const char *name, int type) {
+    struct linux_dirent64_ *dirent = dirent_data;
+    dirent->inode = inode;
+    dirent->offset = offset;
+    dirent->reclen = offsetof(struct linux_dirent64_, name) +
+        strlen(name) + 1; // name, null terminator
+    dirent->type = type;
+    strcpy(dirent->name, name);
+    return dirent->reclen;
+}
+
+int_t sys_getdents_common(fd_t f, addr_t dirents, dword_t count,
+        size_t (*fill_dirent)(void *, ino_t, off_t_, const char *, int)) {
+    STRACE("getdents(%d, %#x, %#x)", f, dirents, count);
     struct fd *fd = f_get(f);
     if (fd == NULL)
         return _EBADF;
@@ -49,24 +81,22 @@ int_t sys_getdents64(fd_t f, addr_t dirents, dword_t count) {
         if (err == 0)
             break;
 
-        dword_t reclen = offsetof(struct linux_dirent64, name) +
-            strlen(entry.name) + 4; // name, null terminator, padding, file type
-        char dirent_data[reclen];
-        struct linux_dirent64 *dirent = (struct linux_dirent64 *) dirent_data;
-        dirent->inode = entry.inode;
-        dirent->offset = fd_telldir(fd);
-        dirent->reclen = reclen;
-        dirent->type = 0;
-        strcpy(dirent->name, entry.name);
+        size_t max_reclen = sizeof(struct linux_dirent64_) + strlen(entry.name) + 4;
+        char dirent_data[max_reclen];
+        ino_t inode = entry.inode;
+        off_t_ offset = fd_telldir(fd);
+        const char *name = entry.name;
+        int type = 0;
+        size_t reclen = fill_dirent(dirent_data, inode, offset, name, type);
         if (printed < 20) {
             STRACE(" {inode=%d, offset=%d, name=%s, type=%d, reclen=%d}",
-                    dirent->inode, dirent->offset, dirent->name, dirent->type, dirent->reclen);
+                    inode, offset, name, type, reclen);
             printed++;
         }
 
         if (reclen > count)
             break;
-        if (user_put(dirents, dirent_data))
+        if (user_write(dirents, dirent_data, reclen))
             return _EFAULT;
         dirents += reclen;
         count -= reclen;
@@ -75,3 +105,12 @@ int_t sys_getdents64(fd_t f, addr_t dirents, dword_t count) {
     fd_seekdir(fd, ptr);
     return orig_count - count;
 }
+
+int_t sys_getdents(fd_t f, addr_t dirents, uint_t count) {
+    return sys_getdents_common(f, dirents, count, fill_dirent_32);
+}
+
+int_t sys_getdents64(fd_t f, addr_t dirents, uint_t count) {
+    return sys_getdents_common(f, dirents, count, fill_dirent_64);
+}
+

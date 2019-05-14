@@ -67,6 +67,7 @@ int generic_mkdirat(struct fd *at, const char *path, mode_t_ mode);
 struct mount {
     const char *point;
     const char *source;
+    int flags;
     const struct fs_ops *fs;
     unsigned refcount;
     struct list mounts;
@@ -90,6 +91,7 @@ struct mount {
                 sqlite3_stmt *path_unlink;
                 sqlite3_stmt *path_rename;
                 sqlite3_stmt *path_from_inode;
+                sqlite3_stmt *try_cleanup_inode;
             } stmt;
             lock_t lock;
         };
@@ -103,7 +105,7 @@ void mount_retain(struct mount *mount);
 void mount_release(struct mount *mount);
 
 // must hold mounts_lock while calling these, or traversing mounts
-int do_mount(const struct fs_ops *fs, const char *source, const char *point);
+int do_mount(const struct fs_ops *fs, const char *source, const char *point, int flags);
 int do_umount(const char *point);
 int mount_remove(struct mount *mount);
 extern struct list mounts;
@@ -158,6 +160,10 @@ struct fs_ops {
     int (*getpath)(struct fd *fd, char *buf);
 
     int (*flock)(struct fd *fd, int operation);
+
+    // If present, called when all references to an inode_data for this
+    // filesystem go away.
+    void (*inode_orphaned)(struct mount *mount, struct inode_data *inode);
 };
 
 struct mount *find_mount_and_trim_path(char *path);

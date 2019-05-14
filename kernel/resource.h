@@ -3,11 +3,17 @@
 #include "kernel/time.h"
 
 typedef qword_t rlim_t_;
+typedef dword_t rlim32_t_;
 #define RLIM_INFINITY_ ((rlim_t_) -1)
 
 struct rlimit_ {
     rlim_t_ cur;
     rlim_t_ max;
+};
+
+struct rlimit32_ {
+    rlim32_t_ cur;
+    rlim32_t_ max;
 };
 
 #define RLIMIT_CPU_ 0
@@ -28,9 +34,10 @@ struct rlimit_ {
 #define RLIMIT_RTTIME_ 15
 #define RLIMIT_NLIMITS_ 16
 
-dword_t sys_getrlimit(dword_t resource, addr_t rlim_addr);
-dword_t sys_setrlimit(dword_t resource, addr_t rlim_addr);
-dword_t sys_prlimit(pid_t_ pid, dword_t resource, addr_t new_limit_addr, addr_t old_limit_addr);
+dword_t sys_getrlimit32(dword_t resource, addr_t rlim_addr);
+dword_t sys_setrlimit32(dword_t resource, addr_t rlim_addr);
+dword_t sys_prlimit64(pid_t_ pid, dword_t resource, addr_t new_limit_addr, addr_t old_limit_addr);
+dword_t sys_old_getrlimit32(dword_t resource, addr_t rlim_addr);
 
 rlim_t_ rlimit(int resource);
 

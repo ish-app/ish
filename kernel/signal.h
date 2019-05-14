@@ -50,13 +50,15 @@ struct sigaction_ {
 #define	SIGIO_     29
 #define	SIGPWR_    30
 #define SIGSYS_    31
-#define SIGUNUSED_ 31
 
 // send a signal
 // you better make sure the task isn't gonna get freed under me (pids_lock or current)
 void send_signal(struct task *task, int sig);
 // send a signal without regard for whether the signal is blocked or ignored
 void deliver_signal(struct task *task, int sig);
+// send a signal to current if it's not blocked or ignored, return whether that worked
+// exists specifically for sending SIGTTIN/SIGTTOU
+bool try_self_signal(int sig);
 // send a signal to all processes in a group, could return ESRCH
 int send_group_signal(dword_t pgid, int sig);
 // check for and deliver pending signals on current
@@ -98,9 +100,11 @@ struct stack_t_ {
 dword_t sys_sigaltstack(addr_t ss, addr_t old_ss);
 
 int_t sys_rt_sigsuspend(addr_t mask_addr, uint_t size);
+int_t sys_pause(void);
 
 dword_t sys_kill(pid_t_ pid, dword_t sig);
 dword_t sys_tkill(pid_t_ tid, dword_t sig);
+dword_t sys_tgkill(pid_t_ tgid, pid_t_ tid, dword_t sig);
 
 // signal frame structs. There's a good chance this should go in its own header file
 

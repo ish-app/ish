@@ -37,12 +37,13 @@ void mount_release(struct mount *mount) {
     unlock(&mounts_lock);
 }
 
-int do_mount(const struct fs_ops *fs, const char *source, const char *point) {
+int do_mount(const struct fs_ops *fs, const char *source, const char *point, int flags) {
     struct mount *new_mount = malloc(sizeof(struct mount));
     if (new_mount == NULL)
         return _ENOMEM;
     new_mount->point = strdup(point);
     new_mount->source = strdup(source);
+    new_mount->flags = flags;
     new_mount->fs = fs;
     new_mount->data = NULL;
     new_mount->refcount = 0;
@@ -91,8 +92,13 @@ int do_umount(const char *point) {
     return mount_remove(mount);
 }
 
+#define MS_READONLY_ (1 << 0)
+#define MS_NOSUID_ (1 << 1)
+#define MS_NODEV_ (1 << 2)
+#define MS_NOEXEC_ (1 << 3)
 #define MS_SILENT_ (1 << 15)
-#define MS_SUPPORTED (MS_SILENT_)
+#define MS_SUPPORTED (MS_READONLY_|MS_NOSUID_|MS_NODEV_|MS_NOEXEC_|MS_SILENT_)
+#define MS_FLAGS (MS_READONLY_|MS_NOSUID_|MS_NODEV_|MS_NOEXEC_)
 
 dword_t sys_mount(addr_t source_addr, addr_t point_addr, addr_t type_addr, dword_t flags, addr_t data_addr) {
     char source[MAX_PATH];
@@ -134,7 +140,7 @@ dword_t sys_mount(addr_t source_addr, addr_t point_addr, addr_t type_addr, dword
         return err;
 
     lock(&mounts_lock);
-    err = do_mount(fs, source, point);
+    err = do_mount(fs, source, point, flags & MS_FLAGS);
     unlock(&mounts_lock);
     return err;
 }

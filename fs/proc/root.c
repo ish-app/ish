@@ -13,7 +13,7 @@ static ssize_t proc_show_version(struct proc_entry *UNUSED(entry), char *buf) {
 static ssize_t proc_show_stat(struct proc_entry *UNUSED(entry), char *buf) {
     struct cpu_usage usage = get_cpu_usage();
     size_t n = 0;
-    n += sprintf(buf + n, "cpu  %llu %llu %llu %llu\n", usage.user_ticks, usage.nice_ticks, usage.system_ticks, usage.idle_ticks);
+    n += sprintf(buf + n, "cpu  %"PRIu64" %"PRIu64" %"PRIu64" %"PRIu64"\n", usage.user_ticks, usage.nice_ticks, usage.system_ticks, usage.idle_ticks);
     return n;
 }
 

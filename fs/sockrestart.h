@@ -25,7 +25,6 @@ void sockrestart_on_suspend(void);
 void sockrestart_on_resume(void);
 
 struct fd_sockrestart {
-    int proto;
     struct list listen;
 };
 

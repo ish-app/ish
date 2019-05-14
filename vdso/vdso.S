@@ -20,8 +20,3 @@ __kernel_rt_sigreturn:
     mov $173, %eax // NR_rt_sigreturn
     int $0x80
     ret
-
-    // this will probably need to be adjusted as the vdso grows, or ptrace
-    // failures may result as the real linux vdso is exactly 8k and the fake
-    // one needs to be the same number of pages
-    .fill 4096, 1, 0x0b0f

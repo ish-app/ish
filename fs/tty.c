@@ -17,15 +17,17 @@ struct tty_driver *tty_drivers[256] = {
 // lock this before locking a tty
 lock_t ttys_lock = LOCK_INITIALIZER;
 
-struct tty *tty_alloc(struct tty_driver *driver, int num) {
+struct tty *tty_alloc(struct tty_driver *driver, int type, int num) {
     struct tty *tty = malloc(sizeof(struct tty));
     if (tty == NULL)
         return NULL;
 
     tty->refcount = 0;
     tty->driver = driver;
+    tty->type = type;
     tty->num = num;
     tty->hung_up = false;
+    tty->ever_opened = false;
     tty->session = 0;
     tty->fg_group = 0;
     list_init(&tty->fds);
@@ -44,15 +46,16 @@ struct tty *tty_alloc(struct tty_driver *driver, int num) {
     cond_init(&tty->consumed);
     memset(tty->buf_flag, false, sizeof(tty->buf_flag));
     tty->bufsize = 0;
+    tty->packet_flags = 0;
 
     return tty;
 }
 
-struct tty *tty_get(struct tty_driver *driver, int num) {
+struct tty *tty_get(struct tty_driver *driver, int type, int num) {
     lock(&ttys_lock);
     struct tty *tty = driver->ttys[num];
     if (tty == NULL) {
-        tty = tty_alloc(driver, num);
+        tty = tty_alloc(driver, type, num);
         if (tty == NULL) {
             unlock(&ttys_lock);
             return NULL;
@@ -69,6 +72,7 @@ struct tty *tty_get(struct tty_driver *driver, int num) {
     }
     lock(&tty->lock);
     tty->refcount++;
+    tty->ever_opened = true;
     unlock(&tty->lock);
     unlock(&ttys_lock);
     return tty;
@@ -78,7 +82,7 @@ static void tty_poll_wakeup(struct tty *tty) {
     unlock(&tty->lock);
     struct fd *fd;
     lock(&tty->fds_lock);
-    list_for_each_entry(&tty->fds, fd, other_fds) {
+    list_for_each_entry(&tty->fds, fd, tty_other_fds) {
         poll_wakeup(fd);
     }
     unlock(&tty->fds_lock);
@@ -121,6 +125,10 @@ static void tty_set_controlling(struct tgroup *group, struct tty *tty) {
     unlock(&group->lock);
 }
 
+// by default, /dev/console is /dev/tty1
+int console_major = 4;
+int console_minor = 1;
+
 static int tty_open(int major, int minor, struct fd *fd) {
     struct tty *tty;
     if (major == 5) {
@@ -137,6 +145,8 @@ static int tty_open(int major, int minor, struct fd *fd) {
             unlock(&ttys_lock);
             if (tty == NULL)
                 return _ENXIO;
+        } else if (minor == 1) {
+            return tty_open(console_major, console_minor, fd);
         } else if (minor == 2) {
             return ptmx_open(fd);
         } else {
@@ -145,7 +155,7 @@ static int tty_open(int major, int minor, struct fd *fd) {
     } else {
         struct tty_driver *driver = tty_drivers[major];
         assert(driver != NULL);
-        tty = tty_get(driver, minor);
+        tty = tty_get(driver, major, minor);
         if (IS_ERR(tty))
             return PTR_ERR(tty);
     }
@@ -162,13 +172,16 @@ static int tty_open(int major, int minor, struct fd *fd) {
     }
 
     lock(&tty->fds_lock);
-    list_add(&tty->fds, &fd->other_fds);
+    list_add(&tty->fds, &fd->tty_other_fds);
     unlock(&tty->fds_lock);
 
     if (!(fd->flags & O_NOCTTY_)) {
+        // Make this our controlling terminal if:
+        // - the terminal doesn't already have a session
+        // - we're a session leader
         lock(&pids_lock);
         lock(&tty->lock);
-        if (current->group->sid == current->pid)
+        if (tty->session == 0 && current->group->sid == current->pid)
             tty_set_controlling(current->group, tty);
         unlock(&tty->lock);
         unlock(&pids_lock);
@@ -180,7 +193,7 @@ static int tty_open(int major, int minor, struct fd *fd) {
 static int tty_close(struct fd *fd) {
     if (fd->tty != NULL) {
         lock(&fd->tty->fds_lock);
-        list_remove_safe(&fd->other_fds);
+        list_remove_safe(&fd->tty_other_fds);
         unlock(&fd->tty->fds_lock);
         lock(&ttys_lock);
         tty_release(fd->tty);
@@ -361,9 +374,31 @@ static bool pty_is_half_closed_master(struct tty *tty) {
     struct tty *slave = tty->pty.other;
     // only time one tty lock is nested in another
     lock(&slave->lock);
-    bool half_closed = slave->refcount == 1;
+    bool half_closed = slave->ever_opened && slave->refcount == 1;
     unlock(&slave->lock);
     return half_closed;
+}
+
+static bool tty_is_current(struct tty *tty) {
+    lock(&current->group->lock);
+    bool is_current = current->group->tty == tty;
+    unlock(&current->group->lock);
+    return is_current;
+}
+
+static int tty_signal_if_background(struct tty *tty, pid_t_ current_pgid, int sig) {
+    // you can apparently access a terminal that's not your controlling
+    // terminal all you want
+    if (!tty_is_current(tty))
+        return 0;
+    // check if we're in the foreground
+    if (tty->fg_group == 0 || current_pgid == tty->fg_group)
+        return 0;
+
+    if (!try_self_signal(sig))
+        return _EIO;
+    else
+        return _EINTR;
 }
 
 static ssize_t tty_read(struct fd *fd, void *buf, size_t bufsize) {
@@ -373,9 +408,33 @@ static ssize_t tty_read(struct fd *fd, void *buf, size_t bufsize) {
 
     int err = 0;
     struct tty *tty = fd->tty;
+    lock(&pids_lock);
     lock(&tty->lock);
-    if (tty->hung_up)
+    if (tty->hung_up) {
+        unlock(&pids_lock);
         goto out;
+    }
+
+    pid_t_ current_pgid = current->group->pgid;
+    unlock(&pids_lock);
+    err = tty_signal_if_background(tty, current_pgid, SIGTTIN_);
+    if (err < 0)
+        goto out;
+
+    int bufsize_extra = 0;
+    if (tty->driver == &pty_master && tty->pty.packet_mode) {
+        char *cbuf = buf;
+        *cbuf++ = tty->packet_flags;
+        bufsize--;
+        bufsize_extra++;
+        buf = cbuf;
+        if (tty->packet_flags != 0)
+            return bufsize_extra;
+
+        // check again in case bufsize was 1
+        if (bufsize == 0)
+            return bufsize_extra;
+    }
 
     // wait loop(s)
     if (tty->termios.lflags & ICANON_) {
@@ -435,7 +494,7 @@ static ssize_t tty_read(struct fd *fd, void *buf, size_t bufsize) {
     }
 
     unlock(&tty->lock);
-    return bufsize;
+    return bufsize + bufsize_extra;
 out:
     unlock(&tty->lock);
     return err;
@@ -499,6 +558,8 @@ static int tty_poll(struct fd *fd) {
         if (tty->bufsize > 0)
             types |= POLL_READ;
     }
+    if (tty->driver == &pty_master && tty->packet_flags != 0)
+        types |= POLL_PRI;
     unlock(&tty->lock);
     return types;
 }
@@ -511,19 +572,13 @@ static ssize_t tty_ioctl_size(int cmd) {
             return sizeof(struct winsize_);
         case TIOCGPRGP_: case TIOCSPGRP_:
         case TIOCSPTLCK_: case TIOCGPTN_:
+        case TIOCPKT_: case TIOCGPKT_:
         case FIONREAD_:
             return sizeof(dword_t);
         case TCFLSH_: case TIOCSCTTY_:
             return 0;
     }
     return -1;
-}
-
-static bool tty_is_current(struct tty *tty) {
-    lock(&current->group->lock);
-    bool is_current = current->group->tty == tty;
-    unlock(&current->group->lock);
-    return is_current;
 }
 
 static int tiocsctty(struct tty *tty, int force) {

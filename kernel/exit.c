@@ -18,16 +18,21 @@ static bool exit_tgroup(struct task *task) {
         // - locking pids_lock first, which do_exit did
         if (group->timer)
             timer_free(group->timer);
-        if (group->tty) {
-            lock(&ttys_lock);
-            tty_release(group->tty);
-            group->tty = NULL;
-            unlock(&ttys_lock);
-        }
+        task_leave_session(task);
         list_remove(&group->pgroup);
-        list_remove(&group->session);
     }
     return group_dead;
+}
+
+void (*exit_hook)(struct task *task, int code) = NULL;
+
+static struct task *find_new_parent(struct task *task) {
+    struct task *new_parent;
+    list_for_each_entry(&task->group->threads, new_parent, group_links) {
+        if (!new_parent->exiting)
+            return new_parent;
+    }
+    return pid_get_task(1);
 }
 
 noreturn void do_exit(int status) {
@@ -55,20 +60,21 @@ noreturn void do_exit(int status) {
 
     // the actual freeing needs pids_lock
     lock(&pids_lock);
+    current->exiting = true;
     // release the sighand
     sighand_release(current->sighand);
     struct task *leader = current->group->leader;
 
-    if (exit_tgroup(current)) {
-        // reparent children
-        struct task *new_parent = pid_get_task(1);
-        struct task *child, *tmp;
-        list_for_each_entry_safe(&current->children, child, tmp, siblings) {
-            child->parent = new_parent;
-            list_remove(&child->siblings);
-            list_add(&new_parent->children, &child->siblings);
-        }
+    // reparent children
+    struct task *new_parent = find_new_parent(current);
+    struct task *child, *tmp;
+    list_for_each_entry_safe(&current->children, child, tmp, siblings) {
+        child->parent = new_parent;
+        list_remove(&child->siblings);
+        list_add(&new_parent->children, &child->siblings);
+    }
 
+    if (exit_tgroup(current)) {
         // notify parent that we died
         struct task *parent = leader->parent;
         if (parent == NULL) {
@@ -79,6 +85,9 @@ noreturn void do_exit(int status) {
             notify(&parent->group->child_exit);
             send_signal(parent, leader->exit_signal);
         }
+
+        if (exit_hook != NULL)
+            exit_hook(current, status);
     }
 
     vfork_notify(current);
@@ -111,9 +120,8 @@ noreturn void do_exit_group(int status) {
     do_exit(status);
 }
 
-void (*exit_hook)(int code) = NULL;
 // always called from init process
-static void halt_system(int status) {
+static void halt_system() {
     // brutally murder everything
     // which will leave everything in an inconsistent state. I will solve this problem later.
     for (int i = 2; i < MAX_PID; i++) {
@@ -129,9 +137,6 @@ static void halt_system(int status) {
         mount_remove(mount);
     }
     unlock(&mounts_lock);
-
-    if (exit_hook != NULL)
-        exit_hook(status);
 }
 
 dword_t sys_exit(dword_t status) {

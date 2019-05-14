@@ -12,7 +12,7 @@ int_t sys_eventfd2(uint_t initval, int_t flags) {
     struct fd *fd = adhoc_fd_create(&eventfd_ops);
     if (fd == NULL)
         return _ENOMEM;
-    fd->eventfd_val = initval;
+    fd->eventfd.val = initval;
     return f_install(fd, flags);
 }
 int_t sys_eventfd(uint_t initval) {
@@ -24,7 +24,7 @@ static ssize_t eventfd_read(struct fd *fd, void *buf, size_t bufsize) {
         return _EINVAL;
 
     lock(&fd->lock);
-    while (fd->eventfd_val == 0) {
+    while (fd->eventfd.val == 0) {
         if (fd->flags & O_NONBLOCK_) {
             unlock(&fd->lock);
             return _EAGAIN;
@@ -32,8 +32,8 @@ static ssize_t eventfd_read(struct fd *fd, void *buf, size_t bufsize) {
         wait_for(&fd->cond, &fd->lock, NULL);
     }
 
-    *(uint64_t *) buf = fd->eventfd_val;
-    fd->eventfd_val = 0;
+    *(uint64_t *) buf = fd->eventfd.val;
+    fd->eventfd.val = 0;
     notify(&fd->cond);
     unlock(&fd->lock);
     poll_wakeup(fd);
@@ -48,7 +48,7 @@ static ssize_t eventfd_write(struct fd *fd, const void *buf, size_t bufsize) {
         return _EINVAL;
 
     lock(&fd->lock);
-    while (fd->eventfd_val >= UINT64_MAX - increment) {
+    while (fd->eventfd.val >= UINT64_MAX - increment) {
         if (fd->flags & O_NONBLOCK_) {
             unlock(&fd->lock);
             return _EAGAIN;
@@ -56,7 +56,7 @@ static ssize_t eventfd_write(struct fd *fd, const void *buf, size_t bufsize) {
         wait_for(&fd->cond, &fd->lock, NULL);
     }
 
-    fd->eventfd_val += increment;
+    fd->eventfd.val += increment;
     notify(&fd->cond);
     unlock(&fd->lock);
     poll_wakeup(fd);
@@ -66,9 +66,9 @@ static ssize_t eventfd_write(struct fd *fd, const void *buf, size_t bufsize) {
 static int eventfd_poll(struct fd *fd) {
     lock(&fd->lock);
     int types = 0;
-    if (fd->eventfd_val > 0)
+    if (fd->eventfd.val > 0)
         types |= POLL_READ;
-    if (fd->eventfd_val < UINT64_MAX - 1)
+    if (fd->eventfd.val < UINT64_MAX - 1)
         types |= POLL_WRITE;
     unlock(&fd->lock);
     return types;

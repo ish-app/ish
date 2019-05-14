@@ -96,6 +96,17 @@ void send_signal(struct task *task, int sig) {
     }
 }
 
+bool try_self_signal(int sig) {
+    struct sighand *sighand = current->sighand;
+    lock(&sighand->lock);
+    bool can_send = signal_action(sighand, sig) != SIGNAL_IGNORE &&
+        !(current->blocked & (1l << sig));
+    if (can_send)
+        deliver_signal_unlocked(current, sig);
+    unlock(&sighand->lock);
+    return can_send;
+}
+
 int send_group_signal(dword_t pgid, int sig) {
     lock(&pids_lock);
     struct pid *pid = pid_get(pgid);
@@ -439,7 +450,15 @@ int_t sys_rt_sigsuspend(addr_t mask_addr, uint_t size) {
     return _EINTR;
 }
 
-dword_t sys_kill(pid_t_ pid, dword_t sig) {
+int_t sys_pause() {
+    lock(&current->sighand->lock);
+    while (!current->pending)
+        wait_for(&current->pause, &current->sighand->lock, NULL);
+    unlock(&current->sighand->lock);
+    return _EINTR;
+}
+
+int do_kill(pid_t_ pid, dword_t sig, pid_t_ tgid) {
     STRACE("kill(%d, %d)", pid, sig);
     if (sig >= NUM_SIGS)
         return _EINVAL;
@@ -455,11 +474,29 @@ dword_t sys_kill(pid_t_ pid, dword_t sig) {
         unlock(&pids_lock);
         return _ESRCH;
     }
+
+    // If tgid is nonzero, it must be correct
+    if (tgid != 0 && task->tgid != tgid) {
+        unlock(&pids_lock);
+        return _ESRCH;
+    }
+
     send_signal(task, sig);
     unlock(&pids_lock);
     return 0;
 }
 
-dword_t sys_tkill(pid_t_ tid, dword_t sig) {
-    return sys_kill(tid, sig);
+dword_t sys_kill(pid_t_ pid, dword_t sig) {
+    return do_kill(pid, sig, 0);
 }
+dword_t sys_tgkill(pid_t_ tgid, pid_t_ tid, dword_t sig) {
+    if (tid <= 0 || tgid <= 0)
+        return _EINVAL;
+    return do_kill(tid, sig, tgid);
+}
+dword_t sys_tkill(pid_t_ tid, dword_t sig) {
+    if (tid <= 0)
+        return _EINVAL;
+    return do_kill(tid, sig, 0);
+}
+

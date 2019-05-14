@@ -14,4 +14,4 @@
 
 @end
 
-extern NSString *const ISHExitedNotification;
+extern NSString *const ProcessExitedNotification;

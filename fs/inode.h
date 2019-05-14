@@ -15,12 +15,18 @@ struct inode_data {
 
     struct list posix_locks;
     cond_t posix_unlock;
+
+    uint32_t socket_id;
+
     lock_t lock;
 };
 
 struct inode_data *inode_get(struct mount *mount, ino_t inode);
 void inode_retain(struct inode_data *inode);
 void inode_release(struct inode_data *inode);
+
+// does this inode have any references? specifically to tell fakefs if it's safe to try and delete its inode data
+bool inode_is_orphaned(struct mount *mount, ino_t inode);
 
 // file locking stuff (maybe should go in kernel/calls.h?)
 

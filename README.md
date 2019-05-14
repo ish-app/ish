@@ -27,30 +27,17 @@ You'll need these things to build the project:
  - Clang and LLD (on mac, `brew install llvm`, on linux, `sudo apt install clang lld` or `sudo pacman -S clang lld` or whatever)
  - sqlite3 (this is so common it may already be installed on linux and is definitely already installed on mac. if not, do something like `sudo apt install libsqlite3-dev`)
 
+## Build for iOS
+
+Open the project in Xcode and click Run. If you're not me, first open the project build settings and change the Product Bundle Identifier to something unique. There are scripts that should do everything else automatically. If you run into any problems, open an issue and I'll try to help.
+
+## Build command line tool for testing
+
 To set up your environment, cd to the project and run `meson build` to create a build directory in `build`. Then cd to the build directory and run `ninja`.
 
 To set up a self-contained Alpine linux filesystem, download the Alpine minirootfs tarball for i386 from the [Alpine website](https://alpinelinux.org/downloads/) and run the `tools/fakefsify.py` script. Specify the minirootfs tarball as the first argument and the name of the output directory as the second argument. Then you can run things inside the Alpine filesystem with `./ish -f alpine /bin/login -f root`, assuming the output directory is called `alpine`.
 
 You can replace `ish` with `tools/ptraceomatic` to run the program in a real process and single step and compare the registers at each step. I use it for debugging. Requires 64-bit Linux 4.11 or later.
-
-To compile the iOS app, just open the Xcode project and click run. There are scripts that should download and set up the alpine filesystem and create build directories for cross compilation and so on automatically.
-
-## Further setup guide
-
-To enable local development there are a few more steps that needs to be done.
-
-- Go to the project settings in Xcode find the "iSH" target
-- Under "General" change the bundle identifier to a specific identifier for you
-- Under "Capabilities" change the name of the "App Group" and remove the old app group
-
-- Go to the "iSHFileProvider" target
-- Under "General" use the same bundle identifier you created before and add `.FileProvider` to it
-- Under "Capabilities" use the same name of the "App Group" as for the "iSH" target
-
-- Go to the file `app/AppDelegate.m`
-- Change the string in the function `manager containerURLForSecurityApplicationGroupIdentifier:` to your App Group name that you entered in the step before.
-
-Congratulations! You should now have the app running!
 
 # A note on the JIT
 

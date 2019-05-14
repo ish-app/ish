@@ -2,8 +2,6 @@
 #include "kernel/calls.h"
 #include "emu/interrupt.h"
 
-#define NUM_SYSCALLS 400
-
 dword_t syscall_stub() {
     return _ENOSYS;
 }
@@ -32,6 +30,8 @@ syscall_t syscall_table[] = {
     [23]  = (syscall_t) sys_setuid,
     [24]  = (syscall_t) sys_getuid,
     [25]  = (syscall_t) sys_stime,
+    [27]  = (syscall_t) sys_alarm,
+    [29]  = (syscall_t) sys_pause,
     [33]  = (syscall_t) sys_access,
     [36]  = (syscall_t) syscall_success_stub, // sync
     [37]  = (syscall_t) sys_kill,
@@ -56,8 +56,8 @@ syscall_t syscall_table[] = {
     [65]  = (syscall_t) sys_getpgrp,
     [66]  = (syscall_t) sys_setsid,
     [74]  = (syscall_t) sys_sethostname,
-    [75]  = (syscall_t) sys_setrlimit,
-    [76]  = (syscall_t) sys_getrlimit,
+    [75]  = (syscall_t) sys_setrlimit32,
+    [76]  = (syscall_t) sys_old_getrlimit32,
     [77]  = (syscall_t) sys_getrusage,
     [78]  = (syscall_t) sys_gettimeofday,
     [79]  = (syscall_t) sys_settimeofday,
@@ -65,11 +65,14 @@ syscall_t syscall_table[] = {
     [81]  = (syscall_t) sys_setgroups,
     [83]  = (syscall_t) sys_symlink,
     [85]  = (syscall_t) sys_readlink,
+    [88]  = (syscall_t) sys_reboot,
     [90]  = (syscall_t) sys_mmap,
     [91]  = (syscall_t) sys_munmap,
     [94]  = (syscall_t) sys_fchmod,
     [96]  = (syscall_t) sys_getpriority,
     [97]  = (syscall_t) sys_setpriority,
+    [99]  = (syscall_t) sys_statfs,
+    [100] = (syscall_t) sys_fstatfs,
     [102] = (syscall_t) sys_socketcall,
     [103] = (syscall_t) sys_syslog,
     [104] = (syscall_t) sys_setitimer,
@@ -82,6 +85,7 @@ syscall_t syscall_table[] = {
     [132] = (syscall_t) sys_getpgid,
     [133] = (syscall_t) sys_fchdir,
     [140] = (syscall_t) sys__llseek,
+    [141] = (syscall_t) sys_getdents,
     [142] = (syscall_t) sys_select,
     [143] = (syscall_t) sys_flock,
     [145] = (syscall_t) sys_readv,
@@ -106,6 +110,7 @@ syscall_t syscall_table[] = {
     [186] = (syscall_t) sys_sigaltstack,
     [187] = (syscall_t) sys_sendfile,
     [190] = (syscall_t) sys_vfork,
+    [191] = (syscall_t) sys_getrlimit32,
     [192] = (syscall_t) sys_mmap2,
     [193] = (syscall_t) sys_truncate64,
     [194] = (syscall_t) sys_ftruncate64,
@@ -147,6 +152,8 @@ syscall_t syscall_table[] = {
     [266] = (syscall_t) sys_clock_getres,
     [268] = (syscall_t) sys_statfs64,
     [269] = (syscall_t) sys_fstatfs64,
+    [270] = (syscall_t) sys_tgkill,
+    [271] = (syscall_t) sys_utimes,
     [272] = (syscall_t) syscall_success_stub,
     [274] = (syscall_t) sys_mbind,
     [295] = (syscall_t) sys_openat,
@@ -162,6 +169,8 @@ syscall_t syscall_table[] = {
     [307] = (syscall_t) sys_faccessat,
     [308] = (syscall_t) sys_pselect,
     [309] = (syscall_t) sys_ppoll,
+    [311] = (syscall_t) sys_set_robust_list,
+    [312] = (syscall_t) sys_get_robust_list,
     [319] = (syscall_t) sys_epoll_pwait,
     [320] = (syscall_t) sys_utimensat,
     [322] = (syscall_t) sys_timerfd_create,
@@ -170,17 +179,36 @@ syscall_t syscall_table[] = {
     [328] = (syscall_t) sys_eventfd2,
     [329] = (syscall_t) sys_epoll_create,
     [331] = (syscall_t) sys_pipe2,
-    [340] = (syscall_t) sys_prlimit,
+    [340] = (syscall_t) sys_prlimit64,
+    [345] = (syscall_t) sys_sendmmsg,
     [353] = (syscall_t) sys_renameat2,
     [355] = (syscall_t) sys_getrandom,
+    [359] = (syscall_t) sys_socket,
+    [360] = (syscall_t) sys_socketpair,
+    [361] = (syscall_t) sys_bind,
+    [362] = (syscall_t) sys_connect,
+    [363] = (syscall_t) sys_listen,
+    [365] = (syscall_t) sys_getsockopt,
+    [366] = (syscall_t) sys_setsockopt,
+    [367] = (syscall_t) sys_getsockname,
+    [368] = (syscall_t) sys_getpeername,
+    [369] = (syscall_t) sys_sendto,
+    [370] = (syscall_t) sys_sendmsg,
+    [371] = (syscall_t) sys_recvfrom,
+    [372] = (syscall_t) sys_recvmsg,
+    [373] = (syscall_t) sys_shutdown,
+    [375] = (syscall_t) syscall_stub, // membarrier
     [377] = (syscall_t) sys_copy_file_range,
+    [384] = (syscall_t) sys_arch_prctl,
 };
+
+#define NUM_SYSCALLS (sizeof(syscall_table) / sizeof(syscall_table[0]))
 
 void handle_interrupt(int interrupt) {
     TRACE_(instr, "\n");
     struct cpu_state *cpu = &current->cpu;
     if (interrupt == INT_SYSCALL) {
-        int syscall_num = cpu->eax;
+        unsigned syscall_num = cpu->eax;
         if (syscall_num >= NUM_SYSCALLS || syscall_table[syscall_num] == NULL) {
             printk("%d missing syscall %d\n", current->pid, syscall_num);
             send_signal(current, SIGSYS_);

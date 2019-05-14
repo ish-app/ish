@@ -79,18 +79,48 @@ struct newstat64 {
 } __attribute__((packed));
 
 struct statfsbuf {
-    dword_t type;
-    dword_t bsize;
-    qword_t blocks;
-    qword_t bfree;
-    qword_t bavail;
-    qword_t files;
-    qword_t ffree;
-    qword_t fsid;
-    dword_t namelen;
-    dword_t frsize;
-    dword_t flags;
-    dword_t pad[4];
+    long type;
+    long bsize;
+    uint64_t blocks;
+    uint64_t bfree;
+    uint64_t bavail;
+    uint64_t files;
+    uint64_t ffree;
+    uint64_t fsid;
+    long namelen;
+    long frsize;
+    long flags;
+    long spare[4];
+};
+
+struct statfs_ {
+    uint_t type;
+    uint_t bsize;
+    uint_t blocks;
+    uint_t bfree;
+    uint_t bavail;
+    uint_t files;
+    uint_t ffree;
+    uint64_t fsid;
+    uint_t namelen;
+    uint_t frsize;
+    uint_t flags;
+    uint_t spare[4];
+};
+
+struct statfs64_ {
+    uint_t type;
+    uint_t bsize;
+    uint64_t blocks;
+    uint64_t bfree;
+    uint64_t bavail;
+    uint64_t files;
+    uint64_t ffree;
+    uint64_t fsid;
+    uint_t namelen;
+    uint_t frsize;
+    uint_t flags;
+    uint_t pad[4];
 };
 
 #endif

@@ -58,7 +58,7 @@ src = [
     'kernel/signal.c',
     'kernel/resource.c',
     'kernel/random.c',
-    'kernel/prctl.c',
+    'kernel/misc.c',
     'kernel/eventfd.c',
 
     'kernel/fs.c',

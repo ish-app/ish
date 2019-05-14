@@ -13,15 +13,27 @@
 #import "UserPreferences.h"
 #include "kernel/init.h"
 #include "kernel/calls.h"
+#include "fs/path.h"
 
 @interface AppDelegate ()
+
+@property int sessionPid;
 
 @property BOOL exiting;
 
 @end
 
-static void ios_handle_exit(int code) {
-    [[NSNotificationCenter defaultCenter] postNotificationName:ISHExitedNotification object:nil];
+static void ios_handle_exit(struct task *task, int code) {
+    // we are interested in init and in children of init
+    // this is called with pids_lock as an implementation side effect, please do not cite as an example of good API design
+    if (task->parent != NULL && task->parent->parent != NULL)
+        return;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [[NSNotificationCenter defaultCenter] postNotificationName:ProcessExitedNotification
+                                                            object:nil
+                                                          userInfo:@{@"pid": @(task->pid),
+                                                                     @"code": @(code)}];
+    });
 }
 
 // Put the abort message in the thread name so it gets included in the crash dump
@@ -36,7 +48,7 @@ static void ios_handle_die(const char *msg) {
 
 - (int)startThings {
     NSFileManager *manager = [NSFileManager defaultManager];
-    NSURL *container = [manager containerURLForSecurityApplicationGroupIdentifier:@"group.app.ish.iSH"];
+    NSURL *container = [manager containerURLForSecurityApplicationGroupIdentifier:PRODUCT_APP_GROUP_IDENTIFIER];
     NSURL *alpineRoot = [container URLByAppendingPathComponent:@"roots/alpine"];
     [manager createDirectoryAtURL:[container URLByAppendingPathComponent:@"roots"]
       withIntermediateDirectories:YES
@@ -66,29 +78,30 @@ static void ios_handle_die(const char *msg) {
     if (err < 0)
         return err;
     
-    create_first_process();
-    NSArray<NSString *> *command = UserPreferences.shared.launchCommand;
-    char argv[4096];
-    char *p = argv;
-    for (NSString *cmd in command) {
-        const char *c = cmd.UTF8String;
-        // Save space for the final NUL byte in argv
-        while (p < argv + sizeof(argv) - 1 && (*p++ = *c++));
-        // If we reach the end of the buffer, the last string still needs to be
-        // NUL terminated
-        *p = '\0';
-    }
-    // Add the final NUL byte to argv
-    *++p = '\0';
-    const char *envp = "TERM=xterm-256color\0";
-    err = sys_execve(argv, argv, envp);
+    // need to do this first so that we can have a valid current for the generic_mknod calls
+    err = become_first_process();
     if (err < 0)
         return err;
-    err = create_stdio(&ios_tty_driver);
-    if (err < 0)
-        return err;
-    exit_hook = ios_handle_exit;
-    die_handler = ios_handle_die;
+    
+    // create some device nodes
+    // this will do nothing if they already exist
+    generic_mknod("/dev/console", S_IFCHR|0666, dev_make(5, 1));
+    generic_mknod("/dev/tty1", S_IFCHR|0666, dev_make(4, 1));
+    generic_mknod("/dev/tty2", S_IFCHR|0666, dev_make(4, 2));
+    generic_mknod("/dev/tty3", S_IFCHR|0666, dev_make(4, 3));
+    generic_mknod("/dev/tty4", S_IFCHR|0666, dev_make(4, 4));
+    generic_mknod("/dev/tty5", S_IFCHR|0666, dev_make(4, 5));
+    generic_mknod("/dev/tty6", S_IFCHR|0666, dev_make(4, 6));
+    generic_mknod("/dev/tty7", S_IFCHR|0666, dev_make(4, 7));
+    generic_mknod("/dev/tty", S_IFCHR|0666, dev_make(5, 0));
+    generic_mknod("/dev/ptmx", S_IFCHR|0666, dev_make(5, 2));
+    generic_mknod("/dev/null", S_IFCHR|0666, dev_make(1, 3));
+    generic_mknod("/dev/random", S_IFCHR|0666, dev_make(1, 8));
+    generic_mknod("/dev/urandom", S_IFCHR|0666, dev_make(1, 9));
+    generic_mkdirat(AT_PWD, "/dev/pts", 0755);
+    
+    do_mount(&procfs, "proc", "/proc", 0);
+    do_mount(&devptsfs, "devpts", "/dev/pts", 0);
     
     // configure dns
     struct __res_state res;
@@ -105,7 +118,7 @@ static void ios_handle_die(const char *msg) {
     for (int i = 0; i < serversFound; i ++) {
         union res_sockaddr_union s = servers[i];
         if (s.sin.sin_len == 0)
-            continue;
+        continue;
         getnameinfo((struct sockaddr *) &s.sin, s.sin.sin_len,
                     address, sizeof(address),
                     NULL, 0, NI_NUMERICHOST);
@@ -117,18 +130,71 @@ static void ios_handle_die(const char *msg) {
         fd_close(fd);
     }
     
-    // create some device nodes
-    // this will do nothing if they already exist
-    generic_mknod("/dev/tty", S_IFCHR|0666, dev_make(5, 0));
-    generic_mknod("/dev/ptmx", S_IFCHR|0666, dev_make(5, 2));
-    generic_mknod("/dev/random", S_IFCHR|0666, dev_make(1, 8));
-    generic_mknod("/dev/urandom", S_IFCHR|0666, dev_make(1, 9));
+    exit_hook = ios_handle_exit;
+    die_handler = ios_handle_die;
+    NSString *sockTmp = [NSTemporaryDirectory() stringByAppendingString:@"ishsock"];
+    sock_tmp_prefix = strdup(sockTmp.UTF8String);
+    
+    tty_drivers[TTY_CONSOLE_MAJOR] = &ios_tty_driver;
+    set_console_device(TTY_CONSOLE_MAJOR, 1);
+    err = create_stdio("/dev/console");
+    if (err < 0)
+        return err;
+    
+    NSArray<NSString *> *command;
+    if (UserPreferences.shared.bootEnabled) {
+        command = UserPreferences.shared.bootCommand;
+    } else {
+        command = UserPreferences.shared.launchCommand;
+    }
+    NSLog(@"%@", command);
+    char argv[4096];
+    [self convertCommand:command toArgs:argv limitSize:sizeof(argv)];
+    const char *envp = "TERM=xterm-256color\0";
+    err = sys_execve(argv, argv, envp);
+    if (err < 0)
+        return err;
+    task_start(current);
+    
+    if (UserPreferences.shared.bootEnabled) {
+        err = [self startSession];
+        if (err < 0)
+            return err;
+    }
+    
+    return 0;
+}
 
-    do_mount(&procfs, "proc", "/proc");
-    do_mount(&devptsfs, "devpts", "/dev/pts");
-
+- (int)startSession {
+    int err = become_new_init_child();
+    if (err < 0)
+        return err;
+    err = create_stdio("/dev/tty7");
+    if (err < 0)
+        return err;
+    char argv[4096];
+    [self convertCommand:UserPreferences.shared.launchCommand toArgs:argv limitSize:sizeof(argv)];
+    const char *envp = "TERM=xterm-256color\0";
+    err = sys_execve(argv, argv, envp);
+    if (err < 0)
+        return err;
+    self.sessionPid = current->pid;
     task_start(current);
     return 0;
+}
+
+- (void)convertCommand:(NSArray<NSString *> *)command toArgs:(char *)argv limitSize:(size_t)maxSize {
+    char *p = argv;
+    for (NSString *cmd in command) {
+        const char *c = cmd.UTF8String;
+        // Save space for the final NUL byte in argv
+        while (p < argv + maxSize - 1 && (*p++ = *c++));
+        // If we reach the end of the buffer, the last string still needs to be
+        // NUL terminated
+        *p = '\0';
+    }
+    // Add the final NUL byte to argv
+    *++p = '\0';
 }
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
@@ -136,6 +202,12 @@ static void ios_handle_die(const char *msg) {
     [[NSURLSession.sharedSession dataTaskWithURL:[NSURL URLWithString:@"http://captive.apple.com"]] resume];
     
     [UserPreferences.shared addObserver:self forKeyPath:@"shouldDisableDimming" options:NSKeyValueObservingOptionInitial context:nil];
+    
+    [NSNotificationCenter.defaultCenter addObserver:self
+                                           selector:@selector(processExited:)
+                                               name:ProcessExitedNotification
+                                             object:nil];
+    
     int err = [self startThings];
     if (err < 0) {
         NSString *message = [NSString stringWithFormat:@"could not initialize"];
@@ -150,6 +222,13 @@ static void ios_handle_die(const char *msg) {
 
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context {
     UIApplication.sharedApplication.idleTimerDisabled = UserPreferences.shared.shouldDisableDimming;
+}
+
+- (void)processExited:(NSNotification *)notif {
+    int pid = [notif.userInfo[@"pid"] intValue];
+    if (pid == self.sessionPid) {
+        [self startSession];
+    }
 }
 
 - (void)showMessage:(NSString *)message subtitle:(NSString *)subtitle fatal:(BOOL)fatal {
@@ -175,4 +254,4 @@ static void ios_handle_die(const char *msg) {
 
 @end
 
-NSString *const ISHExitedNotification = @"ISHExitedNotification";
+NSString *const ProcessExitedNotification = @"ProcessExitedNotification";
