@@ -167,15 +167,15 @@ static UIColor *UnarchiveColor(id data) {
 NSDictionary<NSString *, Theme *> *presetThemes;
 + (void)initialize {
     presetThemes = @{@"Light":           [self _themeWithForegroundColor:UIColor.blackColor
-                                               backgroundColor:UIColor.whiteColor],
+                                                         backgroundColor:UIColor.whiteColor],
                      @"Dark":            [self _themeWithForegroundColor:UIColor.whiteColor
-                                               backgroundColor:UIColor.blackColor],
+                                                         backgroundColor:UIColor.blackColor],
                      @"1337":            [self _themeWithForegroundColor:UIColor.greenColor
-                                               backgroundColor:UIColor.blackColor],
+                                                         backgroundColor:UIColor.blackColor],
                      @"Solarized Light": [self _themeWithForegroundColor:[UIColor colorWithRed:88.0/255.0 green:110.0/255.0 blue:117.0/255.0 alpha: 1.0]
-                                               backgroundColor:[UIColor colorWithRed:253.0/255.0 green:246.0/255.0 blue:227.0/255.0 alpha: 1.0]],
+                                                         backgroundColor:[UIColor colorWithRed:253.0/255.0 green:246.0/255.0 blue:227.0/255.0 alpha: 1.0]],
                      @"Solarized Dark":  [self _themeWithForegroundColor:[UIColor colorWithRed:131.0/255.0 green:148.0/255.0 blue:150.0/255.0 alpha: 1.0]
-                                               backgroundColor:[UIColor colorWithRed:0.0 green:43.0/255.0 blue:54.0/255.0 alpha: 1.0]]};
+                                                         backgroundColor:[UIColor colorWithRed:0.0 green:43.0/255.0 blue:54.0/255.0 alpha: 1.0]]};
 }
 
 + (NSArray<NSString *> *)presetNames {
