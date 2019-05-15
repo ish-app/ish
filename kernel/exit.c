@@ -6,7 +6,7 @@
 #include "fs/fd.h"
 #include "fs/tty.h"
 
-static void halt_system(int status);
+static void halt_system();
 
 static bool exit_tgroup(struct task *task) {
     struct tgroup *group = task->group;
@@ -79,7 +79,7 @@ noreturn void do_exit(int status) {
         struct task *parent = leader->parent;
         if (parent == NULL) {
             // init died
-            halt_system(status);
+            halt_system();
         } else {
             leader->zombie = true;
             notify(&parent->group->child_exit);
