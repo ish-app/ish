@@ -6,7 +6,7 @@
 #include "fs/fd.h"
 #include "fs/tty.h"
 
-static void halt_system(int status);
+static void halt_system(void);
 
 static bool exit_tgroup(struct task *task) {
     struct tgroup *group = task->group;
@@ -79,7 +79,7 @@ noreturn void do_exit(int status) {
         struct task *parent = leader->parent;
         if (parent == NULL) {
             // init died
-            halt_system(status);
+            halt_system();
         } else {
             leader->zombie = true;
             notify(&parent->group->child_exit);
@@ -121,7 +121,7 @@ noreturn void do_exit_group(int status) {
 }
 
 // always called from init process
-static void halt_system() {
+static void halt_system(void) {
     // brutally murder everything
     // which will leave everything in an inconsistent state. I will solve this problem later.
     for (int i = 2; i < MAX_PID; i++) {
