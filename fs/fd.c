@@ -203,7 +203,7 @@ fd_t f_install(struct fd *fd, int flags) {
     return f;
 }
 
-static int fdtable_close(struct fdtable *table, fd_t f) {
+static int fdtable_close_flags(struct fdtable *table, fd_t f, int flags) {
     struct fd *fd = fdtable_get(table, f);
     if (fd == NULL)
         return _EBADF;
@@ -211,15 +211,26 @@ static int fdtable_close(struct fdtable *table, fd_t f) {
         file_lock_remove_owned_by(fd, table);
     int err = fd_close(fd);
     table->files[f] = NULL;
-    bit_clear(f, table->cloexec);
+    if (flags & O_CLOEXEC_)
+    	bit_set(f, table->cloexec);
+    else
+    	bit_clear(f, table->cloexec);
+    return err;
+}
+
+static int fdtable_close(struct fdtable *table, fd_t f) {
+	return fdtable_close_flags(table, f, 0);
+}
+
+int f_close_flags(fd_t f, int flags) {
+    lock(&current->files->lock);
+    int err = fdtable_close_flags(current->files, f, flags);
+    unlock(&current->files->lock);
     return err;
 }
 
 int f_close(fd_t f) {
-    lock(&current->files->lock);
-    int err = fdtable_close(current->files, f);
-    unlock(&current->files->lock);
-    return err;
+	return f_close_flags(f, 0);
 }
 
 dword_t sys_close(fd_t f) {
@@ -257,8 +268,8 @@ dword_t sys_dup(fd_t f) {
     return f_install(fd, 0);
 }
 
-dword_t sys_dup2(fd_t f, fd_t new_f) {
-    STRACE("dup2(%d, %d)", f, new_f);
+dword_t sys_dup3(fd_t f, fd_t new_f, int flags) {
+    STRACE("dup3(%d, %d, %d)", f, new_f, flags);
     struct fdtable *table = current->files;
     struct fd *fd = f_get(f);
     if (fd == NULL)
@@ -267,10 +278,15 @@ dword_t sys_dup2(fd_t f, fd_t new_f) {
     if (err < 0)
         return err;
     fd_retain(fd);
-    f_close(new_f);
+    f_close_flags(new_f, flags);
     table->files[new_f] = fd;
     return new_f;
 }
+
+dword_t sys_dup2(fd_t f, fd_t new_f) {
+    return sys_dup3(f, new_f, 0);
+}
+
 
 int fd_getflags(struct fd *fd) {
     if (fd->ops->getflags)
