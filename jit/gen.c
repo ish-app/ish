@@ -335,16 +335,6 @@ void helper_rdtsc(struct cpu_state *cpu);
 #define ATOMIC_BTS(bit, val,z) lo(atomic_bts, val, bit, z)
 #define ATOMIC_BTR(bit, val,z) lo(atomic_btr, val, bit, z)
 
-// sse
-#define XORP(src, dst) UNDEFINED
-#define PSRLQ(src, dst) UNDEFINED
-#define PCMPEQD(src, dst) UNDEFINED
-#define PADD(src, dst) UNDEFINED
-#define PSUB(src, dst) UNDEFINED
-#define MOVQ(src, dst) UNDEFINED
-#define MOVD(src, dst) UNDEFINED
-#define CVTTSD2SI(src, dst) UNDEFINED
-
 // fpu
 #define st_0 0
 #define st_i modrm.rm_opcode

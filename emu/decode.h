@@ -99,18 +99,6 @@ restart:
                 case 0x4f: TRACEI("cmovnle modrm, reg");
                            READMODRM; CMOVN(LE, modrm_val, modrm_reg,oz); break;
 
-                case 0x57: TRACEI("xorps modrm, reg");
-                           READMODRM; XORP(modrm_val, modrm_reg); break;
-                case 0x73: TRACEI("psrlq imm8, reg");
-                           // TODO I think this is actually a group
-                           READMODRM; READIMM8; PSRLQ(imm, modrm_val); break;
-                case 0x76: TRACEI("pcmpeqd reg, modrm");
-                           READMODRM; PCMPEQD(modrm_reg, modrm_val); break;
-#if OP_SIZE == 16
-                case 0x7e: TRACEI("movd xmm, modrm32");
-                           READMODRM; MOVD(modrm_reg, modrm_val); break;
-#endif
-
                 case 0x80: TRACEI("jo rel\t");
                            READIMM; J_REL(O, imm); break;
                 case 0x81: TRACEI("jno rel\t");
@@ -259,15 +247,6 @@ restart:
                            BSWAP(reg_di); break;
 #endif
 
-#if OP_SIZE == 16
-                case 0xd4: TRACEI("paddq modrm, reg");
-                           READMODRM; PADD(modrm_val, modrm_reg); break;
-                case 0xd6: TRACEI("movq xmm, modrm");
-                           READMODRM; MOVQ(modrm_reg, modrm_val); break;
-#endif
-
-                case 0xfb: TRACEI("psubq modrm, reg");
-                           READMODRM; PSUB(modrm_val, modrm_reg); break;
                 default: TRACEI("undefined");
                          UNDEFINED;
             }
@@ -789,9 +768,6 @@ restart:
                 case 0x0f:
                     READINSN;
                     switch (insn) {
-                        case 0x2c: TRACEI("cvttsd2si modrm64, reg32");
-                                   READMODRM_MEM; // TODO xmm
-                                   CVTTSD2SI(mem_addr_real, modrm_reg); break;
                         case 0x18 ... 0x1f: TRACEI("rep nop modrm\t"); READMODRM; break;
                         default: TRACE("undefined"); UNDEFINED;
                     }
@@ -813,8 +789,6 @@ restart:
                     // after a rep prefix, means we have sse/mmx insanity
                     READINSN;
                     switch (insn) {
-                        case 0x7e: TRACEI("movq modrm, xmm");
-                                   READMODRM; MOVQ(modrm_val, modrm_reg); break;
                         case 0x18 ... 0x1f: TRACEI("repz nop modrm\t"); READMODRM; break;
 
                         // tzcnt is like bsf but the result when the input is zero is defined as the operand size
