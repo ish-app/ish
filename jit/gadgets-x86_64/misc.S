@@ -112,10 +112,55 @@ do_helper 2
 # sync with enum vec_arg
 #define VEC_ARG_LIST xmm,reg
 
+.macro do_vec_helper name, reg, rm, size=
+    # general register access is unimplemented
+    .ifc \reg,reg; .exitm; .endif
+    .ifc \rm,reg; .exitm; .endif
+
+    .gadget vec_helper_\name
+        .ifin(\rm, read,write)
+            \rm\()_prep (\size), vec_helper_\name
+        .endifin
+        save_regs
+        save_c
+        movq %_cpu, %rdi
+        xorq %r14, %r14
+        movb 8(%_ip), %r14b
+        leaq CPU_xmm(%_cpu,%r14b), %rdx
+        .ifin(\rm, xmm)
+            movb 9(%_ip), %r14b
+            leaq CPU_xmm(%_cpu,%r14b), %rsi
+        .endifin
+        .ifin(\rm, read,write)
+            movq %_addrq, %rsi
+        .endifin
+        callq *(%_ip)
+        restore_c
+        load_regs
+        .ifc \rm,write
+            write_done (\size), vec_helper_\name
+        .endif
+        .ifin(\rm, xmm,reg)
+            gret 2
+        .endifin
+        .ifin(\rm, read,write)
+            gret 3
+        .endifin
+.endm
+
 # important: this is VEC_ARG_LIST^2
+.irp reg, VEC_ARG_LIST
+    .irp rm, VEC_ARG_LIST
+        do_vec_helper reg_\reg\()_\rm, \reg, \rm
+    .endr
+.endr
 .gadget_list vec_helper_reg, xmm_xmm,xmm_reg,reg_xmm,reg_reg
 
 .irp size, SIZE_LIST,64,128
+    .irp arg, VEC_ARG_LIST
+        do_vec_helper load\size\()_\arg, \arg, read, \size
+        do_vec_helper store\size\()_\arg, \arg, write, \size
+    .endr
     .gadget_list vec_helper_load\size\(), VEC_ARG_LIST
     .gadget_list vec_helper_store\size\(), VEC_ARG_LIST
 .endr

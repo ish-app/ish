@@ -415,7 +415,7 @@ static inline enum vec_arg vecarg(enum arg arg, struct modrm *modrm) {
     }
 }
 
-static inline bool gen_vec(enum arg reg, enum arg rm, void (*helper)(), gadget_t (*helper_gadgets_mem)[vec_arg_count], struct gen_state *state, struct modrm *modrm, dword_t saved_ip, bool seg_gs) {
+static inline bool gen_vec(enum arg rm, enum arg reg, void (*helper)(), gadget_t (*helper_gadgets_mem)[vec_arg_count], struct gen_state *state, struct modrm *modrm, dword_t saved_ip, bool seg_gs) {
     enum vec_arg v_reg = vecarg(reg, modrm);
     enum vec_arg v_rm = vecarg(rm, modrm);
 
@@ -424,16 +424,22 @@ static inline bool gen_vec(enum arg reg, enum arg rm, void (*helper)(), gadget_t
         gadget = (*helper_gadgets_mem)[v_reg];
     } else {
         extern gadget_t vec_helper_reg_gadgets[vec_arg_count][vec_arg_count];
-        gadget = vec_helper_reg_gadgets[v_reg][v_rm];
+        gadget = vec_helper_reg_gadgets[v_rm][v_reg];
     }
     if (gadget == NULL)
         UNDEFINED;
 
-    gen_addr(state, modrm, seg_gs, saved_ip);
+    if (v_rm == vec_arg_mem)
+        gen_addr(state, modrm, seg_gs, saved_ip);
     GEN(gadget);
     GEN(helper);
-    if (v_rm == vec_arg_mem)
+    if (v_rm != vec_arg_mem) {
+        GEN((modrm->opcode * sizeof(union xmm_reg)) |
+                ((modrm->rm_opcode * sizeof(union xmm_reg) << 8)));
+    } else {
+        GEN(modrm->opcode);
         GEN(saved_ip);
+    }
     return true;
 }
 
@@ -441,8 +447,8 @@ static inline bool gen_vec(enum arg reg, enum arg rm, void (*helper)(), gadget_t
     extern gadget_t helper_gadgets[vec_arg_count]; \
     if (!gen_vec(src, dst, helper, &helper_gadgets, state, &modrm, saved_ip, seg_gs)) return false; \
 } while (0)
-#define v(op, src, dst,z) _v(arg_##dst, arg_##src, vec_##op##z, vec_helper_load##z##_gadgets, z)
-#define v_write(op, src, dst,z) _v(arg_##src, arg_##dst, vec_##op##z, vec_helper_store##z##_gadgets, z)
+#define v(op, src, dst,z) _v(arg_##src, arg_##dst, vec_##op##z, vec_helper_load##z##_gadgets, z)
+#define v_write(op, src, dst,z) _v(arg_##dst, arg_##src, vec_##op##z, vec_helper_store##z##_gadgets, z)
 
 #define VLOAD(src, dst,z) v(load, src, dst,z)
 #define VSTORE(src, dst,z) v_write(store, src, dst,z)
