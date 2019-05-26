@@ -562,7 +562,12 @@ static bool modrm_compute(struct cpu_state *cpu, struct tlb *tlb, addr_t *addr_o
 #define ATOMIC_BTS BTS
 #define ATOMIC_BTR BTR
 #define ATOMIC_BTC BTC
+
 #include "emu/interp/fpu.h"
+
+// fake sse
+#define VLOAD(src, dst,z) UNDEFINED
+#define VSTORE(src, dst,z) UNDEFINED
 
 // ok now include the decoding function
 #define DECODER_RET int
