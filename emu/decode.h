@@ -58,10 +58,14 @@ restart:
             switch (insn) {
                 case 0x18 ... 0x1f: TRACEI("nop modrm\t"); READMODRM; break;
 
-                case 0x28: TRACEI("movp modrm, reg");
-                           READMODRM; MOV(modrm_val, modrm_reg,128); break;
-                case 0x29: TRACEI("movp reg, modrm");
-                           READMODRM; MOV(modrm_reg, modrm_val,128); break;
+                case 0x28: TRACEI("movaps xmm:modrm, xmm");
+                           READMODRM; VLOAD(xmm_modrm_val, xmm_modrm_reg,128); break;
+                case 0x29: TRACEI("movaps xmm, xmm:modrm");
+                           READMODRM; VSTORE(xmm_modrm_reg, xmm_modrm_val,128); break;
+
+                case 0x2e: TRACEI("ucomiss xmm, xmm:modrm");
+                           READMODRM; VCOMPARE(xmm_modrm_val, xmm_modrm_reg,32);
+                           break;
 
                 case 0x31: TRACEI("rdtsc");
                            RDTSC; break;
@@ -98,6 +102,10 @@ restart:
                            READMODRM; CMOV(LE, modrm_val, modrm_reg,oz); break;
                 case 0x4f: TRACEI("cmovnle modrm, reg");
                            READMODRM; CMOVN(LE, modrm_val, modrm_reg,oz); break;
+
+                case 0x57: TRACEI("xorps xmm, xmm:modrm");
+                           READMODRM; VXOR(xmm_modrm_val, xmm_modrm_reg,128);
+                           break;
 
                 case 0x80: TRACEI("jo rel\t");
                            READIMM; J_REL(O, imm); break;
@@ -247,6 +255,12 @@ restart:
                            BSWAP(reg_si); break;
                 case 0xcf: TRACEI("bswap edi");
                            BSWAP(reg_di); break;
+#endif
+
+#if OP_SIZE == 16
+                case 0xef: TRACEI("pxor xmm:modrm xmm");
+                           READMODRM; VXOR(xmm_modrm_val, xmm_modrm_reg,128);
+                           break;
 #endif
 
                 default: TRACEI("undefined");
@@ -788,10 +802,12 @@ restart:
                 case 0x0f:
                     READINSN;
                     switch (insn) {
-                        case 0x10:
-                            TRACEI("movsd xmm:modrm, xmm");
-                            READMODRM; VLOAD(xmm_modrm_val, xmm_modrm_reg,64);
-                            break;
+                        case 0x10: TRACEI("movsd xmm:modrm, xmm");
+                                   READMODRM; VLOAD_PADMEM(xmm_modrm_val, xmm_modrm_reg,64);
+                                   break;
+                        case 0x11: TRACEI("movsd xmm, xmm:modrm");
+                                   READMODRM; VSTORE(xmm_modrm_reg, xmm_modrm_val,64);
+                                   break;
 
                         case 0x18 ... 0x1f: TRACEI("rep nop modrm\t"); READMODRM; break;
                         default: TRACE("undefined"); UNDEFINED;
@@ -814,6 +830,13 @@ restart:
                     // after a rep prefix, means we have sse/mmx insanity
                     READINSN;
                     switch (insn) {
+                        case 0x10: TRACEI("movss xmm:modrm, xmm");
+                                   READMODRM; VLOAD_PADMEM(xmm_modrm_val, xmm_modrm_reg,32);
+                                   break;
+                        case 0x11: TRACEI("movss xmm, xmm:modrm");
+                                   READMODRM; VSTORE(xmm_modrm_reg, xmm_modrm_val,32);
+                                   break;
+
                         case 0x18 ... 0x1f: TRACEI("repz nop modrm\t"); READMODRM; break;
 
                         // tzcnt is like bsf but the result when the input is zero is defined as the operand size
