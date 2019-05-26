@@ -1,6 +1,6 @@
 #include "kernel/calls.h"
 
-static int __user_read_task(struct task *task, addr_t addr, void *buf, size_t count) {
+int user_read_task(struct task *task, addr_t addr, void *buf, size_t count) {
     char *cbuf = (char *) buf;
     size_t i = 0;
     while (i < count) {
@@ -12,18 +12,11 @@ static int __user_read_task(struct task *task, addr_t addr, void *buf, size_t co
     return 0;
 }
 
-int user_read_task(struct task *task, addr_t addr, void *buf, size_t count) {
-    read_wrlock(&task->mem->lock);
-    int res = __user_read_task(task, addr, buf, count);
-    read_wrunlock(&task->mem->lock);
-    return res;
-}
-
 int user_read(addr_t addr, void *buf, size_t count) {
     return user_read_task(current, addr, buf, count);
 }
 
-static int __user_write_task(struct task *task, addr_t addr, const void *buf, size_t count) {
+int user_write_task(struct task *task, addr_t addr, const void *buf, size_t count) {
     const char *cbuf = (const char *) buf;
     size_t i = 0;
     while (i < count) {
@@ -35,21 +28,16 @@ static int __user_write_task(struct task *task, addr_t addr, const void *buf, si
     return 0;
 }
 
-int user_write_task(struct task *task, addr_t addr, const void *buf, size_t count) {
-    read_wrlock(&task->mem->lock);
-    int res = __user_write_task(task, addr, buf, count);
-    read_wrunlock(&task->mem->lock);
-    return res;
-}
-
 int user_write(addr_t addr, const void *buf, size_t count) {
     return user_write_task(current, addr, buf, count);
 }
 
 int user_read_string(addr_t addr, char *buf, size_t max) {
+    if (addr == 0)
+        return 1;
     size_t i = 0;
     while (i < max) {
-        if (__user_read_task(current, addr + i, &buf[i], sizeof(buf[i])))
+        if (user_read(addr + i, &buf[i], sizeof(buf[i])))
             return 1;
         if (buf[i] == '\0')
             break;
@@ -59,11 +47,15 @@ int user_read_string(addr_t addr, char *buf, size_t max) {
 }
 
 int user_write_string(addr_t addr, const char *buf) {
+    if (addr == 0)
+        return 1;
     size_t i = 0;
-    do {
-        if (__user_write_task(current, addr + i, &buf[i], sizeof(buf[i])))
+    while (buf[i] != '\0') {
+        if (user_write(addr + i, &buf[i], sizeof(buf[i])))
             return 1;
         i++;
-    } while (buf[i - 1] != '\0');
+    }
+    if (user_write(addr + i, &buf[i], sizeof(buf[i])))
+        return 1;
     return 0;
 }
