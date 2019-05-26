@@ -126,10 +126,10 @@ do_helper 2
         movq %_cpu, %rdi
         xorq %r14, %r14
         movb 8(%_ip), %r14b
-        leaq CPU_xmm(%_cpu,%r14b), %rdx
+        leaq CPU_xmm(%_cpu,%r14), %rdx
         .ifin(\rm, xmm)
             movb 9(%_ip), %r14b
-            leaq CPU_xmm(%_cpu,%r14b), %rsi
+            leaq CPU_xmm(%_cpu,%r14), %rsi
         .endifin
         .ifin(\rm, read,write)
             movq %_addrq, %rsi
