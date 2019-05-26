@@ -103,6 +103,7 @@ src = [
     'emu/memory.c',
     'emu/tlb.c',
     'emu/fpu.c',
+    'emu/sse.c',
     'emu/float80.c',
 
     'platform/' + host_machine.system() + '.c',

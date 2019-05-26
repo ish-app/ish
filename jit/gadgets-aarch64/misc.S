@@ -116,7 +116,19 @@ do_helper 2
     do_helper write, \size
 .endr
 
+# sync with enum vec_arg
+#define VEC_ARG_LIST xmm,reg
+
+# important: this is VEC_ARG_LIST^2
+.gadget_list vec_helper_reg, xmm_xmm,xmm_reg,reg_xmm,reg_reg
+
+.irp size, SIZE_LIST,64,128
+    .gadget_list vec_helper_load\size\(), VEC_ARG_LIST
+    .gadget_list vec_helper_store\size\(), VEC_ARG_LIST
+.endr
+
 .gadget fstsw_ax
     ldrh w10, [_cpu, CPU_fsw]
     movs eax, w10, h
     gret
+

@@ -82,7 +82,7 @@
 .endm
 
 # jfc
-# https://github.com/llvm-mirror/llvm/blob/master/lib/Target/AArch64/MCTargetDesc/AArch64MCAsmInfo.cpp#L41
+# https://github.com/llvm-mirror/llvm/blob/release_80/lib/Target/AArch64/MCTargetDesc/AArch64MCAsmInfo.cpp#L41
 # https://bugs.llvm.org/show_bug.cgi?id=39010#c4
 #if defined(__APPLE__) && defined(__arm64__)
 #define N %%
