@@ -3,6 +3,7 @@
 #include "emu/modrm.h"
 #include "emu/cpuid.h"
 #include "emu/fpu.h"
+#include "emu/sse.h"
 #include "emu/interrupt.h"
 
 static void gen(struct gen_state *state, unsigned long thing) {
@@ -86,13 +87,15 @@ enum arg {
     arg_imm, arg_mem, arg_addr, arg_gs,
     arg_count, arg_invalid,
     // the following should not be synced with the list mentioned above (no gadgets implement them)
-    arg_modrm_val, arg_modrm_reg, arg_mem_addr, arg_1,
+    arg_modrm_val, arg_modrm_reg,
+    arg_xmm_modrm_val, arg_xmm_modrm_reg,
+    arg_mem_addr, arg_1,
 };
 
 enum size {
     size_8, size_16, size_32,
     size_count,
-    size_64, size_80, // FIXME bonus sizes, fpu only at the moment
+    size_64, size_80, size_128, // bonus sizes
 };
 
 // sync with COND_LIST in control.S
@@ -384,6 +387,65 @@ void helper_rdtsc(struct cpu_state *cpu);
 #define FIDIVR(val,z) h_read(fpu_idivr, z)
 #define FDIVRM(val,z) h_read(fpu_divrm, z)
 #define FPATAN() h(fpu_patan)
+
+// vector
+
+// sync with VEC_ARG_LIST
+enum vec_arg {
+    vec_arg_xmm, vec_arg_reg, vec_arg_count,
+    vec_arg_mem,
+};
+
+static inline enum vec_arg vecarg(enum arg arg, struct modrm *modrm) {
+    switch (arg) {
+        case arg_modrm_reg:
+            return vec_arg_reg;
+        case arg_xmm_modrm_reg:
+            return vec_arg_xmm;
+        case arg_modrm_val:
+            if (modrm->type == modrm_reg)
+                return vec_arg_reg;
+            return vec_arg_mem;
+        case arg_xmm_modrm_val:
+            if (modrm->type == modrm_reg)
+                return vec_arg_xmm;
+            return vec_arg_mem;
+        default:
+            die("unimplemented vecarg");
+    }
+}
+
+static inline bool gen_vec(enum arg reg, enum arg rm, void (*helper)(), gadget_t (*helper_gadgets_mem)[vec_arg_count], struct gen_state *state, struct modrm *modrm, dword_t saved_ip, bool seg_gs) {
+    enum vec_arg v_reg = vecarg(reg, modrm);
+    enum vec_arg v_rm = vecarg(rm, modrm);
+
+    gadget_t gadget;
+    if (v_rm == vec_arg_mem) {
+        gadget = (*helper_gadgets_mem)[v_reg];
+    } else {
+        extern gadget_t vec_helper_reg_gadgets[vec_arg_count][vec_arg_count];
+        gadget = vec_helper_reg_gadgets[v_reg][v_rm];
+    }
+    if (gadget == NULL)
+        UNDEFINED;
+
+    gen_addr(state, modrm, seg_gs, saved_ip);
+    GEN(gadget);
+    GEN(helper);
+    if (v_rm == vec_arg_mem)
+        GEN(saved_ip);
+    return true;
+}
+
+#define _v(src, dst, helper, helper_gadgets, z) do { \
+    extern gadget_t helper_gadgets[vec_arg_count]; \
+    if (!gen_vec(src, dst, helper, &helper_gadgets, state, &modrm, saved_ip, seg_gs)) return false; \
+} while (0)
+#define v(op, src, dst,z) _v(arg_##dst, arg_##src, vec_##op##z, vec_helper_load##z##_gadgets, z)
+#define v_write(op, src, dst,z) _v(arg_##src, arg_##dst, vec_##op##z, vec_helper_store##z##_gadgets, z)
+
+#define VLOAD(src, dst,z) v(load, src, dst,z)
+#define VSTORE(src, dst,z) v_write(store, src, dst,z)
 
 #define DECODER_RET int
 #define DECODER_NAME gen_step

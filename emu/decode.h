@@ -768,6 +768,11 @@ restart:
                 case 0x0f:
                     READINSN;
                     switch (insn) {
+                        case 0x10:
+                            TRACEI("movsd xmm:modrm, xmm");
+                            VLOAD(xmm_modrm_val, xmm_modrm_reg,64);
+                            break;
+
                         case 0x18 ... 0x1f: TRACEI("rep nop modrm\t"); READMODRM; break;
                         default: TRACE("undefined"); UNDEFINED;
                     }
