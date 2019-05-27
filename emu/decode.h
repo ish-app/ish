@@ -186,8 +186,10 @@ restart:
                 case 0xaf: TRACEI("imul modrm, reg");
                            READMODRM; IMUL2(modrm_val, modrm_reg,oz); break;
 
+                case 0xb0: TRACEI("cmpxchg reg8, modrm8");
+                           READMODRM_MEM; CMPXCHG(modrm_reg, modrm_val,8); break;
                 case 0xb1: TRACEI("cmpxchg reg, modrm");
-                           READMODRM; CMPXCHG(modrm_reg, modrm_val,oz); break;
+                           READMODRM_MEM; CMPXCHG(modrm_reg, modrm_val,oz); break;
 
                 case 0xb3: TRACEI("btr reg, modrm");
                            READMODRM; BTR(modrm_reg, modrm_val,oz); break;
@@ -733,6 +735,8 @@ restart:
                                    READMODRM; READIMM8; GRP8_ATOMIC(imm, modrm_val,oz); break;
 #undef GRP8_ATOMIC
 
+                        case 0xb0: TRACEI("lock cmpxchg reg8, modrm8");
+                                   READMODRM_MEM; ATOMIC_CMPXCHG(modrm_reg, modrm_val,8); break;
                         case 0xb1: TRACEI("lock cmpxchg reg, modrm");
                                    READMODRM_MEM; ATOMIC_CMPXCHG(modrm_reg, modrm_val,oz); break;
 

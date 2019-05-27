@@ -1163,35 +1163,33 @@ void test_xchg(void)
     TEST_XCHG(xaddw, "w", "+m");
     TEST_XCHG(xaddb, "b", "+m");
 
-#if 0
 #if defined(__x86_64__)
     TEST_CMPXCHG(cmpxchgq, "", "+q", 0xfbca7654);
 #endif
-    TEST_CMPXCHG(cmpxchgl, "k", "+q", 0xfbca7654);
-    TEST_CMPXCHG(cmpxchgw, "w", "+q", 0xfbca7654);
-    TEST_CMPXCHG(cmpxchgb, "b", "+q", 0xfbca7654);
+    //TEST_CMPXCHG(cmpxchgl, "k", "+q", 0xfbca7654);
+    //TEST_CMPXCHG(cmpxchgw, "w", "+q", 0xfbca7654);
+    //TEST_CMPXCHG(cmpxchgb, "b", "+q", 0xfbca7654);
 
 #if defined(__x86_64__)
     TEST_CMPXCHG(cmpxchgq, "", "+q", 0xfffefdfc);
 #endif
-    TEST_CMPXCHG(cmpxchgl, "k", "+q", 0xfffefdfc);
-    TEST_CMPXCHG(cmpxchgw, "w", "+q", 0xfffefdfc);
-    TEST_CMPXCHG(cmpxchgb, "b", "+q", 0xfffefdfc);
-#endif
+    //TEST_CMPXCHG(cmpxchgl, "k", "+q", 0xfffefdfc);
+    //TEST_CMPXCHG(cmpxchgw, "w", "+q", 0xfffefdfc);
+    //TEST_CMPXCHG(cmpxchgb, "b", "+q", 0xfffefdfc);
 
 #if defined(__x86_64__)
     TEST_CMPXCHG(cmpxchgq, "", "+m", 0xfbca7654);
 #endif
     TEST_CMPXCHG(cmpxchgl, "k", "+m", 0xfbca7654);
-    //TEST_CMPXCHG(cmpxchgw, "w", "+m", 0xfbca7654);
-    //TEST_CMPXCHG(cmpxchgb, "b", "+m", 0xfbca7654);
+    TEST_CMPXCHG(cmpxchgw, "w", "+m", 0xfbca7654);
+    TEST_CMPXCHG(cmpxchgb, "b", "+m", 0xfbca7654);
 
 #if defined(__x86_64__)
     TEST_CMPXCHG(cmpxchgq, "", "+m", 0xfffefdfc);
 #endif
     TEST_CMPXCHG(cmpxchgl, "k", "+m", 0xfffefdfc);
-    //TEST_CMPXCHG(cmpxchgw, "w", "+m", 0xfffefdfc);
-    //TEST_CMPXCHG(cmpxchgb, "b", "+m", 0xfffefdfc);
+    TEST_CMPXCHG(cmpxchgw, "w", "+m", 0xfffefdfc);
+    TEST_CMPXCHG(cmpxchgb, "b", "+m", 0xfffefdfc);
 
 #if 0
     {

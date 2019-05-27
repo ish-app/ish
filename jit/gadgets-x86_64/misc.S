@@ -49,24 +49,30 @@
     movb %r15b, CPU_eflags(%_cpu)
 .endm
 
-.gadget cmpxchg32_mem
-    write_prep 32, cmpxchg32_mem
-    cmpxchg %tmpd, (%_addrq)
-    pushf
-    write_done 32, cmpxchg32_mem
-    popf
-    cmpxchg_set_flags
-    gret 1
-.gadget_array cmpxchg
+.macro do_cmpxchg size, s, ss
+    .gadget cmpxchg\size\()_mem
+        write_prep \size, cmpxchg\size\()_mem
+        cmpxchg\ss %tmp\s, (%_addrq)
+        pushf
+        write_done \size, cmpxchg\size\()_mem
+        popf
+        cmpxchg_set_flags
+        gret 1
 
-.gadget atomic_cmpxchg32_mem
-    write_prep 32, atomic_cmpxchg32_mem
-    lock cmpxchg %tmpd, (%_addrq)
-    pushf
-    write_done 32, atomic_cmpxchg32_mem
-    popf
-    cmpxchg_set_flags
-    gret 1
+    .gadget atomic_cmpxchg\size\()_mem
+        write_prep \size, atomic_cmpxchg\size\()_mem
+        lock cmpxchg\ss %tmp\s, (%_addrq)
+        pushf
+        write_done \size, atomic_cmpxchg\size\()_mem
+        popf
+        cmpxchg_set_flags
+        gret 1
+.endm
+
+.irp size, SIZE_LIST
+    ss \size, do_cmpxchg
+.endr
+.gadget_array cmpxchg
 .gadget_array atomic_cmpxchg
 
 .macro do_helper type, size=
