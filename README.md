@@ -22,6 +22,7 @@ You'll need these things to build the project:
 
  - Python 3
  - Ninja
+ - Parcel `npm install -g parcel-bundler`
  - Yarn (only when building for iOS)
  - Meson (`pip install meson`)
  - Clang and LLD (on mac, `brew install llvm`, on linux, `sudo apt install clang lld` or `sudo pacman -S clang lld` or whatever)
