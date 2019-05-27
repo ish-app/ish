@@ -224,7 +224,7 @@ float80 f80_from_double(double d) {
     else
         f.exp = bias((int) db.exp - 0x3ff);
 
-    f.signif = db.signif << 11;
+    f.signif = (uint64_t) db.signif << 11;
     if (db.exp != EXP64_DENORMAL)
         f.signif |= CURSED_BIT;
     f.sign = db.sign;
