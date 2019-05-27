@@ -119,7 +119,7 @@ void set_console_device(int major, int minor) {
 
 int create_stdio(const char *file) {
     struct fd *fd = generic_open(file, O_RDWR_, 0);
-    if (fd == ERR_PTR(_ENOENT)) {
+    if (IS_ERR(fd)) {
         // fallback to adhoc files for stdio
         fd = adhoc_fd_create(NULL);
         fd->stat.rdev = dev_make(4, 1);
@@ -129,8 +129,6 @@ int create_stdio(const char *file) {
         if (err < 0)
             return err;
     }
-    if (IS_ERR(fd))
-        return PTR_ERR(fd);
 
     fd->refcount = 0;
     current->files->files[0] = fd_retain(fd);
