@@ -57,18 +57,18 @@ static inline bool modrm_decode32(addr_t *ip, struct tlb *tlb, struct modrm *mod
     } mode = MOD(modrm_byte);
     modrm->type = modrm_mem;
     modrm->reg = REG(modrm_byte);
-    modrm->base = RM(modrm_byte);
+    modrm->rm_opcode = RM(modrm_byte);
     if (mode == mode_reg) {
         modrm->type = modrm_reg;
-    } else if (modrm->base == rm_disp32 && mode == mode_disp0) {
+    } else if (modrm->rm_opcode == rm_disp32 && mode == mode_disp0) {
         modrm->base = reg_none;
         mode = mode_disp32;
-    } else if (modrm->base == rm_sib && mode != mode_reg) {
+    } else if (modrm->rm_opcode == rm_sib && mode != mode_reg) {
         byte_t sib_byte;
         READ(sib_byte);
         modrm->base = RM(sib_byte);
         // wtf intel
-        if (modrm->base == rm_disp32) {
+        if (modrm->rm_opcode == rm_disp32) {
             if (mode == mode_disp0) {
                 modrm->base = reg_none;
                 mode = mode_disp32;
