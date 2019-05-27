@@ -181,7 +181,6 @@ static inline bool gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
             break;
     }
     if (arg >= arg_count || gadgets[arg] == NULL) {
-        debugger;
         UNDEFINED;
     }
     if (arg == arg_mem || arg == arg_addr) {
