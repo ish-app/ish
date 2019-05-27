@@ -29,7 +29,7 @@ You'll need these things to build the project:
 
 ## Build for iOS
 
-Open the project in Xcode and click Run. If you're not me, first open the project build settings and change the Product Bundle Identifier to something unique. There are scripts that should do everything else automatically. If you run into any problems, open an issue and I'll try to help.
+Open the project in Xcode and click Run. If you're not me, first open the project build settings and change `ROOT_BUNDLE_IDENTIFIER` to something unique. There are scripts that should do everything else automatically. If you run into any problems, open an issue and I'll try to help.
 
 ## Build command line tool for testing
 
