@@ -22,12 +22,14 @@ You'll need these things to build the project:
 
  - Python 3
  - Ninja
- - Yarn (only when building for iOS)
+ - Node and NPM (only when building for iOS)
  - Meson (`pip install meson`)
  - Clang and LLD (on mac, `brew install llvm`, on linux, `sudo apt install clang lld` or `sudo pacman -S clang lld` or whatever)
  - sqlite3 (this is so common it may already be installed on linux and is definitely already installed on mac. if not, do something like `sudo apt install libsqlite3-dev`)
 
 ## Build for iOS
+
+Important: Meson 0.50 has a bug that prevents this from working. Install an older working version of meson with `pip install meson==0.49.2`.
 
 Open the project in Xcode and click Run. If you're not me, first open the project build settings and change `ROOT_BUNDLE_IDENTIFIER` to something unique. There are scripts that should do everything else automatically. If you run into any problems, open an issue and I'll try to help.
 
