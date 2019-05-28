@@ -137,12 +137,11 @@ int create_stdio(const char *file) {
     return 0;
 }
 
-static struct fd *open_fd_from_actual_fd(int actual_fd) {
-    int fd_no = actual_fd;
+static struct fd *open_fd_from_actual_fd(int fd_no) {
     if (fd_no < 0)
         return ERR_PTR(errno_map());
     struct fd *fd = fd_create(&realfs_fdops);
-    fd->real_fd = actual_fd;
+    fd->real_fd = fd_no;
     fd->dir = NULL;
     return fd;
 }
