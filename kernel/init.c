@@ -136,3 +136,26 @@ int create_stdio(const char *file) {
     current->files->files[2] = fd_retain(fd);
     return 0;
 }
+
+static struct fd *open_fd_from_actual_fd(int actual_fd) {
+    int fd_no = actual_fd;
+    if (fd_no < 0)
+        return ERR_PTR(errno_map());
+    struct fd *fd = fd_create(&realfs_fdops);
+    fd->real_fd = actual_fd;
+    fd->dir = NULL;
+    return fd;
+}
+
+int create_piped_stdio() {
+    struct fd *si = open_fd_from_actual_fd(STDIN_FILENO);
+    struct fd *so = open_fd_from_actual_fd(STDOUT_FILENO);
+    struct fd *se = open_fd_from_actual_fd(STDERR_FILENO);
+    si->refcount = 0;
+    so->refcount = 0;
+    se->refcount = 0;
+    current->files->files[0] = fd_retain(si);
+    current->files->files[1] = fd_retain(so);
+    current->files->files[2] = fd_retain(se);
+    return 0;
+}
