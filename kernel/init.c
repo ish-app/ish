@@ -138,23 +138,24 @@ int create_stdio(const char *file) {
 }
 
 static struct fd *open_fd_from_actual_fd(int fd_no) {
-    if (fd_no < 0)
-        return ERR_PTR(errno_map());
-    struct fd *fd = fd_create(&realfs_fdops);
+    struct fd *fd = adhoc_fd_create(&realfs_fdops);
+    if (fd == NULL) {
+        return NULL;
+    }
     fd->real_fd = fd_no;
     fd->dir = NULL;
     return fd;
 }
 
 int create_piped_stdio() {
-    struct fd *si = open_fd_from_actual_fd(STDIN_FILENO);
-    struct fd *so = open_fd_from_actual_fd(STDOUT_FILENO);
-    struct fd *se = open_fd_from_actual_fd(STDERR_FILENO);
-    si->refcount = 0;
-    so->refcount = 0;
-    se->refcount = 0;
-    current->files->files[0] = fd_retain(si);
-    current->files->files[1] = fd_retain(so);
-    current->files->files[2] = fd_retain(se);
+    if (!(current->files->files[0] = open_fd_from_actual_fd(STDIN_FILENO))) {
+        return -1;
+    }
+    if (!(current->files->files[1] = open_fd_from_actual_fd(STDOUT_FILENO))) {
+        return -1;
+    }
+    if (!(current->files->files[2] = open_fd_from_actual_fd(STDERR_FILENO))) {
+        return -1;
+    }
     return 0;
 }
