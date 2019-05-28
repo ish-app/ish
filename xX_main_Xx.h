@@ -93,9 +93,14 @@ static inline int xX_main_Xx(int argc, char *const argv[], const char *envp) {
     if (err < 0)
         return err;
     tty_drivers[TTY_CONSOLE_MAJOR] = &real_tty_driver;
-    err = create_stdio(console);
-    if (err < 0)
-        return err;
+    if (isatty(fileno(stdin))) {
+        err = create_stdio(console);
+        if (err < 0)
+            return err;
+    }
+    else {
+        create_piped_stdio();
+    }
     exit_hook = exit_handler;
     return 0;
 }
