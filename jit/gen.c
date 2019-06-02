@@ -73,6 +73,7 @@ void gen_exit(struct gen_state *state) {
 #define FINISH \
     return !end_block
 
+#define RESTORE_IP state->ip = saved_ip
 #define _READIMM(name, size) \
     if (!tlb_read(tlb, state->ip, &name, size/8)) SEGFAULT; \
     state->ip += size/8

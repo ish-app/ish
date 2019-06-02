@@ -677,6 +677,18 @@ restart:
             switch (insn) {
                 case 0x65: TRACE("segment gs\n"); SEG_GS(); goto lockrestart;
 
+                case 0x66:
+                    // I didn't think this through
+#if OP_SIZE == 32
+                    TRACE("locked 16-bit mode\n");
+                    RESTORE_IP;
+                    return glue(DECODER_NAME, 16)(DECODER_PASS_ARGS);
+#else
+                    goto lockrestart;
+#endif
+
+
+
 #define MAKE_OP_ATOMIC(x, OP, op) \
         case x+0x0: TRACEI("lock " op " reg8, modrm8"); \
                    READMODRM_MEM; ATOMIC_##OP(modrm_reg, modrm_val,8); break; \
