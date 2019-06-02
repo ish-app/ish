@@ -33,6 +33,7 @@ static bool modrm_compute(struct cpu_state *cpu, struct tlb *tlb, addr_t *addr_o
     }
 #define READADDR READIMM_(addr_offset, 32); addr += addr_offset
 
+#define RESTORE_IP cpu->eip = saved_ip
 #define _READIMM(name,size) \
     name = mem_read(cpu->eip, size); \
     cpu->eip += size/8
