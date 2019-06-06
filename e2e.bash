@@ -4,20 +4,39 @@ mkdir -p e2e_out
 
 FS=./alpine
 VERBOSE=false
+TEST_PATTERN=""
 SUMMARY_LOG=./e2e_out/summary.txt
 rm -f "$SUMMARY_LOG"
 
-while getopts "vf:" OPTION; do
+while getopts "hvf:e:" OPTION; do
     case $OPTION in
         v)
             VERBOSE=true
             ;;
         f)
             if [ -d "$OPTARG" ]; then
-                FS=$OPTARG
+                FS="$OPTARG"
             else
                 echo "No such directory $OPTARG"
             fi
+            ;;
+        e)
+            TEST_PATTERN="$OPTARG"
+            ;;
+        h)
+            echo "iSH E2E Testing"
+            echo "==============="
+            echo "Automates e2e tests defined in tests/e2e."
+            echo ""
+            echo "  -h        Display help text."
+            echo "  -v        Verbosely show test output as it is received."
+            echo "  -f fs     Use \"fs\" as the -f option for iSH. Default \"alpine\"."
+            echo "  -e pat    Use pattern \"pat\" to pattern match tests to run."
+            echo "            Syntax is same as grep -E for local system."
+            echo ""
+            echo "Example: Run the \"hello\" test in the alpine2 fake file system."
+            echo "$ bash e2e.bash -f alpine2 -e ^hello$"
+            exit 0
             ;;
     esac
 done
@@ -71,8 +90,8 @@ validate_test() {
     esac
 }
 
-for e2e_test in $(ls tests/e2e | grep -E "^[a-zA-Z0-9_]+$"); do
-    if [ -d tests/e2e/$e2e_test ]; then
+for e2e_test in $(ls tests/e2e | grep -E "^[a-zA-Z0-9_]+$" | grep -E "$TEST_PATTERN"); do
+    if [ -d "tests/e2e/$e2e_test" ]; then
         let "NUM_TOTAL+=1"
         printf "### Running Test: "%-16s" ###\n" "$e2e_test" | tee -a "$SUMMARY_LOG"
         test_setup $e2e_test
