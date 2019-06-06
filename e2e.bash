@@ -32,7 +32,7 @@ test_setup() {
     $ISH /bin/mkdir -p /tmp/e2e/$1
     rm -rf ./e2e_out/$1
     mkdir -p ./e2e_out/$1
-    tar -cf - -C e2e $1 | $ISH /bin/tar xf - -C /tmp/e2e
+    tar -cf - -C tests/e2e $1 | $ISH /bin/tar xf - -C /tmp/e2e
 }
 
 test_teardown() {
@@ -43,17 +43,17 @@ test_teardown() {
 run_test() {
     ACTUAL_LOG="e2e_out/$1/actual.txt"
     if [ "$VERBOSE" = "true" ]; then
-        $ISH /usr/bin/env sh -c "source /etc/profile && cd /tmp/e2e/$1 && sh test.sh" | tee "$ACTUAL_LOG" -a "$SUMMARY_LOG"
+        $ISH /usr/bin/env sh -c "source /etc/profile && cd /tmp/e2e/$1 && sh test.sh" | tee -a "$SUMMARY_LOG" | tee "$ACTUAL_LOG"
     else
         $ISH /usr/bin/env sh -c "source /etc/profile && cd /tmp/e2e/$1 && sh test.sh" | tee -a "$SUMMARY_LOG" > "$ACTUAL_LOG"
     fi
 }
 
 validate_test() {
-    EXPECTED_LOG="e2e/$1/expected.txt"
+    EXPECTED_LOG="tests/e2e/$1/expected.txt"
     ACTUAL_LOG="e2e_out/$1/actual.txt"
     DIFF_LOG="e2e_out/$1/diff.txt"
-    diff -w "$EXPECTED_LOG" "$ACTUAL_LOG" > $DIFF_LOG
+    diff -uw "$EXPECTED_LOG" "$ACTUAL_LOG" > $DIFF_LOG
     DIFF_EXIT_CODE=$?
     case "$DIFF_EXIT_CODE" in
         0)
@@ -61,8 +61,8 @@ validate_test() {
             ;;
         1)
             NUM_FAILS=$((NUM_FAILS+1))
-            echo "!!! Failed: $1" | tee "$SUMMARY_LOG"
-            cat "$DIFF_LOG" | tee "$SUMMARY_LOG"
+            echo "!!! Failed: $1" | tee -a "$SUMMARY_LOG"
+            cat "$DIFF_LOG" | tee -a "$SUMMARY_LOG"
             ;;
         2)
             NUM_FAILS=$((NUM_FAILS+1))
@@ -71,8 +71,8 @@ validate_test() {
     esac
 }
 
-for e2e_test in $(ls e2e | grep -E "^[a-zA-Z0-9_]+$"); do
-    if [ -d e2e/$e2e_test ]; then
+for e2e_test in $(ls tests/e2e | grep -E "^[a-zA-Z0-9_]+$"); do
+    if [ -d tests/e2e/$e2e_test ]; then
         let "NUM_TOTAL+=1"
         printf "### Running Test: "%-16s" ###\n" "$e2e_test" | tee -a "$SUMMARY_LOG"
         test_setup $e2e_test
