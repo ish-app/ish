@@ -161,5 +161,5 @@ if not meson.is_cross_build()
     test('float80', float80_test, should_fail: true)
 endif
 
-e2e_test = find_program('e2e.bash')
+e2e_test = find_program('tests/e2e/e2e.bash')
 test('e2e', e2e_test, timeout: 120)
