@@ -3,13 +3,15 @@ cd "$(dirname "$0")"
 cd ../../
 mkdir -p e2e_out
 
-FS=./alpine
+FS=./e2e_out/testfs
 VERBOSE=false
+YES_MODE=false
 TEST_PATTERN=""
 SUMMARY_LOG=./e2e_out/summary.txt
+ALPINE_IMAGE="http://dl-cdn.alpinelinux.org/alpine/v3.9/releases/x86/alpine-minirootfs-3.9.4-x86.tar.gz"
 rm -f "$SUMMARY_LOG"
 
-while getopts "hvf:e:" OPTION; do
+while getopts "hvyf:e:" OPTION; do
     case $OPTION in
         v)
             VERBOSE=true
@@ -24,6 +26,9 @@ while getopts "hvf:e:" OPTION; do
         e)
             TEST_PATTERN="$OPTARG"
             ;;
+        y)
+            YES_MODE=true
+            ;;
         h)
             echo "iSH E2E Testing"
             echo "==============="
@@ -34,6 +39,7 @@ while getopts "hvf:e:" OPTION; do
             echo "  -f fs     Use \"fs\" as the -f option for iSH. Default \"alpine\"."
             echo "  -e pat    Use pattern \"pat\" to pattern match tests to run."
             echo "            Syntax is same as grep -E for local system."
+            echo "  -y        Accept creation of test file system if it does not exist"
             echo ""
             echo "Example: Run the \"hello\" test in the alpine2 fake file system."
             echo "$ bash e2e.bash -f alpine2 -e ^hello$"
@@ -43,6 +49,33 @@ while getopts "hvf:e:" OPTION; do
 done
 
 ISH="./build/ish -f $FS"
+
+if [ ! -d "$FS" ]; then
+    if [ "$YES_MODE" = "true" ]; then
+        INSTALL="Yes";
+    else
+        echo "File System \"$FS\" does not exist. Automatically set up now?"
+        select yn in "Yes" "No"; do
+            INSTALL="$yn";
+            break;
+        done
+    fi
+    echo install? $INSTALL
+    case "$INSTALL" in
+        Yes)
+            echo
+            echo "### Setting up test file system..."
+            echo "###### Downloading Alpine"
+            wget "$ALPINE_IMAGE" -O e2e_out/alpine.tar.gz
+            echo "###### Unpacking Alpine"
+            ./tools/fakefsify.py e2e_out/alpine.tar.gz "$FS"
+            echo "###### Configuring iSH and installing base libraries"
+            grep -E "^nameserver" /etc/resolv.conf | head -1 | $ISH /bin/sed -n "w /etc/resolv.conf"
+            $ISH /bin/sh -c "apk update && apk add build-base python2 python3"
+            ;;
+        No) exit 1;;
+    esac
+fi
 
 NUM_TOTAL=0
 NUM_FAILS=0

@@ -13,11 +13,7 @@ macros:
           - pip install meson
       script:
           - meson build $MESON_OPTS
-          - ninja -C build
-          - wget http://dl-cdn.alpinelinux.org/alpine/v3.9/releases/x86/alpine-minirootfs-3.9.4-x86.tar.gz -O alpine.tar.gz
-          - ./tools/fakefsify.py alpine.tar.gz alpine
-          - grep nameserver /etc/resolv.conf | head -1 | ./build/ish -f ./alpine /bin/sed -n "w /etc/resolv.conf"
-          - bash tests/e2e/e2e.bash
+          - ninja -C build test
 
 matrix:
     include:
