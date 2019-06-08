@@ -13,14 +13,18 @@ macros:
           - pip install meson
       script:
           - meson build $MESON_OPTS
-          - ninja -C build test
+          - ninja -C build $NINJA_TARGET
 
 matrix:
     include:
         - <<: *linux
-          env: MESON_OPTS=-Djit=true
+          env:
+              - MESON_OPTS=-Djit=true
+              - NINJA_TARGET=test
         - <<: *linux
-          env: MESON_OPTS=-Djit=false
+          env:
+              - MESON_OPTS=-Djit=false
+              - NINJA_TARGET=
         - language: objective-c
           osx_image: xcode10.1
           install:
