@@ -160,3 +160,6 @@ if not meson.is_cross_build()
     float80_test = executable('float80_test', ['emu/float80.c', 'emu/float80-test.c'], dependencies: [libm])
     test('float80', float80_test, should_fail: true)
 endif
+
+e2e_test = find_program('tests/e2e/e2e.bash')
+test('e2e', e2e_test, args: ['-y'], timeout: 120)
