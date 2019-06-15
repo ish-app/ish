@@ -41,6 +41,20 @@ To set up a self-contained Alpine linux filesystem, download the Alpine miniroot
 
 You can replace `ish` with `tools/ptraceomatic` to run the program in a real process and single step and compare the registers at each step. I use it for debugging. Requires 64-bit Linux 4.11 or later.
 
+## Logging
+
+iSH has several logging channels which can be enabled at build time. By default, all of them are disabled. To enable them:
+
+- In Xcode: Sett the `ISH_LOG` project setting to a space-separated list of log channels.
+- With Meson (command line tool for testing): Run `meson configure -Dlog="<space-separated list of log channels>`.
+
+Available channels:
+
+- `strace`: The most useful channel, logs the parameters and return value of almost every system call.
+- `instr`: Logs every instruction executed by the emulator. This slows things down a lot.
+- `verbose`: Debug logs that don't fit into another category.
+- Grep for `DEFAULT_CHANNEL` to see if more log channels have been added since this list was updated.
+
 # A note on the JIT
 
 Possibly the most interesting thing I wrote as part of iSH is the JIT. It's not actually a JIT since it doesn't target machine code. Instead it generates an array of pointers to functions called gadgets, and each gadget ends with a tailcall to the next function; like the threaded code technique used by some Forth interpreters. The result is a speedup of roughly 3-5x compared to pure emulation.
