@@ -35,6 +35,7 @@ matrix:
                       - ninja
                       - llvm
                       - yarn
+                  update: true
           script:
               - xcodebuild -project iSH.xcodeproj -scheme iSH -sdk iphoneos CODE_SIGNING_ALLOWED=NO
     exclude:
