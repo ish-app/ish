@@ -77,7 +77,10 @@ dword_t sys_clock_settime(dword_t UNUSED(clock), addr_t UNUSED(tp)) {
 }
 
 static void itimer_notify(struct task *task) {
-    send_signal(task, SIGALRM_);
+    struct siginfo_ info = {
+        .code = SI_TIMER_,
+    };
+    send_signal(task, SIGALRM_, info);
 }
 
 static int itimer_set(struct tgroup *group, int which, struct timer_spec spec, struct timer_spec *old_spec) {
@@ -179,8 +182,8 @@ dword_t sys_times(addr_t tbuf) {
     if (tbuf) {
         struct tms_ tmp;
         struct rusage_ rusage = rusage_get_current();
-        tmp.tms_utime = (rusage.utime.sec * 100) + (rusage.utime.usec/10000);
-        tmp.tms_stime = (rusage.utime.sec * 100) + (rusage.utime.usec/10000);
+        tmp.tms_utime = clock_from_timeval(rusage.utime);
+        tmp.tms_stime = clock_from_timeval(rusage.stime);
         tmp.tms_cutime = tmp.tms_utime;
         tmp.tms_cstime = tmp.tms_stime;
         if (user_put(tbuf, tmp))

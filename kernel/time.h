@@ -24,6 +24,10 @@ struct timezone_ {
     dword_t dsttime;
 };
 
+static inline clock_t_ clock_from_timeval(struct timeval_ timeval) {
+    return timeval.sec * 100 + timeval.usec / 10000;
+}
+
 #define ITIMER_REAL_ 0
 #define ITIMER_VIRTUAL_ 1
 #define ITIMER_PROF_ 2
@@ -33,10 +37,10 @@ struct itimerval_ {
 };
 
 struct tms_ {
-    dword_t tms_utime;  /* user time */
-    dword_t tms_stime;  /* system time */
-    dword_t tms_cutime; /* user time of children */
-    dword_t tms_cstime; /* system time of children */
+    clock_t_ tms_utime;  /* user time */
+    clock_t_ tms_stime;  /* system time */
+    clock_t_ tms_cutime; /* user time of children */
+    clock_t_ tms_cstime; /* system time of children */
 };
 
 int_t sys_setitimer(int_t which, addr_t new_val, addr_t old_val);

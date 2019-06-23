@@ -51,16 +51,58 @@ struct sigaction_ {
 #define	SIGPWR_    30
 #define SIGSYS_    31
 
+#define SI_USER_ 0
+#define SI_TIMER_ -2
+#define SI_TKILL_ -6
+#define SI_KERNEL_ 128
+
+union sigval_ {
+    int_t sv_int;
+    addr_t sv_ptr;
+};
+
+struct siginfo_ {
+    int_t signo;
+    int_t code;
+    int_t sig_errno;
+    union {
+        struct {
+            pid_t_ pid;
+            uid_t_ uid;
+        } kill;
+        struct {
+            pid_t_ pid;
+            uid_t_ uid;
+            int_t status;
+            clock_t_ utime;
+            clock_t_ stime;
+        } child;
+        struct {
+            addr_t addr;
+        } fault;
+        struct {
+            addr_t addr;
+            int_t syscall;
+        } sigsys;
+        char __pad[128 - 3 * sizeof(int_t)];
+    };
+};
+
+// a reasonable default siginfo
+static const struct siginfo_ SIGINFO_NIL = {
+    .code = SI_KERNEL_,
+};
+
 // send a signal
 // you better make sure the task isn't gonna get freed under me (pids_lock or current)
-void send_signal(struct task *task, int sig);
+void send_signal(struct task *task, int sig, struct siginfo_ info);
 // send a signal without regard for whether the signal is blocked or ignored
-void deliver_signal(struct task *task, int sig);
+void deliver_signal(struct task *task, int sig, struct siginfo_ info);
 // send a signal to current if it's not blocked or ignored, return whether that worked
 // exists specifically for sending SIGTTIN/SIGTTOU
 bool try_self_signal(int sig);
 // send a signal to all processes in a group, could return ESRCH
-int send_group_signal(dword_t pgid, int sig);
+int send_group_signal(dword_t pgid, int sig, struct siginfo_ info);
 // check for and deliver pending signals on current
 // returns whether signals were received
 // must be called without pids_lock

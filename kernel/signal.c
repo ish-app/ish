@@ -65,13 +65,13 @@ retry:
     }
 }
 
-void deliver_signal(struct task *task, int sig) {
+void deliver_signal(struct task *task, int sig, struct siginfo_ UNUSED(info)) {
     lock(&task->sighand->lock);
     deliver_signal_unlocked(task, sig);
     unlock(&task->sighand->lock);
 }
 
-void send_signal(struct task *task, int sig) {
+void send_signal(struct task *task, int sig, struct siginfo_ UNUSED(info)) {
     // signal zero is for testing whether a process exists
     if (sig == 0)
         return;
@@ -97,6 +97,8 @@ void send_signal(struct task *task, int sig) {
 }
 
 bool try_self_signal(int sig) {
+    assert(sig == SIGTTIN_ || sig == SIGTTOU_);
+
     struct sighand *sighand = current->sighand;
     lock(&sighand->lock);
     bool can_send = signal_action(sighand, sig) != SIGNAL_IGNORE &&
@@ -107,7 +109,7 @@ bool try_self_signal(int sig) {
     return can_send;
 }
 
-int send_group_signal(dword_t pgid, int sig) {
+int send_group_signal(dword_t pgid, int sig, struct siginfo_ info) {
     lock(&pids_lock);
     struct pid *pid = pid_get(pgid);
     if (pid == NULL) {
@@ -116,7 +118,7 @@ int send_group_signal(dword_t pgid, int sig) {
     }
     struct tgroup *tgroup;
     list_for_each_entry(&pid->pgroup, tgroup, pgroup) {
-        send_signal(tgroup->leader, sig);
+        send_signal(tgroup->leader, sig, info);
     }
     unlock(&pids_lock);
     return 0;
@@ -227,7 +229,8 @@ bool receive_signals() {
         if (now_stopped) {
             lock(&pids_lock);
             notify(&current->parent->group->child_exit);
-            send_signal(current->parent, current->group->leader->exit_signal);
+            // TODO add siginfo
+            send_signal(current->parent, current->group->leader->exit_signal, SIGINFO_NIL);
             unlock(&pids_lock);
         }
     }
@@ -462,11 +465,16 @@ int do_kill(pid_t_ pid, dword_t sig, pid_t_ tgid) {
     STRACE("kill(%d, %d)", pid, sig);
     if (sig >= NUM_SIGS)
         return _EINVAL;
+    struct siginfo_ info = {
+        .code = SI_USER_,
+        .kill.pid = current->pid,
+        .kill.uid = current->uid,
+    };
     // TODO check permissions
     if (pid == 0)
         pid = -current->group->pgid;
     if (pid < 0)
-        return send_group_signal(-pid, sig);
+        return send_group_signal(-pid, sig, info);
 
     lock(&pids_lock);
     struct task *task = pid_get_task(pid);
@@ -481,7 +489,7 @@ int do_kill(pid_t_ pid, dword_t sig, pid_t_ tgid) {
         return _ESRCH;
     }
 
-    send_signal(task, sig);
+    send_signal(task, sig, info);
     unlock(&pids_lock);
     return 0;
 }

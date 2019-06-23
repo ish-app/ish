@@ -56,6 +56,7 @@ noreturn void do_exit(int status) {
     struct rusage_ rusage = rusage_get_current();
     lock(&current->group->lock);
     rusage_add(&current->group->rusage, &rusage);
+    struct rusage_ group_rusage = current->group->rusage;
     unlock(&current->group->lock);
 
     // the actual freeing needs pids_lock
@@ -83,7 +84,16 @@ noreturn void do_exit(int status) {
         } else {
             leader->zombie = true;
             notify(&parent->group->child_exit);
-            send_signal(parent, leader->exit_signal);
+            struct siginfo_ info = {
+                .code = SI_KERNEL_,
+                .child.pid = current->pid,
+                .child.uid = current->uid,
+                .child.status = current->exit_code,
+                .child.utime = clock_from_timeval(group_rusage.utime),
+                .child.stime = clock_from_timeval(group_rusage.stime),
+            };
+            if (leader->exit_signal != 0)
+                send_signal(parent, leader->exit_signal, info);
         }
 
         if (exit_hook != NULL)
@@ -111,7 +121,7 @@ noreturn void do_exit_group(int status) {
     // kill everyone else in the group
     struct task *task;
     list_for_each_entry(&group->threads, task, group_links) {
-        deliver_signal(task, SIGKILL_);
+        deliver_signal(task, SIGKILL_, SIGINFO_NIL);
         task->group->stopped = false;
         notify(&task->group->stopped_cond);
     }

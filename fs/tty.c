@@ -345,7 +345,7 @@ canon_wake:
     if (fg_group != 0) {
         for (int sig = 0; sig < NUM_SIGS; sig++) {
             if (queue & (1l << sig))
-                send_group_signal(fg_group, sig);
+                send_group_signal(fg_group, sig, SIGINFO_NIL);
         }
     }
 
@@ -732,7 +732,7 @@ static int tty_ioctl(struct fd *fd, int cmd, void *arg) {
 void tty_set_winsize(struct tty *tty, struct winsize_ winsize) {
     tty->winsize = winsize;
     if (tty->fg_group != 0)
-        send_group_signal(tty->fg_group, SIGWINCH_);
+        send_group_signal(tty->fg_group, SIGWINCH_, SIGINFO_NIL);
 }
 
 void tty_hangup(struct tty *tty) {
