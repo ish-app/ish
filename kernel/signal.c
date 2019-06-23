@@ -13,6 +13,8 @@ static int signal_is_blockable(int sig) {
     return sig != SIGKILL_ && sig != SIGSTOP_;
 }
 
+#define UNBLOCKABLE_MASK ((1l << SIGKILL_) | (1l << SIGSTOP_))
+
 #define SIGNAL_IGNORE 0
 #define SIGNAL_KILL 1
 #define SIGNAL_CALL_HANDLER 2
@@ -42,6 +44,9 @@ static int signal_action(struct sighand *sighand, int sig) {
 
 static void deliver_signal_unlocked(struct task *task, int sig) {
     task->pending |= 1l << sig;
+    if (task->blocked & (1l << sig) && signal_is_blockable(sig))
+        return;
+
     if (task != current) {
         // actual madness, I hope to god it's correct
 retry:
@@ -81,10 +86,7 @@ void send_signal(struct task *task, int sig, struct siginfo_ UNUSED(info)) {
     struct sighand *sighand = task->sighand;
     lock(&sighand->lock);
     if (signal_action(sighand, sig) != SIGNAL_IGNORE) {
-        if (task->blocked & (1l << sig) && signal_is_blockable(sig))
-            task->queued |= (1l << sig);
-        else
-            deliver_signal_unlocked(task, sig);
+        deliver_signal_unlocked(task, sig);
     }
     unlock(&sighand->lock);
 
@@ -213,11 +215,13 @@ bool receive_signals() {
 
     struct sighand *sighand = current->sighand;
     lock(&sighand->lock);
-    bool any_left = current->pending != 0;
+    sigset_t_ pending = current->pending & ~current->blocked;
+    bool any_left = pending != 0;
     if (any_left) {
-        for (int sig = 0; sig < NUM_SIGS; sig++)
-            if (current->pending & (1l << sig))
+        for (int sig = 0; sig < NUM_SIGS; sig++) {
+            if (pending & (1l << sig))
                 receive_signal(sighand, sig);
+        }
     }
     unlock(&sighand->lock);
 
@@ -342,15 +346,7 @@ static int do_sigprocmask_unlocked(dword_t how, sigset_t_ set, sigset_t_ *oldset
         current->blocked = set;
     else
         return _EINVAL;
-
-    // transfer unblocked signals from queued to pending
-    sigset_t_ unblocked = oldset & ~current->blocked;
-    current->pending |= current->queued & unblocked;
-    current->queued &= ~unblocked;
-    // transfer blocked signals from pending to queued
-    sigset_t_ blocked = current->blocked & ~oldset;
-    current->queued |= current->pending & blocked;
-    current->pending &= ~blocked;
+    current->blocked &= ~UNBLOCKABLE_MASK;
 
     if (oldset_out != NULL)
         *oldset_out = oldset;
