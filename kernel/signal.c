@@ -42,8 +42,16 @@ static int signal_action(struct sighand *sighand, int sig) {
     }
 }
 
-static void deliver_signal_unlocked(struct task *task, int sig) {
+static void deliver_signal_unlocked(struct task *task, int sig, struct siginfo_ info) {
+    if (task->pending & (1l << sig))
+        return;
+
     task->pending |= 1l << sig;
+    struct sigqueue *sigqueue = malloc(sizeof(struct sigqueue));
+    sigqueue->info = info;
+    sigqueue->info.signo = sig;
+    list_add_tail(&task->queue, &sigqueue->queue);
+
     if (task->blocked & (1l << sig) && signal_is_blockable(sig))
         return;
 
@@ -70,13 +78,13 @@ retry:
     }
 }
 
-void deliver_signal(struct task *task, int sig, struct siginfo_ UNUSED(info)) {
+void deliver_signal(struct task *task, int sig, struct siginfo_ info) {
     lock(&task->sighand->lock);
-    deliver_signal_unlocked(task, sig);
+    deliver_signal_unlocked(task, sig, info);
     unlock(&task->sighand->lock);
 }
 
-void send_signal(struct task *task, int sig, struct siginfo_ UNUSED(info)) {
+void send_signal(struct task *task, int sig, struct siginfo_ info) {
     // signal zero is for testing whether a process exists
     if (sig == 0)
         return;
@@ -86,7 +94,7 @@ void send_signal(struct task *task, int sig, struct siginfo_ UNUSED(info)) {
     struct sighand *sighand = task->sighand;
     lock(&sighand->lock);
     if (signal_action(sighand, sig) != SIGNAL_IGNORE) {
-        deliver_signal_unlocked(task, sig);
+        deliver_signal_unlocked(task, sig, info);
     }
     unlock(&sighand->lock);
 
@@ -106,7 +114,7 @@ bool try_self_signal(int sig) {
     bool can_send = signal_action(sighand, sig) != SIGNAL_IGNORE &&
         !(current->blocked & (1l << sig));
     if (can_send)
-        deliver_signal_unlocked(current, sig);
+        deliver_signal_unlocked(current, sig, SIGINFO_NIL);
     unlock(&sighand->lock);
     return can_send;
 }
@@ -126,7 +134,8 @@ int send_group_signal(dword_t pgid, int sig, struct siginfo_ info) {
     return 0;
 }
 
-static void receive_signal(struct sighand *sighand, int sig) {
+static void receive_signal(struct sighand *sighand, struct siginfo_ *info) {
+    int sig = info->signo;
     STRACE("%d receiving signal %d\n", current->pid, sig);
     current->pending &= ~(1l << sig);
 
@@ -213,15 +222,17 @@ bool receive_signals() {
     bool was_stopped = current->group->stopped;
     unlock(&current->group->lock);
 
+    bool received_any = false;
     struct sighand *sighand = current->sighand;
     lock(&sighand->lock);
-    sigset_t_ pending = current->pending & ~current->blocked;
-    bool any_left = pending != 0;
-    if (any_left) {
-        for (int sig = 0; sig < NUM_SIGS; sig++) {
-            if (pending & (1l << sig))
-                receive_signal(sighand, sig);
-        }
+    struct sigqueue *sigqueue, *tmp;
+    list_for_each_entry_safe(&current->queue, sigqueue, tmp, queue) {
+        if (current->blocked & sigqueue->info.signo)
+            continue;
+        list_remove(&sigqueue->queue);
+        receive_signal(sighand, &sigqueue->info);
+        free(sigqueue);
+        received_any = true;
     }
     unlock(&sighand->lock);
 
@@ -239,7 +250,7 @@ bool receive_signals() {
         }
     }
 
-    return any_left;
+    return received_any;
 }
 
 struct sighand *sighand_new() {

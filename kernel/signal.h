@@ -2,6 +2,7 @@
 #define SIGNAL_H
 
 #include "misc.h"
+#include "util/list.h"
 struct task;
 
 typedef qword_t sigset_t_;
@@ -84,13 +85,17 @@ struct siginfo_ {
             addr_t addr;
             int_t syscall;
         } sigsys;
-        char __pad[128 - 3 * sizeof(int_t)];
     };
 };
 
 // a reasonable default siginfo
 static const struct siginfo_ SIGINFO_NIL = {
     .code = SI_KERNEL_,
+};
+
+struct sigqueue {
+    struct list queue;
+    struct siginfo_ info;
 };
 
 // send a signal
