@@ -10,6 +10,9 @@ typedef qword_t sigset_t_;
 #define SIG_ERR_ -1
 #define SIG_DFL_ 0
 #define SIG_IGN_ 1
+
+#define SA_SIGINFO_ 4
+
 struct sigaction_ {
     addr_t handler;
     dword_t flags;
@@ -63,9 +66,9 @@ union sigval_ {
 };
 
 struct siginfo_ {
-    int_t signo;
-    int_t code;
+    int_t sig;
     int_t sig_errno;
+    int_t code;
     union {
         struct {
             pid_t_ pid;
@@ -118,7 +121,6 @@ struct sighand {
     struct sigaction_ action[NUM_SIGS];
     addr_t altstack;
     dword_t altstack_size;
-    bool on_altstack;
     lock_t lock;
 };
 struct sighand *sighand_new(void);
@@ -128,6 +130,7 @@ void sighand_release(struct sighand *sighand);
 dword_t sys_rt_sigaction(dword_t signum, addr_t action_addr, addr_t oldaction_addr, dword_t sigset_size);
 dword_t sys_sigaction(dword_t signum, addr_t action_addr, addr_t oldaction_addr);
 dword_t sys_rt_sigreturn(dword_t sig);
+dword_t sys_sigreturn(dword_t sig);
 
 #define SIG_BLOCK_ 0
 #define SIG_UNBLOCK_ 1
@@ -144,6 +147,7 @@ struct stack_t_ {
 };
 #define SS_ONSTACK_ 1
 #define SS_DISABLE_ 2
+#define MINSIGSTKSZ_ 2048
 dword_t sys_sigaltstack(addr_t ss, addr_t old_ss);
 
 int_t sys_rt_sigsuspend(addr_t mask_addr, uint_t size);
@@ -181,6 +185,14 @@ struct sigcontext_ {
     dword_t oldmask;
     dword_t cr2;
 };
+
+struct ucontext_ {
+    uint_t flags;
+    uint_t link;
+    struct stack_t_ stack;
+    struct sigcontext_ mcontext;
+    sigset_t_ sigmask;
+} __attribute__((packed));
 
 struct fpreg_ {
     word_t significand[4];
@@ -220,16 +232,25 @@ struct fpstate_ {
 };
 
 struct sigframe_ {
-    addr_t pretcode;
+    addr_t restorer;
     dword_t sig;
     struct sigcontext_ sc;
     struct fpstate_ fpstate;
     dword_t extramask;
-    struct {
-        uint16_t popmov;
-        dword_t nr_sigreturn;
-        uint16_t int80;
-    } __attribute__((packed)) retcode;
+    char retcode[8];
+};
+
+struct rt_sigframe_ {
+    addr_t restorer;
+    int_t sig;
+    addr_t pinfo;
+    addr_t puc;
+    union {
+        struct siginfo_ info;
+        char __pad[128];
+    };
+    struct ucontext_ uc;
+    char retcode[8];
 };
 
 // On a 64-bit system with 32-bit emulation, the fpu state is stored in extra

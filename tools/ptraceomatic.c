@@ -390,6 +390,7 @@ static void step_tracing(struct cpu_state *cpu, struct tlb *tlb, int pid, int se
             // some syscalls need to just happen
             case 45: // brk
             case 91: // munmap
+            case 119: // sigreturn
             case 125: // mprotect
             case 173: // rt_sigreturn
             case 174: // rt_sigaction

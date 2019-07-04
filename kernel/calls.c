@@ -79,6 +79,7 @@ syscall_t syscall_table[] = {
     [114] = (syscall_t) sys_wait4,
     [116] = (syscall_t) sys_sysinfo,
     [118] = (syscall_t) sys_fsync,
+    [119] = (syscall_t) sys_sigreturn,
     [120] = (syscall_t) sys_clone,
     [122] = (syscall_t) sys_uname,
     [125] = (syscall_t) sys_mprotect,
