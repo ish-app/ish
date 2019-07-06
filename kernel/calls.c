@@ -179,6 +179,7 @@ syscall_t syscall_table[] = {
     [324] = (syscall_t) sys_fallocate,
     [328] = (syscall_t) sys_eventfd2,
     [329] = (syscall_t) sys_epoll_create,
+    [330] = (syscall_t) sys_dup3,
     [331] = (syscall_t) sys_pipe2,
     [340] = (syscall_t) sys_prlimit64,
     [345] = (syscall_t) sys_sendmmsg,

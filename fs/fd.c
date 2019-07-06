@@ -257,8 +257,8 @@ dword_t sys_dup(fd_t f) {
     return f_install(fd, 0);
 }
 
-dword_t sys_dup2(fd_t f, fd_t new_f) {
-    STRACE("dup2(%d, %d)", f, new_f);
+dword_t sys_dup3(fd_t f, fd_t new_f, int_t flags) {
+    STRACE("dup3(%d, %d, %d)", f, new_f, flags);
     struct fdtable *table = current->files;
     struct fd *fd = f_get(f);
     if (fd == NULL)
@@ -269,7 +269,13 @@ dword_t sys_dup2(fd_t f, fd_t new_f) {
     fd_retain(fd);
     f_close(new_f);
     table->files[new_f] = fd;
+    if (flags & O_CLOEXEC_)
+        bit_set(new_f, table->cloexec);
     return new_f;
+}
+
+dword_t sys_dup2(fd_t f, fd_t new_f) {
+    return sys_dup3(f, new_f, 0);
 }
 
 int fd_getflags(struct fd *fd) {
