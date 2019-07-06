@@ -159,7 +159,6 @@ int_t sys_mremap(addr_t addr, dword_t old_len, dword_t new_len, dword_t flags) {
 }
 
 int_t sys_mprotect(addr_t addr, uint_t len, int_t prot) {
-    void dump_stack(); dump_stack();
     STRACE("mprotect(0x%x, 0x%x, 0x%x)", addr, len, prot);
     if (PGOFFSET(addr) != 0)
         return _EINVAL;
