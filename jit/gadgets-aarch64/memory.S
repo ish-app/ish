@@ -79,11 +79,11 @@ NAME(si_gadgets):
         bl NAME(tlb_handle_miss)
         mov x19, x0
         restore_c
-        cbz x19, segfault
+        cbz x19, segfault_\type
         mov _xaddr, x19
         ret
 
-segfault:
+segfault_\type:
     str _addr, [_cpu, CPU_segfault_addr]
     .ifc \type,read
         mov w0, MEM_READ
