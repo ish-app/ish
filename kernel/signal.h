@@ -3,6 +3,7 @@
 
 #include "misc.h"
 #include "util/list.h"
+#include "util/sync.h"
 struct task;
 
 typedef qword_t sigset_t_;
@@ -59,6 +60,8 @@ struct sigaction_ {
 #define SI_TIMER_ -2
 #define SI_TKILL_ -6
 #define SI_KERNEL_ 128
+#define SEGV_MAPERR_ 1
+#define SEGV_ACCERR_ 2
 
 union sigval_ {
     int_t sv_int;

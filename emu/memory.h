@@ -94,6 +94,7 @@ int pt_copy_on_write(struct mem *src, struct mem *dst, page_t start, page_t page
 #define MEM_READ 0
 #define MEM_WRITE 1
 void *mem_ptr(struct mem *mem, addr_t addr, int type);
+int mem_segv_reason(struct mem *mem, addr_t addr, int type);
 
 extern size_t real_page_size;
 

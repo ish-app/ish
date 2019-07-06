@@ -72,17 +72,22 @@
         movq %rax, %r15
         restore_c
         testq %r15, %r15
-        jz segfault
+        jz segfault_\type
         movq %r15, %_addrq
         addq $8, %rsp
         ret
-.endr
 
-segfault:
+segfault_\type:
     movl %_addr, CPU_segfault_addr(%_cpu)
+    .ifc \type,read
+        movb $MEM_READ, CPU_segfault_type(%_cpu)
+    .else
+        movb $MEM_WRITE, CPU_segfault_type(%_cpu)
+    .endif
     movl (%_ip), %_eip
     movl $INT_GPF, %_tmp
     jmp jit_exit
+.endr
 
 .global crosspage_load
 crosspage_load:
@@ -95,7 +100,7 @@ crosspage_load:
     movq %rax, %r14
     restore_c
     testq %r14, %r14
-    jz segfault
+    jz segfault_read
     movl %_addr, LOCAL_value_addr(%_cpu)
     leaq LOCAL_value(%_cpu), %_addrq
     ret
@@ -111,5 +116,5 @@ crosspage_store:
     movq %rax, %r14
     restore_c
     testq %r14, %r14
-    jz segfault
+    jz segfault_write
     ret

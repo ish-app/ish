@@ -82,13 +82,18 @@ NAME(si_gadgets):
         cbz x19, segfault
         mov _xaddr, x19
         ret
-.endr
 
 segfault:
     str _addr, [_cpu, CPU_segfault_addr]
+    .ifc \type,read
+        strb MEM_READ, [_cpu, CPU_segfault_type]
+    .else
+        strb MEM_WRITE, [_cpu, CPU_segfault_type]
+    .endif
     ldr eip, [_ip]
     mov x0, INT_GPF
     b jit_exit
+.endr
 
 .global crosspage_load
 crosspage_load:
@@ -100,7 +105,7 @@ crosspage_load:
     bl NAME(__tlb_read_cross_page)
     mov x19, x0
     restore_c
-    cbz x19, segfault
+    cbz x19, segfault_read
     str _addr, [_cpu, LOCAL_value_addr]
     add _xaddr, _cpu, LOCAL_value
     ret
@@ -115,5 +120,5 @@ crosspage_store:
     bl NAME(__tlb_write_cross_page)
     mov x19, x0
     restore_c
-    cbz x19, segfault
+    cbz x19, segfault_write
     ret
