@@ -16,7 +16,7 @@ static int signal_is_blockable(int sig) {
     return sig != SIGKILL_ && sig != SIGSTOP_;
 }
 
-#define UNBLOCKABLE_MASK ((1l << SIGKILL_) | (1l << SIGSTOP_))
+#define UNBLOCKABLE_MASK (sig_mask(SIGKILL_) | sig_mask(SIGSTOP_))
 
 #define SIGNAL_IGNORE 0
 #define SIGNAL_KILL 1
@@ -46,16 +46,16 @@ static int signal_action(struct sighand *sighand, int sig) {
 }
 
 static void deliver_signal_unlocked(struct task *task, int sig, struct siginfo_ info) {
-    if (task->pending & (1l << sig))
+    if (sigset_has(task->pending, sig))
         return;
 
-    task->pending |= 1l << sig;
+    sigset_add(&task->pending, sig);
     struct sigqueue *sigqueue = malloc(sizeof(struct sigqueue));
     sigqueue->info = info;
     sigqueue->info.sig = sig;
     list_add_tail(&task->queue, &sigqueue->queue);
 
-    if (task->blocked & (1l << sig) && signal_is_blockable(sig))
+    if (sigset_has(task->blocked, sig) && signal_is_blockable(sig))
         return;
 
     if (task != current) {
@@ -115,7 +115,7 @@ bool try_self_signal(int sig) {
     struct sighand *sighand = current->sighand;
     lock(&sighand->lock);
     bool can_send = signal_action(sighand, sig) != SIGNAL_IGNORE &&
-        !(current->blocked & (1l << sig));
+        !sigset_has(current->blocked, sig);
     if (can_send)
         deliver_signal_unlocked(current, sig, SIGINFO_NIL);
     unlock(&sighand->lock);
@@ -208,7 +208,7 @@ static void setup_rt_sigframe(struct siginfo_ *info, struct rt_sigframe_ *frame)
 static void receive_signal(struct sighand *sighand, struct siginfo_ *info) {
     int sig = info->sig;
     STRACE("%d receiving signal %d\n", current->pid, sig);
-    current->pending &= ~(1l << sig);
+    sigset_del(&current->pending, sig);
 
     switch (signal_action(sighand, sig)) {
         case SIGNAL_IGNORE:
@@ -226,7 +226,8 @@ static void receive_signal(struct sighand *sighand, struct siginfo_ *info) {
             do_exit_group(sig);
     }
 
-    bool need_siginfo = sighand->action[info->sig].flags & SA_SIGINFO_;
+    struct sigaction_ *action = &sighand->action[info->sig];
+    bool need_siginfo = action->flags & SA_SIGINFO_;
 
     // setup the frame
     union {
@@ -263,8 +264,11 @@ static void receive_signal(struct sighand *sighand, struct siginfo_ *info) {
     sp = ((sp + 4) & ~0xf) - 4;
     current->cpu.esp = sp;
 
-    // block the signal while running the handler
-    current->blocked |= (1l << info->sig);
+    // Update the mask. By default the signal will be blocked while in the
+    // handler, but sigaction is allowed to customize this.
+    if (!(action->flags & SA_NODEFER_))
+        sigset_add(&current->blocked, info->sig);
+    current->blocked |= action->mask;
 
     // these have to be filled in after the location of the frame is known
     if (need_siginfo) {
@@ -290,7 +294,7 @@ bool receive_signals() {
     lock(&sighand->lock);
     struct sigqueue *sigqueue, *tmp;
     list_for_each_entry_safe(&current->queue, sigqueue, tmp, queue) {
-        if (current->blocked & (1l << sigqueue->info.sig))
+        if (sigset_has(current->blocked, sigqueue->info.sig))
             continue;
         list_remove(&sigqueue->queue);
         receive_signal(sighand, &sigqueue->info);
@@ -485,7 +489,9 @@ dword_t sys_rt_sigprocmask(dword_t how, addr_t set_addr, addr_t oldset_addr, dwo
 
 int_t sys_rt_sigpending(addr_t set_addr) {
     STRACE("rt_sigpending(%#x)");
-    if (user_put(set_addr, current->pending))
+    // as defined by the standard
+    sigset_t_ pending = current->pending & current->blocked;
+    if (user_put(set_addr, pending))
         return _EFAULT;
     return 0;
 }
@@ -545,14 +551,16 @@ int_t sys_rt_sigsuspend(addr_t mask_addr, uint_t size) {
     sigset_t_ mask, oldmask;
     if (user_get(mask_addr, mask))
         return _EFAULT;
-    STRACE("sigsuspend(0x%llx)\n", (long long) mask);
+    STRACE("sigsuspend(0x%llx) = ...\n", (long long) mask);
 
     lock(&current->sighand->lock);
     do_sigprocmask_unlocked(SIG_SETMASK_, mask, &oldmask);
-    while (!current->pending)
+    while (!(current->pending & ~current->blocked)) {
         wait_for(&current->pause, &current->sighand->lock, NULL);
+    }
     do_sigprocmask_unlocked(SIG_SETMASK_, oldmask, NULL);
     unlock(&current->sighand->lock);
+    STRACE("%d done sigsuspend", current->pid);
     return _EINTR;
 }
 

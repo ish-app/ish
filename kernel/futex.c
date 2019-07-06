@@ -74,6 +74,7 @@ int futex_wait(addr_t uaddr, dword_t val, struct timespec *timeout) {
     else
         err = wait_for(&futex->cond, &futex_lock, timeout);
     futex_put(futex);
+    STRACE("%d end futex(FUTEX_WAIT)", current->pid);
     return err;
 }
 
@@ -108,7 +109,7 @@ dword_t sys_futex(addr_t uaddr, dword_t op, dword_t val, addr_t timeout_or_val2,
     }
     switch (op & FUTEX_CMD_MASK_) {
         case FUTEX_WAIT_:
-            STRACE("futex(FUTEX_WAIT, %#x, %d, 0x%x {%ds %dns})", uaddr, val, timeout_or_val2, timeout.tv_sec, timeout.tv_nsec);
+            STRACE("futex(FUTEX_WAIT, %#x, %d, 0x%x {%ds %dns}) = ...\n", uaddr, val, timeout_or_val2, timeout.tv_sec, timeout.tv_nsec);
             return futex_wait(uaddr, val, timeout_or_val2 ? &timeout : NULL);
         case FUTEX_WAKE_:
             STRACE("futex(FUTEX_WAKE, %#x, %d)", uaddr, val);

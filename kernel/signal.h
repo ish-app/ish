@@ -13,6 +13,7 @@ typedef qword_t sigset_t_;
 #define SIG_IGN_ 1
 
 #define SA_SIGINFO_ 4
+#define SA_NODEFER_ 0x40000000
 
 struct sigaction_ {
     addr_t handler;
@@ -142,6 +143,21 @@ typedef uint64_t sigset_t_;
 int do_sigprocmask(dword_t how, sigset_t_ set, sigset_t_ *oldset);
 dword_t sys_rt_sigprocmask(dword_t how, addr_t set, addr_t oldset, dword_t size);
 int_t sys_rt_sigpending(addr_t set_addr);
+
+static inline sigset_t_ sig_mask(int sig) {
+    assert(sig >= 1 && sig <= NUM_SIGS);
+    return 1l << (sig - 1);
+}
+
+static inline bool sigset_has(sigset_t_ set, int sig) {
+    return !!(set & sig_mask(sig));
+}
+static inline void sigset_add(sigset_t_ *set, int sig) {
+    *set |= sig_mask(sig);
+}
+static inline void sigset_del(sigset_t_ *set, int sig) {
+    *set &= ~sig_mask(sig);
+}
 
 struct stack_t_ {
     addr_t stack;
