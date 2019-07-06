@@ -89,6 +89,7 @@ syscall_t syscall_table[] = {
     [141] = (syscall_t) sys_getdents,
     [142] = (syscall_t) sys_select,
     [143] = (syscall_t) sys_flock,
+    [144] = (syscall_t) sys_msync,
     [145] = (syscall_t) sys_readv,
     [146] = (syscall_t) sys_writev,
     [147] = (syscall_t) sys_getsid,

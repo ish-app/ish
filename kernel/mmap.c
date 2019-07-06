@@ -185,6 +185,10 @@ int_t sys_mlock(addr_t UNUSED(addr), dword_t UNUSED(len)) {
     return 0;
 }
 
+int_t sys_msync(addr_t UNUSED(addr), dword_t UNUSED(len), int_t UNUSED(flags)) {
+    return 0;
+}
+
 addr_t sys_brk(addr_t new_brk) {
     STRACE("brk(0x%x)", new_brk);
     struct mm *mm = current->mm;
