@@ -169,7 +169,7 @@ static int sockaddr_read_get_inode(addr_t sockaddr_addr, void *sockaddr, uint_t 
             *inode_out = inode;
 
             struct sockaddr_un *real_addr_un = sockaddr;
-            size_t path_len = sprintf(real_addr_un->sun_path, "%s%d", sock_tmp_prefix, inode->socket_id);
+            size_t path_len = sprintf(real_addr_un->sun_path, "%s%d.%d", sock_tmp_prefix, getpid(), inode->socket_id);
             // The call to real bind will fail if the backing socket already
             // exists from a previous run or something. We already checked that
             // the fake file doesn't exist in unix_socket_get, so try a simple
