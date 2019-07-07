@@ -1,11 +1,13 @@
 #include <sys/utsname.h>
 #include <string.h>
+#include "kernel/calls.h"
+#include "platform/platform.h"
+
 #if __APPLE__
 #include <sys/sysctl.h>
 #elif __linux__
 #include <sys/sysinfo.h>
 #endif
-#include "kernel/calls.h"
 
 void do_uname(struct uname *uts) {
     struct utsname real_uname;
@@ -38,25 +40,14 @@ static uint64_t get_total_ram() {
     sysctl((int []) {CTL_DEBUG, HW_PHYSMEM}, 2, &total_ram, NULL, NULL, 0);
     return total_ram;
 }
-static uint64_t get_uptime() {
-    uint64_t value[2];
-    size_t size = sizeof(value);
-    sysctlbyname("kern.boottime", &value, &size, NULL, 0);
-    struct timeval now;
-    gettimeofday(&now, NULL);
-    return now.tv_sec - value[0];
-}
 static void sysinfo_specific(struct sys_info *info) {
     info->totalram = get_total_ram();
-    info->uptime = get_uptime();
     // TODO: everything else
 }
 #elif __linux__
 static void sysinfo_specific(struct sys_info *info) {
     struct sysinfo host_info;
     sysinfo(&host_info);
-    memcpy(info->loads, host_info.loads, sizeof(host_info.loads));
-    info->uptime = host_info.uptime;
     info->totalram = host_info.totalram;
     info->freeram = host_info.freeram;
     info->sharedram = host_info.sharedram;
@@ -71,6 +62,11 @@ static void sysinfo_specific(struct sys_info *info) {
 
 dword_t sys_sysinfo(addr_t info_addr) {
     struct sys_info info = {0};
+    struct uptime_info uptime = get_uptime();
+    info.uptime = uptime.uptime_ticks;
+    info.loads[0] = uptime.load_1m;
+    info.loads[1] = uptime.load_5m;
+    info.loads[2] = uptime.load_15m;
     sysinfo_specific(&info);
 
     if (user_put(info_addr, info))

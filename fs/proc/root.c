@@ -41,6 +41,14 @@ static ssize_t proc_show_meminfo(struct proc_entry *UNUSED(entry), char *buf) {
     return n;
 }
 
+static ssize_t proc_show_uptime(struct proc_entry *UNUSED(entry), char *buf) {
+    struct uptime_info uptime_info = get_uptime();
+    unsigned uptime = uptime_info.uptime_ticks;
+    size_t n = 0;
+    n += sprintf(buf + n, "%u.%u %u.%u\n", uptime / 100, uptime % 100, uptime / 100, uptime % 100);
+    return n;
+}
+
 static int proc_readlink_self(struct proc_entry *UNUSED(entry), char *buf) {
     sprintf(buf, "%d/", current->pid);
     return 0;
@@ -51,6 +59,7 @@ struct proc_dir_entry proc_root_entries[] = {
     {"version", .show = proc_show_version},
     {"stat", .show = proc_show_stat},
     {"meminfo", .show = proc_show_meminfo},
+    {"uptime", .show = proc_show_uptime},
     {"self", S_IFLNK, .readlink = proc_readlink_self},
 };
 #define PROC_ROOT_LEN sizeof(proc_root_entries)/sizeof(proc_root_entries[0])

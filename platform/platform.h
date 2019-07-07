@@ -19,4 +19,10 @@ struct mem_usage {
 };
 struct mem_usage get_mem_usage(void);
 
+struct uptime_info {
+    uint64_t uptime_ticks;
+    uint64_t load_1m, load_5m, load_15m;
+};
+struct uptime_info get_uptime(void);
+
 #endif

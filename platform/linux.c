@@ -1,3 +1,4 @@
+#include <sys/sysinfo.h>
 #include <inttypes.h>
 #include <stdio.h>
 #include <string.h>
@@ -37,4 +38,16 @@ struct mem_usage get_mem_usage() {
     sscanf(buf, "Inactive: %"PRIu64" kB\n", &usage.inactive);
 
     return usage;
+}
+
+struct uptime_info get_uptime() {
+    struct sysinfo info;
+    sysinfo(&info);
+    struct uptime_info uptime = {
+        .uptime_ticks = info.uptime,
+        .load_1m = info.loads[0],
+        .load_5m = info.loads[1],
+        .load_15m = info.loads[2],
+    };
+    return uptime;
 }

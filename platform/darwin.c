@@ -1,4 +1,6 @@
 #include <mach/mach.h>
+#include <sys/sysctl.h>
+#include <sys/time.h>
 #include "platform/platform.h"
 
 struct cpu_usage get_cpu_usage() {
@@ -27,4 +29,35 @@ struct mem_usage get_mem_usage() {
     usage.active = vm.active_count * vm_page_size;
     usage.inactive = vm.inactive_count * vm_page_size;
     return usage;
+}
+
+struct uptime_info get_uptime() {
+    uint64_t kern_boottime[2];
+    size_t size = sizeof(kern_boottime);
+    sysctlbyname("kern.boottime", &kern_boottime, &size, NULL, 0);
+    struct timeval now;
+    gettimeofday(&now, NULL);
+
+    struct {
+        uint32_t ldavg[3];
+        long scale;
+    } vm_loadavg;
+    size = sizeof(vm_loadavg);
+    sysctlbyname("vm.loadavg", &vm_loadavg, &size, NULL, 0);
+
+    // linux wants the scale to be 16 bits
+    for (int i = 0; i < 3; i++) {
+        if (FSHIFT < 16)
+            vm_loadavg.ldavg[i] <<= 16 - FSHIFT;
+        else
+            vm_loadavg.ldavg[i] >>= FSHIFT - 16;
+    }
+
+    struct uptime_info uptime = {
+        .uptime_ticks = now.tv_sec - kern_boottime[0],
+        .load_1m = vm_loadavg.ldavg[0],
+        .load_5m = vm_loadavg.ldavg[1],
+        .load_15m = vm_loadavg.ldavg[2],
+    };
+    return uptime;
 }
