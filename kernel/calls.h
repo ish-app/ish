@@ -77,7 +77,8 @@ dword_t sys__llseek(fd_t f, dword_t off_high, dword_t off_low, addr_t res_addr, 
 dword_t sys_lseek(fd_t f, dword_t off, dword_t whence);
 dword_t sys_pread(fd_t f, addr_t buf_addr, dword_t buf_size, off_t_ off);
 dword_t sys_ioctl(fd_t f, dword_t cmd, dword_t arg);
-dword_t sys_fcntl64(fd_t f, dword_t cmd, dword_t arg);
+dword_t sys_fcntl(fd_t f, dword_t cmd, dword_t arg);
+dword_t sys_fcntl32(fd_t fd, dword_t cmd, dword_t arg);
 dword_t sys_dup(fd_t fd);
 dword_t sys_dup2(fd_t fd, fd_t new_fd);
 dword_t sys_dup3(fd_t f, fd_t new_f, int_t flags);
