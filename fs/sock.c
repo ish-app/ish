@@ -494,6 +494,11 @@ int_t sys_setsockopt(fd_t sock_fd, dword_t level, dword_t option, addr_t value_a
     if (real_level < 0)
         return _EINVAL;
 
+    // 0 means the option is not implemented, but things rely on it, so we
+    // should just ignore attempts to set it.
+    if (real_opt == 0)
+        return 0;
+
     int err = setsockopt(sock->real_fd, real_level, real_opt, value, value_len);
     if (err < 0)
         return errno_map();

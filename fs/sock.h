@@ -167,6 +167,7 @@ static inline int sock_flags_from_real(int real) {
 #define IP_RECVTTL_ 12
 #define IP_RECVTOS_ 13
 #define TCP_NODELAY_ 1
+#define TCP_DEFER_ACCEPT_ 9
 #define IPV6_UNICAST_HOPS_ 16
 #define IPV6_V6ONLY_ 26
 #define IPV6_TCLASS_ 67
@@ -185,6 +186,7 @@ static inline int sock_opt_to_real(int fake, int level) {
         } break;
         case IPPROTO_TCP: switch (fake) {
             case TCP_NODELAY_: return TCP_NODELAY;
+            case TCP_DEFER_ACCEPT_: return 0; // unimplemented
         } break;
         case IPPROTO_IP: switch (fake) {
             case IP_TOS_: return IP_TOS;
