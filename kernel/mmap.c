@@ -22,6 +22,7 @@ struct mm *mm_copy(struct mm *mm) {
     if (new_mm == NULL)
         return NULL;
     *new_mm = *mm;
+    new_mm->refcount = 1;
     mem_init(&new_mm->mem);
     fd_retain(new_mm->exefile);
     read_wrlock(&mm->mem.lock);
