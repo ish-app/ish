@@ -56,11 +56,11 @@ static addr_t do_mmap(addr_t addr, dword_t len, dword_t prot, dword_t flags, fd_
             return _EINVAL;
         page = PAGE(addr);
     }
+
+    if (flags & MMAP_SHARED)
+        prot |= P_SHARED;
+
     if (flags & MMAP_ANONYMOUS) {
-        if (!(flags & MMAP_PRIVATE)) {
-            TODO("MMAP_SHARED");
-            return _EINVAL;
-        }
         if ((err = pt_map_nothing(current->mem, page, pages, prot)) < 0)
             return err;
     } else {
@@ -81,6 +81,8 @@ static addr_t mmap_common(addr_t addr, dword_t len, dword_t prot, dword_t flags,
     if (len == 0)
         return _EINVAL;
     if (prot & ~(P_READ | P_WRITE | P_EXEC))
+        return _EINVAL;
+    if ((flags & MMAP_PRIVATE) && (flags & MMAP_SHARED))
         return _EINVAL;
 
     write_wrlock(&current->mem->lock);
@@ -151,7 +153,7 @@ int_t sys_mremap(addr_t addr, dword_t old_len, dword_t new_len, dword_t flags) {
         if (entry == NULL && entry->flags != pt_flags)
             return _EFAULT;
     }
-    if (!(pt_flags & P_ANON)) {
+    if (!(pt_flags & P_ANONYMOUS)) {
         FIXME("mremap grow on file mappings");
         return _EFAULT;
     }

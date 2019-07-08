@@ -70,7 +70,11 @@ struct pt_entry {
 #define P_COW (1 << 4)
 #define P_WRITABLE(flags) (flags & P_WRITE && !(flags & P_COW))
 #define P_COMPILED (1 << 5)
-#define P_ANON (1 << 6)
+
+// mapping was created with pt_map_nothing
+#define P_ANONYMOUS (1 << 6)
+// mapping was created with MAP_SHARED, should not CoW
+#define P_SHARED (1 << 7)
 
 bool pt_is_hole(struct mem *mem, page_t start, pages_t pages);
 page_t pt_find_hole(struct mem *mem, pages_t size);

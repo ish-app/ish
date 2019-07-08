@@ -153,7 +153,7 @@ int pt_map_nothing(struct mem *mem, page_t start, pages_t pages, unsigned flags)
     if (pages == 0) return 0;
     void *memory = mmap(NULL, pages * PAGE_SIZE,
             PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
-    return pt_map(mem, start, pages, memory, flags | P_ANON);
+    return pt_map(mem, start, pages, memory, flags | P_ANONYMOUS);
 }
 
 int pt_set_flags(struct mem *mem, page_t start, pages_t pages, int flags) {
@@ -186,8 +186,8 @@ int pt_copy_on_write(struct mem *src, struct mem *dst, page_t start, page_t page
             continue;
         if (pt_unmap(dst, page, 1, PT_FORCE) < 0)
             return -1;
-        // TODO skip shared mappings
-        entry->flags |= P_COW;
+        if (!(entry->flags & P_SHARED))
+            entry->flags |= P_COW;
         entry->flags &= ~P_COMPILED;
         entry->data->refcount++;
         struct pt_entry *dst_entry = mem_pt_new(dst, page);
