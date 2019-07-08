@@ -32,6 +32,7 @@ syscall_t syscall_table[] = {
     [25]  = (syscall_t) sys_stime,
     [27]  = (syscall_t) sys_alarm,
     [29]  = (syscall_t) sys_pause,
+    [30]  = (syscall_t) sys_utime,
     [33]  = (syscall_t) sys_access,
     [36]  = (syscall_t) syscall_success_stub, // sync
     [37]  = (syscall_t) sys_kill,

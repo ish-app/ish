@@ -634,6 +634,26 @@ dword_t sys_utimes(addr_t path_addr, addr_t times_addr) {
     return sys_utime_common(AT_FDCWD_, path_addr, atime, mtime, 0);
 }
 
+dword_t sys_utime(addr_t path_addr, addr_t times_addr) {
+    struct timespec atime;
+    struct timespec mtime;
+    if (times_addr == 0) {
+        atime = mtime = timespec_now();
+    } else {
+        struct utimbuf_ {
+            time_t_ actime;
+            time_t_ modtime;
+        } times;
+        if (user_get(times_addr, times))
+            return _EFAULT;
+        atime.tv_sec = times.actime;
+        atime.tv_nsec = 0;
+        mtime.tv_sec = times.modtime;
+        mtime.tv_nsec = 0;
+    }
+    return sys_utime_common(AT_FDCWD_, path_addr, atime, mtime, 0);
+}
+
 dword_t sys_fchmod(fd_t f, dword_t mode) {
     struct fd *fd = f_get(f);
     if (fd == NULL)

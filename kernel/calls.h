@@ -142,8 +142,9 @@ dword_t sys_ftruncate64(fd_t f, dword_t size_low, dword_t size_high);
 dword_t sys_fallocate(fd_t f, dword_t mode, dword_t offset_low, dword_t offset_high, dword_t len_low, dword_t len_high);
 dword_t sys_mkdir(addr_t path_addr, mode_t_ mode);
 dword_t sys_mkdirat(fd_t at_f, addr_t path_addr, mode_t_ mode);
-dword_t sys_utimes(addr_t path_addr, addr_t times_addr);
 dword_t sys_utimensat(fd_t at_f, addr_t path_addr, addr_t times_addr, dword_t flags);
+dword_t sys_utimes(addr_t path_addr, addr_t times_addr);
+dword_t sys_utime(addr_t path_addr, addr_t times_addr);
 dword_t sys_times( addr_t tbuf);
 dword_t sys_umask(dword_t mask);
 
