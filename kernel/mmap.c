@@ -93,8 +93,15 @@ addr_t sys_mmap2(addr_t addr, dword_t len, dword_t prot, dword_t flags, fd_t fd_
     return mmap_common(addr, len, prot, flags, fd_no, offset << PAGE_BITS);
 }
 
-addr_t sys_mmap(struct mmap_arg_struct *args) {
-    return mmap_common(args->addr, args->len, args->prot, args->flags, args->fd, args->offset);
+struct mmap_arg_struct {
+    dword_t addr, len, prot, flags, fd, offset;
+};
+
+addr_t sys_mmap(addr_t args_addr) {
+    struct mmap_arg_struct args;
+    if (user_get(args_addr, args))
+        return _EFAULT;
+    return mmap_common(args.addr, args.len, args.prot, args.flags, args.fd, args.offset);
 }
 
 int_t sys_munmap(addr_t addr, uint_t len) {
