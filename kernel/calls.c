@@ -80,6 +80,7 @@ syscall_t syscall_table[] = {
     [104] = (syscall_t) sys_setitimer,
     [114] = (syscall_t) sys_wait4,
     [116] = (syscall_t) sys_sysinfo,
+    [117] = (syscall_t) sys_ipc,
     [118] = (syscall_t) sys_fsync,
     [119] = (syscall_t) sys_sigreturn,
     [120] = (syscall_t) sys_clone,

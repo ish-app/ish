@@ -60,6 +60,7 @@ src = [
     'kernel/random.c',
     'kernel/misc.c',
     'kernel/eventfd.c',
+    'kernel/ipc.c',
 
     'kernel/fs.c',
     'kernel/fs_info.c',
