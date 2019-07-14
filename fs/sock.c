@@ -282,26 +282,32 @@ int_t sys_accept(fd_t sock_fd, addr_t sockaddr_addr, addr_t sockaddr_len_addr) {
     struct fd *sock = sock_getfd(sock_fd);
     if (sock == NULL)
         return _EBADF;
-    dword_t sockaddr_len;
-    if (user_get(sockaddr_len_addr, sockaddr_len))
-        return _EFAULT;
+    dword_t sockaddr_len = 0;
+    if (sockaddr_addr != 0) {
+        if (user_get(sockaddr_len_addr, sockaddr_len))
+            return _EFAULT;
+    }
 
     char sockaddr[sockaddr_len];
     int client;
     do {
         sockrestart_begin_listen_wait(sock);
         errno = 0;
-        client = accept(sock->real_fd, (void *) sockaddr, &sockaddr_len);
+        client = accept(sock->real_fd,
+                sockaddr_addr != 0 ? (void *) sockaddr : NULL,
+                sockaddr_addr != 0 ? &sockaddr_len : NULL);
         sockrestart_end_listen_wait(sock);
     } while (sockrestart_should_restart_listen_wait() && errno == EINTR);
     if (client < 0)
         return errno_map();
 
-    int err = sockaddr_write(sockaddr_addr, sockaddr, &sockaddr_len);
-    if (err < 0)
-        return client;
-    if (user_put(sockaddr_len_addr, sockaddr_len))
-        return _EFAULT;
+    if (sockaddr_addr != 0) {
+        int err = sockaddr_write(sockaddr_addr, sockaddr, &sockaddr_len);
+        if (err < 0)
+            return client;
+        if (user_put(sockaddr_len_addr, sockaddr_len))
+            return _EFAULT;
+    }
 
     fd_t client_f = sock_fd_create(client,
             sock->socket.domain, sock->socket.type, sock->socket.protocol);
