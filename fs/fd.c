@@ -248,6 +248,8 @@ void fdtable_do_cloexec(struct fdtable *table) {
 #define F_SETLK64_ 13
 #define F_SETLKW64_ 14
 
+#define F_DUPFD_CLOEXEC_ 1030
+
 dword_t sys_dup(fd_t f) {
     STRACE("dup(%d)", f);
     struct fd *fd = f_get(f);
@@ -299,12 +301,20 @@ dword_t sys_fcntl(fd_t f, dword_t cmd, dword_t arg) {
         return _EBADF;
     struct flock32_ flock32;
     struct flock_ flock;
+    fd_t new_f;
     int err;
     switch (cmd) {
         case F_DUPFD_:
             STRACE("fcntl(%d, F_DUPFD, %d)", f, arg);
             fd->refcount++;
             return f_install_start(fd, arg);
+
+        case F_DUPFD_CLOEXEC_:
+            STRACE("fcntl(%d, F_DUPFD_CLOEXEC, %d)", f, arg);
+            fd->refcount++;
+            new_f = f_install_start(fd, arg);
+            bit_set(new_f, table->cloexec);
+            return new_f;
 
         case F_GETFD_:
             STRACE("fcntl(%d, F_GETFD)", f);
