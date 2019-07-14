@@ -43,8 +43,11 @@ struct fd {
             int domain;
             int type;
             int protocol;
+            // These are only used as strong references, to keep the inode
+            // alive while there is a listener.
             struct inode_data *unix_name_inode;
-            struct inode_data *unix_peer_inode;
+            struct unix_abstract *unix_name_abstract;
+            // TODO add a field for unix socket name
         } socket;
     };
     // fs data
