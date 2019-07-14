@@ -70,6 +70,9 @@ struct fd *generic_openat(struct fd *at, const char *path_raw, int flags, int mo
             return ERR_PTR(err);
         }
     }
+    if (S_ISSOCK(fd->type)) {
+        return ERR_PTR(_ENXIO);
+    }
     if (S_ISDIR(fd->type) && flags & (O_RDWR_ | O_WRONLY_)) {
         fd_close(fd);
         return ERR_PTR(_EISDIR);
