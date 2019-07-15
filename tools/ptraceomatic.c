@@ -39,6 +39,7 @@ static inline int step(int pid) {
     trycall(waitpid(pid, &status, 0), "wait step");
     if (WIFSTOPPED(status) && WSTOPSIG(status) != SIGTRAP) {
         int signal = WSTOPSIG(status);
+        printk("child received signal %d\n", signal);
         // a signal arrived, we now have to actually deliver it
         trycall(ptrace(PTRACE_SINGLESTEP, pid, NULL, signal), "ptrace step");
         trycall(waitpid(pid, &status, 0), "wait step");
@@ -91,8 +92,8 @@ static int compare_cpus(struct cpu_state *cpu, struct tlb *tlb, int pid, int und
         return -1;
     }
 #define CHECK_XMMREG(i) \
-    CHECK(*(uint64_t *) &fpregs.xmm_space[i * 2],   cpu->xmm[i].qw[0], "xmm" #i " low") \
-    CHECK(*(uint64_t *) &fpregs.xmm_space[(i+1)*2], cpu->xmm[i].qw[1], "xmm" #i " high")
+    CHECK(*(uint64_t *) &fpregs.xmm_space[i * 4],   cpu->xmm[i].qw[0], "xmm" #i " low") \
+    CHECK(*(uint64_t *) &fpregs.xmm_space[i*4+2], cpu->xmm[i].qw[1], "xmm" #i " high")
     CHECK_XMMREG(0);
     CHECK_XMMREG(1);
     CHECK_XMMREG(2);
