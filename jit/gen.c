@@ -437,7 +437,7 @@ static inline bool gen_vec(enum arg rm, enum arg reg, void (*helper)(), gadget_t
         GEN((modrm->opcode * sizeof(union xmm_reg)) |
                 ((modrm->rm_opcode * sizeof(union xmm_reg) << 8)));
     } else {
-        GEN(modrm->opcode);
+        GEN(modrm->opcode * sizeof(union xmm_reg));
         GEN(saved_ip);
     }
     return true;
