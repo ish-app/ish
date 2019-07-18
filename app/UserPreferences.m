@@ -33,7 +33,14 @@ static NSString *const kPreferenceBootEnabledKey = @"Boot Enabled";
     self = [super init];
     if (self) {
         _defaults = [NSUserDefaults standardUserDefaults];
-        Theme *defaultTheme = [Theme presetThemeNamed:@"Light"];
+        
+        // Only iOS versions with dark mode have an system theme
+        Theme *defaultTheme;
+        if(@available(iOS 13.0, *))
+            defaultTheme = [Theme presetThemeNamed:@"System"];
+        else
+            defaultTheme = [Theme presetThemeNamed:@"Light"];
+        
         [_defaults registerDefaults:@{kPreferenceFontSizeKey: @(12),
                                       kPreferenceThemeKey: defaultTheme.properties,
                                       kPreferenceCapsLockMappingKey: @(CapsLockMapControl),
@@ -61,6 +68,9 @@ static NSString *const kPreferenceBootEnabledKey = @"Boot Enabled";
     [_defaults setObject:fontSize forKey:kPreferenceFontSizeKey];
 }
 
+- (NSNumber *)identifier {
+    return self.theme.identifier;
+}
 - (UIColor *)foregroundColor {
     return self.theme.foregroundColor;
 }
@@ -126,13 +136,16 @@ static UIColor *UnarchiveColor(id data) {
     if (self = [super init]) {
         _foregroundColor = UnarchiveColor(props[kThemeForegroundColor]);
         _backgroundColor = UnarchiveColor(props[kThemeBackgroundColor]);
+        _identifier = props[kThemeIdentifier];
     }
     return self;
 }
 
-+ (instancetype)_themeWithForegroundColor:(UIColor *)foreground backgroundColor:(UIColor *)background {
++ (instancetype)_themeWithForegroundColor:(UIColor *)foreground backgroundColor:(UIColor *)background identifier:(NSNumber *)identifier {
     return [[self alloc] initWithProperties:@{kThemeForegroundColor: ArchiveColor(foreground),
-                                              kThemeBackgroundColor: ArchiveColor(background)}];
+                                              kThemeBackgroundColor: ArchiveColor(background),
+                                              kThemeIdentifier: identifier
+                                              }];
 }
 
 - (UIStatusBarStyle)statusBarStyle {
@@ -155,7 +168,8 @@ static UIColor *UnarchiveColor(id data) {
 
 - (NSDictionary<NSString *,id> *)properties {
     return @{kThemeForegroundColor: ArchiveColor(self.foregroundColor),
-             kThemeBackgroundColor: ArchiveColor(self.backgroundColor)};
+             kThemeBackgroundColor: ArchiveColor(self.backgroundColor),
+             kThemeIdentifier: self.identifier};
 }
 
 - (BOOL)isEqual:(id)object {
@@ -166,16 +180,28 @@ static UIColor *UnarchiveColor(id data) {
 
 NSDictionary<NSString *, Theme *> *presetThemes;
 + (void)initialize {
-    presetThemes = @{@"Light": [self _themeWithForegroundColor:UIColor.blackColor
-                                               backgroundColor:UIColor.whiteColor],
-                     @"Dark":  [self _themeWithForegroundColor:UIColor.whiteColor
-                                               backgroundColor:UIColor.blackColor],
-                     @"1337":  [self _themeWithForegroundColor:UIColor.greenColor
-                                               backgroundColor:UIColor.blackColor]};
+    presetThemes = @{@"System": [self _themeWithForegroundColor:[UIColor colorNamed:@"systemForegroundColor"]
+                                                backgroundColor:[UIColor colorNamed:@"systemBackgroundColor"]
+                                                     identifier:@0],
+                     @"Light":  [self _themeWithForegroundColor:UIColor.blackColor
+                                                backgroundColor:UIColor.whiteColor
+                                                     identifier:@1],
+                     @"Dark":   [self _themeWithForegroundColor:UIColor.whiteColor
+                                                backgroundColor:UIColor.blackColor
+                                                     identifier:@2],
+                     @"1337":   [self _themeWithForegroundColor:UIColor.greenColor
+                                                backgroundColor:UIColor.blackColor
+                                                     identifier:@3]};
 }
 
 + (NSArray<NSString *> *)presetNames {
-    return @[@"Light", @"Dark", @"1337"];
+    NSArray* names = @[];
+    
+    // Only iOS versions with dark mode have a system theme
+    if(@available(iOS 13.0, *))
+        names = [names arrayByAddingObjectsFromArray:@[@"System"]];
+    
+    return [names arrayByAddingObjectsFromArray:@[@"Light", @"Dark", @"1337"]];
 }
 + (instancetype)presetThemeNamed:(NSString *)name {
     return presetThemes[name];
@@ -190,5 +216,6 @@ NSDictionary<NSString *, Theme *> *presetThemes;
 
 @end
 
+NSString *const kThemeIdentifier = @"ThemeIdentifier";
 NSString *const kThemeForegroundColor = @"ForegroundColor";
 NSString *const kThemeBackgroundColor = @"BackgroundColor";
