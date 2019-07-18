@@ -24,7 +24,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (NSArray<NSString *> *)presetNames;
 - (NSString *)presetName;
 
-@property (nonatomic, readonly) NSNumber *identifier;
+@property (nonatomic, readonly) NSString *name;
 @property (nonatomic, readonly) UIColor *foregroundColor;
 @property (nonatomic, readonly) UIColor *backgroundColor;
 
@@ -32,7 +32,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (readonly) UIStatusBarStyle statusBarStyle;
 
 @end
-extern NSString *const kThemeIdentifier;
+extern NSString *const kThemeName;
 extern NSString *const kThemeForegroundColor;
 extern NSString *const kThemeBackgroundColor;
 
