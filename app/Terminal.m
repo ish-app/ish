@@ -55,7 +55,8 @@ static NSMutableDictionary<NSNumber *, Terminal *> *terminals;
         CGRect webviewSize = CGRectMake(0, 0, 10000, 10000);
         self.webView = [[CustomWebView alloc] initWithFrame:webviewSize configuration:config];
         self.webView.scrollView.scrollEnabled = NO;
-        [self.webView loadFileURL:[NSBundle.mainBundle URLForResource:@"xterm-dist/term" withExtension:@"html"] allowingReadAccessToURL:[NSBundle.mainBundle URLForResource:@"xterm-dist/term" withExtension:@"html"]];
+        NSURL *xtermHtmlFile = [NSBundle.mainBundle URLForResource:@"xterm-dist/term" withExtension:@"html"];
+        [self.webView loadFileURL:xtermHtmlFile allowingReadAccessToURL:xtermHtmlFile];
         [self.webView addObserver:self forKeyPath:@"loading" options:0 context:NULL];
         [self _addPreferenceObservers];
         
