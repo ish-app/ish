@@ -43,11 +43,15 @@ struct fd {
             int domain;
             int type;
             int protocol;
-            // These are only used as strong references, to keep the inode
-            // alive while there is a listener.
-            struct inode_data *unix_name_inode;
-            struct unix_abstract *unix_name_abstract;
-            // TODO add a field for unix socket name
+            struct {
+                // These are only used as strong references, to keep the inode
+                // alive while there is a listener.
+                struct inode_data *name_inode;
+                struct unix_abstract *name_abstract;
+                // TODO add a field for unix socket name
+                struct fd *peer; // locked by peer_lock, for simplicity
+                cond_t got_peer;
+            } unix;
         } socket;
     };
     // fs data
@@ -58,7 +62,6 @@ struct fd {
             char *data;
             size_t size;
         } proc;
-        // devpts
         struct {
             int num;
         } devpts;

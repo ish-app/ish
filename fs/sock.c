@@ -13,6 +13,8 @@
 
 const struct fd_ops socket_fdops;
 
+static lock_t peer_lock = LOCK_INITIALIZER;
+
 static fd_t sock_fd_create(int sock_fd, int domain, int type, int protocol) {
     struct fd *fd = adhoc_fd_create(&socket_fdops);
     if (fd == NULL)
@@ -22,6 +24,7 @@ static fd_t sock_fd_create(int sock_fd, int domain, int type, int protocol) {
     fd->socket.domain = domain;
     fd->socket.type = type & SOCKET_TYPE_MASK;
     fd->socket.protocol = protocol;
+    cond_init(&fd->socket.unix.got_peer);
     return f_install(fd, type & ~SOCKET_TYPE_MASK);
 }
 
@@ -130,7 +133,7 @@ static int unix_socket_get(const char *path_raw, struct fd *bind_fd, uint32_t *s
 
     mount_release(mount);
     if (bind_fd != NULL)
-        bind_fd->socket.unix_name_inode = inode;
+        bind_fd->socket.unix.name_inode = inode;
     else
         inode_release(inode);
     return 0;
@@ -195,7 +198,7 @@ static int unix_abstract_get(const char *name, struct fd *bind_fd, uint32_t *soc
     unlock(&unix_abstract_lock);
     *socket_id = sock->socket_id;
     if (bind_fd != NULL)
-        bind_fd->socket.unix_name_abstract = sock;
+        bind_fd->socket.unix.name_abstract = sock;
     return 0;
 }
 
@@ -324,12 +327,12 @@ int_t sys_bind(fd_t sock_fd, addr_t sockaddr_addr, uint_t sockaddr_len) {
 
     err = bind(sock->real_fd, (void *) &sockaddr, sockaddr_len);
     if (err < 0) {
-        inode_release_if_exist(sock->socket.unix_name_inode);
-        if (sock->socket.unix_name_abstract != NULL)
-            unix_abstract_release(sock->socket.unix_name_abstract);
+        inode_release_if_exist(sock->socket.unix.name_inode);
+        if (sock->socket.unix.name_abstract != NULL)
+            unix_abstract_release(sock->socket.unix.name_abstract);
         return errno_map();
     }
-    sock->socket.unix_name_inode = inode;
+    sock->socket.unix.name_inode = inode;
     return 0;
 }
 
@@ -346,6 +349,21 @@ int_t sys_connect(fd_t sock_fd, addr_t sockaddr_addr, uint_t sockaddr_len) {
     err = connect(sock->real_fd, (void *) &sockaddr, sockaddr_len);
     if (err < 0)
         return errno_map();
+
+    if (sock->socket.domain == AF_LOCAL_) {
+        assert(sock->socket.unix.peer == NULL);
+        // Send a pointer to ourselves to the other end so they can set up the peer pointers.
+        ssize_t res = write(sock->real_fd, &sock, sizeof(struct fd *));
+        printk("sending %p\n", sock);
+        if (res == sizeof(struct fd *)) {
+            // Wait for acknowledgement that it happened.
+            lock(&peer_lock);
+            while (sock->socket.unix.peer == NULL)
+                wait_for(&sock->socket.unix.got_peer, &peer_lock, NULL);
+            unlock(&peer_lock);
+        }
+    }
+
     return err;
 }
 
@@ -397,6 +415,21 @@ int_t sys_accept(fd_t sock_fd, addr_t sockaddr_addr, addr_t sockaddr_len_addr) {
             sock->socket.domain, sock->socket.type, sock->socket.protocol);
     if (client_f < 0)
         close(client);
+
+    if (sock->socket.domain == AF_LOCAL_) {
+        lock(&peer_lock);
+        struct fd *client_fd = f_get(client_f);
+        struct fd *peer;
+        ssize_t res = read(client, &peer, sizeof(peer));
+        if (res == sizeof(peer)) {
+            printk("peering %p and %p\n", peer, client_fd);
+            client_fd->socket.unix.peer = peer;
+            peer->socket.unix.peer = client_fd;
+            notify(&peer->socket.unix.got_peer);
+        }
+        unlock(&peer_lock);
+    }
+
     return client_f;
 }
 
@@ -463,13 +496,23 @@ int_t sys_socketpair(dword_t domain, dword_t type, dword_t protocol, addr_t sock
     if (err < 0)
         return errno_map();
 
+    lock(&peer_lock);
     int fake_sockets[2];
     err = fake_sockets[0] = sock_fd_create(sockets[0], domain, type, protocol);
-    if (fake_sockets[0] < 0)
+    if (fake_sockets[0] < 0) {
+        unlock(&peer_lock);
         goto close_sockets;
+    }
     err = fake_sockets[1] = sock_fd_create(sockets[1], domain, type, protocol);
-    if (fake_sockets[1] < 0)
+    if (fake_sockets[1] < 0) {
+        unlock(&peer_lock);
         goto close_fake_0;
+    }
+    struct fd *sock1 = f_get(fake_sockets[0]);
+    struct fd *sock2 = f_get(fake_sockets[1]);
+    sock1->socket.unix.peer = sock2;
+    sock2->socket.unix.peer = sock1;
+    unlock(&peer_lock);
 
     err = _EFAULT;
     if (user_put(sockets_addr, fake_sockets))
@@ -864,9 +907,13 @@ static ssize_t sock_write(struct fd *fd, const void *buf, size_t size) {
 static int sock_close(struct fd *fd) {
     sockrestart_end_listen(fd);
     // FIXME next 3 lines should go in a function like release_unix_names
-    inode_release_if_exist(fd->socket.unix_name_inode);
-    if (fd->socket.unix_name_abstract != NULL)
-        unix_abstract_release(fd->socket.unix_name_abstract);
+    inode_release_if_exist(fd->socket.unix.name_inode);
+    if (fd->socket.unix.name_abstract != NULL)
+        unix_abstract_release(fd->socket.unix.name_abstract);
+    lock(&peer_lock);
+    if (fd->socket.unix.peer)
+        fd->socket.unix.peer->socket.unix.peer = NULL;
+    unlock(&peer_lock);
     return realfs_close(fd);
 }
 
