@@ -655,7 +655,7 @@
 			buildConfigurationList = BB13F7D1200ACCA2003D1C4D /* Build configuration list for PBXLegacyTarget "Ninja" */;
 			buildPhases = (
 			);
-			buildToolPath = ninja;
+			buildToolPath = "$(NINJA)";
 			buildWorkingDirectory = "$(MESON_BUILD_DIR)";
 			dependencies = (
 				BB13F7D5200ACCA8003D1C4D /* PBXTargetDependency */,
@@ -837,7 +837,7 @@
 			inputPaths = (
 				"$(SRCROOT)/app/xtermjs/term.js",
 				"$(SRCROOT)/app/xtermjs/term.css",
-				"$(SRCROOT)/app/xtermjs/term.css",
+				"$(SRCROOT)/app/xtermjs/term.html",
 			);
 			name = "Compile JavaScript";
 			outputPaths = (
@@ -1062,6 +1062,7 @@
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				MTL_ENABLE_DEBUG_INFO = YES;
+				NINJA = /usr/local/bin/ninja;
 				OTHER_CFLAGS = "";
 				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1090,6 +1091,7 @@
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				MTL_ENABLE_DEBUG_INFO = NO;
+				NINJA = /usr/local/bin/ninja;
 				OTHER_CFLAGS = "";
 				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";

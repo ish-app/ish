@@ -48,7 +48,6 @@ function fit() {
     term.resize(Math.floor(boxWidth / charWidth),
                 Math.floor(boxHeight / charHeight));
 }
-window.fit=fit
 
 fit();
 window.addEventListener('resize', function() {
