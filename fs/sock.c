@@ -25,8 +25,8 @@ static fd_t sock_fd_create(int sock_fd, int domain, int type, int protocol) {
     fd->socket.domain = domain;
     fd->socket.type = type & SOCKET_TYPE_MASK;
     fd->socket.protocol = protocol;
-    cond_init(&fd->socket.unix.got_peer);
-    list_init(&fd->socket.unix.scm);
+    cond_init(&fd->socket.unix_got_peer);
+    list_init(&fd->socket.unix_scm);
     return f_install(fd, type & ~SOCKET_TYPE_MASK);
 }
 
@@ -135,7 +135,7 @@ static int unix_socket_get(const char *path_raw, struct fd *bind_fd, uint32_t *s
 
     mount_release(mount);
     if (bind_fd != NULL)
-        bind_fd->socket.unix.name_inode = inode;
+        bind_fd->socket.unix_name_inode = inode;
     else
         inode_release(inode);
     return 0;
@@ -200,7 +200,7 @@ static int unix_abstract_get(const char *name, struct fd *bind_fd, uint32_t *soc
     unlock(&unix_abstract_lock);
     *socket_id = sock->socket_id;
     if (bind_fd != NULL)
-        bind_fd->socket.unix.name_abstract = sock;
+        bind_fd->socket.unix_name_abstract = sock;
     return 0;
 }
 
@@ -329,12 +329,12 @@ int_t sys_bind(fd_t sock_fd, addr_t sockaddr_addr, uint_t sockaddr_len) {
 
     err = bind(sock->real_fd, (void *) &sockaddr, sockaddr_len);
     if (err < 0) {
-        inode_release_if_exist(sock->socket.unix.name_inode);
-        if (sock->socket.unix.name_abstract != NULL)
-            unix_abstract_release(sock->socket.unix.name_abstract);
+        inode_release_if_exist(sock->socket.unix_name_inode);
+        if (sock->socket.unix_name_abstract != NULL)
+            unix_abstract_release(sock->socket.unix_name_abstract);
         return errno_map();
     }
-    sock->socket.unix.name_inode = inode;
+    sock->socket.unix_name_inode = inode;
     return 0;
 }
 
@@ -353,15 +353,15 @@ int_t sys_connect(fd_t sock_fd, addr_t sockaddr_addr, uint_t sockaddr_len) {
         return errno_map();
 
     if (sock->socket.domain == AF_LOCAL_) {
-        assert(sock->socket.unix.peer == NULL);
+        assert(sock->socket.unix_peer == NULL);
         // Send a pointer to ourselves to the other end so they can set up the peer pointers.
         ssize_t res = write(sock->real_fd, &sock, sizeof(struct fd *));
         printk("sending %p\n", sock);
         if (res == sizeof(struct fd *)) {
             // Wait for acknowledgement that it happened.
             lock(&peer_lock);
-            while (sock->socket.unix.peer == NULL)
-                wait_for(&sock->socket.unix.got_peer, &peer_lock, NULL);
+            while (sock->socket.unix_peer == NULL)
+                wait_for(&sock->socket.unix_got_peer, &peer_lock, NULL);
             unlock(&peer_lock);
         }
     }
@@ -425,9 +425,9 @@ int_t sys_accept(fd_t sock_fd, addr_t sockaddr_addr, addr_t sockaddr_len_addr) {
         ssize_t res = read(client, &peer, sizeof(peer));
         if (res == sizeof(peer)) {
             printk("peering %p and %p\n", peer, client_fd);
-            client_fd->socket.unix.peer = peer;
-            peer->socket.unix.peer = client_fd;
-            notify(&peer->socket.unix.got_peer);
+            client_fd->socket.unix_peer = peer;
+            peer->socket.unix_peer = client_fd;
+            notify(&peer->socket.unix_got_peer);
         }
         unlock(&peer_lock);
     }
@@ -512,8 +512,8 @@ int_t sys_socketpair(dword_t domain, dword_t type, dword_t protocol, addr_t sock
     }
     struct fd *sock1 = f_get(fake_sockets[0]);
     struct fd *sock2 = f_get(fake_sockets[1]);
-    sock1->socket.unix.peer = sock2;
-    sock2->socket.unix.peer = sock1;
+    sock1->socket.unix_peer = sock2;
+    sock2->socket.unix_peer = sock1;
     unlock(&peer_lock);
 
     err = _EFAULT;
@@ -725,7 +725,7 @@ int_t sys_sendmsg(fd_t sock_fd, addr_t msghdr_addr, int_t flags) {
     memset(msg_iov, 0, sizeof(msg_iov));
     msg.msg_iov = msg_iov;
     msg.msg_iovlen = sizeof(msg_iov) / sizeof(msg_iov[0]);
-    for (int i = 0; i < msg.msg_iovlen; i++) {
+    for (size_t i = 0; i < (size_t) msg.msg_iovlen; i++) {
         msg_iov[i].iov_len = msg_iov_fake[i].len;
         msg_iov[i].iov_base = malloc(msg_iov_fake[i].len);
         err = _EFAULT;
@@ -796,14 +796,14 @@ int_t sys_sendmsg(fd_t sock_fd, addr_t msghdr_addr, int_t flags) {
                 }
             }
             lock(&peer_lock);
-            struct fd *peer = sock->socket.unix.peer;
+            struct fd *peer = sock->socket.unix_peer;
             if (peer == NULL) {
                 unlock(&peer_lock);
                 err = _EPIPE;
                 goto out_free_scm;
             }
             lock(&peer->lock);
-            list_add_tail(&peer->socket.unix.scm, &scm->queue);
+            list_add_tail(&peer->socket.unix_scm, &scm->queue);
             unlock(&peer->lock);
             unlock(&peer_lock);
         }
@@ -827,7 +827,7 @@ int_t sys_sendmsg(fd_t sock_fd, addr_t msghdr_addr, int_t flags) {
 out_free_scm:
     if (scm != NULL) {
         lock(&peer_lock);
-        struct fd *peer = sock->socket.unix.peer;
+        struct fd *peer = sock->socket.unix_peer;
         if (peer != NULL) {
             lock(&peer->lock);
             list_remove_safe(&scm->queue);
@@ -837,7 +837,7 @@ out_free_scm:
         scm_free(scm);
     }
 out_free_iov:
-    for (int i = 0; i < msg.msg_iovlen; i++)
+    for (size_t i = 0; i < (size_t) msg.msg_iovlen; i++)
         free(msg_iov[i].iov_base);
     return err;
 }
@@ -884,7 +884,7 @@ int_t sys_recvmsg(fd_t sock_fd, addr_t msghdr_addr, int_t flags) {
     struct iovec msg_iov[msg_fake.msg_iovlen];
     msg.msg_iov = msg_iov;
     msg.msg_iovlen = sizeof(msg_iov) / sizeof(msg_iov[0]);
-    for (int i = 0; i < msg.msg_iovlen; i++) {
+    for (size_t i = 0; i < (size_t) msg.msg_iovlen; i++) {
         msg_iov[i].iov_len = msg_iov_fake[i].len;
         msg_iov[i].iov_base = malloc(msg_iov_fake[i].len);
     }
@@ -900,7 +900,7 @@ int_t sys_recvmsg(fd_t sock_fd, addr_t msghdr_addr, int_t flags) {
     size_t n = res;
     if (res < 0)
         n = 0;
-    for (int i = 0; i < msg.msg_iovlen; i++) {
+    for (size_t i = 0; i < (size_t) msg.msg_iovlen; i++) {
         size_t chunk_size = msg_iov[i].iov_len;
         if (chunk_size > n)
             chunk_size = n;
@@ -917,7 +917,7 @@ int_t sys_recvmsg(fd_t sock_fd, addr_t msghdr_addr, int_t flags) {
         close(dummy_fd);
 
         lock(&sock->lock);
-        struct scm *scm = list_first_entry(&sock->socket.unix.scm, struct scm, queue);
+        struct scm *scm = list_first_entry(&sock->socket.unix_scm, struct scm, queue);
         list_remove(&scm->queue);
         unlock(&sock->lock);
 
@@ -1024,17 +1024,17 @@ static ssize_t sock_write(struct fd *fd, const void *buf, size_t size) {
 static int sock_close(struct fd *fd) {
     sockrestart_end_listen(fd);
     // FIXME next 3 lines should go in a function like release_unix_names
-    inode_release_if_exist(fd->socket.unix.name_inode);
-    if (fd->socket.unix.name_abstract != NULL)
-        unix_abstract_release(fd->socket.unix.name_abstract);
+    inode_release_if_exist(fd->socket.unix_name_inode);
+    if (fd->socket.unix_name_abstract != NULL)
+        unix_abstract_release(fd->socket.unix_name_abstract);
     lock(&peer_lock);
-    struct fd *peer = fd->socket.unix.peer;
+    struct fd *peer = fd->socket.unix_peer;
     if (peer != NULL)
-        peer->socket.unix.peer = NULL;
+        peer->socket.unix_peer = NULL;
     unlock(&peer_lock);
     lock(&fd->lock);
     struct scm *scm, *tmp;
-    list_for_each_entry_safe(&fd->socket.unix.scm, scm, tmp, queue) {
+    list_for_each_entry_safe(&fd->socket.unix_scm, scm, tmp, queue) {
         list_remove(&scm->queue);
         scm_free(scm);
     }
