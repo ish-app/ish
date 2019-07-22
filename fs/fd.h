@@ -51,6 +51,9 @@ struct fd {
                 // TODO add a field for unix socket name
                 struct fd *peer; // locked by peer_lock, for simplicity
                 cond_t got_peer;
+                // Queue of struct scm for sending file descriptors
+                // locked by fd->lock
+                struct list scm;
             } unix;
         } socket;
     };

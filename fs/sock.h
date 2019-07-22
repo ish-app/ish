@@ -51,13 +51,32 @@ struct msghdr_ {
     int_t msg_flags;
 };
 
+struct cmsghdr_ {
+    dword_t len;
+    int_t level;
+    int_t type;
+    uint8_t data[];
+};
+#define SCM_RIGHTS_ 1
+// copied and ported from musl
+#define CMSG_LEN_(cmsg) (((cmsg)->len + sizeof(dword_t) - 1) & ~(dword_t)(sizeof(dword_t) - 1))
+#define CMSG_NEXT_(cmsg) ((uint8_t *)(cmsg) + CMSG_LEN_(cmsg))
+#define CMSG_NXTHDR_(cmsg, mhdr_end) ((cmsg)->len < sizeof (struct cmsghdr_) || \
+        CMSG_LEN_(cmsg) + sizeof(struct cmsghdr_) >= (size_t) (mhdr_end - (uint8_t *)(cmsg)) \
+        ? NULL : (struct cmsghdr_ *)CMSG_NEXT_(cmsg))
+
+struct scm {
+    struct list queue;
+    unsigned num_fds;
+    struct fd *fds[];
+};
+
 #define PF_LOCAL_ 1
 #define PF_INET_ 2
 #define PF_INET6_ 10
 #define AF_LOCAL_ PF_LOCAL_
 #define AF_INET_ PF_INET_
 #define AF_INET6_ PF_INET6_
-
 static inline int sock_family_to_real(int fake) {
     switch (fake) {
         case PF_LOCAL_: return PF_LOCAL;

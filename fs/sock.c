@@ -1,3 +1,4 @@
+#include <fcntl.h>
 #include <string.h>
 #include <sys/socket.h>
 #include <sys/un.h>
@@ -25,6 +26,7 @@ static fd_t sock_fd_create(int sock_fd, int domain, int type, int protocol) {
     fd->socket.type = type & SOCKET_TYPE_MASK;
     fd->socket.protocol = protocol;
     cond_init(&fd->socket.unix.got_peer);
+    list_init(&fd->socket.unix.scm);
     return f_install(fd, type & ~SOCKET_TYPE_MASK);
 }
 
@@ -685,6 +687,12 @@ int_t sys_getsockopt(fd_t sock_fd, dword_t level, dword_t option, addr_t value_a
     return 0;
 }
 
+static void scm_free(struct scm *scm) {
+    for (unsigned i = 0; i < scm->num_fds; i++)
+        fd_close(scm->fds[i]);
+    free(scm);
+}
+
 int_t sys_sendmsg(fd_t sock_fd, addr_t msghdr_addr, int_t flags) {
     int err;
     STRACE("sendmsg(%d, %#x, %d)", sock_fd, msghdr_addr, flags);
@@ -717,7 +725,7 @@ int_t sys_sendmsg(fd_t sock_fd, addr_t msghdr_addr, int_t flags) {
     memset(msg_iov, 0, sizeof(msg_iov));
     msg.msg_iov = msg_iov;
     msg.msg_iovlen = sizeof(msg_iov) / sizeof(msg_iov[0]);
-    for (size_t i = 0; i < msg.msg_iovlen; i++) {
+    for (int i = 0; i < msg.msg_iovlen; i++) {
         msg_iov[i].iov_len = msg_iov_fake[i].len;
         msg_iov[i].iov_base = malloc(msg_iov_fake[i].len);
         err = _EFAULT;
@@ -726,32 +734,110 @@ int_t sys_sendmsg(fd_t sock_fd, addr_t msghdr_addr, int_t flags) {
     }
 
     // msg_control
-    char *msg_control = NULL;
+    uint8_t msg_control_buf[2048];
+    uint8_t *msg_control = NULL;
     if (msg_fake.msg_control != 0) {
-        msg_control = malloc(msg_fake.msg_controllen);
+        if (msg_fake.msg_controllen > sizeof(msg_control_buf)) {
+            err = _EINVAL;
+            goto out_free_iov;
+        }
+        msg_control = msg_control_buf;
         err = _EFAULT;
         if (user_read(msg_fake.msg_control, msg_control, msg_fake.msg_controllen))
-            goto out_free_control;
+            goto out_free_iov;
     }
-    msg.msg_control = msg_control;
-    msg.msg_controllen = msg_fake.msg_controllen;
+    msg.msg_control = NULL;
+    msg.msg_controllen = 0;
+
+    struct scm *scm = NULL;
+    if (msg_control != NULL && msg_fake.msg_controllen >= sizeof(struct cmsghdr_)) {
+        // figure out how many file descriptors we're sending
+        uint8_t *mhdr_end = msg_control + msg_fake.msg_controllen;
+        unsigned num_fds = 0;
+        struct cmsghdr_ *cmsg;
+        for (cmsg = (void *) msg_control; cmsg != NULL; cmsg = CMSG_NXTHDR_(cmsg, mhdr_end)) {
+            if (cmsg->level != SOL_SOCKET_)
+                continue;
+            if (cmsg->type != SCM_RIGHTS_)
+                return _EINVAL;
+            num_fds += (cmsg->len - sizeof(struct cmsghdr_)) / sizeof(fd_t);
+        }
+        if (num_fds > 253) // *magic*
+            return _EINVAL;
+
+        if (num_fds > 0) {
+            // send one (1) real fd and put the rest in a struct scm
+            static int real_fd = -1;
+            if (real_fd == -1) {
+                real_fd = open(".", O_RDONLY);
+                if (real_fd < 0)
+                    ERRNO_DIE("no");
+            }
+            char real_msg_control[CMSG_SPACE(sizeof(real_fd))];
+            msg.msg_control = real_msg_control;
+            msg.msg_controllen = sizeof(real_msg_control);
+            struct cmsghdr *real_cmsg = CMSG_FIRSTHDR(&msg);
+            real_cmsg->cmsg_level = SOL_SOCKET;
+            real_cmsg->cmsg_type = SCM_RIGHTS;
+            real_cmsg->cmsg_len = CMSG_LEN(sizeof(real_fd));
+            memcpy(CMSG_DATA(real_cmsg), &real_fd, sizeof(real_fd));
+
+            scm = malloc(sizeof(struct scm) + num_fds * sizeof(struct fd *));
+            list_init(&scm->queue);
+            scm->num_fds = num_fds;
+            unsigned fd_i = 0;
+            for (cmsg = (void *) msg_control; cmsg != NULL; cmsg = CMSG_NXTHDR_(cmsg, mhdr_end)) {
+                if (cmsg->level != SOL_SOCKET_)
+                    continue;
+                fd_t *fds = (void *) cmsg->data;
+                for (unsigned i = 0; i < (cmsg->len - sizeof(struct cmsghdr_)) / sizeof(fd_t); i++) {
+                    printk("sending file %d\n", fds[i]);
+                    scm->fds[fd_i++] = fd_retain(f_get(fds[i]));
+                }
+            }
+            lock(&peer_lock);
+            struct fd *peer = sock->socket.unix.peer;
+            if (peer == NULL) {
+                unlock(&peer_lock);
+                err = _EPIPE;
+                goto out_free_scm;
+            }
+            lock(&peer->lock);
+            list_add_tail(&peer->socket.unix.scm, &scm->queue);
+            unlock(&peer->lock);
+            unlock(&peer_lock);
+        }
+    }
 
     msg.msg_flags = sock_flags_to_real(msg_fake.msg_flags);
     err = _EINVAL;
     if (msg.msg_flags < 0)
-        goto out_free_control;
+        goto out_free_scm;
     int real_flags = sock_flags_to_real(flags);
     if (real_flags < 0)
-        goto out_free_control;
+        goto out_free_scm;
 
     err = sendmsg(sock->real_fd, &msg, real_flags);
-    if (err < 0)
+    if (err < 0) {
         err = errno_map();
+        goto out_free_scm;
+    }
+    goto out_free_iov;
 
-out_free_control:
-    free(msg_control);
+out_free_scm:
+    if (scm != NULL) {
+        lock(&peer_lock);
+        struct fd *peer = sock->socket.unix.peer;
+        if (peer != NULL) {
+            lock(&peer->lock);
+            list_remove_safe(&scm->queue);
+            unlock(&peer->lock);
+        }
+        unlock(&peer_lock);
+        scm_free(scm);
+    }
 out_free_iov:
-    for (size_t i = 0; i < msg.msg_iovlen; i++)
+    for (int i = 0; i < msg.msg_iovlen; i++)
         free(msg_iov[i].iov_base);
     return err;
 }
@@ -777,10 +863,15 @@ int_t sys_recvmsg(fd_t sock_fd, addr_t msghdr_addr, int_t flags) {
         msg.msg_namelen = 0;
     }
 
-    // msg_control (no initial content)
-    char msg_control[msg_fake.msg_controllen];
-    msg.msg_control = msg_control;
-    msg.msg_controllen = sizeof(msg_control);
+    if (msg_fake.msg_controllen != 0) {
+        // msg_control, include room for one (1) fd
+        char real_msg_control[CMSG_SPACE(sizeof(int))];
+        msg.msg_control = real_msg_control;
+        msg.msg_controllen = sizeof(real_msg_control);
+    } else {
+        msg.msg_control = NULL;
+        msg.msg_controllen = 0;
+    }
 
     int real_flags = sock_flags_to_real(flags);
     if (real_flags < 0)
@@ -793,20 +884,23 @@ int_t sys_recvmsg(fd_t sock_fd, addr_t msghdr_addr, int_t flags) {
     struct iovec msg_iov[msg_fake.msg_iovlen];
     msg.msg_iov = msg_iov;
     msg.msg_iovlen = sizeof(msg_iov) / sizeof(msg_iov[0]);
-    for (size_t i = 0; i < msg.msg_iovlen; i++) {
+    for (int i = 0; i < msg.msg_iovlen; i++) {
         msg_iov[i].iov_len = msg_iov_fake[i].len;
         msg_iov[i].iov_base = malloc(msg_iov_fake[i].len);
     }
 
     ssize_t res = recvmsg(sock->real_fd, &msg, real_flags);
-    // don't return error quite yet, there are outstanding mallocs
+    int err = 0;
+    if (res < 0)
+        err = errno_map();
+    // don't return err quite yet, there are outstanding mallocs
 
     // msg_iovec (changed)
     // copy as many bytes as were received, according to the return value
     size_t n = res;
     if (res < 0)
         n = 0;
-    for (size_t i = 0; i < msg.msg_iovlen; i++) {
+    for (int i = 0; i < msg.msg_iovlen; i++) {
         size_t chunk_size = msg_iov[i].iov_len;
         if (chunk_size > n)
             chunk_size = n;
@@ -817,9 +911,41 @@ int_t sys_recvmsg(fd_t sock_fd, addr_t msghdr_addr, int_t flags) {
         free(msg_iov[i].iov_base);
     }
 
-    // by now the iovecs have been freed so we can return
+    // msg_control (changed)
+    if (msg.msg_controllen != 0) {
+        int dummy_fd = ((int *) CMSG_DATA(CMSG_FIRSTHDR(&msg)))[0];
+        close(dummy_fd);
+
+        lock(&sock->lock);
+        struct scm *scm = list_first_entry(&sock->socket.unix.scm, struct scm, queue);
+        list_remove(&scm->queue);
+        unlock(&sock->lock);
+
+        if (res < 0) {
+            scm_free(scm);
+            return err;
+        }
+
+        uint8_t msg_control[sizeof(struct cmsghdr_) + scm->num_fds * sizeof(fd_t)];
+        struct cmsghdr_ *cmsg = (void *) msg_control;
+        cmsg->len = sizeof(msg_control);
+        cmsg->level = SOL_SOCKET_;
+        cmsg->type = SCM_RIGHTS_;
+        fd_t *fds = (void *) cmsg->data;
+        for (unsigned i = 0; i < scm->num_fds; i++) {
+            fds[i] = f_install(scm->fds[i], 0);
+            fd_close(scm->fds[i]);
+        }
+        if (user_write(msg_fake.msg_control, cmsg, cmsg->len))
+            return _EFAULT;
+        msg_fake.msg_controllen = msg.msg_controllen;
+    } else {
+        msg_fake.msg_controllen = 0;
+    }
+
+    // by now the iovecs and scm have been freed so we can return
     if (res < 0)
-        return errno_map();
+        return err;
 
     // msg_name (changed)
     if (msg.msg_name != 0) {
@@ -829,20 +955,11 @@ int_t sys_recvmsg(fd_t sock_fd, addr_t msghdr_addr, int_t flags) {
     }
     msg_fake.msg_namelen = msg.msg_namelen;
 
-    // msg_control (changed)
-    if (msg_fake.msg_controllen != 0)
-        if (user_write(msg_fake.msg_control, msg.msg_control, msg.msg_controllen))
-            return _EFAULT;
-    msg_fake.msg_controllen = msg.msg_controllen;
-
     // msg_flags (changed)
     msg_fake.msg_flags = sock_flags_from_real(msg.msg_flags);
 
     if (user_put(msghdr_addr, msg_fake))
         return _EFAULT;
-
-    if (res < 0)
-        return errno_map();
     return res;
 }
 
@@ -911,9 +1028,17 @@ static int sock_close(struct fd *fd) {
     if (fd->socket.unix.name_abstract != NULL)
         unix_abstract_release(fd->socket.unix.name_abstract);
     lock(&peer_lock);
-    if (fd->socket.unix.peer)
-        fd->socket.unix.peer->socket.unix.peer = NULL;
+    struct fd *peer = fd->socket.unix.peer;
+    if (peer != NULL)
+        peer->socket.unix.peer = NULL;
     unlock(&peer_lock);
+    lock(&fd->lock);
+    struct scm *scm, *tmp;
+    list_for_each_entry_safe(&fd->socket.unix.scm, scm, tmp, queue) {
+        list_remove(&scm->queue);
+        scm_free(scm);
+    }
+    unlock(&fd->lock);
     return realfs_close(fd);
 }
 
