@@ -197,7 +197,7 @@ fd_t f_install(struct fd *fd, int flags) {
         if (flags & O_CLOEXEC_)
             bit_set(f, current->files->cloexec);
         if (flags & O_NONBLOCK_)
-            fd->flags |= O_NONBLOCK_;
+            fd_setflags(fd, O_NONBLOCK_);
     }
     unlock(&current->files->lock);
     return f;
