@@ -356,7 +356,6 @@ int_t sys_connect(fd_t sock_fd, addr_t sockaddr_addr, uint_t sockaddr_len) {
         assert(sock->socket.unix_peer == NULL);
         // Send a pointer to ourselves to the other end so they can set up the peer pointers.
         ssize_t res = write(sock->real_fd, &sock, sizeof(struct fd *));
-        printk("sending %p\n", sock);
         if (res == sizeof(struct fd *)) {
             // Wait for acknowledgement that it happened.
             lock(&peer_lock);
@@ -424,7 +423,6 @@ int_t sys_accept(fd_t sock_fd, addr_t sockaddr_addr, addr_t sockaddr_len_addr) {
         struct fd *peer;
         ssize_t res = read(client, &peer, sizeof(peer));
         if (res == sizeof(peer)) {
-            printk("peering %p and %p\n", peer, client_fd);
             client_fd->socket.unix_peer = peer;
             peer->socket.unix_peer = client_fd;
             notify(&peer->socket.unix_got_peer);
@@ -791,7 +789,7 @@ int_t sys_sendmsg(fd_t sock_fd, addr_t msghdr_addr, int_t flags) {
                     continue;
                 fd_t *fds = (void *) cmsg->data;
                 for (unsigned i = 0; i < (cmsg->len - sizeof(struct cmsghdr_)) / sizeof(fd_t); i++) {
-                    printk("sending file %d\n", fds[i]);
+                    STRACE(" sending fd %d", fds[i]);
                     scm->fds[fd_i++] = fd_retain(f_get(fds[i]));
                 }
             }
@@ -934,7 +932,7 @@ int_t sys_recvmsg(fd_t sock_fd, addr_t msghdr_addr, int_t flags) {
         fd_t *fds = (void *) cmsg->data;
         for (unsigned i = 0; i < scm->num_fds; i++) {
             fds[i] = f_install(scm->fds[i], 0);
-            fd_close(scm->fds[i]);
+            STRACE(" receiving fd %d", fds[i]);
         }
         if (user_write(msg_fake.msg_control, cmsg, cmsg->len))
             return _EFAULT;

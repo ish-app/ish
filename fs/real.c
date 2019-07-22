@@ -206,6 +206,8 @@ int realfs_poll(struct fd *fd) {
         p.events |= POLLOUT;
     if (poll(&p, 1, 0) <= 0)
         return 0;
+    if (p.revents & POLLNVAL)
+        printk("pollnval %d\n", fd->real_fd);
     return p.revents;
 }
 
