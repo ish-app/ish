@@ -1,24 +1,35 @@
 #ifndef FS_DYN_DEV_H
 #define FS_DYN_DEV_H
 
-// dyn_devs are dynamically added devices (character only for now)
+// dyn_dev's are dynamically added devices (character only for now)
 // with custom dev_ops assigned
 // It's useful to add new device "drivers" in runtime (for example,
 // devices only present on some platforms)
+#define DYN_DEV_MAJOR 240
 
-// (int)('D'+'Y') == 157
-#define DYN_DEV_MAJOR 157
+// dev_ops handing char device with DYN_DEV_MAJOR major number
+extern struct dev_ops dyn_dev_char;
 
-// dev_ops handing DYN_DEV_MAJOR major number
-extern struct dev_ops dyn_dev;
+#define DYN_DEV_TYPE_CHAR  0
+#define DYN_DEV_TYPE_BLOCK 1
 
-// Registeres new device with major number DYN_DEV_MAJOR and returned minor number
-// handled by provided ops, which should be valid for "kernel" lifetime (should
-// not be freed, might be static)
+// Registeres new block/character device with provided major and
+// minor numbers, handled by provided ops
+//
+// ops should be valid for "kernel" lifetime (should not be freed, but
+// might be static), and should not be null
+//
+// type is DYN_DEV_TYPE_CHAR or DYN_DEV_TYPE_BLOCK
+// (only char is supported for now)
+//
+// major should be DYN_DEV_MAJOR
+//
+// minor should be 0-255
 //
 // Return value:
-//  - newly registered device minor number (>= 0) on success
-//  - _ENOSPC if there are no free minor device numbers left
-extern int dyn_dev_register(struct dev_ops *ops);
+//  - 0 on success
+//  - _EEXIST if provided minor number is alredy taken
+//  - _EINVAL if provided arguments are invalid
+extern int dyn_dev_register(struct dev_ops *ops, int type, int major, int minor);
 
 #endif
