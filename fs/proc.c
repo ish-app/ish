@@ -101,7 +101,7 @@ static int proc_refresh_data(struct fd *fd) {
     struct proc_entry entry = fd->proc.entry;
     ssize_t size = entry.meta->show(&entry, fd->proc.data);
     if (size < 0)
-        return size;
+        return (int)size;
     fd->proc.size = size;
     return 0;
 }
@@ -121,7 +121,7 @@ static ssize_t proc_read(struct fd *fd, void *buf, size_t bufsize) {
     if (n > remaining)
         n = remaining;
 
-    memcpy(buf, data, n);
+    memcpy(buf, data + fd->offset, n);
     fd->offset += n;
     return n;
 }
