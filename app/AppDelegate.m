@@ -107,13 +107,11 @@ static void ios_handle_die(const char *msg) {
     generic_mkdirat(AT_PWD, "/dev/pts", 0755);
 
     // Register clipboard device driver and create device node for it
-    int clipboard_dev_minor = dyn_dev_register(&clipboard_dev, CLIPBOARD_DEV_MINOR);
-    if (clipboard_dev_minor != CLIPBOARD_DEV_MINOR) {
-        return clipboard_dev_minor;
+    err = dyn_dev_register(&clipboard_dev, DYN_DEV_TYPE_CHAR, DYN_DEV_MAJOR, CLIPBOARD_DEV_MINOR);
+    if (err != 0) {
+        return err;
     }
-    // XXX(stek29): mknod does nothing if device already exists, but has different major/minor number
-    // but dyn_dev doesn't guarantee fixed minor number. Consider dynamic minor selection.
-    generic_mknod("/dev/clipboard", S_IFCHR|0666, dev_make(DYN_DEV_MAJOR, clipboard_dev_minor));
+    generic_mknod("/dev/clipboard", S_IFCHR|0666, dev_make(DYN_DEV_MAJOR, CLIPBOARD_DEV_MINOR));
     
     do_mount(&procfs, "proc", "/proc", 0);
     do_mount(&devptsfs, "devpts", "/dev/pts", 0);
