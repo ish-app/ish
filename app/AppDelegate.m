@@ -96,6 +96,8 @@ static void ios_handle_die(const char *msg) {
     generic_mknod("/dev/tty", S_IFCHR|0666, dev_make(5, 0));
     generic_mknod("/dev/ptmx", S_IFCHR|0666, dev_make(5, 2));
     generic_mknod("/dev/null", S_IFCHR|0666, dev_make(1, 3));
+    generic_mknod("/dev/zero", S_IFCHR|0666, dev_make(1, 5));
+    generic_mknod("/dev/full", S_IFCHR|0666, dev_make(1, 7));
     generic_mknod("/dev/random", S_IFCHR|0666, dev_make(1, 8));
     generic_mknod("/dev/urandom", S_IFCHR|0666, dev_make(1, 9));
     generic_mkdirat(AT_PWD, "/dev/pts", 0755);
