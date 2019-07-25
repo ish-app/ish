@@ -8,18 +8,7 @@
 // Prepare for fd separation
 #define fd_priv(fd) fd->clipboard
 
-#if 1
-#define CLIP_DEBUG_PRINTK(fmt, ...) printk(fmt, ##__VA_ARGS__)
-#else
-#define CLIP_DEBUG_PRINTK(...)
-#endif
-
 #define INITIAL_WBUFFER_SIZE 1024
-
-static void inline dump_clipboard_state(const char* tag, struct fd *fd) {
-    CLIP_DEBUG_PRINTK("%s offset=%d pb_gen=%d len=%lu\n", tag, fd->offset, fd_priv(fd).generation, UIPasteboard.generalPasteboard.string.length);
-}
-
 
 // If pasteboard contents were changed since file was opened,
 // all read operations on in return error
@@ -28,8 +17,6 @@ static int check_read_generation(struct fd* fd) {
 
     uint64_t pb_gen = (uint64_t)pb.changeCount;
     uint64_t fd_gen = fd_priv(fd).generation;
-
-    CLIP_DEBUG_PRINTK("%s(%p): pb_gen=%d fd_gen=%d offset=%d\n", __func__, fd, pb_gen, fd_gen, fd->offset);
 
     if (fd_gen == 0 || fd->offset == 0) {
         fd_priv(fd).generation = pb_gen;
@@ -113,7 +100,6 @@ static ssize_t clipboard_rsync(struct fd* fd) {
 }
 
 static int clipboard_poll(struct fd *fd) {
-    CLIP_DEBUG_PRINTK("%s(%p)\n", fd, __func__);
     int rv = POLL_WRITE;
 
     size_t len = 0;
@@ -125,8 +111,6 @@ static int clipboard_poll(struct fd *fd) {
 }
 
 static ssize_t clipboard_read(struct fd *fd, void *buf, size_t bufsize) {
-    CLIP_DEBUG_PRINTK("%s(%p, buf, %zu)\n", __func__, fd, bufsize);
-    dump_clipboard_state("read pre", fd);
     size_t length = 0;
     const char *data = get_data(fd, &length);
 
@@ -147,12 +131,10 @@ static ssize_t clipboard_read(struct fd *fd, void *buf, size_t bufsize) {
         fd->offset += n;
     }
 
-    dump_clipboard_state("read post", fd);
     return n;
 }
 
 static ssize_t clipboard_write(struct fd *fd, const void *buf, size_t bufsize) {
-    CLIP_DEBUG_PRINTK("%s(%p, %.*s, %zu)\n", __func__, fd, bufsize, buf, bufsize);
 
     size_t new_len = fd->offset + bufsize;
     size_t old_len = fd_priv(fd).wbuffer_len;
@@ -183,8 +165,6 @@ static ssize_t clipboard_write(struct fd *fd, const void *buf, size_t bufsize) {
 }
 
 static off_t_ clipboard_lseek(struct fd *fd, off_t_ off, int whence) {
-    CLIP_DEBUG_PRINTK("%s(%p, off=%d, whence=%d)\n", __func__, fd, off, whence);
-    dump_clipboard_state("lseek pre", fd);
     off_t_ old_off = fd->offset;
     size_t length = 0;
 
@@ -216,12 +196,10 @@ static off_t_ clipboard_lseek(struct fd *fd, off_t_ off, int whence) {
         return _EINVAL;
     }
 
-    dump_clipboard_state("lseek post", fd);
     return fd->offset;
 }
 
 static int clipboard_close(struct fd *fd) {
-    CLIP_DEBUG_PRINTK("%s(%p)\n", __func__, fd);
     clipboard_wsync(fd);
     if (fd_priv(fd).wbuffer != NULL) {
         free(fd_priv(fd).wbuffer);
@@ -230,7 +208,6 @@ static int clipboard_close(struct fd *fd) {
 }
 
 static int clipboard_open(int major, int minor, struct fd *fd) {
-    CLIP_DEBUG_PRINTK("%s(%p)\n", __func__, fd);
 
     // Zero fd_priv data
     bzero(&fd_priv(fd), sizeof(fd_priv(fd)));
