@@ -81,6 +81,8 @@ src = [
     'fs/proc/root.c',
     'fs/proc/pid.c',
 
+    'fs/dyndev.c',
+
     'fs/adhoc.c',
     'fs/sock.c',
     'fs/pipe.c',
