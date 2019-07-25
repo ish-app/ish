@@ -12,10 +12,10 @@
 
 // If pasteboard contents were changed since file was opened,
 // all read operations on in return error
-static int check_read_generation(struct fd* fd) {
+static int check_read_generation(struct fd *fd) {
     UIPasteboard *pb = UIPasteboard.generalPasteboard;
 
-    uint64_t pb_gen = (uint64_t)pb.changeCount;
+    uint64_t pb_gen = (uint64_t) pb.changeCount;
     uint64_t fd_gen = fd_priv(fd).generation;
 
     if (fd_gen == 0 || fd->offset == 0) {
@@ -27,7 +27,7 @@ static int check_read_generation(struct fd* fd) {
     return 0;
 }
 
-static const char* get_data(struct fd* fd, size_t *len) {
+static const char *get_data(struct fd *fd, size_t *len) {
     if (fd_priv(fd).wbuffer != NULL) {
         *len = fd_priv(fd).wbuffer_len;
         return fd_priv(fd).wbuffer;
@@ -37,13 +37,13 @@ static const char* get_data(struct fd* fd, size_t *len) {
         return NULL;
     }
 
-    NSString* contents = UIPasteboard.generalPasteboard.string;
+    NSString *contents = UIPasteboard.generalPasteboard.string;
     *len = contents.length;
     return contents.UTF8String;
 }
 
 // wbuffer => UIPasteboard
-static int clipboard_wsync(struct fd* fd) {
+static int clipboard_wsync(struct fd *fd) {
     if (fd_priv(fd).wbuffer == NULL) {
         return 0;
     }
@@ -71,7 +71,7 @@ static int clipboard_wsync(struct fd* fd) {
 }
 
 // UIPasteboard => wbuffer, return len
-static ssize_t clipboard_rsync(struct fd* fd) {
+static ssize_t clipboard_rsync(struct fd *fd) {
     if (fd_priv(fd).wbuffer != NULL) {
         free(fd_priv(fd).wbuffer);
         fd_priv(fd).wbuffer = NULL;
@@ -86,7 +86,7 @@ static ssize_t clipboard_rsync(struct fd* fd) {
     // Make sure size is still INITIAL_WBUFFER_SIZE based
     while (size < len) size *= 2;
 
-    void* wbuffer = malloc(size);
+    void *wbuffer = malloc(size);
     if (wbuffer == NULL) {
         return _ENOMEM;
     }
@@ -135,7 +135,6 @@ static ssize_t clipboard_read(struct fd *fd, void *buf, size_t bufsize) {
 }
 
 static ssize_t clipboard_write(struct fd *fd, const void *buf, size_t bufsize) {
-
     size_t new_len = fd->offset + bufsize;
     size_t old_len = fd_priv(fd).wbuffer_len;
 
@@ -208,9 +207,8 @@ static int clipboard_close(struct fd *fd) {
 }
 
 static int clipboard_open(int major, int minor, struct fd *fd) {
-
     // Zero fd_priv data
-    bzero(&fd_priv(fd), sizeof(fd_priv(fd)));
+    memset(&fd_priv(fd), 0, sizeof(fd_priv(fd)));
 
     // If O_APPEND_ is set, initialize wbuffer with current pasteboard contents
     if (fd->flags & O_APPEND_) {
