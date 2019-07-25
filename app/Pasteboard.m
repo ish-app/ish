@@ -5,44 +5,120 @@
 #include "kernel/errno.h"
 #include "debug.h"
 
-#if 0
-#define CLIP_DEBUG_PRINTK(...) printk
+// Prepare for fd separation
+#define fd_priv(fd) fd->clipboard
+
+#if 1
+#define CLIP_DEBUG_PRINTK(fmt, ...) printk(fmt, ##__VA_ARGS__)
 #else
 #define CLIP_DEBUG_PRINTK(...)
 #endif
 
+#define INITIAL_WBUFFER_SIZE 1024
+
 static void inline dump_clipboard_state(const char* tag, struct fd *fd) {
-    CLIP_DEBUG_PRINTK("%s offset=%d pb_gen=%d len=%lu\n", tag, fd->offset, fd->eventfd.val, UIPasteboard.generalPasteboard.string.length);
+    CLIP_DEBUG_PRINTK("%s offset=%d pb_gen=%d len=%lu\n", tag, fd->offset, fd_priv(fd).generation, UIPasteboard.generalPasteboard.string.length);
 }
 
-// Generation aka UIPasteboard changeCount is stored at fd->eventfd.val
-//
+
 // If pasteboard contents were changed since file was opened,
-// all read operations on in return IO Error
-static int check_read_generation(struct fd* fd, UIPasteboard *pb) {
+// all read operations on in return error
+static int check_read_generation(struct fd* fd) {
+    UIPasteboard *pb = UIPasteboard.generalPasteboard;
+
     uint64_t pb_gen = (uint64_t)pb.changeCount;
-    uint64_t fd_gen = fd->eventfd.val;
+    uint64_t fd_gen = fd_priv(fd).generation;
 
     CLIP_DEBUG_PRINTK("%s(%p): pb_gen=%d fd_gen=%d offset=%d\n", __func__, fd, pb_gen, fd_gen, fd->offset);
-    // XXX: fd_gen modifications should be locked
+
     if (fd_gen == 0 || fd->offset == 0) {
-        fd->eventfd.val = pb_gen;
+        fd_priv(fd).generation = pb_gen;
     } else if (fd_gen != pb_gen) {
-        return _EIO;
+        return -1;
     }
 
     return 0;
 }
 
+static const char* get_data(struct fd* fd, size_t *len) {
+    if (fd_priv(fd).wbuffer != NULL) {
+        *len = fd_priv(fd).wbuffer_len;
+        return fd_priv(fd).wbuffer;
+    }
+
+    if (check_read_generation(fd) != 0) {
+        return NULL;
+    }
+
+    NSString* contents = UIPasteboard.generalPasteboard.string;
+    *len = contents.length;
+    return contents.UTF8String;
+}
+
+// wbuffer => UIPasteboard
+static int clipboard_wsync(struct fd* fd) {
+    if (fd_priv(fd).wbuffer == NULL) {
+        return 0;
+    }
+
+    void *data = fd_priv(fd).wbuffer;
+    size_t len = fd_priv(fd).wbuffer_len;
+
+    fd_priv(fd).wbuffer = NULL;
+    fd_priv(fd).wbuffer_size = 0;
+    fd_priv(fd).wbuffer_len = 0;
+
+    // FIXME(stek29): This logs "Returning local object of class NSString"
+    // and I have no idea why (or how to fix it)
+    UIPasteboard.generalPasteboard.string = [[NSString alloc]
+                                             initWithBytesNoCopy:data
+                                             length:len
+                                             encoding:NSUTF8StringEncoding
+                                             freeWhenDone:YES];
+
+    // Reset generation since we've just updated UIPasteboard
+    // note: offset doesn't change
+    fd_priv(fd).generation = 0;
+
+    return 0;
+}
+
+// UIPasteboard => wbuffer, return len
+static ssize_t clipboard_rsync(struct fd* fd) {
+    if (fd_priv(fd).wbuffer != NULL) {
+        free(fd_priv(fd).wbuffer);
+        fd_priv(fd).wbuffer = NULL;
+        fd_priv(fd).wbuffer_size = 0;
+        fd_priv(fd).wbuffer_len = 0;
+    }
+
+    size_t len;
+    const void *data = get_data(fd, &len);
+    size_t size = INITIAL_WBUFFER_SIZE;
+
+    // Make sure size is still INITIAL_WBUFFER_SIZE based
+    while (size < len) size *= 2;
+
+    void* wbuffer = malloc(size);
+    if (wbuffer == NULL) {
+        return _ENOMEM;
+    }
+    memcpy(wbuffer, data, len);
+
+    fd_priv(fd).wbuffer = wbuffer;
+    fd_priv(fd).wbuffer_len = len;
+    fd_priv(fd).wbuffer_size = size;
+
+    return len;
+}
+
 static int clipboard_poll(struct fd *fd) {
     CLIP_DEBUG_PRINTK("%s(%p)\n", fd, __func__);
-    int rv = 0;
+    int rv = POLL_WRITE;
 
-    UIPasteboard* pb = UIPasteboard.generalPasteboard;
-    if (check_read_generation(fd, pb) == 0) {
-        if (fd->offset < pb.string.length) {
-            rv |= POLL_READ;
-        }
+    size_t len = 0;
+    if (get_data(fd, &len) != NULL && fd->offset < len) {
+        rv |= POLL_READ;
     }
 
     return rv;
@@ -51,31 +127,59 @@ static int clipboard_poll(struct fd *fd) {
 static ssize_t clipboard_read(struct fd *fd, void *buf, size_t bufsize) {
     CLIP_DEBUG_PRINTK("%s(%p, buf, %zu)\n", __func__, fd, bufsize);
     dump_clipboard_state("read pre", fd);
-    UIPasteboard* pb = UIPasteboard.generalPasteboard;
+    size_t length = 0;
+    const char *data = get_data(fd, &length);
 
-    NSString *contents = pb.string;
-
-    int err = check_read_generation(fd, pb);
-    if (err != 0) {
-        return err;
+    if (data == NULL) {
+        return _EIO;
     }
-
-    size_t length = contents.length;
 
     size_t remaining = length - fd->offset;
     if ((size_t) fd->offset > length)
         remaining = 0;
+
     size_t n = bufsize;
     if (n > remaining)
         n = remaining;
 
     if (n != 0) {
-        memcpy(buf, contents.UTF8String + fd->offset, n);
+        memcpy(buf, data + fd->offset, n);
         fd->offset += n;
     }
 
     dump_clipboard_state("read post", fd);
     return n;
+}
+
+static ssize_t clipboard_write(struct fd *fd, const void *buf, size_t bufsize) {
+    CLIP_DEBUG_PRINTK("%s(%p, %.*s, %zu)\n", __func__, fd, bufsize, buf, bufsize);
+
+    size_t new_len = fd->offset + bufsize;
+    size_t old_len = fd_priv(fd).wbuffer_len;
+
+    // (Re)allocate wbuffer if there's not enough space to fit new_len
+    if (new_len > fd_priv(fd).wbuffer_size) {
+        size_t new_size = fd_priv(fd).wbuffer_size * 2;
+        if (new_size == 0) {
+            new_size = INITIAL_WBUFFER_SIZE;
+        }
+        void *new_buf = realloc(fd_priv(fd).wbuffer, new_size);
+        if (new_buf == NULL) {
+            return _ENOMEM;
+        }
+        fd_priv(fd).wbuffer = new_buf;
+        fd_priv(fd).wbuffer_size = new_size;
+    }
+
+    // fill the hole between new offset and old len
+    if (old_len < fd->offset) {
+        memset(fd_priv(fd).wbuffer + old_len, '\0', fd->offset - old_len);
+    }
+
+    memcpy(fd_priv(fd).wbuffer + fd->offset, buf, bufsize);
+    fd_priv(fd).wbuffer_len = new_len;
+
+    return bufsize;
 }
 
 static off_t_ clipboard_lseek(struct fd *fd, off_t_ off, int whence) {
@@ -85,12 +189,8 @@ static off_t_ clipboard_lseek(struct fd *fd, off_t_ off, int whence) {
     size_t length = 0;
 
     if (whence != LSEEK_SET || off != 0) {
-        UIPasteboard *pb = UIPasteboard.generalPasteboard;
-        length = pb.string.length;
-
-        int err = check_read_generation(fd, pb);
-        if (err != 0) {
-            return err;
+        if (get_data(fd, &length) == NULL) {
+            return _EIO;
         }
     }
 
@@ -122,18 +222,37 @@ static off_t_ clipboard_lseek(struct fd *fd, off_t_ off, int whence) {
 
 static int clipboard_close(struct fd *fd) {
     CLIP_DEBUG_PRINTK("%s(%p)\n", __func__, fd);
+    clipboard_wsync(fd);
+    if (fd_priv(fd).wbuffer != NULL) {
+        free(fd_priv(fd).wbuffer);
+    }
     return 0;
 }
 
 static int clipboard_open(int major, int minor, struct fd *fd) {
     CLIP_DEBUG_PRINTK("%s(%p)\n", __func__, fd);
+
+    // Zero fd_priv data
+    bzero(&fd_priv(fd), sizeof(fd_priv(fd)));
+
+    // If O_APPEND_ is set, initialize wbuffer with current pasteboard contents
+    if (fd->flags & O_APPEND_) {
+        ssize_t len = clipboard_rsync(fd);
+        if (len < 0) {
+            return (int) len;
+        }
+        fd->offset = (size_t)len;
+    }
+
     return 0;
 }
 
 struct dev_ops clipboard_dev = {
     .open = clipboard_open,
     .fd.read = clipboard_read,
+    .fd.write = clipboard_write,
     .fd.lseek = clipboard_lseek,
     .fd.poll = clipboard_poll,
     .fd.close = clipboard_close,
+    .fd.fsync = clipboard_wsync,
 };

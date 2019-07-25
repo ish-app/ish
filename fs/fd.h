@@ -55,6 +55,13 @@ struct fd {
             // locked by fd->lock
             struct list unix_scm;
         } socket;
+
+        struct {
+            uint64_t generation;
+            void* wbuffer;
+            size_t wbuffer_len;
+            size_t wbuffer_size;
+        } clipboard;
     };
     // fs data
     union {
