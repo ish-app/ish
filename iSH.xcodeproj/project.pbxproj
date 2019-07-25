@@ -13,6 +13,7 @@
 		650B336A22E9F0B500B4C03E /* entry.c in Sources */ = {isa = PBXBuildFile; fileRef = 650B336722E9F0B500B4C03E /* entry.c */; };
 		650B336B22E9F0B500B4C03E /* root.c in Sources */ = {isa = PBXBuildFile; fileRef = 650B336822E9F0B500B4C03E /* root.c */; };
 		650B336E22EA052500B4C03E /* dyndev.c in Sources */ = {isa = PBXBuildFile; fileRef = 650B336C22EA052400B4C03E /* dyndev.c */; };
+		650B337422EA235C00B4C03E /* Pasteboard.m in Sources */ = {isa = PBXBuildFile; fileRef = 650B337322EA235C00B4C03E /* Pasteboard.m */; };
 		8632A7BF219A59FB00F02325 /* UserPreferences.m in Sources */ = {isa = PBXBuildFile; fileRef = 8632A7BE219A59FB00F02325 /* UserPreferences.m */; };
 		9A28E4EA219A8B670073D200 /* AppearanceViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 9A28E4E9219A8B670073D200 /* AppearanceViewController.m */; };
 		BB0FC5921F980A6C00803272 /* Terminal.m in Sources */ = {isa = PBXBuildFile; fileRef = BB0FC5911F980A6B00803272 /* Terminal.m */; };
@@ -100,6 +101,8 @@
 		650B336822E9F0B500B4C03E /* root.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = root.c; sourceTree = "<group>"; };
 		650B336C22EA052400B4C03E /* dyndev.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = dyndev.c; sourceTree = "<group>"; };
 		650B336D22EA052400B4C03E /* dyndev.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dyndev.h; sourceTree = "<group>"; };
+		650B337222EA235C00B4C03E /* Pasteboard.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Pasteboard.h; sourceTree = "<group>"; };
+		650B337322EA235C00B4C03E /* Pasteboard.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Pasteboard.m; sourceTree = "<group>"; };
 		8632A7BD219A59FB00F02325 /* UserPreferences.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = UserPreferences.h; sourceTree = "<group>"; };
 		8632A7BE219A59FB00F02325 /* UserPreferences.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = UserPreferences.m; sourceTree = "<group>"; };
 		9A28E4E8219A8B670073D200 /* AppearanceViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppearanceViewController.h; sourceTree = "<group>"; };
@@ -376,6 +379,8 @@
 		BB792B521F96D90D00FFB7A4 /* app */ = {
 			isa = PBXGroup;
 			children = (
+				650B337222EA235C00B4C03E /* Pasteboard.h */,
+				650B337322EA235C00B4C03E /* Pasteboard.m */,
 				BB792B531F96D90D00FFB7A4 /* AppDelegate.h */,
 				BB792B541F96D90D00FFB7A4 /* AppDelegate.m */,
 				BB792B561F96D90D00FFB7A4 /* TerminalViewController.h */,
@@ -934,6 +939,7 @@
 				BB60F55221573FCA003A4E52 /* BarButton.m in Sources */,
 				BBFB557C215878C600DFE6DE /* UIApplication+OpenURL.m in Sources */,
 				BBFB5579215876CD00DFE6DE /* AboutViewController.m in Sources */,
+				650B337422EA235C00B4C03E /* Pasteboard.m in Sources */,
 				BBFB557121586C4800DFE6DE /* UIViewController+Back.m in Sources */,
 				650B336E22EA052500B4C03E /* dyndev.c in Sources */,
 				650B336B22E9F0B500B4C03E /* root.c in Sources */,

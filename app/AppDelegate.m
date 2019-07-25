@@ -9,11 +9,13 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #import "AppDelegate.h"
+#import "Pasteboard.h"
 #import "TerminalViewController.h"
 #import "UserPreferences.h"
 #include "kernel/init.h"
 #include "kernel/calls.h"
 #include "fs/path.h"
+#include "fs/dyndev.h"
 
 @interface AppDelegate ()
 
@@ -103,6 +105,15 @@ static void ios_handle_die(const char *msg) {
     generic_mknod("/dev/random", S_IFCHR|0666, dev_make(1, 8));
     generic_mknod("/dev/urandom", S_IFCHR|0666, dev_make(1, 9));
     generic_mkdirat(AT_PWD, "/dev/pts", 0755);
+
+    // Register clipboard device driver and create device node for it
+    int clipboard_dev_minor = dyn_dev_register(&clipboard_dev, CLIPBOARD_DEV_MINOR);
+    if (clipboard_dev_minor != CLIPBOARD_DEV_MINOR) {
+        return clipboard_dev_minor;
+    }
+    // XXX(stek29): mknod does nothing if device already exists, but has different major/minor number
+    // but dyn_dev doesn't guarantee fixed minor number. Consider dynamic minor selection.
+    generic_mknod("/dev/clipboard", S_IFCHR|0666, dev_make(DYN_DEV_MAJOR, clipboard_dev_minor));
     
     do_mount(&procfs, "proc", "/proc", 0);
     do_mount(&devptsfs, "devpts", "/dev/pts", 0);
