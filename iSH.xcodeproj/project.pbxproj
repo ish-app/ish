@@ -7,12 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		650B335C22E9E46A00B4C03E /* mem.c in Sources */ = {isa = PBXBuildFile; fileRef = 650B335A22E9E46A00B4C03E /* mem.c */; };
-		650B335F22E9EF9C00B4C03E /* proc.c in Sources */ = {isa = PBXBuildFile; fileRef = 650B335D22E9EF9B00B4C03E /* proc.c */; };
-		650B336922E9F0B500B4C03E /* pid.c in Sources */ = {isa = PBXBuildFile; fileRef = 650B336622E9F0B500B4C03E /* pid.c */; };
-		650B336A22E9F0B500B4C03E /* entry.c in Sources */ = {isa = PBXBuildFile; fileRef = 650B336722E9F0B500B4C03E /* entry.c */; };
-		650B336B22E9F0B500B4C03E /* root.c in Sources */ = {isa = PBXBuildFile; fileRef = 650B336822E9F0B500B4C03E /* root.c */; };
-		650B336E22EA052500B4C03E /* dyndev.c in Sources */ = {isa = PBXBuildFile; fileRef = 650B336C22EA052400B4C03E /* dyndev.c */; };
 		650B337422EA235C00B4C03E /* Pasteboard.m in Sources */ = {isa = PBXBuildFile; fileRef = 650B337322EA235C00B4C03E /* Pasteboard.m */; };
 		8632A7BF219A59FB00F02325 /* UserPreferences.m in Sources */ = {isa = PBXBuildFile; fileRef = 8632A7BE219A59FB00F02325 /* UserPreferences.m */; };
 		9A28E4EA219A8B670073D200 /* AppearanceViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 9A28E4E9219A8B670073D200 /* AppearanceViewController.m */; };
@@ -926,12 +920,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				9A28E4EA219A8B670073D200 /* AppearanceViewController.m in Sources */,
-				650B336A22E9F0B500B4C03E /* entry.c in Sources */,
 				BB792B581F96D90D00FFB7A4 /* TerminalViewController.m in Sources */,
 				BB78AB2B1FAD22440013E782 /* TerminalView.m in Sources */,
 				BBFB557621586F9200DFE6DE /* DismissSegue.m in Sources */,
 				BB455E111FB37F6600AFB48B /* DelayedUITask.m in Sources */,
-				650B335C22E9E46A00B4C03E /* mem.c in Sources */,
 				BB0FC5921F980A6C00803272 /* Terminal.m in Sources */,
 				BB82A7FD21B4C2E8006AA5FD /* CapsLockMappingViewController.m in Sources */,
 				8632A7BF219A59FB00F02325 /* UserPreferences.m in Sources */,
@@ -941,10 +933,6 @@
 				BBFB5579215876CD00DFE6DE /* AboutViewController.m in Sources */,
 				650B337422EA235C00B4C03E /* Pasteboard.m in Sources */,
 				BBFB557121586C4800DFE6DE /* UIViewController+Back.m in Sources */,
-				650B336E22EA052500B4C03E /* dyndev.c in Sources */,
-				650B336B22E9F0B500B4C03E /* root.c in Sources */,
-				650B335F22E9EF9C00B4C03E /* proc.c in Sources */,
-				650B336922E9F0B500B4C03E /* pid.c in Sources */,
 				BBFB558021587B6800DFE6DE /* ArrowBarButton.m in Sources */,
 				BB792B551F96D90D00FFB7A4 /* AppDelegate.m in Sources */,
 			);
