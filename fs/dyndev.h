@@ -5,13 +5,9 @@
 // with custom dev_ops assigned
 // It's useful to add new device "drivers" in runtime (for example,
 // devices only present on some platforms)
-#define DYN_DEV_MAJOR 240
 
 // dev_ops handing char device with DYN_DEV_MAJOR major number
 extern struct dev_ops dyn_dev_char;
-
-#define DYN_DEV_TYPE_CHAR  0
-#define DYN_DEV_TYPE_BLOCK 1
 
 // Registeres new block/character device with provided major and
 // minor numbers, handled by provided ops
@@ -19,7 +15,7 @@ extern struct dev_ops dyn_dev_char;
 // ops should be valid for "kernel" lifetime (should not be freed, but
 // might be static), and should not be null
 //
-// type is DYN_DEV_TYPE_CHAR or DYN_DEV_TYPE_BLOCK
+// type is DEV_BLOCK or DEV_CHAR
 // (only char is supported for now)
 //
 // major should be DYN_DEV_MAJOR

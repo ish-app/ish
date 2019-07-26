@@ -97,6 +97,7 @@
 		650B336D22EA052400B4C03E /* dyndev.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dyndev.h; sourceTree = "<group>"; };
 		650B337222EA235C00B4C03E /* Pasteboard.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Pasteboard.h; sourceTree = "<group>"; };
 		650B337322EA235C00B4C03E /* Pasteboard.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Pasteboard.m; sourceTree = "<group>"; };
+		650B337522EA728B00B4C03E /* devices.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = devices.h; sourceTree = "<group>"; };
 		8632A7BD219A59FB00F02325 /* UserPreferences.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = UserPreferences.h; sourceTree = "<group>"; };
 		8632A7BE219A59FB00F02325 /* UserPreferences.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = UserPreferences.m; sourceTree = "<group>"; };
 		9A28E4E8219A8B670073D200 /* AppearanceViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppearanceViewController.h; sourceTree = "<group>"; };
@@ -501,6 +502,7 @@
 				BB7D936B2087C2890008DA78 /* adhoc.c */,
 				BB7D936C2087C2890008DA78 /* dev.c */,
 				BB7D936D2087C2890008DA78 /* dev.h */,
+				650B337522EA728B00B4C03E /* devices.h */,
 				BB7D936E2087C2890008DA78 /* dir.c */,
 				BB7D936F2087C2890008DA78 /* fake-rebuild.c */,
 				BB7D93702087C2890008DA78 /* fake.c */,

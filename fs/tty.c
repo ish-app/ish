@@ -4,6 +4,7 @@
 #include "kernel/calls.h"
 #include "fs/poll.h"
 #include "fs/tty.h"
+#include "fs/devices.h"
 
 extern struct tty_driver pty_master;
 extern struct tty_driver pty_slave;
@@ -126,13 +127,13 @@ static void tty_set_controlling(struct tgroup *group, struct tty *tty) {
 }
 
 // by default, /dev/console is /dev/tty1
-int console_major = 4;
+int console_major = TTY_CONSOLE_MAJOR;
 int console_minor = 1;
 
 static int tty_open(int major, int minor, struct fd *fd) {
     struct tty *tty;
-    if (major == 5) {
-        if (minor == 0) {
+    if (major == TTY_ALTERNATE_MAJOR) {
+        if (minor == DEV_TTY_MINOR) {
             lock(&ttys_lock);
             lock(&current->group->lock);
             tty = current->group->tty;
@@ -145,9 +146,9 @@ static int tty_open(int major, int minor, struct fd *fd) {
             unlock(&ttys_lock);
             if (tty == NULL)
                 return _ENXIO;
-        } else if (minor == 1) {
+        } else if (minor == DEV_CONSOLE_MINOR) {
             return tty_open(console_major, console_minor, fd);
-        } else if (minor == 2) {
+        } else if (minor == DEV_PTMX_MINOR) {
             return ptmx_open(fd);
         } else {
             return _ENXIO;

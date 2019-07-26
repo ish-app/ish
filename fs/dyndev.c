@@ -1,7 +1,7 @@
 #include "kernel/errno.h"
 #include "fs/dev.h"
 #include "fs/dyndev.h"
-
+#include "fs/devices.h"
 
 #define MAX_MINOR 255
 
@@ -30,7 +30,7 @@ int dyn_dev_register(struct dev_ops *ops, int type, int major, int minor) {
     if (ops == NULL) {
         return _EINVAL;
     }
-    if (type != DYN_DEV_TYPE_CHAR) {
+    if (type != DEV_CHAR) {
         return _EINVAL;
     }
 
@@ -49,7 +49,7 @@ int dyn_dev_register(struct dev_ops *ops, int type, int major, int minor) {
 }
 
 static int dyn_open(int type, int major, int minor, struct fd *fd) {
-    assert(type == DYN_DEV_TYPE_CHAR);
+    assert(type == DEV_CHAR);
     assert(major == DYN_DEV_MAJOR);
     // it's safe to access devs without locking (read-only)
     struct dev_ops *ops = dyn_info_char.devs[minor];
@@ -65,7 +65,7 @@ static int dyn_open(int type, int major, int minor, struct fd *fd) {
 }
 
 static int dyn_open_char(int major, int minor, struct fd *fd) {
-    return dyn_open(DYN_DEV_TYPE_CHAR, major, minor, fd);
+    return dyn_open(DEV_CHAR, major, minor, fd);
 }
 struct dev_ops dyn_dev_char = {
     .open = dyn_open_char,
