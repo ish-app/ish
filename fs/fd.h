@@ -59,6 +59,7 @@ struct fd {
         struct {
             uint64_t generation;
             void* wbuffer;
+            size_t wbuffer_off;
             size_t wbuffer_len;
             size_t wbuffer_size;
         } clipboard;

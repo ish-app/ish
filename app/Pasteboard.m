@@ -7,12 +7,14 @@
 
 // Prepare for fd separation
 #define fd_priv(fd) fd->clipboard
+typedef struct fd clipboard_fd;
 
 #define INITIAL_WBUFFER_SIZE 1024
+#define MAX_WBUFFER_SIZE INITIAL_WBUFFER_SIZE*8
 
 // If pasteboard contents were changed since file was opened,
 // all read operations on in return error
-static int check_read_generation(struct fd *fd) {
+static int check_read_generation(clipboard_fd *fd) {
     UIPasteboard *pb = UIPasteboard.generalPasteboard;
 
     uint64_t pb_gen = (uint64_t) pb.changeCount;
@@ -27,23 +29,8 @@ static int check_read_generation(struct fd *fd) {
     return 0;
 }
 
-static const char *get_data(struct fd *fd, size_t *len) {
-    if (fd_priv(fd).wbuffer != NULL) {
-        *len = fd_priv(fd).wbuffer_len;
-        return fd_priv(fd).wbuffer;
-    }
-
-    if (check_read_generation(fd) != 0) {
-        return NULL;
-    }
-
-    NSString *contents = UIPasteboard.generalPasteboard.string;
-    *len = contents.length;
-    return contents.UTF8String;
-}
-
 // wbuffer => UIPasteboard
-static int clipboard_wsync(struct fd *fd) {
+static int clipboard_wsync(clipboard_fd *fd) {
     if (fd_priv(fd).wbuffer == NULL) {
         return 0;
     }
@@ -51,12 +38,37 @@ static int clipboard_wsync(struct fd *fd) {
     void *data = fd_priv(fd).wbuffer;
     size_t len = fd_priv(fd).wbuffer_len;
 
+    fd_priv(fd).wbuffer = NULL;
+    fd_priv(fd).wbuffer_len = 0;
+    fd_priv(fd).wbuffer_size = 0;
+
+    NSString *wbuffer_str = [[NSString alloc]
+                             initWithBytesNoCopy:data
+                             length:len
+                             encoding:NSUTF8StringEncoding
+                             freeWhenDone:YES];
+
+    if (fd_priv(fd).wbuffer_off != 0) {
+        NSString *current = UIPasteboard.generalPasteboard.string;
+
+        int err = check_read_generation(fd);
+        if (err != 0) {
+            return err;
+        }
+
+        if (fd_priv(fd).wbuffer_off != current.length) {
+            current = [current substringToIndex:fd_priv(fd).wbuffer_off];
+        }
+
+        wbuffer_str = [current stringByAppendingString:wbuffer_str];
+    }
+
+    // Update wbuffer_off with newly written string
+    fd_priv(fd).wbuffer_off = [wbuffer_str length];
+
     // FIXME(stek29): This logs "Returning local object of class NSString"
     // and I have no idea why (or how to fix it)
-    UIPasteboard.generalPasteboard.string = [[NSString alloc]
-                                             initWithBytes:data
-                                             length:len
-                                             encoding:NSUTF8StringEncoding];
+    UIPasteboard.generalPasteboard.string = wbuffer_str;
 
     // Reset generation since we've just updated UIPasteboard
     // note: offset doesn't change
@@ -65,80 +77,107 @@ static int clipboard_wsync(struct fd *fd) {
     return 0;
 }
 
-// UIPasteboard => wbuffer, return len
-static ssize_t clipboard_rsync(struct fd *fd) {
-    if (fd_priv(fd).wbuffer != NULL) {
-        free(fd_priv(fd).wbuffer);
-        fd_priv(fd).wbuffer = NULL;
-        fd_priv(fd).wbuffer_size = 0;
-        fd_priv(fd).wbuffer_len = 0;
+static const char *get_data_offseted(clipboard_fd *fd, size_t *len) {
+    size_t clen = 0;
+    const char *data = NULL;
+    size_t off = 0;
+
+    // If wbuffer isn't empty, but offset is pre wbuffer_off, flush it
+    // and return data from UIPasteboard
+    if (fd_priv(fd).wbuffer != NULL && fd->offset >= fd_priv(fd).wbuffer_off) {
+        off = fd->offset - fd_priv(fd).wbuffer_off;
+        clen = fd_priv(fd).wbuffer_len;
+        data = fd_priv(fd).wbuffer;
+    } else {
+        if (fd_priv(fd).wbuffer != NULL) {
+            clipboard_wsync(fd);
+            assert(fd_priv(fd).wbuffer == NULL);
+        }
+
+        if (check_read_generation(fd) != 0) {
+            return NULL;
+        }
+
+        NSString *contents = UIPasteboard.generalPasteboard.string;
+        off = fd->offset;
+        clen = contents.length;
+        data = contents.UTF8String;
     }
 
-    size_t len;
-    const void *data = get_data(fd, &len);
-    size_t size = INITIAL_WBUFFER_SIZE;
-
-    // Make sure size is still INITIAL_WBUFFER_SIZE based
-    while (size < len) size *= 2;
-
-    void *wbuffer = malloc(size);
-    if (wbuffer == NULL) {
-        return _ENOMEM;
+    if (off < clen) {
+        *len = clen - off;
+    } else {
+        *len = 0;
     }
-    memcpy(wbuffer, data, len);
-
-    fd_priv(fd).wbuffer = wbuffer;
-    fd_priv(fd).wbuffer_len = len;
-    fd_priv(fd).wbuffer_size = size;
-
-    return len;
+    return data + off;
 }
 
-static int clipboard_poll(struct fd *fd) {
+static int clipboard_append_init(clipboard_fd *fd) {
+    assert(fd_priv(fd).wbuffer == NULL);
+    size_t len;
+    if (get_data_offseted(fd, &len) == NULL) {
+        return _EIO;
+    }
+    fd->offset = fd_priv(fd).wbuffer_off = len;
+    return 0;
+}
+
+static int clipboard_poll(clipboard_fd *fd) {
     int rv = POLL_WRITE;
 
     size_t len = 0;
-    if (get_data(fd, &len) != NULL && fd->offset < len) {
+    if (get_data_offseted(fd, &len) != NULL && len > 0) {
         rv |= POLL_READ;
     }
 
     return rv;
 }
 
-static ssize_t clipboard_read(struct fd *fd, void *buf, size_t bufsize) {
+static ssize_t clipboard_read(clipboard_fd *fd, void *buf, size_t bufsize) {
     size_t length = 0;
-    const char *data = get_data(fd, &length);
-
+    const char *data = get_data_offseted(fd, &length);
     if (data == NULL) {
         return _EIO;
     }
-
-    size_t remaining = length - fd->offset;
-    if ((size_t) fd->offset > length)
-        remaining = 0;
-
     size_t n = bufsize;
-    if (n > remaining)
-        n = remaining;
+    if (n > length)
+        n = length;
 
     if (n != 0) {
-        memcpy(buf, data + fd->offset, n);
+        memcpy(buf, data, n);
         fd->offset += n;
     }
 
     return n;
 }
 
-static ssize_t clipboard_write(struct fd *fd, const void *buf, size_t bufsize) {
-    size_t new_len = fd->offset + bufsize;
+static ssize_t clipboard_write(clipboard_fd *fd, const void *buf, size_t bufsize) {
+    // FIXME(stek29): should adjust wbuffer instead of just failing
+    if (fd->offset < fd_priv(fd).wbuffer_off) {
+        return _EIO;
+    }
+
+    size_t off = fd->offset - fd_priv(fd).wbuffer_off;
+    size_t new_len = off + bufsize;
     size_t old_len = fd_priv(fd).wbuffer_len;
+    int force_wsync = 0;
+
+    if (new_len > MAX_WBUFFER_SIZE) {
+        size_t diff = new_len - MAX_WBUFFER_SIZE;
+        new_len = MAX_WBUFFER_SIZE;
+        bufsize -= diff;
+        force_wsync = 1;
+    }
 
     // (Re)allocate wbuffer if there's not enough space to fit new_len
-    if (new_len > fd_priv(fd).wbuffer_size) {
-        size_t new_size = fd_priv(fd).wbuffer_size * 2;
+    if (fd_priv(fd).wbuffer_size < new_len) {
+        size_t new_size = fd_priv(fd).wbuffer_size;
+        // handle emtpy buffer
         if (new_size == 0) {
             new_size = INITIAL_WBUFFER_SIZE;
         }
+        // keep growing until it fits
+        while (new_size < new_len) new_size *= 2;
         void *new_buf = realloc(fd_priv(fd).wbuffer, new_size);
         if (new_buf == NULL) {
             return _ENOMEM;
@@ -148,26 +187,24 @@ static ssize_t clipboard_write(struct fd *fd, const void *buf, size_t bufsize) {
     }
 
     // fill the hole between new offset and old len
-    if (old_len < fd->offset) {
-        memset(fd_priv(fd).wbuffer + old_len, '\0', fd->offset - old_len);
+    if (old_len < off) {
+        memset(fd_priv(fd).wbuffer + old_len, '\0', off - old_len);
     }
 
-    memcpy(fd_priv(fd).wbuffer + fd->offset, buf, bufsize);
+    memcpy(fd_priv(fd).wbuffer + off, buf, bufsize);
     fd->offset += bufsize;
     fd_priv(fd).wbuffer_len = new_len;
+
+    if (force_wsync) {
+        clipboard_wsync(fd);
+    }
 
     return bufsize;
 }
 
-static off_t_ clipboard_lseek(struct fd *fd, off_t_ off, int whence) {
+static off_t_ clipboard_lseek(clipboard_fd *fd, off_t_ off, int whence) {
     off_t_ old_off = fd->offset;
     size_t length = 0;
-
-    if (whence != LSEEK_SET || off != 0) {
-        if (get_data(fd, &length) == NULL) {
-            return _EIO;
-        }
-    }
 
     switch (whence) {
     case LSEEK_SET:
@@ -194,11 +231,9 @@ static off_t_ clipboard_lseek(struct fd *fd, off_t_ off, int whence) {
     return fd->offset;
 }
 
-static int clipboard_close(struct fd *fd) {
+static int clipboard_close(clipboard_fd *fd) {
     clipboard_wsync(fd);
-    if (fd_priv(fd).wbuffer != NULL) {
-        free(fd_priv(fd).wbuffer);
-    }
+    assert(fd_priv(fd).wbuffer == NULL);
     return 0;
 }
 
@@ -208,11 +243,10 @@ static int clipboard_open(int major, int minor, struct fd *fd) {
 
     // If O_APPEND_ is set, initialize wbuffer with current pasteboard contents
     if (fd->flags & O_APPEND_) {
-        ssize_t len = clipboard_rsync(fd);
-        if (len < 0) {
-            return (int) len;
+        int err = clipboard_append_init(fd);
+        if (err != 0) {
+            return err;
         }
-        fd->offset = (size_t)len;
     }
 
     return 0;
