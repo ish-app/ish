@@ -28,10 +28,12 @@ static void ios_handle_exit(struct task *task, int code) {
     // this is called with pids_lock as an implementation side effect, please do not cite as an example of good API design
     if (task->parent != NULL && task->parent->parent != NULL)
         return;
+    // pid should be saved now since task would be freed
+    pid_t pid = task->pid;
     dispatch_async(dispatch_get_main_queue(), ^{
         [[NSNotificationCenter defaultCenter] postNotificationName:ProcessExitedNotification
                                                             object:nil
-                                                          userInfo:@{@"pid": @(task->pid),
+                                                          userInfo:@{@"pid": @(pid),
                                                                      @"code": @(code)}];
     });
 }
