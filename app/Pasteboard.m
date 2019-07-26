@@ -51,17 +51,12 @@ static int clipboard_wsync(struct fd *fd) {
     void *data = fd_priv(fd).wbuffer;
     size_t len = fd_priv(fd).wbuffer_len;
 
-    fd_priv(fd).wbuffer = NULL;
-    fd_priv(fd).wbuffer_size = 0;
-    fd_priv(fd).wbuffer_len = 0;
-
     // FIXME(stek29): This logs "Returning local object of class NSString"
     // and I have no idea why (or how to fix it)
     UIPasteboard.generalPasteboard.string = [[NSString alloc]
-                                             initWithBytesNoCopy:data
+                                             initWithBytes:data
                                              length:len
-                                             encoding:NSUTF8StringEncoding
-                                             freeWhenDone:YES];
+                                             encoding:NSUTF8StringEncoding];
 
     // Reset generation since we've just updated UIPasteboard
     // note: offset doesn't change
@@ -158,6 +153,7 @@ static ssize_t clipboard_write(struct fd *fd, const void *buf, size_t bufsize) {
     }
 
     memcpy(fd_priv(fd).wbuffer + fd->offset, buf, bufsize);
+    fd->offset += bufsize;
     fd_priv(fd).wbuffer_len = new_len;
 
     return bufsize;
