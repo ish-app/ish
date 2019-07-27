@@ -25,8 +25,10 @@ static fd_t sock_fd_create(int sock_fd, int domain, int type, int protocol) {
     fd->socket.domain = domain;
     fd->socket.type = type & SOCKET_TYPE_MASK;
     fd->socket.protocol = protocol;
-    cond_init(&fd->socket.unix_got_peer);
-    list_init(&fd->socket.unix_scm);
+    if (domain == AF_LOCAL_) {
+        cond_init(&fd->socket.unix_got_peer);
+        list_init(&fd->socket.unix_scm);
+    }
     return f_install(fd, type & ~SOCKET_TYPE_MASK);
 }
 
@@ -748,7 +750,7 @@ int_t sys_sendmsg(fd_t sock_fd, addr_t msghdr_addr, int_t flags) {
     msg.msg_controllen = 0;
 
     struct scm *scm = NULL;
-    if (msg_control != NULL && msg_fake.msg_controllen >= sizeof(struct cmsghdr_)) {
+    if (sock->socket.domain == AF_LOCAL_ && msg_control != NULL && msg_fake.msg_controllen >= sizeof(struct cmsghdr_)) {
         // figure out how many file descriptors we're sending
         uint8_t *mhdr_end = msg_control + msg_fake.msg_controllen;
         unsigned num_fds = 0;
@@ -910,11 +912,15 @@ int_t sys_recvmsg(fd_t sock_fd, addr_t msghdr_addr, int_t flags) {
     }
 
     // msg_control (changed)
-    if (msg.msg_controllen != 0) {
-        int dummy_fd = ((int *) CMSG_DATA(CMSG_FIRSTHDR(&msg)))[0];
+    msg_fake.msg_controllen = 0;
+    struct cmsghdr *cmsg = CMSG_FIRSTHDR(&msg);
+    if (sock->socket.domain == AF_LOCAL_ && cmsg != NULL &&
+            cmsg->cmsg_level == SOL_SOCKET && cmsg->cmsg_type == SCM_RIGHTS) {
+        int dummy_fd = ((int *) CMSG_DATA(cmsg))[0];
         close(dummy_fd);
 
         lock(&sock->lock);
+        assert(!list_empty(&sock->socket.unix_scm));
         struct scm *scm = list_first_entry(&sock->socket.unix_scm, struct scm, queue);
         list_remove(&scm->queue);
         unlock(&sock->lock);
@@ -937,8 +943,6 @@ int_t sys_recvmsg(fd_t sock_fd, addr_t msghdr_addr, int_t flags) {
         if (user_write(msg_fake.msg_control, cmsg, cmsg->len))
             return _EFAULT;
         msg_fake.msg_controllen = msg.msg_controllen;
-    } else {
-        msg_fake.msg_controllen = 0;
     }
 
     // by now the iovecs and scm have been freed so we can return
@@ -1030,13 +1034,15 @@ static int sock_close(struct fd *fd) {
     if (peer != NULL)
         peer->socket.unix_peer = NULL;
     unlock(&peer_lock);
-    lock(&fd->lock);
-    struct scm *scm, *tmp;
-    list_for_each_entry_safe(&fd->socket.unix_scm, scm, tmp, queue) {
-        list_remove(&scm->queue);
-        scm_free(scm);
+    if (fd->socket.domain == AF_LOCAL_) {
+        lock(&fd->lock);
+        struct scm *scm, *tmp;
+        list_for_each_entry_safe(&fd->socket.unix_scm, scm, tmp, queue) {
+            list_remove(&scm->queue);
+            scm_free(scm);
+        }
+        unlock(&fd->lock);
     }
-    unlock(&fd->lock);
     return realfs_close(fd);
 }
 
