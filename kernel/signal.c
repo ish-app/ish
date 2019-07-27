@@ -284,12 +284,11 @@ static void receive_signal(struct sighand *sighand, struct siginfo_ *info) {
     // TODO do something other than nothing, like printk maybe
 }
 
-bool receive_signals() {
+void receive_signals() {
     lock(&current->group->lock);
     bool was_stopped = current->group->stopped;
     unlock(&current->group->lock);
 
-    bool received_any = false;
     struct sighand *sighand = current->sighand;
     lock(&sighand->lock);
     struct sigqueue *sigqueue, *tmp;
@@ -299,7 +298,6 @@ bool receive_signals() {
         list_remove(&sigqueue->queue);
         receive_signal(sighand, &sigqueue->info);
         free(sigqueue);
-        received_any = true;
     }
     unlock(&sighand->lock);
 
@@ -316,8 +314,6 @@ bool receive_signals() {
             unlock(&pids_lock);
         }
     }
-
-    return received_any;
 }
 
 static void restore_sigcontext(struct sigcontext_ *context, struct cpu_state *cpu) {
@@ -555,9 +551,8 @@ int_t sys_rt_sigsuspend(addr_t mask_addr, uint_t size) {
 
     lock(&current->sighand->lock);
     do_sigprocmask_unlocked(SIG_SETMASK_, mask, &oldmask);
-    while (!(current->pending & ~current->blocked)) {
-        wait_for(&current->pause, &current->sighand->lock, NULL);
-    }
+    while (wait_for(&current->pause, &current->sighand->lock, NULL) != _EINTR)
+        continue;
     do_sigprocmask_unlocked(SIG_SETMASK_, oldmask, NULL);
     unlock(&current->sighand->lock);
     STRACE("%d done sigsuspend", current->pid);
@@ -566,8 +561,8 @@ int_t sys_rt_sigsuspend(addr_t mask_addr, uint_t size) {
 
 int_t sys_pause() {
     lock(&current->sighand->lock);
-    while (!current->pending)
-        wait_for(&current->pause, &current->sighand->lock, NULL);
+    while (wait_for(&current->pause, &current->sighand->lock, NULL) != _EINTR)
+        continue;
     unlock(&current->sighand->lock);
     return _EINTR;
 }

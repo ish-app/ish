@@ -116,9 +116,8 @@ bool try_self_signal(int sig);
 // send a signal to all processes in a group, could return ESRCH
 int send_group_signal(dword_t pgid, int sig, struct siginfo_ info);
 // check for and deliver pending signals on current
-// returns whether signals were received
-// must be called without pids_lock
-bool receive_signals(void);
+// must be called without pids_lock, current->group->lock, or current->sighand->lock
+void receive_signals(void);
 
 struct sighand {
     atomic_uint refcount;

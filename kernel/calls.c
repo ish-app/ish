@@ -250,13 +250,12 @@ void handle_interrupt(int interrupt) {
         sys_exit(interrupt);
     }
 
-    while (receive_signals()) {
-        struct tgroup *group = current->group;
-        lock(&group->lock);
-        while (group->stopped)
-            wait_for_ignore_signals(&group->stopped_cond, &group->lock, NULL);
-        unlock(&group->lock);
-    }
+    receive_signals();
+    struct tgroup *group = current->group;
+    lock(&group->lock);
+    while (group->stopped)
+        wait_for_ignore_signals(&group->stopped_cond, &group->lock, NULL);
+    unlock(&group->lock);
 }
 
 void dump_stack() {
