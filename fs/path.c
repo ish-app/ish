@@ -1,4 +1,5 @@
 #include <string.h>
+#include <sys/stat.h>
 #include "kernel/calls.h"
 #include "fs/path.h"
 
@@ -68,8 +69,8 @@ static int __path_normalize(const char *at_path, const char *path, char *out, bo
             int res = _EINVAL;
             if (mount->fs->readlink)
                 res = mount->fs->readlink(mount, possible_symlink, c, MAX_PATH - (c - out));
-            mount_release(mount);
             if (res >= 0) {
+                mount_release(mount);
                 if (levels >= 5)
                     return _ELOOP;
                 // readlink does not null terminate
@@ -79,15 +80,27 @@ static int __path_normalize(const char *at_path, const char *path, char *out, bo
                     memmove(out, c, strlen(c) + 1);
                 char *expanded_path = possible_symlink;
                 strcpy(expanded_path, out);
-                strcat(expanded_path, "/");
-                strcat(expanded_path, p);
+                if (strcmp(p, "") != 0) {
+                    strcat(expanded_path, "/");
+                    strcat(expanded_path, p);
+                }
                 return __path_normalize(NULL, expanded_path, out, follow_links, levels + 1);
             }
+
+            // if the path ends with /, ensure it's a directory
+            if (*p == '\0' && *(p - 1) == '/') {
+                struct statbuf stat;
+                int err = mount->fs->stat(mount, possible_symlink, &stat, false);
+                if (err >= 0 && !S_ISDIR(stat.mode))
+                    return _ENOTDIR;
+            }
+            mount_release(mount);
         }
     }
 
     *o = '\0';
     assert(path_is_normalized(out));
+
     return 0;
 }
 
