@@ -412,14 +412,14 @@ static ssize_t tty_read(struct fd *fd, void *buf, size_t bufsize) {
     lock(&tty->lock);
     if (tty->hung_up) {
         unlock(&pids_lock);
-        goto out;
+        goto error;
     }
 
     pid_t_ current_pgid = current->group->pgid;
     unlock(&pids_lock);
     err = tty_signal_if_background(tty, current_pgid, SIGTTIN_);
     if (err < 0)
-        goto out;
+        goto error;
 
     int bufsize_extra = 0;
     if (tty->driver == &pty_master && tty->pty.packet_mode) {
@@ -428,12 +428,14 @@ static ssize_t tty_read(struct fd *fd, void *buf, size_t bufsize) {
         bufsize--;
         bufsize_extra++;
         buf = cbuf;
-        if (tty->packet_flags != 0)
-            return bufsize_extra;
+        if (tty->packet_flags != 0) {
+            bufsize = 0;
+            goto out;
+        }
 
         // check again in case bufsize was 1
         if (bufsize == 0)
-            return bufsize_extra;
+            goto out;
     }
 
     // wait loop(s)
@@ -442,13 +444,13 @@ static ssize_t tty_read(struct fd *fd, void *buf, size_t bufsize) {
         while ((canon_size = tty_canon_size(tty)) == (size_t) -1) {
             err = _EIO;
             if (pty_is_half_closed_master(tty))
-                goto out;
+                goto error;
             err = _EAGAIN;
             if (fd->flags & O_NONBLOCK_)
-                goto out;
+                goto error;
             err = wait_for(&tty->produced, &tty->lock, NULL);
             if (err < 0)
-                goto out;
+                goto error;
         }
         // null byte means eof was typed
         if (tty->buf[canon_size-1] == '\0')
@@ -471,16 +473,16 @@ static ssize_t tty_read(struct fd *fd, void *buf, size_t bufsize) {
         while (tty->bufsize < min) {
             err = _EIO;
             if (pty_is_half_closed_master(tty))
-                goto out;
+                goto error;
             err = _EAGAIN;
             if (fd->flags & O_NONBLOCK_)
-                goto out;
+                goto error;
             // there should be no timeout for the first character read
             err = wait_for(&tty->produced, &tty->lock, tty->bufsize == 0 ? NULL : timeout_ptr);
             if (err == _ETIMEDOUT)
                 break;
             if (err == _EINTR)
-                goto out;
+                goto error;
         }
     }
 
@@ -493,9 +495,11 @@ static ssize_t tty_read(struct fd *fd, void *buf, size_t bufsize) {
         tty_read_into_buf(tty, &dummy, 1);
     }
 
+    
+out:
     unlock(&tty->lock);
     return bufsize + bufsize_extra;
-out:
+error:
     unlock(&tty->lock);
     return err;
 }
