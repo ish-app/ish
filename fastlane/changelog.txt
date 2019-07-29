@@ -1,14 +1,10 @@
-New stuff:
-- screen can reattach
-- tmux works
-- weechat works, all of the above thanks to supporting SCM_RIGHTS
-- racket is less broken, thanks to better signal handling
-- x11vnc is less broken, thanks to support for abstract named unix sockets
+Fixed bugs:
+- Crash when using mosh
+- Deadlock while using tmux
+- Error from doing certain types of directory listings in emacs
+- Hang after typing a command in zsh or starting midnight commander
 
-Bug fixes:
-- No longer leaks the entire address space of any child process of a process with threads
-- App is no longer completely broken on iOS 13 beta 4
-
+Nothing new on the iOS 13 scrolling front. From the last build's release notes:
 It's still not possible to scroll on iOS 13. I've looked into it and I have no idea how it worked before. I've come to the conclusion that to get both scrolling and text selection to work, I'd either have to reimplement scrolling from first principles, or reimplement text selection from first principles. For this release, I asked a few people whether they'd rather have text selection or scrolling, and they said text selection, so that's what we have working in this build. If you understand iOS better than me, I would greatly appreciate if you could help me figure out how to make this work again. My contact info is below.
 
 Send bug reports or feedback here: https://github.com/tbodt/ish/issues (or by email, if you prefer)
