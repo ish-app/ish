@@ -3,7 +3,13 @@
 #include "kernel/calls.h"
 #include "fs/path.h"
 
-static int __path_normalize(const char *at_path, const char *path, char *out, bool follow_links, int levels) {
+static int __path_normalize(const char *at_path, const char *path, char *out, int flags, int levels) {
+    // you must choose one
+    if (flags & N_SYMLINK_FOLLOW)
+        assert(!(flags & N_SYMLINK_NOFOLLOW));
+    else
+        assert(flags & N_SYMLINK_NOFOLLOW);
+
     const char *p = path;
     char *o = out;
     *o = '\0';
@@ -57,7 +63,7 @@ static int __path_normalize(const char *at_path, const char *path, char *out, bo
         if (n == 0)
             return _ENAMETOOLONG;
 
-        if (follow_links || *p != '\0') {
+        if ((flags & N_SYMLINK_FOLLOW) || *p != '\0') {
             // this buffer is used to store the path that we're readlinking, then
             // if it turns out to point to a symlink it's reused as the buffer
             // passed to the next path_normalize call
@@ -84,17 +90,25 @@ static int __path_normalize(const char *at_path, const char *path, char *out, bo
                     strcat(expanded_path, "/");
                     strcat(expanded_path, p);
                 }
-                return __path_normalize(NULL, expanded_path, out, follow_links, levels + 1);
+                return __path_normalize(NULL, expanded_path, out, flags, levels + 1);
             }
 
-            // if the path ends with /, ensure it's a directory
-            if (*p == '\0' && *(p - 1) == '/') {
+            // if there's a slash after this component, ensure it's a
+            // directory, and that we have execute perms on it
+            if (*(p - 1) == '/') {
                 struct statbuf stat;
                 int err = mount->fs->stat(mount, possible_symlink, &stat, false);
-                if (err >= 0 && !S_ISDIR(stat.mode))
+                mount_release(mount);
+                if (err < 0)
+                    return err;
+                if (!S_ISDIR(stat.mode))
                     return _ENOTDIR;
+                err = access_check(&stat, AC_X);
+                if (err < 0)
+                    return err;
+            } else {
+                mount_release(mount);
             }
-            mount_release(mount);
         }
     }
 
@@ -104,7 +118,7 @@ static int __path_normalize(const char *at_path, const char *path, char *out, bo
     return 0;
 }
 
-int path_normalize(struct fd *at, const char *path, char *out, bool follow_links) {
+int path_normalize(struct fd *at, const char *path, char *out, int flags) {
     assert(at != NULL);
     if (strcmp(path, "") == 0)
         return _ENOENT;
@@ -124,7 +138,7 @@ int path_normalize(struct fd *at, const char *path, char *out, bool follow_links
         assert(path_is_normalized(at_path));
     }
 
-    return __path_normalize(at != NULL ? at_path : NULL, path, out, follow_links, 0);
+    return __path_normalize(at != NULL ? at_path : NULL, path, out, flags, 0);
 }
 
 

@@ -135,7 +135,7 @@ dword_t sys_mount(addr_t source_addr, addr_t point_addr, addr_t type_addr, dword
         return _ENOTDIR;
 
     char point[MAX_PATH];
-    err = path_normalize(AT_PWD, point_raw, point, true);
+    err = path_normalize(AT_PWD, point_raw, point, N_SYMLINK_FOLLOW);
     if (err < 0)
         return err;
 
@@ -152,7 +152,8 @@ dword_t sys_umount2(addr_t target_addr, dword_t flags) {
     if (user_read_string(target_addr, target_raw, sizeof(target_raw)))
         return _EFAULT;
     char target[MAX_PATH];
-    int err = path_normalize(AT_PWD, target_raw, target, flags & UMOUNT_NOFOLLOW_ ? false : true);
+    int err = path_normalize(AT_PWD, target_raw, target,
+            flags & UMOUNT_NOFOLLOW_ ? N_SYMLINK_NOFOLLOW : N_SYMLINK_FOLLOW);
     if (err < 0)
         return err;
 

@@ -22,12 +22,25 @@ static void apply_umask(mode_t_ *mode) {
     unlock(&fs->lock);
 }
 
+int access_check(struct statbuf *stat, int check) {
+    if (superuser()) return 0;
+    // Align check with the correct bits in mode
+    if (current->euid == stat->uid) {
+        check <<= 6;
+    } else if (current->egid == stat->gid) {
+        check <<= 3;
+    }
+    if (!(stat->mode & check))
+        return _EACCES;
+    return 0;
+}
+
 // TODO ENAMETOOLONG
 
+#define AT_EACCESS_ 0x200
 dword_t sys_access(addr_t path_addr, dword_t mode) {
     return sys_faccessat(AT_FDCWD_, path_addr, mode, 0);
 }
-// TODO: Something about flags
 dword_t sys_faccessat(fd_t at_f, addr_t path_addr, mode_t_ mode, dword_t flags) {
     char path[MAX_PATH];
     if (user_read_string(path_addr, path, sizeof(path)))
@@ -36,7 +49,18 @@ dword_t sys_faccessat(fd_t at_f, addr_t path_addr, mode_t_ mode, dword_t flags) 
     if (at == NULL)
         return _EBADF;
     STRACE("faccessat(%d, \"%s\", 0x%x, %d)", at_f, path, mode, flags);
-    return generic_accessat(at, path, mode);
+
+    if (flags & AT_EACCESS_)
+        return generic_accessat(at, path, mode);
+
+    uid_t_ uid_tmp = current->euid;
+    uid_t_ gid_tmp = current->egid;
+    current->euid = current->uid;
+    current->egid = current->gid;
+    int err = generic_accessat(at, path, mode);
+    current->euid = uid_tmp;
+    current->egid = gid_tmp;
+    return err;
 }
 
 fd_t sys_openat(fd_t at_f, addr_t path_addr, dword_t flags, mode_t_ mode) {
@@ -536,7 +560,7 @@ dword_t sys_statfs(addr_t path_addr, addr_t buf_addr) {
         return _EFAULT;
     STRACE("statfs(\"%s\", %#x)", path_raw, buf_addr);
     char path[MAX_PATH];
-    int err = path_normalize(AT_PWD, path_raw, path, false);
+    int err = path_normalize(AT_PWD, path_raw, path, N_SYMLINK_NOFOLLOW);
     if (err < 0)
         return err;
     struct mount *mount = mount_find(path);
@@ -551,7 +575,7 @@ dword_t sys_statfs64(addr_t path_addr, addr_t buf_addr) {
         return _EFAULT;
     STRACE("statfs64(\"%s\", %#x)", path_raw, buf_addr);
     char path[MAX_PATH];
-    int err = path_normalize(AT_PWD, path_raw, path, false);
+    int err = path_normalize(AT_PWD, path_raw, path, N_SYMLINK_NOFOLLOW);
     if (err < 0)
         return err;
     struct mount *mount = mount_find(path);

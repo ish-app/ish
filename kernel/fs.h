@@ -64,6 +64,8 @@ int generic_utime(struct fd *at, const char *path, struct timespec atime, struct
 ssize_t generic_readlinkat(struct fd *at, const char *path, char *buf, size_t bufsize);
 int generic_mkdirat(struct fd *at, const char *path, mode_t_ mode);
 
+int access_check(struct statbuf *stat, int check);
+
 struct mount {
     const char *point;
     const char *source;

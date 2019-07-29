@@ -87,7 +87,7 @@ static uint32_t unix_socket_next_id() {
 
 static int unix_socket_get(const char *path_raw, struct fd *bind_fd, uint32_t *socket_id) {
     char path[MAX_PATH];
-    int err = path_normalize(AT_PWD, path_raw, path, true);
+    int err = path_normalize(AT_PWD, path_raw, path, N_SYMLINK_FOLLOW);
     if (err < 0)
         return err;
     struct mount *mount = find_mount_and_trim_path(path);
