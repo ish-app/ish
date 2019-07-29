@@ -88,9 +88,6 @@ function updateStyle({foregroundColor, backgroundColor, fontSize}) {
 window.updateStyle = updateStyle;
 
 // allow touches to scroll the div that exists to display a scrollbar
-term.element.addEventListener('touchstart', function(event) {
+term.on('touchmove', function(event) {
     event.stopPropagation();
-}, {capture: true});
-term.element.addEventListener('touchmove', function(event) {
-    event.stopPropagation();
-}, {capture: true});
+});
