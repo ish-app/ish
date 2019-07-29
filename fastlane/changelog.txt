@@ -1,3 +1,5 @@
+Last build had a stupid bug where you couldn't create directories half the time, so I just fixed that. Previous build release notes are pasted below for your convenience.
+
 Fixed bugs:
 - Crash when using mosh
 - Deadlock while using tmux
