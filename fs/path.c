@@ -93,19 +93,19 @@ static int __path_normalize(const char *at_path, const char *path, char *out, in
                 return __path_normalize(NULL, expanded_path, out, flags, levels + 1);
             }
 
-            // if there's a slash after this component, ensure it's a
-            // directory, and that we have execute perms on it
+            // if there's a slash after this component, ensure that if it
+            // exists, it's a directory and that we have execute perms on it
             if (*(p - 1) == '/') {
                 struct statbuf stat;
                 int err = mount->fs->stat(mount, possible_symlink, &stat, false);
                 mount_release(mount);
-                if (err < 0)
-                    return err;
-                if (!S_ISDIR(stat.mode))
-                    return _ENOTDIR;
-                err = access_check(&stat, AC_X);
-                if (err < 0)
-                    return err;
+                if (err >= 0) {
+                    if (!S_ISDIR(stat.mode))
+                        return _ENOTDIR;
+                    err = access_check(&stat, AC_X);
+                    if (err < 0)
+                        return err;
+                }
             } else {
                 mount_release(mount);
             }
