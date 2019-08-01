@@ -5,6 +5,17 @@
 #include "kernel/errno.h"
 #include "debug.h"
 
+/**
+ * wbuffer is dynamically sized buffer of size wbuffer_size
+ * All writes go to it, and wbuffer_len is length of data held in buffer
+ *
+ * wbuffer can be "flushed" to UIPasteboard. When that happens, all data
+ * in wbuffer is copied to it, and wbuffer_off is adjusted.
+ * 
+ * wbuffer_off is the length of data currently in UIPasteboard (starting
+ * offset for wbuffer)
+ */
+
 // Prepare for fd separation
 #define fd_priv(fd) fd->clipboard
 typedef struct fd clipboard_fd;
@@ -13,7 +24,7 @@ typedef struct fd clipboard_fd;
 #define MAX_WBUFFER_SIZE INITIAL_WBUFFER_SIZE*8
 
 // If pasteboard contents were changed since file was opened,
-// all read operations on in return error
+// all read operations on it return error
 static int check_read_generation(clipboard_fd *fd) {
     UIPasteboard *pb = UIPasteboard.generalPasteboard;
 

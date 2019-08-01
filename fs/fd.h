@@ -56,12 +56,18 @@ struct fd {
             struct list unix_scm;
         } socket;
 
+        // See app/Pasteboard.m
         struct {
+            // UIPasteboard.changeCount
             uint64_t generation;
+            // Buffer
             void* wbuffer;
-            size_t wbuffer_off;
-            size_t wbuffer_len;
+            // its size
             size_t wbuffer_size;
+            // length of data in the buffer
+            size_t wbuffer_len;
+            // length of data already flushed to UIPasteboard
+            size_t wbuffer_off;
         } clipboard;
     };
     // fs data
