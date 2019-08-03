@@ -205,6 +205,7 @@ syscall_t syscall_table[] = {
     [373] = (syscall_t) sys_shutdown,
     [375] = (syscall_t) syscall_stub, // membarrier
     [377] = (syscall_t) sys_copy_file_range,
+    [383] = (syscall_t) syscall_stub,
     [384] = (syscall_t) sys_arch_prctl,
 };
 
