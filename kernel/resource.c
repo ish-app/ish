@@ -191,7 +191,7 @@ dword_t sys_getrusage(dword_t who, addr_t rusage_addr) {
     return 0;
 }
 
-dword_t sys_sched_getaffinity(pid_t_ pid, dword_t cpusetsize, addr_t cpuset_addr) {
+int_t sys_sched_getaffinity(pid_t_ pid, dword_t cpusetsize, addr_t cpuset_addr) {
     if (pid != 0) {
         lock(&pids_lock);
         struct task *task = pid_get_task(pid);
@@ -208,6 +208,10 @@ dword_t sys_sched_getaffinity(pid_t_ pid, dword_t cpusetsize, addr_t cpuset_addr
         bit_set(i, cpuset);
     if (user_write(cpuset_addr, cpuset, cpusetsize))
         return _EFAULT;
+    return 0;
+}
+int_t sys_sched_setaffinity(pid_t_ UNUSED(pid), dword_t UNUSED(cpusetsize), addr_t UNUSED(cpuset_addr)) {
+    // meh
     return 0;
 }
 int_t sys_getpriority(int_t which, pid_t_ who) {

@@ -145,6 +145,7 @@ syscall_t syscall_table[] = {
     [238] = (syscall_t) sys_tkill,
     [239] = (syscall_t) sys_sendfile64,
     [240] = (syscall_t) sys_futex,
+    [241] = (syscall_t) sys_sched_setaffinity,
     [242] = (syscall_t) sys_sched_getaffinity,
     [243] = (syscall_t) sys_set_thread_area,
     [252] = (syscall_t) sys_exit_group,
