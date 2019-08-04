@@ -118,6 +118,8 @@ int send_group_signal(dword_t pgid, int sig, struct siginfo_ info);
 // check for and deliver pending signals on current
 // must be called without pids_lock, current->group->lock, or current->sighand->lock
 void receive_signals(void);
+// set the signal mask, restore it to what it was before on the next receive_signals call
+void sigmask_set_temp(sigset_t_ mask);
 
 struct sighand {
     atomic_uint refcount;
@@ -139,7 +141,6 @@ dword_t sys_sigreturn(void);
 #define SIG_UNBLOCK_ 1
 #define SIG_SETMASK_ 2
 typedef uint64_t sigset_t_;
-int do_sigprocmask(dword_t how, sigset_t_ set, sigset_t_ *oldset);
 dword_t sys_rt_sigprocmask(dword_t how, addr_t set, addr_t oldset, dword_t size);
 int_t sys_rt_sigpending(addr_t set_addr);
 

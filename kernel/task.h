@@ -36,11 +36,15 @@ struct task {
     struct fdtable *files;
     struct fs_info *fs;
 
+    // locked by sighand->lock
     struct sighand *sighand;
     sigset_t_ blocked;
     sigset_t_ pending;
     struct list queue;
     cond_t pause; // please don't signal this
+    // private
+    sigset_t_ saved_mask;
+    bool has_saved_mask;
 
     // locked by pids_lock
     struct task *parent;

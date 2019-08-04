@@ -23,15 +23,8 @@ int wait_for(cond_t *cond, lock_t *lock, struct timespec *timeout) {
     int err = wait_for_ignore_signals(cond, lock, timeout);
     if (err < 0)
         return _ETIMEDOUT;
-    if (current && current->pending) {
-        // Go ahead and push signal handling frames now.
-        // There are a bunch of locks which must not be held while calling
-        // receive_signals, so unlock just to be safe.
-        unlock(lock);
-        receive_signals();
-        lock(lock);
+    if (current && current->pending)
         return _EINTR;
-    }
     return 0;
 }
 int wait_for_ignore_signals(cond_t *cond, lock_t *lock, struct timespec *timeout) {

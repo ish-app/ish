@@ -8,7 +8,7 @@
 
 int xsave_extra = 0;
 int fxsave_extra = 0;
-static int do_sigprocmask_unlocked(dword_t how, sigset_t_ set, sigset_t_ *oldset_out);
+static void sigmask_set(sigset_t_ set);
 static void altstack_to_user(struct sighand *sighand, struct stack_t_ *user_stack);
 static bool is_on_altstack(dword_t sp, struct sighand *sighand);
 
@@ -291,14 +291,27 @@ void receive_signals() {
 
     struct sighand *sighand = current->sighand;
     lock(&sighand->lock);
+
+    // A saved mask means that the last system call was a call like sigsuspend
+    // that changes the mask during the call. Only ignore a signal right now if
+    // it was both blocked during the call and should still be blocked after
+    // the call.
+    sigset_t_ blocked = current->blocked;
+    if (current->has_saved_mask) {
+        blocked &= current->saved_mask;
+        current->has_saved_mask = false;
+        current->blocked = current->saved_mask;
+    }
+
     struct sigqueue *sigqueue, *tmp;
     list_for_each_entry_safe(&current->queue, sigqueue, tmp, queue) {
-        if (sigset_has(current->blocked, sigqueue->info.sig))
+        if (sigset_has(blocked, sigqueue->info.sig))
             continue;
         list_remove(&sigqueue->queue);
         receive_signal(sighand, &sigqueue->info);
         free(sigqueue);
     }
+
     unlock(&sighand->lock);
 
     // this got moved out of the switch case in receive_signal to fix locking problems
@@ -347,7 +360,7 @@ dword_t sys_rt_sigreturn() {
         current->sighand->altstack = frame.uc.stack.stack;
         current->sighand->altstack_size = frame.uc.stack.size;
     }
-    do_sigprocmask_unlocked(SIG_SETMASK_, frame.uc.sigmask, NULL);
+    sigmask_set(frame.uc.sigmask);
     unlock(&current->sighand->lock);
     return cpu->eax;
 }
@@ -362,7 +375,7 @@ dword_t sys_sigreturn() {
 
     lock(&current->sighand->lock);
     sigset_t_ oldmask = ((sigset_t_) frame.extramask << 32) | frame.sc.oldmask;
-    do_sigprocmask_unlocked(SIG_SETMASK_, oldmask, NULL);
+    sigmask_set(oldmask);
     unlock(&current->sighand->lock);
     return cpu->eax;
 }
@@ -432,30 +445,32 @@ dword_t sys_sigaction(dword_t signum, addr_t action_addr, addr_t oldaction_addr)
     return sys_rt_sigaction(signum, action_addr, oldaction_addr, 1);
 }
 
-static int do_sigprocmask_unlocked(dword_t how, sigset_t_ set, sigset_t_ *oldset_out) {
-    sigset_t_ oldset = current->blocked;
-
-    if (how == SIG_BLOCK_)
-        current->blocked |= set;
-    else if (how == SIG_UNBLOCK_)
-        current->blocked &= ~set;
-    else if (how == SIG_SETMASK_)
-        current->blocked = set;
-    else
-        return _EINVAL;
-    current->blocked &= ~UNBLOCKABLE_MASK;
-
-    if (oldset_out != NULL)
-        *oldset_out = oldset;
-    return 0;
+static void sigmask_set(sigset_t_ set) {
+    current->blocked = (set & ~UNBLOCKABLE_MASK);
 }
 
-int do_sigprocmask(dword_t how, sigset_t_ set, sigset_t_ *oldset_out) {
-    struct sighand *sighand = current->sighand;
-    lock(&sighand->lock);
-    int res = do_sigprocmask_unlocked(how, set, oldset_out);
-    unlock(&sighand->lock);
-    return res;
+static void sigmask_set_temp_unlocked(sigset_t_ mask) {
+    current->saved_mask = current->blocked;
+    current->has_saved_mask = true;
+    sigmask_set(mask);
+}
+
+void sigmask_set_temp(sigset_t_ mask) {
+    lock(&current->sighand->lock);
+    sigmask_set_temp_unlocked(mask);
+    unlock(&current->sighand->lock);
+}
+
+static int do_sigprocmask(dword_t how, sigset_t_ set) {
+    if (how == SIG_BLOCK_)
+        sigmask_set(current->blocked | set);
+    else if (how == SIG_UNBLOCK_)
+        sigmask_set(current->blocked & ~set);
+    else if (how == SIG_SETMASK_)
+        sigmask_set(set);
+    else
+        return _EINVAL;
+    return 0;
 }
 
 dword_t sys_rt_sigprocmask(dword_t how, addr_t set_addr, addr_t oldset_addr, dword_t size) {
@@ -476,7 +491,10 @@ dword_t sys_rt_sigprocmask(dword_t how, addr_t set_addr, addr_t oldset_addr, dwo
         if (user_put(oldset_addr, current->blocked))
             return _EFAULT;
     if (set_addr != 0) {
-        int err = do_sigprocmask(how, set, NULL);
+        struct sighand *sighand = current->sighand;
+        lock(&sighand->lock);
+        int err = do_sigprocmask(how, set);
+        unlock(&sighand->lock);
         if (err < 0)
             return err;
     }
@@ -544,16 +562,15 @@ dword_t sys_sigaltstack(addr_t ss_addr, addr_t old_ss_addr) {
 int_t sys_rt_sigsuspend(addr_t mask_addr, uint_t size) {
     if (size != sizeof(sigset_t_))
         return _EINVAL;
-    sigset_t_ mask, oldmask;
+    sigset_t_ mask;
     if (user_get(mask_addr, mask))
         return _EFAULT;
     STRACE("sigsuspend(0x%llx) = ...\n", (long long) mask);
 
     lock(&current->sighand->lock);
-    do_sigprocmask_unlocked(SIG_SETMASK_, mask, &oldmask);
+    sigmask_set_temp_unlocked(mask);
     while (wait_for(&current->pause, &current->sighand->lock, NULL) != _EINTR)
         continue;
-    do_sigprocmask_unlocked(SIG_SETMASK_, oldmask, NULL);
     unlock(&current->sighand->lock);
     STRACE("%d done sigsuspend", current->pid);
     return _EINTR;

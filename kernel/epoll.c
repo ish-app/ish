@@ -104,20 +104,16 @@ int_t sys_epoll_wait(fd_t epoll_f, addr_t events_addr, int_t max_events, int_t t
 }
 
 int_t sys_epoll_pwait(fd_t epoll_f, addr_t events_addr, int_t max_events, int_t timeout, addr_t sigmask_addr, dword_t sigsetsize) {
-    sigset_t_ mask, old_mask;
+    sigset_t_ mask;
     if (sigmask_addr != 0) {
         if (sigsetsize != sizeof(sigset_t_))
             return _EINVAL;
         if (user_get(sigmask_addr, mask))
             return _EFAULT;
-        do_sigprocmask(SIG_SETMASK_, mask, &old_mask);
+        sigmask_set_temp(mask);
     }
 
-    int_t res = sys_epoll_wait(epoll_f, events_addr, max_events, timeout);
-
-    if (sigmask_addr != 0)
-        do_sigprocmask(SIG_SETMASK_, old_mask, NULL);
-    return res;
+    return sys_epoll_wait(epoll_f, events_addr, max_events, timeout);
 }
 
 static int epoll_close(struct fd *fd) {

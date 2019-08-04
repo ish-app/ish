@@ -191,21 +191,17 @@ dword_t sys_pselect(fd_t nfds, addr_t readfds_addr, addr_t writefds_addr, addr_t
     } sigmask;
     if (user_get(sigmask_addr, sigmask))
         return _EFAULT;
-    sigset_t_ mask, old_mask;
+    sigset_t_ mask;
 
     if (sigmask.mask_addr != 0) {
         if (sigmask.mask_size != sizeof(sigset_t_))
             return _EINVAL;
         if (user_get(sigmask.mask_addr, mask))
             return _EFAULT;
-        do_sigprocmask(SIG_SETMASK_, mask, &old_mask);
+        sigmask_set_temp(mask);
     }
 
-    dword_t res = sys_select(nfds, readfds_addr, writefds_addr, exceptfds_addr, timeout_addr);
-
-    if (sigmask.mask_addr != 0)
-        do_sigprocmask(SIG_SETMASK_, old_mask, NULL);
-    return res;
+    return sys_select(nfds, readfds_addr, writefds_addr, exceptfds_addr, timeout_addr);
 }
 
 dword_t sys_ppoll(addr_t fds, dword_t nfds, addr_t timeout_addr, addr_t sigmask_addr, dword_t sigsetsize) {
@@ -217,18 +213,14 @@ dword_t sys_ppoll(addr_t fds, dword_t nfds, addr_t timeout_addr, addr_t sigmask_
         timeout = timeout_timespec.sec * 1000 + timeout_timespec.nsec / 1000000;
     }
 
-    sigset_t_ mask, old_mask;
+    sigset_t_ mask;
     if (sigmask_addr != 0) {
         if (sigsetsize != sizeof(sigset_t_))
             return _EINVAL;
         if (user_get(sigmask_addr, mask))
             return _EFAULT;
-        do_sigprocmask(SIG_SETMASK_, mask, &old_mask);
+        sigmask_set_temp(mask);
     }
 
-    dword_t res = sys_poll(fds, nfds, timeout);
-
-    if (sigmask_addr != 0)
-        do_sigprocmask(SIG_SETMASK_, old_mask, NULL);
-    return res;
+    return sys_poll(fds, nfds, timeout);
 }
