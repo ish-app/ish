@@ -60,12 +60,12 @@ struct fd {
         struct {
             // UIPasteboard.changeCount
             uint64_t generation;
-            // Buffer
-            void* wbuffer;
+            // Buffer for written data
+            void* buffer;
             // it's capacity
-            size_t wbuffer_size;
-            // length of data in the buffer
-            size_t wbuffer_len;
+            size_t buffer_cap;
+            // length of actual data stored in the buffer
+            size_t buffer_len;
         } clipboard;
     };
     // fs data
