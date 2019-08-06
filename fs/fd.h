@@ -62,12 +62,10 @@ struct fd {
             uint64_t generation;
             // Buffer
             void* wbuffer;
-            // its size
+            // it's capacity
             size_t wbuffer_size;
             // length of data in the buffer
             size_t wbuffer_len;
-            // length of data already flushed to UIPasteboard
-            size_t wbuffer_off;
         } clipboard;
     };
     // fs data
