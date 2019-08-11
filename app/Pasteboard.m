@@ -45,7 +45,7 @@ static const char *get_data(clip_fd *fd, size_t *len) {
         return NULL;
     }
 
-    NSString *contents = UIPasteboard.generalPasteboard.string;
+    NSString __autoreleasing *contents = UIPasteboard.generalPasteboard.string;
     *len = contents.length;
     return contents.UTF8String;
 }
@@ -108,18 +108,20 @@ static ssize_t clipboard_rsync(clip_fd *fd) {
         fd_priv(fd).buffer_len = 0;
     }
 
-    size_t len;
-    const void *data = get_data(fd, &len);
-    
-    // Make sure size is still INITIAL_BUFFER_CAP based
-    if (realloc_to_fit(fd, len)) {
-        return _ENOMEM;
+    @autoreleasepool {
+        size_t len;
+        const void *data = get_data(fd, &len);
+
+        // Make sure size is still INITIAL_BUFFER_CAP based
+        if (realloc_to_fit(fd, len)) {
+            return _ENOMEM;
+        }
+
+        memcpy(fd_priv(fd).buffer, data, len);
+        fd_priv(fd).buffer_len = len;
+
+        return len;
     }
-
-    memcpy(fd_priv(fd).buffer, data, len);
-    fd_priv(fd).buffer_len = len;
-
-    return len;
 }
 
 static int clipboard_poll(clip_fd *fd) {
@@ -127,27 +129,29 @@ static int clipboard_poll(clip_fd *fd) {
 }
 
 static ssize_t clipboard_read(clip_fd *fd, void *buf, size_t bufsize) {
-    size_t length = 0;
-    const char *data = get_data(fd, &length);
+    @autoreleasepool {
+        size_t length = 0;
+        const char *data = get_data(fd, &length);
 
-    if (data == NULL) {
-        return _EIO;
+        if (data == NULL) {
+            return _EIO;
+        }
+
+        size_t remaining = length - fd->offset;
+        if ((size_t) fd->offset > length)
+            remaining = 0;
+
+        size_t n = bufsize;
+        if (n > remaining)
+            n = remaining;
+
+        if (n != 0) {
+            memcpy(buf, data + fd->offset, n);
+            fd->offset += n;
+        }
+
+        return n;
     }
-
-    size_t remaining = length - fd->offset;
-    if ((size_t) fd->offset > length)
-        remaining = 0;
-
-    size_t n = bufsize;
-    if (n > remaining)
-        n = remaining;
-
-    if (n != 0) {
-        memcpy(buf, data + fd->offset, n);
-        fd->offset += n;
-    }
-
-    return n;
 }
 
 static ssize_t clipboard_write(clip_fd *fd, const void *buf, size_t bufsize) {
@@ -179,8 +183,10 @@ static off_t_ clipboard_lseek(clip_fd *fd, off_t_ off, int whence) {
     size_t length = 0;
 
     if (whence != LSEEK_SET || off != 0) {
-        if (get_data(fd, &length) == NULL) {
-            return _EIO;
+        @autoreleasepool {
+            if (get_data(fd, &length) == NULL) {
+                return _EIO;
+            }
         }
     }
 
