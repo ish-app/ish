@@ -374,8 +374,6 @@
 		BB792B521F96D90D00FFB7A4 /* app */ = {
 			isa = PBXGroup;
 			children = (
-				650B337222EA235C00B4C03E /* Pasteboard.h */,
-				650B337322EA235C00B4C03E /* Pasteboard.m */,
 				BB792B531F96D90D00FFB7A4 /* AppDelegate.h */,
 				BB792B541F96D90D00FFB7A4 /* AppDelegate.m */,
 				BB792B561F96D90D00FFB7A4 /* TerminalViewController.h */,
@@ -386,6 +384,8 @@
 				BB0FC5901F980A6B00803272 /* Terminal.h */,
 				BB0FC5911F980A6B00803272 /* Terminal.m */,
 				BB4A53991FAA40FD00A72ACE /* xtermjs */,
+				650B337222EA235C00B4C03E /* Pasteboard.h */,
+				650B337322EA235C00B4C03E /* Pasteboard.m */,
 				BB792B591F96D90D00FFB7A4 /* Main.storyboard */,
 				BBFB557321586C7600DFE6DE /* About */,
 				BBFB557221586C6600DFE6DE /* Utilities */,
