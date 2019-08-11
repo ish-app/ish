@@ -62,7 +62,7 @@ struct fd {
             uint64_t generation;
             // Buffer for written data
             void* buffer;
-            // it's capacity
+            // its capacity
             size_t buffer_cap;
             // length of actual data stored in the buffer
             size_t buffer_len;

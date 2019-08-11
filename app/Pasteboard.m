@@ -123,14 +123,7 @@ static ssize_t clipboard_rsync(clip_fd *fd) {
 }
 
 static int clipboard_poll(clip_fd *fd) {
-    int rv = POLL_WRITE;
-
-    size_t len = 0;
-    if (get_data(fd, &len) != NULL && fd->offset < len) {
-        rv |= POLL_READ;
-    }
-
-    return rv;
+    return POLL_READ | POLL_WRITE;
 }
 
 static ssize_t clipboard_read(clip_fd *fd, void *buf, size_t bufsize) {
@@ -160,6 +153,10 @@ static ssize_t clipboard_read(clip_fd *fd, void *buf, size_t bufsize) {
 static ssize_t clipboard_write(clip_fd *fd, const void *buf, size_t bufsize) {
     size_t new_len = fd->offset + bufsize;
     size_t old_len = fd_priv(fd).buffer_len;
+
+    if (old_len > new_len) {
+        new_len = old_len;
+    }
 
     if (realloc_to_fit(fd, new_len)) {
         return _ENOMEM;
