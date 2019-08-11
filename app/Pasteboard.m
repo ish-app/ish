@@ -77,7 +77,7 @@ static int realloc_to_fit(clip_fd* fd, size_t fit_len) {
 }
 
 // buffer => UIPasteboard
-static int clipboard_wsync(clip_fd *fd) {
+static int clipboard_write_sync(clip_fd *fd) {
     if (fd_priv(fd).buffer == NULL) {
         return 0;
     }
@@ -100,7 +100,7 @@ static int clipboard_wsync(clip_fd *fd) {
 }
 
 // UIPasteboard => buffer, return len
-static ssize_t clipboard_rsync(clip_fd *fd) {
+static ssize_t clipboard_read_sync(clip_fd *fd) {
     if (fd_priv(fd).buffer != NULL) {
         free(fd_priv(fd).buffer);
         fd_priv(fd).buffer = NULL;
@@ -216,7 +216,7 @@ static off_t_ clipboard_lseek(clip_fd *fd, off_t_ off, int whence) {
 }
 
 static int clipboard_close(clip_fd *fd) {
-    clipboard_wsync(fd);
+    clipboard_write_sync(fd);
     if (fd_priv(fd).buffer != NULL) {
         free(fd_priv(fd).buffer);
     }
@@ -227,13 +227,15 @@ static int clipboard_open(int major, int minor, clip_fd *fd) {
     // Zero fd_priv data
     memset(&fd_priv(fd), 0, sizeof(fd_priv(fd)));
 
-    // If O_APPEND_ is set, initialize buffer with current pasteboard contents
-    if (fd->flags & O_APPEND_) {
-        ssize_t len = clipboard_rsync(fd);
+    // If O_TRUNC is not set, initialize buffer with current pasteboard contents
+    if (!(fd->flags & O_TRUNC_)) {
+        ssize_t len = clipboard_read_sync(fd);
         if (len < 0) {
             return (int) len;
         }
-        fd->offset = (size_t)len;
+        if (fd->flags & O_APPEND_) {
+            fd->offset = (size_t) len;
+        }
     }
 
     return 0;
@@ -246,5 +248,5 @@ struct dev_ops clipboard_dev = {
     .fd.lseek = clipboard_lseek,
     .fd.poll = clipboard_poll,
     .fd.close = clipboard_close,
-    .fd.fsync = clipboard_wsync,
+    .fd.fsync = clipboard_write_sync,
 };
