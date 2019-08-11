@@ -17,16 +17,28 @@ void cond_destroy(cond_t *cond) {
     pthread_cond_destroy(&cond->cond);
 }
 
+static bool is_signal_pending(lock_t *lock) {
+    if (!current)
+        return false;
+    if (lock != &current->sighand->lock)
+        lock(&current->sighand->lock);
+    bool pending = !!(current->pending & ~current->blocked);
+    if (lock != &current->sighand->lock)
+        unlock(&current->sighand->lock);
+    return pending;
+}
+
 int wait_for(cond_t *cond, lock_t *lock, struct timespec *timeout) {
-    if (current && current->pending)
+    if (is_signal_pending(lock))
         return _EINTR;
     int err = wait_for_ignore_signals(cond, lock, timeout);
     if (err < 0)
         return _ETIMEDOUT;
-    if (current && current->pending)
+    if (is_signal_pending(lock))
         return _EINTR;
     return 0;
 }
+
 int wait_for_ignore_signals(cond_t *cond, lock_t *lock, struct timespec *timeout) {
     if (current) {
         lock(&current->waiting_cond_lock);
@@ -83,14 +95,30 @@ void sigusr1_handler() {
     }
 }
 
-/*
-int foo() {
-    if (sigunwind_start()) {
-        int retval = syscall();
-        sigunwind_end();
-        return retval;
-    } else {
-        return _EINTR;
+// This is how you would mitigate the unlock/wait race if the wait
+// is async signal safe. wait_for *should* be safe from this race
+// because of synchronization involving the waiting_cond_lock.
+#if 0
+    sigset_t sigusr1;
+    sigemptyset(&sigusr1);
+    sigaddset(&sigusr1, SIGUSR1);
+
+    if (current) {
+        if (sigsetjmp(unwind_buf, 1)) {
+            return _EINTR;
+        }
+        should_unwind = true;
+        sigprocmask(SIG_BLOCK, &sigusr1, NULL);
+        if (lock != &current->sighand->lock)
+            lock(&current->sighand->lock);
+        bool pending = !!(current->pending & ~current->blocked);
+        if (lock != &current->sighand->lock)
+            unlock(&current->sighand->lock);
+        sigprocmask(SIG_UNBLOCK, &sigusr1, NULL);
+        if (pending) {
+            should_unwind = false;
+            return _EINTR;
+        }
     }
-}
-*/
+#endif
+
