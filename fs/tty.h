@@ -60,10 +60,6 @@ struct termios_ {
 #define ONOCR_ (1 << 4)
 #define ONLRET_ (1 << 5)
 
-#define TTY_CONSOLE_MAJOR 4
-#define TTY_PSEUDO_MASTER_MAJOR 128
-#define TTY_PSEUDO_SLAVE_MAJOR 136
-
 #define TCGETS_ 0x5401
 #define TCSETS_ 0x5402
 #define TCSETSW_ 0x5403

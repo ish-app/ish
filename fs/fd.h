@@ -55,6 +55,18 @@ struct fd {
             // locked by fd->lock
             struct list unix_scm;
         } socket;
+
+        // See app/Pasteboard.m
+        struct {
+            // UIPasteboard.changeCount
+            uint64_t generation;
+            // Buffer for written data
+            void* buffer;
+            // its capacity
+            size_t buffer_cap;
+            // length of actual data stored in the buffer
+            size_t buffer_len;
+        } clipboard;
     };
     // fs data
     union {

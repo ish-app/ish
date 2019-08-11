@@ -5,6 +5,7 @@
 #include "kernel/task.h"
 #include "kernel/errno.h"
 #include "fs/tty.h"
+#include "fs/devices.h"
 
 extern struct tty_driver pty_slave;
 

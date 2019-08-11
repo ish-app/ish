@@ -4,17 +4,24 @@
 #include "fs/poll.h"
 #include "fs/mem.h"
 #include "fs/dev.h"
+#include "fs/devices.h"
 
-// this file handles major device number 1, minor device numbers are mapped in table below
+extern struct dev_ops
+    null_dev,
+    zero_dev,
+    full_dev,
+    random_dev;
+
+// this file handles major device number MEM_MAJOR, minor device numbers are mapped in table below
 struct dev_ops *mem_devs[256] = {
     // [1] = &prog_mem_dev,
     // [2] = &kmem_dev, // (not really applicable)
-    [3] = &null_dev,
+    [DEV_NULL_MINOR] = &null_dev,
     // [4] = &port_dev,
-    [5] = &zero_dev,
-    [7] = &full_dev,
-    [8] = &random_dev,
-    [9] = &random_dev,
+    [DEV_ZERO_MINOR] = &zero_dev,
+    [DEV_FULL_MINOR] = &full_dev,
+    [DEV_RANDOM_MINOR] = &random_dev,
+    [DEV_URANDOM_MINOR] = &random_dev,
     // [10] = &aio_dev,
     // [11] = &kmsg_dev,
     // [12] = &oldmem_dev, // replaced by /proc/vmcore

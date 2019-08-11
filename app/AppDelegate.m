@@ -9,11 +9,14 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #import "AppDelegate.h"
+#import "Pasteboard.h"
 #import "TerminalViewController.h"
 #import "UserPreferences.h"
 #include "kernel/init.h"
 #include "kernel/calls.h"
 #include "fs/path.h"
+#include "fs/dyndev.h"
+#include "fs/devices.h"
 
 @interface AppDelegate ()
 
@@ -87,23 +90,33 @@ static void ios_handle_die(const char *msg) {
     
     // create some device nodes
     // this will do nothing if they already exist
-    generic_mknod("/dev/console", S_IFCHR|0666, dev_make(5, 1));
-    generic_mknod("/dev/tty1", S_IFCHR|0666, dev_make(4, 1));
-    generic_mknod("/dev/tty2", S_IFCHR|0666, dev_make(4, 2));
-    generic_mknod("/dev/tty3", S_IFCHR|0666, dev_make(4, 3));
-    generic_mknod("/dev/tty4", S_IFCHR|0666, dev_make(4, 4));
-    generic_mknod("/dev/tty5", S_IFCHR|0666, dev_make(4, 5));
-    generic_mknod("/dev/tty6", S_IFCHR|0666, dev_make(4, 6));
-    generic_mknod("/dev/tty7", S_IFCHR|0666, dev_make(4, 7));
-    generic_mknod("/dev/tty", S_IFCHR|0666, dev_make(5, 0));
-    generic_mknod("/dev/ptmx", S_IFCHR|0666, dev_make(5, 2));
-    generic_mknod("/dev/null", S_IFCHR|0666, dev_make(1, 3));
-    generic_mknod("/dev/zero", S_IFCHR|0666, dev_make(1, 5));
-    generic_mknod("/dev/full", S_IFCHR|0666, dev_make(1, 7));
-    generic_mknod("/dev/random", S_IFCHR|0666, dev_make(1, 8));
-    generic_mknod("/dev/urandom", S_IFCHR|0666, dev_make(1, 9));
-    generic_mkdirat(AT_PWD, "/dev/pts", 0755);
+    generic_mknod("/dev/tty1", S_IFCHR|0666, dev_make(TTY_CONSOLE_MAJOR, 1));
+    generic_mknod("/dev/tty2", S_IFCHR|0666, dev_make(TTY_CONSOLE_MAJOR, 2));
+    generic_mknod("/dev/tty3", S_IFCHR|0666, dev_make(TTY_CONSOLE_MAJOR, 3));
+    generic_mknod("/dev/tty4", S_IFCHR|0666, dev_make(TTY_CONSOLE_MAJOR, 4));
+    generic_mknod("/dev/tty5", S_IFCHR|0666, dev_make(TTY_CONSOLE_MAJOR, 5));
+    generic_mknod("/dev/tty6", S_IFCHR|0666, dev_make(TTY_CONSOLE_MAJOR, 6));
+    generic_mknod("/dev/tty7", S_IFCHR|0666, dev_make(TTY_CONSOLE_MAJOR, 7));
+
+    generic_mknod("/dev/tty", S_IFCHR|0666, dev_make(TTY_ALTERNATE_MAJOR, DEV_TTY_MINOR));
+    generic_mknod("/dev/console", S_IFCHR|0666, dev_make(TTY_ALTERNATE_MAJOR, DEV_CONSOLE_MINOR));
+    generic_mknod("/dev/ptmx", S_IFCHR|0666, dev_make(TTY_ALTERNATE_MAJOR, DEV_PTMX_MINOR));
+
+    generic_mknod("/dev/null", S_IFCHR|0666, dev_make(MEM_MAJOR, DEV_NULL_MINOR));
+    generic_mknod("/dev/zero", S_IFCHR|0666, dev_make(MEM_MAJOR, DEV_ZERO_MINOR));
+    generic_mknod("/dev/full", S_IFCHR|0666, dev_make(MEM_MAJOR, DEV_FULL_MINOR));
+    generic_mknod("/dev/random", S_IFCHR|0666, dev_make(MEM_MAJOR, DEV_RANDOM_MINOR));
+    generic_mknod("/dev/urandom", S_IFCHR|0666, dev_make(MEM_MAJOR, DEV_URANDOM_MINOR));
     
+    generic_mkdirat(AT_PWD, "/dev/pts", 0755);
+
+    // Register clipboard device driver and create device node for it
+    err = dyn_dev_register(&clipboard_dev, DEV_CHAR, DYN_DEV_MAJOR, DEV_CLIPBOARD_MINOR);
+    if (err != 0) {
+        return err;
+    }
+    generic_mknod("/dev/clipboard", S_IFCHR|0666, dev_make(DYN_DEV_MAJOR, DEV_CLIPBOARD_MINOR));
+
     do_mount(&procfs, "proc", "/proc", 0);
     do_mount(&devptsfs, "devpts", "/dev/pts", 0);
     

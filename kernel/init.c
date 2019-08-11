@@ -5,6 +5,7 @@
 #include "kernel/calls.h"
 #include "fs/fd.h"
 #include "fs/tty.h"
+#include "fs/devices.h"
 
 int mount_root(const struct fs_ops *fs, const char *source) {
     char source_realpath[MAX_PATH + 1];
@@ -122,7 +123,8 @@ int create_stdio(const char *file) {
     if (IS_ERR(fd)) {
         // fallback to adhoc files for stdio
         fd = adhoc_fd_create(NULL);
-        fd->stat.rdev = dev_make(4, 1);
+        // /dev/tty1
+        fd->stat.rdev = dev_make(TTY_CONSOLE_MAJOR, 1);
         fd->stat.mode = S_IFCHR | S_IRUSR;
         fd->flags = O_RDWR_;
         int err = dev_open(4, 1, DEV_CHAR, fd);

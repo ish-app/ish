@@ -4,11 +4,6 @@
 #include "kernel/fs.h"
 #include "fs/dev.h"
 
-extern struct dev_ops
-    mem_dev,
-    null_dev,
-    zero_dev,
-    full_dev,
-    random_dev;
+extern struct dev_ops mem_dev;
 
 #endif

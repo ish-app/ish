@@ -4,6 +4,7 @@
 #include <errno.h>
 #include "kernel/init.h"
 #include "kernel/fs.h"
+#include "fs/devices.h"
 #ifdef __APPLE__
 #include <sys/resource.h>
 #define IOPOL_TYPE_VFS_HFS_CASE_SENSITIVITY 1

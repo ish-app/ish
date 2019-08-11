@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		650B337422EA235C00B4C03E /* Pasteboard.m in Sources */ = {isa = PBXBuildFile; fileRef = 650B337322EA235C00B4C03E /* Pasteboard.m */; };
 		8632A7BF219A59FB00F02325 /* UserPreferences.m in Sources */ = {isa = PBXBuildFile; fileRef = 8632A7BE219A59FB00F02325 /* UserPreferences.m */; };
 		9A28E4EA219A8B670073D200 /* AppearanceViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 9A28E4E9219A8B670073D200 /* AppearanceViewController.m */; };
 		BB0FC5921F980A6C00803272 /* Terminal.m in Sources */ = {isa = PBXBuildFile; fileRef = BB0FC5911F980A6B00803272 /* Terminal.m */; };
@@ -85,6 +86,18 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		650B335A22E9E46A00B4C03E /* mem.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = mem.c; sourceTree = "<group>"; tabWidth = 4; };
+		650B335B22E9E46A00B4C03E /* mem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mem.h; sourceTree = "<group>"; tabWidth = 4; };
+		650B335D22E9EF9B00B4C03E /* proc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = proc.c; sourceTree = "<group>"; };
+		650B335E22E9EF9B00B4C03E /* proc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = proc.h; sourceTree = "<group>"; };
+		650B336622E9F0B500B4C03E /* pid.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pid.c; sourceTree = "<group>"; };
+		650B336722E9F0B500B4C03E /* entry.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = entry.c; sourceTree = "<group>"; };
+		650B336822E9F0B500B4C03E /* root.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = root.c; sourceTree = "<group>"; };
+		650B336C22EA052400B4C03E /* dyndev.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = dyndev.c; sourceTree = "<group>"; };
+		650B336D22EA052400B4C03E /* dyndev.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dyndev.h; sourceTree = "<group>"; };
+		650B337222EA235C00B4C03E /* Pasteboard.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Pasteboard.h; sourceTree = "<group>"; };
+		650B337322EA235C00B4C03E /* Pasteboard.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Pasteboard.m; sourceTree = "<group>"; };
+		650B337522EA728B00B4C03E /* devices.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = devices.h; sourceTree = "<group>"; };
 		8632A7BD219A59FB00F02325 /* UserPreferences.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = UserPreferences.h; sourceTree = "<group>"; };
 		8632A7BE219A59FB00F02325 /* UserPreferences.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = UserPreferences.m; sourceTree = "<group>"; };
 		9A28E4E8219A8B670073D200 /* AppearanceViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppearanceViewController.h; sourceTree = "<group>"; };
@@ -287,6 +300,16 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		650B336522E9F09F00B4C03E /* proc */ = {
+			isa = PBXGroup;
+			children = (
+				650B336722E9F0B500B4C03E /* entry.c */,
+				650B336622E9F0B500B4C03E /* pid.c */,
+				650B336822E9F0B500B4C03E /* root.c */,
+			);
+			path = proc;
+			sourceTree = "<group>";
+		};
 		BB18B27F1F97F2590059FCD8 /* Scripts */ = {
 			isa = PBXGroup;
 			children = (
@@ -361,6 +384,8 @@
 				BB0FC5901F980A6B00803272 /* Terminal.h */,
 				BB0FC5911F980A6B00803272 /* Terminal.m */,
 				BB4A53991FAA40FD00A72ACE /* xtermjs */,
+				650B337222EA235C00B4C03E /* Pasteboard.h */,
+				650B337322EA235C00B4C03E /* Pasteboard.m */,
 				BB792B591F96D90D00FFB7A4 /* Main.storyboard */,
 				BBFB557321586C7600DFE6DE /* About */,
 				BBFB557221586C6600DFE6DE /* Utilities */,
@@ -467,9 +492,17 @@
 		BB7D936A2087C2890008DA78 /* fs */ = {
 			isa = PBXGroup;
 			children = (
+				650B336522E9F09F00B4C03E /* proc */,
+				650B336C22EA052400B4C03E /* dyndev.c */,
+				650B336D22EA052400B4C03E /* dyndev.h */,
+				650B335D22E9EF9B00B4C03E /* proc.c */,
+				650B335E22E9EF9B00B4C03E /* proc.h */,
+				650B335A22E9E46A00B4C03E /* mem.c */,
+				650B335B22E9E46A00B4C03E /* mem.h */,
 				BB7D936B2087C2890008DA78 /* adhoc.c */,
 				BB7D936C2087C2890008DA78 /* dev.c */,
 				BB7D936D2087C2890008DA78 /* dev.h */,
+				650B337522EA728B00B4C03E /* devices.h */,
 				BB7D936E2087C2890008DA78 /* dir.c */,
 				BB7D936F2087C2890008DA78 /* fake-rebuild.c */,
 				BB7D93702087C2890008DA78 /* fake.c */,
@@ -900,6 +933,7 @@
 				BB60F55221573FCA003A4E52 /* BarButton.m in Sources */,
 				BBFB557C215878C600DFE6DE /* UIApplication+OpenURL.m in Sources */,
 				BBFB5579215876CD00DFE6DE /* AboutViewController.m in Sources */,
+				650B337422EA235C00B4C03E /* Pasteboard.m in Sources */,
 				BBFB557121586C4800DFE6DE /* UIViewController+Back.m in Sources */,
 				BBFB558021587B6800DFE6DE /* ArrowBarButton.m in Sources */,
 				BB792B551F96D90D00FFB7A4 /* AppDelegate.m in Sources */,

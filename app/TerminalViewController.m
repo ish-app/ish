@@ -12,6 +12,7 @@
 #import "ArrowBarButton.h"
 #import "UserPreferences.h"
 #import "AboutViewController.h"
+#include "fs/devices.h"
 
 @interface TerminalViewController () <UIGestureRecognizerDelegate>
 
@@ -39,9 +40,9 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     if (UserPreferences.shared.bootEnabled) {
-        self.terminal = [Terminal terminalWithType:4 number:7];
+        self.terminal = [Terminal terminalWithType:TTY_CONSOLE_MAJOR number:7];
     } else {
-        self.terminal = [Terminal terminalWithType:4 number:1];
+        self.terminal = [Terminal terminalWithType:TTY_CONSOLE_MAJOR number:1];
     }
     [self.termView becomeFirstResponder];
 
@@ -222,7 +223,7 @@
 
 - (void)switchTerminal:(UIKeyCommand *)sender {
     unsigned i = (unsigned) sender.input.integerValue;
-    self.terminal = [Terminal terminalWithType:4 number:i];
+    self.terminal = [Terminal terminalWithType:TTY_CONSOLE_MAJOR number:i];
 }
 
 - (NSArray<UIKeyCommand *> *)keyCommands {
