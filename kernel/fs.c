@@ -341,7 +341,7 @@ dword_t sys_pread(fd_t f, addr_t buf_addr, dword_t size, off_t_ off) {
         return _EBADF;
     char *buf = malloc(size+1);
     if (buf == NULL)
-        return _EFAULT;
+        return _ENOMEM;
     lock(&fd->lock);
     int_t res = fd->ops->lseek(fd, off, LSEEK_SET);
     if (res < 0)
@@ -352,6 +352,25 @@ dword_t sys_pread(fd_t f, addr_t buf_addr, dword_t size, off_t_ off) {
             res = _EFAULT;
     }
 out:
+    unlock(&fd->lock);
+    free(buf);
+    return res;
+}
+
+dword_t sys_pwrite(fd_t f, addr_t buf_addr, dword_t size, off_t_ off) {
+    STRACE("pwrite(%d, 0x%x, %d, %d)", f, buf_addr, size, off);
+    struct fd *fd = f_get(f);
+    if (fd == NULL)
+        return _EBADF;
+    char *buf = malloc(size+1);
+    if (buf == NULL)
+        return _ENOMEM;
+    if (user_read(buf_addr, buf, size))
+        return _EFAULT;
+    lock(&fd->lock);
+    int_t res = fd->ops->lseek(fd, off, LSEEK_SET);
+    if (res >= 0)
+        res = fd->ops->write(fd, buf, size);
     unlock(&fd->lock);
     free(buf);
     return res;

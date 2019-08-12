@@ -109,6 +109,7 @@ syscall_t syscall_table[] = {
     [176] = (syscall_t) sys_rt_sigpending,
     [179] = (syscall_t) sys_rt_sigsuspend,
     [180] = (syscall_t) sys_pread,
+    [181] = (syscall_t) sys_pwrite,
     [183] = (syscall_t) sys_getcwd,
     [184] = (syscall_t) sys_capget,
     [185] = (syscall_t) sys_capset,
