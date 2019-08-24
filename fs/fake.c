@@ -615,8 +615,26 @@ static int fakefs_mount(struct mount *mount) {
 }
 
 static int fakefs_umount(struct mount *mount) {
-    if (mount->db)
-        sqlite3_close(mount->db);
+    if (mount->db) {
+        sqlite3_finalize(mount->stmt.begin);
+        sqlite3_finalize(mount->stmt.commit);
+        sqlite3_finalize(mount->stmt.rollback);
+        sqlite3_finalize(mount->stmt.path_get_inode);
+        sqlite3_finalize(mount->stmt.path_read_stat);
+        sqlite3_finalize(mount->stmt.path_create_stat);
+        sqlite3_finalize(mount->stmt.path_create_path);
+        sqlite3_finalize(mount->stmt.inode_read_stat);
+        sqlite3_finalize(mount->stmt.inode_write_stat);
+        sqlite3_finalize(mount->stmt.path_link);
+        sqlite3_finalize(mount->stmt.path_unlink);
+        sqlite3_finalize(mount->stmt.path_rename);
+        sqlite3_finalize(mount->stmt.path_from_inode);
+        sqlite3_finalize(mount->stmt.try_cleanup_inode);
+        int err = sqlite3_close(mount->db);
+        if (err != SQLITE_OK) {
+            printk("sqlite failed to close: %d\n", err);
+        }
+    }
     /* return realfs.umount(mount); */
     return 0;
 }
