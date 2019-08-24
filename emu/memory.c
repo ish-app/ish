@@ -12,6 +12,8 @@
 #include "kernel/signal.h"
 #include "emu/memory.h"
 #include "jit/jit.h"
+#include "kernel/vdso.h"
+#include "kernel/task.h"
 
 // increment the change count
 static void mem_changed(struct mem *mem);
@@ -102,9 +104,12 @@ bool pt_is_hole(struct mem *mem, page_t start, pages_t pages) {
     return true;
 }
 
-int pt_map(struct mem *mem, page_t start, pages_t pages, void *memory, unsigned flags) {
+int pt_map(struct mem *mem, page_t start, pages_t pages, void *memory, size_t offset, unsigned flags) {
     if (memory == MAP_FAILED)
         return errno_map();
+
+    // If this fails, the munmap in pt_unmap would probably fail.
+    assert((uintptr_t) memory % real_page_size == 0 || memory == vdso_data);
 
     struct data *data = malloc(sizeof(struct data));
     if (data == NULL)
@@ -112,6 +117,10 @@ int pt_map(struct mem *mem, page_t start, pages_t pages, void *memory, unsigned 
     data->data = memory;
     data->size = pages * PAGE_SIZE;
     data->refcount = 0;
+#if LEAK_DEBUG
+    data->pid = current ? current->pid : 0;
+    data->dest = start << PAGE_BITS;
+#endif
 
     for (page_t page = start; page < start + pages; page++) {
         if (mem_pt(mem, page) != NULL)
@@ -119,7 +128,7 @@ int pt_map(struct mem *mem, page_t start, pages_t pages, void *memory, unsigned 
         data->refcount++;
         struct pt_entry *pt = mem_pt_new(mem, page);
         pt->data = data;
-        pt->offset = (page - start) << PAGE_BITS;
+        pt->offset = ((page - start) << PAGE_BITS) + offset;
         pt->flags = flags;
     }
     return 0;
@@ -141,7 +150,12 @@ int pt_unmap(struct mem *mem, page_t start, pages_t pages, int force) {
         struct data *data = pt->data;
         mem_pt_del(mem, page);
         if (--data->refcount == 0) {
-            munmap(data->data, data->size);
+            // vdso wasn't allocated with mmap, it's just in our data segment
+            if (data->data != vdso_data) {
+                int err = munmap(data->data, data->size);
+                if (err != 0)
+                    die("munmap(%p, %lu) failed: %s", data->data, data->size, strerror(errno));
+            }
             free(data);
         }
     }
@@ -153,7 +167,7 @@ int pt_map_nothing(struct mem *mem, page_t start, pages_t pages, unsigned flags)
     if (pages == 0) return 0;
     void *memory = mmap(NULL, pages * PAGE_SIZE,
             PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
-    return pt_map(mem, start, pages, memory, flags | P_ANONYMOUS);
+    return pt_map(mem, start, pages, memory, 0, flags | P_ANONYMOUS);
 }
 
 int pt_set_flags(struct mem *mem, page_t start, pages_t pages, int flags) {
@@ -232,7 +246,7 @@ void *mem_ptr(struct mem *mem, addr_t addr, int type) {
             void *copy = mmap(NULL, PAGE_SIZE, PROT_READ | PROT_WRITE,
                     MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
             memcpy(copy, data, PAGE_SIZE);
-            pt_map(mem, page, 1, copy, entry->flags &~ P_COW);
+            pt_map(mem, page, 1, copy, 0, entry->flags &~ P_COW);
         }
 #if JIT
         // get rid of any compiled blocks in this page

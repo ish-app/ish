@@ -47,10 +47,16 @@ typedef dword_t pages_t;
 #define BYTES_ROUND_DOWN(bytes) (PAGE(bytes) << PAGE_BITS)
 #define BYTES_ROUND_UP(bytes) (PAGE_ROUND_UP(bytes) << PAGE_BITS)
 
+#define LEAK_DEBUG 0
+
 struct data {
     void *data; // immutable
     size_t size; // also immutable
     atomic_uint refcount;
+#if LEAK_DEBUG
+    int pid;
+    addr_t dest;
+#endif
 };
 struct pt_entry {
     struct data *data;
@@ -81,11 +87,10 @@ page_t pt_find_hole(struct mem *mem, pages_t size);
 
 #define PT_FORCE 1
 
-// Map real memory into fake memory (unmaps existing mappings). The memory is
-// freed with munmap, so it must be allocated with mmap
-int pt_map(struct mem *mem, page_t start, pages_t pages, void *memory, unsigned flags);
-// Map fake file into fake memory
-int pt_map_file(struct mem *mem, page_t start, pages_t pages, int fd, off_t off, unsigned flags);
+// Map memory + offset into fake memory (unmaps existing mappings). Takes
+// ownership of memory. It will be freed with:
+// munmap(memory, pages * PAGE_SIZE)
+int pt_map(struct mem *mem, page_t start, pages_t pages, void *memory, size_t offset, unsigned flags);
 // Map empty space into fake memory
 int pt_map_nothing(struct mem *mem, page_t page, pages_t pages, unsigned flags);
 // Unmap fake memory, return -1 if any part of the range isn't mapped and 0 otherwise

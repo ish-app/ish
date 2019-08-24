@@ -243,7 +243,7 @@ static int elf_exec(struct fd *fd, const char *file, const char *argv, const cha
     if (vdso_page == BAD_PAGE)
         goto beyond_hope;
     vdso_page += 1;
-    if ((err = pt_map(current->mem, vdso_page, vdso_pages, (void *) vdso_data, 0)) < 0)
+    if ((err = pt_map(current->mem, vdso_page, vdso_pages, (void *) vdso_data, 0, 0)) < 0)
         goto beyond_hope;
     current->mm->vdso = vdso_page << PAGE_BITS;
     addr_t vdso_entry = current->mm->vdso + ((struct elf_header *) vdso_data)->entry_point;

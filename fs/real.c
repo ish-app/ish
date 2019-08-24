@@ -225,9 +225,7 @@ int realfs_mmap(struct fd *fd, struct mem *mem, page_t start, pages_t pages, off
     off_t correction = offset - real_offset;
     char *memory = mmap(NULL, (pages * PAGE_SIZE) + correction,
             mmap_prot, mmap_flags, fd->real_fd, real_offset);
-    if (memory != MAP_FAILED)
-        memory += correction;
-    return pt_map(mem, start, pages, memory, prot);
+    return pt_map(mem, start, pages, memory, correction, prot);
 }
 
 static ssize_t realfs_readlink(struct mount *mount, const char *path, char *buf, size_t bufsize) {
