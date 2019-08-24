@@ -115,7 +115,7 @@ int pt_map(struct mem *mem, page_t start, pages_t pages, void *memory, size_t of
     if (data == NULL)
         return _ENOMEM;
     data->data = memory;
-    data->size = pages * PAGE_SIZE;
+    data->size = pages * PAGE_SIZE + offset;
     data->refcount = 0;
 #if LEAK_DEBUG
     data->pid = current ? current->pid : 0;
