@@ -36,8 +36,8 @@ dword_t sys_exit(dword_t status);
 noreturn void do_exit(int status);
 noreturn void do_exit_group(int status);
 dword_t sys_exit_group(dword_t status);
-dword_t sys_wait4(dword_t pid, addr_t status_addr, dword_t options, addr_t rusage_addr);
-dword_t sys_waitpid(dword_t pid, addr_t status_addr, dword_t options);
+dword_t sys_wait4(pid_t_ pid, addr_t status_addr, dword_t options, addr_t rusage_addr);
+dword_t sys_waitpid(pid_t_ pid, addr_t status_addr, dword_t options);
 
 // memory management
 addr_t sys_brk(addr_t new_brk);

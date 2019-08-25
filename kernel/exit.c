@@ -216,14 +216,14 @@ static bool reap_if_needed(struct task *task, int_t options, addr_t status_addr,
     return false;
 }
 
-dword_t sys_wait4(dword_t id, addr_t status_addr, dword_t options, addr_t rusage_addr) {
+dword_t sys_wait4(pid_t_ id, addr_t status_addr, dword_t options, addr_t rusage_addr) {
     STRACE("wait(%d, 0x%x, 0x%x, 0x%x)", id, status_addr, options, rusage_addr);
     lock(&pids_lock);
     int err;
     pid_t_ out_id;
 
 retry:
-    if (id == (dword_t) -1) {
+    if (id <= 0) {
         // look for a zombie child
         bool no_children = true;
         struct task *parent;
@@ -231,6 +231,10 @@ retry:
             struct task *task;
             list_for_each_entry(&current->children, task, siblings) {
                 if (!task_is_leader(task))
+                    continue;
+                if (id < -1 && task->group->pgid != -id)
+                    continue;
+                if (id == 0 && task->group->pgid != current->group->pgid)
                     continue;
                 no_children = false;
                 out_id = task->pid;
@@ -272,6 +276,6 @@ error:
     return err;
 }
 
-dword_t sys_waitpid(dword_t pid, addr_t status_addr, dword_t options) {
+dword_t sys_waitpid(pid_t_ pid, addr_t status_addr, dword_t options) {
     return sys_wait4(pid, status_addr, options, 0);
 }
