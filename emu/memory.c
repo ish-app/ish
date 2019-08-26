@@ -30,7 +30,7 @@ void mem_init(struct mem *mem) {
 
 void mem_destroy(struct mem *mem) {
     write_wrlock(&mem->lock);
-    pt_unmap(mem, 0, MEM_PAGES, PT_FORCE);
+    pt_unmap_always(mem, 0, MEM_PAGES);
 #if JIT
     jit_free(mem->jit);
 #endif
@@ -124,7 +124,7 @@ int pt_map(struct mem *mem, page_t start, pages_t pages, void *memory, size_t of
 
     for (page_t page = start; page < start + pages; page++) {
         if (mem_pt(mem, page) != NULL)
-            pt_unmap(mem, page, 1, 0);
+            pt_unmap(mem, page, 1);
         data->refcount++;
         struct pt_entry *pt = mem_pt_new(mem, page);
         pt->data = data;
@@ -134,12 +134,14 @@ int pt_map(struct mem *mem, page_t start, pages_t pages, void *memory, size_t of
     return 0;
 }
 
-int pt_unmap(struct mem *mem, page_t start, pages_t pages, int force) {
-    if (!force)
-        for (page_t page = start; page < start + pages; page++)
-            if (mem_pt(mem, page) == NULL)
-                return -1;
+int pt_unmap(struct mem *mem, page_t start, pages_t pages) {
+    for (page_t page = start; page < start + pages; page++)
+        if (mem_pt(mem, page) == NULL)
+            return -1;
+    return pt_unmap_always(mem, start, pages);
+}
 
+int pt_unmap_always(struct mem *mem, page_t start, pages_t pages) {
     for (page_t page = start; page < start + pages; next_page(mem, &page)) {
         struct pt_entry *pt = mem_pt(mem, page);
         if (pt == NULL)
@@ -198,7 +200,7 @@ int pt_copy_on_write(struct mem *src, struct mem *dst, page_t start, page_t page
         struct pt_entry *entry = mem_pt(src, page);
         if (entry == NULL)
             continue;
-        if (pt_unmap(dst, page, 1, PT_FORCE) < 0)
+        if (pt_unmap_always(dst, page, 1) < 0)
             return -1;
         if (!(entry->flags & P_SHARED))
             entry->flags |= P_COW;

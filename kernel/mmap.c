@@ -56,6 +56,8 @@ static addr_t do_mmap(addr_t addr, dword_t len, dword_t prot, dword_t flags, fd_
         if (PGOFFSET(addr) != 0)
             return _EINVAL;
         page = PAGE(addr);
+        if (!(flags & MMAP_FIXED) && !pt_is_hole(current->mem, page, pages))
+            return _ENOMEM;
     }
 
     if (flags & MMAP_SHARED)
@@ -114,7 +116,7 @@ int_t sys_munmap(addr_t addr, uint_t len) {
     if (len == 0)
         return _EINVAL;
     write_wrlock(&current->mem->lock);
-    int err = pt_unmap(current->mem, PAGE(addr), PAGE_ROUND_UP(len), 0);
+    int err = pt_unmap_always(current->mem, PAGE(addr), PAGE_ROUND_UP(len));
     write_wrunlock(&current->mem->lock);
     if (err < 0)
         return _EINVAL;
@@ -139,7 +141,7 @@ int_t sys_mremap(addr_t addr, dword_t old_len, dword_t new_len, dword_t flags) {
 
     // shrinking always works
     if (new_pages <= old_pages) {
-        int err = pt_unmap(current->mem, PAGE(addr) + new_pages, old_pages - new_pages, 0);
+        int err = pt_unmap(current->mem, PAGE(addr) + new_pages, old_pages - new_pages);
         if (err < 0)
             return _EFAULT;
         return addr;
@@ -225,7 +227,7 @@ addr_t sys_brk(addr_t new_brk) {
         // shrink heap: unmap region from new_brk to old_brk
         // first page to unmap is PAGE(new_brk)
         // last page to unmap is PAGE(old_brk)
-        pt_unmap(&mm->mem, PAGE(new_brk), PAGE(old_brk), PT_FORCE);
+        pt_unmap_always(&mm->mem, PAGE(new_brk), PAGE(old_brk));
     }
 
     mm->brk = new_brk;

@@ -85,16 +85,16 @@ struct pt_entry {
 bool pt_is_hole(struct mem *mem, page_t start, pages_t pages);
 page_t pt_find_hole(struct mem *mem, pages_t size);
 
-#define PT_FORCE 1
-
-// Map memory + offset into fake memory (unmaps existing mappings). Takes
+// Map memory + offset into fake memory, unmapping existing mappings. Takes
 // ownership of memory. It will be freed with:
 // munmap(memory, pages * PAGE_SIZE)
 int pt_map(struct mem *mem, page_t start, pages_t pages, void *memory, size_t offset, unsigned flags);
 // Map empty space into fake memory
 int pt_map_nothing(struct mem *mem, page_t page, pages_t pages, unsigned flags);
 // Unmap fake memory, return -1 if any part of the range isn't mapped and 0 otherwise
-int pt_unmap(struct mem *mem, page_t start, pages_t pages, int force);
+int pt_unmap(struct mem *mem, page_t start, pages_t pages);
+// like pt_unmap but doesn't care if part of the range isn't mapped
+int pt_unmap_always(struct mem *mem, page_t start, pages_t pages);
 // Set the flags on memory
 int pt_set_flags(struct mem *mem, page_t start, pages_t pages, int flags);
 // Copy pages from src memory to dst memory using copy-on-write
