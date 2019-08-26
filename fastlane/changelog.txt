@@ -1,13 +1,15 @@
-Last build had a stupid bug where you couldn't create directories half the time, so I just fixed that. Previous build release notes are pasted below for your convenience.
-
 Fixed bugs:
-- Crash when using mosh
-- Deadlock while using tmux
-- Error from doing certain types of directory listings in emacs
-- Hang after typing a command in zsh or starting midnight commander
+- Weird hangs when using zsh
+- Hang on fish startup
+- Might have fixed someone's crash when using imagemagick
+- Bad system call from dig
+- Giant memory leak where part of a mapped file would never be freed on iOS. Now you can compile large programs without an out of memory crash!
+- Crash when installing things with composer
 
-Nothing new on the iOS 13 scrolling front. From the last build's release notes:
-It's still not possible to scroll on iOS 13. I've looked into it and I have no idea how it worked before. I've come to the conclusion that to get both scrolling and text selection to work, I'd either have to reimplement scrolling from first principles, or reimplement text selection from first principles. For this release, I asked a few people whether they'd rather have text selection or scrolling, and they said text selection, so that's what we have working in this build. If you understand iOS better than me, I would greatly appreciate if you could help me figure out how to make this work again. My contact info is below.
+New stuff:
+- /dev/clipboard exists and provides read/write access to your iOS clipboard. Thanks to @stek29 on github for making this happen.
+
+Again, nothing new on the iOS 13 scrolling front. Someone sent a pull request that enabled xterm's builtin scrolling emulation, but it doesn't support momentum scrolling. I'm starting to think the most reasonable thing to do would be to reimplement momentum scrom first principles. That at least seems much easier than text selection.
 
 Send bug reports or feedback here: https://github.com/tbodt/ish/issues (or by email, if you prefer)
 Follow iSH on Twitter: https://twitter.com/iSH_app
