@@ -40,6 +40,7 @@ struct task {
     struct sighand *sighand;
     sigset_t_ blocked;
     sigset_t_ pending;
+    sigset_t_ waiting; // if nonzero, an ongoing call to sigtimedwait is waiting on these
     struct list queue;
     cond_t pause; // please don't signal this
     // private

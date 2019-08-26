@@ -55,7 +55,7 @@ static void deliver_signal_unlocked(struct task *task, int sig, struct siginfo_ 
     sigqueue->info.sig = sig;
     list_add_tail(&task->queue, &sigqueue->queue);
 
-    if (sigset_has(task->blocked, sig) && signal_is_blockable(sig))
+    if (sigset_has(task->blocked & ~task->waiting, sig) && signal_is_blockable(sig))
         return;
 
     if (task != current) {
@@ -582,6 +582,57 @@ int_t sys_pause() {
         continue;
     unlock(&current->sighand->lock);
     return _EINTR;
+}
+
+int_t sys_rt_sigtimedwait(addr_t set_addr, addr_t info_addr, addr_t timeout_addr, uint_t set_size) {
+    if (set_size != sizeof(sigset_t_))
+        return _EINVAL;
+    sigset_t_ set;
+    if (user_get(set_addr, set))
+        return _EFAULT;
+    struct timespec timeout;
+    if (timeout_addr != 0) {
+        struct timespec_ fake_timeout;
+        if (user_get(timeout_addr, fake_timeout))
+            return _EFAULT;
+        timeout.tv_sec = fake_timeout.sec;
+        timeout.tv_nsec = fake_timeout.nsec;
+    }
+    STRACE("sigtimedwait(%#llx, %#x, %#x) = ...\n", (long long) set, info_addr, timeout_addr);
+
+    lock(&current->sighand->lock);
+    assert(current->waiting == 0);
+    current->waiting = set;
+    int err;
+    do {
+        err = wait_for(&current->pause, &current->sighand->lock, timeout_addr == 0 ? NULL : &timeout);
+    } while (err != 0);
+    current->waiting = 0;
+    if (err == _ETIMEDOUT) {
+        unlock(&current->sighand->lock);
+        STRACE("sigtimedwait timed out\n");
+        return _EAGAIN;
+    }
+
+    struct sigqueue *sigqueue;
+    bool found = false;
+    list_for_each_entry(&current->queue, sigqueue, queue) {
+        if (sigset_has(set, sigqueue->info.sig)) {
+            found = true;
+            list_remove(&sigqueue->queue);
+            break;
+        }
+    }
+    if (!found)
+        return _EINTR;
+    struct siginfo_ info = sigqueue->info;
+    free(sigqueue);
+    if (info_addr != 0)
+        if (user_put(info_addr, info))
+            return _EFAULT;
+    unlock(&current->sighand->lock);
+    STRACE("done sigtimedwait = %d\n", info.sig);
+    return info.sig;
 }
 
 int do_kill(pid_t_ pid, dword_t sig, pid_t_ tgid) {

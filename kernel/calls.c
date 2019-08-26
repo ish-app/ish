@@ -107,6 +107,7 @@ syscall_t syscall_table[] = {
     [174] = (syscall_t) sys_rt_sigaction,
     [175] = (syscall_t) sys_rt_sigprocmask,
     [176] = (syscall_t) sys_rt_sigpending,
+    [177] = (syscall_t) sys_rt_sigtimedwait,
     [179] = (syscall_t) sys_rt_sigsuspend,
     [180] = (syscall_t) sys_pread,
     [181] = (syscall_t) sys_pwrite,
