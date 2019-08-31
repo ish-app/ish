@@ -242,8 +242,8 @@ static inline bool gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define jcc(cc, to, else) gagg(jmp, cond_##cc, to, else); jump_ips(-2, -1); end_block = true
 #define J_REL(cc, off)  jcc(cc, fake_ip + off, fake_ip)
 #define JN_REL(cc, off) jcc(cc, fake_ip, fake_ip + off)
-#define CALL(loc) load(loc, OP_SIZE); ggg(call_indir, saved_ip, fake_ip); end_block = true
-#define CALL_REL(off) gggg(call, saved_ip, fake_ip + off, fake_ip); jump_ips(-2, 0); end_block = true
+#define CALL(loc) load(loc, OP_SIZE); ggg(call_indir, saved_ip, fake_ip); gggg(call_postamble, fake_ip, state->block, fake_ip); jump_ips(-1, 0); end_block = true
+#define CALL_REL(off) gggg(call, saved_ip, fake_ip + off, fake_ip); gggg(call_postamble, fake_ip, state->block, fake_ip); jump_ips(-6, -1); end_block = true
 #define RET_NEAR(imm) ggg(ret, saved_ip, 4 + imm); end_block = true
 #define INT(code) ggg(interrupt, (uint8_t) code, state->ip); end_block = true
 

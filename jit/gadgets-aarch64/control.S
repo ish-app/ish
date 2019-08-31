@@ -6,7 +6,12 @@
     write_prep 32, call
     ldr w8, [_ip, 16]
     str w8, [_xaddr]
+    uxth w12, w8
     write_done 32, call
+    add x13, _cpu, LOCAL_ret_cache
+    add x12, x13, x12, lsl 3
+    add x14, _ip, 24
+    str x14, [x12]
     ldr _ip, [_ip, 8]
     b jit_ret_chain
     write_bullshit 32, call
@@ -17,17 +22,47 @@
     write_prep 32, call_indir
     ldr w8, [_ip, 8]
     str w8, [_xaddr]
+    uxth w12, w8
     write_done 32, call_indir
+    add x13, _cpu, LOCAL_ret_cache
+    add x12, x13, x12, lsl 3
+    add x14, _ip, 16
+    str x14, [x12]
     mov eip, _tmp
     b jit_ret
     write_bullshit 32, call_indir
+
+.gadget call_postamble
+    ldr w9, [_ip]
+    ldr x8, [_ip, 8]
+    cmp _tmp, w9
+    b.ne 1f
+    ldr _ip, [_ip, 16]
+    cmp _ip, 0
+    b.lt 1f
+    sub x8, _ip, JIT_BLOCK_code
+    str x8, [_cpu, LOCAL_last_block]
+    gret
+1:
+    str x8, [_cpu, LOCAL_last_block]
+    mov eip, _tmp
+    b jit_ret
 
 .gadget ret
     mov _addr, esp
     ldr w8, [_ip, 8]
     add esp, esp, w8
     read_prep 32, ret
-    ldr eip, [_xaddr]
+    ldr _tmp, [_xaddr]
+    uxth w12, _tmp
+    add x13, _cpu, LOCAL_ret_cache
+    add x12, x13, x12, lsl 3
+    ldr _ip, [x12]
+    cmp _ip, 0
+    b.eq 1f
+    gret
+1:
+    mov eip, _tmp
     b jit_ret
     read_bullshit 32, ret
 
