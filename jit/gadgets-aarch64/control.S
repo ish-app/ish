@@ -9,9 +9,8 @@
     ubfx w12, w8, 4, 12
     write_done 32, call
     add x13, _cpu, LOCAL_ret_cache
-    add x12, x13, x12, lsl 3
     add x14, _ip, 24
-    str x14, [x12]
+    str x14, [x13, x12, lsl 3]
     ldr _ip, [_ip, 8]
     b jit_ret_chain
     write_bullshit 32, call
@@ -25,9 +24,8 @@
     ubfx w12, w8, 4, 12
     write_done 32, call_indir
     add x13, _cpu, LOCAL_ret_cache
-    add x12, x13, x12, lsl 3
     add x14, _ip, 16
-    str x14, [x12]
+    str x14, [x13, x12, lsl 3]
     mov eip, _tmp
     b jit_ret
     write_bullshit 32, call_indir
@@ -56,8 +54,7 @@
     ldr _tmp, [_xaddr]
     ubfx w12, _tmp, 4, 12
     add x13, _cpu, LOCAL_ret_cache
-    add x12, x13, x12, lsl 3
-    ldr _ip, [x12]
+    ldr _ip, [x13, x12, lsl 3]
     cbz _ip, 1f
     gret
 1:
