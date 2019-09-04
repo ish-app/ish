@@ -1,8 +1,8 @@
 #include "emu/cpu.h"
 
 // keep in sync with asm
-#define JIT_RETURN_CACHE_SIZE 65536
-#define JIT_RETURN_CACHE_HASH(x) ((x) & 0xFFFF)
+#define JIT_RETURN_CACHE_SIZE 4096
+#define JIT_RETURN_CACHE_HASH(x) ((x) & 0xFFF0) >> 4)
 
 struct jit_frame {
     struct cpu_state cpu;

@@ -6,7 +6,7 @@
     write_prep 32, call
     ldr w8, [_ip, 16]
     str w8, [_xaddr]
-    uxth w12, w8
+    ubfx w12, w8, 4, 12
     write_done 32, call
     add x13, _cpu, LOCAL_ret_cache
     add x12, x13, x12, lsl 3
@@ -22,7 +22,7 @@
     write_prep 32, call_indir
     ldr w8, [_ip, 8]
     str w8, [_xaddr]
-    uxth w12, w8
+    ubfx w12, w8, 4, 12
     write_done 32, call_indir
     add x13, _cpu, LOCAL_ret_cache
     add x12, x13, x12, lsl 3
@@ -54,12 +54,11 @@
     add esp, esp, w8
     read_prep 32, ret
     ldr _tmp, [_xaddr]
-    uxth w12, _tmp
+    ubfx w12, _tmp, 4, 12
     add x13, _cpu, LOCAL_ret_cache
     add x12, x13, x12, lsl 3
     ldr _ip, [x12]
-    cmp _ip, 0
-    b.eq 1f
+    cbz _ip, 1f
     gret
 1:
     mov eip, _tmp
