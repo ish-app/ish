@@ -21,6 +21,20 @@ term.on('resize', function(size) {
     webkit.messageHandlers.resize.postMessage('resize');
 });
 
+let lastHeight = 0;
+function checkScrollHeight() {
+    const height = parseFloat(term.viewportScrollArea.style.height);
+    if (height != lastHeight) {
+        webkit.messageHandlers.newScrollHeight.postMessage(height);
+    }
+}
+term.on('resize', checkScrollHeight);
+term.on('scroll', checkScrollHeight);
+function setScroll(px) {
+    term.viewportElement.scrollTop = px;
+}
+window.setScroll = setScroll;
+
 // copied from the fit addon, but without subtracting 17 pixels for a nonexistent scrollbar
 function fit() {
     // find the size of the box

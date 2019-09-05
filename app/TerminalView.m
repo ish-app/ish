@@ -5,12 +5,14 @@
 //  Created by Theodore Dubois on 11/3/17.
 //
 
+#import "ScrollbarView.h"
 #import "TerminalView.h"
 #import "UserPreferences.h"
 
 @interface TerminalView ()
 
 @property (nonatomic) NSMutableArray<UIKeyCommand *> *keyCommands;
+@property ScrollbarView *scrollbarView;
 
 @end
 
@@ -22,6 +24,7 @@
         NSAssert(self.terminal.webView.superview == self, @"old terminal view was not in our view");
         [self.terminal.webView removeFromSuperview];
         [self.terminal.webView.configuration.userContentController removeScriptMessageHandlerForName:@"focus"];
+        [self.terminal.webView.configuration.userContentController removeScriptMessageHandlerForName:@"newScrollHeight"];
     }
     
     _terminal = terminal;
@@ -31,22 +34,23 @@
     webView.scrollView.canCancelContentTouches = NO;
     webView.scrollView.panGestureRecognizer.enabled = NO;
     [webView.configuration.userContentController addScriptMessageHandler:self name:@"focus"];
-    webView.frame = self.frame;
+    [webView.configuration.userContentController addScriptMessageHandler:self name:@"newScrollHeight"];
+    webView.frame = self.bounds;
     self.opaque = webView.opaque = NO;
     webView.backgroundColor = UIColor.clearColor;
-    [self addSubview:webView];
-    webView.translatesAutoresizingMaskIntoConstraints = NO;
-    [webView.topAnchor constraintEqualToAnchor:self.topAnchor].active = YES;
-    [webView.bottomAnchor constraintEqualToAnchor:self.bottomAnchor].active = YES;
-    [webView.leadingAnchor constraintEqualToAnchor:self.leadingAnchor].active = YES;
-    [webView.trailingAnchor constraintEqualToAnchor:self.trailingAnchor].active = YES;
+    webView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+    
+    ScrollbarView *scrollbarView = self.scrollbarView = [[ScrollbarView alloc] initWithFrame:self.bounds];
+    self.scrollbarView = scrollbarView;
+    scrollbarView.contentView = webView;
+    scrollbarView.delegate = self;
+    scrollbarView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+    
+    [scrollbarView addSubview:webView];
+    [self addSubview:scrollbarView];
 }
 
-- (UIScrollView *)scrollView {
-    return self.terminal.webView.scrollView;
-}
-
-#pragma mark Focus
+#pragma mark Focus and scrolling
 
 - (BOOL)canBecomeFirstResponder {
     return YES;
@@ -59,10 +63,12 @@
 }
 
 - (void)userContentController:(WKUserContentController *)userContentController didReceiveScriptMessage:(WKScriptMessage *)message {
-    if ([message.body isEqualToString:@"focus"]) {
+    if ([message.name isEqualToString:@"focus"]) {
         if (!self.isFirstResponder) {
             [self becomeFirstResponder];
         }
+    } else if ([message.name isEqualToString:@"newScrollHeight"]) {
+        self.scrollbarView.contentSize = CGSizeMake(0, [message.body doubleValue]);
     }
 }
 
@@ -75,9 +81,13 @@
     [self resignFirstResponder];
 }
 
-// implementing these makes a keyboard pop up when this view is first responder
+- (void)scrollViewDidScroll:(UIScrollView *)scrollView {
+    [self.terminal.webView evaluateJavaScript:[NSString stringWithFormat:@"setScroll(%f)", scrollView.contentOffset.y] completionHandler:nil];
+}
 
 #pragma mark Keyboard
+
+// implementing these makes a keyboard pop up when this view is first responder
 
 - (void)insertText:(NSString *)text {
     if (self.controlKey.selected) {

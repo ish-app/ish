@@ -8,7 +8,7 @@
 #import <UIKit/UIKit.h>
 #import "Terminal.h"
 
-@interface TerminalView : UIView <UIKeyInput, WKScriptMessageHandler>
+@interface TerminalView : UIView <UIKeyInput, WKScriptMessageHandler, UIScrollViewDelegate>
 
 @property (nonatomic) UIKeyboardAppearance keyboardAppearance;
 
