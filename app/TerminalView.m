@@ -75,7 +75,6 @@
         }
     } else if ([message.name isEqualToString:@"newScrollHeight"]) {
         self.scrollbarView.contentSize = CGSizeMake(0, [message.body doubleValue]);
-        [self.scrollbarView flashScrollIndicators];
     } else if ([message.name isEqualToString:@"newScrollTop"]) {
         CGFloat newOffset = [message.body doubleValue];
         if (self.scrollbarView.contentOffset.y == newOffset)
@@ -95,6 +94,15 @@
 
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView {
     [self.terminal.webView evaluateJavaScript:[NSString stringWithFormat:@"exports.newScrollTop(%f)", scrollView.contentOffset.y] completionHandler:nil];
+}
+
+- (void)setKeyboardAppearance:(UIKeyboardAppearance)keyboardAppearance {
+    _keyboardAppearance = keyboardAppearance;
+    if (keyboardAppearance == UIKeyboardAppearanceLight) {
+        self.scrollbarView.indicatorStyle = UIScrollViewIndicatorStyleBlack;
+    } else {
+        self.scrollbarView.indicatorStyle = UIScrollViewIndicatorStyleWhite;
+    }
 }
 
 #pragma mark Keyboard
