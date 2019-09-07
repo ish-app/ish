@@ -11,7 +11,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface ScrollbarView : UIScrollView
 
-@property (nonatomic) UIView *contentView;
+@property (nonatomic, nullable) UIView *contentView;
 
 @end
 

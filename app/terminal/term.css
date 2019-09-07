@@ -1,0 +1,11 @@
+body {
+    margin: 0;
+    background: transparent;
+    overflow: hidden;
+}
+
+#terminal {
+    position: absolute;
+    top: 3px; bottom: 3px;
+    left: 5px; right: 5px;
+}

@@ -18,13 +18,30 @@
 
 @implementation TerminalView
 
+- (void)awakeFromNib {
+    [super awakeFromNib];
+    self.inputAssistantItem.leadingBarButtonGroups = @[];
+    self.inputAssistantItem.trailingBarButtonGroups = @[];
+
+    ScrollbarView *scrollbarView = self.scrollbarView = [[ScrollbarView alloc] initWithFrame:self.bounds];
+    self.scrollbarView = scrollbarView;
+    scrollbarView.delegate = self;
+    scrollbarView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+    scrollbarView.bounces = NO;
+    [self addSubview:scrollbarView];
+}
+
 - (void)setTerminal:(Terminal *)terminal {
+    NSArray<NSString *>* handlers = @[@"focus", @"newScrollHeight", @"newScrollTop"];
+    
     if (self.terminal) {
         // remove old terminal
-        NSAssert(self.terminal.webView.superview == self, @"old terminal view was not in our view");
+        NSAssert(self.terminal.webView.superview == self.scrollbarView, @"old terminal view was not in our view");
         [self.terminal.webView removeFromSuperview];
-        [self.terminal.webView.configuration.userContentController removeScriptMessageHandlerForName:@"focus"];
-        [self.terminal.webView.configuration.userContentController removeScriptMessageHandlerForName:@"newScrollHeight"];
+        self.scrollbarView.contentView = nil;
+        for (NSString *handler in handlers) {
+            [self.terminal.webView.configuration.userContentController removeScriptMessageHandlerForName:handler];
+        }
     }
     
     _terminal = terminal;
@@ -33,33 +50,22 @@
     webView.scrollView.delaysContentTouches = NO;
     webView.scrollView.canCancelContentTouches = NO;
     webView.scrollView.panGestureRecognizer.enabled = NO;
-    [webView.configuration.userContentController addScriptMessageHandler:self name:@"focus"];
-    [webView.configuration.userContentController addScriptMessageHandler:self name:@"newScrollHeight"];
+    for (NSString *handler in handlers) {
+        [webView.configuration.userContentController addScriptMessageHandler:self name:handler];
+    }
     webView.frame = self.bounds;
     self.opaque = webView.opaque = NO;
     webView.backgroundColor = UIColor.clearColor;
     webView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     
-    ScrollbarView *scrollbarView = self.scrollbarView = [[ScrollbarView alloc] initWithFrame:self.bounds];
-    self.scrollbarView = scrollbarView;
-    scrollbarView.contentView = webView;
-    scrollbarView.delegate = self;
-    scrollbarView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-    
-    [scrollbarView addSubview:webView];
-    [self addSubview:scrollbarView];
+    self.scrollbarView.contentView = webView;
+    [self.scrollbarView addSubview:webView];
 }
 
 #pragma mark Focus and scrolling
 
 - (BOOL)canBecomeFirstResponder {
     return YES;
-}
-
-- (void)awakeFromNib {
-    [super awakeFromNib];
-    self.inputAssistantItem.leadingBarButtonGroups = @[];
-    self.inputAssistantItem.trailingBarButtonGroups = @[];
 }
 
 - (void)userContentController:(WKUserContentController *)userContentController didReceiveScriptMessage:(WKScriptMessage *)message {
@@ -69,11 +75,17 @@
         }
     } else if ([message.name isEqualToString:@"newScrollHeight"]) {
         self.scrollbarView.contentSize = CGSizeMake(0, [message.body doubleValue]);
+        [self.scrollbarView flashScrollIndicators];
+    } else if ([message.name isEqualToString:@"newScrollTop"]) {
+        CGFloat newOffset = [message.body doubleValue];
+        if (self.scrollbarView.contentOffset.y == newOffset)
+            return;
+        [self.scrollbarView setContentOffset:CGPointMake(0, newOffset) animated:NO];
     }
 }
 
 - (BOOL)resignFirstResponder {
-    [self.terminal.webView evaluateJavaScript:@"term.blur()" completionHandler:nil];
+    [self.terminal.webView evaluateJavaScript:@"exports.blur()" completionHandler:nil];
     return [super resignFirstResponder];
 }
 
@@ -82,7 +94,7 @@
 }
 
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView {
-    [self.terminal.webView evaluateJavaScript:[NSString stringWithFormat:@"setScroll(%f)", scrollView.contentOffset.y] completionHandler:nil];
+    [self.terminal.webView evaluateJavaScript:[NSString stringWithFormat:@"exports.newScrollTop(%f)", scrollView.contentOffset.y] completionHandler:nil];
 }
 
 #pragma mark Keyboard
@@ -119,15 +131,7 @@
 }
 
 - (void)copy:(id)sender {
-    [self.terminal.webView evaluateJavaScript:@"window.getSelection().toString()" completionHandler:^(NSString *selection, NSError *err) {
-        if (err != nil) {
-            NSLog(@"error copying: %@", err);
-            return;
-        }
-        // xterm uses nonbreaking spaces for no apparent reason
-        selection = [selection stringByReplacingOccurrencesOfString:@"\u00a0" withString:@" "];
-        UIPasteboard.generalPasteboard.string = selection;
-    }];
+    [self.terminal.webView evaluateJavaScript:@"exports.copy()" completionHandler:nil];
 }
 
 - (id)forwardingTargetForSelector:(SEL)selector {
@@ -145,7 +149,7 @@
 }
 
 - (void)clearScreen:(UIKeyCommand *)command {
-    [self.terminal.webView evaluateJavaScript:@"term.clear()" completionHandler:nil];
+    [self.terminal.webView evaluateJavaScript:@"exports.clear()" completionHandler:nil];
 }
 
 - (UITextSmartDashesType)smartDashesType API_AVAILABLE(ios(11)) {

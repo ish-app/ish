@@ -5,7 +5,6 @@
 //  Created by Theodore Dubois on 10/18/17.
 //
 
-#include <iconv.h>
 #import "Terminal.h"
 #import "DelayedUITask.h"
 #import "UserPreferences.h"
@@ -14,6 +13,7 @@
 @interface Terminal () <WKScriptMessageHandler>
 
 @property WKWebView *webView;
+@property BOOL loaded;
 @property (nonatomic) struct tty *tty;
 @property NSMutableData *pendingData;
 
@@ -48,6 +48,7 @@ static NSMutableDictionary<NSNumber *, Terminal *> *terminals;
         self.scrollToBottomTask = [[DelayedUITask alloc] initWithTarget:self action:@selector(scrollToBottom)];
         
         WKWebViewConfiguration *config = [WKWebViewConfiguration new];
+        [config.userContentController addScriptMessageHandler:self name:@"load"];
         [config.userContentController addScriptMessageHandler:self name:@"log"];
         [config.userContentController addScriptMessageHandler:self name:@"resize"];
         [config.userContentController addScriptMessageHandler:self name:@"propUpdate"];
@@ -55,9 +56,8 @@ static NSMutableDictionary<NSNumber *, Terminal *> *terminals;
         CGRect webviewSize = CGRectMake(0, 0, 10000, 10000);
         self.webView = [[CustomWebView alloc] initWithFrame:webviewSize configuration:config];
         self.webView.scrollView.scrollEnabled = NO;
-        NSURL *xtermHtmlFile = [NSBundle.mainBundle URLForResource:@"xterm-dist/term" withExtension:@"html"];
+        NSURL *xtermHtmlFile = [NSBundle.mainBundle URLForResource:@"term" withExtension:@"html"];
         [self.webView loadFileURL:xtermHtmlFile allowingReadAccessToURL:xtermHtmlFile];
-        [self.webView addObserver:self forKeyPath:@"loading" options:0 context:NULL];
         [self _addPreferenceObservers];
         
         [terminals setObject:self forKey:key];
@@ -71,7 +71,11 @@ static NSMutableDictionary<NSNumber *, Terminal *> *terminals;
 }
 
 - (void)userContentController:(WKUserContentController *)userContentController didReceiveScriptMessage:(WKScriptMessage *)message {
-    if ([message.name isEqualToString:@"log"]) {
+    if ([message.name isEqualToString:@"load"]) {
+        [self _updateStyleFromPreferences];
+        self.loaded = YES;
+        [self.refreshTask schedule];
+    } else if ([message.name isEqualToString:@"log"]) {
         NSLog(@"%@", message.body);
     } else if ([message.name isEqualToString:@"resize"]) {
         [self syncWindowSize];
@@ -81,7 +85,7 @@ static NSMutableDictionary<NSNumber *, Terminal *> *terminals;
 }
 
 - (void)syncWindowSize {
-    [self.webView evaluateJavaScript:@"[term.cols, term.rows]" completionHandler:^(NSArray<NSNumber *> *dimensions, NSError *error) {
+    [self.webView evaluateJavaScript:@"exports.getSize()" completionHandler:^(NSArray<NSNumber *> *dimensions, NSError *error) {
         if (self.tty == NULL) {
             return;
         }
@@ -107,7 +111,7 @@ static NSMutableDictionary<NSNumber *, Terminal *> *terminals;
 }
 
 - (void)scrollToBottom {
-    [self.webView evaluateJavaScript:@"term.scrollToBottom()" completionHandler:nil];
+    [self.webView evaluateJavaScript:@"exports.scrollToBottom()" completionHandler:nil];
 }
 
 - (NSString *)arrow:(char)direction {
@@ -136,15 +140,11 @@ static NSMutableDictionary<NSNumber *, Terminal *> *terminals;
                      @"backgroundColor": [self cssColor:prefs.theme.backgroundColor],
                      };
     NSString *json = [[NSString alloc] initWithData:[NSJSONSerialization dataWithJSONObject:themeInfo options:0 error:nil] encoding:NSUTF8StringEncoding];
-    [self.webView evaluateJavaScript:[NSString stringWithFormat:@"updateStyle(%@)", json] completionHandler:nil];
+    [self.webView evaluateJavaScript:[NSString stringWithFormat:@"exports.updateStyle(%@)", json] completionHandler:nil];
 }
 
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context {
-    if (object == self.webView && [keyPath isEqualToString:@"loading"] && !self.webView.loading) {
-        [self _updateStyleFromPreferences];
-        [self.refreshTask schedule];
-        [self.webView removeObserver:self forKeyPath:@"loading"];
-    } else if (object == [UserPreferences shared]) {
+    if (object == [UserPreferences shared]) {
         [self _updateStyleFromPreferences];
     }
 }
@@ -209,7 +209,7 @@ NSData *removeInvalidUTF8(NSData *data) {
 }
 
 - (void)refresh {
-    if (self.webView.loading)
+    if (!self.loaded)
         return;
     
     NSData *data;
@@ -224,7 +224,7 @@ NSData *removeInvalidUTF8(NSData *data) {
     NSData *jsonData = [NSJSONSerialization dataWithJSONObject:@[str] options:0 error:&err];
     NSString *json = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
     NSAssert(err == nil, @"JSON serialization failed, wtf");
-    NSString *jsToEvaluate = [NSString stringWithFormat:@"termWrite(%@[0])", json];
+    NSString *jsToEvaluate = [NSString stringWithFormat:@"exports.write(%@[0])", json];
     [self.webView evaluateJavaScript:jsToEvaluate completionHandler:nil];
 }
 

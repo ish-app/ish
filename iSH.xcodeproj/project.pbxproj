@@ -13,8 +13,11 @@
 		BB0FC5921F980A6C00803272 /* Terminal.m in Sources */ = {isa = PBXBuildFile; fileRef = BB0FC5911F980A6B00803272 /* Terminal.m */; };
 		BB13F7EA200ADCED003D1C4D /* libish.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BB13F7DC200AD81D003D1C4D /* libish.a */; };
 		BB23F58D231E1D1400585522 /* ScrollbarView.m in Sources */ = {isa = PBXBuildFile; fileRef = BB23F58C231E1D1400585522 /* ScrollbarView.m */; };
+		BB2B4DAC231D94C300CB578B /* hterm_all.js in Resources */ = {isa = PBXBuildFile; fileRef = BB2B4DAB231D94C300CB578B /* hterm_all.js */; };
+		BB2B4DAD231D998300CB578B /* term.js in Resources */ = {isa = PBXBuildFile; fileRef = BB4A539C1FAA490C00A72ACE /* term.js */; };
+		BB2B4DAE231D998300CB578B /* term.css in Resources */ = {isa = PBXBuildFile; fileRef = BB4A53AF1FAA787900A72ACE /* term.css */; };
+		BB2B4DAF231D998300CB578B /* term.html in Resources */ = {isa = PBXBuildFile; fileRef = BB4A53A91FAA496700A72ACE /* term.html */; };
 		BB455E111FB37F6600AFB48B /* DelayedUITask.m in Sources */ = {isa = PBXBuildFile; fileRef = BB455E101FB37F6600AFB48B /* DelayedUITask.m */; };
-		BB52C03D2083DA3600104515 /* xterm-dist in Resources */ = {isa = PBXBuildFile; fileRef = BB52C03C2083DA3600104515 /* xterm-dist */; };
 		BB60F55221573FCA003A4E52 /* BarButton.m in Sources */ = {isa = PBXBuildFile; fileRef = BB60F55121573FCA003A4E52 /* BarButton.m */; };
 		BB623CF91FA7C68800932047 /* alpine in Resources */ = {isa = PBXBuildFile; fileRef = BBF124901FA7C3100088FB50 /* alpine */; };
 		BB6DB261216435340047A611 /* libiconv.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = BB6DB260216435330047A611 /* libiconv.tbd */; };
@@ -111,13 +114,12 @@
 		BB13F7DC200AD81D003D1C4D /* libish.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libish.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		BB23F58B231E1D1400585522 /* ScrollbarView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ScrollbarView.h; sourceTree = "<group>"; };
 		BB23F58C231E1D1400585522 /* ScrollbarView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ScrollbarView.m; sourceTree = "<group>"; };
+		BB2B4DAB231D94C300CB578B /* hterm_all.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = hterm_all.js; path = libapps/hterm/dist/js/hterm_all.js; sourceTree = "<group>"; };
 		BB455E0F1FB37F6600AFB48B /* DelayedUITask.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DelayedUITask.h; sourceTree = "<group>"; };
 		BB455E101FB37F6600AFB48B /* DelayedUITask.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = DelayedUITask.m; sourceTree = "<group>"; };
-		BB4A539A1FAA411D00A72ACE /* package.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = package.json; sourceTree = "<group>"; };
 		BB4A539C1FAA490C00A72ACE /* term.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; path = term.js; sourceTree = "<group>"; };
 		BB4A53A91FAA496700A72ACE /* term.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = term.html; sourceTree = "<group>"; };
 		BB4A53AF1FAA787900A72ACE /* term.css */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.css; path = term.css; sourceTree = "<group>"; };
-		BB52C03C2083DA3600104515 /* xterm-dist */ = {isa = PBXFileReference; lastKnownFileType = folder; path = "xterm-dist"; sourceTree = "<group>"; };
 		BB60F55021573FCA003A4E52 /* BarButton.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BarButton.h; sourceTree = "<group>"; };
 		BB60F55121573FCA003A4E52 /* BarButton.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = BarButton.m; sourceTree = "<group>"; };
 		BB6DB260216435330047A611 /* libiconv.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libiconv.tbd; path = usr/lib/libiconv.tbd; sourceTree = SDKROOT; };
@@ -339,16 +341,15 @@
 			name = "most of the code";
 			sourceTree = "<group>";
 		};
-		BB4A53991FAA40FD00A72ACE /* xtermjs */ = {
+		BB4A53991FAA40FD00A72ACE /* terminal */ = {
 			isa = PBXGroup;
 			children = (
+				BB4A53A91FAA496700A72ACE /* term.html */,
 				BB4A539C1FAA490C00A72ACE /* term.js */,
 				BB4A53AF1FAA787900A72ACE /* term.css */,
-				BB4A53A91FAA496700A72ACE /* term.html */,
-				BB4A539A1FAA411D00A72ACE /* package.json */,
-				BB52C03C2083DA3600104515 /* xterm-dist */,
+				BB2B4DAB231D94C300CB578B /* hterm_all.js */,
 			);
-			path = xtermjs;
+			path = terminal;
 			sourceTree = "<group>";
 		};
 		BB792B451F96D8E000FFB7A4 = {
@@ -388,7 +389,7 @@
 				BB0FC5911F980A6B00803272 /* Terminal.m */,
 				BB23F58B231E1D1400585522 /* ScrollbarView.h */,
 				BB23F58C231E1D1400585522 /* ScrollbarView.m */,
-				BB4A53991FAA40FD00A72ACE /* xtermjs */,
+				BB4A53991FAA40FD00A72ACE /* terminal */,
 				650B337222EA235C00B4C03E /* Pasteboard.h */,
 				650B337322EA235C00B4C03E /* Pasteboard.m */,
 				BB792B591F96D90D00FFB7A4 /* Main.storyboard */,
@@ -839,7 +840,10 @@
 				BBBCE7E321D2F02200CA00B3 /* About.storyboard in Resources */,
 				BB792B5B1F96D90D00FFB7A4 /* Main.storyboard in Resources */,
 				BB623CF91FA7C68800932047 /* alpine in Resources */,
-				BB52C03D2083DA3600104515 /* xterm-dist in Resources */,
+				BB2B4DAF231D998300CB578B /* term.html in Resources */,
+				BB2B4DAC231D94C300CB578B /* hterm_all.js in Resources */,
+				BB2B4DAE231D998300CB578B /* term.css in Resources */,
+				BB2B4DAD231D998300CB578B /* term.js in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -873,17 +877,15 @@
 			files = (
 			);
 			inputPaths = (
-				"$(SRCROOT)/app/xtermjs/term.js",
-				"$(SRCROOT)/app/xtermjs/term.css",
-				"$(SRCROOT)/app/xtermjs/term.html",
+				"$(SRCROOT)/app/terminal/libapps",
 			);
 			name = "Compile JavaScript";
 			outputPaths = (
-				"$(SRCROOT)/app/xtermjs/bundle.js",
+				"$(SRCROOT)/app/terminal/libapps/hterm/dist/js/hterm_all.js",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = "/bin/sh -e";
-			shellScript = "unset SDKROOT\ncd $SRCROOT/app/xtermjs\ntest -d node_modules || npm install\nnpm run build\n";
+			shellScript = "cd $SRCROOT/app/terminal/libapps\n./hterm/bin/mkdist\n";
 		};
 		BBF1248A1FA7BDBA0088FB50 /* Create Alpine Filesystem */ = {
 			isa = PBXShellScriptBuildPhase;

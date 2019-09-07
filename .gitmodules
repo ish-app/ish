@@ -1,0 +1,3 @@
+[submodule "libapps"]
+	path = app/terminal/libapps
+	url = https://chromium.googlesource.com/apps/libapps

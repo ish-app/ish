@@ -16,6 +16,5 @@
 @property (weak) IBOutlet UIButton *controlKey;
 
 @property (nonatomic) Terminal *terminal;
-@property (readonly) UIScrollView *scrollView;
 
 @end
