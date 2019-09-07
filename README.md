@@ -22,7 +22,6 @@ You'll need these things to build the project:
 
  - Python 3
  - Ninja
- - Node and NPM (only when building for iOS)
  - Meson (`pip install meson`)
  - Clang and LLD (on mac, `brew install llvm`, on linux, `sudo apt install clang lld` or `sudo pacman -S clang lld` or whatever)
  - sqlite3 (this is so common it may already be installed on linux and is definitely already installed on mac. if not, do something like `sudo apt install libsqlite3-dev`)
