@@ -10,6 +10,7 @@ struct gen_state {
     unsigned size;
     unsigned capacity;
     unsigned jump_ip[2];
+    unsigned block_patch_ip; // for call/call_indir gadgets
 };
 
 void gen_start(addr_t addr, struct gen_state *state);

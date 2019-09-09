@@ -28,6 +28,7 @@ void gen_start(addr_t addr, struct gen_state *state) {
     for (int i = 0; i <= 1; i++) {
         state->jump_ip[i] = 0;
     }
+    state->block_patch_ip = 0;
 
     struct jit_block *block = malloc(sizeof(struct jit_block) + state->capacity * sizeof(unsigned long));
     state->block = block;
@@ -46,6 +47,9 @@ void gen_end(struct gen_state *state) {
 
         list_init(&block->jumps_from[i]);
         list_init(&block->jumps_from_links[i]);
+    }
+    if (state->block_patch_ip != 0) {
+        block->code[state->block_patch_ip] = (unsigned long)block;
     }
     if (block->addr != state->ip)
         block->end_addr = state->ip - 1;
@@ -118,6 +122,8 @@ typedef void (*gadget_t)(void);
 #define gg(_g, a) do { g(_g); GEN(a); } while (0)
 #define ggg(_g, a, b) do { g(_g); GEN(a); GEN(b); } while (0)
 #define gggg(_g, a, b, c) do { g(_g); GEN(a); GEN(b); GEN(c); } while (0)
+#define ggggg(_g, a, b, c, d) do { g(_g); GEN(a); GEN(b); GEN(c); GEN(d); } while (0)
+#define gggggg(_g, a, b, c, d, e) do { g(_g); GEN(a); GEN(b); GEN(c); GEN(d); GEN(e); } while (0)
 #define ga(g, i) do { extern gadget_t g##_gadgets[]; if (g##_gadgets[i] == NULL) UNDEFINED; GEN(g##_gadgets[i]); } while (0)
 #define gag(g, i, a) do { ga(g, i); GEN(a); } while (0)
 #define gagg(g, i, a, b) do { ga(g, i); GEN(a); GEN(b); } while (0)
@@ -242,8 +248,20 @@ static inline bool gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define jcc(cc, to, else) gagg(jmp, cond_##cc, to, else); jump_ips(-2, -1); end_block = true
 #define J_REL(cc, off)  jcc(cc, fake_ip + off, fake_ip)
 #define JN_REL(cc, off) jcc(cc, fake_ip, fake_ip + off)
-#define CALL(loc) load(loc, OP_SIZE); ggg(call_indir, saved_ip, fake_ip); gggg(call_postamble, fake_ip, -1, fake_ip); state->block->code[state->size - 2] = (long)state->block; jump_ips(-1, 0); end_block = true
-#define CALL_REL(off) gggg(call, saved_ip, fake_ip + off, fake_ip); gggg(call_postamble, fake_ip, -1, fake_ip); state->block->code[state->size - 2] = (long)state->block; jump_ips(-6, -1); end_block = true
+
+#define CALL(loc) do { \
+    load(loc, OP_SIZE); \
+    ggggg(call_indir, saved_ip, -1, fake_ip, fake_ip); \
+    state->block_patch_ip = state->size - 3; \
+    jump_ips(-1, 0); \
+    end_block = true; \
+} while (0)
+#define CALL_REL(off) do { \
+    gggggg(call, saved_ip, -1, fake_ip, fake_ip, fake_ip + off); \
+    state->block_patch_ip = state->size - 4; \
+    jump_ips(-2, -1); \
+    end_block = true; \
+} while (0)
 #define RET_NEAR(imm) ggg(ret, saved_ip, 4 + imm); end_block = true
 #define INT(code) ggg(interrupt, (uint8_t) code, state->ip); end_block = true
 
