@@ -59,7 +59,12 @@ static void deliver_signal_unlocked(struct task *task, int sig, struct siginfo_ 
         return;
 
     if (task != current) {
+        pthread_kill(task->thread, SIGUSR1);
+
+        // wake up any pthread condition waiters
         // actual madness, I hope to god it's correct
+        // must release the sighand lock while going insane, to avoid a deadlock
+        unlock(&task->sighand->lock);
 retry:
         lock(&task->waiting_cond_lock);
         if (task->waiting_cond != NULL) {
@@ -77,7 +82,7 @@ retry:
                 unlock(task->waiting_lock);
         }
         unlock(&task->waiting_cond_lock);
-        pthread_kill(task->thread, SIGUSR1);
+        lock(&task->sighand->lock);
     }
 }
 
