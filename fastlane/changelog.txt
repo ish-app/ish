@@ -1,15 +1,12 @@
 Fixed bugs:
-- Weird hangs when using zsh
-- Hang on fish startup
-- Might have fixed someone's crash when using imagemagick
-- Bad system call from dig
-- Giant memory leak where part of a mapped file would never be freed on iOS. Now you can compile large programs without an out of memory crash!
-- Crash when installing things with composer
+- A couple hangs and crashes revealed by running `npm` in a loop
 
 New stuff:
-- /dev/clipboard exists and provides read/write access to your iOS clipboard. Thanks to @stek29 on github for making this happen.
+- Return cache optimization by @wishstudio, makes things about 10% faster
+- Replace the terminal emulator with hterm
+- Fixed scrolling once and for all
 
-Again, nothing new on the iOS 13 scrolling front. Someone sent a pull request that enabled xterm's builtin scrolling emulation, but it doesn't support momentum scrolling. I'm starting to think the most reasonable thing to do would be to reimplement momentum scrom first principles. That at least seems much easier than text selection.
+You heard that right. Scrolling is working on iOS 13, you can even see the scrollbar! At least until some future iOS version breaks it. Also you can now copy stuff from the terminal without also copying large amounts of whitespace from the end of each line.
 
 Send bug reports or feedback here: https://github.com/tbodt/ish/issues (or by email, if you prefer)
 Follow iSH on Twitter: https://twitter.com/iSH_app
