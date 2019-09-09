@@ -8,20 +8,22 @@
 
 // locks, implemented using pthread
 
-#define LOCK_DEBUG 0
+#define LOCK_DEBUG 1
 
 typedef struct {
     pthread_mutex_t m;
     pthread_t owner;
 #if LOCK_DEBUG
-    const char *file;
-    int line;
-    int pid;
+    struct lock_debug {
+        const char *file;
+        int line;
+        int pid;
+    } debug;
 #endif
 } lock_t;
 #define lock_init(lock) pthread_mutex_init(&(lock)->m, NULL)
 #if LOCK_DEBUG
-#define LOCK_INITIALIZER {PTHREAD_MUTEX_INITIALIZER, 0, 0, 0, 0}
+#define LOCK_INITIALIZER {PTHREAD_MUTEX_INITIALIZER, 0, {}}
 #else
 #define LOCK_INITIALIZER {PTHREAD_MUTEX_INITIALIZER, 0}
 #endif
@@ -29,19 +31,17 @@ static inline void __lock(lock_t *lock, __attribute__((unused)) const char *file
     pthread_mutex_lock(&lock->m);
     lock->owner = pthread_self();
 #if LOCK_DEBUG
-    lock->file = file;
-    lock->line = line;
+    lock->debug.file = file;
+    lock->debug.line = line;
     extern int current_pid(void);
-    lock->pid = current_pid();
+    lock->debug.pid = current_pid();
 #endif
 }
 #define lock(lock) __lock(lock, __FILE__, __LINE__)
 static inline void unlock(lock_t *lock) {
     pthread_mutex_unlock(&lock->m);
 #if LOCK_DEBUG
-    lock->file = NULL;
-    lock->line = 0;
-    lock->pid = 0;
+    lock->debug = (struct lock_debug) {};
 #endif
 }
 #define unlock(lock) pthread_mutex_unlock(&(lock)->m)

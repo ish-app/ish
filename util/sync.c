@@ -47,6 +47,10 @@ int wait_for_ignore_signals(cond_t *cond, lock_t *lock, struct timespec *timeout
         unlock(&current->waiting_cond_lock);
     }
     int rc = 0;
+#if LOCK_DEBUG
+    struct lock_debug lock_tmp = lock->debug;
+    lock->debug = (struct lock_debug) {};
+#endif
     if (!timeout) {
         pthread_cond_wait(&cond->cond, &lock->m);
     } else {
@@ -66,6 +70,9 @@ int wait_for_ignore_signals(cond_t *cond, lock_t *lock, struct timespec *timeout
 #error Unimplemented pthread_cond_wait relative timeout.
 #endif
     }
+#if LOCK_DEBUG
+    lock->debug = lock_tmp;
+#endif
 
     if (current) {
         lock(&current->waiting_cond_lock);
