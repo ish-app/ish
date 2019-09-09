@@ -8,40 +8,22 @@
     movl %r14d, (%_addrq)
     shrw $4, %r14w
     movzwl %r14w, %r14d
-    leaq 24(%_ip), %r15
-    movq %r15, LOCAL_ret_cache(%_cpu, %r14, 8)
+    movq %_ip, LOCAL_ret_cache(%_cpu, %r14, 8)
     write_done 32, call
-    movq 8(%_ip), %_ip
+    movq 32(%_ip), %_ip
     jmp jit_ret_chain
 
 .gadget call_indir
     subl $4, %_esp
     movl %_esp, %_addr
     write_prep 32, call_indir
-    movl 8(%_ip), %r14d
+    movl 16(%_ip), %r14d
     movl %r14d, (%_addrq)
     shrw $4, %r14w
     movzwl %r14w, %r14d
-    leaq 16(%_ip), %r15
-    movq %r15, LOCAL_ret_cache(%_cpu, %r14, 8)
+    movq %_ip, LOCAL_ret_cache(%_cpu, %r14, 8)
     write_done 32, call_indir
     movl %_tmp, %_eip
-    jmp jit_ret
-
-.gadget call_postamble
-    movl (%_ip), %r14d
-    movq 8(%_ip), %r15
-    cmpl %r14d, %tmpd
-    jnz 1f
-    movq 16(%_ip), %_ip
-    btq $63, %_ip
-    jc 1f
-    leaq -JIT_BLOCK_code(%_ip), %r15
-    movq %r15, LOCAL_last_block(%_cpu)
-    gret
-1:
-    movq %r15, LOCAL_last_block(%_cpu)
-    movl %tmpd, %_eip
     jmp jit_ret
 
 .gadget ret
@@ -54,10 +36,22 @@
     movzwq %r14w, %r14
     movq LOCAL_ret_cache(%_cpu, %r14, 8), %_ip
     cmpq $0, %_ip
-    jz 1f
+    jz 2f
+    movl 16(%_ip), %r14d
+    movq 8(%_ip), %r15
+    cmpl %r14d, %tmpd
+    jnz 1f
+    movq 24(%_ip), %_ip
+    btq $63, %_ip
+    jc 1f
+    leaq -JIT_BLOCK_code(%_ip), %r15
+    movq %r15, LOCAL_last_block(%_cpu)
     gret
 1:
-    mov %tmp, %_ip
+    movq %r15, LOCAL_last_block(%_cpu)
+    // fallthrough
+2:
+    movl %tmpd, %_eip
     jmp jit_ret
 
 .gadget jmp_indir
