@@ -251,7 +251,7 @@ static inline bool gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 
 // saved_ip: for use with page fault handler;
 // -1: will be patched to block address in gen_end();
-// fake_ip: the first one is used for verifying the cached ip in return cache is correct;
+// fake_ip: the first one is the return address, used for saving to stack and verifying the cached ip in return cache is correct;
 // fake_ip: the second one is the return target, patchable by return chaining.
 #define CALL(loc) do { \
     load(loc, OP_SIZE); \

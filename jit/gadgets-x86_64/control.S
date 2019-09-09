@@ -3,44 +3,55 @@
 .gadget call
     subl $4, %_esp
     movl %_esp, %_addr
+    // save return address
     write_prep 32, call
     movl 16(%_ip), %r14d
     movl %r14d, (%_addrq)
+    // save ip-to-arguments to return cache
     shrw $4, %r14w
     movzwl %r14w, %r14d
     movq %_ip, LOCAL_ret_cache(%_cpu, %r14, 8)
-    write_done 32, call
+    write_done 32, call // clobbers r14
+    // jump to target
     movq 32(%_ip), %_ip
     jmp jit_ret_chain
 
 .gadget call_indir
     subl $4, %_esp
     movl %_esp, %_addr
+    // save return address
     write_prep 32, call_indir
     movl 16(%_ip), %r14d
     movl %r14d, (%_addrq)
+    // save ip-to-arguments to return cache
     shrw $4, %r14w
     movzwl %r14w, %r14d
     movq %_ip, LOCAL_ret_cache(%_cpu, %r14, 8)
-    write_done 32, call_indir
+    write_done 32, call_indir // clobbers r14
+    // jump to target
     movl %_tmp, %_eip
     jmp jit_ret
 
 .gadget ret
     movl %_esp, %_addr
     addl 8(%_ip), %_esp
+    // load return address and save to _tmp
     read_prep 32, ret
     movl (%_addrq), %tmpd
     movl %tmpd, %r14d
+    // load saved ip in return cache
     shrw $4, %r14w
     movzwq %r14w, %r14
     movq LOCAL_ret_cache(%_cpu, %r14, 8), %_ip
+    // found?
     cmpq $0, %_ip
     jz 2f
+    // check if we jumped to the correct CALL instruction
     movl 16(%_ip), %r14d
     movq 8(%_ip), %r15
     cmpl %r14d, %tmpd
     jnz 1f
+    // good, now do return chaining, the logic is similar to `jit_ret_chain`
     movq 24(%_ip), %_ip
     btq $63, %_ip
     jc 1f

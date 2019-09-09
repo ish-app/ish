@@ -10,5 +10,5 @@ struct jit_frame {
     addr_t value_addr;
     uint64_t value[2]; // buffer for crosspage crap
     struct jit_block *last_block;
-    long ret_cache[JIT_RETURN_CACHE_SIZE];
+    long ret_cache[JIT_RETURN_CACHE_SIZE]; // a map of ip to pointer-to-call-gadget-arguments
 };
