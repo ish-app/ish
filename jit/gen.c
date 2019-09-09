@@ -49,7 +49,7 @@ void gen_end(struct gen_state *state) {
         list_init(&block->jumps_from_links[i]);
     }
     if (state->block_patch_ip != 0) {
-        block->code[state->block_patch_ip] = (unsigned long)block;
+        block->code[state->block_patch_ip] = (unsigned long) block;
     }
     if (block->addr != state->ip)
         block->end_addr = state->ip - 1;
@@ -249,6 +249,10 @@ static inline bool gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define J_REL(cc, off)  jcc(cc, fake_ip + off, fake_ip)
 #define JN_REL(cc, off) jcc(cc, fake_ip, fake_ip + off)
 
+// saved_ip: for use with page fault handler;
+// -1: will be patched to block address in gen_end();
+// fake_ip: the first one is used for verifying the cached ip in return cache is correct;
+// fake_ip: the second one is the return target, patchable by return chaining.
 #define CALL(loc) do { \
     load(loc, OP_SIZE); \
     ggggg(call_indir, saved_ip, -1, fake_ip, fake_ip); \
@@ -256,6 +260,8 @@ static inline bool gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
     jump_ips(-1, 0); \
     end_block = true; \
 } while (0)
+// the first four arguments are the same with CALL,
+// the last one is the call target, patchable by return chaining.
 #define CALL_REL(off) do { \
     gggggg(call, saved_ip, -1, fake_ip, fake_ip, fake_ip + off); \
     state->block_patch_ip = state->size - 4; \
