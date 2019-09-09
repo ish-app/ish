@@ -48,6 +48,7 @@ void cpu() {
     OFFSET(LOCAL, jit_frame, value);
     OFFSET(LOCAL, jit_frame, value_addr);
     OFFSET(LOCAL, jit_frame, last_block);
+    OFFSET(LOCAL, jit_frame, ret_cache);
     OFFSET(CPU, cpu_state, segfault_addr);
     OFFSET(CPU, cpu_state, segfault_type);
     MACRO(MEM_READ);

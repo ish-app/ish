@@ -152,6 +152,8 @@ void cpu_run(struct cpu_state *cpu) {
     struct jit *jit = cpu->mem->jit;
     struct jit_block *cache[JIT_CACHE_SIZE] = {};
     struct jit_frame frame = {.cpu = *cpu};
+    for (size_t i = 0; i < JIT_RETURN_CACHE_SIZE; i++)
+        frame.ret_cache[i] = 0;
 
     int i = 0;
     read_wrlock(&cpu->mem->lock);
@@ -205,6 +207,9 @@ void cpu_run(struct cpu_state *cpu) {
             tlb.mem = cpu->mem;
             if (cpu->mem->changes != changes) {
                 tlb_flush(&tlb);
+                // flush return cache
+                for (size_t i = 0; i < JIT_RETURN_CACHE_SIZE; i++)
+                    frame.ret_cache[i] = 0;
                 changes = cpu->mem->changes;
             }
             memset(cache, 0, sizeof(cache));

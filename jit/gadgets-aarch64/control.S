@@ -3,21 +3,33 @@
 .gadget call
     sub esp, esp, 4
     mov _addr, esp
+    // save return address
     write_prep 32, call
     ldr w8, [_ip, 16]
     str w8, [_xaddr]
-    write_done 32, call
-    ldr _ip, [_ip, 8]
+    // save ip-to-arguments to return cache
+    ubfx w12, w8, 4, 12
+    write_done 32, call // clobbers w8
+    add x13, _cpu, LOCAL_ret_cache
+    str _ip, [x13, x12, lsl 3]
+    // jump to target
+    ldr _ip, [_ip, 32]
     b jit_ret_chain
     write_bullshit 32, call
 
 .gadget call_indir
     sub esp, esp, 4
     mov _addr, esp
+    // save return address
     write_prep 32, call_indir
-    ldr w8, [_ip, 8]
+    ldr w8, [_ip, 16]
     str w8, [_xaddr]
-    write_done 32, call_indir
+    // save ip-to-arguments to return cache
+    ubfx w12, w8, 4, 12
+    write_done 32, call_indir // clobbers w8
+    add x13, _cpu, LOCAL_ret_cache
+    str _ip, [x13, x12, lsl 3]
+    // jump to target
     mov eip, _tmp
     b jit_ret
     write_bullshit 32, call_indir
@@ -26,8 +38,32 @@
     mov _addr, esp
     ldr w8, [_ip, 8]
     add esp, esp, w8
+    // load return address and save to _tmp
     read_prep 32, ret
-    ldr eip, [_xaddr]
+    ldr _tmp, [_xaddr]
+    // load saved ip in return cache
+    ubfx w12, _tmp, 4, 12
+    add x13, _cpu, LOCAL_ret_cache
+    ldr _ip, [x13, x12, lsl 3]
+    // found?
+    cbz _ip, 2f
+    // check if we jumped to the correct CALL instruction
+    ldr w9, [_ip, 16]
+    ldr x8, [_ip, 8]
+    cmp _tmp, w9
+    b.ne 1f
+    // good, now do return chaining, the logic is similar to `jit_ret_chain`
+    ldr _ip, [_ip, 24]
+    cmp _ip, 0
+    b.lt 1f
+    sub x8, _ip, JIT_BLOCK_code
+    str x8, [_cpu, LOCAL_last_block]
+    gret
+1:
+    str x8, [_cpu, LOCAL_last_block]
+    // fallthrough
+2:
+    mov eip, _tmp
     b jit_ret
     read_bullshit 32, ret
 
