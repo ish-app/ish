@@ -103,7 +103,7 @@ void task_leave_session(struct task *task);
 
 // struct thread_group is way too long to type comfortably
 struct tgroup {
-    struct list threads;
+    struct list threads; // locked by pids_lock, by majority vote
     struct task *leader; // immutable
     struct rusage_ rusage;
 

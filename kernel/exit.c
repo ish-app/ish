@@ -115,6 +115,7 @@ noreturn void do_exit(int status) {
 
 noreturn void do_exit_group(int status) {
     struct tgroup *group = current->group;
+    lock(&pids_lock);
     lock(&group->lock);
     if (!group->doing_group_exit) {
         group->doing_group_exit = true;
@@ -132,6 +133,7 @@ noreturn void do_exit_group(int status) {
     }
 
     unlock(&group->lock);
+    unlock(&pids_lock);
     do_exit(status);
 }
 
