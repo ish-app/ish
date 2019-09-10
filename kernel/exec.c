@@ -533,7 +533,7 @@ static int shebang_exec(struct fd *fd, const char *file, const char *argv, const
 
 int sys_execve(const char *file, const char *argv, const char *envp) {
     if (current->traced) {
-        send_signal(current, SIGTRAP_);
+        send_signal(current, SIGTRAP_, SIGINFO_NIL);
     }
     
     struct fd *fd = generic_open(file, O_RDONLY, 0);

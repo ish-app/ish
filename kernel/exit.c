@@ -88,7 +88,7 @@ noreturn void do_exit(int status) {
             halt_system();
         } else {
             leader->zombie = true;
-            notify(&parent->group->child_exit);
+            notify(&parent->group->child_cond);
             struct siginfo_ info = {
                 .code = SI_KERNEL_,
                 .child.pid = current->pid,
@@ -100,7 +100,7 @@ noreturn void do_exit(int status) {
             if (leader->exit_signal != 0)
                 send_signal(parent, leader->exit_signal, info);
             notify(&parent->group->child_cond);
-            send_signal(parent, leader->exit_signal);
+            send_signal(parent, leader->exit_signal, info);
         }
 
         if (exit_hook != NULL)
