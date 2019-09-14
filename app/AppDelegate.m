@@ -231,6 +231,23 @@ static void ios_handle_die(const char *msg) {
     return [UISceneConfiguration configurationWithName:@"Default" sessionRole:connectingSceneSession.role];
 }
 
+- (void)application:(UIApplication *)application didDiscardSceneSessions:(NSSet<UISceneSession *> *)sceneSessions API_AVAILABLE(ios(13.0)) {
+    for (UISceneSession *session in sceneSessions) {
+        if (session.stateRestorationActivity != nil) {
+            NSDictionary<NSString *, NSNumber *> *userInfo = session.stateRestorationActivity.userInfo;
+
+            NSNumber *userInfoTTYNumber = [userInfo objectForKey:@"ttynumber"];
+            if (userInfoTTYNumber != nil) {
+                [self discardTerminalWithTTYNumber:userInfoTTYNumber.intValue];
+            }
+        }
+    }
+}
+
+- (void)discardTerminalWithTTYNumber:(int)number {
+    [Terminal discardTTYWithNumber:number];
+}
+
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context {
     UIApplication.sharedApplication.idleTimerDisabled = UserPreferences.shared.shouldDisableDimming;
 }

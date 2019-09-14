@@ -249,7 +249,6 @@ NSData *removeInvalidUTF8(NSData *data) {
     *++p = '\0';
 }
 
-
 + (Terminal *)terminalWithType:(int)type number:(int)number {
     return [[Terminal alloc] initWithType:type number:number];
 }
@@ -265,6 +264,13 @@ NSData *removeInvalidUTF8(NSData *data) {
     }
 
     return nextTTYNumber++;
+}
+
++ (void)discardTTYWithNumber:(int)number {
+    NSNumber *key = @(dev_make(TTY_CONSOLE_MAJOR, number));
+    [terminals removeObjectForKey:key];
+
+    // TODO remove /dev/ttyx
 }
 
 + (void)terminalWithTTYNumber:(int)number launchCommand:(NSArray<NSString *> *)command completion:(void (^)(Terminal *))completion {

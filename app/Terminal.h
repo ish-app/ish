@@ -16,6 +16,8 @@
 + (bool)isTTYNumberFree:(int)number;
 + (int)nextFreeTTYNumber;
 
++ (void)discardTTYWithNumber:(int)number;
+
 - (int)write:(const void *)buf length:(size_t)len;
 - (void)sendInput:(const char *)buf length:(size_t)len;
 
