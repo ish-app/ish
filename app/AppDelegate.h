@@ -6,8 +6,9 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "TerminalViewControllerDelegate.h"
 
-@interface AppDelegate : UIResponder <UIApplicationDelegate>
+@interface AppDelegate : UIResponder <UIApplicationDelegate, TerminalViewControllerDelegate>
 
 @property (strong, nonatomic) UIWindow *window;
 - (void)exitApp;

@@ -9,6 +9,9 @@
 #import "DelayedUITask.h"
 #import "UserPreferences.h"
 #include "fs/tty.h"
+#include "fs/devices.h"
+#include "kernel/init.h"
+#include "kernel/calls.h"
 
 @interface Terminal () <WKScriptMessageHandler>
 
@@ -21,6 +24,8 @@
 @property DelayedUITask *scrollToBottomTask;
 
 @property BOOL applicationCursor;
+
++ (Terminal *)terminalWithType:(int)type number:(int)number;
 
 @end
 
@@ -35,6 +40,7 @@
 @implementation Terminal
 
 static NSMutableDictionary<NSNumber *, Terminal *> *terminals;
+static int nextTTYNumber = 7;
 
 - (instancetype)initWithType:(int)type number:(int)num {
     NSNumber *key = @(dev_make(type, num));
@@ -43,6 +49,7 @@ static NSMutableDictionary<NSNumber *, Terminal *> *terminals;
         return terminal;
     
     if (self = [super init]) {
+        self.launchCommandPID = -1;
         self.pendingData = [NSMutableData new];
         self.refreshTask = [[DelayedUITask alloc] initWithTarget:self action:@selector(refresh)];
         self.scrollToBottomTask = [[DelayedUITask alloc] initWithTarget:self action:@selector(scrollToBottom)];
@@ -228,8 +235,72 @@ NSData *removeInvalidUTF8(NSData *data) {
     [self.webView evaluateJavaScript:jsToEvaluate completionHandler:nil];
 }
 
++ (void)convertCommand:(NSArray<NSString *> *)command toArgs:(char *)argv limitSize:(size_t)maxSize {
+    char *p = argv;
+    for (NSString *cmd in command) {
+        const char *c = cmd.UTF8String;
+        // Save space for the final NUL byte in argv
+        while (p < argv + maxSize - 1 && (*p++ = *c++));
+        // If we reach the end of the buffer, the last string still needs to be
+        // NUL terminated
+        *p = '\0';
+    }
+    // Add the final NUL byte to argv
+    *++p = '\0';
+}
+
+
 + (Terminal *)terminalWithType:(int)type number:(int)number {
     return [[Terminal alloc] initWithType:type number:number];
+}
+
++ (bool)isTTYNumberFree:(int)number {
+    NSNumber *key = @(dev_make(TTY_CONSOLE_MAJOR, number));
+    return [terminals objectForKey:key] == nil;
+}
+
++ (int)nextFreeTTYNumber {
+    while (![self isTTYNumberFree:nextTTYNumber]) {
+        nextTTYNumber++;
+    }
+
+    return nextTTYNumber++;
+}
+
++ (void)terminalWithTTYNumber:(int)number launchCommand:(NSArray<NSString *> *)command completion:(void (^)(Terminal *))completion {
+    NSNumber *key = @(dev_make(TTY_CONSOLE_MAJOR, number));
+    Terminal *terminal = [terminals objectForKey:key];
+    if (terminal) {
+        completion(terminal);
+        return;
+    }
+
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
+        int err = become_new_init_child();
+        if (err < 0)
+            completion(nil);
+
+        const char *file = [[NSString stringWithFormat:@"/dev/tty%d", number] UTF8String];
+        generic_mknod(file, S_IFCHR|0666, dev_make(TTY_CONSOLE_MAJOR, number));
+
+        err = create_stdio(file);
+        if (err < 0)
+            completion(nil);
+        char argv[4096];
+        [self convertCommand:command toArgs:argv limitSize:sizeof(argv)];
+        const char *envp = "TERM=xterm-256color\0";
+        err = sys_execve(argv, argv, envp);
+        if (err < 0)
+            completion(nil);
+        task_start(current);
+        int launchCommandPID = current->pid;
+
+        dispatch_async(dispatch_get_main_queue(), ^{
+            Terminal *terminal = [Terminal terminalWithType:TTY_CONSOLE_MAJOR number:number];
+            terminal.launchCommandPID = launchCommandPID;
+            completion(terminal);
+        });
+    });
 }
 
 + (void)initialize {

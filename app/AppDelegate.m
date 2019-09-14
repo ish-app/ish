@@ -20,7 +20,10 @@
 
 @interface AppDelegate ()
 
+// Only required for < ios13
 @property int sessionPid;
+@property int ttyNumber;
+@property TerminalViewController *terminalViewController;
 
 @property BOOL exiting;
 
@@ -51,7 +54,7 @@ static void ios_handle_die(const char *msg) {
 
 @implementation AppDelegate
 
-- (int)startThings {
+- (int)setupEnvironment {
     NSFileManager *manager = [NSFileManager defaultManager];
     NSURL *container = [manager containerURLForSecurityApplicationGroupIdentifier:PRODUCT_APP_GROUP_IDENTIFIER];
     NSURL *alpineRoot = [container URLByAppendingPathComponent:@"roots/alpine"];
@@ -96,7 +99,6 @@ static void ios_handle_die(const char *msg) {
     generic_mknod("/dev/tty4", S_IFCHR|0666, dev_make(TTY_CONSOLE_MAJOR, 4));
     generic_mknod("/dev/tty5", S_IFCHR|0666, dev_make(TTY_CONSOLE_MAJOR, 5));
     generic_mknod("/dev/tty6", S_IFCHR|0666, dev_make(TTY_CONSOLE_MAJOR, 6));
-    generic_mknod("/dev/tty7", S_IFCHR|0666, dev_make(TTY_CONSOLE_MAJOR, 7));
 
     generic_mknod("/dev/tty", S_IFCHR|0666, dev_make(TTY_ALTERNATE_MAJOR, DEV_TTY_MINOR));
     generic_mknod("/dev/console", S_IFCHR|0666, dev_make(TTY_ALTERNATE_MAJOR, DEV_CONSOLE_MINOR));
@@ -166,52 +168,27 @@ static void ios_handle_die(const char *msg) {
     }
     NSLog(@"%@", command);
     char argv[4096];
-    [self convertCommand:command toArgs:argv limitSize:sizeof(argv)];
+    [Terminal convertCommand:command toArgs:argv limitSize:sizeof(argv)];
     const char *envp = "TERM=xterm-256color\0";
     err = sys_execve(argv, argv, envp);
     if (err < 0)
         return err;
     task_start(current);
-    
+
+    return 0;
+}
+
+- (void)startSession {
     if (UserPreferences.shared.bootEnabled) {
-        err = [self startSession];
-        if (err < 0)
-            return err;
+        self.ttyNumber = [Terminal nextFreeTTYNumber];
+    } else {
+        self.ttyNumber = 1;
     }
-    
-    return 0;
-}
 
-- (int)startSession {
-    int err = become_new_init_child();
-    if (err < 0)
-        return err;
-    err = create_stdio("/dev/tty7");
-    if (err < 0)
-        return err;
-    char argv[4096];
-    [self convertCommand:UserPreferences.shared.launchCommand toArgs:argv limitSize:sizeof(argv)];
-    const char *envp = "TERM=xterm-256color\0";
-    err = sys_execve(argv, argv, envp);
-    if (err < 0)
-        return err;
-    self.sessionPid = current->pid;
-    task_start(current);
-    return 0;
-}
-
-- (void)convertCommand:(NSArray<NSString *> *)command toArgs:(char *)argv limitSize:(size_t)maxSize {
-    char *p = argv;
-    for (NSString *cmd in command) {
-        const char *c = cmd.UTF8String;
-        // Save space for the final NUL byte in argv
-        while (p < argv + maxSize - 1 && (*p++ = *c++));
-        // If we reach the end of the buffer, the last string still needs to be
-        // NUL terminated
-        *p = '\0';
-    }
-    // Add the final NUL byte to argv
-    *++p = '\0';
+    [Terminal terminalWithTTYNumber:self.ttyNumber launchCommand:UserPreferences.shared.launchCommand completion:^(Terminal *terminal) {
+        self.sessionPid = terminal.launchCommandPID;
+        [self.terminalViewController switchTerminalToTTYNumber:self.ttyNumber];
+    }];
 }
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
@@ -225,7 +202,7 @@ static void ios_handle_die(const char *msg) {
                                                name:ProcessExitedNotification
                                              object:nil];
     
-    int err = [self startThings];
+    int err = [self setupEnvironment];
     if (err < 0) {
         NSString *message = [NSString stringWithFormat:@"could not initialize"];
         NSString *subtitle = [NSString stringWithFormat:@"error code %d", err];
@@ -234,7 +211,24 @@ static void ios_handle_die(const char *msg) {
         [self showMessage:message subtitle:subtitle fatal:NO];
         NSLog(@"failed with code %d", err);
     }
+
+    if (@available(iOS 13, *)) {
+
+    } else {
+        self.window = [[UIWindow alloc] init];
+        self.terminalViewController = [[UIStoryboard storyboardWithName:@"Main" bundle:nil] instantiateViewControllerWithIdentifier:@"terminalVC"];
+
+        self.terminalViewController.delegate = self;
+        self.window.rootViewController = self.terminalViewController;
+        [self startSession];
+        [self.window makeKeyAndVisible];
+    }
+
     return YES;
+}
+
+- (UISceneConfiguration *)application:(UIApplication *)application configurationForConnectingSceneSession:(UISceneSession *)connectingSceneSession options:(UISceneConnectionOptions *)options API_AVAILABLE(ios(13.0)){
+    return [UISceneConfiguration configurationWithName:@"Default" sessionRole:connectingSceneSession.role];
 }
 
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context {
@@ -267,6 +261,10 @@ static void ios_handle_die(const char *msg) {
 - (void)applicationDidEnterBackground:(UIApplication *)application {
     if (self.exiting)
         exit(0);
+}
+
+- (void)terminalViewController:(TerminalViewController *)terminalViewController requestedTTYWithNumber:(int)number {
+    [terminalViewController switchTerminalToTTYNumber:number == 0 ? self.ttyNumber : number];
 }
 
 @end

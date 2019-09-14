@@ -39,11 +39,9 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    if (UserPreferences.shared.bootEnabled) {
-        self.terminal = [Terminal terminalWithType:TTY_CONSOLE_MAJOR number:7];
-    } else {
-        self.terminal = [Terminal terminalWithType:TTY_CONSOLE_MAJOR number:1];
-    }
+
+    self.termView.terminal = self.terminal;
+
     [self.termView becomeFirstResponder];
 
     NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
@@ -105,7 +103,7 @@
 }
 
 - (BOOL)prefersStatusBarHidden {
-    BOOL isIPhoneX = UIApplication.sharedApplication.delegate.window.safeAreaInsets.top > 20;
+    BOOL isIPhoneX = self.view.window.safeAreaInsets.top > 20;
     return !isIPhoneX;
 }
 
@@ -221,16 +219,22 @@
     }
 }
 
+- (void)switchTerminalToTTYNumber:(int)ttyNumber {
+    Terminal * newTerminal = [Terminal terminalWithType:TTY_CONSOLE_MAJOR number:ttyNumber];
+    if (newTerminal.webView.superview == nil) {
+        self.terminal = newTerminal;
+    }
+}
+
 - (void)switchTerminal:(UIKeyCommand *)sender {
-    unsigned i = (unsigned) sender.input.integerValue;
-    self.terminal = [Terminal terminalWithType:TTY_CONSOLE_MAJOR number:i];
+    [_delegate terminalViewController:self requestedTTYWithNumber:sender.input.intValue];
 }
 
 - (NSArray<UIKeyCommand *> *)keyCommands {
     static NSMutableArray<UIKeyCommand *> *commands = nil;
     if (commands == nil) {
         commands = [NSMutableArray new];
-        for (unsigned i = 1; i <= 7; i++) {
+        for (unsigned i = 0; i <= 6; i++) {
             [commands addObject:
              [UIKeyCommand keyCommandWithInput:[NSString stringWithFormat:@"%d", i]
                                  modifierFlags:UIKeyModifierCommand|UIKeyModifierAlternate|UIKeyModifierShift
