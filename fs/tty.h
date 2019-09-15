@@ -147,7 +147,7 @@ struct tty {
 };
 
 // if blocking, may return _EINTR, otherwise, may return _EAGAIN
-int tty_input(struct tty *tty, const char *input, size_t len, bool blocking);
+ssize_t tty_input(struct tty *tty, const char *input, size_t len, bool blocking);
 void tty_set_winsize(struct tty *tty, struct winsize_ winsize);
 void tty_hangup(struct tty *tty);
 

@@ -246,13 +246,15 @@ static bool tty_send_input_signal(struct tty *tty, char ch, sigset_t_ *queue) {
     return true;
 }
 
-int tty_input(struct tty *tty, const char *input, size_t size, bool blocking) {
+ssize_t tty_input(struct tty *tty, const char *input, size_t size, bool blocking) {
     int err = 0;
+    size_t done_size = 0;
+    sigset_t_ queue = 0; // to prevent having to lock tty->lock and pids_lock at the same time
+
     lock(&tty->lock);
     dword_t lflags = tty->termios.lflags;
     dword_t iflags = tty->termios.iflags;
     unsigned char *cc = tty->termios.cc;
-    sigset_t_ queue = 0; // to prevent having to lock tty->lock and pids_lock at the same time
 
 #define SHOULD_ECHOCTL(ch) \
     (lflags & ECHOCTL_ && \
@@ -261,6 +263,7 @@ int tty_input(struct tty *tty, const char *input, size_t size, bool blocking) {
 
     if (lflags & ICANON_) {
         for (size_t i = 0; i < size; i++) {
+            done_size++;
             char ch = input[i];
             bool echo = lflags & ECHO_;
 
@@ -303,15 +306,19 @@ int tty_input(struct tty *tty, const char *input, size_t size, bool blocking) {
                     tty_echo(tty, "\r\n", 2);
 canon_wake:
                 err = tty_push_char(tty, ch, /*flag*/true, blocking);
-                if (err < 0)
+                if (err < 0) {
+                    done_size--;
                     break;
+                }
                 echo = false;
                 tty_input_wakeup(tty);
             } else {
                 if (!tty_send_input_signal(tty, ch, &queue)) {
                     err = tty_push_char(tty, ch, /*flag*/false, blocking);
-                    if (err < 0)
+                    if (err < 0) {
+                        done_size--;
                         break;
+                    }
                 }
             }
 
@@ -325,9 +332,9 @@ canon_wake:
         }
     } else {
         for (size_t i = 0; i < size; i++) {
+            done_size++;
             if (tty_send_input_signal(tty, input[i], &queue))
                 continue;
-            tty->buf[tty->bufsize++] = input[i];
             while (tty->bufsize >= sizeof(tty->buf)) {
                 err = _EAGAIN;
                 if (!blocking)
@@ -336,11 +343,18 @@ canon_wake:
                 if (wait_for(&tty->consumed, &tty->lock, NULL))
                     break;
             }
+            if (err < 0) {
+                done_size--;
+                break;
+            }
+            assert(tty->bufsize < sizeof(tty->buf));
+            tty->buf[tty->bufsize++] = input[i];
         }
         tty_input_wakeup(tty);
     }
 
     pid_t_ fg_group = tty->fg_group;
+    assert(tty->bufsize <= sizeof(tty->buf));
     unlock(&tty->lock);
 
     if (fg_group != 0) {
@@ -350,11 +364,14 @@ canon_wake:
         }
     }
 
+    if (done_size > 0)
+        return done_size;
     return err;
 }
 
 // expects bufsize <= tty->bufsize
 static void tty_read_into_buf(struct tty *tty, void *buf, size_t bufsize) {
+    assert(bufsize <= tty->bufsize);
     memcpy(buf, tty->buf, bufsize);
     tty->bufsize -= bufsize;
     memmove(tty->buf, tty->buf + bufsize, tty->bufsize); // magic!
