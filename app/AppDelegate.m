@@ -17,10 +17,11 @@
 #include "fs/path.h"
 #include "fs/dyndev.h"
 #include "fs/devices.h"
+#include "FeatureAvailability.h"
 
 @interface AppDelegate ()
 
-// Only required for < ios13
+// Only required for ios < 13
 @property int sessionPid;
 @property int ttyNumber;
 @property TerminalViewController *terminalViewController;
@@ -196,7 +197,7 @@ static void ios_handle_die(const char *msg) {
     [[NSURLSession.sharedSession dataTaskWithURL:[NSURL URLWithString:@"http://captive.apple.com"]] resume];
     
     [UserPreferences.shared addObserver:self forKeyPath:@"shouldDisableDimming" options:NSKeyValueObservingOptionInitial context:nil];
-    
+
     [NSNotificationCenter.defaultCenter addObserver:self
                                            selector:@selector(processExited:)
                                                name:ProcessExitedNotification
@@ -227,6 +228,7 @@ static void ios_handle_die(const char *msg) {
     return YES;
 }
 
+#if ENABLE_MULTIWINDOW
 - (UISceneConfiguration *)application:(UIApplication *)application configurationForConnectingSceneSession:(UISceneSession *)connectingSceneSession options:(UISceneConnectionOptions *)options API_AVAILABLE(ios(13.0)){
     return [UISceneConfiguration configurationWithName:@"Default" sessionRole:connectingSceneSession.role];
 }
@@ -243,6 +245,7 @@ static void ios_handle_die(const char *msg) {
         }
     }
 }
+#endif
 
 - (void)discardTerminalWithTTYNumber:(int)number {
     [Terminal discardTTYWithNumber:number];

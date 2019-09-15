@@ -7,10 +7,13 @@
 
 #import <UIKit/UIKit.h>
 #import "TerminalViewControllerDelegate.h"
+#include "FeatureAvailability.h"
 
+#if ENABLE_MULTIWINDOW
 API_AVAILABLE(ios(13.0))
 @interface SceneDelegate : UIResponder <UIWindowSceneDelegate, TerminalViewControllerDelegate>
 
 @property (strong, nonatomic) UIWindow *window;
 
 @end
+#endif

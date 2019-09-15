@@ -10,6 +10,7 @@
 #import "UserPreferences.h"
 #import "AppDelegate.h"
 
+#if ENABLE_MULTIWINDOW
 @interface SceneDelegate ()
 
 @property int sessionPid;
@@ -97,3 +98,4 @@
 }
 
 @end
+#endif

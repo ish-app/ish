@@ -92,6 +92,7 @@
 
 /* Begin PBXFileReference section */
 		4005519C232C325C00134BDF /* TerminalViewControllerDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TerminalViewControllerDelegate.h; sourceTree = "<group>"; };
+		4034C2BC232E2A1400FBD68F /* FeatureAvailability.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = FeatureAvailability.h; sourceTree = "<group>"; };
 		40E5B1D4232C08E4003B19C5 /* SceneDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SceneDelegate.h; sourceTree = "<group>"; };
 		40E5B1D5232C08E4003B19C5 /* SceneDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SceneDelegate.m; sourceTree = "<group>"; };
 		650B335A22E9E46A00B4C03E /* mem.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = mem.c; sourceTree = "<group>"; tabWidth = 4; };
@@ -382,6 +383,7 @@
 		BB792B521F96D90D00FFB7A4 /* app */ = {
 			isa = PBXGroup;
 			children = (
+				4034C2BC232E2A1400FBD68F /* FeatureAvailability.h */,
 				BB792B531F96D90D00FFB7A4 /* AppDelegate.h */,
 				BB792B541F96D90D00FFB7A4 /* AppDelegate.m */,
 				40E5B1D4232C08E4003B19C5 /* SceneDelegate.h */,
