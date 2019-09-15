@@ -750,6 +750,7 @@ int_t sys_sendmsg(fd_t sock_fd, addr_t msghdr_addr, int_t flags) {
     msg.msg_controllen = 0;
 
     struct scm *scm = NULL;
+    char real_msg_control[CMSG_SPACE(sizeof(int))]; // only used if actually sending an fd
     if (sock->socket.domain == AF_LOCAL_ && msg_control != NULL && msg_fake.msg_controllen >= sizeof(struct cmsghdr_)) {
         // figure out how many file descriptors we're sending
         uint8_t *mhdr_end = msg_control + msg_fake.msg_controllen;
@@ -773,7 +774,6 @@ int_t sys_sendmsg(fd_t sock_fd, addr_t msghdr_addr, int_t flags) {
                 if (real_fd < 0)
                     ERRNO_DIE("no");
             }
-            char real_msg_control[CMSG_SPACE(sizeof(real_fd))];
             msg.msg_control = real_msg_control;
             msg.msg_controllen = sizeof(real_msg_control);
             struct cmsghdr *real_cmsg = CMSG_FIRSTHDR(&msg);
@@ -863,9 +863,9 @@ int_t sys_recvmsg(fd_t sock_fd, addr_t msghdr_addr, int_t flags) {
         msg.msg_namelen = 0;
     }
 
+    char real_msg_control[CMSG_SPACE(sizeof(int))]; // only used if needed
     if (msg_fake.msg_controllen != 0) {
         // msg_control, include room for one (1) fd
-        char real_msg_control[CMSG_SPACE(sizeof(int))];
         msg.msg_control = real_msg_control;
         msg.msg_controllen = sizeof(real_msg_control);
     } else {
