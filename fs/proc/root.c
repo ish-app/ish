@@ -80,7 +80,6 @@ static bool proc_root_readdir(struct proc_entry *UNUSED(entry), unsigned long *i
         unlock(&pids_lock);
         if (pid > MAX_PID)
             return false;
-        assert(pid_get_task(pid) != NULL);
         *next_entry = (struct proc_entry) {&proc_pid, .pid = pid};
         *index = pid + PROC_ROOT_LEN;
         return true;
