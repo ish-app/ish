@@ -21,6 +21,9 @@ var termCss = `
 x-screen {
     background: transparent !important;
 }
+x-screen::-webkit-scrollbar {
+    display: none;
+}
 `;
 
 function onTerminalReady() {
@@ -108,7 +111,7 @@ exports.updateStyle = ({foregroundColor, backgroundColor, fontSize}) => {
     term.getPrefs().set('font-size', fontSize);
 };
 
-exports.clear = () => term.clearScrollback();
+exports.clearScrollback = () => term.clearScrollback();
 exports.blur = () => term.blur();
 
 native.load();
