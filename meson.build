@@ -165,4 +165,4 @@ if not meson.is_cross_build()
 endif
 
 e2e_test = find_program('tests/e2e/e2e.bash')
-test('e2e', e2e_test, args: ['-y'], timeout: 120)
+test('e2e', e2e_test, args: ['-y'], timeout: 180)
