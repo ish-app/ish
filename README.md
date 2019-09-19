@@ -18,6 +18,8 @@ You can [join the Testflight beta](https://testflight.apple.com/join/97i7KM8O) n
 
 # Hacking
 
+This project has a git submodule, make sure to clone with `--recurse-submodules` or run `git submodule update --init` after cloning.
+
 You'll need these things to build the project:
 
  - Python 3
