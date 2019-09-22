@@ -114,6 +114,8 @@ exports.updateStyle = ({foregroundColor, backgroundColor, fontSize}) => {
 exports.clearScrollback = () => term.clearScrollback();
 exports.blur = () => term.blur();
 
+hterm.openUrl = (url) => native.openLink(url);
+
 native.load();
 
 }

@@ -8,6 +8,7 @@
 #import "ScrollbarView.h"
 #import "TerminalView.h"
 #import "UserPreferences.h"
+#import "UIApplication+OpenURL.h"
 
 @interface TerminalView ()
 
@@ -32,7 +33,7 @@
 }
 
 - (void)setTerminal:(Terminal *)terminal {
-    NSArray<NSString *>* handlers = @[@"focus", @"newScrollHeight", @"newScrollTop"];
+    NSArray<NSString *>* handlers = @[@"focus", @"newScrollHeight", @"newScrollTop", @"openLink"];
     
     if (self.terminal) {
         // remove old terminal
@@ -80,6 +81,8 @@
         if (self.scrollbarView.contentOffset.y == newOffset)
             return;
         [self.scrollbarView setContentOffset:CGPointMake(0, newOffset) animated:NO];
+    } else if ([message.name isEqualToString:@"openLink"]) {
+        [UIApplication openURL:message.body];
     }
 }
 
