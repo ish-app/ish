@@ -24,6 +24,7 @@ static void apply_umask(mode_t_ *mode) {
 
 int access_check(struct statbuf *stat, int check) {
     if (superuser()) return 0;
+    if (check == 0) return 0;
     // Align check with the correct bits in mode
     if (current->euid == stat->uid) {
         check <<= 6;
