@@ -164,6 +164,7 @@ syscall_t syscall_table[] = {
     [271] = (syscall_t) sys_utimes,
     [272] = (syscall_t) syscall_success_stub,
     [274] = (syscall_t) sys_mbind,
+    [291] = (syscall_t) syscall_stub, // inotify_init
     [295] = (syscall_t) sys_openat,
     [296] = (syscall_t) sys_mkdirat,
     [298] = (syscall_t) sys_fchownat,
@@ -188,6 +189,7 @@ syscall_t syscall_table[] = {
     [329] = (syscall_t) sys_epoll_create,
     [330] = (syscall_t) sys_dup3,
     [331] = (syscall_t) sys_pipe2,
+    [332] = (syscall_t) syscall_stub, // inotify_init1
     [340] = (syscall_t) sys_prlimit64,
     [345] = (syscall_t) sys_sendmmsg,
     [353] = (syscall_t) sys_renameat2,
@@ -223,6 +225,9 @@ void handle_interrupt(int interrupt) {
             printk("%d missing syscall %d\n", current->pid, syscall_num);
             deliver_signal(current, SIGSYS_, SIGINFO_NIL);
         } else {
+            if (syscall_table[syscall_num] == syscall_stub) {
+                printk("%d stub syscall %d\n", current->pid, syscall_num);
+            }
             STRACE("%d call %-3d ", current->pid, syscall_num);
             int result = syscall_table[syscall_num](cpu->ebx, cpu->ecx, cpu->edx, cpu->esi, cpu->edi, cpu->ebp);
             STRACE(" = 0x%x\n", result);
