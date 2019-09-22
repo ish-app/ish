@@ -20,7 +20,9 @@
 @property (weak, nonatomic) IBOutlet TerminalView *termView;
 @property (weak, nonatomic) IBOutlet NSLayoutConstraint *bottomConstraint;
 
+@property (weak, nonatomic) IBOutlet UIButton *tabKey;
 @property (weak, nonatomic) IBOutlet UIButton *controlKey;
+@property (weak, nonatomic) IBOutlet UIButton *escapeKey;
 @property (strong, nonatomic) IBOutletCollection(id) NSArray *barButtons;
 @property (strong, nonatomic) IBOutletCollection(id) NSArray *barControls;
 
@@ -31,6 +33,8 @@
 @property (weak, nonatomic) IBOutlet NSLayoutConstraint *barLeading;
 @property (weak, nonatomic) IBOutlet NSLayoutConstraint *barTrailing;
 @property (weak, nonatomic) IBOutlet NSLayoutConstraint *barButtonWidth;
+
+@property (weak, nonatomic) IBOutlet UIButton *pasteButton;
 @property (weak, nonatomic) IBOutlet UIButton *hideKeyboardButton;
 
 @end
@@ -67,6 +71,19 @@
         self.barView.frame = CGRectMake(0, 0, 100, 48);
     } else {
         self.barView.frame = CGRectMake(0, 0, 100, 55);
+    }
+    
+    // SF Symbols is cool
+    if (@available(iOS 13, *)) {
+        [self.pasteButton setImage:[UIImage systemImageNamed:@"doc.on.clipboard"] forState:UIControlStateNormal];
+        [self.hideKeyboardButton setImage:[UIImage systemImageNamed:@"keyboard.chevron.compact.down"] forState:UIControlStateNormal];
+        
+        [self.tabKey setTitle:nil forState:UIControlStateNormal];
+        [self.tabKey setImage:[UIImage systemImageNamed:@"arrow.right.to.line.alt"] forState:UIControlStateNormal];
+        [self.controlKey setTitle:nil forState:UIControlStateNormal];
+        [self.controlKey setImage:[UIImage systemImageNamed:@"control"] forState:UIControlStateNormal];
+        [self.escapeKey setTitle:nil forState:UIControlStateNormal];
+        [self.escapeKey setImage:[UIImage systemImageNamed:@"escape"] forState:UIControlStateNormal];
     }
 }
 

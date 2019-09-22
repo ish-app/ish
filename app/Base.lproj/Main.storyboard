@@ -1,11 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="14460.31" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="BYZ-38-t0r">
-    <device id="retina4_0" orientation="portrait">
-        <adaptation id="fullscreen"/>
-    </device>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="14868" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="BYZ-38-t0r">
+    <device id="retina4_0" orientation="portrait" appearance="light"/>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="14460.20"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="14824"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
@@ -19,7 +17,7 @@
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="FQi-r8-odu" customClass="TerminalView">
-                                <rect key="frame" x="0.0" y="20" width="320" height="548"/>
+                                <rect key="frame" x="0.0" y="0.0" width="320" height="568"/>
                                 <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <connections>
                                     <outlet property="controlKey" destination="W9v-cj-FWz" id="HgQ-u7-5IL"/>
@@ -47,7 +45,10 @@
                         <outlet property="barView" destination="GyN-ob-WFz" id="lVV-s6-cQt"/>
                         <outlet property="bottomConstraint" destination="fXD-Y3-UQj" id="dpH-0p-KEx"/>
                         <outlet property="controlKey" destination="W9v-cj-FWz" id="c9i-VC-j7f"/>
+                        <outlet property="escapeKey" destination="IPm-l0-f25" id="QBn-lt-GPd"/>
                         <outlet property="hideKeyboardButton" destination="7qw-ie-p4d" id="n5f-XX-i98"/>
+                        <outlet property="pasteButton" destination="hmm-tv-z35" id="mgi-xs-C8r"/>
+                        <outlet property="tabKey" destination="cJt-oG-BnW" id="YaE-o4-lKm"/>
                         <outlet property="termView" destination="FQi-r8-odu" id="QIa-yI-fmG"/>
                         <outletCollection property="barButtons" destination="cJt-oG-BnW" id="Yjx-uz-RbI"/>
                         <outletCollection property="barButtons" destination="W9v-cj-FWz" id="OFf-FH-2Xy"/>
