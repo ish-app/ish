@@ -54,6 +54,11 @@ struct fd {
             // Queue of struct scm for sending file descriptors
             // locked by fd->lock
             struct list unix_scm;
+            struct ucred_ {
+                pid_t_ pid;
+                uid_t_ uid;
+                uid_t_ gid;
+            } unix_cred;
         } socket;
 
         // See app/Pasteboard.m

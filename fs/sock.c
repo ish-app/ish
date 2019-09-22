@@ -340,6 +340,12 @@ int_t sys_bind(fd_t sock_fd, addr_t sockaddr_addr, uint_t sockaddr_len) {
     return 0;
 }
 
+static void fill_cred(struct ucred_ *cred) {
+    cred->pid = current->pid;
+    cred->uid = current->euid;
+    cred->gid = current->egid;
+}
+
 int_t sys_connect(fd_t sock_fd, addr_t sockaddr_addr, uint_t sockaddr_len) {
     STRACE("connect(%d, 0x%x, %d)", sock_fd, sockaddr_addr, sockaddr_len);
     struct fd *sock = sock_getfd(sock_fd);
@@ -355,6 +361,7 @@ int_t sys_connect(fd_t sock_fd, addr_t sockaddr_addr, uint_t sockaddr_len) {
         return errno_map();
 
     if (sock->socket.domain == AF_LOCAL_) {
+        fill_cred(&sock->socket.unix_cred);
         assert(sock->socket.unix_peer == NULL);
         // Send a pointer to ourselves to the other end so they can set up the peer pointers.
         ssize_t res = write(sock->real_fd, &sock, sizeof(struct fd *));
@@ -422,6 +429,7 @@ int_t sys_accept(fd_t sock_fd, addr_t sockaddr_addr, addr_t sockaddr_len_addr) {
     if (sock->socket.domain == AF_LOCAL_) {
         lock(&peer_lock);
         struct fd *client_fd = f_get(client_f);
+        fill_cred(&client_fd->socket.unix_cred);
         struct fd *peer;
         ssize_t res = read(client, &peer, sizeof(peer));
         if (res == sizeof(peer)) {
@@ -667,6 +675,18 @@ int_t sys_getsockopt(fd_t sock_fd, dword_t level, dword_t option, addr_t value_a
             *value_p = sock->socket.type;
         else if (option == SO_PROTOCOL_)
             *value_p = sock->socket.protocol;
+    } else if (level == SOL_SOCKET_ && option == SO_PEERCRED_) {
+        struct ucred_ *cred = (struct ucred_ *) value;
+        if (value_len != sizeof(*cred))
+            return _EINVAL;
+        lock(&peer_lock);
+        if (sock->socket.domain != AF_LOCAL_ || sock->socket.unix_peer == NULL) {
+            cred->pid = 0;
+            cred->uid = cred->gid = -1;
+        } else {
+            *cred = sock->socket.unix_peer->socket.unix_cred;
+        }
+        unlock(&peer_lock);
     } else {
         int real_opt = sock_opt_to_real(option, level);
         if (real_opt < 0)
