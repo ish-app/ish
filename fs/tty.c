@@ -339,8 +339,8 @@ canon_wake:
                 err = _EAGAIN;
                 if (!blocking)
                     break;
-                err = _EINTR;
-                if (wait_for(&tty->consumed, &tty->lock, NULL))
+                err = wait_for(&tty->consumed, &tty->lock, NULL);
+                if (err < 0)
                     break;
             }
             if (err < 0) {
@@ -376,6 +376,7 @@ static void tty_read_into_buf(struct tty *tty, void *buf, size_t bufsize) {
     tty->bufsize -= bufsize;
     memmove(tty->buf, tty->buf + bufsize, tty->bufsize); // magic!
     memmove(tty->buf_flag, tty->buf_flag + bufsize, tty->bufsize);
+    notify(&tty->consumed);
 }
 
 static size_t tty_canon_size(struct tty *tty) {
@@ -513,7 +514,6 @@ static ssize_t tty_read(struct fd *fd, void *buf, size_t bufsize) {
         tty_read_into_buf(tty, &dummy, 1);
     }
 
-    
 out:
     unlock(&tty->lock);
     return bufsize + bufsize_extra;
@@ -660,6 +660,7 @@ static int tty_mode_ioctl(struct tty *in_tty, int cmd, void *arg) {
             break;
         case TCSETSF_:
             tty->bufsize = 0;
+            notify(&tty->consumed);
         case TCSETSW_:
             // we have no output buffer currently
         case TCSETS_:
@@ -701,6 +702,7 @@ static int tty_ioctl(struct fd *fd, int cmd, void *arg) {
                 case TCIFLUSH_:
                 case TCIOFLUSH_:
                     tty->bufsize = 0;
+                    notify(&tty->consumed);
                     break;
                 case TCOFLUSH_:
                     break;
