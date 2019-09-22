@@ -80,8 +80,8 @@
 #define _EMSGSIZE      -90 /* Message too long */
 #define _EPROTOTYPE    -91 /* Protocol wrong type for socket */
 #define _ENOPROTOOPT   -92 /* Protocol not available */
-#define _EPROTONOSUPPORT    93 /* Protocol not supported */
-#define _ESOCKTNOSUPPORT    94 /* Socket type not supported */
+#define _EPROTONOSUPPORT   -93 /* Protocol not supported */
+#define _ESOCKTNOSUPPORT   -94 /* Socket type not supported */
 #define _EOPNOTSUPP    -95 /* Operation not supported on transport endpoint */
 #define _ENOTSUP _EOPNOTSUPP
 #define _EPFNOSUPPORT  -96 /* Protocol family not supported */

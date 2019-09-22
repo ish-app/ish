@@ -225,7 +225,7 @@ void handle_interrupt(int interrupt) {
             printk("%d missing syscall %d\n", current->pid, syscall_num);
             deliver_signal(current, SIGSYS_, SIGINFO_NIL);
         } else {
-            if (syscall_table[syscall_num] == syscall_stub) {
+            if (syscall_table[syscall_num] == (syscall_t) syscall_stub) {
                 printk("%d stub syscall %d\n", current->pid, syscall_num);
             }
             STRACE("%d call %-3d ", current->pid, syscall_num);
