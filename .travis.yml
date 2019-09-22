@@ -26,15 +26,14 @@ matrix:
               - MESON_OPTS=-Djit=false
               - NINJA_TARGET=
         - language: objective-c
-          osx_image: xcode10.1
+          osx_image: xcode11
           install:
-              - pip3 install meson==0.49.2
+              - pip3 install meson
           addons:
               homebrew:
                   packages:
                       - ninja
                       - llvm
-                      - yarn
                   update: true
           script:
               - xcodebuild -project iSH.xcodeproj -scheme iSH -sdk iphoneos CODE_SIGNING_ALLOWED=NO
