@@ -5,18 +5,18 @@
 //  Created by Charlie Melbye on 11/12/18.
 //
 
-#import "AppearanceViewController.h"
+#import "AboutAppearanceViewController.h"
 #import "UserPreferences.h"
 
 static NSString *const ThemeNameCellIdentifier = @"Theme Name";
 static NSString *const FontSizeCellIdentifier = @"Font Size";
 static NSString *const PreviewCellIdentifier = @"Preview";
 
-@interface AppearanceViewController ()
+@interface AboutAppearanceViewController ()
 
 @end
 
-@implementation AppearanceViewController
+@implementation AboutAppearanceViewController
 
 - (void)viewDidLoad {
     [super viewDidLoad];

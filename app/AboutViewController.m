@@ -71,16 +71,6 @@
 - (void)_updatePreferenceUI {
     UserPreferences *prefs = UserPreferences.shared;
     self.themeCell.detailTextLabel.text = prefs.theme.presetName;
-    NSString *capsLockMappingDescr;
-    switch (prefs.capsLockMapping) {
-        case CapsLockMapNone:
-            capsLockMappingDescr = @"None"; break;
-        case CapsLockMapControl:
-            capsLockMappingDescr = @"Control"; break;
-        case CapsLockMapEscape:
-            capsLockMappingDescr = @"Escape"; break;
-    }
-    self.capsLockMappingCell.detailTextLabel.text = capsLockMappingDescr;
     self.disableDimmingSwitch.on = UserPreferences.shared.shouldDisableDimming;
     self.launchCommandField.text = [UserPreferences.shared.launchCommand componentsJoinedByString:@" "];
     self.bootCommandField.text = [UserPreferences.shared.bootCommand componentsJoinedByString:@" "];

@@ -30,6 +30,20 @@
     scrollbarView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     scrollbarView.bounces = NO;
     [self addSubview:scrollbarView];
+    
+    [UserPreferences.shared addObserver:self forKeyPath:@"capsLockMapping" options:0 context:nil];
+    [UserPreferences.shared addObserver:self forKeyPath:@"optionMapping" options:0 context:nil];
+    [UserPreferences.shared addObserver:self forKeyPath:@"backtickMapEscape" options:0 context:nil];
+}
+
+- (void)dealloc {
+    [UserPreferences.shared removeObserver:self forKeyPath:@"capsLockMapping"];
+    [UserPreferences.shared removeObserver:self forKeyPath:@"optionMapping"];
+    [UserPreferences.shared removeObserver:self forKeyPath:@"backtickMapEscape"];
+}
+
+- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context {
+    _keyCommands = nil;
 }
 
 - (void)setTerminal:(Terminal *)terminal {
@@ -184,6 +198,8 @@
 - (void)handleKeyCommand:(UIKeyCommand *)command {
     NSString *key = command.input;
     if (command.modifierFlags == 0) {
+        if ([key isEqualToString:@"`"] && UserPreferences.shared.backtickMapEscape)
+            key = UIKeyInputEscape;
         if ([key isEqualToString:UIKeyInputEscape])
             key = @"\x1b";
         else if ([key isEqualToString:UIKeyInputUpArrow])
@@ -197,7 +213,9 @@
         [self insertText:key];
     } else if (command.modifierFlags & UIKeyModifierShift) {
         [self insertText:[key uppercaseString]];
-    } else if(command.modifierFlags & UIKeyModifierAlphaShift) {
+    } else if (command.modifierFlags & UIKeyModifierAlternate) {
+        [self insertText:[@"\x1b" stringByAppendingString:key]];
+    } else if (command.modifierFlags & UIKeyModifierAlphaShift) {
         [self handleCapsLockWithCommand:command];
     } else if (command.modifierFlags & UIKeyModifierControl || command.modifierFlags & UIKeyModifierAlphaShift) {
         if (key.length == 0)
@@ -215,6 +233,7 @@
 
 static const char *alphabet = "abcdefghijklmnopqrstuvwxyz";
 static const char *controlKeys = "abcdefghijklmnopqrstuvwxyz26-=[]\\";
+static const char *metaKeys = "abcdefghijklmnopqrstuvwxyz0123456789-=[]\\;',./";
 
 - (NSArray<UIKeyCommand *> *)keyCommands {
     if (_keyCommands != nil)
@@ -230,6 +249,12 @@ static const char *controlKeys = "abcdefghijklmnopqrstuvwxyz26-=[]\\";
         [self addKeys:alphabet withModifiers:0];
         [self addKeys:alphabet withModifiers:UIKeyModifierShift];
         [self addKey:@"" withModifiers:UIKeyModifierAlphaShift]; // otherwise tap of caps lock can switch layouts
+    }
+    if (UserPreferences.shared.capsLockMapping == OptionMapEsc) {
+        [self addKeys:metaKeys withModifiers:UIKeyModifierAlternate];
+    }
+    if (UserPreferences.shared.backtickMapEscape) {
+        [self addKey:@"`" withModifiers:0];
     }
     [_keyCommands addObject:[UIKeyCommand keyCommandWithInput:@"k"
                                                 modifierFlags:UIKeyModifierCommand|UIKeyModifierShift

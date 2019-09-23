@@ -13,6 +13,11 @@ typedef NS_ENUM(NSInteger, CapsLockMapping) {
     CapsLockMapEscape,
 };
 
+typedef enum : NSUInteger {
+    OptionMapNone = 0,
+    OptionMapEsc,
+} OptionMapping;
+
 NS_ASSUME_NONNULL_BEGIN
 
 @interface Theme : NSObject
@@ -36,6 +41,8 @@ extern NSString *const kThemeBackgroundColor;
 @interface UserPreferences : NSObject
 
 @property CapsLockMapping capsLockMapping;
+@property OptionMapping optionMapping;
+@property BOOL backtickMapEscape;
 @property (nonatomic) Theme *theme;
 @property BOOL shouldDisableDimming;
 @property NSNumber *fontSize;

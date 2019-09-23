@@ -9,6 +9,8 @@
 #import "UserPreferences.h"
 
 static NSString *const kPreferenceCapsLockMappingKey = @"Caps Lock Mapping";
+static NSString *const kPreferenceOptionMappingKey = @"Option Mapping";
+static NSString *const kPreferenceBacktickEscapeKey = @"Backtick Mapping Escape";
 static NSString *const kPreferenceFontSizeKey = @"Font Size";
 static NSString *const kPreferenceThemeKey = @"Theme";
 static NSString *const kPreferenceDisableDimmingKey = @"Disable Dimming";
@@ -34,14 +36,17 @@ static NSString *const kPreferenceBootEnabledKey = @"Boot Enabled";
     if (self) {
         _defaults = [NSUserDefaults standardUserDefaults];
         Theme *defaultTheme = [Theme presetThemeNamed:@"Light"];
-        [_defaults registerDefaults:@{kPreferenceFontSizeKey: @(12),
-                                      kPreferenceThemeKey: defaultTheme.properties,
-                                      kPreferenceCapsLockMappingKey: @(CapsLockMapControl),
-                                      kPreferenceDisableDimmingKey: @(NO),
-                                      kPreferenceLaunchCommandKey: @[@"/bin/login", @"-f", @"root"],
-                                      kPreferenceBootCommandKey: @[@"/sbin/init"],
-                                      kPreferenceBootEnabledKey: @(YES),
-                                      }];
+        [_defaults registerDefaults:@{
+            kPreferenceFontSizeKey: @(12),
+            kPreferenceThemeKey: defaultTheme.properties,
+            kPreferenceCapsLockMappingKey: @(CapsLockMapControl),
+            kPreferenceOptionMappingKey: @(OptionMapNone),
+            kPreferenceBacktickEscapeKey: @(NO),
+            kPreferenceDisableDimmingKey: @(NO),
+            kPreferenceLaunchCommandKey: @[@"/bin/login", @"-f", @"root"],
+            kPreferenceBootCommandKey: @[@"/sbin/init"],
+            kPreferenceBootEnabledKey: @(YES),
+        }];
         _theme = [[Theme alloc] initWithProperties:[_defaults objectForKey:kPreferenceThemeKey]];
     }
     return self;
@@ -52,6 +57,20 @@ static NSString *const kPreferenceBootEnabledKey = @"Boot Enabled";
 }
 - (void)setCapsLockMapping:(CapsLockMapping)capsLockMapping {
     [_defaults setInteger:capsLockMapping forKey:kPreferenceCapsLockMappingKey];
+}
+
+- (OptionMapping)optionMapping {
+    return [_defaults integerForKey:kPreferenceOptionMappingKey];
+}
+- (void)setOptionMapping:(OptionMapping)optionMapping {
+    [_defaults setInteger:optionMapping forKey:kPreferenceOptionMappingKey];
+}
+
+- (BOOL)backtickMapEscape {
+    return [_defaults boolForKey:kPreferenceBacktickEscapeKey];
+}
+- (void)setBacktickMapEscape:(BOOL)backtickMapEscape {
+    [_defaults setBool:backtickMapEscape forKey:kPreferenceBacktickEscapeKey];
 }
 
 - (NSNumber *)fontSize {

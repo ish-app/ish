@@ -9,7 +9,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface AppearanceViewController : UITableViewController
+@interface AboutAppearanceViewController : UITableViewController
 
 @end
 
