@@ -16,7 +16,6 @@ static NSString *const kPreferenceThemeKey = @"Theme";
 static NSString *const kPreferenceDisableDimmingKey = @"Disable Dimming";
 static NSString *const kPreferenceLaunchCommandKey = @"Init Command";
 static NSString *const kPreferenceBootCommandKey = @"Boot Command";
-static NSString *const kPreferenceBootEnabledKey = @"Boot Enabled";
 
 @implementation UserPreferences {
     NSUserDefaults *_defaults;
@@ -45,7 +44,6 @@ static NSString *const kPreferenceBootEnabledKey = @"Boot Enabled";
             kPreferenceDisableDimmingKey: @(NO),
             kPreferenceLaunchCommandKey: @[@"/bin/login", @"-f", @"root"],
             kPreferenceBootCommandKey: @[@"/sbin/init"],
-            kPreferenceBootEnabledKey: @(YES),
         }];
         _theme = [[Theme alloc] initWithProperties:[_defaults objectForKey:kPreferenceThemeKey]];
     }
@@ -115,13 +113,6 @@ static NSString *const kPreferenceBootEnabledKey = @"Boot Enabled";
 }
 - (void)setBootCommand:(NSArray<NSString *> *)bootCommand {
     [_defaults setObject:bootCommand forKey:kPreferenceBootCommandKey];
-}
-
-- (BOOL)bootEnabled {
-    return [_defaults boolForKey:kPreferenceBootEnabledKey];
-}
-- (void)setBootEnabled:(BOOL)bootEnabled {
-    [_defaults setBool:bootEnabled forKey:kPreferenceBootEnabledKey];
 }
 
 @end

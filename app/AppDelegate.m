@@ -159,11 +159,7 @@ static void ios_handle_die(const char *msg) {
         return err;
     
     NSArray<NSString *> *command;
-    if (UserPreferences.shared.bootEnabled) {
-        command = UserPreferences.shared.bootCommand;
-    } else {
-        command = UserPreferences.shared.launchCommand;
-    }
+    command = UserPreferences.shared.bootCommand;
     NSLog(@"%@", command);
     char argv[4096];
     [self convertCommand:command toArgs:argv limitSize:sizeof(argv)];
@@ -173,11 +169,9 @@ static void ios_handle_die(const char *msg) {
         return err;
     task_start(current);
     
-    if (UserPreferences.shared.bootEnabled) {
-        err = [self startSession];
-        if (err < 0)
-            return err;
-    }
+    err = [self startSession];
+    if (err < 0)
+        return err;
     
     return 0;
 }

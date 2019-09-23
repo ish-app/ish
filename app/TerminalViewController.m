@@ -43,11 +43,7 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    if (UserPreferences.shared.bootEnabled) {
-        self.terminal = [Terminal terminalWithType:TTY_CONSOLE_MAJOR number:7];
-    } else {
-        self.terminal = [Terminal terminalWithType:TTY_CONSOLE_MAJOR number:1];
-    }
+    self.terminal = [Terminal terminalWithType:TTY_CONSOLE_MAJOR number:7];
     [self.termView becomeFirstResponder];
 
     NSNotificationCenter *center = [NSNotificationCenter defaultCenter];

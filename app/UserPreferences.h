@@ -48,7 +48,6 @@ extern NSString *const kThemeBackgroundColor;
 @property NSNumber *fontSize;
 @property NSArray<NSString *> *launchCommand;
 @property NSArray<NSString *> *bootCommand;
-@property BOOL bootEnabled;
 
 + (instancetype)shared;
 
