@@ -55,10 +55,11 @@
         } completion:nil];
     }
     if (self.keyAppearance == UIKeyboardAppearanceLight) {
-        [self setTitleColor:UIColor.blackColor forState:UIControlStateNormal];
+        self.tintColor = UIColor.blackColor;
     } else {
-        [self setTitleColor:UIColor.whiteColor forState:UIControlStateNormal];
+        self.tintColor = UIColor.whiteColor;
     }
+    [self setTitleColor:self.tintColor forState:UIControlStateNormal];
 }
 
 - (void)setHighlighted:(BOOL)highlighted {
