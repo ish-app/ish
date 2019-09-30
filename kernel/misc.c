@@ -1,12 +1,22 @@
+#include <string.h>
 #include "kernel/calls.h"
 
 #define PRCTL_SET_KEEPCAPS_ 8
+#define PRCTL_SET_NAME_ 15
 
-int_t sys_prctl(dword_t option, uint_t UNUSED(arg2), uint_t UNUSED(arg3), uint_t UNUSED(arg4), uint_t UNUSED(arg5)) {
+int_t sys_prctl(dword_t option, uint_t arg2, uint_t UNUSED(arg3), uint_t UNUSED(arg4), uint_t UNUSED(arg5)) {
     switch (option) {
         case PRCTL_SET_KEEPCAPS_:
             // stub
             return 0;
+        case PRCTL_SET_NAME_: {
+            char name[16];
+            if (user_read_string(arg2, name, sizeof(name)))
+                return _EFAULT;
+            STRACE("prctl(PRCTL_SET_NAME, \"%s\")", name);
+            strcpy(current->comm, name);
+            return 0;
+        }
         default:
             STRACE("prctl(%#x)", option);
             return _EINVAL;
