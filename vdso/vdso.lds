@@ -44,7 +44,7 @@ SECTIONS {
     .eh_frame_hdr  : {*(.eh_frame_hdr)}    :text :eh_frame_hdr
     .eh_frame      : {KEEP (*(.eh_frame))} :text
 
-    .text          : {*(.text*)}           :text   =0x90909090
+    .text          : {*(.text*)}           :text
 
     /DISCARD/ : {
         *(.debug*)
