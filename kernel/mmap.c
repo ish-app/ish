@@ -48,15 +48,17 @@ static addr_t do_mmap(addr_t addr, dword_t len, dword_t prot, dword_t flags, fd_
     int err;
     pages_t pages = PAGE_ROUND_UP(len);
     page_t page;
-    if (addr == 0) {
-        page = pt_find_hole(current->mem, pages);
-        if (page == BAD_PAGE)
-            return _ENOMEM;
-    } else {
+    if (addr != 0) {
         if (PGOFFSET(addr) != 0)
             return _EINVAL;
         page = PAGE(addr);
-        if (!(flags & MMAP_FIXED) && !pt_is_hole(current->mem, page, pages))
+        if (!(flags & MMAP_FIXED) && !pt_is_hole(current->mem, page, pages)) {
+            addr = 0;
+        }
+    }
+    if (addr == 0) {
+        page = pt_find_hole(current->mem, pages);
+        if (page == BAD_PAGE)
             return _ENOMEM;
     }
 
