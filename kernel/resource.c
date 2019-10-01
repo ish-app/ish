@@ -10,6 +10,7 @@
 #endif
 
 #include <limits.h>
+#include <string.h>
 #include "kernel/calls.h"
 
 static bool resource_valid(int resource) {

@@ -36,6 +36,11 @@ struct itimerval_ {
     struct timeval_ value;
 };
 
+struct itimerspec_ {
+    struct timespec_ interval;
+    struct timespec_ value;
+};
+
 struct tms_ {
     clock_t_ tms_utime;  /* user time */
     clock_t_ tms_stime;  /* system time */
@@ -51,5 +56,6 @@ dword_t sys_gettimeofday(addr_t tv, addr_t tz);
 dword_t sys_settimeofday(addr_t tv, addr_t tz);
 
 fd_t sys_timerfd_create(int_t clockid, int_t flags);
+int_t sys_timerfd_settime(fd_t f, int_t flags, addr_t new_value_addr, addr_t old_value_addr);
 
 #endif

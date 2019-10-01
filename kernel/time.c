@@ -240,6 +240,44 @@ fd_t sys_timerfd_create(int_t clockid, int_t flags) {
     return f_install(fd, flags);
 }
 
+int_t sys_timerfd_settime(fd_t f, int_t flags, addr_t new_value_addr, addr_t old_value_addr) {
+    STRACE("timerfd_settime(%d, %d, %#x, %#x)", f, flags, new_value_addr, old_value_addr);
+    struct fd *fd = f_get(f);
+    if (fd == NULL)
+        return _EBADF;
+    if (fd->ops != &timerfd_ops)
+        return _EINVAL;
+    struct itimerspec_ value;
+    if (user_get(new_value_addr, value))
+        return _EFAULT;
+
+    struct timer_spec spec = {
+        .value.tv_sec = value.value.sec,
+        .value.tv_nsec = value.value.nsec,
+        .interval.tv_sec = value.interval.sec,
+        .interval.tv_nsec = value.interval.nsec,
+    };
+    struct timer_spec old_spec;
+    lock(&fd->lock);
+    int err = timer_set(fd->timerfd.timer, spec, &old_spec);
+    unlock(&fd->lock);
+    if (err < 0)
+        return err;
+
+    if (old_value_addr) {
+        struct itimerspec_ old_value = {
+            .value.sec = old_spec.value.tv_sec,
+            .value.nsec = old_spec.value.tv_nsec,
+            .interval.sec = old_spec.interval.tv_sec,
+            .interval.nsec = old_spec.interval.tv_nsec,
+        };
+        if (user_put(old_value_addr, old_value))
+            return _EFAULT;
+    }
+
+    return 0;
+}
+
 static ssize_t timerfd_read(struct fd *fd, void *buf, size_t bufsize) {
     if (bufsize < sizeof(uint64_t))
         return _EINVAL;
@@ -260,7 +298,7 @@ static ssize_t timerfd_read(struct fd *fd, void *buf, size_t bufsize) {
 static int timerfd_poll(struct fd *fd) {
     int res = 0;
     lock(&fd->lock);
-    if (fd->timerfd.expirations == 0)
+    if (fd->timerfd.expirations != 0)
         res |= POLL_READ;
     unlock(&fd->lock);
     return res;
