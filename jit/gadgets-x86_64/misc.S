@@ -131,16 +131,22 @@ do_helper 2
         save_c
         movq %_cpu, %rdi
         xorq %r14, %r14
-        movb 8(%_ip), %r14b
+        .ifin(\rm, xmm)
+            movb 8(%_ip), %r14b
+        .endifin
+        .ifin(\rm, read,write)
+            movb 16(%_ip), %r14b
+        .endifin
         leaq CPU_xmm(%_cpu,%r14), %rdx
         .ifin(\rm, xmm)
             movb 9(%_ip), %r14b
             leaq CPU_xmm(%_cpu,%r14), %rsi
+            callq *(%_ip)
         .endifin
         .ifin(\rm, read,write)
             movq %_addrq, %rsi
+            callq *8(%_ip)
         .endifin
-        callq *(%_ip)
         restore_c
         load_regs
         .ifc \rm,write
