@@ -6,6 +6,7 @@ lib.init(function() {
     term.getPrefs().set('background-color', 'transparent');
     term.getPrefs().set('foreground-color', 'transparent');
     term.getPrefs().set('cursor-color', 'transparent');
+    term.getPrefs().set('terminal-encoding', 'iso-2022');
     
     term.getPrefs().set('font-family', 'Menlo');
     term.getPrefs().set('enable-resize-notice', false);
