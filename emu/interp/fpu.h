@@ -103,6 +103,7 @@
 #define FUCOM FCOM
 #define FCOMM(val,z) F_COMPARE(f80_from_float(get(val,z),z))
 #define FTST() F_COMPARE(fpu_consts[fconst_zero])
+#define FICOM(val,z) UNDEFINED // nyehhh
 
 #define FILD(val,z) \
     FPUSH(f80_from_int((sint(z)) get(val,z)))
