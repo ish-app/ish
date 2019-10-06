@@ -499,10 +499,10 @@
             </objects>
             <point key="canvasLocation" x="1058" y="725"/>
         </scene>
-        <!--Navigation Controller-->
+        <!--About Navigation Controller-->
         <scene sceneID="Vga-Xh-1SC">
             <objects>
-                <navigationController modalPresentationStyle="formSheet" id="0yy-Uo-cZb" sceneMemberID="viewController">
+                <navigationController modalPresentationStyle="formSheet" id="0yy-Uo-cZb" customClass="AboutNavigationController" sceneMemberID="viewController">
                     <modalFormSheetSimulatedSizeMetrics key="simulatedDestinationMetrics"/>
                     <navigationBar key="navigationBar" contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" id="q93-rv-TwM">
                         <rect key="frame" x="0.0" y="0.0" width="320" height="56"/>
