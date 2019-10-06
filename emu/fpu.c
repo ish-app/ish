@@ -141,6 +141,12 @@ void fpu_comm32(struct cpu_state *cpu, float *f) {
 void fpu_comm64(struct cpu_state *cpu, double *f) {
     fpu_compare(cpu, f80_from_double(*f));
 }
+void fpu_icom16(struct cpu_state *cpu, int16_t *i) {
+    fpu_compare(cpu, f80_from_int(*i));
+}
+void fpu_icom32(struct cpu_state *cpu, int32_t *i) {
+    fpu_compare(cpu, f80_from_int(*i));
+}
 void fpu_tst(struct cpu_state *cpu) {
     fpu_compare(cpu, fpu_consts[fconst_zero]);
 }

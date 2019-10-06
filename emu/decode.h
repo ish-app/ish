@@ -569,6 +569,8 @@ restart:
                     case 0xd97: TRACE("fnstcw mem16"); FSTCW(mem_addr); break;
                     case 0xda0: TRACE("fiadd mem32"); FIADD(mem_addr,32); break;
                     case 0xda1: TRACE("fimul mem32"); FIMUL(mem_addr,32); break;
+                    case 0xda2: TRACE("ficom mem32"); FICOM(mem_addr,32); break;
+                    case 0xda3: TRACE("ficomp mem32"); FICOM(mem_addr,32); FPOP; break;
                     case 0xda4: TRACE("fisub mem32"); FISUB(mem_addr,32); break;
                     case 0xda5: TRACE("fisubr mem32"); FISUBR(mem_addr,32); break;
                     case 0xda6: TRACE("fidiv mem32"); FIDIV(mem_addr,32); break;
@@ -591,6 +593,8 @@ restart:
                     case 0xdd3: TRACE("fstp mem64"); FSTM(mem_addr_real,64); FPOP; break;
                     case 0xde0: TRACE("fiadd mem16"); FIADD(mem_addr,16); break;
                     case 0xde1: TRACE("fimul mem16"); FIMUL(mem_addr,16); break;
+                    case 0xde2: TRACE("ficom mem16"); FICOM(mem_addr,16); break;
+                    case 0xde3: TRACE("ficomp mem16"); FICOM(mem_addr,16); FPOP; break;
                     case 0xde4: TRACE("fisub mem16"); FISUB(mem_addr,16); break;
                     case 0xde5: TRACE("fisubr mem16"); FISUBR(mem_addr,16); break;
                     case 0xde6: TRACE("fidiv mem16"); FIDIV(mem_addr,16); break;
