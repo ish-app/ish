@@ -20,7 +20,9 @@
 }
 
 - (void)dealloc {
-    [[UserPreferences shared] removeObserver:self forKeyPath:@"theme"];
+    @try {
+        [[UserPreferences shared] removeObserver:self forKeyPath:@"theme"];
+    } @catch (NSException * __unused exception) {}
 }
 
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context {
