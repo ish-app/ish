@@ -1,12 +1,20 @@
 Fixed bugs:
-- A couple hangs and crashes revealed by running `npm` in a loop
+- Line drawing characters appearing as q and x
+- Illegal instruction in latest gcc
+- Reported "out of memory" when running composer install
+- Vim looking totally screwed up in screen/tmux
+- "Permission denied" when using gcc with a non-root user
+- "Bad file descriptor" when using socketpair in python
+- GPG crashing
+- ssh-agent crashing
+- Fixed clear screen shortcut
 
 New stuff:
-- Return cache optimization by @wishstudio, makes things about 10% faster
-- Replace the terminal emulator with hterm
-- Fixed scrolling once and for all
-
-You heard that right. Scrolling is working on iOS 13, you can even see the scrollbar! At least until some future iOS version breaks it. Also you can now copy stuff from the terminal without also copying large amounts of whitespace from the end of each line.
+- Dark theme in about box if your terminal is dark
+- Elixir/Erlang kinda works about 20% of the time
+- Backtick->escape and option->meta mappings
+- SF Symbols on iOS 13
+- Hyperlinks using escape sequences
 
 Send bug reports or feedback here: https://github.com/tbodt/ish/issues (or by email, if you prefer)
 Follow iSH on Twitter: https://twitter.com/iSH_app
