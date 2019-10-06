@@ -837,6 +837,10 @@ restart:
                                    READMODRM; VSTORE(xmm_modrm_reg, xmm_modrm_val,32);
                                    break;
 
+                        case 0x7e: TRACEI("movq xmm:modrm, xmm");
+                                   READMODRM; VZLOAD(xmm_modrm_val, xmm_modrm_reg,64);
+                                   break;
+
                         case 0x18 ... 0x1f: TRACEI("repz nop modrm\t"); READMODRM; break;
 
                         // tzcnt is like bsf but the result when the input is zero is defined as the operand size

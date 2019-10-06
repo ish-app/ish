@@ -478,6 +478,13 @@ static inline bool gen_vec(enum arg rm, enum arg reg, void (*helper)(), gadget_t
 
 #define VLOAD(src, dst,z) v(load, src, dst,z)
 #define VZLOAD(src, dst,z) v_write(zload, dst, src,z)
+#define VLOAD_PADNOTMEM(src, dst, z) do { \
+    if (arg_##src == arg_xmm_modrm_val && modrm.type != modrm_mem) { \
+        VZLOAD(src, dst, z); \
+    } else { \
+        VLOAD(src, dst, z); \
+    } \
+} while (0)
 #define VLOAD_PADMEM(src, dst, z) do { \
     if (arg_##src == arg_xmm_modrm_val && modrm.type != modrm_reg) { \
         VZLOAD(src, dst, z); \
