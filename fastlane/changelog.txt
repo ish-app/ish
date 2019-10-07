@@ -1,3 +1,5 @@
+HOTFIX for last build that would crash as soon as you tapped the close button on the about box. Release notes for previous build pasted below for your convenience.
+
 Fixed bugs:
 - Line drawing characters appearing as q and x
 - Illegal instruction in latest gcc
