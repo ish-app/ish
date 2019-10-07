@@ -97,7 +97,7 @@ int futex_wake(addr_t uaddr, dword_t val) {
 
 dword_t sys_futex(addr_t uaddr, dword_t op, dword_t val, addr_t timeout_or_val2, addr_t uaddr2, dword_t val3) {
     if (!(op & FUTEX_PRIVATE_FLAG_)) {
-        FIXME("no support for shared futexes");
+        STRACE("!FUTEX_PRIVATE ");
     }
     struct timespec timeout = {0};
     if ((op & (FUTEX_WAIT_)) > 0) {
