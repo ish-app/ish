@@ -227,7 +227,8 @@ NSData *removeInvalidUTF8(NSData *data) {
         self.pendingData = [NSMutableData new];
     }
     NSData *cleanData = removeInvalidUTF8(data);
-    
+    NSString *str = [[NSString alloc] initWithData:cleanData encoding:NSUTF8StringEncoding];
+
     NSError *err = nil;
     NSData *jsonData = [NSJSONSerialization dataWithJSONObject:@[str] options:0 error:&err];
     NSString *json = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
