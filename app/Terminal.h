@@ -18,6 +18,7 @@
 - (NSString *)arrow:(char)direction;
 
 @property (readonly) WKWebView *webView;
+@property (nonatomic) BOOL enableVoiceOverAnnounce;
 
 @end
 

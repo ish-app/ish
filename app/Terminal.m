@@ -75,6 +75,8 @@ static NSMutableDictionary<NSNumber *, Terminal *> *terminals;
         [self _updateStyleFromPreferences];
         self.loaded = YES;
         [self.refreshTask schedule];
+        // make sure this setting works if it's set before loading
+        self.enableVoiceOverAnnounce = self.enableVoiceOverAnnounce;
     } else if ([message.name isEqualToString:@"log"]) {
         NSLog(@"%@", message.body);
     } else if ([message.name isEqualToString:@"resize"]) {
@@ -95,6 +97,13 @@ static NSMutableDictionary<NSNumber *, Terminal *> *terminals;
         tty_set_winsize(self.tty, (struct winsize_) {.col = cols, .row = rows});
         unlock(&self.tty->lock);
     }];
+}
+
+- (void)setEnableVoiceOverAnnounce:(BOOL)enableVoiceOverAnnounce {
+    _enableVoiceOverAnnounce = enableVoiceOverAnnounce;
+    [self.webView evaluateJavaScript:[NSString stringWithFormat:@"term.setAccessibilityEnabled(%@)",
+                                      enableVoiceOverAnnounce ? @"true" : @"false"]
+                   completionHandler:nil];
 }
 
 - (int)write:(const void *)buf length:(size_t)len {
@@ -218,7 +227,6 @@ NSData *removeInvalidUTF8(NSData *data) {
         self.pendingData = [NSMutableData new];
     }
     NSData *cleanData = removeInvalidUTF8(data);
-    NSString *str = [[NSString alloc] initWithData:cleanData encoding:NSUTF8StringEncoding];
     
     NSError *err = nil;
     NSData *jsonData = [NSJSONSerialization dataWithJSONObject:@[str] options:0 error:&err];

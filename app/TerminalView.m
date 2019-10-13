@@ -57,10 +57,12 @@
         for (NSString *handler in handlers) {
             [self.terminal.webView.configuration.userContentController removeScriptMessageHandlerForName:handler];
         }
+        terminal.enableVoiceOverAnnounce = NO;
     }
     
     _terminal = terminal;
     WKWebView *webView = terminal.webView;
+    terminal.enableVoiceOverAnnounce = YES;
     webView.scrollView.scrollEnabled = NO;
     webView.scrollView.delaysContentTouches = NO;
     webView.scrollView.canCancelContentTouches = NO;
