@@ -70,14 +70,14 @@
                                 <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="cJt-oG-BnW" customClass="BarButton">
                                     <rect key="frame" x="0.0" y="0.0" width="31" height="43"/>
                                     <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                    <accessibility key="accessibilityConfiguration" label="Tab">
+                                        <accessibilityTraits key="traits" button="YES"/>
+                                    </accessibility>
                                     <fontDescription key="fontDescription" type="system" pointSize="20"/>
                                     <color key="tintColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                     <state key="normal" title="⇥">
                                         <color key="titleColor" cocoaTouchSystemColor="darkTextColor"/>
                                     </state>
-                                    <userDefinedRuntimeAttributes>
-                                        <userDefinedRuntimeAttribute type="boolean" keyPath="secondary" value="NO"/>
-                                    </userDefinedRuntimeAttributes>
                                     <connections>
                                         <action selector="pressTab:" destination="BYZ-38-t0r" eventType="primaryActionTriggered" id="Cbz-tT-Cre"/>
                                     </connections>
@@ -85,13 +85,16 @@
                                 <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="W9v-cj-FWz" customClass="BarButton">
                                     <rect key="frame" x="37" y="0.0" width="31" height="43"/>
                                     <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                    <accessibility key="accessibilityConfiguration" label="Control">
+                                        <accessibilityTraits key="traits" button="YES"/>
+                                    </accessibility>
                                     <fontDescription key="fontDescription" type="system" pointSize="20"/>
                                     <color key="tintColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                     <state key="normal" title="⌃">
                                         <color key="titleColor" cocoaTouchSystemColor="darkTextColor"/>
                                     </state>
                                     <userDefinedRuntimeAttributes>
-                                        <userDefinedRuntimeAttribute type="boolean" keyPath="secondary" value="NO"/>
+                                        <userDefinedRuntimeAttribute type="boolean" keyPath="toggleable" value="YES"/>
                                     </userDefinedRuntimeAttributes>
                                     <connections>
                                         <action selector="pressControl:" destination="BYZ-38-t0r" eventType="primaryActionTriggered" id="c21-jR-m4I"/>
@@ -100,14 +103,14 @@
                                 <button contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="IPm-l0-f25" customClass="BarButton">
                                     <rect key="frame" x="74" y="0.0" width="31" height="43"/>
                                     <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                    <accessibility key="accessibilityConfiguration" label="Escape">
+                                        <accessibilityTraits key="traits" button="YES"/>
+                                    </accessibility>
                                     <fontDescription key="fontDescription" type="system" pointSize="24"/>
                                     <color key="tintColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                     <state key="normal" title="⎋">
                                         <color key="titleColor" cocoaTouchSystemColor="darkTextColor"/>
                                     </state>
-                                    <userDefinedRuntimeAttributes>
-                                        <userDefinedRuntimeAttribute type="boolean" keyPath="secondary" value="NO"/>
-                                    </userDefinedRuntimeAttributes>
                                     <connections>
                                         <action selector="pressEscape:" destination="BYZ-38-t0r" eventType="primaryActionTriggered" id="Z7i-gl-kzw"/>
                                     </connections>

@@ -10,6 +10,8 @@
 @interface BarButton ()
 @end
 
+extern UIAccessibilityTraits UIAccessibilityTraitToggle;
+
 @implementation BarButton
 
 - (void)awakeFromNib {
@@ -21,6 +23,9 @@
     self.backgroundColor = self.defaultColor;
     self.keyAppearance = UIKeyboardAppearanceLight;
     self.accessibilityTraits |= UIAccessibilityTraitKeyboardKey;
+    if (self.toggleable) {
+        self.accessibilityTraits |= 0x20000000000000;
+    }
 }
 
 - (UIColor *)primaryColor {
@@ -74,6 +79,13 @@
 - (void)setKeyAppearance:(UIKeyboardAppearance)keyAppearance {
     _keyAppearance = keyAppearance;
     [self chooseBackground];
+}
+
+- (NSString *)accessibilityValue {
+    if (self.toggleable) {
+        return self.selected ? @"1" : @"0";
+    }
+    return nil;
 }
 
 @end

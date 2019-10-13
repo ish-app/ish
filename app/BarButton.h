@@ -13,6 +13,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic) UIKeyboardAppearance keyAppearance;
 @property IBInspectable BOOL secondary;
+@property IBInspectable BOOL toggleable;
 
 @end
 
