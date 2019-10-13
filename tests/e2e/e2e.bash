@@ -8,7 +8,7 @@ VERBOSE=false
 YES_MODE=false
 TEST_PATTERN=""
 SUMMARY_LOG=./e2e_out/summary.txt
-ALPINE_IMAGE="http://dl-cdn.alpinelinux.org/alpine/v3.10/releases/x86/alpine-minirootfs-3.10.0-x86.tar.gz"
+ALPINE_IMAGE="http://dl-cdn.alpinelinux.org/alpine/v3.10/releases/x86/alpine-minirootfs-3.10.2-x86.tar.gz"
 rm -f "$SUMMARY_LOG"
 
 while getopts "hvyf:e:" OPTION; do
