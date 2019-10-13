@@ -116,6 +116,7 @@ static NSMutableDictionary<NSNumber *, Terminal *> *terminals;
 
 - (void)sendInput:(const char *)buf length:(size_t)len {
     tty_input(self.tty, buf, len, 0);
+    [self.webView evaluateJavaScript:@"exports.setUserGesture()" completionHandler:nil];
     [self.scrollToBottomTask schedule];
 }
 

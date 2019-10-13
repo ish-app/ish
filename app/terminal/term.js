@@ -114,6 +114,7 @@ exports.updateStyle = ({foregroundColor, backgroundColor, fontSize}) => {
 
 exports.clearScrollback = () => term.clearScrollback();
 exports.blur = () => term.blur();
+exports.setUserGesture = () => term.accessibilityReader_.hasUserGesture = true;
 
 hterm.openUrl = (url) => native.openLink(url);
 
