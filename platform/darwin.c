@@ -16,12 +16,12 @@ struct cpu_usage get_cpu_usage() {
 }
 
 struct mem_usage get_mem_usage() {
-    host_basic_info_data_t basic;
-    mach_msg_type_number_t fuck = HOST_BASIC_INFO;
-    host_statistics(mach_host_self(), HOST_BASIC_INFO, (host_info_t) &basic, &fuck);
-    vm_statistics64_data_t vm;
+    host_basic_info_data_t basic = {};
+    mach_msg_type_number_t fuck = HOST_BASIC_INFO_COUNT;
+    kern_return_t status = host_info(mach_host_self(), HOST_BASIC_INFO, (host_info_t) &basic, &fuck);
+    vm_statistics64_data_t vm = {};
     fuck = HOST_VM_INFO64_COUNT;
-    host_statistics64(mach_host_self(), HOST_VM_INFO64, (host_info_t) &vm, &fuck);
+    status = host_statistics64(mach_host_self(), HOST_VM_INFO64, (host_info_t) &vm, &fuck);
 
     struct mem_usage usage;
     usage.total = basic.max_mem;
