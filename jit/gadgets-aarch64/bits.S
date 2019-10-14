@@ -34,6 +34,9 @@
             .endif
             .ifc \type,sar
                 # lazy ass copy paste job
+                .ifnb \s
+                    sxt\s _tmp, _tmp
+                .endif
                 sub w8, w8, 1
                 asr _tmp, _tmp, w8
                 and w9, _tmp, 1
