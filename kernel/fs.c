@@ -531,7 +531,7 @@ static int mount_statfs(struct mount *mount, struct statfsbuf *stat) {
 }
 
 static int_t statfs_mount(struct mount *mount, addr_t buf_addr) {
-    struct statfsbuf buf;
+    struct statfsbuf buf = {};
     int err = mount_statfs(mount, &buf);
     if (err < 0)
         return err;
@@ -554,7 +554,7 @@ static int_t statfs_mount(struct mount *mount, addr_t buf_addr) {
 }
 
 static int_t statfs64_mount(struct mount *mount, addr_t buf_addr) {
-    struct statfsbuf buf;
+    struct statfsbuf buf = {};
     int err = mount_statfs(mount, &buf);
     if (err < 0)
         return err;
@@ -591,11 +591,13 @@ dword_t sys_statfs(addr_t path_addr, addr_t buf_addr) {
     return err;
 }
 
-dword_t sys_statfs64(addr_t path_addr, addr_t buf_addr) {
+dword_t sys_statfs64(addr_t path_addr, dword_t buf_size, addr_t buf_addr) {
     char path_raw[MAX_PATH];
     if (user_read_string(path_addr, path_raw, sizeof(path_raw)))
         return _EFAULT;
-    STRACE("statfs64(\"%s\", %#x)", path_raw, buf_addr);
+    STRACE("statfs64(\"%s\", %d, %#x)", path_raw, buf_size, buf_addr);
+    if (buf_size != sizeof(struct statfs64_))
+        return _EINVAL;
     char path[MAX_PATH];
     int err = path_normalize(AT_PWD, path_raw, path, N_SYMLINK_NOFOLLOW);
     if (err < 0)

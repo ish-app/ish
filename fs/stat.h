@@ -121,6 +121,6 @@ struct statfs64_ {
     uint_t frsize;
     uint_t flags;
     uint_t pad[4];
-};
+} __attribute__((packed));
 
 #endif

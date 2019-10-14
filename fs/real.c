@@ -8,6 +8,7 @@
 #include <sys/mman.h>
 #include <sys/xattr.h>
 #include <sys/file.h>
+#include <sys/statvfs.h>
 #include <poll.h>
 
 #include "kernel/errno.h"
@@ -385,9 +386,17 @@ int realfs_flock(struct fd *fd, int operation) {
     return flock(fd->real_fd, real_op);
 }
 
-int realfs_statfs(struct mount *UNUSED(mount), struct statfsbuf *stat) {
-    stat->namelen = NAME_MAX;
-    stat->bsize = PAGE_SIZE;
+int realfs_statfs(struct mount *mount, struct statfsbuf *stat) {
+    struct statvfs vfs = {};
+    fstatvfs(mount->root_fd, &vfs);
+    stat->bsize = vfs.f_bsize;
+    stat->blocks = vfs.f_blocks;
+    stat->bfree = vfs.f_bfree;
+    stat->bavail = vfs.f_bavail;
+    stat->files = vfs.f_files;
+    stat->ffree = vfs.f_ffree;
+    stat->namelen = vfs.f_namemax;
+    stat->frsize = vfs.f_frsize;
     return 0;
 }
 
