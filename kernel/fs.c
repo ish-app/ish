@@ -314,7 +314,9 @@ dword_t sys__llseek(fd_t f, dword_t off_high, dword_t off_low, addr_t res_addr, 
         return _ESPIPE;
     lock(&fd->lock);
     off_t_ off = ((off_t_) off_high << 32) | off_low;
+    STRACE("llseek(%d, %lu, %#x, %d)", f, off, res_addr, whence);
     off_t_ res = fd->ops->lseek(fd, off, whence);
+    STRACE(" -> %lu", res);
     unlock(&fd->lock);
     if (res < 0)
         return res;
@@ -327,6 +329,8 @@ dword_t sys_lseek(fd_t f, dword_t off, dword_t whence) {
     struct fd *fd = f_get(f);
     if (fd == NULL)
         return _EBADF;
+    if (!fd->ops->lseek)
+        return _ESPIPE;
     lock(&fd->lock);
     off_t res = fd->ops->lseek(fd, off, whence);
     unlock(&fd->lock);
@@ -821,6 +825,7 @@ dword_t sys_rmdir(addr_t path_addr) {
     char path[MAX_PATH];
     if (user_read_string(path_addr, path, sizeof(path)))
         return _EFAULT;
+    STRACE("rmdir(%s)", path);
     return generic_rmdirat(AT_PWD, path);
 }
 
