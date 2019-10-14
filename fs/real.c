@@ -182,6 +182,11 @@ void realfs_seekdir(struct fd *fd, unsigned long ptr) {
 }
 
 off_t realfs_lseek(struct fd *fd, off_t offset, int whence) {
+    if (fd->dir != NULL && whence == LSEEK_SET) {
+        realfs_seekdir(fd, offset);
+        return offset;
+    }
+
     if (whence == LSEEK_SET)
         whence = SEEK_SET;
     else if (whence == LSEEK_CUR)
