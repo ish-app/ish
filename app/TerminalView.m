@@ -15,9 +15,13 @@
 @property (nonatomic) NSMutableArray<UIKeyCommand *> *keyCommands;
 @property ScrollbarView *scrollbarView;
 
+@property (nullable) NSString *markedText;
+
 @end
 
 @implementation TerminalView
+@synthesize inputDelegate;
+@synthesize tokenizer;
 
 - (void)awakeFromNib {
     [super awakeFromNib];
@@ -306,5 +310,44 @@ static const char *metaKeys = "abcdefghijklmnopqrstuvwxyz0123456789-=[]\\;',./";
                                                           action:@selector(keyCommandTriggered:)];
     [self handleKeyCommand:newCommand];
 }
+
+#pragma mark UITextInput stubs
+
+#if 0
+#define DLog NSLog
+#else
+#define DLog(...)
+#endif
+#define DLogFunc() DLog(@"%s", __func__)
+
+- (NSWritingDirection)baseWritingDirectionForPosition:(nonnull UITextPosition *)position inDirection:(UITextStorageDirection)direction { DLogFunc(); return NSWritingDirectionLeftToRight; }
+- (void)setBaseWritingDirection:(NSWritingDirection)writingDirection forRange:(nonnull UITextRange *)range { DLogFunc(); }
+- (UITextPosition *)beginningOfDocument { DLogFunc(); return [UITextPosition new]; }
+- (CGRect)caretRectForPosition:(nonnull UITextPosition *)position { DLogFunc(); return CGRectZero; }
+- (nullable UITextRange *)characterRangeAtPoint:(CGPoint)point { DLogFunc(); return nil; }
+- (nullable UITextRange *)characterRangeByExtendingPosition:(nonnull UITextPosition *)position inDirection:(UITextLayoutDirection)direction { DLogFunc(); return nil; }
+- (nullable UITextPosition *)closestPositionToPoint:(CGPoint)point { DLogFunc(); return nil; }
+- (nullable UITextPosition *)closestPositionToPoint:(CGPoint)point withinRange:(nonnull UITextRange *)range { DLogFunc(); return nil; }
+- (NSComparisonResult)comparePosition:(nonnull UITextPosition *)position toPosition:(nonnull UITextPosition *)other { DLogFunc(); return NSOrderedSame; }
+- (UITextPosition *)endOfDocument { DLogFunc(); return [UITextPosition new]; }
+- (CGRect)firstRectForRange:(nonnull UITextRange *)range { DLogFunc(); return CGRectZero; }
+- (void)setMarkedText:(NSString *)markedText selectedRange:(NSRange)selectedRange { DLogFunc(); }
+- (UITextRange *)markedTextRange { DLogFunc(); return nil; }
+- (NSDictionary<NSAttributedStringKey,id> *)markedTextStyle { DLogFunc(); return nil; }
+- (void)setMarkedTextStyle:(NSDictionary<NSAttributedStringKey,id> *)markedTextStyle { DLogFunc(); }
+- (NSInteger)offsetFromPosition:(nonnull UITextPosition *)from toPosition:(nonnull UITextPosition *)toPosition { DLogFunc(); return 0; }
+- (nullable UITextPosition *)positionFromPosition:(nonnull UITextPosition *)position inDirection:(UITextLayoutDirection)direction offset:(NSInteger)offset { DLogFunc(); return nil; }
+- (nullable UITextPosition *)positionFromPosition:(nonnull UITextPosition *)position offset:(NSInteger)offset { DLogFunc(); return nil; }
+- (nullable UITextPosition *)positionWithinRange:(nonnull UITextRange *)range farthestInDirection:(UITextLayoutDirection)direction { DLogFunc(); return nil; }
+- (void)replaceRange:(nonnull UITextRange *)range withText:(nonnull NSString *)text { DLogFunc(); }
+- (UITextRange *)selectedTextRange { DLogFunc(); return nil; }
+- (void)setSelectedTextRange:(UITextRange *)selectedTextRange { DLogFunc(); }
+- (nonnull NSArray<UITextSelectionRect *> *)selectionRectsForRange:(nonnull UITextRange *)range { DLogFunc(); return @[]; }
+- (nullable NSString *)textInRange:(nonnull UITextRange *)range { DLogFunc(); return nil; }
+- (nullable UITextRange *)textRangeFromPosition:(nonnull UITextPosition *)fromPosition toPosition:(nonnull UITextPosition *)toPosition { DLogFunc(); return nil; }
+- (void)unmarkText { DLogFunc(); }
+
+// conforming to UITextInput makes this view default to being an accessibility element, which blocks selecting anything in it
+- (BOOL)isAccessibilityElement { return NO; }
 
 @end
