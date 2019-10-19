@@ -11,8 +11,9 @@ int_t sys_prctl(dword_t option, uint_t arg2, uint_t UNUSED(arg3), uint_t UNUSED(
             return 0;
         case PRCTL_SET_NAME_: {
             char name[16];
-            if (user_read_string(arg2, name, sizeof(name)))
+            if (user_read_string(arg2, name, sizeof(name) - 1))
                 return _EFAULT;
+            name[sizeof(name) - 1] = '\0';
             STRACE("prctl(PRCTL_SET_NAME, \"%s\")", name);
             strcpy(current->comm, name);
             return 0;
