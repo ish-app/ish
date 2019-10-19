@@ -128,11 +128,12 @@
     }
 }
 
-#pragma mark Keyboard
+#pragma mark Keyboard Input
 
 // implementing these makes a keyboard pop up when this view is first responder
 
 - (void)insertText:(NSString *)text {
+    self.markedText = nil;
     if (self.controlKey.selected) {
         self.controlKey.selected = NO;
         if (text.length == 1) {
@@ -148,11 +149,37 @@
     [self.terminal sendInput:data.bytes length:data.length];
 }
 
-- (BOOL)canPerformAction:(SEL)action withSender:(id)sender {
-    if ([NSStringFromSelector(action) hasPrefix:@"_accessibility"] && [self.terminal.webView canPerformAction:action withSender:sender])
-        return YES;
-    return [super canPerformAction:action withSender:sender];
+- (void)deleteBackward {
+    [self insertText:@"\x7f"];
 }
+
+- (BOOL)hasText {
+    return YES; // it's always ok to send a "delete"
+}
+
+#pragma mark IME Input
+
+- (void)setMarkedText:(nullable NSString *)markedText selectedRange:(NSRange)selectedRange {
+    self.markedText = markedText;
+}
+
+- (UITextRange *)markedTextRange {
+    if (self.markedText == nil) {
+        return nil;
+    }
+    return [UITextRange new];
+}
+
+- (NSString *)textInRange:(UITextRange *)range {
+    return self.markedText;
+}
+
+- (void)unmarkText {
+    [self insertText:self.markedText];
+}
+
+
+#pragma mark Keyboard Actions
 
 - (void)paste:(id)sender {
     NSString *string = UIPasteboard.generalPasteboard.string;
@@ -165,23 +192,23 @@
     [self.terminal.webView evaluateJavaScript:@"exports.copy()" completionHandler:nil];
 }
 
+- (void)clearScrollback:(UIKeyCommand *)command {
+    [self.terminal.webView evaluateJavaScript:@"exports.clearScrollback()" completionHandler:nil];
+}
+
 - (id)forwardingTargetForSelector:(SEL)selector {
     if ([NSStringFromSelector(selector) hasPrefix:@"_accessibility"])
         return self.terminal.webView;
     return nil;
 }
 
-- (void)deleteBackward {
-    [self insertText:@"\x7f"];
+- (BOOL)canPerformAction:(SEL)action withSender:(id)sender {
+    if ([NSStringFromSelector(action) hasPrefix:@"_accessibility"] && [self.terminal.webView canPerformAction:action withSender:sender])
+        return YES;
+    return [super canPerformAction:action withSender:sender];
 }
 
-- (BOOL)hasText {
-    return YES; // it's always ok to send a "delete"
-}
-
-- (void)clearScrollback:(UIKeyCommand *)command {
-    [self.terminal.webView evaluateJavaScript:@"exports.clearScrollback()" completionHandler:nil];
-}
+#pragma mark Keyboard Traits
 
 - (UITextSmartDashesType)smartDashesType API_AVAILABLE(ios(11)) {
     return UITextSmartDashesTypeNo;
@@ -314,38 +341,33 @@ static const char *metaKeys = "abcdefghijklmnopqrstuvwxyz0123456789-=[]\\;',./";
 #pragma mark UITextInput stubs
 
 #if 0
-#define DLog NSLog
+#define LogStub() NSLog(@"%s", __func__)
 #else
-#define DLog(...)
+#define LogStub()
 #endif
-#define DLogFunc() DLog(@"%s", __func__)
 
-- (NSWritingDirection)baseWritingDirectionForPosition:(nonnull UITextPosition *)position inDirection:(UITextStorageDirection)direction { DLogFunc(); return NSWritingDirectionLeftToRight; }
-- (void)setBaseWritingDirection:(NSWritingDirection)writingDirection forRange:(nonnull UITextRange *)range { DLogFunc(); }
-- (UITextPosition *)beginningOfDocument { DLogFunc(); return [UITextPosition new]; }
-- (CGRect)caretRectForPosition:(nonnull UITextPosition *)position { DLogFunc(); return CGRectZero; }
-- (nullable UITextRange *)characterRangeAtPoint:(CGPoint)point { DLogFunc(); return nil; }
-- (nullable UITextRange *)characterRangeByExtendingPosition:(nonnull UITextPosition *)position inDirection:(UITextLayoutDirection)direction { DLogFunc(); return nil; }
-- (nullable UITextPosition *)closestPositionToPoint:(CGPoint)point { DLogFunc(); return nil; }
-- (nullable UITextPosition *)closestPositionToPoint:(CGPoint)point withinRange:(nonnull UITextRange *)range { DLogFunc(); return nil; }
-- (NSComparisonResult)comparePosition:(nonnull UITextPosition *)position toPosition:(nonnull UITextPosition *)other { DLogFunc(); return NSOrderedSame; }
-- (UITextPosition *)endOfDocument { DLogFunc(); return [UITextPosition new]; }
-- (CGRect)firstRectForRange:(nonnull UITextRange *)range { DLogFunc(); return CGRectZero; }
-- (void)setMarkedText:(NSString *)markedText selectedRange:(NSRange)selectedRange { DLogFunc(); }
-- (UITextRange *)markedTextRange { DLogFunc(); return nil; }
-- (NSDictionary<NSAttributedStringKey,id> *)markedTextStyle { DLogFunc(); return nil; }
-- (void)setMarkedTextStyle:(NSDictionary<NSAttributedStringKey,id> *)markedTextStyle { DLogFunc(); }
-- (NSInteger)offsetFromPosition:(nonnull UITextPosition *)from toPosition:(nonnull UITextPosition *)toPosition { DLogFunc(); return 0; }
-- (nullable UITextPosition *)positionFromPosition:(nonnull UITextPosition *)position inDirection:(UITextLayoutDirection)direction offset:(NSInteger)offset { DLogFunc(); return nil; }
-- (nullable UITextPosition *)positionFromPosition:(nonnull UITextPosition *)position offset:(NSInteger)offset { DLogFunc(); return nil; }
-- (nullable UITextPosition *)positionWithinRange:(nonnull UITextRange *)range farthestInDirection:(UITextLayoutDirection)direction { DLogFunc(); return nil; }
-- (void)replaceRange:(nonnull UITextRange *)range withText:(nonnull NSString *)text { DLogFunc(); }
-- (UITextRange *)selectedTextRange { DLogFunc(); return nil; }
-- (void)setSelectedTextRange:(UITextRange *)selectedTextRange { DLogFunc(); }
-- (nonnull NSArray<UITextSelectionRect *> *)selectionRectsForRange:(nonnull UITextRange *)range { DLogFunc(); return @[]; }
-- (nullable NSString *)textInRange:(nonnull UITextRange *)range { DLogFunc(); return nil; }
-- (nullable UITextRange *)textRangeFromPosition:(nonnull UITextPosition *)fromPosition toPosition:(nonnull UITextPosition *)toPosition { DLogFunc(); return nil; }
-- (void)unmarkText { DLogFunc(); }
+- (NSWritingDirection)baseWritingDirectionForPosition:(nonnull UITextPosition *)position inDirection:(UITextStorageDirection)direction { LogStub(); return NSWritingDirectionLeftToRight; }
+- (void)setBaseWritingDirection:(NSWritingDirection)writingDirection forRange:(nonnull UITextRange *)range { LogStub(); }
+- (UITextPosition *)beginningOfDocument { LogStub(); return nil; }
+- (CGRect)caretRectForPosition:(nonnull UITextPosition *)position { LogStub(); return CGRectZero; }
+- (nullable UITextRange *)characterRangeAtPoint:(CGPoint)point { LogStub(); return nil; }
+- (nullable UITextRange *)characterRangeByExtendingPosition:(nonnull UITextPosition *)position inDirection:(UITextLayoutDirection)direction { LogStub(); return nil; }
+- (nullable UITextPosition *)closestPositionToPoint:(CGPoint)point { LogStub(); return nil; }
+- (nullable UITextPosition *)closestPositionToPoint:(CGPoint)point withinRange:(nonnull UITextRange *)range { LogStub(); return nil; }
+- (NSComparisonResult)comparePosition:(nonnull UITextPosition *)position toPosition:(nonnull UITextPosition *)other { LogStub(); return NSOrderedSame; }
+- (UITextPosition *)endOfDocument { LogStub(); return nil; }
+- (CGRect)firstRectForRange:(nonnull UITextRange *)range { LogStub(); return CGRectZero; }
+- (NSDictionary<NSAttributedStringKey,id> *)markedTextStyle { LogStub(); return nil; }
+- (void)setMarkedTextStyle:(NSDictionary<NSAttributedStringKey,id> *)markedTextStyle { LogStub(); }
+- (NSInteger)offsetFromPosition:(nonnull UITextPosition *)from toPosition:(nonnull UITextPosition *)toPosition { LogStub(); return 0; }
+- (nullable UITextPosition *)positionFromPosition:(nonnull UITextPosition *)position inDirection:(UITextLayoutDirection)direction offset:(NSInteger)offset { LogStub(); return nil; }
+- (nullable UITextPosition *)positionFromPosition:(nonnull UITextPosition *)position offset:(NSInteger)offset { LogStub(); return nil; }
+- (nullable UITextPosition *)positionWithinRange:(nonnull UITextRange *)range farthestInDirection:(UITextLayoutDirection)direction { LogStub(); return nil; }
+- (void)replaceRange:(nonnull UITextRange *)range withText:(nonnull NSString *)text { LogStub(); }
+- (UITextRange *)selectedTextRange { LogStub(); return nil; }
+- (void)setSelectedTextRange:(UITextRange *)selectedTextRange { LogStub(); }
+- (nonnull NSArray<UITextSelectionRect *> *)selectionRectsForRange:(nonnull UITextRange *)range { LogStub(); return @[]; }
+- (nullable UITextRange *)textRangeFromPosition:(nonnull UITextPosition *)fromPosition toPosition:(nonnull UITextPosition *)toPosition { LogStub(); return nil; }
 
 // conforming to UITextInput makes this view default to being an accessibility element, which blocks selecting anything in it
 - (BOOL)isAccessibilityElement { return NO; }
