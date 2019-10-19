@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="14868" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="BYZ-38-t0r">
+    <device id="retina4_0" orientation="portrait" appearance="light"/>
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="14824"/>
+        <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <scenes>
+        <!--Terminal View Controller-->
+        <scene sceneID="tne-QT-ifu">
+            <objects>
+                <viewController id="BYZ-38-t0r" customClass="TerminalViewController" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="8bC-Xf-vdC">
+                        <rect key="frame" x="0.0" y="0.0" width="320" height="568"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="FQi-r8-odu" customClass="TerminalView">
+                                <rect key="frame" x="0.0" y="0.0" width="320" height="568"/>
+                                <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                <connections>
+                                    <outlet property="controlKey" destination="W9v-cj-FWz" id="HgQ-u7-5IL"/>
+                                    <outlet property="inputAccessoryView" destination="GyN-ob-WFz" id="mVD-kz-BQc"/>
+                                </connections>
+                            </view>
+                        </subviews>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                        <gestureRecognizers/>
+                        <constraints>
+                            <constraint firstItem="FQi-r8-odu" firstAttribute="trailing" secondItem="IVs-Oh-AhK" secondAttribute="trailing" id="EeQ-tO-BY6"/>
+                            <constraint firstItem="FQi-r8-odu" firstAttribute="top" secondItem="IVs-Oh-AhK" secondAttribute="top" id="Fd5-I9-Qjs"/>
+                            <constraint firstItem="FQi-r8-odu" firstAttribute="leading" secondItem="IVs-Oh-AhK" secondAttribute="leading" id="VUM-Zu-VAQ"/>
+                            <constraint firstItem="FQi-r8-odu" firstAttribute="bottom" secondItem="8bC-Xf-vdC" secondAttribute="bottom" identifier="bottom constraint" id="fXD-Y3-UQj"/>
+                        </constraints>
+                        <viewLayoutGuide key="safeArea" id="IVs-Oh-AhK"/>
+                    </view>
+                    <connections>
+                        <outlet property="bar" destination="4pc-Ei-ihz" id="iy4-s8-7yt"/>
+                        <outlet property="barBottom" destination="OK7-xG-JFg" id="vWW-y5-fIo"/>
+                        <outlet property="barButtonWidth" destination="1Ax-5U-2CI" id="Wlc-g8-GEs"/>
+                        <outlet property="barLeading" destination="Ha9-7V-oYm" id="o53-7B-f32"/>
+                        <outlet property="barTop" destination="gtD-Rx-Gdo" id="zXm-Bb-ZyO"/>
+                        <outlet property="barTrailing" destination="RAD-x5-aAI" id="Ele-Ty-xAK"/>
+                        <outlet property="barView" destination="GyN-ob-WFz" id="lVV-s6-cQt"/>
+                        <outlet property="bottomConstraint" destination="fXD-Y3-UQj" id="dpH-0p-KEx"/>
+                        <outlet property="controlKey" destination="W9v-cj-FWz" id="c9i-VC-j7f"/>
+                        <outlet property="escapeKey" destination="IPm-l0-f25" id="QBn-lt-GPd"/>
+                        <outlet property="hideKeyboardButton" destination="7qw-ie-p4d" id="n5f-XX-i98"/>
+                        <outlet property="pasteButton" destination="hmm-tv-z35" id="mgi-xs-C8r"/>
+                        <outlet property="tabKey" destination="cJt-oG-BnW" id="YaE-o4-lKm"/>
+                        <outlet property="termView" destination="FQi-r8-odu" id="QIa-yI-fmG"/>
+                        <outletCollection property="barButtons" destination="cJt-oG-BnW" id="Yjx-uz-RbI"/>
+                        <outletCollection property="barButtons" destination="W9v-cj-FWz" id="OFf-FH-2Xy"/>
+                        <outletCollection property="barButtons" destination="IPm-l0-f25" id="dHH-gh-Tzq"/>
+                        <outletCollection property="barButtons" destination="VCr-TW-PIZ" id="NlS-hh-ara"/>
+                        <outletCollection property="barControls" destination="5dl-UV-6qh" id="ocU-st-RdO"/>
+                        <outletCollection property="barControls" destination="7qw-ie-p4d" id="fDV-Yg-Dec"/>
+                        <outletCollection property="barControls" destination="hmm-tv-z35" id="EEv-5m-po5"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
+                <view contentMode="scaleToFill" id="GyN-ob-WFz" customClass="BarView">
+                    <rect key="frame" x="0.0" y="0.0" width="500" height="55"/>
+                    <autoresizingMask key="autoresizingMask" widthSizable="YES"/>
+                    <subviews>
+                        <stackView opaque="NO" contentMode="scaleToFill" spacing="6" translatesAutoresizingMaskIntoConstraints="NO" id="4pc-Ei-ihz">
+                            <rect key="frame" x="6" y="6" width="488" height="43"/>
+                            <subviews>
+                                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="cJt-oG-BnW" customClass="BarButton">
+                                    <rect key="frame" x="0.0" y="0.0" width="31" height="43"/>
+                                    <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                    <accessibility key="accessibilityConfiguration" label="Tab">
+                                        <accessibilityTraits key="traits" button="YES"/>
+                                    </accessibility>
+                                    <fontDescription key="fontDescription" type="system" pointSize="20"/>
+                                    <color key="tintColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                    <state key="normal" title="⇥">
+                                        <color key="titleColor" cocoaTouchSystemColor="darkTextColor"/>
+                                    </state>
+                                    <connections>
+                                        <action selector="pressTab:" destination="BYZ-38-t0r" eventType="primaryActionTriggered" id="Cbz-tT-Cre"/>
+                                    </connections>
+                                </button>
+                                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="W9v-cj-FWz" customClass="BarButton">
+                                    <rect key="frame" x="37" y="0.0" width="31" height="43"/>
+                                    <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                    <accessibility key="accessibilityConfiguration" label="Control">
+                                        <accessibilityTraits key="traits" button="YES"/>
+                                    </accessibility>
+                                    <fontDescription key="fontDescription" type="system" pointSize="20"/>
+                                    <color key="tintColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                    <state key="normal" title="⌃">
+                                        <color key="titleColor" cocoaTouchSystemColor="darkTextColor"/>
+                                    </state>
+                                    <userDefinedRuntimeAttributes>
+                                        <userDefinedRuntimeAttribute type="boolean" keyPath="toggleable" value="YES"/>
+                                    </userDefinedRuntimeAttributes>
+                                    <connections>
+                                        <action selector="pressControl:" destination="BYZ-38-t0r" eventType="primaryActionTriggered" id="c21-jR-m4I"/>
+                                    </connections>
+                                </button>
+                                <button contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="IPm-l0-f25" customClass="BarButton">
+                                    <rect key="frame" x="74" y="0.0" width="31" height="43"/>
+                                    <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                    <accessibility key="accessibilityConfiguration" label="Escape">
+                                        <accessibilityTraits key="traits" button="YES"/>
+                                    </accessibility>
+                                    <fontDescription key="fontDescription" type="system" pointSize="24"/>
+                                    <color key="tintColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                    <state key="normal" title="⎋">
+                                        <color key="titleColor" cocoaTouchSystemColor="darkTextColor"/>
+                                    </state>
+                                    <connections>
+                                        <action selector="pressEscape:" destination="BYZ-38-t0r" eventType="primaryActionTriggered" id="Z7i-gl-kzw"/>
+                                    </connections>
+                                </button>
+                                <button contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="VCr-TW-PIZ" userLabel="Arrows" customClass="ArrowBarButton">
+                                    <rect key="frame" x="111" y="0.0" width="31" height="43"/>
+                                    <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                    <fontDescription key="fontDescription" type="system" pointSize="24"/>
+                                    <color key="tintColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                    <state key="normal">
+                                        <color key="titleColor" cocoaTouchSystemColor="darkTextColor"/>
+                                    </state>
+                                    <connections>
+                                        <action selector="pressArrow:" destination="BYZ-38-t0r" eventType="valueChanged" id="SBI-0w-nSu"/>
+                                    </connections>
+                                </button>
+                                <view contentMode="scaleToFill" horizontalHuggingPriority="100" translatesAutoresizingMaskIntoConstraints="NO" id="qmg-M1-7W8" userLabel="Spacer">
+                                    <rect key="frame" x="148" y="0.0" width="229" height="43"/>
+                                </view>
+                                <button contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="infoLight" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="5dl-UV-6qh" userLabel="Info">
+                                    <rect key="frame" x="383" y="0.0" width="31" height="43"/>
+                                    <accessibility key="accessibilityConfiguration" label="Settings"/>
+                                    <constraints>
+                                        <constraint firstAttribute="width" constant="31" id="1Ax-5U-2CI"/>
+                                    </constraints>
+                                    <color key="tintColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                    <state key="normal">
+                                        <color key="titleColor" cocoaTouchSystemColor="darkTextColor"/>
+                                    </state>
+                                    <connections>
+                                        <action selector="showAbout:" destination="BYZ-38-t0r" eventType="primaryActionTriggered" id="xbI-EN-avC"/>
+                                        <outletCollection property="gestureRecognizers" destination="reB-As-gYu" appends="YES" id="ehk-hz-UIY"/>
+                                    </connections>
+                                </button>
+                                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="hmm-tv-z35" userLabel="Paste">
+                                    <rect key="frame" x="420" y="0.0" width="31" height="43"/>
+                                    <accessibility key="accessibilityConfiguration" label="Paste"/>
+                                    <color key="tintColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                    <state key="normal" image="Paste"/>
+                                    <connections>
+                                        <action selector="paste:" destination="dkx-z0-nzr" eventType="primaryActionTriggered" id="cfw-0C-OAd"/>
+                                    </connections>
+                                </button>
+                                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="7qw-ie-p4d">
+                                    <rect key="frame" x="457" y="0.0" width="31" height="43"/>
+                                    <color key="tintColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                    <state key="normal" image="Hide Keyboard"/>
+                                    <connections>
+                                        <action selector="loseFocus:" destination="dkx-z0-nzr" eventType="primaryActionTriggered" id="T2t-j9-oFz"/>
+                                    </connections>
+                                </button>
+                            </subviews>
+                            <constraints>
+                                <constraint firstItem="7qw-ie-p4d" firstAttribute="width" secondItem="5dl-UV-6qh" secondAttribute="width" id="5aW-YN-2vX"/>
+                                <constraint firstItem="5dl-UV-6qh" firstAttribute="width" secondItem="hmm-tv-z35" secondAttribute="width" id="Nyk-On-Tyt"/>
+                                <constraint firstItem="W9v-cj-FWz" firstAttribute="width" secondItem="5dl-UV-6qh" secondAttribute="width" id="Xdt-z5-Zdb"/>
+                                <constraint firstItem="IPm-l0-f25" firstAttribute="width" secondItem="5dl-UV-6qh" secondAttribute="width" id="ebo-yF-ffX"/>
+                                <constraint firstItem="5dl-UV-6qh" firstAttribute="width" secondItem="VCr-TW-PIZ" secondAttribute="width" id="fXl-3w-1Zj"/>
+                                <constraint firstItem="cJt-oG-BnW" firstAttribute="width" secondItem="5dl-UV-6qh" secondAttribute="width" id="oQb-HX-lTG"/>
+                            </constraints>
+                        </stackView>
+                    </subviews>
+                    <color key="tintColor" cocoaTouchSystemColor="darkTextColor"/>
+                    <constraints>
+                        <constraint firstItem="4pc-Ei-ihz" firstAttribute="leading" secondItem="hgN-L1-K1S" secondAttribute="leading" constant="6" id="Ha9-7V-oYm"/>
+                        <constraint firstAttribute="bottom" secondItem="4pc-Ei-ihz" secondAttribute="bottom" constant="6" id="OK7-xG-JFg"/>
+                        <constraint firstItem="hgN-L1-K1S" firstAttribute="trailing" secondItem="4pc-Ei-ihz" secondAttribute="trailing" constant="6" id="RAD-x5-aAI"/>
+                        <constraint firstItem="4pc-Ei-ihz" firstAttribute="top" secondItem="GyN-ob-WFz" secondAttribute="top" constant="6" id="gtD-Rx-Gdo"/>
+                    </constraints>
+                    <viewLayoutGuide key="safeArea" id="hgN-L1-K1S"/>
+                    <connections>
+                        <outlet property="terminalViewController" destination="BYZ-38-t0r" id="Pog-Oc-1za"/>
+                    </connections>
+                </view>
+                <pongPressGestureRecognizer allowableMovement="20" minimumPressDuration="5" id="reB-As-gYu" userLabel="Debug Panel Trigger">
+                    <connections>
+                        <action selector="showAbout:" destination="BYZ-38-t0r" id="UDK-Ol-mdv"/>
+                    </connections>
+                </pongPressGestureRecognizer>
+            </objects>
+            <point key="canvasLocation" x="32.799999999999997" y="32.833583208395808"/>
+        </scene>
+    </scenes>
+    <resources>
+        <image name="Hide Keyboard" width="32" height="32"/>
+        <image name="Paste" width="20" height="21"/>
+    </resources>
+</document>
