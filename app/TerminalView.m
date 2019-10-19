@@ -252,7 +252,7 @@ static const char *metaKeys = "abcdefghijklmnopqrstuvwxyz0123456789-=[]\\;',./";
         [self addKeys:alphabet withModifiers:UIKeyModifierShift];
         [self addKey:@"" withModifiers:UIKeyModifierAlphaShift]; // otherwise tap of caps lock can switch layouts
     }
-    if (UserPreferences.shared.capsLockMapping == OptionMapEsc) {
+    if (UserPreferences.shared.optionMapping == OptionMapEsc) {
         [self addKeys:metaKeys withModifiers:UIKeyModifierAlternate];
     }
     if (UserPreferences.shared.backtickMapEscape) {
