@@ -1,5 +1,5 @@
 project('ish', 'c',
-    default_options: ['default_library=static', 'c_std=gnu11', 'engine=jit', 'warning_level=2'])
+    default_options: ['default_library=static', 'c_std=gnu11', 'warning_level=2'])
 
 log_on = get_option('log').split()
 log_off = get_option('nolog').split()
