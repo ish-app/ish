@@ -24,19 +24,6 @@ static NSString *const PreviewCellIdentifier = @"Preview";
     [[UserPreferences shared] addObserver:self forKeyPath:@"theme" options:NSKeyValueObservingOptionNew context:nil];
     [[UserPreferences shared] addObserver:self forKeyPath:@"fontSize" options:NSKeyValueObservingOptionNew context:nil];
 }
-- (void) stillTestingAlert: (NSString * )msg {
-    UIAlertController *alertVC= [UIAlertController alertControllerWithTitle:@"Just Wait!" message: msg preferredStyle:UIAlertControllerStyleAlert];
-    UIAlertAction * action = [UIAlertAction actionWithTitle:@"Go Back" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
-        NSLog(@"User went back");
-    }
-        ];
-    [alertVC addAction: action];
-    [self presentViewController:alertVC animated:true completion:nil];
-    
-}
-- (IBAction) WereTesting:(id)sender {
-    [self stillTestingAlert:@"Were still coding but will be done soon ;)"];
-}
 - (void)dealloc {
     @try {
         [[UserPreferences shared] removeObserver:self forKeyPath:@"Custom-Theme"];
