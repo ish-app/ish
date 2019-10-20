@@ -144,6 +144,11 @@ do_helper 2
             movq %_addrq, %rsi
             callq *8(%_ip)
         .endifin
+        .ifin(\rm, imm)
+            movb 8(%_ip), %r14b
+            leaq CPU_xmm(%_cpu,%r14), %rdx
+            movb 9(%_ip), %sil
+        .endifin
         restore_c
         load_regs
         .ifc \rm,write

@@ -69,9 +69,18 @@ void vec_store128(struct cpu_state *UNUSED(cpu), union xmm_reg *dst, const union
     *dst = *src;
 }
 
-void vec_imm_shiftr64(struct cpu_state *UNUSED(cpu), const uint64_t amount, union xmm_reg *src) {
-    src->qw[0] >>= (uint8_t) amount;
-    src->qw[1] >>= (uint8_t) amount;
+#include <stdio.h>
+
+void vec_imm_shiftr64(struct cpu_state *UNUSED(cpu), union xmm_reg *UNUSED(ignore), union xmm_reg *src, uint8_t amount) {
+    printf("amount: %d\n", amount);
+    if ((amount & 0x7F) > 63) {
+        printf("drems\n");
+        //zero_xmm(src);
+    } else {
+        printf("memes\n");
+        //src->qw[0] >>= amount;
+        //src->qw[1] >>= amount;
+    }
 }
 
 void vec_xor128(struct cpu_state *UNUSED(cpu), union xmm_reg *src, union xmm_reg *dst) {

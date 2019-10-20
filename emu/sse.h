@@ -37,7 +37,8 @@ void vec_store32(struct cpu_state *UNUSED(cpu), union xmm_reg *src, const union 
 void vec_store64(struct cpu_state *UNUSED(cpu), union xmm_reg *src, const union xmm_reg *dst);
 void vec_store128(struct cpu_state *UNUSED(cpu), union xmm_reg *src, const union xmm_reg *dst);
 
-void vec_imm_shiftr64(struct cpu_state *UNUSED(cpu), const uint64 amount, union xmm_reg *src);
+// TODO is uint right?
+void vec_imm_shiftr64(struct cpu_state *UNUSED(cpu), union xmm_reg *UNUSED(ignore), union xmm_reg *src, uint8_t amount);
 void vec_xor128(struct cpu_state *cpu, union xmm_reg *src, union xmm_reg *dst);
 
 #endif
