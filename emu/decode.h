@@ -108,19 +108,23 @@ restart:
                            break;
 
                 case 0x6e: TRACEI("movd modrm, xmm");
+                           // TODO: REX.W = 1 might be needed later
                            READMODRM; VZLOAD(modrm_val, xmm_modrm_reg,32);
                            break;
 
                 case 0x6f: TRACEI("movdqa xmm:modrm, xmm");
                            READMODRM; VLOAD(xmm_modrm_val, xmm_modrm_reg,128); break;
 
-                case 0x73: TRACEI("psrlq xmm imm");
-                           READIMM8;
-                           printf("got imm: %u\n", (uint8_t) imm);
-                           VIMM_SHIFTR(xmm_modrm_reg,64);
+                case 0x73: READMODRM;
+                           switch (modrm.opcode) {
+                               case (0x02): TRACEI("psrlq xmm imm");
+                                            READIMM8; VIMM_SHIFTR(xmm_modrm_val, imm,64); break;
+                               default: UNDEFINED;
+                           }
                            break;
 
                 case 0x7e: TRACEI("movd xmm, modrm");
+                           // TODO: REX.W = 1 might be needed later
                            READMODRM; VSTORE(xmm_modrm_reg, xmm_modrm_val,32);
                            break;
 
