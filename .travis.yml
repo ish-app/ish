@@ -21,10 +21,6 @@ matrix:
           env:
               - MESON_OPTS=-Djit=true
               - NINJA_TARGET=test
-        - <<: *linux
-          env:
-              - MESON_OPTS=-Djit=false
-              - NINJA_TARGET=
         - language: objective-c
           osx_image: xcode11
           install:
@@ -37,6 +33,3 @@ matrix:
                   update: true
           script:
               - xcodebuild -project iSH.xcodeproj -scheme iSH -sdk iphoneos CODE_SIGNING_ALLOWED=NO
-    exclude:
-        - language: objective-c
-          env: MESON_OPTS=-Djit=false
