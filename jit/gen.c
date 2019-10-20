@@ -454,14 +454,14 @@ static inline bool gen_vec(enum arg rm, enum arg reg, void (*helper)(), gadget_t
     if (gadget == NULL)
         UNDEFINED;
 
-    if (v_rm == vec_arg_mem)
-        gen_addr(state, modrm, seg_gs, saved_ip);
-    GEN(gadget);
     if (v_rm != vec_arg_mem) {
+        GEN(gadget);
         GEN(helper);
         GEN((modrm->opcode * sizeof(union xmm_reg)) |
                 ((modrm->rm_opcode * sizeof(union xmm_reg) << 8)));
     } else {
+        gen_addr(state, modrm, seg_gs, saved_ip);
+        GEN(gadget);
         GEN(saved_ip);
         GEN(helper);
         GEN(modrm->opcode * sizeof(union xmm_reg));
