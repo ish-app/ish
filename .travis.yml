@@ -33,6 +33,3 @@ matrix:
                   update: true
           script:
               - xcodebuild -project iSH.xcodeproj -scheme iSH -sdk iphoneos CODE_SIGNING_ALLOWED=NO
-    exclude:
-        - language: objective-c
-          env: MESON_OPTS=-Djit=false
