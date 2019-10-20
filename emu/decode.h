@@ -123,6 +123,11 @@ restart:
                            }
                            break;
 
+#if OP_SIZE != 32
+                case 0x74: TRACEI("pcmpeqb xmm:modrm, xmm");
+                           READMODRM; VCOMPARE_EACH(xmm_modrm_val, xmm_modrm_reg,8); break;
+#endif
+
                 case 0x7e: TRACEI("movd xmm, modrm");
                            // TODO: REX.W = 1 might be needed later
                            READMODRM; VSTORE(xmm_modrm_reg, xmm_modrm_val,32);

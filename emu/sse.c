@@ -35,6 +35,12 @@ void vec_compare32(struct cpu_state *cpu, float *f2, float *f1) {
     cpu->pf_res = 0;
 }
 
+void vec_compare_each8(struct cpu_state *UNUSED(cpu), const union xmm_reg *cmp, union xmm_reg *dst) {
+    for (int pos = 0; pos < 16; ++pos) {
+        dst->u8[pos] = (dst->u8[pos] == cmp->u8[pos]) ? 0xFF : 0x00;
+    }
+}
+
 void vec_load32(struct cpu_state *UNUSED(cpu), const union xmm_reg *src, union xmm_reg *dst) {
     dst->dw[0] = src->dw[0];
 }

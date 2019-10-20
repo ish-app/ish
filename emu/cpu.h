@@ -15,6 +15,8 @@ int cpu_step16(struct cpu_state *cpu, struct tlb *tlb);
 union xmm_reg {
     qword_t qw[2];
     dword_t dw[4];
+    uint16_t u16[8];
+    uint8_t u8[16];
     // TODO more forms
 };
 

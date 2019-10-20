@@ -14,3 +14,8 @@ gcc -msse2 xorps.c -o test_xorps
 echo psrlq
 gcc -msse2 psrlq.c -o test_psrlq
 ./test_psrlq
+
+echo pcmpeqb
+gcc -msse2 pcmpeqb.c -o test_pcmpeqb
+./test_pcmpeqb
+
