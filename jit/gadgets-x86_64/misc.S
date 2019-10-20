@@ -133,17 +133,14 @@ do_helper 2
         xorq %r14, %r14
         .ifin(\rm, xmm)
             movb 8(%_ip), %r14b
-        .endifin
-        .ifin(\rm, read,write)
-            movb 16(%_ip), %r14b
-        .endifin
-        leaq CPU_xmm(%_cpu,%r14), %rdx
-        .ifin(\rm, xmm)
+            leaq CPU_xmm(%_cpu,%r14), %rdx
             movb 9(%_ip), %r14b
             leaq CPU_xmm(%_cpu,%r14), %rsi
             callq *(%_ip)
         .endifin
         .ifin(\rm, read,write)
+            movb 16(%_ip), %r14b
+            leaq CPU_xmm(%_cpu,%r14), %rdx
             movq %_addrq, %rsi
             callq *8(%_ip)
         .endifin
