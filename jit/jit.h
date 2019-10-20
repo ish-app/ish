@@ -4,7 +4,7 @@
 #include "emu/memory.h"
 #include "util/list.h"
 
-#if JIT
+#if ENGINE_JIT
 
 #define JIT_INITIAL_HASH_SIZE (1 << 10)
 #define JIT_CACHE_SIZE (1 << 10)

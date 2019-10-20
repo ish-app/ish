@@ -19,7 +19,7 @@ matrix:
     include:
         - <<: *linux
           env:
-              - MESON_OPTS=-Djit=true
+              - MESON_OPTS=-Dengine=jit
               - NINJA_TARGET=test
         - language: objective-c
           osx_image: xcode11
