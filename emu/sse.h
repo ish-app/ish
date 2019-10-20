@@ -16,6 +16,11 @@ void vec_compare32(struct cpu_state *UNUSED(cpu), float *f2, float *f1);
  * - If v(...) is being used, the first argument is source.
  * - If v_write(...) is being used, the first argument is being written to.
  * Because the first argument is the operand that might be memory.
+ * 
+ *  jit/gen method | arg order
+ * ----------------|------------
+ *  v()            | const a, b    
+ *  v_write()      | a, const b
  */
 
 void vec_load32(struct cpu_state *UNUSED(cpu), const union xmm_reg *src, union xmm_reg *dst);
@@ -32,6 +37,7 @@ void vec_store32(struct cpu_state *UNUSED(cpu), union xmm_reg *src, const union 
 void vec_store64(struct cpu_state *UNUSED(cpu), union xmm_reg *src, const union xmm_reg *dst);
 void vec_store128(struct cpu_state *UNUSED(cpu), union xmm_reg *src, const union xmm_reg *dst);
 
+void vec_imm_shiftr64(struct cpu_state *UNUSED(cpu), const uint64 amount, union xmm_reg *src);
 void vec_xor128(struct cpu_state *cpu, union xmm_reg *src, union xmm_reg *dst);
 
 #endif

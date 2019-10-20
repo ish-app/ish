@@ -107,6 +107,18 @@ restart:
                            READMODRM; VXOR(xmm_modrm_val, xmm_modrm_reg,128);
                            break;
 
+                case 0x6e: TRACEI("movd modrm, xmm");
+                           READMODRM; VZLOAD(modrm_val, xmm_modrm_reg,32);
+                           break;
+
+                case 0x73: TRACEI("psrlq xmm imm");
+                           READIMM8; VIMM_SHIFTR(xmm_modrm_reg, imm,64);
+                           break;
+
+                case 0x7e: TRACEI("movd xmm, modrm");
+                           READMODRM; VSTORE(xmm_modrm_reg, xmm_modrm_val,32);
+                           break;
+
                 case 0x80: TRACEI("jo rel\t");
                            READIMM; J_REL(O, imm); break;
                 case 0x81: TRACEI("jno rel\t");

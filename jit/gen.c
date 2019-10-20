@@ -477,7 +477,7 @@ static inline bool gen_vec(enum arg rm, enum arg reg, void (*helper)(), gadget_t
 #define v_write(op, src, dst,z) _v(arg_##dst, arg_##src, vec_##op##z, vec_helper_store##z##_gadgets, z)
 
 #define VLOAD(src, dst,z) v(load, src, dst,z)
-#define VZLOAD(src, dst,z) v_write(zload, dst, src,z)
+#define VZLOAD(src, dst,z) v(zload, src, dst, z)
 #define VLOAD_PADNOTMEM(src, dst, z) do { \
     if (arg_##src == arg_xmm_modrm_val && modrm.type != modrm_mem) { \
         VZLOAD(src, dst, z); \
@@ -494,6 +494,7 @@ static inline bool gen_vec(enum arg rm, enum arg reg, void (*helper)(), gadget_t
 } while (0)
 #define VSTORE(src, dst,z) v_write(store, src, dst,z)
 #define VCOMPARE(src, dst,z) v(compare, src, dst,z)
+#define VIMM_SHIFTR(src, amount,z) v(imm_shiftr, amount, src,z)
 #define VXOR(src, dst,z) v(xor, src, dst,z)
 
 #define DECODER_RET int
