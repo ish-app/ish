@@ -54,13 +54,26 @@ static int proc_readlink_self(struct proc_entry *UNUSED(entry), char *buf) {
     return 0;
 }
 
-// in no particular order
+static ssize_t proc_show_mounts(struct proc_entry *UNUSED(entry), char *buf) {
+    size_t n = 0;
+    struct mount *mount;
+    list_for_each_entry(&mounts, mount, mounts) {
+        const char *point = mount->point;
+        if (point[0] == '\0')
+            point = "/";
+        n += sprintf(buf + n, "%s %s %s %s 0 0\n", mount->source, point, mount->fs->name, "rw");
+    };
+    return n;
+}
+
+// in alphabetical order
 struct proc_dir_entry proc_root_entries[] = {
-    {"version", .show = proc_show_version},
-    {"stat", .show = proc_show_stat},
     {"meminfo", .show = proc_show_meminfo},
-    {"uptime", .show = proc_show_uptime},
+    {"mounts", .show = proc_show_mounts},
     {"self", S_IFLNK, .readlink = proc_readlink_self},
+    {"stat", .show = proc_show_stat},
+    {"uptime", .show = proc_show_uptime},
+    {"version", .show = proc_show_version},
 };
 #define PROC_ROOT_LEN sizeof(proc_root_entries)/sizeof(proc_root_entries[0])
 

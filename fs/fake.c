@@ -646,7 +646,7 @@ static void fakefs_inode_orphaned(struct mount *mount, struct inode_data *inode)
 }
 
 const struct fs_ops fakefs = {
-    .magic = 0x66616b65,
+    .name = "fake", .magic = 0x66616b65,
     .mount = fakefs_mount,
     .umount = fakefs_umount,
     .statfs = realfs_statfs,
