@@ -458,9 +458,9 @@ static inline bool gen_vec(enum arg rm, enum arg reg, void (*helper)(), gadget_t
         gen_addr(state, modrm, seg_gs, saved_ip);
     GEN(gadget);
     if (v_rm != vec_arg_mem) {
+        GEN(helper);
         GEN((modrm->opcode * sizeof(union xmm_reg)) |
                 ((modrm->rm_opcode * sizeof(union xmm_reg) << 8)));
-        GEN(helper);
     } else {
         GEN(saved_ip);
         GEN(helper);
