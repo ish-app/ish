@@ -68,6 +68,15 @@ void vec_store64(struct cpu_state *UNUSED(cpu), union xmm_reg *dst, const union 
 void vec_store128(struct cpu_state *UNUSED(cpu), union xmm_reg *dst, const union xmm_reg *src) {
     *dst = *src;
 }
+#define ZSTORE(sz) \
+void vec_zstore##sz(struct cpu_state *cpu, union xmm_reg *dst, const union xmm_reg *src) { \
+    zero_xmm(dst); \
+    vec_store##sz(cpu, dst, src); \
+}
+ZSTORE(32)
+ZSTORE(64)
+ZSTORE(128)
+#undef ZSTORE
 
 void vec_imm_shiftr64(struct cpu_state *UNUSED(cpu), const uint8_t amount, union xmm_reg *src) {
     if (amount > 63) {

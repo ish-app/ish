@@ -279,6 +279,9 @@ restart:
                            BSWAP(reg_si); break;
                 case 0xcf: TRACEI("bswap edi");
                            BSWAP(reg_di); break;
+
+                case 0xd6: TRACEI("movq xmm xmm:modrm");
+                           READMODRM; VSTORE_PADNOTMEM(xmm_modrm_reg, xmm_modrm_val,64); break;
 #endif
 
 #if OP_SIZE == 16

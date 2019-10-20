@@ -33,9 +33,15 @@ void vec_zload32(struct cpu_state *UNUSED(cpu), const union xmm_reg *src, union 
 void vec_zload64(struct cpu_state *UNUSED(cpu), const union xmm_reg *src, union xmm_reg *dst);
 void vec_zload128(struct cpu_state *UNUSED(cpu), const union xmm_reg *src, union xmm_reg *dst);
 
-void vec_store32(struct cpu_state *UNUSED(cpu), union xmm_reg *src, const union xmm_reg *dst);
-void vec_store64(struct cpu_state *UNUSED(cpu), union xmm_reg *src, const union xmm_reg *dst);
-void vec_store128(struct cpu_state *UNUSED(cpu), union xmm_reg *src, const union xmm_reg *dst);
+void vec_store32(struct cpu_state *UNUSED(cpu), union xmm_reg *dst, const union xmm_reg *src);
+void vec_store64(struct cpu_state *UNUSED(cpu), union xmm_reg *dst, const union xmm_reg *src);
+void vec_store128(struct cpu_state *UNUSED(cpu), union xmm_reg *dst, const union xmm_reg *src);
+
+// Zeroes out the destination before storing.
+// Used in some instructions like movq when the dst is register.
+void vec_zstore32(struct cpu_state *UNUSED(cpu), union xmm_reg *dst, const union xmm_reg *src);
+void vec_zstore64(struct cpu_state *UNUSED(cpu), union xmm_reg *dst, const union xmm_reg *src);
+void vec_zstore128(struct cpu_state *UNUSED(cpu), union xmm_reg *dst, const union xmm_reg *src);
 
 void vec_imm_shiftr64(struct cpu_state *UNUSED(cpu), const uint8_t amount, union xmm_reg *src);
 void vec_xor128(struct cpu_state *cpu, union xmm_reg *src, union xmm_reg *dst);

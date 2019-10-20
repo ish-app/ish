@@ -515,6 +515,13 @@ static inline bool gen_vec(enum arg rm, enum arg reg, void (*helper)(), gadget_t
     } \
 } while (0)
 #define VSTORE(src, dst,z) v_write(store, src, dst,z)
+#define VSTORE_PADNOTMEM(src, dst,z) do { \
+    if (arg_##src == arg_xmm_modrm_val && modrm.type != modrm_mem) { \
+        v_write(zstore, src, dst,z); \
+    } else { \
+        v_write(store, src, dst,z); \
+    } \
+} while (0)
 #define VCOMPARE(src, dst,z) v(compare, src, dst,z)
 #define VSHIFTR_IMM(reg, amount, z) v_imm(imm_shiftr, amount, reg,z)
 #define VXOR(src, dst,z) v(xor, src, dst,z)
