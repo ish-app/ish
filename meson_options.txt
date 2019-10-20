@@ -2,7 +2,7 @@ option('log', type: 'string', value: '')
 option('nolog', type: 'string', value: '')
 option('log_handler', type: 'string', value: 'dprintf')
 
-option('jit', type: 'boolean', value: false)
+option('engine', type: 'combo', choices: ['jit', 'interp'], value: 'jit')
 
 option('vdso_c_args', type: 'string', value: '')
 

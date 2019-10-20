@@ -1,5 +1,5 @@
 project('ish', 'c',
-    default_options: ['default_library=static', 'c_std=gnu11', 'jit=true', 'warning_level=2'])
+    default_options: ['default_library=static', 'c_std=gnu11', 'warning_level=2'])
 
 log_on = get_option('log').split()
 log_off = get_option('nolog').split()
@@ -11,13 +11,10 @@ foreach channel : log_on + log_off
     endif
 endforeach
 add_project_arguments('-DLOG_HANDLER_' + get_option('log_handler').to_upper() + '=1', language: 'c')
+add_project_arguments('-DENGINE_' + get_option('engine').to_upper() + '=1', language: 'c')
 
 if get_option('no_crlf')
     add_project_arguments('-DNO_CRLF', language: 'c')
-endif
-
-if get_option('jit')
-    add_project_arguments('-DJIT=1', language: 'c')
 endif
 
 add_project_arguments('-Wno-switch', language: 'c')
@@ -111,7 +108,7 @@ src = [
 
     'platform/' + host_machine.system() + '.c',
 ]
-if get_option('jit')
+if get_option('engine') == 'jit'
     gadgets = 'jit/gadgets-' + host_machine.cpu_family()
     src += [
         'jit/jit.c',

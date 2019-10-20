@@ -6,7 +6,7 @@
 #include "util/list.h"
 #include "util/sync.h"
 #include "misc.h"
-#if JIT
+#if ENGINE_JIT
 struct jit;
 #endif
 
@@ -20,7 +20,7 @@ struct mem {
     int pgdir_used;
 
     // TODO put these in their own mm struct maybe
-#if JIT
+#if ENGINE_JIT
     struct jit *jit;
 #endif
 
@@ -62,7 +62,7 @@ struct pt_entry {
     struct data *data;
     size_t offset;
     unsigned flags;
-#if JIT
+#if ENGINE_JIT
     struct list blocks[2];
 #endif
 };
