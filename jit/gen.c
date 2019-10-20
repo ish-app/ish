@@ -458,15 +458,14 @@ static inline bool gen_vec(enum arg rm, enum arg reg, void (*helper)(), gadget_t
     }
 
     switch (v_rm) {
-        case (vec_arg_reg):
-        case (vec_arg_xmm):
+        case vec_arg_xmm:
             GEN(gadget);
             GEN(helper);
             GEN((modrm->opcode * sizeof(union xmm_reg))
                     | (modrm->rm_opcode * sizeof(union xmm_reg) << 8));
             break;
 
-        case (vec_arg_mem):
+        case vec_arg_mem:
             gen_addr(state, modrm, seg_gs, saved_ip);
             GEN(gadget);
             GEN(saved_ip);
@@ -474,7 +473,7 @@ static inline bool gen_vec(enum arg rm, enum arg reg, void (*helper)(), gadget_t
             GEN(modrm->opcode * sizeof(union xmm_reg));
             break;
 
-        case (vec_arg_imm):
+        case vec_arg_imm:
             // TODO: support immediates and opcode
             GEN(gadget);
             GEN(helper);
@@ -482,7 +481,7 @@ static inline bool gen_vec(enum arg rm, enum arg reg, void (*helper)(), gadget_t
                     | (((uint16_t) imm) << 8));
             break;
 
-        default: UNDEFINED;
+        default: die("unimplemented vecarg");
     }
     return true;
 }
@@ -496,7 +495,7 @@ static inline bool gen_vec(enum arg rm, enum arg reg, void (*helper)(), gadget_t
     if (!gen_vec(arg_imm, dst, helper, &helper_gadgets, state, &modrm, imm, saved_ip, seg_gs)) return false; \
 } while (0)
 #define v(op, src, dst,z) _v(arg_##src, arg_##dst, vec_##op##z, vec_helper_load##z##_gadgets, z)
-#define vi(op, imm, dst,z) _vi(imm, arg_##dst, vec_##op##z, vec_helper_load##z##_gadgets, z)
+#define v_imm(op, imm, dst,z) _vi(imm, arg_##dst, vec_##op##z, vec_helper_load##z##_gadgets, z)
 #define v_write(op, src, dst,z) _v(arg_##dst, arg_##src, vec_##op##z, vec_helper_store##z##_gadgets, z)
 
 #define VLOAD(src, dst,z) v(load, src, dst,z)
@@ -517,7 +516,7 @@ static inline bool gen_vec(enum arg rm, enum arg reg, void (*helper)(), gadget_t
 } while (0)
 #define VSTORE(src, dst,z) v_write(store, src, dst,z)
 #define VCOMPARE(src, dst,z) v(compare, src, dst,z)
-#define VIMM_SHIFTR(reg, amount, z) vi(imm_shiftr, amount, reg,z)
+#define VSHIFTR_IMM(reg, amount, z) vi(imm_shiftr, amount, reg,z)
 #define VXOR(src, dst,z) v(xor, src, dst,z)
 
 #define DECODER_RET int
