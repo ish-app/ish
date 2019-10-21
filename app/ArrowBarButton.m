@@ -80,15 +80,15 @@ static CGPoint anchors[] = {
     if (self.accessibilityUpDown)
         self.direction = ArrowUp;
     else
-        self.direction = ArrowRight; // this might be wrong in RTL
-    [self.timer invalidate];
+        self.direction = ArrowLeft; // this might be wrong in RTL
+    self.direction = ArrowNone;
 }
 - (void)accessibilityDecrement {
     if (self.accessibilityUpDown)
         self.direction = ArrowDown;
     else
-        self.direction = ArrowLeft;
-    [self.timer invalidate];
+        self.direction = ArrowRight;
+    self.direction = ArrowNone;
 }
 
 - (void)addTextLayer:(NSString *)text direction:(ArrowDirection)direction {
