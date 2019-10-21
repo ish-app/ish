@@ -70,7 +70,7 @@ void vec_store128(struct cpu_state *UNUSED(cpu), union xmm_reg *dst, const union
 }
 
 void vec_imm_shiftr64(struct cpu_state *UNUSED(cpu), const uint8_t amount, union xmm_reg *src) {
-    if ((amount & 0x7F) > 63) {
+    if (amount > 63) {
         zero_xmm(src);
     } else {
         src->qw[0] >>= amount;
