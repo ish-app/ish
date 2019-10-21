@@ -9,7 +9,7 @@ lib.init(function() {
     term.getPrefs().set('terminal-encoding', 'iso-2022');
     
     term.getPrefs().set('font-family', 'Menlo');
-    term.getPrefs().set('enable-resize-notice', false);
+    term.getPrefs().set('enable-resize-status', false);
     term.getPrefs().set('copy-on-select', false);
     term.getPrefs().set('enable-clipboard-notice', false);
     term.getPrefs().set('user-css-text', termCss);
