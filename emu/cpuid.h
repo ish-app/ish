@@ -3,8 +3,8 @@
 
 #include "misc.h"
 
-static inline int SSE2 = 1 << 26;
-static inline int CMOV = 1 << 15;
+static int SSE2 = 1 << 26;
+static int CMOV = 1 << 15;
 
 static inline void do_cpuid(dword_t *eax, dword_t *ebx, dword_t *ecx, dword_t *edx) {
     dword_t leaf = *eax;
