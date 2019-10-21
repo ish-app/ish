@@ -46,6 +46,7 @@ void vec_zstore64(struct cpu_state *UNUSED(cpu), union xmm_reg *dst, const union
 void vec_zstore128(struct cpu_state *UNUSED(cpu), union xmm_reg *dst, const union xmm_reg *src);
 
 void vec_imm_shiftr64(struct cpu_state *UNUSED(cpu), const uint8_t amount, union xmm_reg *src);
+void vec_or128(struct cpu_state *cpu, const union xmm_reg *arg, union xmm_reg *dst);
 void vec_xor128(struct cpu_state *cpu, union xmm_reg *src, union xmm_reg *dst);
 
 #endif

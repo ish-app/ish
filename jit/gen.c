@@ -525,6 +525,7 @@ static inline bool gen_vec(enum arg rm, enum arg reg, void (*helper)(), gadget_t
 #define VCOMPARE(src, dst,z) v(compare, src, dst,z)
 #define VSHIFTR_IMM(reg, amount, z) v_imm(imm_shiftr, amount, reg,z)
 #define VCOMPARE_EACH(src, dst,z) v(compare_each, src, dst,z)
+#define VOR(src, dst,z) v(or, src, dst,z)
 #define VXOR(src, dst,z) v(xor, src, dst,z)
 
 #define DECODER_RET int

@@ -93,6 +93,11 @@ void vec_imm_shiftr64(struct cpu_state *UNUSED(cpu), const uint8_t amount, union
     }
 }
 
+void vec_or128(struct cpu_state *UNUSED(cpu), const union xmm_reg *arg, union xmm_reg *dst) {
+    dst->qw[0] |= arg->qw[0];
+    dst->qw[1] |= arg->qw[1];
+}
+
 void vec_xor128(struct cpu_state *UNUSED(cpu), union xmm_reg *src, union xmm_reg *dst) {
     dst->qw[0] ^= src->qw[0];
     dst->qw[1] ^= src->qw[1];
