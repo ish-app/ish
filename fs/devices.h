@@ -38,5 +38,7 @@
 
 // /dev/clipboard
 #define DEV_CLIPBOARD_MINOR 0
+// /dev/gps
+#define DEV_LOCATION_MINOR 1
 
 #endif

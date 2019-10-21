@@ -9,7 +9,8 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #import "AppDelegate.h"
-#import "Pasteboard.h"
+#import "PasteboardDevice.h"
+#import "LocationDevice.h"
 #import "TerminalViewController.h"
 #import "UserPreferences.h"
 #include "kernel/init.h"
@@ -116,6 +117,11 @@ static void ios_handle_die(const char *msg) {
         return err;
     }
     generic_mknod("/dev/clipboard", S_IFCHR|0666, dev_make(DYN_DEV_MAJOR, DEV_CLIPBOARD_MINOR));
+    
+    err = dyn_dev_register(&location_dev, DEV_CHAR, DYN_DEV_MAJOR, DEV_LOCATION_MINOR);
+    if (err != 0)
+        return err;
+    generic_mknod("/dev/location", S_IFCHR|0666, dev_make(DYN_DEV_MAJOR, DEV_LOCATION_MINOR));
 
     do_mount(&procfs, "proc", "/proc", 0);
     do_mount(&devptsfs, "devpts", "/dev/pts", 0);

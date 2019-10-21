@@ -72,6 +72,9 @@ struct fd {
             // length of actual data stored in the buffer
             size_t buffer_len;
         } clipboard;
+        
+        // can fit anything in here
+        void *data;
     };
     // fs data
     union {
