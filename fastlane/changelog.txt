@@ -1,11 +1,19 @@
 Fixed bugs:
-- Free space reported incorrectly (now rtorrent doesn't shut down thinking it's out of disk space)
-- Total memory reported incorrectly
-- Incorrect 16-bit signed right shifting on arm
-- Composer deleting its own output (it thought the directory was empty, it was not)
+- Option->Meta map setting having no effect. It was looking at the caps lock setting instead :facepalm:. Now you can actually type characters that require AltGr.
+- Braille screen input not working
+- Incorrect VoiceOver labels on some of the keyboard buttons
+- Arrow keys in VoiceOver could only be swiped once in a direction
+- Long press on delete key not working
+- Transmission printing errors about not being able to set the receive buffer size
 
 New stuff:
-- VoiceOver reads terminal output, making iSH the best iOS terminal for blind people by a long shot. Seriously, why is every other terminal so broken? Blink doesn't read new output even though it uses the same terminal emulator as iSH, Shelly won't let you select anything in the terminal, Termius doesn't let you select anything at all.
+- IME support, so you can type text in Chinese or Japanese, and also use dead keys. Unfortunately the in-progress text doesn't appear on screen, but at least you can type at all.
+- Long press on delete key works
+- Dictation vaguely works
+- /proc/mounts so you can see your list of mounts. You can even run df -h and see how much free space you have. It gives a real answer!
+- Location tracking through /dev/location. Reading from this device will start tracking your location and output a line each time your location updates. It also supports background tracking, so you can get the app to run in the background with the following incantation:
+
+cat /dev/location > /dev/null &
 
 Send bug reports or feedback here: https://github.com/tbodt/ish/issues (or by email, if you prefer)
 Follow iSH on Twitter: https://twitter.com/iSH_app
