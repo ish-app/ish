@@ -490,12 +490,12 @@ static inline bool gen_vec(enum arg rm, enum arg reg, void (*helper)(), gadget_t
     extern gadget_t helper_gadgets[vec_arg_count]; \
     if (!gen_vec(src, dst, helper, &helper_gadgets, state, &modrm, 0, saved_ip, seg_gs)) return false; \
 } while (0)
-#define _vi(imm, dst, helper, helper_gadgets, z) do { \
+#define _v_imm(imm, dst, helper, helper_gadgets, z) do { \
     extern gadget_t helper_gadgets[vec_arg_count]; \
     if (!gen_vec(arg_imm, dst, helper, &helper_gadgets, state, &modrm, imm, saved_ip, seg_gs)) return false; \
 } while (0)
 #define v(op, src, dst,z) _v(arg_##src, arg_##dst, vec_##op##z, vec_helper_load##z##_gadgets, z)
-#define v_imm(op, imm, dst,z) _vi(imm, arg_##dst, vec_##op##z, vec_helper_load##z##_gadgets, z)
+#define v_imm(op, imm, dst,z) _v_imm(imm, arg_##dst, vec_##op##z, vec_helper_load##z##_gadgets, z)
 #define v_write(op, src, dst,z) _v(arg_##dst, arg_##src, vec_##op##z, vec_helper_store##z##_gadgets, z)
 
 #define VLOAD(src, dst,z) v(load, src, dst,z)
