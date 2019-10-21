@@ -458,6 +458,14 @@ static inline bool gen_vec(enum arg rm, enum arg reg, void (*helper)(), gadget_t
     }
 
     switch (v_rm) {
+        case vec_arg_reg:
+            GEN(gadget);
+            GEN(helper);
+            // if register size increases this should too
+            GEN((modrm->rm_opcode * sizeof(union xmm_reg))
+                    | ((modrm->opcode * sizeof(uint32_t)) << 8));
+            break;
+
         case vec_arg_xmm:
             GEN(gadget);
             GEN(helper);
@@ -525,6 +533,7 @@ static inline bool gen_vec(enum arg rm, enum arg reg, void (*helper)(), gadget_t
 #define VCOMPARE(src, dst,z) v(compare, src, dst,z)
 #define VSHIFTR_IMM(reg, amount, z) v_imm(imm_shiftr, amount, reg,z)
 #define VCOMPARE_EACH(src, dst,z) v(compare_each, src, dst,z)
+#define VMOVMSK(src, dst,z) v(movmsk, src, dst,z)
 #define VOR(src, dst,z) v(or, src, dst,z)
 #define VXOR(src, dst,z) v(xor, src, dst,z)
 

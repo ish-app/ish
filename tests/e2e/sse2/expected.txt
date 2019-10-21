@@ -27,3 +27,5 @@ pcmpeqb
 00000000ffffffff00000000ffffffff
 00000000ffffffff0000000000000000
 ffffffffffffffffffffffff00000000
+pmovmskb
+0000ff00

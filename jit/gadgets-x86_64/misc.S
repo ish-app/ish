@@ -119,10 +119,6 @@ do_helper 2
 #define VEC_ARG_LIST xmm,reg,imm
 
 .macro do_vec_helper name, reg, rm, size=
-    # general register access is unimplemented
-    .ifc \reg,reg; .exitm; .endif
-    .ifc \rm,reg; .exitm; .endif
-
     .gadget vec_helper_\name
         .ifin(\rm, read,write)
             \rm\()_prep (\size), vec_helper_\name
@@ -136,6 +132,13 @@ do_helper 2
             leaq CPU_xmm(%_cpu,%r14), %rdx
             movb 9(%_ip), %r14b
             leaq CPU_xmm(%_cpu,%r14), %rsi
+            callq *(%_ip)
+        .endifin
+        .ifin(\rm, reg)
+            movb 8(%_ip), %r14b
+            leaq CPU_xmm(%_cpu,%r14), %rdx
+            movb 9(%_ip), %r14b
+            leaq CPU_ebx(%_cpu,%r14), %rsi # I don't know why this has to be ebx instead of eax
             callq *(%_ip)
         .endifin
         .ifin(\rm, read,write)

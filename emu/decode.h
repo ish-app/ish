@@ -293,6 +293,9 @@ restart:
                            READMODRM; VSTORE_PADNOTMEM(xmm_modrm_reg, xmm_modrm_val,64); break;
 #endif
 
+                case 0xd7: TRACEI("pmovmskb xmm reg");
+                           READMODRM; VMOVMSK(modrm_reg, xmm_modrm_val,8); break;
+
 #if OP_SIZE == 16
                 case 0xef: TRACEI("pxor xmm:modrm xmm");
                            READMODRM; VXOR(xmm_modrm_val, xmm_modrm_reg,128);

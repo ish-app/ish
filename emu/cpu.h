@@ -25,6 +25,7 @@ struct cpu_state {
     struct jit *jit;
 
     // assumes little endian (as does literally everything)
+    // if register size gets bigger than dword_t, change gen_vec of jit/gen.c
 #define _REG(n) \
     union { \
         dword_t e##n; \

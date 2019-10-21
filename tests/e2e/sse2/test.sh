@@ -19,3 +19,7 @@ echo pcmpeqb
 gcc -msse2 pcmpeqb.c -o test_pcmpeqb
 ./test_pcmpeqb
 
+echo pmovmskb
+gcc -msse2 pmovmskb.c -o test_pmovmskb
+./test_pmovmskb
+

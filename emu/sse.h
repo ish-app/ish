@@ -24,6 +24,7 @@ void vec_compare32(struct cpu_state *UNUSED(cpu), float *f2, float *f1);
  */
 
 void vec_compare_each8(struct cpu_state *UNUSED(cpu), const union xmm_reg *cmp, union xmm_reg *dst);
+void vec_movmsk8(struct cpu_state *UNUSED(cpu), uint32_t *dst, const union xmm_reg *src);
 
 void vec_load32(struct cpu_state *UNUSED(cpu), const union xmm_reg *src, union xmm_reg *dst);
 void vec_load64(struct cpu_state *UNUSED(cpu), const union xmm_reg *src, union xmm_reg *dst);
