@@ -107,6 +107,30 @@ restart:
                            READMODRM; VXOR(xmm_modrm_val, xmm_modrm_reg,128);
                            break;
 
+                case 0x6e: TRACEI("movd modrm, xmm");
+                           // TODO: REX.W = 1 might be needed later
+                           READMODRM; VZLOAD(modrm_val, xmm_modrm_reg,32);
+                           break;
+
+                case 0x6f: TRACEI("movdqa xmm:modrm, xmm");
+                           READMODRM; VLOAD(xmm_modrm_val, xmm_modrm_reg,128); break;
+
+                case 0x73: READMODRM;
+                           switch (modrm.opcode) {
+                               case 0x02: TRACEI("psrlq xmm imm");
+                                          READIMM8; VSHIFTR_IMM(xmm_modrm_val, imm,64); break;
+                               default: UNDEFINED;
+                           }
+                           break;
+
+                case 0x7e: TRACEI("movd xmm, modrm");
+                           // TODO: REX.W = 1 might be needed later
+                           READMODRM; VSTORE(xmm_modrm_reg, xmm_modrm_val,32);
+                           break;
+
+                case 0x7f: TRACEI("movdqa xmm, xmm:modrm");
+                           READMODRM; VSTORE(xmm_modrm_reg, xmm_modrm_val,128); break;
+
                 case 0x80: TRACEI("jo rel\t");
                            READIMM; J_REL(O, imm); break;
                 case 0x81: TRACEI("jno rel\t");

@@ -69,6 +69,15 @@ void vec_store128(struct cpu_state *UNUSED(cpu), union xmm_reg *dst, const union
     *dst = *src;
 }
 
+void vec_imm_shiftr64(struct cpu_state *UNUSED(cpu), const uint8_t amount, union xmm_reg *src) {
+    if (amount > 63) {
+        zero_xmm(src);
+    } else {
+        src->qw[0] >>= amount;
+        src->qw[1] >>= amount;
+    }
+}
+
 void vec_xor128(struct cpu_state *UNUSED(cpu), union xmm_reg *src, union xmm_reg *dst) {
     dst->qw[0] ^= src->qw[0];
     dst->qw[1] ^= src->qw[1];

@@ -417,7 +417,7 @@ void helper_rdtsc(struct cpu_state *cpu);
 
 // sync with VEC_ARG_LIST
 enum vec_arg {
-    vec_arg_xmm, vec_arg_reg, vec_arg_count,
+    vec_arg_xmm, vec_arg_reg, vec_arg_imm, vec_arg_count,
     vec_arg_mem,
 };
 
@@ -425,6 +425,8 @@ static inline enum vec_arg vecarg(enum arg arg, struct modrm *modrm) {
     switch (arg) {
         case arg_modrm_reg:
             return vec_arg_reg;
+        case arg_imm:
+            return vec_arg_imm;
         case arg_xmm_modrm_reg:
             return vec_arg_xmm;
         case arg_modrm_val:
@@ -440,7 +442,7 @@ static inline enum vec_arg vecarg(enum arg arg, struct modrm *modrm) {
     }
 }
 
-static inline bool gen_vec(enum arg rm, enum arg reg, void (*helper)(), gadget_t (*helper_gadgets_mem)[vec_arg_count], struct gen_state *state, struct modrm *modrm, dword_t saved_ip, bool seg_gs) {
+static inline bool gen_vec(enum arg rm, enum arg reg, void (*helper)(), gadget_t (*helper_gadgets_mem)[vec_arg_count], struct gen_state *state, struct modrm *modrm, uint8_t imm, dword_t saved_ip, bool seg_gs) {
     enum vec_arg v_reg = vecarg(reg, modrm);
     enum vec_arg v_rm = vecarg(rm, modrm);
 
@@ -449,35 +451,55 @@ static inline bool gen_vec(enum arg rm, enum arg reg, void (*helper)(), gadget_t
         gadget = (*helper_gadgets_mem)[v_reg];
     } else {
         extern gadget_t vec_helper_reg_gadgets[vec_arg_count][vec_arg_count];
-        gadget = vec_helper_reg_gadgets[v_rm][v_reg];
+        gadget = vec_helper_reg_gadgets[v_reg][v_rm];
     }
-    if (gadget == NULL)
+    if (gadget == NULL) {
         UNDEFINED;
+    }
 
-    if (v_rm != vec_arg_mem) {
-        GEN(gadget);
-        GEN(helper);
-        GEN((modrm->opcode * sizeof(union xmm_reg)) |
-                ((modrm->rm_opcode * sizeof(union xmm_reg) << 8)));
-    } else {
-        gen_addr(state, modrm, seg_gs, saved_ip);
-        GEN(gadget);
-        GEN(saved_ip);
-        GEN(helper);
-        GEN(modrm->opcode * sizeof(union xmm_reg));
+    switch (v_rm) {
+        case vec_arg_xmm:
+            GEN(gadget);
+            GEN(helper);
+            GEN((modrm->opcode * sizeof(union xmm_reg))
+                    | (modrm->rm_opcode * sizeof(union xmm_reg) << 8));
+            break;
+
+        case vec_arg_mem:
+            gen_addr(state, modrm, seg_gs, saved_ip);
+            GEN(gadget);
+            GEN(saved_ip);
+            GEN(helper);
+            GEN(modrm->opcode * sizeof(union xmm_reg));
+            break;
+
+        case vec_arg_imm:
+            // TODO: support immediates and opcode
+            GEN(gadget);
+            GEN(helper);
+            GEN((modrm->rm_opcode * sizeof(union xmm_reg))
+                    | (((uint16_t) imm) << 8));
+            break;
+
+        default: die("unimplemented vecarg");
     }
     return true;
 }
 
 #define _v(src, dst, helper, helper_gadgets, z) do { \
     extern gadget_t helper_gadgets[vec_arg_count]; \
-    if (!gen_vec(src, dst, helper, &helper_gadgets, state, &modrm, saved_ip, seg_gs)) return false; \
+    if (!gen_vec(src, dst, helper, &helper_gadgets, state, &modrm, 0, saved_ip, seg_gs)) return false; \
+} while (0)
+#define _v_imm(imm, dst, helper, helper_gadgets, z) do { \
+    extern gadget_t helper_gadgets[vec_arg_count]; \
+    if (!gen_vec(arg_imm, dst, helper, &helper_gadgets, state, &modrm, imm, saved_ip, seg_gs)) return false; \
 } while (0)
 #define v(op, src, dst,z) _v(arg_##src, arg_##dst, vec_##op##z, vec_helper_load##z##_gadgets, z)
+#define v_imm(op, imm, dst,z) _v_imm(imm, arg_##dst, vec_##op##z, vec_helper_load##z##_gadgets, z)
 #define v_write(op, src, dst,z) _v(arg_##dst, arg_##src, vec_##op##z, vec_helper_store##z##_gadgets, z)
 
 #define VLOAD(src, dst,z) v(load, src, dst,z)
-#define VZLOAD(src, dst,z) v_write(zload, dst, src,z)
+#define VZLOAD(src, dst,z) v(zload, src, dst, z)
 #define VLOAD_PADNOTMEM(src, dst, z) do { \
     if (arg_##src == arg_xmm_modrm_val && modrm.type != modrm_mem) { \
         VZLOAD(src, dst, z); \
@@ -494,6 +516,7 @@ static inline bool gen_vec(enum arg rm, enum arg reg, void (*helper)(), gadget_t
 } while (0)
 #define VSTORE(src, dst,z) v_write(store, src, dst,z)
 #define VCOMPARE(src, dst,z) v(compare, src, dst,z)
+#define VSHIFTR_IMM(reg, amount, z) v_imm(imm_shiftr, amount, reg,z)
 #define VXOR(src, dst,z) v(xor, src, dst,z)
 
 #define DECODER_RET int

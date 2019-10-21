@@ -116,7 +116,7 @@ do_helper 2
 .endr
 
 # sync with enum vec_arg
-#define VEC_ARG_LIST xmm,reg
+#define VEC_ARG_LIST xmm,reg,imm
 
 .macro do_vec_helper name, reg, rm, size=
     # general register access is unimplemented
@@ -144,12 +144,18 @@ do_helper 2
             movq %_addrq, %rsi
             callq *8(%_ip)
         .endifin
+        .ifin(\rm, imm)
+            movb 8(%_ip), %r14b
+            leaq CPU_xmm(%_cpu,%r14), %rdx
+            movb 9(%_ip), %sil
+            callq *(%_ip)
+        .endifin
         restore_c
         load_regs
         .ifc \rm,write
             write_done (\size), vec_helper_\name
         .endif
-        .ifin(\rm, xmm,reg)
+        .ifin(\rm, xmm,reg,imm)
             gret 2
         .endifin
         .ifin(\rm, read,write)
@@ -163,7 +169,7 @@ do_helper 2
         do_vec_helper reg_\reg\()_\rm, \reg, \rm
     .endr
 .endr
-.gadget_list vec_helper_reg, xmm_xmm,xmm_reg,reg_xmm,reg_reg
+.gadget_list vec_helper_reg, xmm_xmm,xmm_reg,xmm_imm,reg_xmm,reg_reg,reg_imm,imm_xmm,imm_reg,imm_imm
 
 .irp size, SIZE_LIST,64,128
     .irp arg, VEC_ARG_LIST
