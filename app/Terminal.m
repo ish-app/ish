@@ -12,6 +12,7 @@
 #include "fs/devices.h"
 #include "kernel/init.h"
 #include "kernel/calls.h"
+#include "fs/pty.c"
 
 @interface Terminal () <WKScriptMessageHandler>
 
@@ -274,24 +275,30 @@ NSData *removeInvalidUTF8(NSData *data) {
 }
 
 + (void)terminalWithTTYNumber:(int)number launchCommand:(NSArray<NSString *> *)command completion:(void (^)(Terminal *))completion {
-    NSNumber *key = @(dev_make(TTY_CONSOLE_MAJOR, number));
-    Terminal *terminal = [terminals objectForKey:key];
-    if (terminal) {
-        completion(terminal);
-        return;
-    }
+//    NSNumber *key = @(dev_make(TTY_PSEUDO_SLAVE_MAJOR, number));
+//    Terminal *terminal = [terminals objectForKey:key];
+//    if (terminal) {
+//        completion(terminal);
+//        return;
+//    }
 
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
         int err = become_new_init_child();
         if (err < 0)
             completion(nil);
 
-        const char *file = [[NSString stringWithFormat:@"/dev/tty%d", number] UTF8String];
-        generic_mknod(file, S_IFCHR|0666, dev_make(TTY_CONSOLE_MAJOR, number));
+        struct fd *fd = pty_create_fake(ios_tty_driver.ops);
 
-        err = create_stdio(file);
+//        const char *file = [[NSString stringWithFormat:@"/dev/tty%d", number] UTF8String];
+//        generic_mknod(file, S_IFCHR|0666, dev_make(TTY_CONSOLE_MAJOR, number));
+
+//        err = create_stdio(file);
+//        err = create_stdio("/dev/pts/0");
         if (err < 0)
             completion(nil);
+
+        create_stdio_fd(fd);
+
         char argv[4096];
         [self convertCommand:command toArgs:argv limitSize:sizeof(argv)];
         const char *envp = "TERM=xterm-256color\0";
@@ -302,7 +309,9 @@ NSData *removeInvalidUTF8(NSData *data) {
         int launchCommandPID = current->pid;
 
         dispatch_async(dispatch_get_main_queue(), ^{
-            Terminal *terminal = [Terminal terminalWithType:TTY_CONSOLE_MAJOR number:number];
+            // TODO real number
+//            Terminal *terminal = [Terminal terminalWithType:TTY_CONSOLE_MAJOR number:number];
+            Terminal *terminal = [Terminal terminalWithType:TTY_PSEUDO_SLAVE_MAJOR number:0];
             terminal.launchCommandPID = launchCommandPID;
             completion(terminal);
         });
@@ -319,6 +328,7 @@ static int ios_tty_init(struct tty *tty) {
     tty->refcount++;
     void (^init_block)(void) = ^{
         Terminal *terminal = [Terminal terminalWithType:tty->type number:tty->num];
+        NSLog(@"%d:%d", tty->type, tty->num);
         tty->data = (void *) CFBridgingRetain(terminal);
         terminal.tty = tty;
     };

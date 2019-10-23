@@ -167,6 +167,52 @@ static struct fd *devpts_open(struct mount *UNUSED(mount), const char *path, int
     return fd;
 }
 
+static struct tty_driver fake_tty_driver;
+
+static struct fd* pty_create_fake(const struct tty_driver_ops *ops) {
+    int pty_num;
+    lock(&ttys_lock);
+    for (pty_num = 0; pty_num < MAX_PTYS; pty_num++) {
+        if (pty_slave.ttys[pty_num] == NULL)
+            break;
+    }
+    unlock(&ttys_lock);
+    if (pty_num == MAX_PTYS)
+//        return _ENOSPC;
+        return NULL;
+
+    // TODO: store and do not pass reference
+    struct tty_driver fake_tty_driver2 = {
+        .ops = ops,
+        .ttys = pty_master.ttys,
+        .limit = pty_master.limit
+    };
+
+    fake_tty_driver = fake_tty_driver2;
+
+    struct tty *tty = tty_get(&fake_tty_driver, TTY_PSEUDO_SLAVE_MAJOR, pty_num);
+    if (IS_ERR(tty))
+//        return PTR_ERR(tty);
+        return NULL;
+
+    struct fd *fd = adhoc_fd_create(&devpts_fdops);
+    fd->devpts.num = pty_num;
+
+    fd->tty = tty;
+    fd->stat.rdev = dev_make(TTY_PSEUDO_SLAVE_MAJOR, pty_num);
+    fd->stat.mode = S_IFCHR | S_IRUSR;
+
+    int err = dev_open(4, 1, DEV_CHAR, fd);
+    if (err < 0)
+        return err;
+
+    lock(&tty->fds_lock);
+    list_add(&tty->fds, &fd->tty_other_fds);
+    unlock(&tty->fds_lock);
+
+    return fd;
+}
+
 static int devpts_getpath(struct fd *fd, char *buf) {
     if (fd->devpts.num == -1)
         strcpy(buf, "");

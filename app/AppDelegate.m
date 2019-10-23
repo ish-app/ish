@@ -188,7 +188,7 @@ static void ios_handle_die(const char *msg) {
 
     [Terminal terminalWithTTYNumber:self.ttyNumber launchCommand:UserPreferences.shared.launchCommand completion:^(Terminal *terminal) {
         self.sessionPid = terminal.launchCommandPID;
-        [self.terminalViewController switchTerminalToTTYNumber:self.ttyNumber];
+        [self.terminalViewController switchToTerminal:terminal];
     }];
 }
 
@@ -284,7 +284,14 @@ static void ios_handle_die(const char *msg) {
 }
 
 - (void)terminalViewController:(TerminalViewController *)terminalViewController requestedTTYWithNumber:(int)number {
-    [terminalViewController switchTerminalToTTYNumber:number == 0 ? self.ttyNumber : number];
+    Terminal *terminal;
+    if (number == 0) {
+        // TODO real number
+        terminal = [Terminal terminalWithType:TTY_PSEUDO_SLAVE_MAJOR number:0];
+    } else {
+        terminal = [Terminal terminalWithType:TTY_CONSOLE_MAJOR number:number];
+    }
+    [terminalViewController switchToTerminal:terminal];
 }
 
 @end

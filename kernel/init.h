@@ -9,6 +9,7 @@ void set_console_device(int major, int minor);
 int become_first_process(void);
 int become_new_init_child(void);
 int create_stdio(const char *file);
+void create_stdio_fd(struct fd * fd);
 int create_piped_stdio();
 
 #endif

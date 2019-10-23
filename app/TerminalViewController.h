@@ -14,7 +14,7 @@
 @property (nonatomic) Terminal *terminal;
 @property (nonatomic, weak) id <TerminalViewControllerDelegate> delegate;
 
-- (void)switchTerminalToTTYNumber:(int)ttyNumber;
+- (void)switchToTerminal:(Terminal *)newTerminal;
 
 @end
 

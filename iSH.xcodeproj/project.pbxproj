@@ -93,6 +93,15 @@
 /* Begin PBXFileReference section */
 		4005519C232C325C00134BDF /* TerminalViewControllerDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TerminalViewControllerDelegate.h; sourceTree = "<group>"; };
 		4034C2BC232E2A1400FBD68F /* FeatureAvailability.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = FeatureAvailability.h; sourceTree = "<group>"; };
+		40BB00FD232E3C8500F8E588 /* fake-migrate.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = "fake-migrate.c"; sourceTree = "<group>"; };
+		40BB00FF232E3C8D00F8E588 /* fake.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = fake.h; sourceTree = "<group>"; };
+		40BB0100232E3C9800F8E588 /* inode.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = inode.c; sourceTree = "<group>"; };
+		40BB0101232E3C9800F8E588 /* inode.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = inode.h; sourceTree = "<group>"; };
+		40BB0102232E3C9800F8E588 /* lock.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = lock.c; sourceTree = "<group>"; };
+		40BB0105232E3CA100F8E588 /* mount.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = mount.c; sourceTree = "<group>"; };
+		40BB0107232E3CB200F8E588 /* pty.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pty.c; sourceTree = "<group>"; };
+		40BB0109232E3CC100F8E588 /* sockrestart.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = sockrestart.h; sourceTree = "<group>"; };
+		40BB010A232E3CC100F8E588 /* sockrestart.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = sockrestart.c; sourceTree = "<group>"; };
 		40E5B1D4232C08E4003B19C5 /* SceneDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SceneDelegate.h; sourceTree = "<group>"; };
 		40E5B1D5232C08E4003B19C5 /* SceneDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SceneDelegate.m; sourceTree = "<group>"; };
 		650B335A22E9E46A00B4C03E /* mem.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = mem.c; sourceTree = "<group>"; tabWidth = 4; };
@@ -507,31 +516,40 @@
 		BB7D936A2087C2890008DA78 /* fs */ = {
 			isa = PBXGroup;
 			children = (
-				650B336522E9F09F00B4C03E /* proc */,
-				650B336C22EA052400B4C03E /* dyndev.c */,
-				650B336D22EA052400B4C03E /* dyndev.h */,
-				650B335D22E9EF9B00B4C03E /* proc.c */,
-				650B335E22E9EF9B00B4C03E /* proc.h */,
-				650B335A22E9E46A00B4C03E /* mem.c */,
-				650B335B22E9E46A00B4C03E /* mem.h */,
 				BB7D936B2087C2890008DA78 /* adhoc.c */,
 				BB7D936C2087C2890008DA78 /* dev.c */,
 				BB7D936D2087C2890008DA78 /* dev.h */,
 				650B337522EA728B00B4C03E /* devices.h */,
 				BB7D936E2087C2890008DA78 /* dir.c */,
+				650B336C22EA052400B4C03E /* dyndev.c */,
+				650B336D22EA052400B4C03E /* dyndev.h */,
+				40BB00FD232E3C8500F8E588 /* fake-migrate.c */,
 				BB7D936F2087C2890008DA78 /* fake-rebuild.c */,
 				BB7D93702087C2890008DA78 /* fake.c */,
+				40BB00FF232E3C8D00F8E588 /* fake.h */,
 				BB7D93712087C2890008DA78 /* fd.c */,
 				BB7D93722087C2890008DA78 /* fd.h */,
 				BB7D93732087C2890008DA78 /* generic.c */,
+				40BB0100232E3C9800F8E588 /* inode.c */,
+				40BB0101232E3C9800F8E588 /* inode.h */,
+				40BB0102232E3C9800F8E588 /* lock.c */,
+				650B335A22E9E46A00B4C03E /* mem.c */,
+				650B335B22E9E46A00B4C03E /* mem.h */,
+				40BB0105232E3CA100F8E588 /* mount.c */,
 				BB7D93742087C2890008DA78 /* path.c */,
 				BB7D93752087C2890008DA78 /* path.h */,
 				BB7D93762087C2890008DA78 /* pipe.c */,
 				BB7D93772087C2890008DA78 /* poll.c */,
 				BB7D93782087C2890008DA78 /* poll.h */,
+				650B336522E9F09F00B4C03E /* proc */,
+				650B335D22E9EF9B00B4C03E /* proc.c */,
+				650B335E22E9EF9B00B4C03E /* proc.h */,
+				40BB0107232E3CB200F8E588 /* pty.c */,
 				BB7D93792087C2890008DA78 /* real.c */,
 				BB7D937A2087C2890008DA78 /* sock.c */,
 				BB7D937B2087C2890008DA78 /* sock.h */,
+				40BB010A232E3CC100F8E588 /* sockrestart.c */,
+				40BB0109232E3CC100F8E588 /* sockrestart.h */,
 				BB7D937C2087C2890008DA78 /* stat.c */,
 				BB7D937D2087C2890008DA78 /* stat.h */,
 				BB7D937E2087C2890008DA78 /* tty-real.c */,

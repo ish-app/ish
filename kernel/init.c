@@ -133,10 +133,14 @@ int create_stdio(const char *file) {
     }
 
     fd->refcount = 0;
+    create_stdio_fd(fd);
+    return 0;
+}
+
+void create_stdio_fd(struct fd * fd) {
     current->files->files[0] = fd_retain(fd);
     current->files->files[1] = fd_retain(fd);
     current->files->files[2] = fd_retain(fd);
-    return 0;
 }
 
 static struct fd *open_fd_from_actual_fd(int fd_no) {

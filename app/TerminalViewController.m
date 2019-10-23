@@ -219,8 +219,7 @@
     }
 }
 
-- (void)switchTerminalToTTYNumber:(int)ttyNumber {
-    Terminal * newTerminal = [Terminal terminalWithType:TTY_CONSOLE_MAJOR number:ttyNumber];
+- (void)switchToTerminal:(Terminal *)newTerminal {
     if (newTerminal.webView.superview == nil) {
         self.terminal = newTerminal;
     }

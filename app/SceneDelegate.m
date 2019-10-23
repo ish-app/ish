@@ -9,6 +9,7 @@
 #import "TerminalViewController.h"
 #import "UserPreferences.h"
 #import "AppDelegate.h"
+#include "fs/devices.h"
 
 #if ENABLE_MULTIWINDOW
 @interface SceneDelegate ()
@@ -61,8 +62,9 @@
     [self updateTTYNumberForSession:session];
 
     [Terminal terminalWithTTYNumber:self.ttyNumber launchCommand:UserPreferences.shared.launchCommand completion:^(Terminal *terminal) {
+//    [Terminal terminalWithTTYNumber:self.ttyNumber launchCommand:@[@"/bin/ls", @"/dev/pts"] completion:^(Terminal *terminal) {
         self.sessionPid = terminal.launchCommandPID;
-        [terminalViewController switchTerminalToTTYNumber:self.ttyNumber];
+        [terminalViewController switchToTerminal:terminal];
     }];
 
     [self.window makeKeyAndVisible];
@@ -80,13 +82,20 @@
 }
 
 - (void)terminalViewController:(TerminalViewController *)terminalViewController requestedTTYWithNumber:(int)number {
-    [terminalViewController switchTerminalToTTYNumber:number == 0 ? self.ttyNumber : number];
+    Terminal *terminal;
+    if (number == 0) {
+        // TODO real number
+        terminal = [Terminal terminalWithType:TTY_PSEUDO_SLAVE_MAJOR number:0];
+    } else {
+        terminal = [Terminal terminalWithType:TTY_CONSOLE_MAJOR number:number];
+    }
+    [terminalViewController switchToTerminal:terminal];
 }
 
 - (void)processExited:(NSNotification *)notif {
     int pid = [notif.userInfo[@"pid"] intValue];
     if (pid == self.sessionPid) {
-        [self closeScene];
+//        [self closeScene];
     }
 }
 
