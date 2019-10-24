@@ -954,7 +954,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "curl -L http://dl-cdn.alpinelinux.org/alpine/v3.10/releases/x86/alpine-minirootfs-3.10.0-x86.tar.gz -o $SRCROOT/alpine.tar.gz";
+			shellScript = "CURRENT_ALPINE=$(curl -s \"http://dl-cdn.alpinelinux.org/alpine/latest-stable/releases/x86/latest-releases.yaml\" | grep \"version\" | cut -d ' ' -f 4 | head -n 1)\n\ncurl -L \"http://dl-cdn.alpinelinux.org/alpine/latest-stable/releases/x86/alpine-minirootfs-$CURRENT_ALPINE-x86.tar.gz\" -o \"$SRCROOT/alpine.tar.gz\"\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
