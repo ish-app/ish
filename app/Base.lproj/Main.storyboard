@@ -47,6 +47,7 @@
                         <outlet property="controlKey" destination="W9v-cj-FWz" id="c9i-VC-j7f"/>
                         <outlet property="escapeKey" destination="IPm-l0-f25" id="QBn-lt-GPd"/>
                         <outlet property="hideKeyboardButton" destination="7qw-ie-p4d" id="n5f-XX-i98"/>
+                        <outlet property="infoButton" destination="5dl-UV-6qh" id="jaF-Xd-IYp"/>
                         <outlet property="pasteButton" destination="hmm-tv-z35" id="mgi-xs-C8r"/>
                         <outlet property="tabKey" destination="cJt-oG-BnW" id="YaE-o4-lKm"/>
                         <outlet property="termView" destination="FQi-r8-odu" id="QIa-yI-fmG"/>
