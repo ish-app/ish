@@ -45,6 +45,7 @@ extern NSString *const kThemeBackgroundColor;
 @property BOOL backtickMapEscape;
 @property (nonatomic) Theme *theme;
 @property BOOL shouldDisableDimming;
+@property NSString *fontFamily;
 @property NSNumber *fontSize;
 @property NSArray<NSString *> *launchCommand;
 @property NSArray<NSString *> *bootCommand;

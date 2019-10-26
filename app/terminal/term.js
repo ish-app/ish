@@ -105,10 +105,11 @@ hterm.ScrollPort.prototype.syncScrollHeight = function() {
 };
 term.scrollPort_.screen_.addEventListener('scroll', syncScroll);
 
-exports.updateStyle = ({foregroundColor, backgroundColor, fontSize}) => {
+exports.updateStyle = ({foregroundColor, backgroundColor, fontFamily, fontSize}) => {
     term.getPrefs().set('background-color', backgroundColor);
     term.getPrefs().set('foreground-color', foregroundColor);
     term.getPrefs().set('cursor-color', foregroundColor);
+    term.getPrefs().set('font-family', fontFamily);
     term.getPrefs().set('font-size', fontSize);
 };
 

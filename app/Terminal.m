@@ -131,6 +131,7 @@ static NSMutableDictionary<NSNumber *, Terminal *> *terminals;
 - (void)_addPreferenceObservers {
     UserPreferences *prefs = [UserPreferences shared];
     NSKeyValueObservingOptions opts = NSKeyValueObservingOptionNew;
+    [prefs addObserver:self forKeyPath:@"fontFamily" options:opts context:nil];
     [prefs addObserver:self forKeyPath:@"fontSize" options:opts context:nil];
     [prefs addObserver:self forKeyPath:@"theme" options:opts context:nil];
 }
@@ -145,10 +146,11 @@ static NSMutableDictionary<NSNumber *, Terminal *> *terminals;
 - (void)_updateStyleFromPreferences {
     UserPreferences *prefs = [UserPreferences shared];
     id themeInfo = @{
-                     @"fontSize": prefs.fontSize,
-                     @"foregroundColor": [self cssColor:prefs.theme.foregroundColor],
-                     @"backgroundColor": [self cssColor:prefs.theme.backgroundColor],
-                     };
+        @"fontFamily": prefs.fontFamily,
+        @"fontSize": prefs.fontSize,
+        @"foregroundColor": [self cssColor:prefs.theme.foregroundColor],
+        @"backgroundColor": [self cssColor:prefs.theme.backgroundColor],
+    };
     NSString *json = [[NSString alloc] initWithData:[NSJSONSerialization dataWithJSONObject:themeInfo options:0 error:nil] encoding:NSUTF8StringEncoding];
     [self.webView evaluateJavaScript:[NSString stringWithFormat:@"exports.updateStyle(%@)", json] completionHandler:nil];
 }
