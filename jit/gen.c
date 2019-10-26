@@ -488,11 +488,11 @@ static inline bool gen_vec(enum arg rm, enum arg reg, void (*helper)(), gadget_t
 
 #define _v(src, dst, helper, helper_gadgets, z) do { \
     extern gadget_t helper_gadgets[vec_arg_count]; \
-    if (!gen_vec(src, dst, helper, &helper_gadgets, state, &modrm, 0, saved_ip, seg_gs)) return false; \
+    if (!gen_vec(src, dst, (void (*)()) helper, &helper_gadgets, state, &modrm, 0, saved_ip, seg_gs)) return false; \
 } while (0)
 #define _v_imm(imm, dst, helper, helper_gadgets, z) do { \
     extern gadget_t helper_gadgets[vec_arg_count]; \
-    if (!gen_vec(arg_imm, dst, helper, &helper_gadgets, state, &modrm, imm, saved_ip, seg_gs)) return false; \
+    if (!gen_vec(arg_imm, dst, (void (*)()) helper, &helper_gadgets, state, &modrm, imm, saved_ip, seg_gs)) return false; \
 } while (0)
 #define v(op, src, dst,z) _v(arg_##src, arg_##dst, vec_##op##z, vec_helper_load##z##_gadgets, z)
 #define v_imm(op, imm, dst,z) _v_imm(imm, arg_##dst, vec_##op##z, vec_helper_load##z##_gadgets, z)
