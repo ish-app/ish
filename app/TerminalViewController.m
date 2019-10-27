@@ -12,6 +12,9 @@
 #import "ArrowBarButton.h"
 #import "UserPreferences.h"
 #import "AboutViewController.h"
+#include "kernel/init.h"
+#include "kernel/task.h"
+#include "kernel/calls.h"
 #include "fs/devices.h"
 
 @interface TerminalViewController () <UIGestureRecognizerDelegate>
@@ -38,13 +41,22 @@
 @property (weak, nonatomic) IBOutlet UIButton *pasteButton;
 @property (weak, nonatomic) IBOutlet UIButton *hideKeyboardButton;
 
+@property int sessionPid;
+@property (nonatomic) Terminal *sessionTerminal;
+
 @end
 
 @implementation TerminalViewController
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    self.terminal = [Terminal terminalWithType:TTY_CONSOLE_MAJOR number:7];
+    
+    [self startSession];
+    [NSNotificationCenter.defaultCenter addObserver:self
+                                           selector:@selector(processExited:)
+                                               name:ProcessExitedNotification
+                                             object:nil];
+
     [self.termView becomeFirstResponder];
 
     NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
@@ -82,6 +94,43 @@
         [self.controlKey setImage:[UIImage systemImageNamed:@"control"] forState:UIControlStateNormal];
         [self.escapeKey setTitle:nil forState:UIControlStateNormal];
         [self.escapeKey setImage:[UIImage systemImageNamed:@"escape"] forState:UIControlStateNormal];
+    }
+}
+
+- (int)startSession {
+    int err = become_new_init_child();
+    if (err < 0)
+        return err;
+    struct tty *tty;
+    [self.sessionTerminal destroy];
+    self.sessionTerminal = nil;
+    Terminal *terminal = [Terminal createPseudoTerminal:&tty];
+    if (terminal == nil) {
+        NSAssert(IS_ERR(tty), @"tty should be error");
+        return (int) PTR_ERR(tty);
+    }
+    self.sessionTerminal = terminal;
+    NSString *stdioFile = [NSString stringWithFormat:@"/dev/pts/%d", tty->num];
+    err = create_stdio(stdioFile.fileSystemRepresentation, TTY_PSEUDO_SLAVE_MAJOR, tty->num);
+    if (err < 0)
+        return err;
+    tty_release(tty);
+    
+    char argv[4096];
+    [Terminal convertCommand:UserPreferences.shared.launchCommand toArgs:argv limitSize:sizeof(argv)];
+    const char *envp = "TERM=xterm-256color\0";
+    err = sys_execve(argv, argv, envp);
+    if (err < 0)
+        return err;
+    self.sessionPid = current->pid;
+    task_start(current);
+    return 0;
+}
+
+- (void)processExited:(NSNotification *)notif {
+    int pid = [notif.userInfo[@"pid"] intValue];
+    if (pid == self.sessionPid) {
+        [self startSession];
     }
 }
 
@@ -238,7 +287,10 @@
 
 - (void)switchTerminal:(UIKeyCommand *)sender {
     unsigned i = (unsigned) sender.input.integerValue;
-    self.terminal = [Terminal terminalWithType:TTY_CONSOLE_MAJOR number:i];
+    if (i == 7)
+        self.terminal = self.sessionTerminal;
+    else
+        self.terminal = [Terminal terminalWithType:TTY_CONSOLE_MAJOR number:i];
 }
 
 - (NSArray<UIKeyCommand *> *)keyCommands {
@@ -258,6 +310,12 @@
 - (void)setTerminal:(Terminal *)terminal {
     _terminal = terminal;
     self.termView.terminal = self.terminal;
+}
+
+- (void)setSessionTerminal:(Terminal *)sessionTerminal {
+    if (_terminal == _sessionTerminal)
+        self.terminal = sessionTerminal;
+    _sessionTerminal = sessionTerminal;
 }
 
 @end

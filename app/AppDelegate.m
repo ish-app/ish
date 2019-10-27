@@ -15,13 +15,11 @@
 #import "UserPreferences.h"
 #include "kernel/init.h"
 #include "kernel/calls.h"
-#include "fs/path.h"
 #include "fs/dyndev.h"
 #include "fs/devices.h"
+#include "fs/path.h"
 
 @interface AppDelegate ()
-
-@property int sessionPid;
 
 @property BOOL exiting;
 
@@ -158,9 +156,9 @@ static void ios_handle_die(const char *msg) {
     NSString *sockTmp = [NSTemporaryDirectory() stringByAppendingString:@"ishsock"];
     sock_tmp_prefix = strdup(sockTmp.UTF8String);
     
-    tty_drivers[TTY_CONSOLE_MAJOR] = &ios_tty_driver;
+    tty_drivers[TTY_CONSOLE_MAJOR] = &ios_console_driver;
     set_console_device(TTY_CONSOLE_MAJOR, 1);
-    err = create_stdio("/dev/console");
+    err = create_stdio("/dev/console", TTY_CONSOLE_MAJOR, 1);
     if (err < 0)
         return err;
     
@@ -168,50 +166,14 @@ static void ios_handle_die(const char *msg) {
     command = UserPreferences.shared.bootCommand;
     NSLog(@"%@", command);
     char argv[4096];
-    [self convertCommand:command toArgs:argv limitSize:sizeof(argv)];
+    [Terminal convertCommand:command toArgs:argv limitSize:sizeof(argv)];
     const char *envp = "TERM=xterm-256color\0";
     err = sys_execve(argv, argv, envp);
     if (err < 0)
         return err;
     task_start(current);
     
-    err = [self startSession];
-    if (err < 0)
-        return err;
-    
     return 0;
-}
-
-- (int)startSession {
-    int err = become_new_init_child();
-    if (err < 0)
-        return err;
-    err = create_stdio("/dev/tty7");
-    if (err < 0)
-        return err;
-    char argv[4096];
-    [self convertCommand:UserPreferences.shared.launchCommand toArgs:argv limitSize:sizeof(argv)];
-    const char *envp = "TERM=xterm-256color\0";
-    err = sys_execve(argv, argv, envp);
-    if (err < 0)
-        return err;
-    self.sessionPid = current->pid;
-    task_start(current);
-    return 0;
-}
-
-- (void)convertCommand:(NSArray<NSString *> *)command toArgs:(char *)argv limitSize:(size_t)maxSize {
-    char *p = argv;
-    for (NSString *cmd in command) {
-        const char *c = cmd.UTF8String;
-        // Save space for the final NUL byte in argv
-        while (p < argv + maxSize - 1 && (*p++ = *c++));
-        // If we reach the end of the buffer, the last string still needs to be
-        // NUL terminated
-        *p = '\0';
-    }
-    // Add the final NUL byte to argv
-    *++p = '\0';
 }
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
@@ -219,11 +181,6 @@ static void ios_handle_die(const char *msg) {
     [[NSURLSession.sharedSession dataTaskWithURL:[NSURL URLWithString:@"http://captive.apple.com"]] resume];
     
     [UserPreferences.shared addObserver:self forKeyPath:@"shouldDisableDimming" options:NSKeyValueObservingOptionInitial context:nil];
-    
-    [NSNotificationCenter.defaultCenter addObserver:self
-                                           selector:@selector(processExited:)
-                                               name:ProcessExitedNotification
-                                             object:nil];
     
     int err = [self startThings];
     if (err < 0) {
@@ -239,13 +196,6 @@ static void ios_handle_die(const char *msg) {
 
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context {
     UIApplication.sharedApplication.idleTimerDisabled = UserPreferences.shared.shouldDisableDimming;
-}
-
-- (void)processExited:(NSNotification *)notif {
-    int pid = [notif.userInfo[@"pid"] intValue];
-    if (pid == self.sessionPid) {
-        [self startSession];
-    }
 }
 
 - (void)showMessage:(NSString *)message subtitle:(NSString *)subtitle fatal:(BOOL)fatal {

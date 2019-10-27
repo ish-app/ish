@@ -8,7 +8,10 @@
 #import "Terminal.h"
 #import "DelayedUITask.h"
 #import "UserPreferences.h"
+#include "fs/devices.h"
 #include "fs/tty.h"
+
+extern struct tty_driver ios_pty_driver;
 
 @interface Terminal () <WKScriptMessageHandler>
 
@@ -22,6 +25,8 @@
 
 @property BOOL applicationCursor;
 
+@property NSNumber *terminalsKey;
+
 @end
 
 @interface CustomWebView : WKWebView
@@ -34,11 +39,11 @@
 
 @implementation Terminal
 
-static NSMutableDictionary<NSNumber *, Terminal *> *terminals;
+static NSMapTable<NSNumber *, Terminal *> *terminals;
 
 - (instancetype)initWithType:(int)type number:(int)num {
-    NSNumber *key = @(dev_make(type, num));
-    Terminal *terminal = [terminals objectForKey:key];
+    self.terminalsKey = @(dev_make(type, num));
+    Terminal *terminal = [terminals objectForKey:self.terminalsKey];
     if (terminal)
         return terminal;
     
@@ -60,14 +65,23 @@ static NSMutableDictionary<NSNumber *, Terminal *> *terminals;
         [self.webView loadFileURL:xtermHtmlFile allowingReadAccessToURL:xtermHtmlFile];
         [self _addPreferenceObservers];
         
-        [terminals setObject:self forKey:key];
+        [terminals setObject:self forKey:self.terminalsKey];
     }
     return self;
 }
 
++ (Terminal *)createPseudoTerminal:(struct tty **)tty {
+    *tty = pty_open_fake(&ios_pty_driver);
+    if (IS_ERR(*tty))
+        return nil;
+    return (__bridge Terminal *) (*tty)->data;
+}
+
 - (void)setTty:(struct tty *)tty {
     _tty = tty;
-    [self syncWindowSize];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self syncWindowSize];
+    });
 }
 
 - (void)userContentController:(WKUserContentController *)userContentController didReceiveScriptMessage:(WKScriptMessage *)message {
@@ -115,6 +129,8 @@ static NSMutableDictionary<NSNumber *, Terminal *> *terminals;
 }
 
 - (void)sendInput:(const char *)buf length:(size_t)len {
+    if (self.tty == NULL)
+        return;
     tty_input(self.tty, buf, len, 0);
     [self.webView evaluateJavaScript:@"exports.setUserGesture()" completionHandler:nil];
     [self.scrollToBottomTask schedule];
@@ -240,18 +256,35 @@ NSData *removeInvalidUTF8(NSData *data) {
     [self.webView evaluateJavaScript:jsToEvaluate completionHandler:nil];
 }
 
++ (void)convertCommand:(NSArray<NSString *> *)command toArgs:(char *)argv limitSize:(size_t)maxSize {
+    char *p = argv;
+    for (NSString *cmd in command) {
+        const char *c = cmd.UTF8String;
+        // Save space for the final NUL byte in argv
+        while (p < argv + maxSize - 1 && (*p++ = *c++));
+        // If we reach the end of the buffer, the last string still needs to be
+        // NUL terminated
+        *p = '\0';
+    }
+    // Add the final NUL byte to argv
+    *++p = '\0';
+}
+
 + (Terminal *)terminalWithType:(int)type number:(int)number {
     return [[Terminal alloc] initWithType:type number:number];
 }
 
+- (void)destroy {
+    [terminals removeObjectForKey:self.terminalsKey];
+}
+
 + (void)initialize {
-    terminals = [NSMutableDictionary new];
+    terminals = [NSMapTable strongToWeakObjectsMapTable];
 }
 
 @end
 
 static int ios_tty_init(struct tty *tty) {
-    tty->refcount++;
     void (^init_block)(void) = ^{
         Terminal *terminal = [Terminal terminalWithType:tty->type number:tty->num];
         tty->data = (void *) CFBridgingRetain(terminal);
@@ -262,27 +295,6 @@ static int ios_tty_init(struct tty *tty) {
     else
         dispatch_sync(dispatch_get_main_queue(), init_block);
 
-    // termios
-    tty->termios.lflags = ISIG_ | ICANON_ | ECHO_ | ECHOE_ | ECHOCTL_;
-    tty->termios.iflags = ICRNL_;
-    tty->termios.oflags = OPOST_ | ONLCR_;
-    tty->termios.cc[VINTR_] = '\x03';
-    tty->termios.cc[VQUIT_] = '\x1c';
-    tty->termios.cc[VERASE_] = '\x7f';
-    tty->termios.cc[VKILL_] = '\x15';
-    tty->termios.cc[VEOF_] = '\x04';
-    tty->termios.cc[VTIME_] = 0;
-    tty->termios.cc[VMIN_] = 1;
-    tty->termios.cc[VSTART_] = '\x11';
-    tty->termios.cc[VSTOP_] = '\x13';
-    tty->termios.cc[VSUSP_] = '\x1a';
-    tty->termios.cc[VEOL_] = 0;
-    tty->termios.cc[VREPRINT_] = '\x12';
-    tty->termios.cc[VDISCARD_] = '\x0f';
-    tty->termios.cc[VWERASE_] = '\x17';
-    tty->termios.cc[VLNEXT_] = '\x16';
-    tty->termios.cc[VEOL2_] = 0;
-
     return 0;
 }
 
@@ -292,7 +304,9 @@ static int ios_tty_write(struct tty *tty, const void *buf, size_t len, bool bloc
 }
 
 static void ios_tty_cleanup(struct tty *tty) {
-    CFBridgingRelease(tty->data);
+    Terminal *terminal = CFBridgingRelease(tty->data);
+    tty->data = NULL;
+    terminal.tty = NULL;
 }
 
 struct tty_driver_ops ios_tty_ops = {
@@ -300,4 +314,5 @@ struct tty_driver_ops ios_tty_ops = {
     .write = ios_tty_write,
     .cleanup = ios_tty_cleanup,
 };
-DEFINE_TTY_DRIVER(ios_tty_driver, &ios_tty_ops, 64);
+DEFINE_TTY_DRIVER(ios_console_driver, &ios_tty_ops, 64);
+struct tty_driver ios_pty_driver = {.ops = &ios_tty_ops};
