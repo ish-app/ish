@@ -16,6 +16,9 @@ struct tty;
 // Returns a strong struct tty and a Terminal that has a weak reference to the same tty
 + (Terminal *)createPseudoTerminal:(struct tty **)tty;
 
++ (Terminal *)terminalWithUUID:(NSUUID *)uuid;
+@property (readonly) NSUUID *uuid;
+
 + (void)convertCommand:(NSArray<NSString *> *)command toArgs:(char *)argv limitSize:(size_t)maxSize;
 
 - (int)write:(const void *)buf length:(size_t)len;

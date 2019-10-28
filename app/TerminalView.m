@@ -44,6 +44,7 @@
     [UserPreferences.shared removeObserver:self forKeyPath:@"capsLockMapping"];
     [UserPreferences.shared removeObserver:self forKeyPath:@"optionMapping"];
     [UserPreferences.shared removeObserver:self forKeyPath:@"backtickMapEscape"];
+    self.terminal = nil;
 }
 
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context {

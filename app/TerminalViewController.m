@@ -43,6 +43,7 @@
 
 @property int sessionPid;
 @property (nonatomic) Terminal *sessionTerminal;
+@property int sessionTerminalNumber;
 
 @end
 
@@ -51,12 +52,17 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     
-    [self startSession];
-    [NSNotificationCenter.defaultCenter addObserver:self
-                                           selector:@selector(processExited:)
-                                               name:ProcessExitedNotification
-                                             object:nil];
+    int bootError = [AppDelegate bootError];
+    if (bootError < 0) {
+        NSString *message = [NSString stringWithFormat:@"could not boot"];
+        NSString *subtitle = [NSString stringWithFormat:@"error code %d", bootError];
+        if (bootError == _EINVAL)
+            subtitle = [subtitle stringByAppendingString:@"\n(try reinstalling the app, see release notes for details)"];
+        [self showMessage:message subtitle:subtitle];
+        NSLog(@"boot failed with code %d", bootError);
+    }
 
+    self.termView.terminal = self.terminal;
     [self.termView becomeFirstResponder];
 
     NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
@@ -97,12 +103,37 @@
     }
 }
 
+- (void)awakeFromNib {
+    [super awakeFromNib];
+    [NSNotificationCenter.defaultCenter addObserver:self
+                                           selector:@selector(processExited:)
+                                               name:ProcessExitedNotification
+                                             object:nil];
+}
+
+- (void)startNewSession {
+    int err = [self startSession];
+    if (err < 0) {
+        [self showMessage:@"could not start session"
+                 subtitle:[NSString stringWithFormat:@"error code %d", err]];
+    }
+}
+
+- (void)reconnectSessionFromTerminalUUID:(NSUUID *)uuid {
+    self.sessionTerminal = [Terminal terminalWithUUID:uuid];
+    if (self.sessionTerminal == nil)
+        [self startNewSession];
+}
+
+- (NSUUID *)sessionTerminalUUID {
+    return self.terminal.uuid;
+}
+
 - (int)startSession {
     int err = become_new_init_child();
     if (err < 0)
         return err;
     struct tty *tty;
-    [self.sessionTerminal destroy];
     self.sessionTerminal = nil;
     Terminal *terminal = [Terminal createPseudoTerminal:&tty];
     if (terminal == nil) {
@@ -110,6 +141,7 @@
         return (int) PTR_ERR(tty);
     }
     self.sessionTerminal = terminal;
+    self.sessionTerminalNumber = tty->num;
     NSString *stdioFile = [NSString stringWithFormat:@"/dev/pts/%d", tty->num];
     err = create_stdio(stdioFile.fileSystemRepresentation, TTY_PSEUDO_SLAVE_MAJOR, tty->num);
     if (err < 0)
@@ -129,9 +161,31 @@
 
 - (void)processExited:(NSNotification *)notif {
     int pid = [notif.userInfo[@"pid"] intValue];
-    if (pid == self.sessionPid) {
-        [self startSession];
+    if (pid != self.sessionPid)
+        return;
+
+    [self.sessionTerminal destroy];
+    self.sessionTerminalNumber = 0;
+    // On iOS 13, there are multiple windows, so just close this one.
+    if (@available(iOS 13, *)) {
+        if (self.sceneSession != nil) {
+            [UIApplication.sharedApplication requestSceneSessionDestruction:self.sceneSession options:nil errorHandler:^(NSError *error) {
+                NSLog(@"scene destruction error %@", error);
+                self.sceneSession = nil;
+                [self processExited:notif];
+            }];
+            return;
+        }
     }
+    [self startNewSession];
+}
+
+- (void)showMessage:(NSString *)message subtitle:(NSString *)subtitle {
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:message message:subtitle preferredStyle:UIAlertControllerStyleAlert];
+    [alert addAction:[UIAlertAction actionWithTitle:@"k"
+                                              style:UIAlertActionStyleDefault
+                                            handler:nil]];
+    [self presentViewController:alert animated:YES completion:nil];
 }
 
 - (void)dealloc {

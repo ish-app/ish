@@ -50,7 +50,7 @@ static void ios_handle_die(const char *msg) {
 
 @implementation AppDelegate
 
-- (int)startThings {
+- (int)boot {
     NSFileManager *manager = [NSFileManager defaultManager];
     NSURL *container = [manager containerURLForSecurityApplicationGroupIdentifier:PRODUCT_APP_GROUP_IDENTIFIER];
     NSURL *alpineRoot = [container URLByAppendingPathComponent:@"roots/alpine"];
@@ -176,36 +176,33 @@ static void ios_handle_die(const char *msg) {
     return 0;
 }
 
+static int bootError;
+
++ (int)bootError {
+    return bootError;
+}
+
+- (BOOL)application:(UIApplication *)application willFinishLaunchingWithOptions:(NSDictionary<UIApplicationLaunchOptionsKey,id> *)launchOptions {
+    bootError = [self boot];
+    return YES;
+}
+
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     // get the network permissions popup to appear on chinese devices
     [[NSURLSession.sharedSession dataTaskWithURL:[NSURL URLWithString:@"http://captive.apple.com"]] resume];
     
     [UserPreferences.shared addObserver:self forKeyPath:@"shouldDisableDimming" options:NSKeyValueObservingOptionInitial context:nil];
     
-    int err = [self startThings];
-    if (err < 0) {
-        NSString *message = [NSString stringWithFormat:@"could not initialize"];
-        NSString *subtitle = [NSString stringWithFormat:@"error code %d", err];
-        if (err == _EINVAL)
-            subtitle = [subtitle stringByAppendingString:@"\n(try reinstalling the app, see release notes for details)"];
-        [self showMessage:message subtitle:subtitle fatal:NO];
-        NSLog(@"failed with code %d", err);
+    if (self.window != nil) {
+        // For iOS <13, where the app delegate owns the window instead of the scene
+        TerminalViewController *vc = (TerminalViewController *) self.window.rootViewController;
+        [vc startNewSession];
     }
     return YES;
 }
 
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context {
     UIApplication.sharedApplication.idleTimerDisabled = UserPreferences.shared.shouldDisableDimming;
-}
-
-- (void)showMessage:(NSString *)message subtitle:(NSString *)subtitle fatal:(BOOL)fatal {
-    dispatch_async(dispatch_get_main_queue(), ^{
-        UIAlertController *alert = [UIAlertController alertControllerWithTitle:message message:subtitle preferredStyle:UIAlertControllerStyleAlert];
-        [alert addAction:[UIAlertAction actionWithTitle:@"k"
-                                                  style:UIAlertActionStyleDefault
-                                                handler:nil]];
-        [self.window.rootViewController presentViewController:alert animated:YES completion:nil];
-    });
 }
 
 - (void)exitApp {
@@ -217,6 +214,13 @@ static void ios_handle_die(const char *msg) {
 - (void)applicationDidEnterBackground:(UIApplication *)application {
     if (self.exiting)
         exit(0);
+}
+
+- (void)application:(UIApplication *)application didDiscardSceneSessions:(NSSet<UISceneSession *> *)sceneSessions API_AVAILABLE(ios(13.0)) {
+    for (UISceneSession *sceneSession in sceneSessions) {
+        NSString *terminalUUID = sceneSession.stateRestorationActivity.userInfo[@"TerminalUUID"];
+        [[Terminal terminalWithUUID:[[NSUUID alloc] initWithUUIDString:terminalUUID]] destroy];
+    }
 }
 
 @end

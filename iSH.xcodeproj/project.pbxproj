@@ -40,6 +40,7 @@
 		BB88F4A62154770200A341FD /* libish.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BB13F7DC200AD81D003D1C4D /* libish.a */; };
 		BBBCE7E321D2F02200CA00B3 /* About.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = BBBCE7E521D2F02200CA00B3 /* About.storyboard */; };
 		BBBFE94921C5CFF100509DD5 /* NSError+ISHErrno.m in Sources */ = {isa = PBXBuildFile; fileRef = BB13F4DD21C5770000343E17 /* NSError+ISHErrno.m */; };
+		BBCC9D962365430800424C83 /* SceneDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = BBCC9D952365430800424C83 /* SceneDelegate.m */; };
 		BBFB55662158644C00DFE6DE /* libresolv.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = BBFB55652158644C00DFE6DE /* libresolv.tbd */; };
 		BBFB557121586C4800DFE6DE /* UIViewController+Back.m in Sources */ = {isa = PBXBuildFile; fileRef = BBFB557021586C4800DFE6DE /* UIViewController+Back.m */; };
 		BBFB557621586F9200DFE6DE /* DismissSegue.m in Sources */ = {isa = PBXBuildFile; fileRef = BBFB557521586F9200DFE6DE /* DismissSegue.m */; };
@@ -289,6 +290,8 @@
 		BB88F49C2154760800A341FD /* iSHFileProvider.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = iSHFileProvider.entitlements; sourceTree = "<group>"; };
 		BB88F4A4215476BA00A341FD /* iSH.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = iSH.entitlements; sourceTree = "<group>"; };
 		BBBCE7E421D2F02200CA00B3 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/About.storyboard; sourceTree = "<group>"; };
+		BBCC9D942365430800424C83 /* SceneDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SceneDelegate.h; sourceTree = "<group>"; };
+		BBCC9D952365430800424C83 /* SceneDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SceneDelegate.m; sourceTree = "<group>"; };
 		BBF124901FA7C3100088FB50 /* alpine */ = {isa = PBXFileReference; explicitFileType = folder; includeInIndex = 0; path = alpine; sourceTree = "<group>"; };
 		BBFB55652158644C00DFE6DE /* libresolv.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libresolv.tbd; path = usr/lib/libresolv.tbd; sourceTree = SDKROOT; };
 		BBFB556F21586C4800DFE6DE /* UIViewController+Back.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "UIViewController+Back.h"; sourceTree = "<group>"; };
@@ -421,6 +424,8 @@
 			children = (
 				BB792B531F96D90D00FFB7A4 /* AppDelegate.h */,
 				BB792B541F96D90D00FFB7A4 /* AppDelegate.m */,
+				BBCC9D942365430800424C83 /* SceneDelegate.h */,
+				BBCC9D952365430800424C83 /* SceneDelegate.m */,
 				BB792B561F96D90D00FFB7A4 /* TerminalViewController.h */,
 				BB792B571F96D90D00FFB7A4 /* TerminalViewController.m */,
 				BBFB557D21587B2B00DFE6DE /* Bar */,
@@ -975,6 +980,7 @@
 				BB455E111FB37F6600AFB48B /* DelayedUITask.m in Sources */,
 				BB0FC5921F980A6C00803272 /* Terminal.m in Sources */,
 				BB101B382364CF57000A93BC /* FontPickerViewController.m in Sources */,
+				BBCC9D962365430800424C83 /* SceneDelegate.m in Sources */,
 				BB82A7FD21B4C2E8006AA5FD /* AboutExternalKeyboardViewController.m in Sources */,
 				8632A7BF219A59FB00F02325 /* UserPreferences.m in Sources */,
 				BB792B631F96D90D00FFB7A4 /* main.m in Sources */,

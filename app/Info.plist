@@ -20,6 +20,35 @@
 	<string>61</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>A program running in iSH wants to track your location in the background.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>A program running in iSH wants to track your location.</string>
+	<key>NSUserActivityTypes</key>
+	<array>
+		<string>app.ish.scene</string>
+	</array>
+	<key>UIApplicationSceneManifest</key>
+	<dict>
+		<key>UISceneConfigurations</key>
+		<dict>
+			<key>UIWindowSceneSessionRoleApplication</key>
+			<array>
+				<dict>
+					<key>UISceneClassName</key>
+					<string>UIWindowScene</string>
+					<key>UISceneDelegateClassName</key>
+					<string>SceneDelegate</string>
+					<key>UISceneConfigurationName</key>
+					<string>Terminal</string>
+					<key>UISceneStoryboardFile</key>
+					<string>Main</string>
+				</dict>
+			</array>
+		</dict>
+		<key>UIApplicationSupportsMultipleScenes</key>
+		<true/>
+	</dict>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>location</string>
@@ -50,9 +79,5 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
-	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>A program running in iSH wants to track your location in the background.</string>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>A program running in iSH wants to track your location.</string>
 </dict>
 </plist>

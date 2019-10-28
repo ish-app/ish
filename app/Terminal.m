@@ -26,6 +26,7 @@ extern struct tty_driver ios_pty_driver;
 @property BOOL applicationCursor;
 
 @property NSNumber *terminalsKey;
+@property NSUUID *uuid;
 
 @end
 
@@ -40,6 +41,7 @@ extern struct tty_driver ios_pty_driver;
 @implementation Terminal
 
 static NSMapTable<NSNumber *, Terminal *> *terminals;
+static NSMapTable<NSUUID *, Terminal *> *terminalsByUUID;
 
 - (instancetype)initWithType:(int)type number:(int)num {
     self.terminalsKey = @(dev_make(type, num));
@@ -66,6 +68,8 @@ static NSMapTable<NSNumber *, Terminal *> *terminals;
         [self _addPreferenceObservers];
         
         [terminals setObject:self forKey:self.terminalsKey];
+        self.uuid = [NSUUID UUID];
+        [terminalsByUUID setObject:self forKey:self.uuid];
     }
     return self;
 }
@@ -274,17 +278,29 @@ NSData *removeInvalidUTF8(NSData *data) {
     return [[Terminal alloc] initWithType:type number:number];
 }
 
++ (Terminal *)terminalWithUUID:(NSUUID *)uuid {
+    return [terminalsByUUID objectForKey:uuid];
+}
+
 - (void)destroy {
+    if (self.tty != NULL) {
+        lock(&self.tty->lock);
+        tty_hangup(self.tty);
+        unlock(&self.tty->lock);
+    }
     [terminals removeObjectForKey:self.terminalsKey];
 }
 
 + (void)initialize {
     terminals = [NSMapTable strongToWeakObjectsMapTable];
+    terminalsByUUID = [NSMapTable strongToWeakObjectsMapTable];
 }
 
 @end
 
 static int ios_tty_init(struct tty *tty) {
+    // This is called with ttys_lock but that results in deadlock since the main thread can also acquire ttys_lock. So release it.
+    unlock(&ttys_lock);
     void (^init_block)(void) = ^{
         Terminal *terminal = [Terminal terminalWithType:tty->type number:tty->num];
         tty->data = (void *) CFBridgingRetain(terminal);
@@ -295,6 +311,7 @@ static int ios_tty_init(struct tty *tty) {
     else
         dispatch_sync(dispatch_get_main_queue(), init_block);
 
+    lock(&ttys_lock);
     return 0;
 }
 
