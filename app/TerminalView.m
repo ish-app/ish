@@ -14,6 +14,7 @@
 
 @property (nonatomic) NSMutableArray<UIKeyCommand *> *keyCommands;
 @property ScrollbarView *scrollbarView;
+@property (nonatomic) BOOL terminalFocused;
 
 @property (nullable) NSString *markedText;
 
@@ -52,7 +53,7 @@
 }
 
 - (void)setTerminal:(Terminal *)terminal {
-    NSArray<NSString *>* handlers = @[@"focus", @"newScrollHeight", @"newScrollTop", @"openLink"];
+    NSArray<NSString *>* handlers = @[@"syncFocus", @"focus", @"newScrollHeight", @"newScrollTop", @"openLink"];
     
     if (self.terminal) {
         // remove old terminal
@@ -90,8 +91,57 @@
     return YES;
 }
 
+- (void)setTerminalFocused:(BOOL)terminalFocused {
+    _terminalFocused = terminalFocused;
+    NSString *script = terminalFocused ? @"exports.setFocused(true)" : @"exports.setFocused(false)";
+    [self.terminal.webView evaluateJavaScript:script completionHandler:nil];
+}
+
+- (BOOL)becomeFirstResponder {
+    self.terminalFocused = YES;
+    return [super becomeFirstResponder];
+}
+- (BOOL)resignFirstResponder {
+    self.terminalFocused = NO;
+    return [super resignFirstResponder];
+}
+- (void)windowDidBecomeKey:(NSNotification *)notif {
+    self.terminalFocused = YES;
+}
+- (void)windowDidResignKey:(NSNotification *)notif {
+    self.terminalFocused = NO;
+}
+
+- (IBAction)loseFocus:(id)sender {
+    [self resignFirstResponder];
+}
+
+- (void)willMoveToWindow:(UIWindow *)newWindow {
+    NSNotificationCenter *center = NSNotificationCenter.defaultCenter;
+    if (self.window != nil) {
+        [center removeObserver:self
+                          name:UIWindowDidBecomeKeyNotification
+                        object:self.window];
+        [center removeObserver:self
+                          name:UIWindowDidResignKeyNotification
+                        object:self.window];
+    }
+    if (newWindow != nil) {
+        [center addObserver:self
+                   selector:@selector(windowDidBecomeKey:)
+                       name:UIWindowDidBecomeKeyNotification
+                     object:newWindow];
+        [center addObserver:self
+                   selector:@selector(windowDidResignKey:)
+                       name:UIWindowDidResignKeyNotification
+                     object:newWindow];
+    }
+}
+
 - (void)userContentController:(WKUserContentController *)userContentController didReceiveScriptMessage:(WKScriptMessage *)message {
-    if ([message.name isEqualToString:@"focus"]) {
+    if ([message.name isEqualToString:@"syncFocus"]) {
+        self.terminalFocused = self.terminalFocused;
+    } else if ([message.name isEqualToString:@"focus"]) {
         if (!self.isFirstResponder) {
             [self becomeFirstResponder];
         }
@@ -105,15 +155,6 @@
     } else if ([message.name isEqualToString:@"openLink"]) {
         [UIApplication openURL:message.body];
     }
-}
-
-- (BOOL)resignFirstResponder {
-    [self.terminal.webView evaluateJavaScript:@"exports.blur()" completionHandler:nil];
-    return [super resignFirstResponder];
-}
-
-- (IBAction)loseFocus:(id)sender {
-    [self resignFirstResponder];
 }
 
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView {
