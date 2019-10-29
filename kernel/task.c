@@ -112,6 +112,14 @@ void task_start(struct task *task) {
         die("could not create thread");
 }
 
+int_t sys_sched_setscheduler(pthread_t thread, int policy, const struct sched_param *param) {
+    return pthread_setschedparam(thread, policy, param);
+}
+
+int_t sys_sched_getscheduler(pthread_t thread, int *restrict policy, struct sched_param *restrict param) {
+    return pthread_getschedparam(thread, policy, param);
+}
+
 int_t sys_sched_yield() {
     sched_yield();
     return 0;
