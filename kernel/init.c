@@ -105,6 +105,8 @@ int become_new_init_child() {
     // these are things we definitely don't want to inherit
     task->clear_tid = 0;
     task->vfork = NULL;
+    task->blocked = task->pending = task->waiting = 0;
+    list_init(&task->queue);
     // TODO: think about whether it would be a good idea to inherit fs_info
 
     current = task;
