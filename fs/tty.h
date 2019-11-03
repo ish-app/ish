@@ -81,13 +81,14 @@ struct termios_ {
 
 struct tty_driver {
     const struct tty_driver_ops *ops;
+    int major;
     struct tty **ttys;
     unsigned limit;
 };
 
-#define DEFINE_TTY_DRIVER(name, driver_ops, size) \
+#define DEFINE_TTY_DRIVER(name, driver_ops, _major, size) \
     static struct tty *name##_ttys[size]; \
-    struct tty_driver name = {.ops = driver_ops, .ttys = name##_ttys, .limit = size}
+    struct tty_driver name = {.ops = driver_ops, .major = _major, .ttys = name##_ttys, .limit = size}
 
 struct tty_driver_ops {
     int (*init)(struct tty *tty);

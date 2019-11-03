@@ -9,6 +9,7 @@
 #import "DelayedUITask.h"
 #import "UserPreferences.h"
 #include "fs/tty.h"
+#include "fs/devices.h"
 
 @interface Terminal () <WKScriptMessageHandler>
 
@@ -300,4 +301,4 @@ struct tty_driver_ops ios_tty_ops = {
     .write = ios_tty_write,
     .cleanup = ios_tty_cleanup,
 };
-DEFINE_TTY_DRIVER(ios_tty_driver, &ios_tty_ops, 64);
+DEFINE_TTY_DRIVER(ios_tty_driver, &ios_tty_ops, TTY_CONSOLE_MAJOR, 64);

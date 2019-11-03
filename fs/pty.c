@@ -87,14 +87,14 @@ const struct tty_driver_ops pty_master_ops = {
     .ioctl = pty_master_ioctl,
     .cleanup = pty_master_cleanup,
 };
-DEFINE_TTY_DRIVER(pty_master, &pty_master_ops, MAX_PTYS);
+DEFINE_TTY_DRIVER(pty_master, &pty_master_ops, TTY_PSEUDO_MASTER_MAJOR, MAX_PTYS);
 
 const struct tty_driver_ops pty_slave_ops = {
     .init = pty_return_eio,
     .open = pty_slave_open,
     .write = pty_write,
 };
-DEFINE_TTY_DRIVER(pty_slave, &pty_slave_ops, MAX_PTYS);
+DEFINE_TTY_DRIVER(pty_slave, &pty_slave_ops, TTY_PSEUDO_SLAVE_MAJOR, MAX_PTYS);
 
 int ptmx_open(struct fd *fd) {
     int pty_num;
