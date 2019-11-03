@@ -285,35 +285,32 @@ static int sockaddr_read(addr_t sockaddr_addr, void *sockaddr, uint_t *sockaddr_
     return err;
 }
 
-static int sockaddr_write(addr_t sockaddr_addr, void *sockaddr, uint_t *sockaddr_len) {
+static int sockaddr_write(addr_t sockaddr_addr, void *sockaddr, uint_t buffer_len, uint_t *sockaddr_len) {
     struct sockaddr *real_addr = sockaddr;
     struct sockaddr_ *fake_addr = sockaddr;
     fake_addr->family = sock_family_from_real(real_addr->sa_family);
-    size_t len = sizeof(struct sockaddr_);
     switch (fake_addr->family) {
-        case PF_INET_:
-            len = sizeof(struct sockaddr_in);
-            break;
-        case PF_INET6_:
-            len = sizeof(struct sockaddr_in6);
-            break;
         case PF_LOCAL_: {
             // Most callers of sockaddr_write use it to return a peer name, and
             // since we don't know the peer name in this case, just return the
             // default peer name, which is the null address.
             static struct sockaddr_ unix_domain_null = {.family = PF_LOCAL_};
             sockaddr = &unix_domain_null;
+            *sockaddr_len = sizeof(unix_domain_null);
             break;
         }
+        case PF_INET_:
+        case PF_INET6_:
+            break;
         default:
             return _EINVAL;
     }
 
-    if (*sockaddr_len > len)
-        *sockaddr_len = len;
+    if (buffer_len > *sockaddr_len)
+        buffer_len = *sockaddr_len;
     // The address is supposed to be truncated if the specified length is too
     // short, instead of returning an error.
-    if (user_write(sockaddr_addr, sockaddr, *sockaddr_len))
+    if (user_write(sockaddr_addr, sockaddr, buffer_len))
         return _EFAULT;
     return 0;
 }
@@ -414,7 +411,7 @@ int_t sys_accept(fd_t sock_fd, addr_t sockaddr_addr, addr_t sockaddr_len_addr) {
         return errno_map();
 
     if (sockaddr_addr != 0) {
-        int err = sockaddr_write(sockaddr_addr, sockaddr, &sockaddr_len);
+        int err = sockaddr_write(sockaddr_addr, sockaddr, sizeof(sockaddr), &sockaddr_len);
         if (err < 0)
             return client;
         if (user_put(sockaddr_len_addr, sockaddr_len))
@@ -459,7 +456,7 @@ int_t sys_getsockname(fd_t sock_fd, addr_t sockaddr_addr, addr_t sockaddr_len_ad
     if (res < 0)
         return errno_map();
 
-    int err = sockaddr_write(sockaddr_addr, sockaddr, &sockaddr_len);
+    int err = sockaddr_write(sockaddr_addr, sockaddr, sizeof(sockaddr), &sockaddr_len);
     if (err < 0)
         return err;
     if (user_put(sockaddr_len_addr, sockaddr_len))
@@ -484,7 +481,7 @@ int_t sys_getpeername(fd_t sock_fd, addr_t sockaddr_addr, addr_t sockaddr_len_ad
     if (res < 0)
         return errno_map();
 
-    int err = sockaddr_write(sockaddr_addr, sockaddr, &sockaddr_len);
+    int err = sockaddr_write(sockaddr_addr, sockaddr, sizeof(sockaddr), &sockaddr_len);
     if (err < 0)
         return err;
     if (user_put(sockaddr_len_addr, sockaddr_len))
@@ -591,7 +588,7 @@ int_t sys_recvfrom(fd_t sock_fd, addr_t buffer_addr, dword_t len, dword_t flags,
     if (user_write(buffer_addr, buffer, len))
         return _EFAULT;
     if (sockaddr_addr != 0) {
-        int err = sockaddr_write(sockaddr_addr, sockaddr, &sockaddr_len);
+        int err = sockaddr_write(sockaddr_addr, sockaddr, sizeof(sockaddr), &sockaddr_len);
         if (err < 0)
             return err;
     }
@@ -972,7 +969,7 @@ int_t sys_recvmsg(fd_t sock_fd, addr_t msghdr_addr, int_t flags) {
 
     // msg_name (changed)
     if (msg.msg_name != 0) {
-        int err = sockaddr_write(msg_fake.msg_name, msg.msg_name, &msg_fake.msg_namelen);
+        int err = sockaddr_write(msg_fake.msg_name, msg.msg_name, sizeof(msg_name), &msg.msg_namelen);
         if (err < 0)
             return err;
     }
