@@ -633,19 +633,26 @@ static int user_read_string_array(addr_t addr, char *buf, size_t max) {
     return 0;
 }
 
-#define MAX_ARGS 256 // for now
+#define ARGV_MAX 32 * PAGE_SIZE
 dword_t _sys_execve(addr_t filename_addr, addr_t argv_addr, addr_t envp_addr) {
     char filename[MAX_PATH];
     if (user_read_string(filename_addr, filename, sizeof(filename)))
         return _EFAULT;
-    char argv[4096];
-    int err = user_read_string_array(argv_addr, argv, sizeof(argv));
+
+    int err = _ENOMEM;
+    char *argv = malloc(ARGV_MAX);
+    if (argv == NULL)
+        goto err_free_argv;
+    err = user_read_string_array(argv_addr, argv, ARGV_MAX);
+    
     if (err < 0)
-        return err;
-    char envp[4096];
-    err = user_read_string_array(envp_addr, envp, sizeof(envp));
+        goto err_free_argv;
+    char *envp = malloc(ARGV_MAX);
+    if (envp == NULL)
+        goto err_free_envp;
+    err = user_read_string_array(envp_addr, envp, ARGV_MAX);
     if (err < 0)
-        return err;
+        goto err_free_envp;
 
     STRACE("execve(\"%s\", {", filename);
     const char *args = argv;
@@ -661,4 +668,10 @@ dword_t _sys_execve(addr_t filename_addr, addr_t argv_addr, addr_t envp_addr) {
     STRACE("})");
 
     return sys_execve(filename, argv, envp);
+
+err_free_envp:
+    free(envp);
+err_free_argv:
+    free(argv);
+    return err;
 }
