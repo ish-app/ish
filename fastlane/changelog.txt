@@ -1,19 +1,13 @@
-Fixed bugs:
-- Option->Meta map setting having no effect. It was looking at the caps lock setting instead :facepalm:. Now you can actually type characters that require AltGr.
-- Braille screen input not working
-- Incorrect VoiceOver labels on some of the keyboard buttons
-- Arrow keys in VoiceOver could only be swiped once in a direction
-- Long press on delete key not working
-- Transmission printing errors about not being able to set the receive buffer size
-
 New stuff:
-- IME support, so you can type text in Chinese or Japanese, and also use dead keys. Unfortunately the in-progress text doesn't appear on screen, but at least you can type at all.
-- Long press on delete key works
-- Dictation vaguely works
-- /proc/mounts so you can see your list of mounts. You can even run df -h and see how much free space you have. It gives a real answer!
-- Location tracking through /dev/location. Reading from this device will start tracking your location and output a line each time your location updates. It also supports background tracking, so you can get the app to run in the background with the following incantation:
+- Multiple windows on iOS 13! Open the app switcher and tap iSH in the dock to reveal a completely undiscoverable + button which creates a new window. You can even put two windows side by side!
+- Font picker lets you select any installed font (though I think the only way to install them is through configuration profiles)
+- DNS settings will be automatically synced with iOS whenever the network changes
+- Settings icon is now a gear on iOS 13, thanks to SF Symbols
 
-cat /dev/location > /dev/null &
+Fixed bugs:
+- sudo thinking you're not at a tty
+- gem install crashing from stack smashing
+- Toolbar sometimes overlaying the terminal when a hardware keyboard is attached
 
 Send bug reports or feedback here: https://github.com/tbodt/ish/issues (or by email, if you prefer)
 Follow iSH on Twitter: https://twitter.com/iSH_app
