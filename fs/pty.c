@@ -129,7 +129,7 @@ struct tty *pty_open_fake(struct tty_driver *driver) {
     driver->limit = pty_slave.limit;
     struct tty *tty = tty_get(driver, TTY_PSEUDO_SLAVE_MAJOR, pty_num);
     if (IS_ERR(tty))
-        return PTR_ERR(tty);
+        return tty;
     pty_slave_init_inode(tty);
     return tty;
 }
