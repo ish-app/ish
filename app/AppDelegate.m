@@ -8,6 +8,7 @@
 #include <resolv.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+#import <SystemConfiguration/SystemConfiguration.h>
 #import "AppDelegate.h"
 #import "PasteboardDevice.h"
 #import "LocationDevice.h"
@@ -22,6 +23,7 @@
 @interface AppDelegate ()
 
 @property BOOL exiting;
+@property SCNetworkReachabilityRef reachability;
 
 @end
 
@@ -124,32 +126,7 @@ static void ios_handle_die(const char *msg) {
     do_mount(&procfs, "proc", "/proc", 0);
     do_mount(&devptsfs, "devpts", "/dev/pts", 0);
     
-    // configure dns
-    struct __res_state res;
-    if (EXIT_SUCCESS != res_ninit(&res)) {
-        exit(2);
-    }
-    NSMutableString *resolvConf = [NSMutableString new];
-    for (int i = 0; res.dnsrch[i] != NULL; i++) {
-        [resolvConf appendFormat:@"search %s\n", res.dnsrch[i]];
-    }
-    union res_sockaddr_union servers[NI_MAXSERV];
-    int serversFound = res_getservers(&res, servers, NI_MAXSERV);
-    char address[NI_MAXHOST];
-    for (int i = 0; i < serversFound; i ++) {
-        union res_sockaddr_union s = servers[i];
-        if (s.sin.sin_len == 0)
-        continue;
-        getnameinfo((struct sockaddr *) &s.sin, s.sin.sin_len,
-                    address, sizeof(address),
-                    NULL, 0, NI_NUMERICHOST);
-        [resolvConf appendFormat:@"nameserver %s\n", address];
-    }
-    struct fd *fd = generic_open("/etc/resolv.conf", O_WRONLY_ | O_CREAT_ | O_TRUNC_, 0666);
-    if (!IS_ERR(fd)) {
-        fd->ops->write(fd, resolvConf.UTF8String, [resolvConf lengthOfBytesUsingEncoding:NSUTF8StringEncoding]);
-        fd_close(fd);
-    }
+    [self configureDns];
     
     exit_hook = ios_handle_exit;
     die_handler = ios_handle_die;
@@ -176,6 +153,34 @@ static void ios_handle_die(const char *msg) {
     return 0;
 }
 
+- (void)configureDns {
+    struct __res_state res;
+    if (EXIT_SUCCESS != res_ninit(&res)) {
+        exit(2);
+    }
+    NSMutableString *resolvConf = [NSMutableString new];
+    for (int i = 0; res.dnsrch[i] != NULL; i++) {
+        [resolvConf appendFormat:@"search %s\n", res.dnsrch[i]];
+    }
+    union res_sockaddr_union servers[NI_MAXSERV];
+    int serversFound = res_getservers(&res, servers, NI_MAXSERV);
+    char address[NI_MAXHOST];
+    for (int i = 0; i < serversFound; i ++) {
+        union res_sockaddr_union s = servers[i];
+        if (s.sin.sin_len == 0)
+        continue;
+        getnameinfo((struct sockaddr *) &s.sin, s.sin.sin_len,
+                    address, sizeof(address),
+                    NULL, 0, NI_NUMERICHOST);
+        [resolvConf appendFormat:@"nameserver %s\n", address];
+    }
+    struct fd *fd = generic_open("/etc/resolv.conf", O_WRONLY_ | O_CREAT_ | O_TRUNC_, 0666);
+    if (!IS_ERR(fd)) {
+        fd->ops->write(fd, resolvConf.UTF8String, [resolvConf lengthOfBytesUsingEncoding:NSUTF8StringEncoding]);
+        fd_close(fd);
+    }
+}
+
 static int bootError;
 
 + (int)bootError {
@@ -187,11 +192,27 @@ static int bootError;
     return YES;
 }
 
+void NetworkReachabilityCallback(SCNetworkReachabilityRef target, SCNetworkReachabilityFlags flags, void *info) {
+    AppDelegate *self = (__bridge AppDelegate *) info;
+    [self configureDns];
+}
+
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     // get the network permissions popup to appear on chinese devices
     [[NSURLSession.sharedSession dataTaskWithURL:[NSURL URLWithString:@"http://captive.apple.com"]] resume];
     
     [UserPreferences.shared addObserver:self forKeyPath:@"shouldDisableDimming" options:NSKeyValueObservingOptionInitial context:nil];
+    
+    struct sockaddr_in6 address = {
+        .sin6_len = sizeof(address),
+        .sin6_family = AF_INET6,
+    };
+    self.reachability = SCNetworkReachabilityCreateWithAddress(kCFAllocatorDefault, (struct sockaddr *) &address);
+    SCNetworkReachabilityContext context = {
+        .info = (__bridge void *) self,
+    };
+    SCNetworkReachabilitySetCallback(self.reachability, NetworkReachabilityCallback, &context);
+    SCNetworkReachabilityScheduleWithRunLoop(self.reachability, CFRunLoopGetMain(), kCFRunLoopCommonModes);
     
     if (self.window != nil) {
         // For iOS <13, where the app delegate owns the window instead of the scene
@@ -205,6 +226,20 @@ static int bootError;
     UIApplication.sharedApplication.idleTimerDisabled = UserPreferences.shared.shouldDisableDimming;
 }
 
+- (void)application:(UIApplication *)application didDiscardSceneSessions:(NSSet<UISceneSession *> *)sceneSessions API_AVAILABLE(ios(13.0)) {
+    for (UISceneSession *sceneSession in sceneSessions) {
+        NSString *terminalUUID = sceneSession.stateRestorationActivity.userInfo[@"TerminalUUID"];
+        [[Terminal terminalWithUUID:[[NSUUID alloc] initWithUUIDString:terminalUUID]] destroy];
+    }
+}
+
+- (void)dealloc {
+    if (self.reachability != NULL) {
+        SCNetworkReachabilityUnscheduleFromRunLoop(self.reachability, CFRunLoopGetMain(), kCFRunLoopCommonModes);
+        CFRelease(self.reachability);
+    }
+}
+
 - (void)exitApp {
     self.exiting = YES;
     id app = [UIApplication sharedApplication];
@@ -214,13 +249,6 @@ static int bootError;
 - (void)applicationDidEnterBackground:(UIApplication *)application {
     if (self.exiting)
         exit(0);
-}
-
-- (void)application:(UIApplication *)application didDiscardSceneSessions:(NSSet<UISceneSession *> *)sceneSessions API_AVAILABLE(ios(13.0)) {
-    for (UISceneSession *sceneSession in sceneSessions) {
-        NSString *terminalUUID = sceneSession.stateRestorationActivity.userInfo[@"TerminalUUID"];
-        [[Terminal terminalWithUUID:[[NSUUID alloc] initWithUUIDString:terminalUUID]] destroy];
-    }
 }
 
 @end
