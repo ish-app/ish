@@ -55,11 +55,12 @@ struct tty *tty_alloc(struct tty_driver *driver, int type, int num) {
 struct tty *tty_get(struct tty_driver *driver, int type, int num) {
     lock(&ttys_lock);
     struct tty *tty = driver->ttys[num];
-    if (tty == NULL) {
+    // pty_reserve_next stores 1 to avoid races on the same tty
+    if (tty == NULL || tty == (void *) 1 /* ew */) {
         tty = tty_alloc(driver, type, num);
         if (tty == NULL) {
             unlock(&ttys_lock);
-            return NULL;
+            return ERR_PTR(_ENOMEM);
         }
 
         if (driver->ops->init) {
@@ -130,47 +131,8 @@ static void tty_set_controlling(struct tgroup *group, struct tty *tty) {
 int console_major = TTY_CONSOLE_MAJOR;
 int console_minor = 1;
 
-static int tty_open(int major, int minor, struct fd *fd) {
-    struct tty *tty;
-    if (major == TTY_ALTERNATE_MAJOR) {
-        if (minor == DEV_TTY_MINOR) {
-            lock(&ttys_lock);
-            lock(&current->group->lock);
-            tty = current->group->tty;
-            unlock(&current->group->lock);
-            if (tty != NULL) {
-                lock(&tty->lock);
-                tty->refcount++;
-                unlock(&tty->lock);
-            }
-            unlock(&ttys_lock);
-            if (tty == NULL)
-                return _ENXIO;
-        } else if (minor == DEV_CONSOLE_MINOR) {
-            return tty_open(console_major, console_minor, fd);
-        } else if (minor == DEV_PTMX_MINOR) {
-            return ptmx_open(fd);
-        } else {
-            return _ENXIO;
-        }
-    } else {
-        struct tty_driver *driver = tty_drivers[major];
-        assert(driver != NULL);
-        tty = tty_get(driver, major, minor);
-        if (IS_ERR(tty))
-            return PTR_ERR(tty);
-    }
+int tty_open(struct tty *tty, struct fd *fd) {
     fd->tty = tty;
-
-    if (tty->driver->ops->open) {
-        int err = tty->driver->ops->open(tty);
-        if (err < 0) {
-            lock(&ttys_lock);
-            tty_release(tty);
-            unlock(&ttys_lock);
-            return err;
-        }
-    }
 
     lock(&tty->fds_lock);
     list_add(&tty->fds, &fd->tty_other_fds);
@@ -189,6 +151,50 @@ static int tty_open(int major, int minor, struct fd *fd) {
     }
 
     return 0;
+}
+
+static int tty_device_open(int major, int minor, struct fd *fd) {
+    struct tty *tty;
+    if (major == TTY_ALTERNATE_MAJOR) {
+        if (minor == DEV_TTY_MINOR) {
+            lock(&ttys_lock);
+            lock(&current->group->lock);
+            tty = current->group->tty;
+            unlock(&current->group->lock);
+            if (tty != NULL) {
+                lock(&tty->lock);
+                tty->refcount++;
+                unlock(&tty->lock);
+            }
+            unlock(&ttys_lock);
+            if (tty == NULL)
+                return _ENXIO;
+        } else if (minor == DEV_CONSOLE_MINOR) {
+            return tty_device_open(console_major, console_minor, fd);
+        } else if (minor == DEV_PTMX_MINOR) {
+            return ptmx_open(fd);
+        } else {
+            return _ENXIO;
+        }
+    } else {
+        struct tty_driver *driver = tty_drivers[major];
+        assert(driver != NULL);
+        tty = tty_get(driver, major, minor);
+        if (IS_ERR(tty))
+            return PTR_ERR(tty);
+    }
+
+    if (tty->driver->ops->open) {
+        int err = tty->driver->ops->open(tty);
+        if (err < 0) {
+            lock(&ttys_lock);
+            tty_release(tty);
+            unlock(&ttys_lock);
+            return err;
+        }
+    }
+
+    return tty_open(tty, fd);
 }
 
 static int tty_close(struct fd *fd) {
@@ -765,7 +771,7 @@ void tty_hangup(struct tty *tty) {
 }
 
 struct dev_ops tty_dev = {
-    .open = tty_open,
+    .open = tty_device_open,
     .fd.close = tty_close,
     .fd.read = tty_read,
     .fd.write = tty_write,

@@ -95,7 +95,7 @@ static inline int xX_main_Xx(int argc, char *const argv[], const char *envp) {
         return err;
     tty_drivers[TTY_CONSOLE_MAJOR] = &real_tty_driver;
     if (isatty(STDIN_FILENO) && isatty(STDOUT_FILENO)) {
-        err = create_stdio(console);
+        err = create_stdio(console, TTY_CONSOLE_MAJOR, 1);
         if (err < 0)
             return err;
     } else {

@@ -48,7 +48,7 @@ window.exports = {};
 term.io.push();
 term.reset();
 
-let oldProps = {}
+let oldProps = {};
 function syncProp(name, value) {
     if (oldProps[name] !== value)
         native.propUpdate(name, value);
@@ -69,8 +69,15 @@ term.focus();
 exports.copy = () => term.copySelectionToClipboard();
 
 // focus
-term.scrollPort_.screen_.addEventListener('mousedown', (e) => term.focus());
-term.scrollPort_.subscribe('focus', () => native.focus());
+term.scrollPort_.screen_.addEventListener('mousedown', (e) => native.focus());
+let dontSync = false;
+exports.setFocused = (focus) => {
+    if (focus)
+        term.focus();
+    else
+        term.blur();
+};
+term.scrollPort_.screen_.addEventListener('focus', (e) => native.syncFocus());
 
 // scrolling
 // Disable hterm builtin touch scrolling
@@ -114,11 +121,11 @@ exports.updateStyle = ({foregroundColor, backgroundColor, fontFamily, fontSize})
 };
 
 exports.clearScrollback = () => term.clearScrollback();
-exports.blur = () => term.blur();
 exports.setUserGesture = () => term.accessibilityReader_.hasUserGesture = true;
 
 hterm.openUrl = (url) => native.openLink(url);
 
 native.load();
+native.syncFocus();
 
 }

@@ -15,13 +15,11 @@
 #import "UserPreferences.h"
 #include "kernel/init.h"
 #include "kernel/calls.h"
-#include "fs/path.h"
 #include "fs/dyndev.h"
 #include "fs/devices.h"
+#include "fs/path.h"
 
 @interface AppDelegate ()
-
-@property int sessionPid;
 
 @property BOOL exiting;
 
@@ -52,7 +50,7 @@ static void ios_handle_die(const char *msg) {
 
 @implementation AppDelegate
 
-- (int)startThings {
+- (int)boot {
     NSFileManager *manager = [NSFileManager defaultManager];
     NSURL *container = [manager containerURLForSecurityApplicationGroupIdentifier:PRODUCT_APP_GROUP_IDENTIFIER];
     NSURL *alpineRoot = [container URLByAppendingPathComponent:@"roots/alpine"];
@@ -158,9 +156,9 @@ static void ios_handle_die(const char *msg) {
     NSString *sockTmp = [NSTemporaryDirectory() stringByAppendingString:@"ishsock"];
     sock_tmp_prefix = strdup(sockTmp.UTF8String);
     
-    tty_drivers[TTY_CONSOLE_MAJOR] = &ios_tty_driver;
+    tty_drivers[TTY_CONSOLE_MAJOR] = &ios_console_driver;
     set_console_device(TTY_CONSOLE_MAJOR, 1);
-    err = create_stdio("/dev/console");
+    err = create_stdio("/dev/console", TTY_CONSOLE_MAJOR, 1);
     if (err < 0)
         return err;
     
@@ -168,50 +166,25 @@ static void ios_handle_die(const char *msg) {
     command = UserPreferences.shared.bootCommand;
     NSLog(@"%@", command);
     char argv[4096];
-    [self convertCommand:command toArgs:argv limitSize:sizeof(argv)];
+    [Terminal convertCommand:command toArgs:argv limitSize:sizeof(argv)];
     const char *envp = "TERM=xterm-256color\0";
     err = sys_execve(argv, argv, envp);
     if (err < 0)
         return err;
     task_start(current);
     
-    err = [self startSession];
-    if (err < 0)
-        return err;
-    
     return 0;
 }
 
-- (int)startSession {
-    int err = become_new_init_child();
-    if (err < 0)
-        return err;
-    err = create_stdio("/dev/tty7");
-    if (err < 0)
-        return err;
-    char argv[4096];
-    [self convertCommand:UserPreferences.shared.launchCommand toArgs:argv limitSize:sizeof(argv)];
-    const char *envp = "TERM=xterm-256color\0";
-    err = sys_execve(argv, argv, envp);
-    if (err < 0)
-        return err;
-    self.sessionPid = current->pid;
-    task_start(current);
-    return 0;
+static int bootError;
+
++ (int)bootError {
+    return bootError;
 }
 
-- (void)convertCommand:(NSArray<NSString *> *)command toArgs:(char *)argv limitSize:(size_t)maxSize {
-    char *p = argv;
-    for (NSString *cmd in command) {
-        const char *c = cmd.UTF8String;
-        // Save space for the final NUL byte in argv
-        while (p < argv + maxSize - 1 && (*p++ = *c++));
-        // If we reach the end of the buffer, the last string still needs to be
-        // NUL terminated
-        *p = '\0';
-    }
-    // Add the final NUL byte to argv
-    *++p = '\0';
+- (BOOL)application:(UIApplication *)application willFinishLaunchingWithOptions:(NSDictionary<UIApplicationLaunchOptionsKey,id> *)launchOptions {
+    bootError = [self boot];
+    return YES;
 }
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
@@ -220,42 +193,16 @@ static void ios_handle_die(const char *msg) {
     
     [UserPreferences.shared addObserver:self forKeyPath:@"shouldDisableDimming" options:NSKeyValueObservingOptionInitial context:nil];
     
-    [NSNotificationCenter.defaultCenter addObserver:self
-                                           selector:@selector(processExited:)
-                                               name:ProcessExitedNotification
-                                             object:nil];
-    
-    int err = [self startThings];
-    if (err < 0) {
-        NSString *message = [NSString stringWithFormat:@"could not initialize"];
-        NSString *subtitle = [NSString stringWithFormat:@"error code %d", err];
-        if (err == _EINVAL)
-            subtitle = [subtitle stringByAppendingString:@"\n(try reinstalling the app, see release notes for details)"];
-        [self showMessage:message subtitle:subtitle fatal:NO];
-        NSLog(@"failed with code %d", err);
+    if (self.window != nil) {
+        // For iOS <13, where the app delegate owns the window instead of the scene
+        TerminalViewController *vc = (TerminalViewController *) self.window.rootViewController;
+        [vc startNewSession];
     }
     return YES;
 }
 
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context {
     UIApplication.sharedApplication.idleTimerDisabled = UserPreferences.shared.shouldDisableDimming;
-}
-
-- (void)processExited:(NSNotification *)notif {
-    int pid = [notif.userInfo[@"pid"] intValue];
-    if (pid == self.sessionPid) {
-        [self startSession];
-    }
-}
-
-- (void)showMessage:(NSString *)message subtitle:(NSString *)subtitle fatal:(BOOL)fatal {
-    dispatch_async(dispatch_get_main_queue(), ^{
-        UIAlertController *alert = [UIAlertController alertControllerWithTitle:message message:subtitle preferredStyle:UIAlertControllerStyleAlert];
-        [alert addAction:[UIAlertAction actionWithTitle:@"k"
-                                                  style:UIAlertActionStyleDefault
-                                                handler:nil]];
-        [self.window.rootViewController presentViewController:alert animated:YES completion:nil];
-    });
 }
 
 - (void)exitApp {
@@ -267,6 +214,13 @@ static void ios_handle_die(const char *msg) {
 - (void)applicationDidEnterBackground:(UIApplication *)application {
     if (self.exiting)
         exit(0);
+}
+
+- (void)application:(UIApplication *)application didDiscardSceneSessions:(NSSet<UISceneSession *> *)sceneSessions API_AVAILABLE(ios(13.0)) {
+    for (UISceneSession *sceneSession in sceneSessions) {
+        NSString *terminalUUID = sceneSession.stateRestorationActivity.userInfo[@"TerminalUUID"];
+        [[Terminal terminalWithUUID:[[NSUUID alloc] initWithUUIDString:terminalUUID]] destroy];
+    }
 }
 
 @end
