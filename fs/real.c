@@ -212,8 +212,22 @@ int realfs_poll(struct fd *fd) {
         p.events |= POLLOUT;
     if (poll(&p, 1, 0) <= 0)
         return 0;
-    if (p.revents & POLLNVAL)
-        printk("pollnval %d\n", fd->real_fd);
+    if (p.revents & POLLNVAL) {
+        printk("pollnval %d flags %d events %d revents %d\n", fd->real_fd, flags, p.events, p.revents);
+        // Seriously, fuck Darwin. I just want to poll on POLLIN|POLLOUT|POLLPRI.
+        // But if there's almost any kind of error, you just get POLLNVAL back,
+        // and no information about the bits that are in fact set. So ask for each
+        // separately and ignore a POLLNVAL.
+        // This is no longer atomic but I don't really know what to do about that.
+        int events = 0;
+        static const int pollbits[] = {POLLIN, POLLOUT, POLLPRI};
+        for (unsigned i = 0; i < sizeof(pollbits)/sizeof(pollbits[0]); i++) {
+            p.events = pollbits[i];
+            if (poll(&p, 1, 0) > 0 && !(p.revents & POLLNVAL))
+                events |= p.revents;
+        }
+        return events;
+    }
     return p.revents;
 }
 
