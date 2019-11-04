@@ -50,11 +50,7 @@
     NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
     [center addObserver:self
                selector:@selector(keyboardDidSomething:)
-                   name:UIKeyboardWillShowNotification
-                 object:nil];
-    [center addObserver:self
-               selector:@selector(keyboardDidSomething:)
-                   name:UIKeyboardWillHideNotification
+                   name:UIKeyboardWillChangeFrameNotification
                  object:nil];
 
     [self _updateStyleFromPreferences:NO];
@@ -125,16 +121,23 @@
 }
 
 - (void)keyboardDidSomething:(NSNotification *)notification {
+    // NSLog(@"%@", notification);
     BOOL initialLayout = self.termView.needsUpdateConstraints;
     
-    CGFloat pad = 0;
-    if ([notification.name isEqualToString:UIKeyboardWillShowNotification]) {
-        NSValue *frame = notification.userInfo[UIKeyboardFrameEndUserInfoKey];
-        pad = frame.CGRectValue.size.height;
+    CGRect keyboardFrame = [notification.userInfo[UIKeyboardFrameEndUserInfoKey] CGRectValue];
+    CGFloat pad;
+    if (keyboardFrame.origin.x == 0 &&
+        keyboardFrame.origin.y == 0 &&
+        keyboardFrame.size.height == 0 &&
+        keyboardFrame.size.width == 0) {
+        pad = 0;
+    } else {
+        pad = UIScreen.mainScreen.bounds.size.height - keyboardFrame.origin.y;
     }
     if (pad == 0) {
         pad = self.view.safeAreaInsets.bottom;
     }
+    // NSLog(@"pad %f", pad);
     self.bottomConstraint.constant = -pad;
     [self.view setNeedsUpdateConstraints];
     
