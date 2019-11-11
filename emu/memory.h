@@ -35,6 +35,9 @@ void mem_init(struct mem *mem);
 void mem_destroy(struct mem *mem);
 // Return the pagetable entry for the given page
 struct pt_entry *mem_pt(struct mem *mem, page_t page);
+// Increment *page, skipping over unallocated page directories. Intended to be
+// used as the incremenent in a for loop to traverse mappings.
+void mem_next_page(struct mem *mem, page_t *page);
 
 #define PAGE_BITS 12
 #undef PAGE_SIZE // defined in system headers somewhere
@@ -53,6 +56,11 @@ struct data {
     void *data; // immutable
     size_t size; // also immutable
     atomic_uint refcount;
+
+    // for display in /proc/pid/maps
+    struct fd *fd;
+    size_t file_offset;
+    const char *name;
 #if LEAK_DEBUG
     int pid;
     addr_t dest;
@@ -72,6 +80,7 @@ struct pt_entry {
 #define P_WRITE (1 << 1)
 #undef P_EXEC // defined in sys/proc.h on darwin
 #define P_EXEC (1 << 2)
+#define P_RWX (P_READ | P_WRITE | P_EXEC)
 #define P_GROWSDOWN (1 << 3)
 #define P_COW (1 << 4)
 #define P_WRITABLE(flags) (flags & P_WRITE && !(flags & P_COW))

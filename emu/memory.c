@@ -14,6 +14,7 @@
 #include "jit/jit.h"
 #include "kernel/vdso.h"
 #include "kernel/task.h"
+#include "fs/fd.h"
 
 // increment the change count
 static void mem_changed(struct mem *mem);
@@ -71,7 +72,7 @@ static void mem_pt_del(struct mem *mem, page_t page) {
         entry->data = NULL;
 }
 
-static void next_page(struct mem *mem, page_t *page) {
+void mem_next_page(struct mem *mem, page_t *page) {
     (*page)++;
     if (*page >= MEM_PAGES)
         return;
@@ -114,13 +115,15 @@ int pt_map(struct mem *mem, page_t start, pages_t pages, void *memory, size_t of
     struct data *data = malloc(sizeof(struct data));
     if (data == NULL)
         return _ENOMEM;
-    data->data = memory;
-    data->size = pages * PAGE_SIZE + offset;
-    data->refcount = 0;
+    *data = (struct data) {
+        .data = memory,
+        .size = pages * PAGE_SIZE + offset,
+
 #if LEAK_DEBUG
-    data->pid = current ? current->pid : 0;
-    data->dest = start << PAGE_BITS;
+        .pid = current ? current->pid : 0,
+        .dest = start << PAGE_BITS,
 #endif
+    };
 
     for (page_t page = start; page < start + pages; page++) {
         if (mem_pt(mem, page) != NULL)
@@ -142,7 +145,7 @@ int pt_unmap(struct mem *mem, page_t start, pages_t pages) {
 }
 
 int pt_unmap_always(struct mem *mem, page_t start, pages_t pages) {
-    for (page_t page = start; page < start + pages; next_page(mem, &page)) {
+    for (page_t page = start; page < start + pages; mem_next_page(mem, &page)) {
         struct pt_entry *pt = mem_pt(mem, page);
         if (pt == NULL)
             continue;
@@ -157,6 +160,9 @@ int pt_unmap_always(struct mem *mem, page_t start, pages_t pages) {
                 int err = munmap(data->data, data->size);
                 if (err != 0)
                     die("munmap(%p, %lu) failed: %s", data->data, data->size, strerror(errno));
+            }
+            if (data->fd != NULL) {
+                fd_close(data->fd);
             }
             free(data);
         }
@@ -196,7 +202,7 @@ int pt_set_flags(struct mem *mem, page_t start, pages_t pages, int flags) {
 }
 
 int pt_copy_on_write(struct mem *src, struct mem *dst, page_t start, page_t pages) {
-    for (page_t page = start; page < start + pages; next_page(src, &page)) {
+    for (page_t page = start; page < start + pages; mem_next_page(src, &page)) {
         struct pt_entry *entry = mem_pt(src, page);
         if (entry == NULL)
             continue;

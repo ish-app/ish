@@ -78,6 +78,9 @@ static int load_entry(struct prg_header ph, addr_t bias, struct fd *fd) {
                     PAGE_ROUND_UP(filesize + PGOFFSET(addr)),
                     offset - PGOFFSET(addr), flags, MMAP_PRIVATE)) < 0)
         return err;
+    // TODO find a better place for these to avoid code duplication
+    mem_pt(current->mem, PAGE(addr))->data->fd = fd_retain(fd);
+    mem_pt(current->mem, PAGE(addr))->data->file_offset = offset - PGOFFSET(addr);
 
     if (memsize > filesize) {
         // put zeroes between addr + filesize and addr + memsize, call that bss
@@ -245,6 +248,7 @@ static int elf_exec(struct fd *fd, const char *file, const char *argv, const cha
     vdso_page += 1;
     if ((err = pt_map(current->mem, vdso_page, vdso_pages, (void *) vdso_data, 0, 0)) < 0)
         goto beyond_hope;
+    mem_pt(current->mem, vdso_page)->data->name = "[vdso]";
     current->mm->vdso = vdso_page << PAGE_BITS;
     addr_t vdso_entry = current->mm->vdso + ((struct elf_header *) vdso_data)->entry_point;
 
@@ -255,6 +259,7 @@ static int elf_exec(struct fd *fd, const char *file, const char *argv, const cha
         goto beyond_hope;
     if ((err = pt_map_nothing(current->mem, vvar_page, NUM_VVAR, 0)) < 0)
         goto beyond_hope;
+    mem_pt(current->mem, vvar_page)->data->name = "[vvar]";
 
     // STACK TIME!
 

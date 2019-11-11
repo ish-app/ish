@@ -10,6 +10,12 @@ struct proc_entry {
     sdword_t fd; // typedef might not have been read yet
 };
 
+struct proc_data {
+    char *data;
+    size_t size;
+    size_t capacity;
+};
+
 struct proc_dir_entry {
     const char *name;
     mode_t_ mode;
@@ -18,8 +24,7 @@ struct proc_dir_entry {
     void (*getname)(struct proc_entry *entry, char *buf);
 
     // file with custom show data function
-    // not worrying about buffer overflows for now
-    ssize_t (*show)(struct proc_entry *entry, char *buf);
+    int (*show)(struct proc_entry *entry, struct proc_data *data);
 
     // symlink
     int (*readlink)(struct proc_entry *entry, char *buf);
@@ -43,5 +48,8 @@ void proc_entry_getname(struct proc_entry *entry, char *buf);
 int proc_entry_stat(struct proc_entry *entry, struct statbuf *stat);
 
 bool proc_dir_read(struct proc_entry *entry, unsigned long *index, struct proc_entry *next_entry);
+
+void proc_buf_write(struct proc_data *buf, const void *data, size_t size);
+void proc_printf(struct proc_data *buf, const char *format, ...);
 
 #endif

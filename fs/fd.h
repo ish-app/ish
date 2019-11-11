@@ -81,8 +81,7 @@ struct fd {
         struct {
             struct proc_entry entry;
             unsigned dir_index;
-            char *data;
-            size_t size;
+            struct proc_data data;
         } proc;
         struct {
             int num;
