@@ -364,6 +364,7 @@ static int elf_exec(struct fd *fd, const char *file, const char *argv, const cha
         goto beyond_hope;
     p += sizeof(aux);
 
+    current->mm->stack_start = sp;
     current->cpu.esp = sp;
     current->cpu.eip = entry;
     current->cpu.fcw = 0x37f;
@@ -649,7 +650,7 @@ dword_t _sys_execve(addr_t filename_addr, addr_t argv_addr, addr_t envp_addr) {
     if (argv == NULL)
         goto err_free_argv;
     err = user_read_string_array(argv_addr, argv, ARGV_MAX);
-    
+
     if (err < 0)
         goto err_free_argv;
     char *envp = malloc(ARGV_MAX);

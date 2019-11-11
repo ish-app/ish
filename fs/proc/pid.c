@@ -72,7 +72,7 @@ static int proc_pid_stat_show(struct proc_entry *entry, struct proc_data *buf) {
     // bunch of shit that can only be accessed by a debugger
     proc_printf(buf, "%lu ", 0l); // startcode
     proc_printf(buf, "%lu ", 0l); // endcode
-    proc_printf(buf, "%lu ", 0l); // startstack
+    proc_printf(buf, "%lu ", task->mm->stack_start);
     proc_printf(buf, "%lu ", 0l); // kstkesp
     proc_printf(buf, "%lu ", 0l); // kstkeip
 
