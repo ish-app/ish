@@ -3,6 +3,7 @@
 #include "misc.h"
 #include "emu/memory.h"
 #include "util/list.h"
+#include "util/sync.h"
 
 #if ENGINE_JIT
 
@@ -14,8 +15,14 @@ struct jit {
     struct mem *mem;
     size_t mem_used;
     size_t num_blocks;
+
     struct list *hash;
     size_t hash_size;
+
+    // list of jit_blocks that should be freed soon (at the next RCU grace
+    // period, if we had such a thing)
+    struct list jetsam;
+
     lock_t lock;
 };
 
@@ -41,6 +48,9 @@ struct jit_block {
     struct list page[2];
     // links for jumps_from
     struct list jumps_from_links[2];
+    // links for free list
+    struct list jetsam;
+    bool is_jetsam;
 
     unsigned long code[];
 };
@@ -49,7 +59,8 @@ struct jit_block {
 struct jit *jit_new(struct mem *mem);
 void jit_free(struct jit *jit);
 
-// Invalidate all jit blocks in the given page. Locks the jit.
+// Invalidate all jit blocks in the given page. Locks the jit. Should only be
+// called by memory.c in conjunction with mem_changed.
 void jit_invalidate_page(struct jit *jit, page_t page);
 
 #endif

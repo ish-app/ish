@@ -259,6 +259,7 @@ void *mem_ptr(struct mem *mem, addr_t addr, int type) {
 #if ENGINE_JIT
         // get rid of any compiled blocks in this page
         jit_invalidate_page(mem->jit, page);
+        mem_changed(mem);
 #endif
     }
 

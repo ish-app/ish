@@ -56,6 +56,7 @@ void gen_end(struct gen_state *state) {
     else
         block->end_addr = block->addr;
     list_init(&block->chain);
+    block->is_jetsam = false;
     for (int i = 0; i <= 1; i++) {
         list_init(&block->page[i]);
     }
