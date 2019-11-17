@@ -168,12 +168,14 @@ static void ios_handle_die(const char *msg) {
     for (int i = 0; i < serversFound; i ++) {
         union res_sockaddr_union s = servers[i];
         if (s.sin.sin_len == 0)
-        continue;
+            continue;
         getnameinfo((struct sockaddr *) &s.sin, s.sin.sin_len,
                     address, sizeof(address),
                     NULL, 0, NI_NUMERICHOST);
         [resolvConf appendFormat:@"nameserver %s\n", address];
     }
+    
+    current = pid_get_task(1);
     struct fd *fd = generic_open("/etc/resolv.conf", O_WRONLY_ | O_CREAT_ | O_TRUNC_, 0666);
     if (!IS_ERR(fd)) {
         fd->ops->write(fd, resolvConf.UTF8String, [resolvConf lengthOfBytesUsingEncoding:NSUTF8StringEncoding]);
