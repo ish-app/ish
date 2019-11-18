@@ -603,7 +603,13 @@ restart:
                     case 0xd90: TRACE("fld mem32"); FLDM(mem_addr_real,32); break;
                     case 0xd92: TRACE("fst mem32"); FSTM(mem_addr_real,32); break;
                     case 0xd93: TRACE("fstp mem32"); FSTM(mem_addr_real,32); FPOP; break;
+#if OP_SIZE == 32
+                    case 0xd94: TRACE("fldenv mem32"); FLDENV(mem_addr,32); break;
+#endif
                     case 0xd95: TRACE("fldcw mem16"); FLDCW(mem_addr); break;
+#if OP_SIZE == 32
+                    case 0xd96: TRACE("fnstenv mem32"); FSTENV(mem_addr,32); break;
+#endif
                     case 0xd97: TRACE("fnstcw mem16"); FSTCW(mem_addr); break;
                     case 0xda0: TRACE("fiadd mem32"); FIADD(mem_addr,32); break;
                     case 0xda1: TRACE("fimul mem32"); FIMUL(mem_addr,32); break;

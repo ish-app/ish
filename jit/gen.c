@@ -393,6 +393,8 @@ void helper_rdtsc(struct cpu_state *cpu);
 #define FSTSW(dst) if (arg_##dst == arg_reg_a) g(fstsw_ax); else UNDEFINED
 #define FSTCW(dst) if (arg_##dst == arg_reg_a) UNDEFINED; else h_write(fpu_stcw, 16)
 #define FLDCW(dst) if (arg_##dst == arg_reg_a) UNDEFINED; else h_read(fpu_ldcw, 16)
+#define FSTENV(val,z) h_write(fpu_stenv, z)
+#define FLDENV(val,z) h_write(fpu_ldenv, z)
 #define FPOP h(fpu_pop)
 #define FADD(src, dst) hhh(fpu_add, src, dst)
 #define FIADD(val,z) h_read(fpu_iadd, z)

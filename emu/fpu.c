@@ -254,14 +254,6 @@ void fpu_divrm64(struct cpu_state *cpu, float64 *f) {
     ST(0) = f80_div(f80_from_double(*f), ST(0));
 }
 
-void fpu_stcw16(struct cpu_state *cpu, uint16_t *i) {
-    *i = cpu->fcw;
-}
-void fpu_ldcw16(struct cpu_state *cpu, uint16_t *i) {
-    cpu->fcw = *i;
-    f80_rounding_mode = cpu->rc;
-}
-
 void fpu_patan(struct cpu_state *cpu) {
     // there's no native atan2 for 80-bit float yet.
     ST(1) = f80_from_double(atan2(f80_to_double(ST(1)), f80_to_double(ST(0))));
@@ -290,4 +282,37 @@ void fpu_xam(struct cpu_state *cpu) {
     cpu->c0 = outflags & 1;
     cpu->c2 = (outflags >> 1) & 1;
     cpu->c3 = (outflags >> 2) & 1;
+}
+
+// meta
+
+void fpu_stcw16(struct cpu_state *cpu, uint16_t *i) {
+    *i = cpu->fcw;
+}
+void fpu_ldcw16(struct cpu_state *cpu, uint16_t *i) {
+    cpu->fcw = *i;
+    f80_rounding_mode = cpu->rc;
+}
+
+struct fpu_env32 {
+    uint32_t control;
+    uint32_t status;
+    uint32_t tag;
+    uint32_t ip;
+    uint32_t ip_selector;
+    uint32_t operand;
+    uint32_t operand_selector;
+};
+
+void fpu_stenv32(struct cpu_state *cpu, struct fpu_env32 *env) {
+    env->control = cpu->fcw;
+    env->status = cpu->fsw;
+    // hope nobody looks at these
+    env->tag = 0;
+    env->ip = env->ip_selector = 0;
+    env->operand = env->operand_selector = 0;
+}
+void fpu_ldenv32(struct cpu_state *cpu, struct fpu_env32 *env) {
+    cpu->fcw = env->control;
+    cpu->fsw = env->status;
 }
