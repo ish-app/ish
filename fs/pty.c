@@ -127,6 +127,7 @@ struct tty *pty_open_fake(struct tty_driver *driver) {
     // TODO this is a bit of a hack
     driver->ttys = pty_slave.ttys;
     driver->limit = pty_slave.limit;
+    driver->major = TTY_PSEUDO_SLAVE_MAJOR;
     struct tty *tty = tty_get(driver, TTY_PSEUDO_SLAVE_MAJOR, pty_num);
     if (IS_ERR(tty))
         return tty;
