@@ -145,7 +145,7 @@ static void ios_handle_die(const char *msg) {
     char argv[4096];
     [Terminal convertCommand:command toArgs:argv limitSize:sizeof(argv)];
     const char *envp = "TERM=xterm-256color\0";
-    err = sys_execve(argv, argv, envp);
+    err = do_execve(command[0].UTF8String, command.count, argv, envp);
     if (err < 0)
         return err;
     task_start(current);
