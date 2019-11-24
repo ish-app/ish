@@ -135,8 +135,7 @@ static void path_unlink(struct mount *mount, const char *path) {
     // delete from paths where path = ?
     bind_path(mount->stmt.path_unlink, 1, path);
     db_exec_reset(mount, mount->stmt.path_unlink);
-    if (inode_is_orphaned(mount, inode))
-        try_cleanup_inode(mount, inode);
+    inode_check_orphaned(mount, inode, try_cleanup_inode);
 }
 static void path_rename(struct mount *mount, const char *src, const char *dst) {
     // update or replace paths set path = change_prefix(path, ? [len(src)], ? [dst])
@@ -485,7 +484,7 @@ int fakefs_migrate(struct mount *mount);
 #if DEBUG_sql
 static int trace_callback(unsigned UNUSED(why), void *UNUSED(fuck), void *stmt, void *_sql) {
     char *sql = _sql;
-    printk("sql trace: %s %s\n", sqlite3_expanded_sql(stmt), sql[0] == '-' ? sql : "");
+    printk("%d sql trace: %s %s\n", current ? current->pid : -1, sqlite3_expanded_sql(stmt), sql[0] == '-' ? sql : "");
     return 0;
 }
 #endif
@@ -639,9 +638,9 @@ static int fakefs_umount(struct mount *mount) {
     return 0;
 }
 
-static void fakefs_inode_orphaned(struct mount *mount, struct inode_data *inode) {
+static void fakefs_inode_orphaned(struct mount *mount, ino_t inode) {
     db_begin(mount);
-    try_cleanup_inode(mount, inode->number);
+    try_cleanup_inode(mount, inode);
     db_commit(mount);
 }
 

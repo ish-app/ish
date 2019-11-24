@@ -25,8 +25,18 @@ struct inode_data *inode_get(struct mount *mount, ino_t inode);
 void inode_retain(struct inode_data *inode);
 void inode_release(struct inode_data *inode);
 
-// does this inode have any references? specifically to tell fakefs if it's safe to try and delete its inode data
-bool inode_is_orphaned(struct mount *mount, ino_t inode);
+// generic_open must lock out anything trying to destroy an inode between
+// opening the file and acquiring a reference to its inode. For this purpose
+// only, the inodes_lock and inode_get_unlocked are made available. Think
+// carefully before using them for anything else.
+// mount->lock nests inside this.
+// To quote @dril: i despise this lock. id love nothing more than to kick it
+// through the wall and shatter it into 100 deadlocks. But i need it
+extern lock_t inodes_lock;
+struct inode_data *inode_get_unlocked(struct mount *mount, ino_t inode);
+
+// calls the callback if this inode is orphaned, while holding indoes_lock
+void inode_check_orphaned(struct mount *mount, ino_t ino, void (*callback)(struct mount *mount, ino_t inode));
 
 // file locking stuff (maybe should go in kernel/calls.h?)
 

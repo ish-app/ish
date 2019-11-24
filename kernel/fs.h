@@ -165,7 +165,7 @@ struct fs_ops {
 
     // If present, called when all references to an inode_data for this
     // filesystem go away.
-    void (*inode_orphaned)(struct mount *mount, struct inode_data *inode);
+    void (*inode_orphaned)(struct mount *mount, ino_t inode);
 };
 
 struct mount *find_mount_and_trim_path(char *path);
