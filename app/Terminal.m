@@ -58,6 +58,7 @@ static NSMapTable<NSUUID *, Terminal *> *terminalsByUUID;
         WKWebViewConfiguration *config = [WKWebViewConfiguration new];
         [config.userContentController addScriptMessageHandler:self name:@"load"];
         [config.userContentController addScriptMessageHandler:self name:@"log"];
+        [config.userContentController addScriptMessageHandler:self name:@"sendInput"];
         [config.userContentController addScriptMessageHandler:self name:@"resize"];
         [config.userContentController addScriptMessageHandler:self name:@"propUpdate"];
         // Make the web view really big so that if a program tries to write to the terminal before it's displayed, the text probably won't wrap too badly.
@@ -98,6 +99,9 @@ static NSMapTable<NSUUID *, Terminal *> *terminalsByUUID;
         self.enableVoiceOverAnnounce = self.enableVoiceOverAnnounce;
     } else if ([message.name isEqualToString:@"log"]) {
         NSLog(@"%@", message.body);
+    } else if ([message.name isEqualToString:@"sendInput"]) {
+        NSData *data = [message.body dataUsingEncoding:NSUTF8StringEncoding];
+        [self sendInput:data.bytes length:data.length];
     } else if ([message.name isEqualToString:@"resize"]) {
         [self syncWindowSize];
     } else if ([message.name isEqualToString:@"propUpdate"]) {

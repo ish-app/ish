@@ -57,6 +57,9 @@ exports.write = (data) => {
     term.io.print(data);
     syncProp('applicationCursor', term.keyboard.applicationCursor);
 };
+term.io.sendString = term.io.onVTKeyStroke = (data) => {
+    native.sendInput(data);
+};
 
 // hterm size updates native size
 term.io.onTerminalResize = () => native.resize();
