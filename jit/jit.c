@@ -225,7 +225,9 @@ void cpu_run(struct cpu_state *cpu) {
                 // write-lock the mem to wait until other jit threads get to
                 // this point, so they will all clear out their block pointers
                 // TODO: use RCU for better performance
+                unlock(&jit->lock);
                 write_wrlock(&cpu->mem->lock);
+                lock(&jit->lock);
                 struct jit_block *block, *tmp;
                 list_for_each_entry_safe(&jit->jetsam, block, tmp, jetsam) {
                     list_remove(&block->jetsam);
