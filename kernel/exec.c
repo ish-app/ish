@@ -102,8 +102,13 @@ static int load_entry(struct prg_header ph, addr_t bias, struct fd *fd) {
             // if you can calculate tail_size better and not have to do this please let me know
             tail_size = 0;
 
-        if (tail_size != 0)
+        if (tail_size != 0) {
+            // Unlock and lock the mem because the user functions must be
+            // called without locking mem.
+            write_wrunlock(&current->mem->lock);
             user_memset(file_end, 0, tail_size);
+            write_wrlock(&current->mem->lock);
+        }
         if (tail_size > bss_size)
             tail_size = bss_size;
 

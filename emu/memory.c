@@ -240,7 +240,19 @@ void *mem_ptr(struct mem *mem, addr_t addr, int type) {
             return NULL;
         if (!(mem_pt(mem, p)->flags & P_GROWSDOWN))
             return NULL;
+
+        // Changing memory maps must be done with the write lock. But this is
+        // called with the read lock, e.g. by tlb_handle_miss.
+        // This locking stuff is copy/pasted for all the code in this function
+        // which changes memory maps.
+        // TODO: factor the lock/unlock code here into a new function. Do this
+        // next time you touch this function.
+        read_wrunlock(&mem->lock);
+        write_wrlock(&mem->lock);
         pt_map_nothing(mem, page, 1, P_WRITE | P_GROWSDOWN);
+        write_wrunlock(&mem->lock);
+        read_wrlock(&mem->lock);
+
         entry = mem_pt(mem, page);
     }
 
@@ -254,12 +266,17 @@ void *mem_ptr(struct mem *mem, addr_t addr, int type) {
             void *copy = mmap(NULL, PAGE_SIZE, PROT_READ | PROT_WRITE,
                     MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
             memcpy(copy, data, PAGE_SIZE);
+
+            // copy/paste from above
+            read_wrunlock(&mem->lock);
+            write_wrlock(&mem->lock);
             pt_map(mem, page, 1, copy, 0, entry->flags &~ P_COW);
+            write_wrunlock(&mem->lock);
+            read_wrlock(&mem->lock);
         }
 #if ENGINE_JIT
         // get rid of any compiled blocks in this page
         jit_invalidate_page(mem->jit, page);
-        mem_changed(mem);
 #endif
     }
 

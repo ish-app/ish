@@ -239,16 +239,14 @@ void cpu_run(struct cpu_state *cpu) {
             read_wrlock(&cpu->mem->lock);
 
             tlb.mem = cpu->mem;
-            if (cpu->mem->changes != changes) {
+            if (cpu->mem->changes != changes)
                 tlb_flush(&tlb);
-                // flush return cache
-                for (size_t i = 0; i < JIT_RETURN_CACHE_SIZE; i++)
-                    frame.ret_cache[i] = 0;
-                changes = cpu->mem->changes;
-            }
+            changes = cpu->mem->changes;
             frame.cpu = *cpu;
             frame.last_block = NULL;
             last_block = NULL;
+            // jit blocks might have been invalidated, flush caches
+            memset(frame.ret_cache, 0, sizeof(frame.ret_cache));
             memset(cache, 0, sizeof(cache));
         }
     }
