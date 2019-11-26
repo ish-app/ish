@@ -164,11 +164,11 @@ dword_t sys_poll(addr_t fds, dword_t nfds, int_t timeout) {
     }
     struct poll_context context = {polls, files, nfds};
     struct timespec timeout_ts;
-    if (timeout != -1) {
+    if (timeout >= 0) {
         timeout_ts.tv_sec = timeout / 1000;
         timeout_ts.tv_nsec = (timeout % 1000) * 1000000;
     }
-    int res = poll_wait(poll, poll_event_callback, &context, timeout == -1 ? NULL : &timeout_ts);
+    int res = poll_wait(poll, poll_event_callback, &context, timeout < 0 ? NULL : &timeout_ts);
     poll_destroy(poll);
     for (unsigned i = 0; i < nfds; i++) {
         if (files[i] != NULL)
