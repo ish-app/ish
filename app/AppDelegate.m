@@ -23,6 +23,7 @@
 @interface AppDelegate ()
 
 @property BOOL exiting;
+@property NSString *unameVersion;
 @property SCNetworkReachabilityRef reachability;
 
 @end
@@ -202,6 +203,12 @@ void NetworkReachabilityCallback(SCNetworkReachabilityRef target, SCNetworkReach
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     // get the network permissions popup to appear on chinese devices
     [[NSURLSession.sharedSession dataTaskWithURL:[NSURL URLWithString:@"http://captive.apple.com"]] resume];
+    
+    self.unameVersion = [NSString stringWithFormat:@"iSH %@ (%@)",
+                         [NSBundle.mainBundle objectForInfoDictionaryKey:@"CFBundleShortVersionString"],
+                         [NSBundle.mainBundle objectForInfoDictionaryKey:(NSString *) kCFBundleVersionKey]];
+    extern const char *uname_version;
+    uname_version = self.unameVersion.UTF8String;
     
     [UserPreferences.shared addObserver:self forKeyPath:@"shouldDisableDimming" options:NSKeyValueObservingOptionInitial context:nil];
     

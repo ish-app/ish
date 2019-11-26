@@ -9,6 +9,8 @@
 #include <sys/sysinfo.h>
 #endif
 
+const char *uname_version = "SUPER AWESOME";
+
 void do_uname(struct uname *uts) {
     struct utsname real_uname;
     uname(&real_uname);
@@ -17,7 +19,7 @@ void do_uname(struct uname *uts) {
     strcpy(uts->system, "Linux");
     strcpy(uts->hostname, real_uname.nodename);
     strcpy(uts->release, "3.2.0-ish");
-    strcpy(uts->version, "SUPER AWESOME compiled on " __DATE__ );
+    snprintf(uts->version, sizeof(uts->version), "%s %s %s", uname_version, __DATE__, __TIME__);
     strcpy(uts->arch, "i686");
     strcpy(uts->domain, "(none)");
 }
