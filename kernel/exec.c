@@ -689,6 +689,7 @@ dword_t sys_execve(addr_t filename_addr, addr_t argv_addr, addr_t envp_addr) {
         STRACE("\"%s\", ", args);
         args += strlen(args) + 1;
     }
+    STRACE("}, {");
     args = envp;
     while (*args != '\0') {
         STRACE("\"%s\", ", args);
