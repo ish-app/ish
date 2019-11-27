@@ -31,6 +31,8 @@ struct tty;
 
 @property (readonly) WKWebView *webView;
 @property (nonatomic) BOOL enableVoiceOverAnnounce;
+// Use KVO on this
+@property (readonly) BOOL loaded;
 
 @end
 

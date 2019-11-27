@@ -24,6 +24,9 @@
 @synthesize inputDelegate;
 @synthesize tokenizer;
 
+static int kObserverMappings;
+static int kObserverStyling;
+
 - (void)awakeFromNib {
     [super awakeFromNib];
     self.inputAssistantItem.leadingBarButtonGroups = @[];
@@ -36,20 +39,38 @@
     scrollbarView.bounces = NO;
     [self addSubview:scrollbarView];
     
-    [UserPreferences.shared addObserver:self forKeyPath:@"capsLockMapping" options:0 context:nil];
-    [UserPreferences.shared addObserver:self forKeyPath:@"optionMapping" options:0 context:nil];
-    [UserPreferences.shared addObserver:self forKeyPath:@"backtickMapEscape" options:0 context:nil];
+    UserPreferences *prefs = UserPreferences.shared;
+    [prefs addObserver:self forKeyPath:@"capsLockMapping" options:0 context:&kObserverMappings];
+    [prefs addObserver:self forKeyPath:@"optionMapping" options:0 context:&kObserverMappings];
+    [prefs addObserver:self forKeyPath:@"backtickMapEscape" options:0 context:&kObserverMappings];
+    [prefs addObserver:self forKeyPath:@"fontFamily" options:0 context:&kObserverStyling];
+    [prefs addObserver:self forKeyPath:@"fontSize" options:0 context:&kObserverStyling];
+    [prefs addObserver:self forKeyPath:@"theme" options:0 context:&kObserverStyling];
 }
 
 - (void)dealloc {
-    [UserPreferences.shared removeObserver:self forKeyPath:@"capsLockMapping"];
-    [UserPreferences.shared removeObserver:self forKeyPath:@"optionMapping"];
-    [UserPreferences.shared removeObserver:self forKeyPath:@"backtickMapEscape"];
+    UserPreferences *prefs = UserPreferences.shared;
+    [prefs removeObserver:self forKeyPath:@"capsLockMapping"];
+    [prefs removeObserver:self forKeyPath:@"optionMapping"];
+    [prefs removeObserver:self forKeyPath:@"backtickMapEscape"];
+    [prefs removeObserver:self forKeyPath:@"fontFamily"];
+    [prefs removeObserver:self forKeyPath:@"fontSize"];
+    [prefs removeObserver:self forKeyPath:@"theme"];
+    if (self.terminal)
+        [self.terminal removeObserver:self forKeyPath:@"loaded"];
     self.terminal = nil;
 }
 
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context {
-    _keyCommands = nil;
+    if (object == self.terminal) {
+        if (self.terminal.loaded) {
+            [self _updateStyle];
+        }
+    } else if (context == &kObserverMappings) {
+        _keyCommands = nil;
+    } else if (context == &kObserverStyling) {
+        [self _updateStyle];
+    }
 }
 
 - (void)setTerminal:(Terminal *)terminal {
@@ -64,6 +85,7 @@
             [self.terminal.webView.configuration.userContentController removeScriptMessageHandlerForName:handler];
         }
         terminal.enableVoiceOverAnnounce = NO;
+        [self.terminal removeObserver:self forKeyPath:@"loaded"];
     }
     
     _terminal = terminal;
@@ -80,9 +102,33 @@
     self.opaque = webView.opaque = NO;
     webView.backgroundColor = UIColor.clearColor;
     webView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+    [self.terminal addObserver:self forKeyPath:@"loaded" options:NSKeyValueObservingOptionInitial context:nil];
     
     self.scrollbarView.contentView = webView;
     [self.scrollbarView addSubview:webView];
+}
+
+#pragma mark Styling
+
+- (NSString *)cssColor:(UIColor *)color {
+    CGFloat red, green, blue, alpha;
+    [color getRed:&red green:&green blue:&blue alpha:&alpha];
+    return [NSString stringWithFormat:@"rgba(%ld, %ld, %ld, %ld)",
+            lround(red * 255), lround(green * 255), lround(blue * 255), lround(alpha * 255)];
+}
+
+- (void)_updateStyle {
+    if (!self.terminal.loaded)
+        return;
+    UserPreferences *prefs = [UserPreferences shared];
+    id themeInfo = @{
+        @"fontFamily": prefs.fontFamily,
+        @"fontSize": prefs.fontSize,
+        @"foregroundColor": [self cssColor:prefs.theme.foregroundColor],
+        @"backgroundColor": [self cssColor:prefs.theme.backgroundColor],
+    };
+    NSString *json = [[NSString alloc] initWithData:[NSJSONSerialization dataWithJSONObject:themeInfo options:0 error:nil] encoding:NSUTF8StringEncoding];
+    [self.terminal.webView evaluateJavaScript:[NSString stringWithFormat:@"exports.updateStyle(%@)", json] completionHandler:nil];
 }
 
 #pragma mark Focus and scrolling
