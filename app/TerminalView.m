@@ -121,14 +121,27 @@ static int kObserverStyling;
     if (!self.terminal.loaded)
         return;
     UserPreferences *prefs = [UserPreferences shared];
+    if (_overrideFontSize == prefs.fontSize.doubleValue)
+        _overrideFontSize = 0;
     id themeInfo = @{
         @"fontFamily": prefs.fontFamily,
-        @"fontSize": prefs.fontSize,
+        @"fontSize": @(self.effectiveFontSize),
         @"foregroundColor": [self cssColor:prefs.theme.foregroundColor],
         @"backgroundColor": [self cssColor:prefs.theme.backgroundColor],
     };
     NSString *json = [[NSString alloc] initWithData:[NSJSONSerialization dataWithJSONObject:themeInfo options:0 error:nil] encoding:NSUTF8StringEncoding];
     [self.terminal.webView evaluateJavaScript:[NSString stringWithFormat:@"exports.updateStyle(%@)", json] completionHandler:nil];
+}
+
+- (void)setOverrideFontSize:(CGFloat)overrideFontSize {
+    _overrideFontSize = overrideFontSize;
+    [self _updateStyle];
+}
+
+- (CGFloat)effectiveFontSize {
+    if (self.overrideFontSize != 0)
+        return self.overrideFontSize;
+    return UserPreferences.shared.fontSize.doubleValue;
 }
 
 #pragma mark Focus and scrolling

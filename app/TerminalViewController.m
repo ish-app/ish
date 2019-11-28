@@ -353,6 +353,16 @@
         self.terminal = [Terminal terminalWithType:TTY_CONSOLE_MAJOR number:i];
 }
 
+- (void)increaseFontSize:(UIKeyCommand *)command {
+    self.termView.overrideFontSize = self.termView.effectiveFontSize + 1;
+}
+- (void)decreaseFontSize:(UIKeyCommand *)command {
+    self.termView.overrideFontSize = self.termView.effectiveFontSize - 1;
+}
+- (void)resetFontSize:(UIKeyCommand *)command {
+    self.termView.overrideFontSize = 0;
+}
+
 - (NSArray<UIKeyCommand *> *)keyCommands {
     static NSMutableArray<UIKeyCommand *> *commands = nil;
     if (commands == nil) {
@@ -363,6 +373,25 @@
                                  modifierFlags:UIKeyModifierCommand|UIKeyModifierAlternate|UIKeyModifierShift
                                         action:@selector(switchTerminal:)]];
         }
+        [commands addObject:
+         [UIKeyCommand keyCommandWithInput:@"+"
+                             modifierFlags:UIKeyModifierCommand
+                                    action:@selector(increaseFontSize:)
+                      discoverabilityTitle:@"Increase Font Size"]];
+        [commands addObject:
+         [UIKeyCommand keyCommandWithInput:@"="
+                             modifierFlags:UIKeyModifierCommand
+                                    action:@selector(increaseFontSize:)]];
+        [commands addObject:
+         [UIKeyCommand keyCommandWithInput:@"-"
+                             modifierFlags:UIKeyModifierCommand
+                                    action:@selector(decreaseFontSize:)
+                      discoverabilityTitle:@"Decrease Font Size"]];
+        [commands addObject:
+         [UIKeyCommand keyCommandWithInput:@"0"
+                             modifierFlags:UIKeyModifierCommand
+                                    action:@selector(resetFontSize:)
+                      discoverabilityTitle:@"Reset Font Size"]];
     }
     return commands;
 }
