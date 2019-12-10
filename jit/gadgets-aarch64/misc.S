@@ -53,6 +53,11 @@
         mov w9, eax
         do_add sub, w9, w8, \s
         setf_zsp \s, val=w9
+        .ifnb \s
+            cmp w9, 0
+            and w9, eax, (-1 << \size)
+            orr w8, w8, w9
+        .endif
         csel eax, w8, eax, ne
         csel w8, _tmp, w8, eq
         cset w9, eq
