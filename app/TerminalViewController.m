@@ -165,7 +165,8 @@
     self.sessionTerminalNumber = 0;
     // On iOS 13, there are multiple windows, so just close this one.
     if (@available(iOS 13, *)) {
-        if (self.sceneSession != nil) {
+        // On iPhone, destroying scenes will fail, but the error doesn't actually go to the error handler, which is really stupid. Apple doesn't fix bugs, so I'm forced to just add a check here.
+        if (UIDevice.currentDevice.userInterfaceIdiom == UIUserInterfaceIdiomPad && self.sceneSession != nil) {
             [UIApplication.sharedApplication requestSceneSessionDestruction:self.sceneSession options:nil errorHandler:^(NSError *error) {
                 NSLog(@"scene destruction error %@", error);
                 self.sceneSession = nil;
