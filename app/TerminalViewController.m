@@ -392,6 +392,11 @@
                              modifierFlags:UIKeyModifierCommand
                                     action:@selector(resetFontSize:)
                       discoverabilityTitle:@"Reset Font Size"]];
+        [commands addObject:
+         [UIKeyCommand keyCommandWithInput:@","
+                             modifierFlags:UIKeyModifierCommand
+                                    action:@selector(showAbout:)
+                      discoverabilityTitle:@"Settings"]];
     }
     return commands;
 }
