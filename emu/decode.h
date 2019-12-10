@@ -805,6 +805,13 @@ restart:
                                    READMODRM_MEM; ATOMIC_XADD(modrm_reg, modrm_val,8); break;
                         case 0xc1: TRACEI("lock xadd reg, modrm");
                                    READMODRM_MEM; ATOMIC_XADD(modrm_reg, modrm_val,oz); break;
+
+                        case 0xc7: READMODRM_MEM; switch (modrm.opcode) {
+                                       case 1: TRACEI("lock cmpxchg8b modrm");
+                                               ATOMIC_CMPXCHG8B(modrm_val,64); break;
+                                       default: UNDEFINED;
+                                   };
+                                   break;
                         default: TRACE("undefined"); UNDEFINED;
                     }
                     break;

@@ -1191,7 +1191,6 @@ void test_xchg(void)
     TEST_CMPXCHG(cmpxchgw, "w", "+m", 0xfffefdfc);
     TEST_CMPXCHG(cmpxchgb, "b", "+m", 0xfffefdfc);
 
-#if 0
     {
         uint64_t op0, op1, op2;
         long eax, edx;
@@ -1206,7 +1205,7 @@ void test_xchg(void)
             else
                 op1 = op0;
             op2 = 0x6532432432434LL;
-            asm("cmpxchg8b %2\n"
+            asm("lock cmpxchg8b %2\n"
                 "pushf\n"
                 "pop %3\n"
                 : "=a" (eax), "=d" (edx), "=m" (op1), "=g" (eflags)
@@ -1215,7 +1214,6 @@ void test_xchg(void)
                    eax, edx, op1, eflags & CC_Z);
         }
     }
-#endif
 }
 
 #ifdef TEST_SEGS

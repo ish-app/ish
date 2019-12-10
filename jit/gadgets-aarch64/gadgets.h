@@ -6,6 +6,7 @@ eax .req w20
 xax .req x20
 ebx .req w21
 ecx .req w22
+xcx .req x22
 edx .req w23
 xdx .req x23
 esi .req w24

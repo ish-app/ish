@@ -362,6 +362,7 @@ void helper_rdtsc(struct cpu_state *cpu);
 #define ATOMIC_BTC(bit, val,z) lo(atomic_btc, val, bit, z)
 #define ATOMIC_BTS(bit, val,z) lo(atomic_bts, val, bit, z)
 #define ATOMIC_BTR(bit, val,z) lo(atomic_btr, val, bit, z)
+#define ATOMIC_CMPXCHG8B(dst,z) g_addr(); gg(atomic_cmpxchg8b, saved_ip)
 
 // fpu
 #define st_0 0
