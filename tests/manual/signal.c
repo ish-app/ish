@@ -14,3 +14,4 @@ int main() {
     sigaction(SIGILL, &act, NULL);
     __asm__("ud2");
     printf("back in main\n");
+}
