@@ -6,8 +6,11 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "TerminalViewController.h"
 
 NS_ASSUME_NONNULL_BEGIN
+
+extern TerminalViewController *currentTerminalViewController;
 
 API_AVAILABLE(ios(13))
 @interface SceneDelegate : UIResponder <UIWindowSceneDelegate>

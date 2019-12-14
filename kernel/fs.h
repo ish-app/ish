@@ -108,6 +108,7 @@ void mount_release(struct mount *mount);
 
 // must hold mounts_lock while calling these, or traversing mounts
 int do_mount(const struct fs_ops *fs, const char *source, const char *point, int flags);
+int do_mount_with_data(const struct fs_ops *fs, const char *source, const char *point, int flags, void *data);
 int do_umount(const char *point);
 int mount_remove(struct mount *mount);
 extern struct list mounts;
@@ -174,6 +175,25 @@ const char *fix_path(const char *path); // TODO reconsider
 // real fs
 extern const struct fd_ops realfs_fdops;
 
+struct fd *realfs_open_with_fdops(struct mount *mount, const char *path, int flags, int mode, const struct fd_ops *fdops);
+struct fd *realfs_open(struct mount *mount, const char *path, int flags, int mode);
+
+ssize_t realfs_readlink(struct mount *mount, const char *path, char *buf, size_t bufsize);
+int realfs_link(struct mount *mount, const char *src, const char *dst);
+int realfs_unlink(struct mount *mount, const char *path);
+int realfs_rmdir(struct mount *mount, const char *path);
+int realfs_rename(struct mount *mount, const char *src, const char *dst);
+int realfs_symlink(struct mount *mount, const char *target, const char *link);
+int realfs_mknod(struct mount *mount, const char *path, mode_t_ mode, dev_t_ UNUSED(dev));
+
+int realfs_stat(struct mount *mount, const char *path, struct statbuf *fake_stat, bool follow_links);
+int realfs_statfs(struct mount *mount, struct statfsbuf *stat);
+int realfs_fstat(struct fd *fd, struct statbuf *fake_stat);
+int realfs_setattr(struct mount *mount, const char *path, struct attr attr);
+int realfs_fsetattr(struct fd *fd, struct attr attr);
+
+int realfs_mkdir(struct mount *mount, const char *path, mode_t_ mode);
+
 int realfs_truncate(struct mount *mount, const char *path, off_t_ size);
 int realfs_utime(struct mount *mount, const char *path, struct timespec atime, struct timespec mtime);
 
@@ -182,7 +202,16 @@ int realfs_flock(struct fd *fd, int operation);
 int realfs_getpath(struct fd *fd, char *buf);
 ssize_t realfs_read(struct fd *fd, void *buf, size_t bufsize);
 ssize_t realfs_write(struct fd *fd, const void *buf, size_t bufsize);
+
+int realfs_readdir(struct fd *fd, struct dir_entry *entry);
+unsigned long realfs_telldir(struct fd *fd);
+void realfs_seekdir(struct fd *fd, unsigned long ptr);
+
+off_t realfs_lseek(struct fd *fd, off_t offset, int whence);
+
 int realfs_poll(struct fd *fd);
+int realfs_mmap(struct fd *fd, struct mem *mem, page_t start, pages_t pages, off_t offset, int prot, int flags);
+int realfs_fsync(struct fd *fd);
 int realfs_getflags(struct fd *fd);
 int realfs_setflags(struct fd *fd, dword_t arg);
 int realfs_close(struct fd *fd);
@@ -195,5 +224,9 @@ extern const struct fs_ops realfs;
 extern const struct fs_ops procfs;
 extern const struct fs_ops fakefs;
 extern const struct fs_ops devptsfs;
+
+extern const struct fs_ops *filesystems[];
+#define IOS_FILESYSTEM_ID 3
+#define IOS_UNSAFE_FILESYSTEM_ID 4
 
 #endif

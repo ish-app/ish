@@ -73,15 +73,19 @@ static int open_flags_fake_from_real(int flags) {
     return fake_flags;
 }
 
-static struct fd *realfs_open(struct mount *mount, const char *path, int flags, int mode) {
+struct fd *realfs_open_with_fdops(struct mount *mount, const char *path, int flags, int mode, const struct fd_ops *fdops) {
     int real_flags = open_flags_real_from_fake(flags);
     int fd_no = openat(mount->root_fd, fix_path(path), real_flags, mode);
     if (fd_no < 0)
         return ERR_PTR(errno_map());
-    struct fd *fd = fd_create(&realfs_fdops);
+    struct fd *fd = fd_create(fdops);
     fd->real_fd = fd_no;
     fd->dir = NULL;
     return fd;
+}
+
+struct fd *realfs_open(struct mount *mount, const char *path, int flags, int mode) {
+    return realfs_open_with_fdops(mount, path, flags, mode, &realfs_fdops);
 }
 
 int realfs_close(struct fd *fd) {
@@ -118,7 +122,7 @@ static void copy_stat(struct statbuf *fake_stat, struct stat *real_stat) {
 #undef TIMESPEC
 }
 
-static int realfs_stat(struct mount *mount, const char *path, struct statbuf *fake_stat, bool follow_links) {
+int realfs_stat(struct mount *mount, const char *path, struct statbuf *fake_stat, bool follow_links) {
     struct stat real_stat;
     if (fstatat(mount->root_fd, fix_path(path), &real_stat, follow_links ? 0 : AT_SYMLINK_NOFOLLOW) < 0)
         return errno_map();
@@ -126,7 +130,7 @@ static int realfs_stat(struct mount *mount, const char *path, struct statbuf *fa
     return 0;
 }
 
-static int realfs_fstat(struct fd *fd, struct statbuf *fake_stat) {
+int realfs_fstat(struct fd *fd, struct statbuf *fake_stat) {
     struct stat real_stat;
     if (fstat(fd->real_fd, &real_stat) < 0)
         return errno_map();
@@ -148,7 +152,7 @@ ssize_t realfs_write(struct fd *fd, const void *buf, size_t bufsize) {
     return res;
 }
 
-static void realfs_opendir(struct fd *fd) {
+void realfs_opendir(struct fd *fd) {
     if (fd->dir == NULL) {
         int dirfd = dup(fd->real_fd);
         fd->dir = fdopendir(dirfd);
@@ -248,7 +252,7 @@ int realfs_mmap(struct fd *fd, struct mem *mem, page_t start, pages_t pages, off
     return pt_map(mem, start, pages, memory, correction, prot);
 }
 
-static ssize_t realfs_readlink(struct mount *mount, const char *path, char *buf, size_t bufsize) {
+ssize_t realfs_readlink(struct mount *mount, const char *path, char *buf, size_t bufsize) {
     ssize_t size = readlinkat(mount->root_fd, fix_path(path), buf, bufsize);
     if (size < 0)
         return errno_map();
@@ -266,42 +270,42 @@ int realfs_getpath(struct fd *fd, char *buf) {
     return 0;
 }
 
-static int realfs_link(struct mount *mount, const char *src, const char *dst) {
+int realfs_link(struct mount *mount, const char *src, const char *dst) {
     int res = linkat(mount->root_fd, fix_path(src), mount->root_fd, fix_path(dst), 0);
     if (res < 0)
         return errno_map();
     return res;
 }
 
-static int realfs_unlink(struct mount *mount, const char *path) {
+int realfs_unlink(struct mount *mount, const char *path) {
     int res = unlinkat(mount->root_fd, fix_path(path), 0);
     if (res < 0)
         return errno_map();
     return res;
 }
 
-static int realfs_rmdir(struct mount *mount, const char *path) {
+int realfs_rmdir(struct mount *mount, const char *path) {
     int err = unlinkat(mount->root_fd, fix_path(path), AT_REMOVEDIR);
     if (err < 0)
         return errno_map();
     return 0;
 }
 
-static int realfs_rename(struct mount *mount, const char *src, const char *dst) {
+int realfs_rename(struct mount *mount, const char *src, const char *dst) {
     int err = renameat(mount->root_fd, fix_path(src), mount->root_fd, fix_path(dst));
     if (err < 0)
         return errno_map();
     return err;
 }
 
-static int realfs_symlink(struct mount *mount, const char *target, const char *link) {
+int realfs_symlink(struct mount *mount, const char *target, const char *link) {
     int err = symlinkat(target, mount->root_fd, link);
     if (err < 0)
         return errno_map();
     return err;
 }
 
-static int realfs_mknod(struct mount *mount, const char *path, mode_t_ mode, dev_t_ UNUSED(dev)) {
+int realfs_mknod(struct mount *mount, const char *path, mode_t_ mode, dev_t_ UNUSED(dev)) {
     int err;
     if (S_ISFIFO(mode)) {
         lock_fchdir(mount->root_fd);
@@ -330,7 +334,7 @@ int realfs_truncate(struct mount *mount, const char *path, off_t_ size) {
     return err;
 }
 
-static int realfs_setattr(struct mount *mount, const char *path, struct attr attr) {
+int realfs_setattr(struct mount *mount, const char *path, struct attr attr) {
     path = fix_path(path);
     int root = mount->root_fd;
     int err;
@@ -354,7 +358,7 @@ static int realfs_setattr(struct mount *mount, const char *path, struct attr att
     return err;
 }
 
-static int realfs_fsetattr(struct fd *fd, struct attr attr) {
+int realfs_fsetattr(struct fd *fd, struct attr attr) {
     int real_fd = fd->real_fd;
     int err;
     switch (attr.type) {
@@ -384,7 +388,7 @@ int realfs_utime(struct mount *mount, const char *path, struct timespec atime, s
     return 0;
 }
 
-static int realfs_mkdir(struct mount *mount, const char *path, mode_t_ mode) {
+int realfs_mkdir(struct mount *mount, const char *path, mode_t_ mode) {
     int err = mkdirat(mount->root_fd, fix_path(path), mode);
     if (err < 0)
         return errno_map();

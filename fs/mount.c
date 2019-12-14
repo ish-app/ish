@@ -8,6 +8,8 @@ const struct fs_ops *filesystems[] = {
     &realfs,
     &procfs,
     &devptsfs,
+    [IOS_FILESYSTEM_ID] = NULL,
+    [IOS_UNSAFE_FILESYSTEM_ID] = NULL
 };
 
 struct mount *mount_find(char *path) {
@@ -119,7 +121,7 @@ dword_t sys_mount(addr_t source_addr, addr_t point_addr, addr_t type_addr, dword
 
     const struct fs_ops *fs = NULL;
     for (size_t i = 0; i < sizeof(filesystems)/sizeof(filesystems[0]); i++) {
-        if (strcmp(filesystems[i]->name, type) == 0) {
+        if (filesystems[i] && (strcmp(filesystems[i]->name, type) == 0)) {
             fs = filesystems[i];
             break;
         }
