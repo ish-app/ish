@@ -9,6 +9,8 @@ const struct fs_ops *filesystems[] = {
     &procfs,
     &devptsfs,
     &tmpfs,
+    [IOS_FILESYSTEM_ID] = NULL,
+    [IOS_UNSAFE_FILESYSTEM_ID] = NULL
 };
 
 struct mount *mount_find(char *path) {
@@ -17,7 +19,7 @@ struct mount *mount_find(char *path) {
     struct mount *mount = NULL;
     assert(!list_empty(&mounts)); // this would mean there's no root FS mounted
     list_for_each_entry(&mounts, mount, mounts) {
-        int n = strlen(mount->point);
+        size_t n = strlen(mount->point);
         if (strncmp(path, mount->point, n) == 0 && (path[n] == '/' || path[n] == '\0'))
             break;
     }
@@ -120,7 +122,7 @@ dword_t sys_mount(addr_t source_addr, addr_t point_addr, addr_t type_addr, dword
 
     const struct fs_ops *fs = NULL;
     for (size_t i = 0; i < sizeof(filesystems)/sizeof(filesystems[0]); i++) {
-        if (strcmp(filesystems[i]->name, type) == 0) {
+        if (filesystems[i] && (strcmp(filesystems[i]->name, type) == 0)) {
             fs = filesystems[i];
             break;
         }

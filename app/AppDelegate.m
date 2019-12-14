@@ -10,11 +10,13 @@
 #include <netdb.h>
 #import <SystemConfiguration/SystemConfiguration.h>
 #import "AppDelegate.h"
+#import "AppGroup.h"
+#import "iOSFS.h"
+#import "SceneDelegate.h"
 #import "PasteboardDevice.h"
 #import "LocationDevice.h"
 #import "TerminalViewController.h"
 #import "UserPreferences.h"
-#import "AppGroup.h"
 #include "kernel/init.h"
 #include "kernel/calls.h"
 #include "fs/dyndev.h"
@@ -137,7 +139,9 @@ static void ios_handle_die(const char *msg) {
     die_handler = ios_handle_die;
     NSString *sockTmp = [NSTemporaryDirectory() stringByAppendingString:@"ishsock"];
     sock_tmp_prefix = strdup(sockTmp.UTF8String);
-    
+
+    filesystems[IOS_FILESYSTEM_ID] = &iosfs;
+    filesystems[IOS_UNSAFE_FILESYSTEM_ID] = &iosfs_unsafe;
     tty_drivers[TTY_CONSOLE_MAJOR] = &ios_console_driver;
     set_console_device(TTY_CONSOLE_MAJOR, 1);
     err = create_stdio("/dev/console", TTY_CONSOLE_MAJOR, 1);
@@ -237,6 +241,7 @@ void NetworkReachabilityCallback(SCNetworkReachabilityRef target, SCNetworkReach
     if (self.window != nil) {
         // For iOS <13, where the app delegate owns the window instead of the scene
         TerminalViewController *vc = (TerminalViewController *) self.window.rootViewController;
+        currentTerminalViewController = vc;
         [vc startNewSession];
     }
     return YES;

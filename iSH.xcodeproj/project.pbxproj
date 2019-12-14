@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		40616E3C236642B6008CDF19 /* mount.c in Sources */ = {isa = PBXBuildFile; fileRef = 40616E3B236642B5008CDF19 /* mount.c */; };
+		408A263A236440F8008A4E81 /* iOSFS.m in Sources */ = {isa = PBXBuildFile; fileRef = 408A2639236440F8008A4E81 /* iOSFS.m */; };
 		650B337422EA235C00B4C03E /* PasteboardDevice.m in Sources */ = {isa = PBXBuildFile; fileRef = 650B337322EA235C00B4C03E /* PasteboardDevice.m */; };
 		8632A7BF219A59FB00F02325 /* UserPreferences.m in Sources */ = {isa = PBXBuildFile; fileRef = 8632A7BE219A59FB00F02325 /* UserPreferences.m */; };
 		9A28E4EA219A8B670073D200 /* AboutAppearanceViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 9A28E4E9219A8B670073D200 /* AboutAppearanceViewController.m */; };
@@ -99,6 +101,9 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		40616E3B236642B5008CDF19 /* mount.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = mount.c; sourceTree = "<group>"; };
+		408A2639236440F8008A4E81 /* iOSFS.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iOSFS.m; sourceTree = "<group>"; };
+		408A263B23644102008A4E81 /* iOSFS.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iOSFS.h; sourceTree = "<group>"; };
 		650B335A22E9E46A00B4C03E /* mem.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = mem.c; sourceTree = "<group>"; tabWidth = 4; };
 		650B335B22E9E46A00B4C03E /* mem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mem.h; sourceTree = "<group>"; tabWidth = 4; };
 		650B335D22E9EF9B00B4C03E /* proc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = proc.c; sourceTree = "<group>"; };
@@ -440,6 +445,8 @@
 				BB792B561F96D90D00FFB7A4 /* TerminalViewController.h */,
 				BB792B571F96D90D00FFB7A4 /* TerminalViewController.m */,
 				BBBF7B5B2415CDBB00EC4C14 /* Settings.bundle */,
+				408A263B23644102008A4E81 /* iOSFS.h */,
+				408A2639236440F8008A4E81 /* iOSFS.m */,
 				BBFB557D21587B2B00DFE6DE /* Bar */,
 				BB78AB291FAD22440013E782 /* TerminalView.h */,
 				BB78AB2A1FAD22440013E782 /* TerminalView.m */,
@@ -989,6 +996,7 @@
 				9A28E4EA219A8B670073D200 /* AboutAppearanceViewController.m in Sources */,
 				BB1D9D93234A8FE100F364E8 /* AboutNavigationController.m in Sources */,
 				BB235534235D488500139E00 /* LocationDevice.m in Sources */,
+				40616E3C236642B6008CDF19 /* mount.c in Sources */,
 				BB792B581F96D90D00FFB7A4 /* TerminalViewController.m in Sources */,
 				BB78AB2B1FAD22440013E782 /* TerminalView.m in Sources */,
 				BB23F58D231E1D1400585522 /* ScrollbarView.m in Sources */,
@@ -1006,6 +1014,7 @@
 				BBFB5579215876CD00DFE6DE /* AboutViewController.m in Sources */,
 				650B337422EA235C00B4C03E /* PasteboardDevice.m in Sources */,
 				BBFB557121586C4800DFE6DE /* UIViewController+Back.m in Sources */,
+				408A263A236440F8008A4E81 /* iOSFS.m in Sources */,
 				BBFB558021587B6800DFE6DE /* ArrowBarButton.m in Sources */,
 				BB792B551F96D90D00FFB7A4 /* AppDelegate.m in Sources */,
 			);

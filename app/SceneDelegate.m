@@ -6,7 +6,8 @@
 //
 
 #import "SceneDelegate.h"
-#import "TerminalViewController.h"
+
+TerminalViewController *currentTerminalViewController = NULL;
 
 @interface SceneDelegate ()
 
@@ -38,6 +39,19 @@ static NSString *const TerminalUUID = @"TerminalUUID";
         [activity addUserInfoEntriesFromDictionary:@{TerminalUUID: self.terminalUUID}];
     }
     return activity;
+}
+
+- (void)sceneDidBecomeActive:(UIScene *)scene {
+    TerminalViewController *terminalViewController = (TerminalViewController *) self.window.rootViewController;;
+    currentTerminalViewController = terminalViewController;
+}
+
+- (void)sceneWillResignActive:(UIScene *)scene {
+    TerminalViewController *terminalViewController = (TerminalViewController *) self.window.rootViewController;
+
+    if (currentTerminalViewController == terminalViewController) {
+        currentTerminalViewController = NULL;
+    }
 }
 
 @end
