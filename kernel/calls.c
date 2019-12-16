@@ -153,6 +153,7 @@ syscall_t syscall_table[] = {
     [241] = (syscall_t) sys_sched_setaffinity,
     [242] = (syscall_t) sys_sched_getaffinity,
     [243] = (syscall_t) sys_set_thread_area,
+    [245] = (syscall_t) syscall_stub, // io_setup
     [252] = (syscall_t) sys_exit_group,
     [254] = (syscall_t) sys_epoll_create0,
     [255] = (syscall_t) sys_epoll_ctl,
