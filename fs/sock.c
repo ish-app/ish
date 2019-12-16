@@ -542,26 +542,32 @@ int_t sys_sendto(fd_t sock_fd, addr_t buffer_addr, dword_t len, dword_t flags, a
     struct fd *sock = sock_getfd(sock_fd);
     if (sock == NULL)
         return _EBADF;
-    char buffer[len + 1];
+    char *buffer = malloc(len + 1);
     if (user_read(buffer_addr, buffer, len))
         return _EFAULT;
     buffer[len] = '\0';
     STRACE("sendto(%d, \"%.100s\", %d, %d, 0x%x, %d)", sock_fd, buffer, len, flags, sockaddr_addr, sockaddr_len);
     int real_flags = sock_flags_to_real(flags);
+    int err = _EINVAL;
     if (real_flags < 0)
-        return _EINVAL;
+        goto error;
     struct sockaddr_max_ sockaddr;
     if (sockaddr_addr) {
-        int err = sockaddr_read(sockaddr_addr, &sockaddr, &sockaddr_len);
+        err = sockaddr_read(sockaddr_addr, &sockaddr, &sockaddr_len);
         if (err < 0)
-            return err;
+            goto error;
     }
 
     ssize_t res = sendto(sock->real_fd, buffer, len, real_flags,
             sockaddr_addr ? (void *) &sockaddr : NULL, sockaddr_len);
+    free(buffer);
     if (res < 0)
         return errno_map();
     return res;
+
+error:
+    free(buffer);
+    return err;
 }
 
 int_t sys_recvfrom(fd_t sock_fd, addr_t buffer_addr, dword_t len, dword_t flags, addr_t sockaddr_addr, addr_t sockaddr_len_addr) {
@@ -577,16 +583,21 @@ int_t sys_recvfrom(fd_t sock_fd, addr_t buffer_addr, dword_t len, dword_t flags,
         if (user_get(sockaddr_len_addr, sockaddr_len))
             return _EFAULT;
 
-    char buffer[len];
+    char *buffer = malloc(len);
     char sockaddr[sockaddr_len];
     ssize_t res = recvfrom(sock->real_fd, buffer, len, real_flags,
             sockaddr_addr != 0 ? (void *) sockaddr : NULL,
             sockaddr_len_addr != 0 ? &sockaddr_len : NULL);
-    if (res < 0)
+    if (res < 0) {
+        free(buffer);
         return errno_map();
+    }
 
-    if (user_write(buffer_addr, buffer, len))
+    if (user_write(buffer_addr, buffer, len)) {
+        free(buffer);
         return _EFAULT;
+    }
+    free(buffer);
     if (sockaddr_addr != 0) {
         int err = sockaddr_write(sockaddr_addr, sockaddr, sizeof(sockaddr), &sockaddr_len);
         if (err < 0)
