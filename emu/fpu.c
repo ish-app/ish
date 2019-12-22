@@ -316,3 +316,20 @@ void fpu_ldenv32(struct cpu_state *cpu, struct fpu_env32 *env) {
     cpu->fcw = env->control;
     cpu->fsw = env->status;
 }
+
+struct fpu_state32 {
+    struct fpu_env32 env;
+    uint8_t regs[8][10];
+};
+
+void fpu_save32(struct cpu_state *cpu, struct fpu_state32 *state) {
+    fpu_stenv32(cpu, &state->env);
+    for (int i = 0; i < 8; i++)
+        memcpy(state->regs[i], &ST(i), 10);
+}
+
+void fpu_restore32(struct cpu_state *cpu, struct fpu_state32 *state) {
+    fpu_ldenv32(cpu, &state->env);
+    for (int i = 0; i < 8; i++)
+        memcpy(&ST(i), state->regs[i], 10);
+}

@@ -3,6 +3,7 @@
 #include "emu/float80.h"
 struct cpu_state;
 struct fpu_env32;
+struct fpu_state32;
 
 typedef float float32;
 typedef double float64;
@@ -103,5 +104,7 @@ void fpu_stcw16(struct cpu_state *cpu, uint16_t *i);
 void fpu_ldcw16(struct cpu_state *cpu, uint16_t *i);
 void fpu_stenv32(struct cpu_state *cpu, struct fpu_env32 *env);
 void fpu_ldenv32(struct cpu_state *cpu, struct fpu_env32 *env);
+void fpu_save32(struct cpu_state *cpu, struct fpu_state32 *state);
+void fpu_restore32(struct cpu_state *cpu, struct fpu_state32 *state);
 
 #endif
