@@ -700,7 +700,7 @@ static int do_kill(pid_t_ pid, dword_t sig, pid_t_ tgid) {
     if (pid == -1) {
         err = kill_everything(sig);
     } else if (pid < 0) {
-        err = kill_group(pid, sig);
+        err = kill_group(-pid, sig);
     } else {
         struct task *task = pid_get_task(pid);
         if (task == NULL) {
