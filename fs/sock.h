@@ -176,6 +176,7 @@ static inline int sock_flags_from_real(int real) {
 #define SO_SNDBUF_ 7
 #define SO_RCVBUF_ 8
 #define SO_KEEPALIVE_ 9
+#define SO_LINGER_ 13
 #define SO_PEERCRED_ 17
 #define SO_TIMESTAMP_ 29
 #define SO_PROTOCOL_ 38
@@ -202,6 +203,7 @@ static inline int sock_opt_to_real(int fake, int level) {
             case SO_ERROR_: return SO_ERROR;
             case SO_BROADCAST_: return SO_BROADCAST;
             case SO_KEEPALIVE_: return SO_KEEPALIVE;
+            case SO_LINGER_: return SO_LINGER;
             case SO_SNDBUF_: return SO_SNDBUF;
             case SO_RCVBUF_: return SO_RCVBUF;
             case SO_TIMESTAMP_: return SO_TIMESTAMP;
