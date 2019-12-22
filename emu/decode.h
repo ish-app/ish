@@ -341,6 +341,20 @@ restart:
 
         case 0x65: TRACE("segment gs\n"); SEG_GS(); goto restart;
 
+        case 0x60: TRACE("pusha");
+                   PUSH(reg_a,oz); PUSH(reg_c,oz);
+                   PUSH(reg_d,oz); PUSH(reg_b,oz);
+                   PUSH(reg_sp,oz); PUSH(reg_bp,oz); // TODO this is the wrong sp
+                   PUSH(reg_si,oz); PUSH(reg_di,oz);
+                   break;
+        case 0x61: TRACE("popa");
+                   POP(reg_di,oz); POP(reg_si,oz);
+                   // pop reg_sp into reg_b as an easy way to ignore it
+                   POP(reg_bp,oz); POP(reg_b,oz);
+                   POP(reg_b,oz); POP(reg_d,oz);
+                   POP(reg_c,oz); POP(reg_a,oz);
+                   break;
+
         case 0x66:
 #if OP_SIZE == 32
             TRACE("entering 16 bit mode\n");
