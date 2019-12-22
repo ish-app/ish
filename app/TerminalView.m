@@ -237,17 +237,21 @@ static int kObserverStyling;
     self.markedText = nil;
     if (self.controlKey.selected) {
         self.controlKey.selected = NO;
-        if (text.length == 1) {
-            char ch = [text characterAtIndex:0];
-            if (strchr(controlKeys, ch) != NULL) {
-                ch = toupper(ch) ^ 0x40;
-                text = [NSString stringWithFormat:@"%c", ch];
-            }
-        }
+        if (text.length == 1)
+            return [self insertControlChar:[text characterAtIndex:0]];
     }
     text = [text stringByReplacingOccurrencesOfString:@"\n" withString:@"\r"];
     NSData *data = [text dataUsingEncoding:NSUTF8StringEncoding];
     [self.terminal sendInput:data.bytes length:data.length];
+}
+
+- (void)insertControlChar:(char)ch {
+    if (strchr(controlKeys, ch) != NULL) {
+        if (ch == '2') ch = '@';
+        if (ch == '6') ch = '^';
+        ch = toupper(ch) ^ 0x40;
+        [self.terminal sendInput:&ch length:1];
+    }
 }
 
 - (void)deleteBackward {
@@ -360,13 +364,12 @@ static int kObserverStyling;
             key = @"^";
         else if ([key isEqualToString:@"-"])
             key = @"_";
-        char ch = (char) [key.uppercaseString characterAtIndex:0] ^ 0x40;
-        [self insertText:[NSString stringWithFormat:@"%c", ch]];
+        [self insertControlChar:[key characterAtIndex:0]];
     }
 }
 
 static const char *alphabet = "abcdefghijklmnopqrstuvwxyz";
-static const char *controlKeys = "abcdefghijklmnopqrstuvwxyz26-=[]\\";
+static const char *controlKeys = "abcdefghijklmnopqrstuvwxyz@^26-=[]\\";
 static const char *metaKeys = "abcdefghijklmnopqrstuvwxyz0123456789-=[]\\;',./";
 
 - (NSArray<UIKeyCommand *> *)keyCommands {
