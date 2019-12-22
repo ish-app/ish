@@ -254,7 +254,7 @@ static void receive_signal(struct sighand *sighand, struct siginfo_ *info) {
     current->cpu.eip = sighand->action[info->sig].handler;
 
     dword_t sp = current->cpu.esp;
-    if (sighand->altstack) {
+    if (sighand->altstack && !is_on_altstack(sp, sighand)) {
         sp = sighand->altstack + sighand->altstack_size;
     }
     if (xsave_extra) {
