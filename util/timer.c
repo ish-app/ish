@@ -41,7 +41,7 @@ static void *timer_thread(void *param) {
         }
         if (timer->running)
             timer->callback(timer->data);
-        if (timespec_positive(timer->interval)) {
+        if (timer->running && timespec_positive(timer->interval)) {
             timer->start = timer->end;
             timer->end = timespec_add(timer->start, timer->interval);
         } else {
