@@ -6,81 +6,6 @@
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
-	<key>CFBundleIcons</key>
-	<dict>
-		<key>CFBundleAlternateIcons</key>
-		<dict>
-			<key>ihash1</key>
-			<dict>
-				<key>CFBundleIconFiles</key>
-				<array>
-					<string>ihash1</string>
-				</array>
-			</dict>
-			<key>pydann1</key>
-			<dict>
-				<key>CFBundleIconFiles</key>
-				<array>
-					<string>pydann1</string>
-				</array>
-			</dict>
-			<key>pydann2</key>
-			<dict>
-				<key>CFBundleIconFiles</key>
-				<array>
-					<string>pydann2</string>
-				</array>
-			</dict>
-			<key>uninspired</key>
-			<dict>
-				<key>CFBundleIconFiles</key>
-				<array>
-					<string>uninspired</string>
-				</array>
-			</dict>
-		</dict>
-		<key>CFBundlePrimaryIcon</key>
-		<dict>
-			<key>CFBundleIconFiles</key>
-			<array>
-				<string>icon</string>
-			</array>
-		</dict>
-	</dict>
-	<key>CFBundleIcons~ipad</key>
-	<dict>
-		<key>CFBundleAlternateIcons</key>
-		<dict>
-			<key>ihash1</key>
-			<dict>
-				<key>CFBundleIconFiles</key>
-				<array>
-					<string>ihash1</string>
-				</array>
-			</dict>
-			<key>pydann1</key>
-			<dict>
-				<key>CFBundleIconFiles</key>
-				<array>
-					<string>pydann1</string>
-				</array>
-			</dict>
-			<key>pydann2</key>
-			<dict>
-				<key>CFBundleIconFiles</key>
-				<array>
-					<string>pydann2</string>
-				</array>
-			</dict>
-			<key>uninspired</key>
-			<dict>
-				<key>CFBundleIconFiles</key>
-				<array>
-					<string>uninspired</string>
-				</array>
-			</dict>
-		</dict>
-	</dict>
 	<key>CFBundleIdentifier</key>
 	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	<key>CFBundleInfoDictionaryVersion</key>
@@ -105,8 +30,6 @@
 	</array>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
-		<key>UIApplicationSupportsMultipleScenes</key>
-		<true/>
 		<key>UISceneConfigurations</key>
 		<dict>
 			<key>UIWindowSceneSessionRoleApplication</key>
@@ -114,15 +37,17 @@
 				<dict>
 					<key>UISceneClassName</key>
 					<string>UIWindowScene</string>
-					<key>UISceneConfigurationName</key>
-					<string>Terminal</string>
 					<key>UISceneDelegateClassName</key>
 					<string>SceneDelegate</string>
+					<key>UISceneConfigurationName</key>
+					<string>Terminal</string>
 					<key>UISceneStoryboardFile</key>
 					<string>Main</string>
 				</dict>
 			</array>
 		</dict>
+		<key>UIApplicationSupportsMultipleScenes</key>
+		<true/>
 	</dict>
 	<key>UIBackgroundModes</key>
 	<array>
