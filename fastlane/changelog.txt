@@ -1,13 +1,25 @@
 New stuff:
-- Multiple windows on iOS 13! Open the app switcher and tap iSH in the dock to reveal a completely undiscoverable + button which creates a new window. You can even put two windows side by side!
-- Font picker lets you select any installed font (though I think the only way to install them is through configuration profiles)
-- DNS settings will be automatically synced with iOS whenever the network changes
-- Settings icon is now a gear on iOS 13, thanks to SF Symbols
+- The terminal has mouse support, so you can tap and it moves the cursor in Vim
+- Mono works a lot better
+- Java works a little better
+- Elixir and Erlang work
+- uname -v includes the build number
+- Added keyboard shortcuts to increase and decrease font size and open settings
+- /proc/pid/maps
 
 Fixed bugs:
-- sudo thinking you're not at a tty
-- gem install crashing from stack smashing
-- Toolbar sometimes overlaying the terminal when a hardware keyboard is attached
+- iSH sometimes crashing in the background when it tries to update DNS settings
+- Crash in the PCRE JIT, which affected Laravel
+- Crash when running reboot
+- Empty command line arguments being ignored
+- sudo reporting "no tty present". It's actually fixed this time, I swear.
+- Crash when running a fork bomb
+- Python asyncio failing with "Invalid argument", because it uses -1000 to request an infinite timeout
+- Session not restarting when you type exit on iPhone with iOS 13
+- Crash when the recvmsg buffer is too big, which affected xterm in xvfb
+- Vim locking up sometimes when you close and reopen the app
+- Jupyter crashing complaining about SO_LINGER
+- ^@ and ^^ being impossible to press without a hardware keyboard
 
 Send bug reports or feedback here: https://github.com/tbodt/ish/issues (or by email, if you prefer)
 Follow iSH on Twitter: https://twitter.com/iSH_app
