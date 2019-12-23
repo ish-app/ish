@@ -48,6 +48,7 @@ dword_t sys_clock_gettime(dword_t clock, addr_t tp) {
     t.nsec = ts.tv_nsec;
     if (user_put(tp, t))
         return _EFAULT;
+    STRACE(" {%lds %ldns}", t.sec, t.nsec);
     return 0;
 }
 
