@@ -248,3 +248,10 @@ int_t sys_sched_setscheduler(pid_t_ UNUSED(pid), int_t policy, addr_t param_addr
         return _EINVAL;
     return 0;
 }
+
+int_t sys_sched_get_priority_max(int_t policy) {
+    STRACE("sched_get_priority_max(%d)", policy);
+    if (policy == 0)
+        return 0;
+    return _EINVAL;
+}

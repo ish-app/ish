@@ -102,6 +102,7 @@ syscall_t syscall_table[] = {
     [156] = (syscall_t) sys_sched_setscheduler,
     [157] = (syscall_t) sys_sched_getscheduler,
     [158] = (syscall_t) sys_sched_yield,
+    [159] = (syscall_t) sys_sched_get_priority_max,
     [162] = (syscall_t) sys_nanosleep,
     [163] = (syscall_t) sys_mremap,
     [168] = (syscall_t) sys_poll,
