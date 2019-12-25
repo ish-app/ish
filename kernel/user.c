@@ -1,25 +1,34 @@
+#include <string.h>
 #include "kernel/calls.h"
 
 static int __user_read_task(struct task *task, addr_t addr, void *buf, size_t count) {
     char *cbuf = (char *) buf;
-    size_t i = 0;
-    while (i < count) {
-        char *ptr = mem_ptr(task->mem, addr + i, MEM_READ);
+    addr_t p = addr;
+    while (p < addr + count) {
+        addr_t chunk_end = (PAGE(p) + 1) << PAGE_BITS;
+        if (chunk_end > addr + count)
+            chunk_end = addr + count;
+        const char *ptr = mem_ptr(task->mem, p, MEM_READ);
         if (ptr == NULL)
             return 1;
-        cbuf[i++] = *ptr;
+        memcpy(&cbuf[p - addr], ptr, chunk_end - p);
+        p = chunk_end;
     }
     return 0;
 }
 
 static int __user_write_task(struct task *task, addr_t addr, const void *buf, size_t count) {
     const char *cbuf = (const char *) buf;
-    size_t i = 0;
-    while (i < count) {
-        char *ptr = mem_ptr(task->mem, addr + i, MEM_WRITE);
+    addr_t p = addr;
+    while (p < addr + count) {
+        addr_t chunk_end = (PAGE(p) + 1) << PAGE_BITS;
+        if (chunk_end > addr + count)
+            chunk_end = addr + count;
+        char *ptr = mem_ptr(task->mem, p, MEM_WRITE);
         if (ptr == NULL)
             return 1;
-        *ptr = cbuf[i++];
+        memcpy(ptr, &cbuf[p - addr], chunk_end - p);
+        p = chunk_end;
     }
     return 0;
 }
