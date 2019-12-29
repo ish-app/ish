@@ -124,7 +124,7 @@ int generic_accessat(struct fd *dirfd, const char *path_raw, int mode) {
 
     struct mount *mount = find_mount_and_trim_path(path);
     struct statbuf stat = {};
-    err = mount->fs->stat(mount, path, &stat, true);
+    err = mount->fs->stat(mount, path, &stat);
     mount_release(mount);
     if (err < 0)
         return err;

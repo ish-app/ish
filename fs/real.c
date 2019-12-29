@@ -118,9 +118,9 @@ static void copy_stat(struct statbuf *fake_stat, struct stat *real_stat) {
 #undef TIMESPEC
 }
 
-static int realfs_stat(struct mount *mount, const char *path, struct statbuf *fake_stat, bool follow_links) {
+static int realfs_stat(struct mount *mount, const char *path, struct statbuf *fake_stat) {
     struct stat real_stat;
-    if (fstatat(mount->root_fd, fix_path(path), &real_stat, follow_links ? 0 : AT_SYMLINK_NOFOLLOW) < 0)
+    if (fstatat(mount->root_fd, fix_path(path), &real_stat, AT_SYMLINK_NOFOLLOW) < 0)
         return errno_map();
     copy_stat(fake_stat, &real_stat);
     return 0;

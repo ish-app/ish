@@ -92,7 +92,7 @@ static int unix_socket_get(const char *path_raw, struct fd *bind_fd, uint32_t *s
         return err;
     struct mount *mount = find_mount_and_trim_path(path);
     struct statbuf stat;
-    err = mount->fs->stat(mount, path, &stat, true);
+    err = mount->fs->stat(mount, path, &stat);
 
     // If bind was called, there are some funny semantics.
     if (bind_fd != NULL) {
@@ -111,7 +111,7 @@ static int unix_socket_get(const char *path_raw, struct fd *bind_fd, uint32_t *s
             err = mount->fs->mknod(mount, path, S_IFSOCK | mode, 0);
             if (err < 0)
                 goto out;
-            err = mount->fs->stat(mount, path, &stat, true);
+            err = mount->fs->stat(mount, path, &stat);
             if (err < 0)
                 goto out;
         }

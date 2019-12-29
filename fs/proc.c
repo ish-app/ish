@@ -77,7 +77,7 @@ static int proc_getpath(struct fd *fd, char *buf) {
     return 0;
 }
 
-static int proc_stat(struct mount *UNUSED(mount), const char *path, struct statbuf *stat, bool UNUSED(follow_links)) {
+static int proc_stat(struct mount *UNUSED(mount), const char *path, struct statbuf *stat) {
     struct proc_entry entry;
     int err = proc_lookup(path, &entry);
     if (err < 0)

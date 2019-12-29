@@ -153,7 +153,7 @@ struct fs_ops {
     // If they are the same function, it will only be called once.
     int (*close)(struct fd *fd);
 
-    int (*stat)(struct mount *mount, const char *path, struct statbuf *stat, bool follow_links);
+    int (*stat)(struct mount *mount, const char *path, struct statbuf *stat);
     int (*fstat)(struct fd *fd, struct statbuf *stat);
     int (*setattr)(struct mount *mount, const char *path, struct attr attr);
     int (*fsetattr)(struct fd *fd, struct attr attr);

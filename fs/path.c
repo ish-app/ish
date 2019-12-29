@@ -97,7 +97,7 @@ static int __path_normalize(const char *at_path, const char *path, char *out, in
             // exists, it's a directory and that we have execute perms on it
             if (*(p - 1) == '/') {
                 struct statbuf stat;
-                int err = mount->fs->stat(mount, possible_symlink, &stat, false);
+                int err = mount->fs->stat(mount, possible_symlink, &stat);
                 mount_release(mount);
                 if (err >= 0) {
                     if (!S_ISDIR(stat.mode))

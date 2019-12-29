@@ -247,7 +247,7 @@ static int devpts_fstat(struct fd *fd, struct statbuf *stat) {
     return 0;
 }
 
-static int devpts_stat(struct mount *UNUSED(mount), const char *path, struct statbuf *stat, bool UNUSED(follow_links)) {
+static int devpts_stat(struct mount *UNUSED(mount), const char *path, struct statbuf *stat) {
     int pty_num = devpts_get_pty_num(path);
     if (pty_num == _ENOENT)
         return _ENOENT;

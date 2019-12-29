@@ -315,7 +315,7 @@ static int fakefs_mknod(struct mount *mount, const char *path, mode_t_ mode, dev
     return err;
 }
 
-static int fakefs_stat(struct mount *mount, const char *path, struct statbuf *fake_stat, bool follow_links) {
+static int fakefs_stat(struct mount *mount, const char *path, struct statbuf *fake_stat) {
     db_begin(mount);
     struct ish_stat ishstat;
     ino_t inode;
@@ -323,7 +323,7 @@ static int fakefs_stat(struct mount *mount, const char *path, struct statbuf *fa
         db_rollback(mount);
         return _ENOENT;
     }
-    int err = realfs.stat(mount, path, fake_stat, follow_links);
+    int err = realfs.stat(mount, path, fake_stat);
     db_commit(mount);
     if (err < 0)
         return err;
