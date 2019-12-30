@@ -649,7 +649,7 @@ static dword_t sys_utime_common(fd_t at_f, addr_t path_addr, struct timespec ati
         return _EBADF;
 
     bool follow_links = flags & AT_SYMLINK_NOFOLLOW_ ? false : true;
-    return generic_utime(at, path_addr != 0 ? path : ".", atime, mtime, follow_links); // TODO implement
+    return generic_utime(at, path_addr != 0 ? path : ".", atime, mtime, follow_links);
 }
 
 dword_t sys_utimensat(fd_t at_f, addr_t path_addr, addr_t times_addr, dword_t flags) {
