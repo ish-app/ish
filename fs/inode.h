@@ -35,8 +35,8 @@ void inode_release(struct inode_data *inode);
 extern lock_t inodes_lock;
 struct inode_data *inode_get_unlocked(struct mount *mount, ino_t inode);
 
-// calls the callback if this inode is orphaned, while holding indoes_lock
-void inode_check_orphaned(struct mount *mount, ino_t ino, void (*callback)(struct mount *mount, ino_t inode));
+// calls mount->fs->inode_orphaned if this inode is orphaned, while holding indoes_lock
+void inode_check_orphaned(struct mount *mount, ino_t ino);
 
 // file locking stuff (maybe should go in kernel/calls.h?)
 
