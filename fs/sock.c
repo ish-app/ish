@@ -185,10 +185,14 @@ static int unix_abstract_get(const char *name, struct fd *bind_fd, uint32_t *soc
         }
     }
 
-    if (bind_fd != NULL && sock != NULL)
+    if (bind_fd != NULL && sock != NULL) {
+        unlock(&unix_abstract_lock);
         return _EEXIST;
-    if (bind_fd == NULL && sock == NULL)
+    }
+    if (bind_fd == NULL && sock == NULL) {
+        unlock(&unix_abstract_lock);
         return _ENOENT;
+    }
 
     if (sock == NULL) {
         sock = malloc(sizeof(struct unix_abstract));
