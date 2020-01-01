@@ -11,6 +11,7 @@
 
 static void jit_block_disconnect(struct jit *jit, struct jit_block *block);
 static void jit_block_free(struct jit *jit, struct jit_block *block);
+static void jit_free_jetsam(struct jit *jit);
 static void jit_resize_hash(struct jit *jit, size_t new_size);
 
 struct jit *jit_new(struct mem *mem) {
@@ -31,6 +32,7 @@ void jit_free(struct jit *jit) {
             jit_block_free(jit, block);
         }
     }
+    jit_free_jetsam(jit);
     free(jit->hash);
     free(jit);
 }
@@ -148,6 +150,14 @@ static void jit_block_free(struct jit *jit, struct jit_block *block) {
     free(block);
 }
 
+static void jit_free_jetsam(struct jit *jit) {
+    struct jit_block *block, *tmp;
+    list_for_each_entry_safe(&jit->jetsam, block, tmp, jetsam) {
+        list_remove(&block->jetsam);
+        free(block);
+    }
+}
+
 int jit_enter(struct jit_block *block, struct jit_frame *frame, struct tlb *tlb);
 
 #if 1
@@ -228,11 +238,7 @@ void cpu_run(struct cpu_state *cpu) {
                 unlock(&jit->lock);
                 write_wrlock(&cpu->mem->lock);
                 lock(&jit->lock);
-                struct jit_block *block, *tmp;
-                list_for_each_entry_safe(&jit->jetsam, block, tmp, jetsam) {
-                    list_remove(&block->jetsam);
-                    free(block);
-                }
+                jit_free_jetsam(jit);
                 write_wrunlock(&cpu->mem->lock);
             }
             unlock(&jit->lock);
