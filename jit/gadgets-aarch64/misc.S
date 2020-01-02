@@ -115,6 +115,32 @@
     gret 1
     write_bullshit 64, atomic_cmpxchg8b
 
+.gadget cmpxchg8b
+    write_prep 64, cmpxchg8b
+    mov w9, eax
+    bfi x9, xdx, 32, 32
+    mov w10, ebx
+    bfi x10, xcx, 32, 32
+
+    ldr x8, [_xaddr]
+    cmp x9, x8
+    csel x9, x8, x9, ne
+    csel x8, x10, x8, eq
+    cset w11, eq
+    str x8, [_xaddr]
+    write_done 64, cmpxchg8b
+    ubfx xax, x9, 0, 32
+    ubfx xdx, x9, 32, 32
+
+    ldr w8, [_cpu, CPU_flags_res]
+    ldr w9, [_cpu, CPU_eflags]
+    and w8, w8, ~ZF_RES
+    bfi w9, w11, 6, 1
+    str w8, [_cpu, CPU_flags_res]
+    str w9, [_cpu, CPU_eflags]
+    gret 1
+    write_bullshit 64, cmpxchg8b
+
 .macro do_helper type, size=
     .gadget helper_\type\size
         .ifin(\type, read,write)

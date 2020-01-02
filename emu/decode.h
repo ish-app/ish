@@ -262,6 +262,12 @@ restart:
                 case 0xc1: TRACEI("xadd reg, modrm");
                            READMODRM; XADD(modrm_reg, modrm_val,oz); break;
 
+                case 0xc7: READMODRM_MEM; switch (modrm.opcode) {
+                               case 1: TRACEI("cmpxchg8b modrm");
+                                       CMPXCHG8B(modrm_val,64); break;
+                               default: UNDEFINED;
+                           };
+
 #if OP_SIZE != 16
                 case 0xc8: TRACEI("bswap eax");
                            BSWAP(reg_a); break;

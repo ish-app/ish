@@ -86,6 +86,17 @@
     orb %r15b, CPU_eflags(%_cpu)
     gret 1
 
+.gadget cmpxchg8b
+    write_prep 64, cmpxchg8b
+    cmpxchg8b (%_addrq)
+    setz %r15b
+    write_done 64, cmpxchg8b
+    andl $~ZF_RES, CPU_flags_res(%_cpu)
+    andl $~ZF_FLAG, CPU_eflags(%_cpu)
+    shlb $6, %r15b
+    orb %r15b, CPU_eflags(%_cpu)
+    gret 1
+
 .macro do_helper type, size=
     .gadget helper_\type\size
         .ifin(\type, read,write)
