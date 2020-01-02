@@ -5,7 +5,7 @@
 #include "emu/float80.h"
 #include "emu/fpu.h"
 
-#define ST(i) cpu->fp[cpu->top + i]
+#define ST(i) cpu->fp[(cpu->top + i) % 8]
 
 static void fpu_push(struct cpu_state *cpu, float80 f) {
     cpu->top--;
