@@ -22,6 +22,13 @@ void fpu_xch(struct cpu_state *cpu, int i) {
     ST(i) = tmp;
 }
 
+void fpu_incstp(struct cpu_state *cpu) {
+    // This is different from just popping the stack, it doesn't tag the stack
+    // element as free. We don't have stack tagging yet so in practice there's
+    // no difference.
+    cpu->top++;
+}
+
 // loads
 
 void fpu_ld(struct cpu_state *cpu, int i) {

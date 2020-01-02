@@ -29,6 +29,7 @@ static float80 fpu_consts[] = {
 
 void fpu_pop(struct cpu_state *cpu);
 void fpu_xch(struct cpu_state *cpu, int i);
+void fpu_incstp(struct cpu_state *cpu);
 
 void fpu_st(struct cpu_state *cpu, int i);
 void fpu_ist16(struct cpu_state *cpu, int16_t *i);
