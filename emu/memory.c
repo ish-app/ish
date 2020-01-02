@@ -285,15 +285,11 @@ void *mem_ptr(struct mem *mem, addr_t addr, int type) {
     return entry->data->data + entry->offset + PGOFFSET(addr);
 }
 
-int mem_segv_reason(struct mem *mem, addr_t addr, int type) {
-    assert(type == MEM_READ || type == MEM_WRITE);
+int mem_segv_reason(struct mem *mem, addr_t addr) {
     struct pt_entry *pt = mem_pt(mem, PAGE(addr));
     if (pt == NULL)
         return SEGV_MAPERR_;
-    if ((type == MEM_READ && !(pt->flags & P_READ)) ||
-            (type == MEM_WRITE && !(pt->flags & P_WRITE)))
-        return SEGV_ACCERR_;
-    die("caught segv for valid access");
+    return SEGV_ACCERR_;
 }
 
 size_t real_page_size;

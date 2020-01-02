@@ -79,11 +79,6 @@
 
 segfault_\type:
     movl %_addr, CPU_segfault_addr(%_cpu)
-    .ifc \type,read
-        movb $MEM_READ, CPU_segfault_type(%_cpu)
-    .else
-        movb $MEM_WRITE, CPU_segfault_type(%_cpu)
-    .endif
     movl (%_ip), %_eip
     movl $INT_GPF, %_tmp
     jmp jit_exit

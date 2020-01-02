@@ -85,12 +85,6 @@ NAME(si_gadgets):
 
 segfault_\type:
     str _addr, [_cpu, CPU_segfault_addr]
-    .ifc \type,read
-        mov w0, MEM_READ
-    .else
-        mov w0, MEM_WRITE
-    .endif
-    strb w0, [_cpu, CPU_segfault_type]
     ldr eip, [_ip]
     mov x0, INT_GPF
     b jit_exit

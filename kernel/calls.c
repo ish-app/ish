@@ -242,7 +242,7 @@ void handle_interrupt(int interrupt) {
     } else if (interrupt == INT_GPF) {
         printk("%d page fault on 0x%x at 0x%x\n", current->pid, cpu->segfault_addr, cpu->eip);
         struct siginfo_ info = {
-            .code = mem_segv_reason(cpu->mem, cpu->segfault_addr, cpu->segfault_type),
+            .code = mem_segv_reason(cpu->mem, cpu->segfault_addr),
             .fault.addr = cpu->segfault_addr,
         };
         deliver_signal(current, SIGSEGV_, info);
