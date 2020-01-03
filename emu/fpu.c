@@ -267,6 +267,13 @@ void fpu_patan(struct cpu_state *cpu) {
     fpu_pop(cpu);
 }
 
+void fpu_sin(struct cpu_state *cpu) {
+    ST(0) = f80_from_double(sin(f80_to_double(ST(0))));
+}
+void fpu_cos(struct cpu_state *cpu) {
+    ST(0) = f80_from_double(cos(f80_to_double(ST(0))));
+}
+
 void fpu_xam(struct cpu_state *cpu) {
     float80 f = ST(0);
     int outflags = 0;
