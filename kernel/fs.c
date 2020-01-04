@@ -656,7 +656,7 @@ dword_t sys_utimensat(fd_t at_f, addr_t path_addr, addr_t times_addr, dword_t fl
     struct timespec atime;
     struct timespec mtime;
     if (times_addr == 0) {
-        atime = mtime = timespec_now();
+        atime = mtime = timespec_now(CLOCK_REALTIME);
     } else {
         struct timespec_ times[2];
         if (user_get(times_addr, times))
@@ -671,7 +671,7 @@ dword_t sys_utimes(addr_t path_addr, addr_t times_addr) {
     struct timespec atime;
     struct timespec mtime;
     if (times_addr == 0) {
-        atime = mtime = timespec_now();
+        atime = mtime = timespec_now(CLOCK_REALTIME);
     } else {
         struct timeval_ times[2];
         if (user_get(times_addr, times))
@@ -686,7 +686,7 @@ dword_t sys_utime(addr_t path_addr, addr_t times_addr) {
     struct timespec atime;
     struct timespec mtime;
     if (times_addr == 0) {
-        atime = mtime = timespec_now();
+        atime = mtime = timespec_now(CLOCK_REALTIME);
     } else {
         struct utimbuf_ {
             time_t_ actime;

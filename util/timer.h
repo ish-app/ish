@@ -4,11 +4,13 @@
 #include <stdbool.h>
 #include <time.h>
 #include <pthread.h>
+#include <assert.h>
 #include "util/sync.h"
 
-static inline struct timespec timespec_now() {
+static inline struct timespec timespec_now(clockid_t clockid) {
+    assert(clockid == CLOCK_MONOTONIC || clockid == CLOCK_REALTIME);
     struct timespec now;
-    clock_gettime(CLOCK_MONOTONIC, &now); // can't fail, according to posix spec
+    clock_gettime(clockid, &now); // can't fail, according to posix spec
     return now;
 }
 
@@ -43,6 +45,7 @@ static inline bool timespec_positive(struct timespec ts) {
 
 typedef void (*timer_callback_t)(void *data);
 struct timer {
+    clockid_t clockid;
     struct timespec start;
     struct timespec end;
     struct timespec interval;
@@ -55,7 +58,7 @@ struct timer {
     bool dead;
 };
 
-struct timer *timer_new(timer_callback_t callback, void *data);
+struct timer *timer_new(clockid_t clockid, timer_callback_t callback, void *data);
 void timer_free(struct timer *timer);
 // value is how long to wait until the next fire
 // interval is how long after that to wait until the next fire (if non-zero)
