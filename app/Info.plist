@@ -21,9 +21,11 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>A program running in iSH wants to track your location in the background.</string>
+	<string>Programs running in iSH will be allowed to track your location in the background.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>Programs running in iSH will be allowed to track your location in the background.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>A program running in iSH wants to track your location.</string>
+	<string>Programs running in iSH will be allowed to see your location.</string>
 	<key>NSUserActivityTypes</key>
 	<array>
 		<string>app.ish.scene</string>
