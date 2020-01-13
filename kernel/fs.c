@@ -335,7 +335,7 @@ dword_t sys__llseek(fd_t f, dword_t off_high, dword_t off_low, addr_t res_addr, 
     if (!fd->ops->lseek)
         return _ESPIPE;
     lock(&fd->lock);
-    off_t_ off = ((off_t_) off_high << 32) | off_low;
+    off_t_ off = ((qword_t) off_high << 32) | off_low;
     STRACE("llseek(%d, %lu, %#x, %d)", f, off, res_addr, whence);
     off_t_ res = fd->ops->lseek(fd, off, whence);
     STRACE(" -> %lu", res);
@@ -832,7 +832,7 @@ dword_t sys_lchown(addr_t path_addr, uid_t_ owner, uid_t_ group) {
 }
 
 dword_t sys_truncate64(addr_t path_addr, dword_t size_low, dword_t size_high) {
-    off_t_ size = ((off_t_) size_high << 32) | size_low;
+    off_t_ size = ((qword_t) size_high << 32) | size_low;
     char path[MAX_PATH];
     if (user_read_string(path_addr, path, sizeof(path)))
         return _EFAULT;
@@ -840,7 +840,7 @@ dword_t sys_truncate64(addr_t path_addr, dword_t size_low, dword_t size_high) {
 }
 
 dword_t sys_ftruncate64(fd_t f, dword_t size_low, dword_t size_high) {
-    off_t_ size = ((off_t_) size_high << 32) | size_low;
+    off_t_ size = ((qword_t) size_high << 32) | size_low;
     struct fd *fd = f_get(f);
     if (fd == NULL)
         return _EBADF;
@@ -848,8 +848,8 @@ dword_t sys_ftruncate64(fd_t f, dword_t size_low, dword_t size_high) {
 }
 
 dword_t sys_fallocate(fd_t f, dword_t UNUSED(mode), dword_t offset_low, dword_t offset_high, dword_t len_low, dword_t len_high) {
-    off_t_ offset = ((off_t_) offset_high << 32) | offset_low;
-    off_t_ len = ((off_t_) len_high << 32) | len_low;
+    off_t_ offset = ((qword_t) offset_high << 32) | offset_low;
+    off_t_ len = ((qword_t) len_high << 32) | len_low;
     struct fd *fd = f_get(f);
     if (fd == NULL)
         return _EBADF;
