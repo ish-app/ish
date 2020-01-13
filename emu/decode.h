@@ -705,6 +705,7 @@ restart:
                     case 0xde5: TRACE("fsubp st, st(i)"); FSUB(st_0, st_i); FPOP; break;
                     case 0xde6: TRACE("fdivrp st, st(i)"); FDIVR(st_0, st_i); FPOP; break;
                     case 0xde7: TRACE("fdivp st, st(i)"); FDIV(st_0, st_i); FPOP; break;
+                    case 0xdf0: TRACE("ffreep st(i) (omegalul)"); FPOP; break;
                     case 0xdf5: TRACE("fucomip st"); FUCOMI(); FPOP; break;
                     case 0xdf6: TRACE("fcomip st"); FCOMI(); FPOP; break;
                     default: switch (insn << 8 | modrm.opcode << 4 | modrm.rm_opcode) {
@@ -730,7 +731,6 @@ restart:
                     case 0xd976: TRACE("fsin"); FSIN(); break;
                     case 0xd977: TRACE("fcos"); FCOS(); break;
                     case 0xde31: TRACE("fcompp"); FCOM(); FPOP; FPOP; break;
-                    case 0xdf00: TRACE("ffreep st(i) (omegalul)"); FPOP; break;
                     case 0xdf40: TRACE("fnstsw ax"); FSTSW(reg_a); break;
                     default: TRACE("undefined"); UNDEFINED;
                 }}
