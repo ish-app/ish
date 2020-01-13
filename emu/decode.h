@@ -123,6 +123,8 @@ restart:
                            }
                            break;
 
+                case 0x77: TRACEI("emms (ignored because there is no mmx)"); break;
+
                 case 0x7e: TRACEI("movd xmm, modrm");
                            // TODO: REX.W = 1 might be needed later
                            READMODRM; VSTORE(xmm_modrm_reg, xmm_modrm_val,32);
@@ -728,6 +730,7 @@ restart:
                     case 0xd976: TRACE("fsin"); FSIN(); break;
                     case 0xd977: TRACE("fcos"); FCOS(); break;
                     case 0xde31: TRACE("fcompp"); FCOM(); FPOP; FPOP; break;
+                    case 0xdf00: TRACE("ffreep st(i) (omegalul)"); FPOP; break;
                     case 0xdf40: TRACE("fnstsw ax"); FSTSW(reg_a); break;
                     default: TRACE("undefined"); UNDEFINED;
                 }}
