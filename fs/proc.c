@@ -99,26 +99,6 @@ static int proc_refresh_data(struct fd *fd) {
     return 0;
 }
 
-static ssize_t proc_read(struct fd *fd, void *buf, size_t bufsize) {
-    int err = proc_refresh_data(fd);
-    if (err < 0)
-        return err;
-
-    const char *data = fd->proc.data.data;
-    assert(data != NULL);
-
-    size_t remaining = fd->proc.data.size - fd->offset;
-    if ((size_t) fd->offset > fd->proc.data.size)
-        remaining = 0;
-    size_t n = bufsize;
-    if (n > remaining)
-        n = remaining;
-
-    memcpy(buf, data + fd->offset, n);
-    fd->offset += n;
-    return n;
-}
-
 static off_t_ proc_seek(struct fd *fd, off_t_ off, int whence) {
     int err = proc_refresh_data(fd);
     if (err < 0)
@@ -141,6 +121,25 @@ static off_t_ proc_seek(struct fd *fd, off_t_ off, int whence) {
     return fd->offset;
 }
 
+static ssize_t proc_pread(struct fd *fd, void *buf, size_t bufsize, off_t off) {
+    int err = proc_refresh_data(fd);
+    if (err < 0)
+        return err;
+
+    const char *data = fd->proc.data.data;
+    assert(data != NULL);
+
+    size_t remaining = fd->proc.data.size - off;
+    if ((size_t) off > fd->proc.data.size)
+        remaining = 0;
+    size_t n = bufsize;
+    if (n > remaining)
+        n = remaining;
+
+    memcpy(buf, data + off, n);
+    return n;
+}
+
 static int proc_readdir(struct fd *fd, struct dir_entry *entry) {
     struct proc_entry proc_entry;
     bool any_left = proc_dir_read(&fd->proc.entry, &fd->offset, &proc_entry);
@@ -158,7 +157,7 @@ static int proc_close(struct fd *fd) {
 }
 
 const struct fd_ops procfs_fdops = {
-    .read = proc_read,
+    .pread = proc_pread,
     .lseek = proc_seek,
     .readdir = proc_readdir,
     .close = proc_close,
