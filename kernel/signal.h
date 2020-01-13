@@ -145,7 +145,7 @@ dword_t sys_rt_sigprocmask(dword_t how, addr_t set, addr_t oldset, dword_t size)
 int_t sys_rt_sigpending(addr_t set_addr);
 
 static inline sigset_t_ sig_mask(int sig) {
-    assert(sig >= 1 && sig <= NUM_SIGS);
+    assert(sig >= 1 && sig < NUM_SIGS);
     return 1l << (sig - 1);
 }
 
