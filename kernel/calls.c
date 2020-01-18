@@ -147,6 +147,7 @@ syscall_t syscall_table[] = {
     [220] = (syscall_t) sys_getdents64,
     [221] = (syscall_t) sys_fcntl,
     [224] = (syscall_t) sys_gettid,
+    [225] = (syscall_t) syscall_success_stub, // readahead
     [226 ... 237] = (syscall_t) sys_xattr_stub,
     [238] = (syscall_t) sys_tkill,
     [239] = (syscall_t) sys_sendfile64,

@@ -5,7 +5,7 @@
 #include "emu/float80.h"
 #include "emu/fpu.h"
 
-#define ST(i) cpu->fp[cpu->top + i]
+#define ST(i) cpu->fp[(cpu->top + i) % 8]
 
 static void fpu_push(struct cpu_state *cpu, float80 f) {
     cpu->top--;
@@ -265,6 +265,13 @@ void fpu_patan(struct cpu_state *cpu) {
     // there's no native atan2 for 80-bit float yet.
     ST(1) = f80_from_double(atan2(f80_to_double(ST(1)), f80_to_double(ST(0))));
     fpu_pop(cpu);
+}
+
+void fpu_sin(struct cpu_state *cpu) {
+    ST(0) = f80_from_double(sin(f80_to_double(ST(0))));
+}
+void fpu_cos(struct cpu_state *cpu) {
+    ST(0) = f80_from_double(cos(f80_to_double(ST(0))));
 }
 
 void fpu_xam(struct cpu_state *cpu) {

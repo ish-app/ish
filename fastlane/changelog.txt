@@ -1,25 +1,11 @@
-New stuff:
-- The terminal has mouse support, so you can tap and it moves the cursor in Vim
-- Mono works a lot better
-- Java works a little better
-- Elixir and Erlang work
-- uname -v includes the build number
-- Added keyboard shortcuts to increase and decrease font size and open settings
-- /proc/pid/maps
+I had planned to implement various cool features like opening directories in the file provider or supporting openrc, but all that took too long, so here's some accumulated bug fixes.
 
 Fixed bugs:
-- iSH sometimes crashing in the background when it tries to update DNS settings
-- Crash in the PCRE JIT, which affected Laravel
-- Crash when running reboot
-- Empty command line arguments being ignored
-- sudo reporting "no tty present". It's actually fixed this time, I swear.
-- Crash when running a fork bomb
-- Python asyncio failing with "Invalid argument", because it uses -1000 to request an infinite timeout
-- Session not restarting when you type exit on iPhone with iOS 13
-- Crash when the recvmsg buffer is too big, which affected xterm in xvfb
-- Vim locking up sometimes when you close and reopen the app
-- Jupyter crashing complaining about SO_LINGER
-- ^@ and ^^ being impossible to press without a hardware keyboard
+- VNC being really really slow. It's now just slow, rather than really really slow.
+- Deadlock that showed up for me when doing git clone
+- Memory leak for every exited process
+- Rare deadlock when running x11vnc
+- A few emulator fixes for Java
 
 Send bug reports or feedback here: https://github.com/tbodt/ish/issues (or by email, if you prefer)
 Follow iSH on Twitter: https://twitter.com/iSH_app

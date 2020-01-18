@@ -340,6 +340,7 @@ static inline bool gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define REPNZ(op, z) strop(op, repnz, z)
 
 #define CMPXCHG(src, dst,z) load(src, z); op(cmpxchg, dst, z)
+#define CMPXCHG8B(dst,z) g_addr(); gg(cmpxchg8b, saved_ip)
 #define XADD(src, dst,z) XCHG(src, dst,z); ADD(src, dst,z)
 
 void helper_rdtsc(struct cpu_state *cpu);
@@ -399,6 +400,7 @@ void helper_rdtsc(struct cpu_state *cpu);
 #define FSAVE(val,z) h_write(fpu_save, z)
 #define FRESTORE(val,z) h_write(fpu_restore, z)
 #define FPOP h(fpu_pop)
+#define FINCSTP() h(fpu_incstp)
 #define FADD(src, dst) hhh(fpu_add, src, dst)
 #define FIADD(val,z) h_read(fpu_iadd, z)
 #define FADDM(val,z) h_read(fpu_addm, z)
@@ -418,7 +420,8 @@ void helper_rdtsc(struct cpu_state *cpu);
 #define FIDIVR(val,z) h_read(fpu_idivr, z)
 #define FDIVRM(val,z) h_read(fpu_divrm, z)
 #define FPATAN() h(fpu_patan)
-#define FINCSTP() h(fpu_incstp)
+#define FSIN() h(fpu_sin)
+#define FCOS() h(fpu_cos)
 
 // vector
 
