@@ -111,7 +111,10 @@ static void ios_handle_die(const char *msg) {
     generic_mknod("/dev/urandom", S_IFCHR|0666, dev_make(MEM_MAJOR, DEV_URANDOM_MINOR));
     
     generic_mkdirat(AT_PWD, "/dev/pts", 0755);
-
+    
+    // Permissions on / have been broken for a while, let's fix them
+    generic_setattrat(AT_PWD, "/", (struct attr) {.type = attr_mode, .mode = 0755}, false);
+    
     // Register clipboard device driver and create device node for it
     err = dyn_dev_register(&clipboard_dev, DEV_CHAR, DYN_DEV_MAJOR, DEV_CLIPBOARD_MINOR);
     if (err != 0) {

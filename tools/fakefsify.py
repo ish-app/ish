@@ -3,7 +3,6 @@ import os
 import sys
 from pathlib import Path
 import struct
-import urllib.request
 import tarfile
 import sqlite3
 
@@ -40,6 +39,10 @@ def extract_member(archive, db, member):
         pass
     else:
         raise ValueError('unrecognized tar entry type')
+
+    if path == data:
+        # Make sure the root has sane permissions. Give everyone at least rx.
+        mode |= 0o555
 
     if path != data and not path.parent.exists():
         parent_member = tarfile.TarInfo(os.path.dirname(member.name))
