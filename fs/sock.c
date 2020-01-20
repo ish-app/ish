@@ -1,8 +1,12 @@
 #include <fcntl.h>
+#include <netinet/tcp.h>
+#if defined(__APPLE__)
+#include <netinet/tcp_fsm.h>
+#endif
 #include <string.h>
 #include <sys/socket.h>
-#include <sys/un.h>
 #include <sys/stat.h>
+#include <sys/un.h>
 #include "kernel/calls.h"
 #include "fs/fd.h"
 #include "fs/inode.h"
@@ -632,6 +636,8 @@ int_t sys_shutdown(fd_t sock_fd, dword_t how) {
     return 0;
 }
 
+#define DEFAULT_TCP_CONGESTION "cubic"
+
 int_t sys_setsockopt(fd_t sock_fd, dword_t level, dword_t option, addr_t value_addr, dword_t value_len) {
     STRACE("setsockopt(%d, %d, %d, 0x%x, %d)", sock_fd, level, option, value_addr, value_len);
     struct fd *sock = sock_getfd(sock_fd);
@@ -647,6 +653,14 @@ int_t sys_setsockopt(fd_t sock_fd, dword_t level, dword_t option, addr_t value_a
     // IP_MTU_DISCOVER has no equivalent on Darwin
     if (level == IPPROTO_IP && option == IP_MTU_DISCOVER_)
         return 0;
+    // TCP_CONGESTION also has no equivalent on Darwin
+#if defined(__APPLE__)
+    if (level == IPPROTO_TCP && option == TCP_CONGESTION_) {
+        if (strncmp(value, DEFAULT_TCP_CONGESTION, sizeof(value)) == 0)
+            return 0;
+        return _ENOENT;
+    }
+#endif
 
     int real_opt = sock_opt_to_real(option, level);
     if (real_opt < 0)
@@ -700,6 +714,54 @@ int_t sys_getsockopt(fd_t sock_fd, dword_t level, dword_t option, addr_t value_a
             *cred = sock->socket.unix_peer->socket.unix_cred;
         }
         unlock(&peer_lock);
+    } else if (level == IPPROTO_TCP && option == TCP_CONGESTION_) {
+        value_len = strlen(DEFAULT_TCP_CONGESTION);
+        memcpy(value, DEFAULT_TCP_CONGESTION, value_len);
+#if defined(__APPLE__)
+    } else if (level == IPPROTO_TCP && option == TCP_INFO_) {
+        // This one's fun. On Linux, the struct is not ABI dependent, so no
+        // special handling is needed. On Darwin, the struct is completely
+        // different and has a different sockopt name.
+        struct tcp_connection_info conn_info;
+        socklen_t conn_info_size = sizeof(conn_info);
+        int err = getsockopt(sock->real_fd, IPPROTO_TCP, TCP_CONNECTION_INFO, &conn_info, &conn_info_size);
+        if (err < 0)
+            return errno_map();
+
+        static const uint8_t tcp_state_table[] = {
+            [TCPS_CLOSED] = 7,
+            [TCPS_LISTEN] = 10,
+            [TCPS_SYN_SENT] = 2,
+            [TCPS_SYN_RECEIVED] = 3,
+            [TCPS_ESTABLISHED] = 1,
+            [TCPS_CLOSE_WAIT] = 8,
+            [TCPS_FIN_WAIT_1] = 4,
+            [TCPS_CLOSING] = 11,
+            [TCPS_LAST_ACK] = 9,
+            [TCPS_FIN_WAIT_2] = 5,
+            [TCPS_TIME_WAIT] = 6,
+        };
+        struct tcp_info_ info = {
+            .state = tcp_state_table[conn_info.tcpi_state],
+            .options = conn_info.tcpi_options,
+            .snd_wscale = conn_info.tcpi_snd_wscale,
+            .rcv_wscale = conn_info.tcpi_rcv_wscale,
+
+            .rto = conn_info.tcpi_rto * 1000,
+            .snd_mss = conn_info.tcpi_maxseg,
+
+            .rtt = conn_info.tcpi_srtt * 1000,
+            .rttvar = conn_info.tcpi_rttvar * 1000,
+            .snd_ssthresh = conn_info.tcpi_snd_ssthresh,
+            .snd_cwnd = conn_info.tcpi_snd_cwnd / conn_info.tcpi_maxseg,
+
+            // https://lkml.org/lkml/2017/4/24/923
+            .total_retrans = conn_info.tcpi_txretransmitpackets,
+        };
+        if (value_len > sizeof(struct tcp_info_))
+            value_len = sizeof(struct tcp_info_);
+        memcpy(value, &info, value_len);
+#endif
     } else {
         int real_opt = sock_opt_to_real(option, level);
         if (real_opt < 0)

@@ -190,6 +190,8 @@ static inline int sock_flags_from_real(int real) {
 #define IP_RECVTOS_ 13
 #define TCP_NODELAY_ 1
 #define TCP_DEFER_ACCEPT_ 9
+#define TCP_INFO_ 11
+#define TCP_CONGESTION_ 13
 #define IPV6_UNICAST_HOPS_ 16
 #define IPV6_V6ONLY_ 26
 #define IPV6_TCLASS_ 67
@@ -211,6 +213,10 @@ static inline int sock_opt_to_real(int fake, int level) {
         case IPPROTO_TCP: switch (fake) {
             case TCP_NODELAY_: return TCP_NODELAY;
             case TCP_DEFER_ACCEPT_: return 0; // unimplemented
+#if defined(__linux__)
+            case TCP_INFO_: return TCP_INFO;
+            case TCP_CONGESTION_: return TCP_CONGESTION;
+#endif
         } break;
         case IPPROTO_IP: switch (fake) {
             case IP_TOS_: return IP_TOS;
@@ -236,5 +242,45 @@ static inline int sock_level_to_real(int fake) {
 }
 
 extern const char *sock_tmp_prefix;
+
+struct tcp_info_ {
+    uint8_t state;
+    uint8_t ca_state;
+    uint8_t retransmits;
+    uint8_t probes;
+    uint8_t backoff;
+    uint8_t options;
+    uint8_t snd_wscale:4, rcv_wscale:4;
+
+    uint32_t rto;
+    uint32_t ato;
+    uint32_t snd_mss;
+    uint32_t rcv_mss;
+
+    uint32_t unacked;
+    uint32_t sacked;
+    uint32_t lost;
+    uint32_t retrans;
+    uint32_t fackets;
+
+    uint32_t last_data_sent;
+    uint32_t last_ack_sent;
+    uint32_t last_data_recv;
+    uint32_t last_ack_recv;
+
+    uint32_t pmtu;
+    uint32_t rcv_ssthresh;
+    uint32_t rtt;
+    uint32_t rttvar;
+    uint32_t snd_ssthresh;
+    uint32_t snd_cwnd;
+    uint32_t advmss;
+    uint32_t reordering;
+
+    uint32_t rcv_rtt;
+    uint32_t rcv_space;
+
+    uint32_t total_retrans;
+};
 
 #endif
