@@ -48,7 +48,7 @@ int_t sys_epoll_ctl(fd_t epoll_f, int_t op, fd_t f, addr_t event_addr) {
         return _EFAULT;
     STRACE(" {events: %#x, data: %#x}", event.events, event.data);
     if (event.events & EPOLLET_)
-        printk("ignoring EPOLLET\n");
+        TRACE("ignoring EPOLLET\n");
     if (event.events & EPOLLONESHOT_) {
         printk("unimplemented epoll one-shot\n");
         return _EINVAL;
