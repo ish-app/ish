@@ -185,6 +185,8 @@ ssize_t realfs_write(struct fd *fd, const void *buf, size_t bufsize);
 int realfs_poll(struct fd *fd);
 int realfs_getflags(struct fd *fd);
 int realfs_setflags(struct fd *fd, dword_t arg);
+ssize_t realfs_ioctl_size(int cmd);
+int realfs_ioctl(struct fd *fd, int cmd, void *arg);
 int realfs_close(struct fd *fd);
 
 // adhoc fs

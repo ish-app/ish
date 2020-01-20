@@ -1086,6 +1086,8 @@ const struct fd_ops socket_fdops = {
     .poll = realfs_poll,
     .getflags = realfs_getflags,
     .setflags = realfs_setflags,
+    .ioctl_size = realfs_ioctl_size,
+    .ioctl = realfs_ioctl,
 };
 
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"

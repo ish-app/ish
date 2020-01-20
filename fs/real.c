@@ -11,6 +11,7 @@
 #include <sys/statvfs.h>
 #include <poll.h>
 
+#include "debug.h"
 #include "kernel/errno.h"
 #include "kernel/calls.h"
 #include "kernel/fs.h"
@@ -442,6 +443,26 @@ int realfs_setflags(struct fd *fd, dword_t flags) {
     return 0;
 }
 
+ssize_t realfs_ioctl_size(int cmd) {
+    if (cmd == FIONREAD_)
+        return sizeof(dword_t);
+    return -1;
+}
+
+int realfs_ioctl(struct fd *fd, int cmd, void *arg) {
+    int err;
+    size_t nread;
+    switch (cmd) {
+        case FIONREAD_:
+            err = ioctl(fd->real_fd, FIONREAD, &nread);
+            if (err < 0)
+                return errno_map();
+            *(dword_t *) arg = nread;
+            return 0;
+    }
+    return _ENOTTY;
+}
+
 const struct fs_ops realfs = {
     .name = "real", .magic = 0x7265616c,
     .mount = realfs_mount,
@@ -477,6 +498,8 @@ const struct fd_ops realfs_fdops = {
     .lseek = realfs_lseek,
     .mmap = realfs_mmap,
     .poll = realfs_poll,
+    .ioctl_size = realfs_ioctl_size,
+    .ioctl = realfs_ioctl,
     .fsync = realfs_fsync,
     .close = realfs_close,
     .getflags = realfs_getflags,
