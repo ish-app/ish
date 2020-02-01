@@ -1,7 +1,7 @@
 #include <fcntl.h>
 #include <netinet/tcp.h>
 #if defined(__APPLE__)
-#include <netinet/tcp_fsm.h>
+//#include <netinet/tcp_fsm.h>
 #endif
 #include <string.h>
 #include <sys/socket.h>
@@ -728,18 +728,20 @@ int_t sys_getsockopt(fd_t sock_fd, dword_t level, dword_t option, addr_t value_a
         if (err < 0)
             return errno_map();
 
+        // The possible keys for this table are in netinet/tcp_fsm.h, but that
+        // header isn't available on iOS, only macOS.
         static const uint8_t tcp_state_table[] = {
-            [TCPS_CLOSED] = 7,
-            [TCPS_LISTEN] = 10,
-            [TCPS_SYN_SENT] = 2,
-            [TCPS_SYN_RECEIVED] = 3,
-            [TCPS_ESTABLISHED] = 1,
-            [TCPS_CLOSE_WAIT] = 8,
-            [TCPS_FIN_WAIT_1] = 4,
-            [TCPS_CLOSING] = 11,
-            [TCPS_LAST_ACK] = 9,
-            [TCPS_FIN_WAIT_2] = 5,
-            [TCPS_TIME_WAIT] = 6,
+            7, // TCPS_CLOSED
+            10, // TCPS_LISTEN
+            2, // TCPS_SYN_SENT
+            3, // TCPS_SYN_RECEIVED
+            1, // TCPS_ESTABLISHED
+            8, // TCPS_CLOSE_WAIT
+            4, // TCPS_FIN_WAIT_1
+            11, // TCPS_CLOSING
+            9, // TCPS_LAST_ACK
+            5, // TCPS_FIN_WAIT_2
+            6, // TCPS_TIME_WAIT
         };
         struct tcp_info_ info = {
             .state = tcp_state_table[conn_info.tcpi_state],
