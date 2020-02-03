@@ -144,6 +144,8 @@ int generic_linkat(struct fd *src_at, const char *src_raw, struct fd *dst_at, co
     struct mount *dst_mount = find_mount_and_trim_path(dst);
     if (mount != dst_mount)
         err = _EXDEV;
+    else if (mount->fs->link == NULL)
+        err = _EPERM;
     else
         err = mount->fs->link(mount, src, dst);
     mount_release(mount);
@@ -157,7 +159,9 @@ int generic_unlinkat(struct fd *at, const char *path_raw) {
     if (err < 0)
         return err;
     struct mount *mount = find_mount_and_trim_path(path);
-    err = mount->fs->unlink(mount, path);
+    err = _EPERM;
+    if (mount->fs->unlink)
+        err = mount->fs->unlink(mount, path);
     mount_release(mount);
     return err;
 }
@@ -177,6 +181,8 @@ int generic_renameat(struct fd *src_at, const char *src_raw, struct fd *dst_at, 
     struct mount *dst_mount = find_mount_and_trim_path(dst);
     if (mount != dst_mount)
         err = _EXDEV;
+    else if (mount->fs->rename == NULL)
+        err = _EPERM;
     else
         err = mount->fs->rename(mount, src, dst);
     mount_release(mount);
@@ -190,7 +196,9 @@ int generic_symlinkat(const char *target, struct fd *at, const char *link_raw) {
     if (err < 0)
         return err;
     struct mount *mount = find_mount_and_trim_path(link);
-    err = mount->fs->symlink(mount, target, link);
+    err = _EPERM;
+    if (mount->fs->symlink)
+        err = mount->fs->symlink(mount, target, link);
     mount_release(mount);
     return err;
 }
@@ -206,9 +214,8 @@ int generic_mknodat(struct fd *at, const char *path_raw, mode_t_ mode, dev_t_ de
     if (err < 0)
         return err;
     struct mount *mount = find_mount_and_trim_path(path);
-    if (mount->fs->mknod == NULL)
-        err = _EPERM;
-    else
+    err = _EPERM;
+    if (mount->fs->mknod)
         err = mount->fs->mknod(mount, path, mode, dev);
     mount_release(mount);
     return err;
@@ -220,7 +227,9 @@ int generic_setattrat(struct fd *at, const char *path_raw, struct attr attr, boo
     if (err < 0)
         return err;
     struct mount *mount = find_mount_and_trim_path(path);
-    err = mount->fs->setattr(mount, path, attr);
+    err = _EPERM;
+    if (mount->fs->setattr)
+        err = mount->fs->setattr(mount, path, attr);
     mount_release(mount);
     return err;
 }
@@ -231,7 +240,9 @@ int generic_utime(struct fd *at, const char *path_raw, struct timespec atime, st
     if (err < 0)
         return err;
     struct mount *mount = find_mount_and_trim_path(path);
-    err = mount->fs->utime(mount, path, atime, mtime);
+    err = _EPERM;
+    if (mount->fs->utime)
+        err = mount->fs->utime(mount, path, atime, mtime);
     mount_release(mount);
     return err;
 }
@@ -255,7 +266,9 @@ int generic_mkdirat(struct fd *at, const char *path_raw, mode_t_ mode) {
     if (err < 0)
         return err;
     struct mount *mount = find_mount_and_trim_path(path);
-    err = mount->fs->mkdir(mount, path, mode);
+    err = _EPERM;
+    if (mount->fs->mkdir)
+        err = mount->fs->mkdir(mount, path, mode);
     mount_release(mount);
     return err;
 }
@@ -268,7 +281,9 @@ int generic_rmdirat(struct fd *at, const char *path_raw) {
     if (contains_mount_point(path))
         return _EBUSY;
     struct mount *mount = find_mount_and_trim_path(path);
-    err = mount->fs->rmdir(mount, path);
+    err = _EPERM;
+    if (mount->fs->rmdir)
+        err = mount->fs->rmdir(mount, path);
     mount_release(mount);
     return err;
 }

@@ -128,6 +128,7 @@ extern struct list mounts;
 #define FIONREAD_ 0x541b
 #define FIONBIO_ 0x5421
 
+// All operations are optional unless otherwise specified
 struct fs_ops {
     const char *name;
     int magic;
@@ -138,7 +139,8 @@ struct fs_ops {
 
     struct fd *(*open)(struct mount *mount, const char *path, int flags, int mode); // required
     ssize_t (*readlink)(struct mount *mount, const char *path, char *buf, size_t bufsize);
-    // TODO make these optional (EROFS probably)
+
+    // These return _EPERM if not present
     int (*link)(struct mount *mount, const char *src, const char *dst);
     int (*unlink)(struct mount *mount, const char *path);
     int (*rmdir)(struct mount *mount, const char *path);
@@ -153,13 +155,13 @@ struct fs_ops {
     // If they are the same function, it will only be called once.
     int (*close)(struct fd *fd);
 
-    int (*stat)(struct mount *mount, const char *path, struct statbuf *stat);
-    int (*fstat)(struct fd *fd, struct statbuf *stat);
+    int (*stat)(struct mount *mount, const char *path, struct statbuf *stat); // required
+    int (*fstat)(struct fd *fd, struct statbuf *stat); // required
     int (*setattr)(struct mount *mount, const char *path, struct attr attr);
     int (*fsetattr)(struct fd *fd, struct attr attr);
     int (*utime)(struct mount *mount, const char *path, struct timespec atime, struct timespec mtime);
     // Returns the path of the file descriptor, null terminated, buf must be at least MAX_PATH+1
-    int (*getpath)(struct fd *fd, char *buf);
+    int (*getpath)(struct fd *fd, char *buf); // required
 
     int (*flock)(struct fd *fd, int operation);
 

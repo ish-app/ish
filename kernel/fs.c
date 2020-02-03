@@ -627,6 +627,10 @@ dword_t sys_flock(fd_t f, dword_t operation) {
     struct fd *fd = f_get(f);
     if (fd == NULL)
         return _EBADF;
+    // TODO: POSIX doesn't allow flock to fail in this way. The check is here
+    // because a segfault is worse.
+    if (fd->mount->fs->flock == NULL)
+        return _EBADF;
     return fd->mount->fs->flock(fd, operation);
 }
 
@@ -709,12 +713,18 @@ dword_t sys_utime(addr_t path_addr, addr_t times_addr) {
     return sys_utime_common(AT_FDCWD_, path_addr, atime, mtime, 0);
 }
 
+static int generic_fsetattr(struct fd *fd, struct attr attr) {
+    if (fd->mount->fs->fsetattr == NULL)
+        return _EPERM;
+    return fd->mount->fs->fsetattr(fd, attr);
+}
+
 dword_t sys_fchmod(fd_t f, dword_t mode) {
     struct fd *fd = f_get(f);
     if (fd == NULL)
         return _EBADF;
     mode &= ~S_IFMT;
-    return fd->mount->fs->fsetattr(fd, make_attr(mode, mode));
+    return generic_fsetattr(fd, make_attr(mode, mode));
 }
 
 dword_t sys_fchmodat(fd_t at_f, addr_t path_addr, dword_t mode) {
@@ -739,12 +749,12 @@ dword_t sys_fchown32(fd_t f, uid_t_ owner, uid_t_ group) {
         return _EBADF;
     int err;
     if (owner != (uid_t) -1) {
-        err = fd->mount->fs->fsetattr(fd, make_attr(uid, owner));
+        err = generic_fsetattr(fd, make_attr(uid, owner));
         if (err < 0)
             return err;
     }
     if (group != (uid_t) -1) {
-        err = fd->mount->fs->fsetattr(fd, make_attr(gid, group));
+        err = generic_fsetattr(fd, make_attr(gid, group));
         if (err < 0)
             return err;
     }
@@ -795,7 +805,7 @@ dword_t sys_ftruncate64(fd_t f, dword_t size_low, dword_t size_high) {
     struct fd *fd = f_get(f);
     if (fd == NULL)
         return _EBADF;
-    return fd->mount->fs->fsetattr(fd, make_attr(size, size));
+    return generic_fsetattr(fd, make_attr(size, size));
 }
 
 dword_t sys_fallocate(fd_t f, dword_t UNUSED(mode), dword_t offset_low, dword_t offset_high, dword_t len_low, dword_t len_high) {
@@ -809,7 +819,7 @@ dword_t sys_fallocate(fd_t f, dword_t UNUSED(mode), dword_t offset_low, dword_t 
     if (err < 0)
         return err;
     if ((uint64_t) offset + (uint64_t) len > statbuf.size)
-        return fd->mount->fs->fsetattr(fd, make_attr(size, offset + len));
+        return generic_fsetattr(fd, make_attr(size, offset + len));
     return 0;
 }
 
