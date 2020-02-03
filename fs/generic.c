@@ -195,14 +195,14 @@ int generic_symlinkat(const char *target, struct fd *at, const char *link_raw) {
     return err;
 }
 
-int generic_mknod(const char *path_raw, mode_t_ mode, dev_t_ dev) {
+int generic_mknodat(struct fd *at, const char *path_raw, mode_t_ mode, dev_t_ dev) {
     if (S_ISDIR(mode) || S_ISLNK(mode))
         return _EINVAL;
     if (!superuser() && (S_ISBLK(mode) || S_ISCHR(mode)))
         return _EPERM;
 
     char path[MAX_PATH];
-    int err = path_normalize(AT_PWD, path_raw, path, N_SYMLINK_NOFOLLOW | N_PARENT_DIR_WRITE);
+    int err = path_normalize(at, path_raw, path, N_SYMLINK_NOFOLLOW | N_PARENT_DIR_WRITE);
     if (err < 0)
         return err;
     struct mount *mount = find_mount_and_trim_path(path);

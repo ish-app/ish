@@ -173,6 +173,7 @@ syscall_t syscall_table[] = {
     [291] = (syscall_t) syscall_stub, // inotify_init
     [295] = (syscall_t) sys_openat,
     [296] = (syscall_t) sys_mkdirat,
+    [297] = (syscall_t) sys_mknodat,
     [298] = (syscall_t) sys_fchownat,
     [300] = (syscall_t) sys_fstatat64,
     [301] = (syscall_t) sys_unlinkat,

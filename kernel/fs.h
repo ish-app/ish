@@ -52,7 +52,7 @@ int generic_unlinkat(struct fd *at, const char *path);
 int generic_rmdirat(struct fd *at, const char *path);
 int generic_renameat(struct fd *src_at, const char *src, struct fd *dst_at, const char *dst);
 int generic_symlinkat(const char *target, struct fd *at, const char *link);
-int generic_mknod(const char *path, mode_t_ mode, dev_t_ dev);
+int generic_mknodat(struct fd *at, const char *path, mode_t_ mode, dev_t_ dev);
 #define AC_R 4
 #define AC_W 2
 #define AC_X 1

@@ -193,13 +193,20 @@ dword_t sys_symlink(addr_t target_addr, addr_t link_addr) {
     return sys_symlinkat(target_addr, AT_FDCWD_, link_addr);
 }
 
-dword_t sys_mknod(addr_t path_addr, mode_t_ mode, dev_t_ dev) {
+dword_t sys_mknodat(fd_t at_f, addr_t path_addr, mode_t_ mode, dev_t_ dev) {
     char path[MAX_PATH];
     if (user_read_string(path_addr, path, sizeof(path)))
         return _EFAULT;
-    STRACE("mknod(\"%s\", %#x, %#x)", path, mode, dev);
+    STRACE("mknodat(%d, \"%s\", %#x, %#x)", at_f, path, mode, dev);
     apply_umask(&mode);
-    return generic_mknod(path, mode, dev);
+    struct fd *at = at_fd(at_f);
+    if (at == NULL)
+        return _EBADF;
+    return generic_mknodat(at, path, mode, dev);
+}
+
+dword_t sys_mknod(addr_t path_addr, mode_t_ mode, dev_t_ dev) {
+    return sys_mknodat(AT_FDCWD_, path_addr, mode, dev);
 }
 
 dword_t sys_read(fd_t fd_no, addr_t buf_addr, dword_t size) {

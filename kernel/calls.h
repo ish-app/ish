@@ -117,6 +117,7 @@ dword_t sys_renameat2(fd_t src_at_f, addr_t src_addr, fd_t dst_at_f, addr_t dst_
 dword_t sys_symlink(addr_t target_addr, addr_t link_addr);
 dword_t sys_symlinkat(addr_t target_addr, fd_t at_f, addr_t link_addr);
 dword_t sys_mknod(addr_t path_addr, mode_t_ mode, dev_t_ dev);
+dword_t sys_mknodat(fd_t at_f, addr_t path_addr, mode_t_ mode, dev_t_ dev);
 dword_t sys_access(addr_t path_addr, dword_t mode);
 dword_t sys_faccessat(fd_t at_f, addr_t path, mode_t_ mode, dword_t flags);
 dword_t sys_readlink(addr_t path, addr_t buf, dword_t bufsize);
