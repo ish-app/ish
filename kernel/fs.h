@@ -117,6 +117,7 @@ extern struct list mounts;
 #define O_WRONLY_ (1 << 0)
 #define O_RDWR_ (1 << 1)
 #define O_CREAT_ (1 << 6)
+#define O_EXCL_ (1 << 7)
 #define O_NOCTTY_ (1 << 8)
 #define O_TRUNC_ (1 << 9)
 #define O_APPEND_ (1 << 10)
@@ -199,5 +200,6 @@ extern const struct fs_ops realfs;
 extern const struct fs_ops procfs;
 extern const struct fs_ops fakefs;
 extern const struct fs_ops devptsfs;
+extern const struct fs_ops tmpfs;
 
 #endif

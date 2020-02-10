@@ -154,3 +154,23 @@ bool path_is_normalized(const char *path) {
     }
     return true;
 }
+
+bool path_next_component(const char **path, char *component, int *err) {
+    const char *p = *path;
+    if (*p == '\0')
+        return false;
+
+    assert(*p == '/');
+    p++;
+    char *c = component;
+    while (*p != '/' && *p != '\0') {
+        *c++ = *p++;
+        if (c - component >= MAX_NAME) {
+            *err = _ENAMETOOLONG;
+            return false;
+        }
+    }
+    *c = '\0';
+    *path = p;
+    return true;
+}

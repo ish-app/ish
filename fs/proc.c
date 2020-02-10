@@ -3,23 +3,15 @@
 #include "kernel/calls.h"
 #include "kernel/fs.h"
 #include "fs/proc.h"
+#include "fs/path.h"
 
 static int proc_lookup(const char *path, struct proc_entry *entry) {
     entry->meta = &proc_root;
-    char component[MAX_NAME + 1] = {};
-    while (*path != '\0') {
+    char component[MAX_NAME + 1];
+    int err = 0;
+    while (path_next_component(&path, component, &err)) {
         if (!S_ISDIR(proc_entry_mode(entry)))
             return _ENOTDIR;
-
-        assert(*path == '/');
-        path++;
-        char *c = component;
-        while (*path != '/' && *path != '\0') {
-            *c++ = *path++;
-            if (c - component >= MAX_NAME)
-                return _ENAMETOOLONG;
-        }
-        *c = '\0';
 
         unsigned long index = 0;
         struct proc_entry next_entry;
@@ -42,7 +34,7 @@ static int proc_lookup(const char *path, struct proc_entry *entry) {
 found:
         *entry = next_entry;
     }
-    return 0;
+    return err;
 }
 
 extern const struct fd_ops procfs_fdops;

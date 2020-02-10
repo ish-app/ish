@@ -26,4 +26,15 @@
 int path_normalize(struct fd *at, const char *path, char *out, int flags);
 bool path_is_normalized(const char *path);
 
+// Helper function for iterating through a normalized path.
+//
+// The *path pointer is advanced to point to the next /, and the next path
+// component is copied to component. component must point to a buffer large
+// enough to hold a string of MAX_NAME characters.
+//
+// If the next path component was successfully copied, returns true; otherwise
+// returns false. If an error occurred, *err is set to the error code.
+// Otherwise, the end of the path has been reached.
+bool path_next_component(const char **path, char *component, int *err);
+
 #endif
