@@ -88,6 +88,7 @@ syscall_t syscall_table[] = {
     [125] = (syscall_t) sys_mprotect,
     [132] = (syscall_t) sys_getpgid,
     [133] = (syscall_t) sys_fchdir,
+    [136] = (syscall_t) sys_personality,
     [140] = (syscall_t) sys__llseek,
     [141] = (syscall_t) sys_getdents,
     [142] = (syscall_t) sys_select,
