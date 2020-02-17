@@ -177,5 +177,5 @@ dword_t sys_personality(dword_t pers) {
         return 0x00000000;
     if (pers == 0x00000000)  // set personality to Linux
         return 0x00000000;
-    return -1;  // otherwise return error
+    return _EINVAL;  // otherwise return error
 }
