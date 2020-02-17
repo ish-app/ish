@@ -1,8 +1,5 @@
 #include <fcntl.h>
 #include <netinet/tcp.h>
-#if defined(__APPLE__)
-//#include <netinet/tcp_fsm.h>
-#endif
 #include <string.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
