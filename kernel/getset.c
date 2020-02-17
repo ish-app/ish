@@ -172,7 +172,7 @@ int_t sys_capset(addr_t header_addr, addr_t data_addr) {
 }
 
 // minimal version according to Linux sys/personality.h
-dword_t sys_personality(dword_t pers) {
+int_t sys_personality(dword_t pers) {
     if (pers == 0xffffffff)  // get personality, return default (Linux)
         return 0x00000000;
     if (pers == 0x00000000)  // set personality to Linux
