@@ -148,7 +148,13 @@ dword_t sys_clone(dword_t flags, addr_t stack, addr_t ptid, addr_t tls, addr_t c
         return _ENOMEM;
     int err = copy_task(task, flags, stack, ptid, tls, ctid);
     if (err < 0) {
+        // FIXME: there is a window between task_create_ and task_destroy where
+        // some other thread could get a pointer to the task.
+        // FIXME: task_destroy doesn't free all aspects of the task, which
+        // could cause leaks
+        lock(&pids_lock);
         task_destroy(task);
+        unlock(&pids_lock);
         return err;
     }
     task->cpu.eax = 0;

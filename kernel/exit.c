@@ -13,13 +13,16 @@ static bool exit_tgroup(struct task *task) {
     list_remove(&task->group_links);
     bool group_dead = list_empty(&group->threads);
     if (group_dead) {
-        // don't need to lock the group since the only pointers it come from:
-        // - other threads current->group, but the other threads have accessed it
+        // don't need to lock the group since the only pointers to it come from:
+        // - other threads' current->group, but there are none left thanks to that list_empty call
         // - locking pids_lock first, which do_exit did
         if (group->timer)
             timer_free(group->timer);
-        task_leave_session(task);
-        list_remove(&group->pgroup);
+
+        // The group will be removed from its group and session by reap_if_zombie,
+        // because fish tries to set the pgid to that of an exited but not reaped
+        // task.
+        // https://github.com/Microsoft/WSL/issues/2786
     }
     return group_dead;
 }
@@ -191,8 +194,13 @@ static bool reap_if_zombie(struct task *task, addr_t status_addr, addr_t rusage_
             return _EFAULT;
 
     unlock(&task->group->lock);
+
+    // tear down group
     cond_destroy(&task->group->child_exit);
+    task_leave_session(task);
+    list_remove(&task->group->pgroup);
     free(task->group);
+
     task_destroy(task);
     return true;
 }
