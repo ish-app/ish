@@ -382,10 +382,12 @@ static const char *metaKeys = "abcdefghijklmnopqrstuvwxyz0123456789-=[]\\;',./";
         [self addKey:specialKey withModifiers:0];
     }
     if (UserPreferences.shared.capsLockMapping != CapsLockMapNone) {
-        [self addKeys:controlKeys withModifiers:UIKeyModifierAlphaShift];
-        [self addKeys:alphabet withModifiers:0];
-        [self addKeys:alphabet withModifiers:UIKeyModifierShift];
-        [self addKey:@"" withModifiers:UIKeyModifierAlphaShift]; // otherwise tap of caps lock can switch layouts
+        if (@available(iOS 13, *)); else {
+            [self addKeys:controlKeys withModifiers:UIKeyModifierAlphaShift];
+            [self addKeys:alphabet withModifiers:0];
+            [self addKeys:alphabet withModifiers:UIKeyModifierShift];
+            [self addKey:@"" withModifiers:UIKeyModifierAlphaShift]; // otherwise tap of caps lock can switch layouts
+        }
     }
     if (UserPreferences.shared.optionMapping == OptionMapEsc) {
         [self addKeys:metaKeys withModifiers:UIKeyModifierAlternate];
