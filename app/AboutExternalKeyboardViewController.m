@@ -70,7 +70,7 @@ const int kCapsLockMappingSection = 0;
 - (NSString *)tableView:(UITableView *)tableView titleForFooterInSection:(NSInteger)section {
     if (section == 0 && ![self.class capsLockMappingSupported])
         return @"Caps Lock mapping is broken in iOS 13.\n\n"
-        @"Since iOS 13.4, Caps Lock can be remapped in Settings → General → Keyboard → Hardware Keyboard → Modifier Keys.";
+        @"Since iOS 13.4, Caps Lock can be remapped system-wide in Settings → General → Keyboard → Hardware Keyboard → Modifier Keys.";
     return [super tableView:tableView titleForFooterInSection:section];
 }
 
