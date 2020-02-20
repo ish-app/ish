@@ -8,6 +8,7 @@
 
 #include "kernel/calls.h"
 #include "fs/tty.h"
+#include "fs/devices.h"
 
 // Only /dev/tty1 will be connected, the rest will go to a black hole.
 #define REAL_TTY_NUM 1
@@ -130,4 +131,4 @@ struct tty_driver_ops real_tty_ops = {
     .write = real_tty_write,
     .cleanup = real_tty_cleanup,
 };
-DEFINE_TTY_DRIVER(real_tty_driver, &real_tty_ops, 64);
+DEFINE_TTY_DRIVER(real_tty_driver, &real_tty_ops, TTY_CONSOLE_MAJOR, 64);

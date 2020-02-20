@@ -22,6 +22,7 @@ matrix:
               - MESON_OPTS=-Dengine=jit
               - NINJA_TARGET=test
         - language: objective-c
+          os: osx
           osx_image: xcode11
           install:
               - pip3 install meson

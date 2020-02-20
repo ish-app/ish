@@ -4,49 +4,47 @@
 #include "fs/proc.h"
 #include "platform/platform.h"
 
-static ssize_t proc_show_version(struct proc_entry *UNUSED(entry), char *buf) {
+static int proc_show_version(struct proc_entry *UNUSED(entry), struct proc_data *buf) {
     struct uname uts;
     do_uname(&uts);
-    return sprintf(buf, "%s version %s %s\n", uts.system, uts.release, uts.version);
+    proc_printf(buf, "%s version %s %s\n", uts.system, uts.release, uts.version);
+    return 0;
 }
 
-static ssize_t proc_show_stat(struct proc_entry *UNUSED(entry), char *buf) {
+static int proc_show_stat(struct proc_entry *UNUSED(entry), struct proc_data *buf) {
     struct cpu_usage usage = get_cpu_usage();
-    size_t n = 0;
-    n += sprintf(buf + n, "cpu  %"PRIu64" %"PRIu64" %"PRIu64" %"PRIu64"\n", usage.user_ticks, usage.nice_ticks, usage.system_ticks, usage.idle_ticks);
-    return n;
+    proc_printf(buf, "cpu  %"PRIu64" %"PRIu64" %"PRIu64" %"PRIu64"\n", usage.user_ticks, usage.nice_ticks, usage.system_ticks, usage.idle_ticks);
+    return 0;
 }
 
-static void show_kb(char *buf, size_t *n, const char *name, uint64_t value) {
-    *n += sprintf(buf + *n, "%s%8"PRIu64" kB\n", name, value / 1000);
+static void show_kb(struct proc_data *buf, const char *name, uint64_t value) {
+    proc_printf(buf, "%s%8"PRIu64" kB\n", name, value / 1000);
 }
 
-static ssize_t proc_show_meminfo(struct proc_entry *UNUSED(entry), char *buf) {
+static int proc_show_meminfo(struct proc_entry *UNUSED(entry), struct proc_data *buf) {
     struct mem_usage usage = get_mem_usage();
-    size_t n = 0;
-    show_kb(buf, &n, "MemTotal:       ", usage.total);
-    show_kb(buf, &n, "MemFree:        ", usage.free);
-    show_kb(buf, &n, "MemShared:      ", usage.free);
+    show_kb(buf, "MemTotal:       ", usage.total);
+    show_kb(buf, "MemFree:        ", usage.free);
+    show_kb(buf, "MemShared:      ", usage.free);
     // a bunch of crap busybox top needs to see or else it gets stack garbage
-    show_kb(buf, &n, "Shmem:          ", 0);
-    show_kb(buf, &n, "Buffers:        ", 0);
-    show_kb(buf, &n, "Cached:         ", 0);
-    show_kb(buf, &n, "SwapTotal:      ", 0);
-    show_kb(buf, &n, "SwapFree:       ", 0);
-    show_kb(buf, &n, "Dirty:          ", 0);
-    show_kb(buf, &n, "Writeback:      ", 0);
-    show_kb(buf, &n, "AnonPages:      ", 0);
-    show_kb(buf, &n, "Mapped:         ", 0);
-    show_kb(buf, &n, "Slab:           ", 0);
-    return n;
+    show_kb(buf, "Shmem:          ", 0);
+    show_kb(buf, "Buffers:        ", 0);
+    show_kb(buf, "Cached:         ", 0);
+    show_kb(buf, "SwapTotal:      ", 0);
+    show_kb(buf, "SwapFree:       ", 0);
+    show_kb(buf, "Dirty:          ", 0);
+    show_kb(buf, "Writeback:      ", 0);
+    show_kb(buf, "AnonPages:      ", 0);
+    show_kb(buf, "Mapped:         ", 0);
+    show_kb(buf, "Slab:           ", 0);
+    return 0;
 }
 
-static ssize_t proc_show_uptime(struct proc_entry *UNUSED(entry), char *buf) {
+static int proc_show_uptime(struct proc_entry *UNUSED(entry), struct proc_data *buf) {
     struct uptime_info uptime_info = get_uptime();
     unsigned uptime = uptime_info.uptime_ticks;
-    size_t n = 0;
-    n += sprintf(buf + n, "%u.%u %u.%u\n", uptime / 100, uptime % 100, uptime / 100, uptime % 100);
-    return n;
+    proc_printf(buf, "%u.%u %u.%u\n", uptime / 100, uptime % 100, uptime / 100, uptime % 100);
+    return 0;
 }
 
 static int proc_readlink_self(struct proc_entry *UNUSED(entry), char *buf) {
@@ -54,16 +52,15 @@ static int proc_readlink_self(struct proc_entry *UNUSED(entry), char *buf) {
     return 0;
 }
 
-static ssize_t proc_show_mounts(struct proc_entry *UNUSED(entry), char *buf) {
-    size_t n = 0;
+static int proc_show_mounts(struct proc_entry *UNUSED(entry), struct proc_data *buf) {
     struct mount *mount;
     list_for_each_entry(&mounts, mount, mounts) {
         const char *point = mount->point;
         if (point[0] == '\0')
             point = "/";
-        n += sprintf(buf + n, "%s %s %s %s 0 0\n", mount->source, point, mount->fs->name, "rw");
+        proc_printf(buf, "%s %s %s %s 0 0\n", mount->source, point, mount->fs->name, "rw");
     };
-    return n;
+    return 0;
 }
 
 // in alphabetical order

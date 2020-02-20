@@ -9,13 +9,16 @@
 #include "util/list.h"
 #include "kernel/calls.h"
 
+static void jit_block_disconnect(struct jit *jit, struct jit_block *block);
 static void jit_block_free(struct jit *jit, struct jit_block *block);
+static void jit_free_jetsam(struct jit *jit);
 static void jit_resize_hash(struct jit *jit, size_t new_size);
 
 struct jit *jit_new(struct mem *mem) {
     struct jit *jit = calloc(1, sizeof(struct jit));
     jit->mem = mem;
     jit_resize_hash(jit, JIT_INITIAL_HASH_SIZE);
+    list_init(&jit->jetsam);
     lock_init(&jit->lock);
     return jit;
 }
@@ -29,6 +32,7 @@ void jit_free(struct jit *jit) {
             jit_block_free(jit, block);
         }
     }
+    jit_free_jetsam(jit);
     free(jit->hash);
     free(jit);
 }
@@ -45,7 +49,9 @@ void jit_invalidate_page(struct jit *jit, page_t page) {
         if (list_null(blocks))
             continue;
         list_for_each_entry_safe(blocks, block, tmp, page[i]) {
-            jit_block_free(jit, block);
+            jit_block_disconnect(jit, block);
+            block->is_jetsam = true;
+            list_add(&jit->jetsam, &block->jetsam);
         }
     }
     unlock(&jit->lock);
@@ -118,7 +124,9 @@ static struct jit_block *jit_block_compile(addr_t ip, struct tlb *tlb) {
     return state.block;
 }
 
-static void jit_block_free(struct jit *jit, struct jit_block *block) {
+// Remove all pointers to the block. It can't be freed yet because another
+// thread may be executing it.
+static void jit_block_disconnect(struct jit *jit, struct jit_block *block) {
     if (jit != NULL) {
         jit->mem_used -= block->used;
         jit->num_blocks--;
@@ -128,14 +136,26 @@ static void jit_block_free(struct jit *jit, struct jit_block *block) {
         list_remove(&block->page[i]);
         list_remove_safe(&block->jumps_from_links[i]);
 
-        struct jit_block *last_block, *tmp;
-        list_for_each_entry_safe(&block->jumps_from[i], last_block, tmp, jumps_from_links[i]) {
-            if (last_block->jump_ip[i] != NULL)
-                *last_block->jump_ip[i] = last_block->old_jump_ip[i];
-            list_remove(&last_block->jumps_from_links[i]);
+        struct jit_block *prev_block, *tmp;
+        list_for_each_entry_safe(&block->jumps_from[i], prev_block, tmp, jumps_from_links[i]) {
+            if (prev_block->jump_ip[i] != NULL)
+                *prev_block->jump_ip[i] = prev_block->old_jump_ip[i];
+            list_remove(&prev_block->jumps_from_links[i]);
         }
     }
+}
+
+static void jit_block_free(struct jit *jit, struct jit_block *block) {
+    jit_block_disconnect(jit, block);
     free(block);
+}
+
+static void jit_free_jetsam(struct jit *jit) {
+    struct jit_block *block, *tmp;
+    list_for_each_entry_safe(&jit->jetsam, block, tmp, jetsam) {
+        list_remove(&block->jetsam);
+        free(block);
+    }
 }
 
 int jit_enter(struct jit_block *block, struct jit_frame *frame, struct tlb *tlb);
@@ -180,16 +200,24 @@ void cpu_run(struct cpu_state *cpu) {
                 (last_block->jump_ip[0] != NULL ||
                  last_block->jump_ip[1] != NULL)) {
             lock(&jit->lock);
-            for (int i = 0; i <= 1; i++) {
-                if (last_block->jump_ip[i] != NULL &&
-                        (*last_block->jump_ip[i] & 0xffffffff) == block->addr) {
-                    *last_block->jump_ip[i] = (unsigned long) block->code;
-                    list_add(&block->jumps_from[i], &last_block->jumps_from_links[i]);
+            // can't mint new pointers to a block that has been marked jetsam
+            // and is thus assumed to have no pointers left
+            if (!last_block->is_jetsam && !block->is_jetsam) {
+                for (int i = 0; i <= 1; i++) {
+                    if (last_block->jump_ip[i] != NULL &&
+                            (*last_block->jump_ip[i] & 0xffffffff) == block->addr) {
+                        *last_block->jump_ip[i] = (unsigned long) block->code;
+                        list_add(&block->jumps_from[i], &last_block->jumps_from_links[i]);
+                    }
                 }
             }
+
             unlock(&jit->lock);
         }
         frame.last_block = block;
+
+        // block may be jetsam, but that's ok, because it can't be freed until
+        // every thread on this jit is not executing anything
 
         TRACE("%d %08x --- cycle %d\n", current->pid, ip, i);
         int interrupt = jit_enter(block, &frame, &tlb);
@@ -200,21 +228,32 @@ void cpu_run(struct cpu_state *cpu) {
             cpu->trapno = interrupt;
             read_wrunlock(&cpu->mem->lock);
             handle_interrupt(interrupt);
-            read_wrlock(&cpu->mem->lock);
 
             jit = cpu->mem->jit;
-            last_block = NULL;
-            tlb.mem = cpu->mem;
-            if (cpu->mem->changes != changes) {
-                tlb_flush(&tlb);
-                // flush return cache
-                for (size_t i = 0; i < JIT_RETURN_CACHE_SIZE; i++)
-                    frame.ret_cache[i] = 0;
-                changes = cpu->mem->changes;
+            lock(&jit->lock);
+            if (!list_empty(&jit->jetsam)) {
+                // write-lock the mem to wait until other jit threads get to
+                // this point, so they will all clear out their block pointers
+                // TODO: use RCU for better performance
+                unlock(&jit->lock);
+                write_wrlock(&cpu->mem->lock);
+                lock(&jit->lock);
+                jit_free_jetsam(jit);
+                write_wrunlock(&cpu->mem->lock);
             }
-            memset(cache, 0, sizeof(cache));
+            unlock(&jit->lock);
+            read_wrlock(&cpu->mem->lock);
+
+            tlb.mem = cpu->mem;
+            if (cpu->mem->changes != changes)
+                tlb_flush(&tlb);
+            changes = cpu->mem->changes;
             frame.cpu = *cpu;
             frame.last_block = NULL;
+            last_block = NULL;
+            // jit blocks might have been invalidated, flush caches
+            memset(frame.ret_cache, 0, sizeof(frame.ret_cache));
+            memset(cache, 0, sizeof(cache));
         }
     }
 }

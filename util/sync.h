@@ -8,7 +8,7 @@
 
 // locks, implemented using pthread
 
-#define LOCK_DEBUG 1
+#define LOCK_DEBUG 0
 
 typedef struct {
     pthread_mutex_t m;

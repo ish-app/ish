@@ -97,7 +97,7 @@
     if ([parentPath isEqualToString:@"/"])
         return NSFileProviderRootContainerItemIdentifier;
     struct statbuf stat;
-    int err = self.fd->mount->fs->stat(self.fd->mount, parentPath.UTF8String, &stat, false);
+    int err = self.fd->mount->fs->stat(self.fd->mount, parentPath.UTF8String, &stat);
     [self handleError:err inFunction:@"stat"];
     NSString *parent = [NSString stringWithFormat:@"%lu", (unsigned long) stat.inode];
     NSLog(@"parent of %@ is %@", self.path, parent);

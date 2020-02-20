@@ -9,7 +9,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface AboutAppearanceViewController : UITableViewController
+@interface AboutAppearanceViewController : UITableViewController <UIFontPickerViewControllerDelegate>
 
 @end
 

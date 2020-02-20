@@ -81,13 +81,14 @@ struct termios_ {
 
 struct tty_driver {
     const struct tty_driver_ops *ops;
+    int major;
     struct tty **ttys;
     unsigned limit;
 };
 
-#define DEFINE_TTY_DRIVER(name, driver_ops, size) \
+#define DEFINE_TTY_DRIVER(name, driver_ops, _major, size) \
     static struct tty *name##_ttys[size]; \
-    struct tty_driver name = {.ops = driver_ops, .ttys = name##_ttys, .limit = size}
+    struct tty_driver name = {.ops = driver_ops, .major = _major, .ttys = name##_ttys, .limit = size}
 
 struct tty_driver_ops {
     int (*init)(struct tty *tty);
@@ -154,6 +155,7 @@ void tty_hangup(struct tty *tty);
 // public for the benefit of ptys
 struct tty *tty_get(struct tty_driver *driver, int type, int num);
 struct tty *tty_alloc(struct tty_driver *driver, int type, int num);
+int tty_open(struct tty *tty, struct fd *fd);
 extern lock_t ttys_lock;
 void tty_release(struct tty *tty); // must be called with ttys_lock
 
@@ -161,5 +163,7 @@ extern struct dev_ops tty_dev;
 extern struct dev_ops ptmx_dev;
 
 int ptmx_open(struct fd *fd);
+// Should call with a driver declared *without* DEFINE_TTY_DRIVER, as it overwrites the ttys field.
+struct tty *pty_open_fake(struct tty_driver *driver);
 
 #endif

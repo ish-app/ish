@@ -3,6 +3,7 @@
 #include <signal.h>
 #include "kernel/calls.h"
 #include "kernel/signal.h"
+#include "kernel/task.h"
 #include "kernel/vdso.h"
 #include "emu/interrupt.h"
 
@@ -253,7 +254,7 @@ static void receive_signal(struct sighand *sighand, struct siginfo_ *info) {
     current->cpu.eip = sighand->action[info->sig].handler;
 
     dword_t sp = current->cpu.esp;
-    if (sighand->altstack) {
+    if (sighand->altstack && !is_on_altstack(sp, sighand)) {
         sp = sighand->altstack + sighand->altstack_size;
     }
     if (xsave_extra) {
@@ -640,37 +641,84 @@ int_t sys_rt_sigtimedwait(addr_t set_addr, addr_t info_addr, addr_t timeout_addr
     return info.sig;
 }
 
-int do_kill(pid_t_ pid, dword_t sig, pid_t_ tgid) {
-    STRACE("kill(%d, %d)", pid, sig);
-    if (sig >= NUM_SIGS)
-        return _EINVAL;
+static int kill_task(struct task *task, dword_t sig) {
+    if (!superuser() &&
+            current->uid != task->uid &&
+            current->uid != task->suid &&
+            current->euid != task->uid &&
+            current->euid != task->suid)
+        return _EPERM;
     struct siginfo_ info = {
         .code = SI_USER_,
         .kill.pid = current->pid,
         .kill.uid = current->uid,
     };
-    // TODO check permissions
+    send_signal(task, sig, info);
+    return 0;
+}
+
+static int kill_group(pid_t_ pgid, dword_t sig) {
+    struct pid *pid = pid_get(pgid);
+    if (pid == NULL) {
+        unlock(&pids_lock);
+        return _ESRCH;
+    }
+    struct tgroup *tgroup;
+    int err = _EPERM;
+    list_for_each_entry(&pid->pgroup, tgroup, pgroup) {
+        int kill_err = kill_task(tgroup->leader, sig);
+        // killing a group should return an error only if no process can be signaled
+        if (err == _EPERM)
+            err = kill_err;
+    }
+    return err;
+}
+
+static int kill_everything(dword_t sig) {
+    int err = _EPERM;
+    for (int i = 2; i < MAX_PID; i++) {
+        struct task *task = pid_get_task(i);
+        if (task == NULL || task == current || !task_is_leader(task))
+            continue;
+        int kill_err = kill_task(task, sig);
+        if (err == _EPERM)
+            err = kill_err;
+    }
+    return err;
+}
+
+static int do_kill(pid_t_ pid, dword_t sig, pid_t_ tgid) {
+    STRACE("kill(%d, %d)", pid, sig);
+    if (sig >= NUM_SIGS)
+        return _EINVAL;
     if (pid == 0)
         pid = -current->group->pgid;
-    if (pid < 0)
-        return send_group_signal(-pid, sig, info);
 
+    int err;
     lock(&pids_lock);
-    struct task *task = pid_get_task(pid);
-    if (task == NULL) {
-        unlock(&pids_lock);
-        return _ESRCH;
+
+    if (pid == -1) {
+        err = kill_everything(sig);
+    } else if (pid < 0) {
+        err = kill_group(-pid, sig);
+    } else {
+        struct task *task = pid_get_task(pid);
+        if (task == NULL) {
+            unlock(&pids_lock);
+            return _ESRCH;
+        }
+
+        // If tgid is nonzero, it must be correct
+        if (tgid != 0 && task->tgid != tgid) {
+            unlock(&pids_lock);
+            return _ESRCH;
+        }
+
+        err = kill_task(task, sig);
     }
 
-    // If tgid is nonzero, it must be correct
-    if (tgid != 0 && task->tgid != tgid) {
-        unlock(&pids_lock);
-        return _ESRCH;
-    }
-
-    send_signal(task, sig, info);
     unlock(&pids_lock);
-    return 0;
+    return err;
 }
 
 dword_t sys_kill(pid_t_ pid, dword_t sig) {
@@ -686,4 +734,3 @@ dword_t sys_tkill(pid_t_ tid, dword_t sig) {
         return _EINVAL;
     return do_kill(tid, sig, 0);
 }
-

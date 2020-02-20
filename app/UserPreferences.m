@@ -11,6 +11,7 @@
 static NSString *const kPreferenceCapsLockMappingKey = @"Caps Lock Mapping";
 static NSString *const kPreferenceOptionMappingKey = @"Option Mapping";
 static NSString *const kPreferenceBacktickEscapeKey = @"Backtick Mapping Escape";
+static NSString *const kPreferenceFontFamilyKey = @"Font Family";
 static NSString *const kPreferenceFontSizeKey = @"Font Size";
 static NSString *const kPreferenceThemeKey = @"Theme";
 static NSString *const kPreferenceDisableDimmingKey = @"Disable Dimming";
@@ -36,6 +37,7 @@ static NSString *const kPreferenceBootCommandKey = @"Boot Command";
         _defaults = [NSUserDefaults standardUserDefaults];
         Theme *defaultTheme = [Theme presetThemeNamed:@"Light"];
         [_defaults registerDefaults:@{
+            kPreferenceFontFamilyKey: @"Menlo",
             kPreferenceFontSizeKey: @(12),
             kPreferenceThemeKey: defaultTheme.properties,
             kPreferenceCapsLockMappingKey: @(CapsLockMapControl),
@@ -76,6 +78,13 @@ static NSString *const kPreferenceBootCommandKey = @"Boot Command";
 }
 - (void)setFontSize:(NSNumber *)fontSize {
     [_defaults setObject:fontSize forKey:kPreferenceFontSizeKey];
+}
+
+- (NSString *)fontFamily {
+    return [_defaults objectForKey:kPreferenceFontFamilyKey];
+}
+- (void)setFontFamily:(NSString *)fontFamily {
+    [_defaults setObject:fontFamily forKey:kPreferenceFontFamilyKey];
 }
 
 - (UIColor *)foregroundColor {

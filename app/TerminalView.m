@@ -14,6 +14,7 @@
 
 @property (nonatomic) NSMutableArray<UIKeyCommand *> *keyCommands;
 @property ScrollbarView *scrollbarView;
+@property (nonatomic) BOOL terminalFocused;
 
 @property (nullable) NSString *markedText;
 
@@ -22,6 +23,9 @@
 @implementation TerminalView
 @synthesize inputDelegate;
 @synthesize tokenizer;
+
+static int kObserverMappings;
+static int kObserverStyling;
 
 - (void)awakeFromNib {
     [super awakeFromNib];
@@ -35,23 +39,42 @@
     scrollbarView.bounces = NO;
     [self addSubview:scrollbarView];
     
-    [UserPreferences.shared addObserver:self forKeyPath:@"capsLockMapping" options:0 context:nil];
-    [UserPreferences.shared addObserver:self forKeyPath:@"optionMapping" options:0 context:nil];
-    [UserPreferences.shared addObserver:self forKeyPath:@"backtickMapEscape" options:0 context:nil];
+    UserPreferences *prefs = UserPreferences.shared;
+    [prefs addObserver:self forKeyPath:@"capsLockMapping" options:0 context:&kObserverMappings];
+    [prefs addObserver:self forKeyPath:@"optionMapping" options:0 context:&kObserverMappings];
+    [prefs addObserver:self forKeyPath:@"backtickMapEscape" options:0 context:&kObserverMappings];
+    [prefs addObserver:self forKeyPath:@"fontFamily" options:0 context:&kObserverStyling];
+    [prefs addObserver:self forKeyPath:@"fontSize" options:0 context:&kObserverStyling];
+    [prefs addObserver:self forKeyPath:@"theme" options:0 context:&kObserverStyling];
 }
 
 - (void)dealloc {
-    [UserPreferences.shared removeObserver:self forKeyPath:@"capsLockMapping"];
-    [UserPreferences.shared removeObserver:self forKeyPath:@"optionMapping"];
-    [UserPreferences.shared removeObserver:self forKeyPath:@"backtickMapEscape"];
+    UserPreferences *prefs = UserPreferences.shared;
+    [prefs removeObserver:self forKeyPath:@"capsLockMapping"];
+    [prefs removeObserver:self forKeyPath:@"optionMapping"];
+    [prefs removeObserver:self forKeyPath:@"backtickMapEscape"];
+    [prefs removeObserver:self forKeyPath:@"fontFamily"];
+    [prefs removeObserver:self forKeyPath:@"fontSize"];
+    [prefs removeObserver:self forKeyPath:@"theme"];
+    if (self.terminal)
+        [self.terminal removeObserver:self forKeyPath:@"loaded"];
+    self.terminal = nil;
 }
 
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context {
-    _keyCommands = nil;
+    if (object == self.terminal) {
+        if (self.terminal.loaded) {
+            [self _updateStyle];
+        }
+    } else if (context == &kObserverMappings) {
+        _keyCommands = nil;
+    } else if (context == &kObserverStyling) {
+        [self _updateStyle];
+    }
 }
 
 - (void)setTerminal:(Terminal *)terminal {
-    NSArray<NSString *>* handlers = @[@"focus", @"newScrollHeight", @"newScrollTop", @"openLink"];
+    NSArray<NSString *>* handlers = @[@"syncFocus", @"focus", @"newScrollHeight", @"newScrollTop", @"openLink"];
     
     if (self.terminal) {
         // remove old terminal
@@ -62,6 +85,7 @@
             [self.terminal.webView.configuration.userContentController removeScriptMessageHandlerForName:handler];
         }
         terminal.enableVoiceOverAnnounce = NO;
+        [self.terminal removeObserver:self forKeyPath:@"loaded"];
     }
     
     _terminal = terminal;
@@ -78,9 +102,46 @@
     self.opaque = webView.opaque = NO;
     webView.backgroundColor = UIColor.clearColor;
     webView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+    [self.terminal addObserver:self forKeyPath:@"loaded" options:NSKeyValueObservingOptionInitial context:nil];
     
     self.scrollbarView.contentView = webView;
     [self.scrollbarView addSubview:webView];
+}
+
+#pragma mark Styling
+
+- (NSString *)cssColor:(UIColor *)color {
+    CGFloat red, green, blue, alpha;
+    [color getRed:&red green:&green blue:&blue alpha:&alpha];
+    return [NSString stringWithFormat:@"rgba(%ld, %ld, %ld, %ld)",
+            lround(red * 255), lround(green * 255), lround(blue * 255), lround(alpha * 255)];
+}
+
+- (void)_updateStyle {
+    if (!self.terminal.loaded)
+        return;
+    UserPreferences *prefs = [UserPreferences shared];
+    if (_overrideFontSize == prefs.fontSize.doubleValue)
+        _overrideFontSize = 0;
+    id themeInfo = @{
+        @"fontFamily": prefs.fontFamily,
+        @"fontSize": @(self.effectiveFontSize),
+        @"foregroundColor": [self cssColor:prefs.theme.foregroundColor],
+        @"backgroundColor": [self cssColor:prefs.theme.backgroundColor],
+    };
+    NSString *json = [[NSString alloc] initWithData:[NSJSONSerialization dataWithJSONObject:themeInfo options:0 error:nil] encoding:NSUTF8StringEncoding];
+    [self.terminal.webView evaluateJavaScript:[NSString stringWithFormat:@"exports.updateStyle(%@)", json] completionHandler:nil];
+}
+
+- (void)setOverrideFontSize:(CGFloat)overrideFontSize {
+    _overrideFontSize = overrideFontSize;
+    [self _updateStyle];
+}
+
+- (CGFloat)effectiveFontSize {
+    if (self.overrideFontSize != 0)
+        return self.overrideFontSize;
+    return UserPreferences.shared.fontSize.doubleValue;
 }
 
 #pragma mark Focus and scrolling
@@ -89,8 +150,57 @@
     return YES;
 }
 
+- (void)setTerminalFocused:(BOOL)terminalFocused {
+    _terminalFocused = terminalFocused;
+    NSString *script = terminalFocused ? @"exports.setFocused(true)" : @"exports.setFocused(false)";
+    [self.terminal.webView evaluateJavaScript:script completionHandler:nil];
+}
+
+- (BOOL)becomeFirstResponder {
+    self.terminalFocused = YES;
+    return [super becomeFirstResponder];
+}
+- (BOOL)resignFirstResponder {
+    self.terminalFocused = NO;
+    return [super resignFirstResponder];
+}
+- (void)windowDidBecomeKey:(NSNotification *)notif {
+    self.terminalFocused = YES;
+}
+- (void)windowDidResignKey:(NSNotification *)notif {
+    self.terminalFocused = NO;
+}
+
+- (IBAction)loseFocus:(id)sender {
+    [self resignFirstResponder];
+}
+
+- (void)willMoveToWindow:(UIWindow *)newWindow {
+    NSNotificationCenter *center = NSNotificationCenter.defaultCenter;
+    if (self.window != nil) {
+        [center removeObserver:self
+                          name:UIWindowDidBecomeKeyNotification
+                        object:self.window];
+        [center removeObserver:self
+                          name:UIWindowDidResignKeyNotification
+                        object:self.window];
+    }
+    if (newWindow != nil) {
+        [center addObserver:self
+                   selector:@selector(windowDidBecomeKey:)
+                       name:UIWindowDidBecomeKeyNotification
+                     object:newWindow];
+        [center addObserver:self
+                   selector:@selector(windowDidResignKey:)
+                       name:UIWindowDidResignKeyNotification
+                     object:newWindow];
+    }
+}
+
 - (void)userContentController:(WKUserContentController *)userContentController didReceiveScriptMessage:(WKScriptMessage *)message {
-    if ([message.name isEqualToString:@"focus"]) {
+    if ([message.name isEqualToString:@"syncFocus"]) {
+        self.terminalFocused = self.terminalFocused;
+    } else if ([message.name isEqualToString:@"focus"]) {
         if (!self.isFirstResponder) {
             [self becomeFirstResponder];
         }
@@ -104,15 +214,6 @@
     } else if ([message.name isEqualToString:@"openLink"]) {
         [UIApplication openURL:message.body];
     }
-}
-
-- (BOOL)resignFirstResponder {
-    [self.terminal.webView evaluateJavaScript:@"exports.blur()" completionHandler:nil];
-    return [super resignFirstResponder];
-}
-
-- (IBAction)loseFocus:(id)sender {
-    [self resignFirstResponder];
 }
 
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView {
@@ -136,17 +237,21 @@
     self.markedText = nil;
     if (self.controlKey.selected) {
         self.controlKey.selected = NO;
-        if (text.length == 1) {
-            char ch = [text characterAtIndex:0];
-            if (strchr(controlKeys, ch) != NULL) {
-                ch = toupper(ch) ^ 0x40;
-                text = [NSString stringWithFormat:@"%c", ch];
-            }
-        }
+        if (text.length == 1)
+            return [self insertControlChar:[text characterAtIndex:0]];
     }
     text = [text stringByReplacingOccurrencesOfString:@"\n" withString:@"\r"];
     NSData *data = [text dataUsingEncoding:NSUTF8StringEncoding];
     [self.terminal sendInput:data.bytes length:data.length];
+}
+
+- (void)insertControlChar:(char)ch {
+    if (strchr(controlKeys, ch) != NULL) {
+        if (ch == '2') ch = '@';
+        if (ch == '6') ch = '^';
+        ch = toupper(ch) ^ 0x40;
+        [self.terminal sendInput:&ch length:1];
+    }
 }
 
 - (void)deleteBackward {
@@ -259,13 +364,12 @@
             key = @"^";
         else if ([key isEqualToString:@"-"])
             key = @"_";
-        char ch = (char) [key.uppercaseString characterAtIndex:0] ^ 0x40;
-        [self insertText:[NSString stringWithFormat:@"%c", ch]];
+        [self insertControlChar:[key characterAtIndex:0]];
     }
 }
 
 static const char *alphabet = "abcdefghijklmnopqrstuvwxyz";
-static const char *controlKeys = "abcdefghijklmnopqrstuvwxyz26-=[]\\";
+static const char *controlKeys = "abcdefghijklmnopqrstuvwxyz@^26-=[]\\";
 static const char *metaKeys = "abcdefghijklmnopqrstuvwxyz0123456789-=[]\\;',./";
 
 - (NSArray<UIKeyCommand *> *)keyCommands {
@@ -278,10 +382,12 @@ static const char *metaKeys = "abcdefghijklmnopqrstuvwxyz0123456789-=[]\\;',./";
         [self addKey:specialKey withModifiers:0];
     }
     if (UserPreferences.shared.capsLockMapping != CapsLockMapNone) {
-        [self addKeys:controlKeys withModifiers:UIKeyModifierAlphaShift];
-        [self addKeys:alphabet withModifiers:0];
-        [self addKeys:alphabet withModifiers:UIKeyModifierShift];
-        [self addKey:@"" withModifiers:UIKeyModifierAlphaShift]; // otherwise tap of caps lock can switch layouts
+        if (@available(iOS 13, *)); else {
+            [self addKeys:controlKeys withModifiers:UIKeyModifierAlphaShift];
+            [self addKeys:alphabet withModifiers:0];
+            [self addKeys:alphabet withModifiers:UIKeyModifierShift];
+            [self addKey:@"" withModifiers:UIKeyModifierAlphaShift]; // otherwise tap of caps lock can switch layouts
+        }
     }
     if (UserPreferences.shared.optionMapping == OptionMapEsc) {
         [self addKeys:metaKeys withModifiers:UIKeyModifierAlternate];

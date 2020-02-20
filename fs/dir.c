@@ -34,8 +34,6 @@ struct linux_dirent64_ {
     char name[];
 } __attribute__((packed));
 
-#define MAX_RECLEN sizeof(struct linux_dirent64_) + NAME_MAX + 
-
 size_t fill_dirent_32(void *dirent_data, ino_t inode, off_t_ offset, const char *name, int type) {
     struct linux_dirent_ *dirent = dirent_data;
     dirent->inode = inode;

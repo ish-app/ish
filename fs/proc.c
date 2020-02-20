@@ -3,23 +3,15 @@
 #include "kernel/calls.h"
 #include "kernel/fs.h"
 #include "fs/proc.h"
+#include "fs/path.h"
 
 static int proc_lookup(const char *path, struct proc_entry *entry) {
     entry->meta = &proc_root;
-    char component[MAX_NAME + 1] = {};
-    while (*path != '\0') {
+    char component[MAX_NAME + 1];
+    int err = 0;
+    while (path_next_component(&path, component, &err)) {
         if (!S_ISDIR(proc_entry_mode(entry)))
             return _ENOTDIR;
-
-        assert(*path == '/');
-        path++;
-        char *c = component;
-        while (*path != '/' && *path != '\0') {
-            *c++ = *path++;
-            if (c - component >= MAX_NAME)
-                return _ENAMETOOLONG;
-        }
-        *c = '\0';
 
         unsigned long index = 0;
         struct proc_entry next_entry;
@@ -42,7 +34,7 @@ static int proc_lookup(const char *path, struct proc_entry *entry) {
 found:
         *entry = next_entry;
     }
-    return 0;
+    return err;
 }
 
 extern const struct fd_ops procfs_fdops;
@@ -54,7 +46,7 @@ static struct fd *proc_open(struct mount *UNUSED(mount), const char *path, int U
         return ERR_PTR(err);
     struct fd *fd = fd_create(&procfs_fdops);
     fd->proc.entry = entry;
-    fd->proc.data = NULL;
+    fd->proc.data.data = NULL;
     return fd;
 }
 
@@ -77,7 +69,7 @@ static int proc_getpath(struct fd *fd, char *buf) {
     return 0;
 }
 
-static int proc_stat(struct mount *UNUSED(mount), const char *path, struct statbuf *stat, bool UNUSED(follow_links)) {
+static int proc_stat(struct mount *UNUSED(mount), const char *path, struct statbuf *stat) {
     struct proc_entry entry;
     int err = proc_lookup(path, &entry);
     if (err < 0)
@@ -95,14 +87,15 @@ static int proc_refresh_data(struct fd *fd) {
         return _EISDIR;
     assert(S_ISREG(mode));
 
-    if (fd->proc.data == NULL) {
-        fd->proc.data = malloc(4096); // TODO choose a good number
+    if (fd->proc.data.data == NULL) {
+        fd->proc.data.capacity = 4096;
+        fd->proc.data.data = malloc(fd->proc.data.capacity); // default size
     }
+    fd->proc.data.size = 0;
     struct proc_entry entry = fd->proc.entry;
-    ssize_t size = entry.meta->show(&entry, fd->proc.data);
-    if (size < 0)
-        return (int)size;
-    fd->proc.size = size;
+    int err = entry.meta->show(&entry, &fd->proc.data);
+    if (err < 0)
+        return err;
     return 0;
 }
 
@@ -111,11 +104,11 @@ static ssize_t proc_read(struct fd *fd, void *buf, size_t bufsize) {
     if (err < 0)
         return err;
 
-    const char *data = fd->proc.data;
+    const char *data = fd->proc.data.data;
     assert(data != NULL);
 
-    size_t remaining = fd->proc.size - fd->offset;
-    if ((size_t) fd->offset > fd->proc.size)
+    size_t remaining = fd->proc.data.size - fd->offset;
+    if ((size_t) fd->offset > fd->proc.data.size)
         remaining = 0;
     size_t n = bufsize;
     if (n > remaining)
@@ -137,7 +130,7 @@ static off_t_ proc_seek(struct fd *fd, off_t_ off, int whence) {
     else if (whence == LSEEK_CUR)
         fd->offset += off;
     else if (whence == LSEEK_END)
-        fd->offset = fd->proc.size + off;
+        fd->offset = fd->proc.data.size + off;
     else
         return _EINVAL;
 
@@ -159,8 +152,8 @@ static int proc_readdir(struct fd *fd, struct dir_entry *entry) {
 }
 
 static int proc_close(struct fd *fd) {
-    if (fd->proc.data != NULL)
-        free(fd->proc.data);
+    if (fd->proc.data.data != NULL)
+        free(fd->proc.data.data);
     return 0;
 }
 
@@ -187,6 +180,33 @@ static ssize_t proc_readlink(struct mount *UNUSED(mount), const char *path, char
         bufsize = strlen(target);
     memcpy(buf, target, bufsize);
     return bufsize;
+}
+
+void proc_buf_write(struct proc_data *buf, const void *data, size_t size) {
+    if (buf->size + size > buf->capacity) {
+        size_t new_capacity = buf->capacity;
+        while (buf->size + size > new_capacity)
+            new_capacity *= 2;
+        char *new_data = realloc(buf->data, new_capacity);
+        if (new_data == NULL) {
+            // just give up, error reporting is a pain
+            return;
+        }
+        buf->data = new_data;
+        buf->capacity = new_capacity;
+    }
+    assert(buf->size + size <= buf->capacity);
+    memcpy(&buf->data[buf->size], data, size);
+    buf->size += size;
+}
+
+void proc_printf(struct proc_data *buf, const char *format, ...) {
+    char data[4096];
+    va_list args;
+    va_start(args, format);
+    size_t size = vsnprintf(data, sizeof(data), format, args);
+    va_end(args);
+    proc_buf_write(buf, data, size);
 }
 
 const struct fs_ops procfs = {

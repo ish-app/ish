@@ -11,6 +11,7 @@
 #include <sys/statvfs.h>
 #include <poll.h>
 
+#include "debug.h"
 #include "kernel/errno.h"
 #include "kernel/calls.h"
 #include "kernel/fs.h"
@@ -118,9 +119,9 @@ static void copy_stat(struct statbuf *fake_stat, struct stat *real_stat) {
 #undef TIMESPEC
 }
 
-static int realfs_stat(struct mount *mount, const char *path, struct statbuf *fake_stat, bool follow_links) {
+static int realfs_stat(struct mount *mount, const char *path, struct statbuf *fake_stat) {
     struct stat real_stat;
-    if (fstatat(mount->root_fd, fix_path(path), &real_stat, follow_links ? 0 : AT_SYMLINK_NOFOLLOW) < 0)
+    if (fstatat(mount->root_fd, fix_path(path), &real_stat, AT_SYMLINK_NOFOLLOW) < 0)
         return errno_map();
     copy_stat(fake_stat, &real_stat);
     return 0;
@@ -212,8 +213,22 @@ int realfs_poll(struct fd *fd) {
         p.events |= POLLOUT;
     if (poll(&p, 1, 0) <= 0)
         return 0;
-    if (p.revents & POLLNVAL)
-        printk("pollnval %d\n", fd->real_fd);
+    if (p.revents & POLLNVAL) {
+        printk("pollnval %d flags %d events %d revents %d\n", fd->real_fd, flags, p.events, p.revents);
+        // Seriously, fuck Darwin. I just want to poll on POLLIN|POLLOUT|POLLPRI.
+        // But if there's almost any kind of error, you just get POLLNVAL back,
+        // and no information about the bits that are in fact set. So ask for each
+        // separately and ignore a POLLNVAL.
+        // This is no longer atomic but I don't really know what to do about that.
+        int events = 0;
+        static const int pollbits[] = {POLLIN, POLLOUT, POLLPRI};
+        for (unsigned i = 0; i < sizeof(pollbits)/sizeof(pollbits[0]); i++) {
+            p.events = pollbits[i];
+            if (poll(&p, 1, 0) > 0 && !(p.revents & POLLNVAL))
+                events |= p.revents;
+        }
+        return events;
+    }
     return p.revents;
 }
 
@@ -428,6 +443,26 @@ int realfs_setflags(struct fd *fd, dword_t flags) {
     return 0;
 }
 
+ssize_t realfs_ioctl_size(int cmd) {
+    if (cmd == FIONREAD_)
+        return sizeof(dword_t);
+    return -1;
+}
+
+int realfs_ioctl(struct fd *fd, int cmd, void *arg) {
+    int err;
+    size_t nread;
+    switch (cmd) {
+        case FIONREAD_:
+            err = ioctl(fd->real_fd, FIONREAD, &nread);
+            if (err < 0)
+                return errno_map();
+            *(dword_t *) arg = nread;
+            return 0;
+    }
+    return _ENOTTY;
+}
+
 const struct fs_ops realfs = {
     .name = "real", .magic = 0x7265616c,
     .mount = realfs_mount,
@@ -463,6 +498,8 @@ const struct fd_ops realfs_fdops = {
     .lseek = realfs_lseek,
     .mmap = realfs_mmap,
     .poll = realfs_poll,
+    .ioctl_size = realfs_ioctl_size,
+    .ioctl = realfs_ioctl,
     .fsync = realfs_fsync,
     .close = realfs_close,
     .getflags = realfs_getflags,

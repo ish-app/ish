@@ -10,6 +10,9 @@
 
 @interface TerminalView : UIView <UITextInput, WKScriptMessageHandler, UIScrollViewDelegate>
 
+@property (nonatomic) CGFloat overrideFontSize;
+@property (readonly) CGFloat effectiveFontSize;
+
 @property (nonatomic) UIKeyboardAppearance keyboardAppearance;
 
 @property (weak) IBOutlet UIInputView *inputAccessoryView;

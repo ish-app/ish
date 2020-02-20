@@ -56,6 +56,7 @@ void gen_end(struct gen_state *state) {
     else
         block->end_addr = block->addr;
     list_init(&block->chain);
+    block->is_jetsam = false;
     for (int i = 0; i <= 1; i++) {
         list_init(&block->page[i]);
     }
@@ -339,6 +340,7 @@ static inline bool gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define REPNZ(op, z) strop(op, repnz, z)
 
 #define CMPXCHG(src, dst,z) load(src, z); op(cmpxchg, dst, z)
+#define CMPXCHG8B(dst,z) g_addr(); gg(cmpxchg8b, saved_ip)
 #define XADD(src, dst,z) XCHG(src, dst,z); ADD(src, dst,z)
 
 void helper_rdtsc(struct cpu_state *cpu);
@@ -361,6 +363,7 @@ void helper_rdtsc(struct cpu_state *cpu);
 #define ATOMIC_BTC(bit, val,z) lo(atomic_btc, val, bit, z)
 #define ATOMIC_BTS(bit, val,z) lo(atomic_bts, val, bit, z)
 #define ATOMIC_BTR(bit, val,z) lo(atomic_btr, val, bit, z)
+#define ATOMIC_CMPXCHG8B(dst,z) g_addr(); gg(atomic_cmpxchg8b, saved_ip)
 
 // fpu
 #define st_0 0
@@ -392,7 +395,12 @@ void helper_rdtsc(struct cpu_state *cpu);
 #define FSTSW(dst) if (arg_##dst == arg_reg_a) g(fstsw_ax); else UNDEFINED
 #define FSTCW(dst) if (arg_##dst == arg_reg_a) UNDEFINED; else h_write(fpu_stcw, 16)
 #define FLDCW(dst) if (arg_##dst == arg_reg_a) UNDEFINED; else h_read(fpu_ldcw, 16)
+#define FSTENV(val,z) h_write(fpu_stenv, z)
+#define FLDENV(val,z) h_write(fpu_ldenv, z)
+#define FSAVE(val,z) h_write(fpu_save, z)
+#define FRESTORE(val,z) h_write(fpu_restore, z)
 #define FPOP h(fpu_pop)
+#define FINCSTP() h(fpu_incstp)
 #define FADD(src, dst) hhh(fpu_add, src, dst)
 #define FIADD(val,z) h_read(fpu_iadd, z)
 #define FADDM(val,z) h_read(fpu_addm, z)
@@ -412,6 +420,8 @@ void helper_rdtsc(struct cpu_state *cpu);
 #define FIDIVR(val,z) h_read(fpu_idivr, z)
 #define FDIVRM(val,z) h_read(fpu_divrm, z)
 #define FPATAN() h(fpu_patan)
+#define FSIN() h(fpu_sin)
+#define FCOS() h(fpu_cos)
 
 // vector
 
@@ -496,11 +506,11 @@ static inline bool gen_vec(enum arg rm, enum arg reg, void (*helper)(), gadget_t
 
 #define _v(src, dst, helper, helper_gadgets, z) do { \
     extern gadget_t helper_gadgets[vec_arg_count]; \
-    if (!gen_vec(src, dst, helper, &helper_gadgets, state, &modrm, 0, saved_ip, seg_gs)) return false; \
+    if (!gen_vec(src, dst, (void (*)()) helper, &helper_gadgets, state, &modrm, 0, saved_ip, seg_gs)) return false; \
 } while (0)
 #define _v_imm(imm, dst, helper, helper_gadgets, z) do { \
     extern gadget_t helper_gadgets[vec_arg_count]; \
-    if (!gen_vec(arg_imm, dst, helper, &helper_gadgets, state, &modrm, imm, saved_ip, seg_gs)) return false; \
+    if (!gen_vec(arg_imm, dst, (void (*)()) helper, &helper_gadgets, state, &modrm, imm, saved_ip, seg_gs)) return false; \
 } while (0)
 #define v(op, src, dst,z) _v(arg_##src, arg_##dst, vec_##op##z, vec_helper_load##z##_gadgets, z)
 #define v_imm(op, imm, dst,z) _v_imm(imm, arg_##dst, vec_##op##z, vec_helper_load##z##_gadgets, z)

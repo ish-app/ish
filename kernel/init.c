@@ -105,6 +105,8 @@ int become_new_init_child() {
     // these are things we definitely don't want to inherit
     task->clear_tid = 0;
     task->vfork = NULL;
+    task->blocked = task->pending = task->waiting = 0;
+    list_init(&task->queue);
     // TODO: think about whether it would be a good idea to inherit fs_info
 
     current = task;
@@ -118,16 +120,15 @@ void set_console_device(int major, int minor) {
     console_minor = minor;
 }
 
-int create_stdio(const char *file) {
+int create_stdio(const char *file, int major, int minor) {
     struct fd *fd = generic_open(file, O_RDWR_, 0);
     if (IS_ERR(fd)) {
         // fallback to adhoc files for stdio
         fd = adhoc_fd_create(NULL);
-        // /dev/tty1
-        fd->stat.rdev = dev_make(TTY_CONSOLE_MAJOR, 1);
+        fd->stat.rdev = dev_make(major, minor);
         fd->stat.mode = S_IFCHR | S_IRUSR;
         fd->flags = O_RDWR_;
-        int err = dev_open(4, 1, DEV_CHAR, fd);
+        int err = dev_open(major, minor, DEV_CHAR, fd);
         if (err < 0)
             return err;
     }

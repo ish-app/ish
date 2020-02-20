@@ -7,12 +7,15 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		650B337422EA235C00B4C03E /* Pasteboard.m in Sources */ = {isa = PBXBuildFile; fileRef = 650B337322EA235C00B4C03E /* Pasteboard.m */; };
+		650B337422EA235C00B4C03E /* PasteboardDevice.m in Sources */ = {isa = PBXBuildFile; fileRef = 650B337322EA235C00B4C03E /* PasteboardDevice.m */; };
 		8632A7BF219A59FB00F02325 /* UserPreferences.m in Sources */ = {isa = PBXBuildFile; fileRef = 8632A7BE219A59FB00F02325 /* UserPreferences.m */; };
 		9A28E4EA219A8B670073D200 /* AboutAppearanceViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 9A28E4E9219A8B670073D200 /* AboutAppearanceViewController.m */; };
 		BB0FC5921F980A6C00803272 /* Terminal.m in Sources */ = {isa = PBXBuildFile; fileRef = BB0FC5911F980A6B00803272 /* Terminal.m */; };
+		BB101B382364CF57000A93BC /* FontPickerViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = BB101B372364CF57000A93BC /* FontPickerViewController.m */; };
 		BB13F7EA200ADCED003D1C4D /* libish.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BB13F7DC200AD81D003D1C4D /* libish.a */; };
 		BB1D9D93234A8FE100F364E8 /* AboutNavigationController.m in Sources */ = {isa = PBXBuildFile; fileRef = BB1D9D92234A8FE100F364E8 /* AboutNavigationController.m */; };
+		BB235534235D488500139E00 /* LocationDevice.m in Sources */ = {isa = PBXBuildFile; fileRef = BB235533235D488400139E00 /* LocationDevice.m */; };
+		BB235537235D49B300139E00 /* CoreLocation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BB235536235D49B300139E00 /* CoreLocation.framework */; };
 		BB23F58D231E1D1400585522 /* ScrollbarView.m in Sources */ = {isa = PBXBuildFile; fileRef = BB23F58C231E1D1400585522 /* ScrollbarView.m */; };
 		BB2B4DAC231D94C300CB578B /* hterm_all.js in Resources */ = {isa = PBXBuildFile; fileRef = BB2B4DAB231D94C300CB578B /* hterm_all.js */; };
 		BB2B4DAD231D998300CB578B /* term.js in Resources */ = {isa = PBXBuildFile; fileRef = BB4A539C1FAA490C00A72ACE /* term.js */; };
@@ -35,8 +38,10 @@
 		BB88F49A2154760800A341FD /* FileProviderEnumerator.m in Sources */ = {isa = PBXBuildFile; fileRef = BB88F4992154760800A341FD /* FileProviderEnumerator.m */; };
 		BB88F49F2154760800A341FD /* iSHFileProvider.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = BB88F4902154760800A341FD /* iSHFileProvider.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		BB88F4A62154770200A341FD /* libish.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BB13F7DC200AD81D003D1C4D /* libish.a */; };
+		BBA8E2C1236FF5EA00515F76 /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BBA8E2C0236FF5EA00515F76 /* SystemConfiguration.framework */; };
 		BBBCE7E321D2F02200CA00B3 /* About.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = BBBCE7E521D2F02200CA00B3 /* About.storyboard */; };
 		BBBFE94921C5CFF100509DD5 /* NSError+ISHErrno.m in Sources */ = {isa = PBXBuildFile; fileRef = BB13F4DD21C5770000343E17 /* NSError+ISHErrno.m */; };
+		BBCC9D962365430800424C83 /* SceneDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = BBCC9D952365430800424C83 /* SceneDelegate.m */; };
 		BBFB55662158644C00DFE6DE /* libresolv.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = BBFB55652158644C00DFE6DE /* libresolv.tbd */; };
 		BBFB557121586C4800DFE6DE /* UIViewController+Back.m in Sources */ = {isa = PBXBuildFile; fileRef = BBFB557021586C4800DFE6DE /* UIViewController+Back.m */; };
 		BBFB557621586F9200DFE6DE /* DismissSegue.m in Sources */ = {isa = PBXBuildFile; fileRef = BBFB557521586F9200DFE6DE /* DismissSegue.m */; };
@@ -100,8 +105,8 @@
 		650B336822E9F0B500B4C03E /* root.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = root.c; sourceTree = "<group>"; };
 		650B336C22EA052400B4C03E /* dyndev.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = dyndev.c; sourceTree = "<group>"; };
 		650B336D22EA052400B4C03E /* dyndev.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dyndev.h; sourceTree = "<group>"; };
-		650B337222EA235C00B4C03E /* Pasteboard.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Pasteboard.h; sourceTree = "<group>"; };
-		650B337322EA235C00B4C03E /* Pasteboard.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Pasteboard.m; sourceTree = "<group>"; };
+		650B337222EA235C00B4C03E /* PasteboardDevice.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PasteboardDevice.h; sourceTree = "<group>"; };
+		650B337322EA235C00B4C03E /* PasteboardDevice.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PasteboardDevice.m; sourceTree = "<group>"; };
 		650B337522EA728B00B4C03E /* devices.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = devices.h; sourceTree = "<group>"; };
 		8632A7BD219A59FB00F02325 /* UserPreferences.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = UserPreferences.h; sourceTree = "<group>"; };
 		8632A7BE219A59FB00F02325 /* UserPreferences.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = UserPreferences.m; sourceTree = "<group>"; };
@@ -109,12 +114,41 @@
 		9A28E4E9219A8B670073D200 /* AboutAppearanceViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AboutAppearanceViewController.m; sourceTree = "<group>"; };
 		BB0FC5901F980A6B00803272 /* Terminal.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Terminal.h; sourceTree = "<group>"; };
 		BB0FC5911F980A6B00803272 /* Terminal.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Terminal.m; sourceTree = "<group>"; };
+		BB101B362364CF57000A93BC /* FontPickerViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = FontPickerViewController.h; sourceTree = "<group>"; };
+		BB101B372364CF57000A93BC /* FontPickerViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = FontPickerViewController.m; sourceTree = "<group>"; };
+		BB101B4E2364EAD7000A93BC /* sse.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = sse.h; sourceTree = "<group>"; };
+		BB101B4F2364EAD8000A93BC /* sse.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = sse.c; sourceTree = "<group>"; };
+		BB101B512364EAF0000A93BC /* mount.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = mount.c; sourceTree = "<group>"; };
+		BB101B522364EAF0000A93BC /* sockrestart.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = sockrestart.c; sourceTree = "<group>"; };
+		BB101B532364EAF0000A93BC /* lock.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = lock.c; sourceTree = "<group>"; };
+		BB101B542364EAF0000A93BC /* inode.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = inode.h; sourceTree = "<group>"; };
+		BB101B552364EAF0000A93BC /* fake.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = fake.h; sourceTree = "<group>"; };
+		BB101B562364EAF0000A93BC /* sockrestart.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = sockrestart.h; sourceTree = "<group>"; };
+		BB101B572364EAF0000A93BC /* fake-migrate.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = "fake-migrate.c"; sourceTree = "<group>"; };
+		BB101B582364EAF0000A93BC /* pty.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = pty.c; sourceTree = "<group>"; };
+		BB101B592364EAF0000A93BC /* inode.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = inode.c; sourceTree = "<group>"; };
+		BB101B5A2364EB66000A93BC /* math.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = math.h; sourceTree = "<group>"; };
+		BB101B5C2364EB88000A93BC /* futex.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = futex.h; sourceTree = "<group>"; };
+		BB101B5D2364EB88000A93BC /* eventfd.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = eventfd.c; sourceTree = "<group>"; };
+		BB101B5E2364EB88000A93BC /* random.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = random.c; sourceTree = "<group>"; };
+		BB101B5F2364EB88000A93BC /* epoll.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = epoll.c; sourceTree = "<group>"; };
+		BB101B602364EB88000A93BC /* mm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mm.h; sourceTree = "<group>"; };
+		BB101B612364EB88000A93BC /* random.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = random.h; sourceTree = "<group>"; };
+		BB101B622364EB88000A93BC /* log.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = log.c; sourceTree = "<group>"; };
+		BB101B632364EB89000A93BC /* misc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = misc.c; sourceTree = "<group>"; };
+		BB101B6A2364EC2F000A93BC /* sync.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = sync.h; sourceTree = "<group>"; };
+		BB101B6B2364EC2F000A93BC /* fifo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = fifo.h; sourceTree = "<group>"; };
+		BB101B6C2364EC2F000A93BC /* sync.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = sync.c; sourceTree = "<group>"; };
+		BB101B6D2364EC2F000A93BC /* fifo.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = fifo.c; sourceTree = "<group>"; };
 		BB13F4DC21C5770000343E17 /* NSError+ISHErrno.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSError+ISHErrno.h"; sourceTree = "<group>"; };
 		BB13F4DD21C5770000343E17 /* NSError+ISHErrno.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSError+ISHErrno.m"; sourceTree = "<group>"; };
 		BB13F7C8200ACC24003D1C4D /* xcode-meson.sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = "xcode-meson.sh"; sourceTree = "<group>"; };
 		BB13F7DC200AD81D003D1C4D /* libish.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libish.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		BB1D9D91234A8FE100F364E8 /* AboutNavigationController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AboutNavigationController.h; sourceTree = "<group>"; };
 		BB1D9D92234A8FE100F364E8 /* AboutNavigationController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AboutNavigationController.m; sourceTree = "<group>"; };
+		BB235533235D488400139E00 /* LocationDevice.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = LocationDevice.m; sourceTree = "<group>"; };
+		BB235535235D489400139E00 /* LocationDevice.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LocationDevice.h; sourceTree = "<group>"; };
+		BB235536235D49B300139E00 /* CoreLocation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreLocation.framework; path = System/Library/Frameworks/CoreLocation.framework; sourceTree = SDKROOT; };
 		BB23F58B231E1D1400585522 /* ScrollbarView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ScrollbarView.h; sourceTree = "<group>"; };
 		BB23F58C231E1D1400585522 /* ScrollbarView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ScrollbarView.m; sourceTree = "<group>"; };
 		BB2B4DAB231D94C300CB578B /* hterm_all.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = hterm_all.js; path = libapps/hterm/dist/js/hterm_all.js; sourceTree = "<group>"; };
@@ -141,11 +175,6 @@
 		BB792B5F1F96D90D00FFB7A4 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		BB792B611F96D90D00FFB7A4 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		BB792B621F96D90D00FFB7A4 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
-		BB7D93302087C2880008DA78 /* meson.build */ = {isa = PBXFileReference; lastKnownFileType = text; path = meson.build; sourceTree = "<group>"; };
-		BB7D93312087C2880008DA78 /* note.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = note.S; sourceTree = "<group>"; };
-		BB7D93322087C2880008DA78 /* vdso.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = vdso.c; sourceTree = "<group>"; };
-		BB7D93332087C2880008DA78 /* vdso.lds */ = {isa = PBXFileReference; lastKnownFileType = text; path = vdso.lds; sourceTree = "<group>"; };
-		BB7D93342087C2880008DA78 /* vdso.S */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = vdso.S; sourceTree = "<group>"; };
 		BB7D93352087C2880008DA78 /* xX_main_Xx.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = xX_main_Xx.h; sourceTree = "<group>"; };
 		BB7D93372087C2880008DA78 /* bits.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = bits.h; sourceTree = "<group>"; };
 		BB7D93382087C2880008DA78 /* list.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = list.h; sourceTree = "<group>"; };
@@ -183,19 +212,6 @@
 		BB7D93592087C2880008DA78 /* user.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = user.c; sourceTree = "<group>"; };
 		BB7D935A2087C2880008DA78 /* vdso.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = vdso.c; sourceTree = "<group>"; };
 		BB7D935B2087C2880008DA78 /* vdso.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = vdso.h; sourceTree = "<group>"; };
-		BB7D935D2087C2880008DA78 /* cify.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = cify.c; sourceTree = "<group>"; };
-		BB7D935E2087C2880008DA78 /* fakefsify.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = fakefsify.py; sourceTree = "<group>"; };
-		BB7D935F2087C2880008DA78 /* meson.build */ = {isa = PBXFileReference; lastKnownFileType = text; path = meson.build; sourceTree = "<group>"; };
-		BB7D93602087C2880008DA78 /* ptraceomatic-gdb.gdb */ = {isa = PBXFileReference; lastKnownFileType = text; path = "ptraceomatic-gdb.gdb"; sourceTree = "<group>"; };
-		BB7D93612087C2880008DA78 /* ptraceomatic.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ptraceomatic.c; sourceTree = "<group>"; };
-		BB7D93622087C2880008DA78 /* ptutil.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ptutil.c; sourceTree = "<group>"; };
-		BB7D93632087C2880008DA78 /* ptutil.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ptutil.h; sourceTree = "<group>"; };
-		BB7D93642087C2880008DA78 /* transplant.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = transplant.h; sourceTree = "<group>"; };
-		BB7D93652087C2880008DA78 /* undefined-flags.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = "undefined-flags.c"; sourceTree = "<group>"; };
-		BB7D93662087C2880008DA78 /* undefined-flags.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "undefined-flags.h"; sourceTree = "<group>"; };
-		BB7D93672087C2880008DA78 /* vdso-dump.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = "vdso-dump.c"; sourceTree = "<group>"; };
-		BB7D93682087C2880008DA78 /* vdso-transplant-main.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = "vdso-transplant-main.c"; sourceTree = "<group>"; };
-		BB7D93692087C2880008DA78 /* vdso-transplant.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = "vdso-transplant.c"; sourceTree = "<group>"; };
 		BB7D936B2087C2890008DA78 /* adhoc.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = adhoc.c; sourceTree = "<group>"; };
 		BB7D936C2087C2890008DA78 /* dev.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = dev.c; sourceTree = "<group>"; };
 		BB7D936D2087C2890008DA78 /* dev.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = dev.h; sourceTree = "<group>"; };
@@ -274,7 +290,10 @@
 		BB88F49B2154760800A341FD /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		BB88F49C2154760800A341FD /* iSHFileProvider.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = iSHFileProvider.entitlements; sourceTree = "<group>"; };
 		BB88F4A4215476BA00A341FD /* iSH.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = iSH.entitlements; sourceTree = "<group>"; };
+		BBA8E2C0236FF5EA00515F76 /* SystemConfiguration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SystemConfiguration.framework; path = System/Library/Frameworks/SystemConfiguration.framework; sourceTree = SDKROOT; };
 		BBBCE7E421D2F02200CA00B3 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/About.storyboard; sourceTree = "<group>"; };
+		BBCC9D942365430800424C83 /* SceneDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SceneDelegate.h; sourceTree = "<group>"; };
+		BBCC9D952365430800424C83 /* SceneDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SceneDelegate.m; sourceTree = "<group>"; };
 		BBF124901FA7C3100088FB50 /* alpine */ = {isa = PBXFileReference; explicitFileType = folder; includeInIndex = 0; path = alpine; sourceTree = "<group>"; };
 		BBFB55652158644C00DFE6DE /* libresolv.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libresolv.tbd; path = usr/lib/libresolv.tbd; sourceTree = SDKROOT; };
 		BBFB556F21586C4800DFE6DE /* UIViewController+Back.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "UIViewController+Back.h"; sourceTree = "<group>"; };
@@ -294,6 +313,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BB235537235D49B300139E00 /* CoreLocation.framework in Frameworks */,
+				BBA8E2C1236FF5EA00515F76 /* SystemConfiguration.framework in Frameworks */,
 				BB6DB261216435340047A611 /* libiconv.tbd in Frameworks */,
 				BBFB55662158644C00DFE6DE /* libresolv.tbd in Frameworks */,
 				BB13F7EA200ADCED003D1C4D /* libish.a in Frameworks */,
@@ -329,6 +350,17 @@
 			name = Scripts;
 			sourceTree = "<group>";
 		};
+		BB235532235D472F00139E00 /* Devices */ = {
+			isa = PBXGroup;
+			children = (
+				650B337222EA235C00B4C03E /* PasteboardDevice.h */,
+				650B337322EA235C00B4C03E /* PasteboardDevice.m */,
+				BB235535235D489400139E00 /* LocationDevice.h */,
+				BB235533235D488400139E00 /* LocationDevice.m */,
+			);
+			name = Devices;
+			sourceTree = "<group>";
+		};
 		BB2D71072354244700A10D1E /* platform */ = {
 			isa = PBXGroup;
 			children = (
@@ -347,9 +379,7 @@
 				BB88F4712152F75A00A341FD /* jit */,
 				BB7D933C2087C2880008DA78 /* kernel */,
 				BB2D71072354244700A10D1E /* platform */,
-				BB7D935C2087C2880008DA78 /* tools */,
 				BB7D93362087C2880008DA78 /* util */,
-				BB7D932F2087C2880008DA78 /* vdso */,
 				BB7D93822087C2890008DA78 /* main.c */,
 				BB7D933B2087C2880008DA78 /* misc.h */,
 				BB7D93812087C2890008DA78 /* debug.h */,
@@ -397,6 +427,8 @@
 			children = (
 				BB792B531F96D90D00FFB7A4 /* AppDelegate.h */,
 				BB792B541F96D90D00FFB7A4 /* AppDelegate.m */,
+				BBCC9D942365430800424C83 /* SceneDelegate.h */,
+				BBCC9D952365430800424C83 /* SceneDelegate.m */,
 				BB792B561F96D90D00FFB7A4 /* TerminalViewController.h */,
 				BB792B571F96D90D00FFB7A4 /* TerminalViewController.m */,
 				BBFB557D21587B2B00DFE6DE /* Bar */,
@@ -407,8 +439,7 @@
 				BB23F58B231E1D1400585522 /* ScrollbarView.h */,
 				BB23F58C231E1D1400585522 /* ScrollbarView.m */,
 				BB4A53991FAA40FD00A72ACE /* terminal */,
-				650B337222EA235C00B4C03E /* Pasteboard.h */,
-				650B337322EA235C00B4C03E /* Pasteboard.m */,
+				BB235532235D472F00139E00 /* Devices */,
 				BB792B591F96D90D00FFB7A4 /* Main.storyboard */,
 				BBFB557321586C7600DFE6DE /* About */,
 				BBFB557221586C6600DFE6DE /* Utilities */,
@@ -425,29 +456,23 @@
 		BB792B7D1F96E32B00FFB7A4 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				BBA8E2C0236FF5EA00515F76 /* SystemConfiguration.framework */,
+				BB235536235D49B300139E00 /* CoreLocation.framework */,
 				BB6DB260216435330047A611 /* libiconv.tbd */,
 				BBFB55652158644C00DFE6DE /* libresolv.tbd */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
-		BB7D932F2087C2880008DA78 /* vdso */ = {
-			isa = PBXGroup;
-			children = (
-				BB7D93302087C2880008DA78 /* meson.build */,
-				BB7D93312087C2880008DA78 /* note.S */,
-				BB7D93322087C2880008DA78 /* vdso.c */,
-				BB7D93332087C2880008DA78 /* vdso.lds */,
-				BB7D93342087C2880008DA78 /* vdso.S */,
-			);
-			path = vdso;
-			sourceTree = "<group>";
-		};
 		BB7D93362087C2880008DA78 /* util */ = {
 			isa = PBXGroup;
 			children = (
 				BB7D93372087C2880008DA78 /* bits.h */,
+				BB101B6D2364EC2F000A93BC /* fifo.c */,
+				BB101B6B2364EC2F000A93BC /* fifo.h */,
 				BB7D93382087C2880008DA78 /* list.h */,
+				BB101B6C2364EC2F000A93BC /* sync.c */,
+				BB101B6A2364EC2F000A93BC /* sync.h */,
 				BB7D93392087C2880008DA78 /* timer.c */,
 				BB7D933A2087C2880008DA78 /* timer.h */,
 			);
@@ -460,8 +485,10 @@
 				BB7D933D2087C2880008DA78 /* calls.c */,
 				BB7D933E2087C2880008DA78 /* calls.h */,
 				BB7D933F2087C2880008DA78 /* elf.h */,
+				BB101B5F2364EB88000A93BC /* epoll.c */,
 				BB7D93402087C2880008DA78 /* errno.c */,
 				BB7D93412087C2880008DA78 /* errno.h */,
+				BB101B5D2364EB88000A93BC /* eventfd.c */,
 				BB7D93422087C2880008DA78 /* exec.c */,
 				BB7D93432087C2880008DA78 /* exit.c */,
 				BB7D93442087C2880008DA78 /* fork.c */,
@@ -469,12 +496,18 @@
 				BB7D93462087C2880008DA78 /* fs.h */,
 				BB7D93472087C2880008DA78 /* fs_info.c */,
 				BB7D93482087C2880008DA78 /* futex.c */,
+				BB101B5C2364EB88000A93BC /* futex.h */,
 				BB7D93492087C2880008DA78 /* getset.c */,
 				BB7D934A2087C2880008DA78 /* group.c */,
 				BB7D934B2087C2880008DA78 /* init.c */,
 				BB7D934C2087C2880008DA78 /* init.h */,
+				BB101B622364EB88000A93BC /* log.c */,
+				BB101B632364EB89000A93BC /* misc.c */,
+				BB101B602364EB88000A93BC /* mm.h */,
 				BB7D934D2087C2880008DA78 /* mmap.c */,
 				BB7D934E2087C2880008DA78 /* poll.c */,
+				BB101B5E2364EB88000A93BC /* random.c */,
+				BB101B612364EB88000A93BC /* random.h */,
 				BB7D934F2087C2880008DA78 /* resource.c */,
 				BB7D93502087C2880008DA78 /* resource.h */,
 				BB7D93512087C2880008DA78 /* signal.c */,
@@ -492,54 +525,43 @@
 			path = kernel;
 			sourceTree = "<group>";
 		};
-		BB7D935C2087C2880008DA78 /* tools */ = {
-			isa = PBXGroup;
-			children = (
-				BB7D935D2087C2880008DA78 /* cify.c */,
-				BB7D935E2087C2880008DA78 /* fakefsify.py */,
-				BB7D935F2087C2880008DA78 /* meson.build */,
-				BB7D93602087C2880008DA78 /* ptraceomatic-gdb.gdb */,
-				BB7D93612087C2880008DA78 /* ptraceomatic.c */,
-				BB7D93622087C2880008DA78 /* ptutil.c */,
-				BB7D93632087C2880008DA78 /* ptutil.h */,
-				BB7D93642087C2880008DA78 /* transplant.h */,
-				BB7D93652087C2880008DA78 /* undefined-flags.c */,
-				BB7D93662087C2880008DA78 /* undefined-flags.h */,
-				BB7D93672087C2880008DA78 /* vdso-dump.c */,
-				BB7D93682087C2880008DA78 /* vdso-transplant-main.c */,
-				BB7D93692087C2880008DA78 /* vdso-transplant.c */,
-			);
-			path = tools;
-			sourceTree = "<group>";
-		};
 		BB7D936A2087C2890008DA78 /* fs */ = {
 			isa = PBXGroup;
 			children = (
-				650B336522E9F09F00B4C03E /* proc */,
-				650B336C22EA052400B4C03E /* dyndev.c */,
-				650B336D22EA052400B4C03E /* dyndev.h */,
-				650B335D22E9EF9B00B4C03E /* proc.c */,
-				650B335E22E9EF9B00B4C03E /* proc.h */,
-				650B335A22E9E46A00B4C03E /* mem.c */,
-				650B335B22E9E46A00B4C03E /* mem.h */,
 				BB7D936B2087C2890008DA78 /* adhoc.c */,
 				BB7D936C2087C2890008DA78 /* dev.c */,
 				BB7D936D2087C2890008DA78 /* dev.h */,
 				650B337522EA728B00B4C03E /* devices.h */,
 				BB7D936E2087C2890008DA78 /* dir.c */,
+				650B336C22EA052400B4C03E /* dyndev.c */,
+				650B336D22EA052400B4C03E /* dyndev.h */,
+				BB101B572364EAF0000A93BC /* fake-migrate.c */,
 				BB7D936F2087C2890008DA78 /* fake-rebuild.c */,
 				BB7D93702087C2890008DA78 /* fake.c */,
+				BB101B552364EAF0000A93BC /* fake.h */,
 				BB7D93712087C2890008DA78 /* fd.c */,
 				BB7D93722087C2890008DA78 /* fd.h */,
 				BB7D93732087C2890008DA78 /* generic.c */,
+				BB101B542364EAF0000A93BC /* inode.h */,
+				BB101B592364EAF0000A93BC /* inode.c */,
+				BB101B532364EAF0000A93BC /* lock.c */,
+				650B335A22E9E46A00B4C03E /* mem.c */,
+				650B335B22E9E46A00B4C03E /* mem.h */,
+				BB101B512364EAF0000A93BC /* mount.c */,
 				BB7D93742087C2890008DA78 /* path.c */,
 				BB7D93752087C2890008DA78 /* path.h */,
 				BB7D93762087C2890008DA78 /* pipe.c */,
 				BB7D93772087C2890008DA78 /* poll.c */,
 				BB7D93782087C2890008DA78 /* poll.h */,
+				650B336522E9F09F00B4C03E /* proc */,
+				650B335D22E9EF9B00B4C03E /* proc.c */,
+				650B335E22E9EF9B00B4C03E /* proc.h */,
+				BB101B582364EAF0000A93BC /* pty.c */,
 				BB7D93792087C2890008DA78 /* real.c */,
 				BB7D937A2087C2890008DA78 /* sock.c */,
 				BB7D937B2087C2890008DA78 /* sock.h */,
+				BB101B522364EAF0000A93BC /* sockrestart.c */,
+				BB101B562364EAF0000A93BC /* sockrestart.h */,
 				BB7D937C2087C2890008DA78 /* stat.c */,
 				BB7D937D2087C2890008DA78 /* stat.h */,
 				BB7D937E2087C2890008DA78 /* tty-real.c */,
@@ -567,6 +589,8 @@
 				BB8637072167F4F200E7ADC0 /* memory.h */,
 				BB8637082167F4F200E7ADC0 /* modrm.h */,
 				BB8637092167F4F200E7ADC0 /* regid.h */,
+				BB101B4F2364EAD8000A93BC /* sse.c */,
+				BB101B4E2364EAD7000A93BC /* sse.h */,
 				BB86370A2167F4F200E7ADC0 /* tlb.c */,
 				BB86370B2167F4F200E7ADC0 /* tlb.h */,
 			);
@@ -606,6 +630,7 @@
 				BB88F4752152F75A00A341FD /* control.S */,
 				BB88F4762152F75A00A341FD /* entry.S */,
 				BB88F4772152F75A00A341FD /* gadgets.h */,
+				BB101B5A2364EB66000A93BC /* math.h */,
 				BB88F4782152F75A00A341FD /* math.S */,
 				BB88F4792152F75A00A341FD /* memory.S */,
 				BB88F47A2152F75A00A341FD /* misc.S */,
@@ -673,6 +698,8 @@
 				8632A7BE219A59FB00F02325 /* UserPreferences.m */,
 				9A28E4E8219A8B670073D200 /* AboutAppearanceViewController.h */,
 				9A28E4E9219A8B670073D200 /* AboutAppearanceViewController.m */,
+				BB101B362364CF57000A93BC /* FontPickerViewController.h */,
+				BB101B372364CF57000A93BC /* FontPickerViewController.m */,
 				BB82A7FB21B4C2E8006AA5FD /* AboutExternalKeyboardViewController.h */,
 				BB82A7FC21B4C2E8006AA5FD /* AboutExternalKeyboardViewController.m */,
 			);
@@ -937,7 +964,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "curl -L http://dl-cdn.alpinelinux.org/alpine/v3.10/releases/x86/alpine-minirootfs-3.10.0-x86.tar.gz -o $SRCROOT/alpine.tar.gz";
+			shellScript = "curl -L http://dl-cdn.alpinelinux.org/alpine/v3.11/releases/x86/alpine-minirootfs-3.11.2-x86.tar.gz -o $SRCROOT/alpine.tar.gz";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
@@ -949,19 +976,22 @@
 			files = (
 				9A28E4EA219A8B670073D200 /* AboutAppearanceViewController.m in Sources */,
 				BB1D9D93234A8FE100F364E8 /* AboutNavigationController.m in Sources */,
+				BB235534235D488500139E00 /* LocationDevice.m in Sources */,
 				BB792B581F96D90D00FFB7A4 /* TerminalViewController.m in Sources */,
 				BB78AB2B1FAD22440013E782 /* TerminalView.m in Sources */,
 				BB23F58D231E1D1400585522 /* ScrollbarView.m in Sources */,
 				BBFB557621586F9200DFE6DE /* DismissSegue.m in Sources */,
 				BB455E111FB37F6600AFB48B /* DelayedUITask.m in Sources */,
 				BB0FC5921F980A6C00803272 /* Terminal.m in Sources */,
+				BB101B382364CF57000A93BC /* FontPickerViewController.m in Sources */,
+				BBCC9D962365430800424C83 /* SceneDelegate.m in Sources */,
 				BB82A7FD21B4C2E8006AA5FD /* AboutExternalKeyboardViewController.m in Sources */,
 				8632A7BF219A59FB00F02325 /* UserPreferences.m in Sources */,
 				BB792B631F96D90D00FFB7A4 /* main.m in Sources */,
 				BB60F55221573FCA003A4E52 /* BarButton.m in Sources */,
 				BBFB557C215878C600DFE6DE /* UIApplication+OpenURL.m in Sources */,
 				BBFB5579215876CD00DFE6DE /* AboutViewController.m in Sources */,
-				650B337422EA235C00B4C03E /* Pasteboard.m in Sources */,
+				650B337422EA235C00B4C03E /* PasteboardDevice.m in Sources */,
 				BBFB557121586C4800DFE6DE /* UIViewController+Back.m in Sources */,
 				BBFB558021587B6800DFE6DE /* ArrowBarButton.m in Sources */,
 				BB792B551F96D90D00FFB7A4 /* AppDelegate.m in Sources */,
@@ -1250,7 +1280,7 @@
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				CURRENT_PROJECT_VERSION = 60;
+				CURRENT_PROJECT_VERSION = 64;
 				DEVELOPMENT_TEAM = CK5SXRTBR7;
 				ENABLE_BITCODE = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -1296,7 +1326,7 @@
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				CURRENT_PROJECT_VERSION = 60;
+				CURRENT_PROJECT_VERSION = 64;
 				DEVELOPMENT_TEAM = CK5SXRTBR7;
 				ENABLE_BITCODE = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;

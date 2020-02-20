@@ -56,7 +56,9 @@ static void futex_put(struct futex *futex) {
 
 static int futex_load(struct futex *futex, dword_t *out) {
     assert(futex->mem == current->mem);
+    read_wrlock(&current->mem->lock);
     dword_t *ptr = mem_ptr(current->mem, futex->addr, MEM_READ);
+    read_wrunlock(&current->mem->lock);
     if (ptr == NULL)
         return 1;
     *out = *ptr;
@@ -100,7 +102,7 @@ dword_t sys_futex(addr_t uaddr, dword_t op, dword_t val, addr_t timeout_or_val2,
         STRACE("!FUTEX_PRIVATE ");
     }
     struct timespec timeout = {0};
-    if ((op & (FUTEX_WAIT_)) > 0) {
+    if ((op & FUTEX_CMD_MASK_) == FUTEX_WAIT_ && timeout_or_val2) {
         struct timespec_ timeout_;
         if (user_get(timeout_or_val2, timeout_))
             return _EFAULT;

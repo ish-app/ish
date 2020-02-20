@@ -97,7 +97,7 @@ static int __path_normalize(const char *at_path, const char *path, char *out, in
             // exists, it's a directory and that we have execute perms on it
             if (*(p - 1) == '/') {
                 struct statbuf stat;
-                int err = mount->fs->stat(mount, possible_symlink, &stat, false);
+                int err = mount->fs->stat(mount, possible_symlink, &stat);
                 mount_release(mount);
                 if (err >= 0) {
                     if (!S_ISDIR(stat.mode))
@@ -152,5 +152,25 @@ bool path_is_normalized(const char *path) {
         while (*path != '/' && *path != '\0')
             path++;
     }
+    return true;
+}
+
+bool path_next_component(const char **path, char *component, int *err) {
+    const char *p = *path;
+    if (*p == '\0')
+        return false;
+
+    assert(*p == '/');
+    p++;
+    char *c = component;
+    while (*p != '/' && *p != '\0') {
+        *c++ = *p++;
+        if (c - component >= MAX_NAME) {
+            *err = _ENAMETOOLONG;
+            return false;
+        }
+    }
+    *c = '\0';
+    *path = p;
     return true;
 }

@@ -61,4 +61,30 @@ const int kCapsLockMappingSection = 0;
     }
 }
 
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
+    if (section == 0 && ![self.class capsLockMappingSupported])
+        return 0;
+    return [super tableView:tableView numberOfRowsInSection:section];
+}
+
+- (NSString *)tableView:(UITableView *)tableView titleForFooterInSection:(NSInteger)section {
+    if (section == 0 && ![self.class capsLockMappingSupported])
+        return @"Caps Lock mapping is broken in iOS 13.\n\n"
+        @"Since iOS 13.4, Caps Lock can be remapped system-wide in Settings → General → Keyboard → Hardware Keyboard → Modifier Keys.";
+    return [super tableView:tableView titleForFooterInSection:section];
+}
+
+- (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
+    if (section == 0 && ![self.class capsLockMappingSupported])
+        return @"";
+    return [super tableView:tableView titleForHeaderInSection:section];
+}
+
++ (BOOL)capsLockMappingSupported {
+    if (@available(iOS 13, *)) {
+        return NO;
+    }
+    return YES;
+}
+
 @end

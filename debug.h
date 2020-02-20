@@ -58,7 +58,7 @@ void vprintk(const char *msg, va_list args);
 extern int log_override;
 #define TRACE__NOP(msg, ...) if (log_override) { TRACE__(msg, ##__VA_ARGS__); }
 #else
-#define TRACE__NOP(msg, ...) do {} while(0)
+#define TRACE__NOP(msg, ...) use(__VA_ARGS__)
 #endif
 #define TRACE__(msg, ...) printk(msg, ##__VA_ARGS__)
 

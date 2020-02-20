@@ -12,6 +12,13 @@ extern struct tty_driver pty_slave;
 // the master holds a reference to the slave, so the slave will always be cleaned up second
 // when the master cleans up it hangs up the slave, making any operation that references the master unreachable
 
+static void pty_slave_init_inode(struct tty *tty) {
+    tty->pty.uid = current->euid;
+    // TODO make these mount options
+    tty->pty.gid = current->egid;
+    tty->pty.perms = 0620;
+}
+
 static int pty_master_init(struct tty *tty) {
     tty->termios.iflags = 0;
     tty->termios.oflags = 0;
@@ -23,12 +30,7 @@ static int pty_master_init(struct tty *tty) {
     tty->pty.other = slave;
     slave->pty.other = tty;
     slave->pty.locked = true;
-
-    slave->pty.uid = current->euid;
-    // TODO make these mount options
-    slave->pty.gid = current->egid;
-    slave->pty.perms = 0620;
-
+    pty_slave_init_inode(slave);
     return 0;
 }
 
@@ -87,35 +89,50 @@ const struct tty_driver_ops pty_master_ops = {
     .ioctl = pty_master_ioctl,
     .cleanup = pty_master_cleanup,
 };
-DEFINE_TTY_DRIVER(pty_master, &pty_master_ops, MAX_PTYS);
+DEFINE_TTY_DRIVER(pty_master, &pty_master_ops, TTY_PSEUDO_MASTER_MAJOR, MAX_PTYS);
 
 const struct tty_driver_ops pty_slave_ops = {
     .init = pty_return_eio,
     .open = pty_slave_open,
     .write = pty_write,
 };
-DEFINE_TTY_DRIVER(pty_slave, &pty_slave_ops, MAX_PTYS);
+DEFINE_TTY_DRIVER(pty_slave, &pty_slave_ops, TTY_PSEUDO_SLAVE_MAJOR, MAX_PTYS);
 
-int ptmx_open(struct fd *fd) {
+static int pty_reserve_next() {
     int pty_num;
     lock(&ttys_lock);
     for (pty_num = 0; pty_num < MAX_PTYS; pty_num++) {
         if (pty_slave.ttys[pty_num] == NULL)
             break;
     }
+    pty_slave.ttys[pty_num] = (void *) 1; // anything non-null to reserve it
     unlock(&ttys_lock);
+    return pty_num;
+}
+
+int ptmx_open(struct fd *fd) {
+    int pty_num = pty_reserve_next();
     if (pty_num == MAX_PTYS)
         return _ENOSPC;
+    struct tty *master = tty_get(&pty_master, TTY_PSEUDO_MASTER_MAJOR, pty_num);
+    if (IS_ERR(master))
+        return PTR_ERR(master);
+    return tty_open(master, fd);
+}
 
-    struct tty *tty = tty_get(&pty_master, TTY_PSEUDO_MASTER_MAJOR, pty_num);
+struct tty *pty_open_fake(struct tty_driver *driver) {
+    int pty_num = pty_reserve_next();
+    if (pty_num == MAX_PTYS)
+        return ERR_PTR(_ENOSPC);
+    // TODO this is a bit of a hack
+    driver->ttys = pty_slave.ttys;
+    driver->limit = pty_slave.limit;
+    driver->major = TTY_PSEUDO_SLAVE_MAJOR;
+    struct tty *tty = tty_get(driver, TTY_PSEUDO_SLAVE_MAJOR, pty_num);
     if (IS_ERR(tty))
-        return PTR_ERR(tty);
-
-    fd->tty = tty;
-    lock(&tty->fds_lock);
-    list_add(&tty->fds, &fd->tty_other_fds);
-    unlock(&tty->fds_lock);
-    return 0;
+        return tty;
+    pty_slave_init_inode(tty);
+    return tty;
 }
 
 static bool isdigits(const char *str) {
@@ -230,7 +247,7 @@ static int devpts_fstat(struct fd *fd, struct statbuf *stat) {
     return 0;
 }
 
-static int devpts_stat(struct mount *UNUSED(mount), const char *path, struct statbuf *stat, bool UNUSED(follow_links)) {
+static int devpts_stat(struct mount *UNUSED(mount), const char *path, struct statbuf *stat) {
     int pty_num = devpts_get_pty_num(path);
     if (pty_num == _ENOENT)
         return _ENOENT;

@@ -90,12 +90,12 @@ static inline int xX_main_Xx(int argc, char *const argv[], const char *envp) {
         i++;
     }
     argv_copy[p] = '\0';
-    err = sys_execve(argv[optind], argv_copy, envp == NULL ? "\0" : envp);
+    err = do_execve(argv[optind], argc - optind, argv_copy, envp == NULL ? "\0" : envp);
     if (err < 0)
         return err;
     tty_drivers[TTY_CONSOLE_MAJOR] = &real_tty_driver;
     if (isatty(STDIN_FILENO) && isatty(STDOUT_FILENO)) {
-        err = create_stdio(console);
+        err = create_stdio(console, TTY_CONSOLE_MAJOR, 1);
         if (err < 0)
             return err;
     } else {

@@ -48,7 +48,7 @@ int_t sys_epoll_ctl(fd_t epoll_f, int_t op, fd_t f, addr_t event_addr) {
         return _EFAULT;
     STRACE(" {events: %#x, data: %#x}", event.events, event.data);
     if (event.events & EPOLLET_)
-        printk("ignoring EPOLLET\n");
+        TRACE("ignoring EPOLLET\n");
     if (event.events & EPOLLONESHOT_) {
         printk("unimplemented epoll one-shot\n");
         return _EINVAL;
@@ -87,7 +87,7 @@ int_t sys_epoll_wait(fd_t epoll_f, addr_t events_addr, int_t max_events, int_t t
         return _EINVAL;
 
     struct timespec timeout_ts;
-    if (timeout != -1) {
+    if (timeout >= 0) {
         timeout_ts.tv_sec = timeout / 1000;
         timeout_ts.tv_nsec = (timeout % 1000) * 1000000;
     }
@@ -96,7 +96,7 @@ int_t sys_epoll_wait(fd_t epoll_f, addr_t events_addr, int_t max_events, int_t t
     struct epoll_event_ events[max_events];
 
     struct epoll_context context = {.events = events, .n = 0, .max_events = max_events};
-    int res = poll_wait(epoll->epollfd.poll, epoll_callback, &context, timeout == -1 ? NULL : &timeout_ts);
+    int res = poll_wait(epoll->epollfd.poll, epoll_callback, &context, timeout < 0 ? NULL : &timeout_ts);
     if (res >= 0)
         if (user_write(events_addr, events, sizeof(struct epoll_event_) * res))
             return _EFAULT;

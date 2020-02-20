@@ -113,6 +113,7 @@ void task_start(struct task *task) {
 }
 
 int_t sys_sched_yield() {
+    STRACE("sched_yield()");
     sched_yield();
     return 0;
 }

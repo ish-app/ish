@@ -72,18 +72,25 @@ struct fd {
             // length of actual data stored in the buffer
             size_t buffer_len;
         } clipboard;
+
+        // can fit anything in here
+        void *data;
     };
     // fs data
     union {
         struct {
             struct proc_entry entry;
             unsigned dir_index;
-            char *data;
-            size_t size;
+            struct proc_data data;
         } proc;
         struct {
             int num;
         } devpts;
+        struct {
+            struct tmp_dirent *dirent;
+            struct tmp_dirent *dir_pos;
+        } tmpfs;
+        void *fs_data;
     };
 
     // fs/inode data

@@ -6,6 +6,7 @@
 //
 
 #import "AboutAppearanceViewController.h"
+#import "FontPickerViewController.h"
 #import "UserPreferences.h"
 
 static NSString *const ThemeNameCellIdentifier = @"Theme Name";
@@ -22,12 +23,14 @@ static NSString *const PreviewCellIdentifier = @"Preview";
     [super viewDidLoad];
     [[UserPreferences shared] addObserver:self forKeyPath:@"theme" options:NSKeyValueObservingOptionNew context:nil];
     [[UserPreferences shared] addObserver:self forKeyPath:@"fontSize" options:NSKeyValueObservingOptionNew context:nil];
+    [[UserPreferences shared] addObserver:self forKeyPath:@"fontFamily" options:NSKeyValueObservingOptionNew context:nil];
 }
 
 - (void)dealloc {
     @try {
         [[UserPreferences shared] removeObserver:self forKeyPath:@"theme"];
         [[UserPreferences shared] removeObserver:self forKeyPath:@"fontSize"];
+        [[UserPreferences shared] removeObserver:self forKeyPath:@"fontFamily"];
     } @catch (NSException * __unused exception) {}
 }
 
@@ -40,7 +43,7 @@ static NSString *const PreviewCellIdentifier = @"Preview";
 
 enum {
     ThemeNameSection,
-    FontSizeSection,
+    FontSection,
     PreviewSection,
     NumberOfSections,
 };
@@ -52,7 +55,7 @@ enum {
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     switch (section) {
         case ThemeNameSection: return Theme.presetNames.count;
-        case FontSizeSection: return 1;
+        case FontSection: return 2;
         case PreviewSection: return 1;
         default: NSAssert(NO, @"unhandled section"); return 0;
     }
@@ -70,10 +73,10 @@ enum {
     return [Theme presetThemeNamed:Theme.presetNames[row]];
 }
 
-- (NSString *)reuseIdentifierForSection:(NSInteger)section {
-    switch (section) {
+- (NSString *)reuseIdentifierForIndexPath:(NSIndexPath *)indexPath {
+    switch (indexPath.section) {
         case ThemeNameSection: return @"Theme Name";
-        case FontSizeSection: return @"Font Size";
+        case FontSection: return @[@"Font", @"Font Size"][indexPath.row];
         case PreviewSection: return @"Preview";
         default: return nil;
     }
@@ -81,7 +84,7 @@ enum {
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     UserPreferences *prefs = [UserPreferences shared];
-    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:[self reuseIdentifierForSection:indexPath.section] forIndexPath:indexPath];
+    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:[self reuseIdentifierForIndexPath:indexPath] forIndexPath:indexPath];
     
     switch (indexPath.section) {
         case ThemeNameSection:
@@ -93,19 +96,22 @@ enum {
             }
             break;
             
-        case FontSizeSection: {
-            UserPreferences *prefs = [UserPreferences shared];
-            UILabel *label = [cell viewWithTag:1];
-            UIStepper *stepper = [cell viewWithTag:2];
-            label.text = prefs.fontSize.stringValue;
-            stepper.value = prefs.fontSize.doubleValue;
+        case FontSection:
+            if (indexPath.row == 0) {
+                cell.detailTextLabel.text = UserPreferences.shared.fontFamily;
+            } else if (indexPath.row == 1) {
+                UserPreferences *prefs = [UserPreferences shared];
+                UILabel *label = [cell viewWithTag:1];
+                UIStepper *stepper = [cell viewWithTag:2];
+                label.text = prefs.fontSize.stringValue;
+                stepper.value = prefs.fontSize.doubleValue;
+            }
             break;
-        }
             
         case PreviewSection:
             cell.backgroundColor = prefs.theme.backgroundColor;
             cell.textLabel.textColor = prefs.theme.foregroundColor;
-            cell.textLabel.font = [UIFont fontWithName:@"Menlo-Regular" size:prefs.fontSize.doubleValue];
+            cell.textLabel.font = [UIFont fontWithName:UserPreferences.shared.fontFamily size:prefs.fontSize.doubleValue];
             cell.textLabel.text = [NSString stringWithFormat:@"%@:~# ps aux", [UIDevice currentDevice].name];
             cell.selectionStyle = UITableViewCellSelectionStyleNone;
             break;
@@ -121,7 +127,28 @@ enum {
         case ThemeNameSection:
             UserPreferences.shared.theme = [self _themeForRow:indexPath.row];
             break;
+        case FontSection:
+            if (indexPath.row == 0) // font family
+                [self selectFont:nil];
     }
+}
+
+- (IBAction)selectFont:(id)sender {
+    if (@available(iOS 13, *)) {
+        UIFontPickerViewControllerConfiguration *config = [UIFontPickerViewControllerConfiguration new];
+        config.filteredTraits = UIFontDescriptorTraitMonoSpace;
+        UIFontPickerViewController *fontPicker = [[UIFontPickerViewController alloc] initWithConfiguration:config];
+        fontPicker.delegate = self;
+        [self presentViewController:fontPicker animated:YES completion:nil];
+        return;
+    }
+    
+    FontPickerViewController *fontPicker = [self.storyboard instantiateViewControllerWithIdentifier:@"FontPicker"];
+    [self.navigationController pushViewController:fontPicker animated:YES];
+}
+
+- (void)fontPickerViewControllerDidPickFont:(UIFontPickerViewController *)viewController API_AVAILABLE(ios(13.0)) {
+    UserPreferences.shared.fontFamily = viewController.selectedFontDescriptor.fontAttributes[UIFontDescriptorFamilyAttribute];
 }
 
 - (IBAction)fontSizeChanged:(UIStepper *)sender {

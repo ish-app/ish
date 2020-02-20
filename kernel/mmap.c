@@ -25,9 +25,9 @@ struct mm *mm_copy(struct mm *mm) {
     new_mm->refcount = 1;
     mem_init(&new_mm->mem);
     fd_retain(new_mm->exefile);
-    read_wrlock(&mm->mem.lock);
+    write_wrlock(&mm->mem.lock);
     pt_copy_on_write(&mm->mem, &new_mm->mem, 0, MEM_PAGES);
-    read_wrunlock(&mm->mem.lock);
+    write_wrunlock(&mm->mem.lock);
     return new_mm;
 }
 
@@ -77,6 +77,8 @@ static addr_t do_mmap(addr_t addr, dword_t len, dword_t prot, dword_t flags, fd_
             return _ENODEV;
         if ((err = fd->ops->mmap(fd, current->mem, page, pages, offset, prot, flags)) < 0)
             return err;
+        mem_pt(current->mem, page)->data->fd = fd_retain(fd);
+        mem_pt(current->mem, page)->data->file_offset = offset;
     }
     return page << PAGE_BITS;
 }
@@ -85,7 +87,7 @@ static addr_t mmap_common(addr_t addr, dword_t len, dword_t prot, dword_t flags,
     STRACE("mmap(0x%x, 0x%x, 0x%x, 0x%x, %d, %d)", addr, len, prot, flags, fd_no, offset);
     if (len == 0)
         return _EINVAL;
-    if (prot & ~(P_READ | P_WRITE | P_EXEC))
+    if (prot & ~P_RWX)
         return _EINVAL;
     if ((flags & MMAP_PRIVATE) && (flags & MMAP_SHARED))
         return _EINVAL;
@@ -176,7 +178,7 @@ int_t sys_mprotect(addr_t addr, uint_t len, int_t prot) {
     STRACE("mprotect(0x%x, 0x%x, 0x%x)", addr, len, prot);
     if (PGOFFSET(addr) != 0)
         return _EINVAL;
-    if (prot & ~(P_READ | P_WRITE | P_EXEC))
+    if (prot & ~P_RWX)
         return _EINVAL;
     pages_t pages = PAGE_ROUND_UP(len);
     write_wrlock(&current->mem->lock);
@@ -229,7 +231,7 @@ addr_t sys_brk(addr_t new_brk) {
         // shrink heap: unmap region from new_brk to old_brk
         // first page to unmap is PAGE(new_brk)
         // last page to unmap is PAGE(old_brk)
-        pt_unmap_always(&mm->mem, PAGE(new_brk), PAGE(old_brk));
+        pt_unmap_always(&mm->mem, PAGE(new_brk), PAGE(old_brk) - PAGE(new_brk));
     }
 
     mm->brk = new_brk;

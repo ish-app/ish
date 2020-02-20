@@ -9,6 +9,7 @@
 #include "kernel/calls.h"
 #include "kernel/errno.h"
 #include "kernel/resource.h"
+#include "kernel/time.h"
 #include "fs/poll.h"
 
 dword_t sys_time(addr_t time_out) {
@@ -48,6 +49,7 @@ dword_t sys_clock_gettime(dword_t clock, addr_t tp) {
     t.nsec = ts.tv_nsec;
     if (user_put(tp, t))
         return _EFAULT;
+    STRACE(" {%lds %ldns}", t.sec, t.nsec);
     return 0;
 }
 
@@ -90,7 +92,7 @@ static int itimer_set(struct tgroup *group, int which, struct timer_spec spec, s
     }
 
     if (!group->timer) {
-        struct timer *timer = timer_new((timer_callback_t) itimer_notify, current);
+        struct timer *timer = timer_new(CLOCK_REALTIME, (timer_callback_t) itimer_notify, current);
         if (IS_ERR(timer))
             return PTR_ERR(timer);
         group->timer = timer;
@@ -227,21 +229,27 @@ static void timerfd_callback(struct fd *fd) {
 
 fd_t sys_timerfd_create(int_t clockid, int_t flags) {
     STRACE("timerfd_create(%d, %#x)", clockid, flags);
-    if (clockid != ITIMER_REAL_) {
-        FIXME("timerfd %d", clockid);
-        return _EINVAL;
+    clockid_t real_clockid;
+    switch (clockid) {
+        case CLOCK_REALTIME_: real_clockid = CLOCK_REALTIME; break;
+        case CLOCK_MONOTONIC_: real_clockid = CLOCK_MONOTONIC; break;
+        default: FIXME("timerfd %d", clockid); return _EINVAL;
     }
 
     struct fd *fd = adhoc_fd_create(&timerfd_ops);
     if (fd == NULL)
         return _ENOMEM;
 
-    fd->timerfd.timer = timer_new((timer_callback_t) timerfd_callback, fd);
+    fd->timerfd.timer = timer_new(real_clockid, (timer_callback_t) timerfd_callback, fd);
     return f_install(fd, flags);
 }
 
+#define TFD_TIMER_ABSTIME_ (1 << 0)
+
 int_t sys_timerfd_settime(fd_t f, int_t flags, addr_t new_value_addr, addr_t old_value_addr) {
     STRACE("timerfd_settime(%d, %d, %#x, %#x)", f, flags, new_value_addr, old_value_addr);
+    if (flags & ~(TFD_TIMER_ABSTIME_))
+        return _EINVAL;
     struct fd *fd = f_get(f);
     if (fd == NULL)
         return _EBADF;
@@ -258,6 +266,11 @@ int_t sys_timerfd_settime(fd_t f, int_t flags, addr_t new_value_addr, addr_t old
         .interval.tv_nsec = value.interval.nsec,
     };
     struct timer_spec old_spec;
+    if (flags & TFD_TIMER_ABSTIME_) {
+        struct timespec now = timespec_now(fd->timerfd.timer->clockid);
+        spec.value = timespec_subtract(spec.value, now);
+    }
+
     lock(&fd->lock);
     int err = timer_set(fd->timerfd.timer, spec, &old_spec);
     unlock(&fd->lock);

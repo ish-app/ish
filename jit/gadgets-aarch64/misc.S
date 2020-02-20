@@ -53,6 +53,11 @@
         mov w9, eax
         do_add sub, w9, w8, \s
         setf_zsp \s, val=w9
+        .ifnb \s
+            cmp w9, 0
+            and w9, eax, (-1 << \size)
+            orr w8, w8, w9
+        .endif
         csel eax, w8, eax, ne
         csel w8, _tmp, w8, eq
         cset w9, eq
@@ -81,6 +86,60 @@
 .endr
 .gadget_array cmpxchg
 .gadget_array atomic_cmpxchg
+
+.gadget atomic_cmpxchg8b
+    write_prep 64, atomic_cmpxchg8b
+    mov w9, eax
+    bfi x9, xdx, 32, 32
+    mov w10, ebx
+    bfi x10, xcx, 32, 32
+
+1:
+    ldaxr x8, [_xaddr]
+    cmp x9, x8
+    csel x9, x8, x9, ne
+    csel x8, x10, x8, eq
+    cset w11, eq
+    stlxr w12, x8, [_xaddr]
+    cbnz w12, 1b
+    write_done 64, atomic_cmpxchg8b
+    ubfx xax, x9, 0, 32
+    ubfx xdx, x9, 32, 32
+
+    ldr w8, [_cpu, CPU_flags_res]
+    ldr w9, [_cpu, CPU_eflags]
+    and w8, w8, ~ZF_RES
+    bfi w9, w11, 6, 1
+    str w8, [_cpu, CPU_flags_res]
+    str w9, [_cpu, CPU_eflags]
+    gret 1
+    write_bullshit 64, atomic_cmpxchg8b
+
+.gadget cmpxchg8b
+    write_prep 64, cmpxchg8b
+    mov w9, eax
+    bfi x9, xdx, 32, 32
+    mov w10, ebx
+    bfi x10, xcx, 32, 32
+
+    ldr x8, [_xaddr]
+    cmp x9, x8
+    csel x9, x8, x9, ne
+    csel x8, x10, x8, eq
+    cset w11, eq
+    str x8, [_xaddr]
+    write_done 64, cmpxchg8b
+    ubfx xax, x9, 0, 32
+    ubfx xdx, x9, 32, 32
+
+    ldr w8, [_cpu, CPU_flags_res]
+    ldr w9, [_cpu, CPU_eflags]
+    and w8, w8, ~ZF_RES
+    bfi w9, w11, 6, 1
+    str w8, [_cpu, CPU_flags_res]
+    str w9, [_cpu, CPU_eflags]
+    gret 1
+    write_bullshit 64, cmpxchg8b
 
 .macro do_helper type, size=
     .gadget helper_\type\size

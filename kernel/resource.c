@@ -217,6 +217,7 @@ int_t sys_sched_setaffinity(pid_t_ UNUSED(pid), dword_t UNUSED(cpusetsize), addr
     // meh
     return 0;
 }
+
 int_t sys_getpriority(int_t which, pid_t_ who) {
     STRACE("getpriority(%d, %d)", which, who);
     return 20;
@@ -224,4 +225,33 @@ int_t sys_getpriority(int_t which, pid_t_ who) {
 int_t sys_setpriority(int_t which, pid_t_ who, int_t prio) {
     STRACE("setpriority(%d, %d, %d)", which, who, prio);
     return 0;
+}
+
+// realtime scheduling stubs
+int_t sys_sched_getparam(pid_t_ UNUSED(pid), addr_t param_addr) {
+    int_t sched_priority = 0;
+    if (user_put(param_addr, sched_priority))
+        return _EFAULT;
+    return 0;
+}
+#define SCHED_OTHER_ 0
+int_t sys_sched_getscheduler(pid_t_ UNUSED(pid)) {
+    return SCHED_OTHER_;
+}
+int_t sys_sched_setscheduler(pid_t_ UNUSED(pid), int_t policy, addr_t param_addr) {
+    if (policy != SCHED_OTHER_)
+        return _EINVAL;
+    int_t sched_priority;
+    if (user_get(param_addr, sched_priority))
+        return _EFAULT;
+    if (sched_priority != 0)
+        return _EINVAL;
+    return 0;
+}
+
+int_t sys_sched_get_priority_max(int_t policy) {
+    STRACE("sched_get_priority_max(%d)", policy);
+    if (policy == 0)
+        return 0;
+    return _EINVAL;
 }

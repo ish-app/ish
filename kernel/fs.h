@@ -52,7 +52,7 @@ int generic_unlinkat(struct fd *at, const char *path);
 int generic_rmdirat(struct fd *at, const char *path);
 int generic_renameat(struct fd *src_at, const char *src, struct fd *dst_at, const char *dst);
 int generic_symlinkat(const char *target, struct fd *at, const char *link);
-int generic_mknod(const char *path, mode_t_ mode, dev_t_ dev);
+int generic_mknodat(struct fd *at, const char *path, mode_t_ mode, dev_t_ dev);
 #define AC_R 4
 #define AC_W 2
 #define AC_X 1
@@ -117,6 +117,7 @@ extern struct list mounts;
 #define O_WRONLY_ (1 << 0)
 #define O_RDWR_ (1 << 1)
 #define O_CREAT_ (1 << 6)
+#define O_EXCL_ (1 << 7)
 #define O_NOCTTY_ (1 << 8)
 #define O_TRUNC_ (1 << 9)
 #define O_APPEND_ (1 << 10)
@@ -128,6 +129,7 @@ extern struct list mounts;
 #define FIONREAD_ 0x541b
 #define FIONBIO_ 0x5421
 
+// All operations are optional unless otherwise specified
 struct fs_ops {
     const char *name;
     int magic;
@@ -138,7 +140,8 @@ struct fs_ops {
 
     struct fd *(*open)(struct mount *mount, const char *path, int flags, int mode); // required
     ssize_t (*readlink)(struct mount *mount, const char *path, char *buf, size_t bufsize);
-    // TODO make these optional (EROFS probably)
+
+    // These return _EPERM if not present
     int (*link)(struct mount *mount, const char *src, const char *dst);
     int (*unlink)(struct mount *mount, const char *path);
     int (*rmdir)(struct mount *mount, const char *path);
@@ -153,19 +156,19 @@ struct fs_ops {
     // If they are the same function, it will only be called once.
     int (*close)(struct fd *fd);
 
-    int (*stat)(struct mount *mount, const char *path, struct statbuf *stat, bool follow_links);
-    int (*fstat)(struct fd *fd, struct statbuf *stat);
+    int (*stat)(struct mount *mount, const char *path, struct statbuf *stat); // required
+    int (*fstat)(struct fd *fd, struct statbuf *stat); // required
     int (*setattr)(struct mount *mount, const char *path, struct attr attr);
     int (*fsetattr)(struct fd *fd, struct attr attr);
     int (*utime)(struct mount *mount, const char *path, struct timespec atime, struct timespec mtime);
     // Returns the path of the file descriptor, null terminated, buf must be at least MAX_PATH+1
-    int (*getpath)(struct fd *fd, char *buf);
+    int (*getpath)(struct fd *fd, char *buf); // required
 
     int (*flock)(struct fd *fd, int operation);
 
     // If present, called when all references to an inode_data for this
     // filesystem go away.
-    void (*inode_orphaned)(struct mount *mount, struct inode_data *inode);
+    void (*inode_orphaned)(struct mount *mount, ino_t inode);
 };
 
 struct mount *find_mount_and_trim_path(char *path);
@@ -185,6 +188,8 @@ ssize_t realfs_write(struct fd *fd, const void *buf, size_t bufsize);
 int realfs_poll(struct fd *fd);
 int realfs_getflags(struct fd *fd);
 int realfs_setflags(struct fd *fd, dword_t arg);
+ssize_t realfs_ioctl_size(int cmd);
+int realfs_ioctl(struct fd *fd, int cmd, void *arg);
 int realfs_close(struct fd *fd);
 
 // adhoc fs
@@ -195,5 +200,6 @@ extern const struct fs_ops realfs;
 extern const struct fs_ops procfs;
 extern const struct fs_ops fakefs;
 extern const struct fs_ops devptsfs;
+extern const struct fs_ops tmpfs;
 
 #endif
