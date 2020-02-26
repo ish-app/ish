@@ -212,9 +212,10 @@ out:
 int fcntl_setlk(struct fd *fd, struct flock_ *flock, bool blocking) {
     if (flock->type != F_RDLCK_ && flock->type != F_WRLCK_ && flock->type != F_UNLCK_)
         return _EINVAL;
-    if (flock->type == F_RDLCK_ && !(fd_getflags(fd) & (O_RDONLY_|O_RDWR_)))
+    int fd_mode = fd_getflags(fd) & O_ACCMODE_;
+    if (flock->type == F_RDLCK_ && !(fd_mode == O_RDONLY_) && !(fd_mode == O_RDWR_))
         return _EBADF;
-    if (flock->type == F_WRLCK_ && !(fd_getflags(fd) & (O_WRONLY_|O_RDWR_)))
+    if (flock->type == F_WRLCK_ && !(fd_mode == O_WRONLY_) && !(fd_mode == O_RDWR_))
         return _EBADF;
 
     struct inode_data *inode = fd->inode;
