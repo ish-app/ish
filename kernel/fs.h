@@ -113,6 +113,7 @@ int mount_remove(struct mount *mount);
 extern struct list mounts;
 
 // open flags
+#define O_ACCMODE_ 3
 #define O_RDONLY_ 0
 #define O_WRONLY_ (1 << 0)
 #define O_RDWR_ (1 << 1)
