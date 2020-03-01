@@ -5,6 +5,7 @@
 #include "kernel/fs.h"
 #include "fs/path.h"
 #include "util/refcount.h"
+#include "debug.h"
 
 // ========================
 // ======== INODES ========
@@ -87,12 +88,18 @@ static void tmp_dirent_init(struct tmp_dirent *dirent) {
     lock_init(&dirent->lock);
 }
 
+// Frees the child inode on failure, so you don't need to! But be careful you don't free it yourself.
+// In other words: Takes ownership of `child`
 static int tmpfs_dir_link(struct tmp_dirent *dir, const char *name, struct tmp_inode *child, struct tmp_dirent **dirent_out) {
-    if (!S_ISDIR(dir->inode->stat.mode))
+    if (!S_ISDIR(dir->inode->stat.mode)) {
+        tmp_inode_release(child);
         return _ENOTDIR;
+    }
     struct tmp_dirent *new_dirent = malloc(sizeof(struct tmp_dirent));
-    if (new_dirent == NULL)
+    if (new_dirent == NULL) {
+        tmp_inode_release(child);
         return _ENOMEM;
+    }
 
     tmp_dirent_init(new_dirent);
     strcpy(new_dirent->name, name);
@@ -130,6 +137,17 @@ static struct tmp_dirent *tmpfs_dir_lookup(struct tmp_dirent *dir, const char *n
     if (dirent == NULL)
         return ERR_PTR(_ENOENT);
     return tmp_dirent_retain(dirent);
+}
+
+// TODO: should this function even exist? can't tmpfs_dir_link check for existence?
+static int tmpfs_dir_lookup_existence(struct tmp_dirent *dir, const char *name) {
+    struct tmp_dirent *dirent = tmpfs_dir_lookup(dir, name);
+    if (dirent == ERR_PTR(_ENOENT))
+        return 0;
+    if (IS_ERR(dirent))
+        return PTR_ERR(dirent);
+    tmp_dirent_release(dirent);
+    return _EEXIST;
 }
 
 static struct tmp_dirent *__tmpfs_lookup(struct mount *mount, const char *path, bool parent, const char **filename_out) {
@@ -226,13 +244,14 @@ static int tmpfs_umount(struct mount *mount) {
     // big fat fuckin TODO
     // struct tmp_inode *root = mount->data;
     // tmpfs_unmount_tree(root);
-    assert(!"TODO tmpfs umount");
+    TODO("tmpfs umount");
     return 0;
 }
 
 static struct fd *tmpfs_open(struct mount *mount, const char *path, int flags, int mode) {
     struct tmp_dirent *dirent;
-    if (flags & O_CREAT_ && path[strlen(path) - 1] != '/') { // TODO: do we really need that ending / check? does it even do anything?
+    if (flags & O_CREAT_) {
+        // FIXME: will create a file when given a path that ends with a slash
         const char *filename;
         struct tmp_dirent *parent = tmpfs_lookup_parent(mount, path, &filename);
         if (IS_ERR(parent))
@@ -307,6 +326,29 @@ static int tmpfs_close(struct fd *fd) {
     return 0;
 }
 
+static int tmpfs_mkdir(struct mount *mount, const char *path, mode_t_ mode) {
+    const char *filename;
+    struct tmp_dirent *parent = tmpfs_lookup_parent(mount, path, &filename);
+    if (IS_ERR(parent))
+        return PTR_ERR(parent);
+    lock(&parent->lock);
+
+    int err = tmpfs_dir_lookup_existence(parent, filename);
+    if (err < 0)
+        goto out;
+
+    struct tmp_inode *inode = tmp_inode_new(S_IFDIR | mode);
+    err = _ENOMEM;
+    if (inode == NULL)
+        goto out;
+
+    err = tmpfs_dir_link(parent, filename, inode, NULL);
+out:
+    unlock(&parent->lock);
+    tmp_dirent_release(parent);
+    return err;
+}
+
 // ========================
 // ======== FD OPS ========
 // ========================
@@ -377,11 +419,38 @@ static ssize_t tmpfs_write(struct fd *fd, const void *buf, size_t bufsize) {
             goto out;
     }
     memcpy(inode->file_data + fd->offset, buf, bufsize);
+    fd->offset += bufsize;
     res = bufsize;
 
 out:
     unlock(&inode->lock);
     return res;
+}
+
+static off_t_ tmpfs_lseek(struct fd *fd, off_t_ off, int whence) {
+    qword_t size;
+    if (whence == LSEEK_END) {
+        struct tmp_inode *inode = tmpfs_fd_inode(fd);
+        lock(&inode->lock);
+        size = inode->stat.size;
+    }
+
+    // TODO: dedupe code with procfs
+    off_t_ old_off = fd->offset;
+    if (whence == LSEEK_SET)
+        fd->offset = off;
+    else if (whence == LSEEK_CUR)
+        fd->offset += off;
+    else if (whence == LSEEK_END)
+        fd->offset = size + off;
+    else
+        return _EINVAL;
+
+    if (fd->offset < 0) {
+        fd->offset = old_off;
+        return _EINVAL;
+    }
+    return fd->offset;
 }
 
 static int tmpfs_readdir(struct fd *fd, struct dir_entry *entry) {
@@ -442,11 +511,13 @@ const struct fs_ops tmpfs = {
     .stat = tmpfs_stat,
     .fstat = tmpfs_fstat,
     .getpath = tmpfs_getpath,
+    .mkdir = tmpfs_mkdir,
 };
 
 const struct fd_ops tmpfs_fdops = {
     .read = tmpfs_read,
     .write = tmpfs_write,
+    .lseek = tmpfs_lseek,
     .readdir = tmpfs_readdir,
     .telldir = tmpfs_telldir,
     .seekdir = tmpfs_seekdir,
