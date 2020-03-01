@@ -8,6 +8,7 @@
 #import "UIApplication+OpenURL.h"
 #import "AboutViewController.h"
 #import "UserPreferences.h"
+#import "AppGroup.h"
 
 @interface AboutViewController ()
 @property (weak, nonatomic) IBOutlet UITableViewCell *capsLockMappingCell;
@@ -85,7 +86,7 @@
         [UIApplication openURL:@"https://discord.gg/SndDh5y"];
     } else if (cell == self.exportContainerCell) {
         // copy the files to the app container so they can be extracted from iTunes file sharing
-        NSURL *container = [NSFileManager.defaultManager containerURLForSecurityApplicationGroupIdentifier:PRODUCT_APP_GROUP_IDENTIFIER];
+        NSURL *container = ContainerURL();
         NSURL *documents = [NSFileManager.defaultManager URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask][0];
         [NSFileManager.defaultManager removeItemAtURL:[documents URLByAppendingPathComponent:@"roots copy"] error:nil];
         [NSFileManager.defaultManager copyItemAtURL:[container URLByAppendingPathComponent:@"roots"]

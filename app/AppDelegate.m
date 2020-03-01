@@ -14,6 +14,7 @@
 #import "LocationDevice.h"
 #import "TerminalViewController.h"
 #import "UserPreferences.h"
+#import "AppGroup.h"
 #include "kernel/init.h"
 #include "kernel/calls.h"
 #include "fs/dyndev.h"
@@ -55,7 +56,7 @@ static void ios_handle_die(const char *msg) {
 
 - (int)boot {
     NSFileManager *manager = [NSFileManager defaultManager];
-    NSURL *container = [manager containerURLForSecurityApplicationGroupIdentifier:PRODUCT_APP_GROUP_IDENTIFIER];
+    NSURL *container = ContainerURL();
     NSURL *alpineRoot = [container URLByAppendingPathComponent:@"roots/alpine"];
     [manager createDirectoryAtURL:[container URLByAppendingPathComponent:@"roots"]
       withIntermediateDirectories:YES

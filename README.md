@@ -30,7 +30,7 @@ You'll need these things to build the project:
 
 ## Build for iOS
 
-Open the project in Xcode and click Run. If you're not me, first open the project build settings and change `ROOT_BUNDLE_IDENTIFIER` to something unique. There are scripts that should do everything else automatically. If you run into any problems, open an issue and I'll try to help.
+Open the project in Xcode, open iSH.xcconfig, and change `ROOT_BUNDLE_IDENTIFIER` to something unique. Then click Run. There are scripts that should do everything else automatically. If you run into any problems, open an issue and I'll try to help.
 
 ## Build command line tool for testing
 
@@ -44,7 +44,7 @@ You can replace `ish` with `tools/ptraceomatic` to run the program in a real pro
 
 iSH has several logging channels which can be enabled at build time. By default, all of them are disabled. To enable them:
 
-- In Xcode: Sett the `ISH_LOG` project setting to a space-separated list of log channels.
+- In Xcode: Set the `ISH_LOG` setting in iSH.xcconfig to a space-separated list of log channels.
 - With Meson (command line tool for testing): Run `meson configure -Dlog="<space-separated list of log channels>`.
 
 Available channels:

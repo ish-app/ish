@@ -10,6 +10,7 @@
 #import "FileProviderEnumerator.h"
 #import "NSError+ISHErrno.h"
 #include "kernel/fs.h"
+#import "../AppGroup.h"
 #define ISH_INTERNAL
 #include "fs/fake.h"
 
@@ -28,8 +29,7 @@ struct task *fake_task;
         if (!self.mount)
             return nil;
         self.mount->fs = &fakefs;
-        NSFileManager *manager = NSFileManager.defaultManager;
-        NSURL *container = [manager containerURLForSecurityApplicationGroupIdentifier:PRODUCT_APP_GROUP_IDENTIFIER];
+        NSURL *container = ContainerURL();
         _root = [container URLByAppendingPathComponent:@"roots/alpine/data"];
         self.mount->source = strdup(self.root.fileSystemRepresentation);
         int err = self.mount->fs->mount(self.mount);
