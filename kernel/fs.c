@@ -379,16 +379,18 @@ dword_t sys_pread(fd_t f, addr_t buf_addr, dword_t size, off_t_ off) {
             goto out;
         }
         res = fd->ops->read(fd, buf, size);
-        if (res >= 0) {
-            if (user_write(buf_addr, buf, res))
-                res = _EFAULT;
-        }
         // This really shouldn't fail. The lseek man page lists these reasons:
         // EBADF, ESPIPE: can't happen because the last lseek wouldn't have succeeded.
         // EOVERFLOW: can't happen for LSEEK_SET.
         // EINVAL: can't happen other than typoing LSEEK_SET, because we know saved_off is not negative.
         off_t_ lseek_res = fd->ops->lseek(fd, saved_off, LSEEK_SET);
         assert(lseek_res >= 0);
+    }
+    if (res >= 0) {
+        buf[res] = '\0';
+        STRACE(" \"%.99s\"", buf);
+        if (user_write(buf_addr, buf, res))
+            res = _EFAULT;
     }
 out:
     unlock(&fd->lock);
