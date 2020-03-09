@@ -195,6 +195,13 @@ static int bootError;
 }
 
 - (BOOL)application:(UIApplication *)application willFinishLaunchingWithOptions:(NSDictionary<UIApplicationLaunchOptionsKey,id> *)launchOptions {
+    NSUserDefaults *defaults = NSUserDefaults.standardUserDefaults;
+    if ([defaults boolForKey:@"hail mary"]) {
+        [defaults removeObjectForKey:kPreferenceBootCommandKey];
+        [defaults removeObjectForKey:kPreferenceLaunchCommandKey];
+        [defaults setBool:NO forKey:@"hail mary"];
+    }
+    
     bootError = [self boot];
     return YES;
 }

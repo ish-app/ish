@@ -15,8 +15,8 @@ static NSString *const kPreferenceFontFamilyKey = @"Font Family";
 static NSString *const kPreferenceFontSizeKey = @"Font Size";
 static NSString *const kPreferenceThemeKey = @"Theme";
 static NSString *const kPreferenceDisableDimmingKey = @"Disable Dimming";
-static NSString *const kPreferenceLaunchCommandKey = @"Init Command";
-static NSString *const kPreferenceBootCommandKey = @"Boot Command";
+NSString *const kPreferenceLaunchCommandKey = @"Init Command";
+NSString *const kPreferenceBootCommandKey = @"Boot Command";
 
 @implementation UserPreferences {
     NSUserDefaults *_defaults;

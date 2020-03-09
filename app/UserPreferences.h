@@ -56,4 +56,7 @@ extern NSString *const kThemeBackgroundColor;
 
 @end
 
+extern NSString *const kPreferenceLaunchCommandKey;
+extern NSString *const kPreferenceBootCommandKey;
+
 NS_ASSUME_NONNULL_END
