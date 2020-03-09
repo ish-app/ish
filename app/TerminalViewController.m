@@ -72,7 +72,6 @@
                  object:nil];
 
     [self _updateStyleFromPreferences:NO];
-    [[UserPreferences shared] addObserver:self forKeyPath:@"theme" options:NSKeyValueObservingOptionNew context:nil];
     
     if (UIDevice.currentDevice.userInterfaceIdiom == UIUserInterfaceIdiomPad) {
         [self.bar removeArrangedSubview:self.hideKeyboardButton];
@@ -105,6 +104,7 @@
                                            selector:@selector(processExited:)
                                                name:ProcessExitedNotification
                                              object:nil];
+    [[UserPreferences shared] addObserver:self forKeyPath:@"theme" options:NSKeyValueObservingOptionNew context:nil];
 }
 
 - (void)startNewSession {
@@ -189,9 +189,7 @@
 }
 
 - (void)dealloc {
-    @try {
-        [[UserPreferences shared] removeObserver:self forKeyPath:@"theme"];
-    } @catch (NSException * __unused exception) {}
+    [[UserPreferences shared] removeObserver:self forKeyPath:@"theme"];
 }
 
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context {

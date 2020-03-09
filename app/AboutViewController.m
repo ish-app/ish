@@ -28,9 +28,13 @@
 
 @implementation AboutViewController
 
+- (void)awakeFromNib {
+    [super awakeFromNib];
+    [self _addObservers];
+}
+
 - (void)viewDidLoad {
     [super viewDidLoad];
-    [self _addObservers];
     [self _updatePreferenceUI];
 }
 
@@ -49,13 +53,11 @@
 }
 
 - (void)_removeObservers {
-    @try {
-        UserPreferences *prefs = [UserPreferences shared];
-        [prefs removeObserver:self forKeyPath:@"capsLockMapping"];
-        [prefs removeObserver:self forKeyPath:@"fontSize"];
-        [prefs removeObserver:self forKeyPath:@"launchCommand"];
-        [prefs removeObserver:self forKeyPath:@"bootCommand"];
-    } @catch (NSException * __unused exception) {}
+    UserPreferences *prefs = [UserPreferences shared];
+    [prefs removeObserver:self forKeyPath:@"capsLockMapping"];
+    [prefs removeObserver:self forKeyPath:@"fontSize"];
+    [prefs removeObserver:self forKeyPath:@"launchCommand"];
+    [prefs removeObserver:self forKeyPath:@"bootCommand"];
 }
 
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context {
