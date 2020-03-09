@@ -7,6 +7,7 @@
 
 #import <Foundation/Foundation.h>
 #include <mach-o/loader.h>
+#include <mach-o/getsect.h>
 #include <dlfcn.h>
 
 struct cs_blob_index {
@@ -44,6 +45,19 @@ static NSDictionary *AppEntitlements() {
     struct mach_header_64 *header = dl_info.dli_fbase;
     if (header->magic != MH_MAGIC_64)
         return nil;
+    
+    // Simulator executables have fake entitlements in the code signature. The real entitlements can be found in an __entitlements section.
+    size_t entitlements_size;
+    uint8_t *entitlements_data = getsectiondata(header, "__TEXT", "__entitlements", &entitlements_size);
+    if (entitlements_data != NULL) {
+        NSData *data = [NSData dataWithBytesNoCopy:entitlements_data
+                                            length:entitlements_size
+                                      freeWhenDone:NO];
+        return entitlements = [NSPropertyListSerialization propertyListWithData:data
+                                                                        options:NSPropertyListImmutable
+                                                                         format:nil
+                                                                          error:nil];
+    }
     
     // Find the LC_CODE_SIGNATURE
     struct load_command *lc = (void *) (base + sizeof(*header));
