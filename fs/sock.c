@@ -711,6 +711,15 @@ int_t sys_getsockopt(fd_t sock_fd, dword_t level, dword_t option, addr_t value_a
             *cred = sock->socket.unix_peer->socket.unix_cred;
         }
         unlock(&peer_lock);
+    } else if (level == SOL_SOCKET_ && option == SO_ERROR_) {
+        if (value_len != sizeof(dword_t))
+            return _EINVAL;
+        int real_error;
+        socklen_t real_error_len = sizeof(real_error);
+        int err = getsockopt(sock->real_fd, SOL_SOCKET, SO_ERROR, &real_error, &real_error_len);
+        if (err < 0)
+            return errno_map();
+        *(dword_t *) value = real_error == 0 ? 0 : -err_map(real_error);
     } else if (level == IPPROTO_TCP && option == TCP_CONGESTION_) {
         value_len = strlen(DEFAULT_TCP_CONGESTION);
         memcpy(value, DEFAULT_TCP_CONGESTION, value_len);
