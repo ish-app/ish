@@ -364,7 +364,7 @@ canon_wake:
     unlock(&tty->lock);
 
     if (fg_group != 0) {
-        for (int sig = 1; sig <= NUM_SIGS; sig++) {
+        for (int sig = 1; sig < NUM_SIGS; sig++) {
             if (sigset_has(queue, sig))
                 send_group_signal(fg_group, sig, SIGINFO_NIL);
         }

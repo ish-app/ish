@@ -141,9 +141,9 @@ int_t sys_get_robust_list(pid_t_ pid, addr_t robust_list_ptr, addr_t len_ptr) {
 
     lock(&pids_lock);
     struct task *task = pid_get_task(pid);
+    unlock(&pids_lock);
     if (task != current)
         return _EPERM;
-    unlock(&pids_lock);
 
     if (user_put(robust_list_ptr, current->robust_list))
         return _EFAULT;

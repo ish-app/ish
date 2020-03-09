@@ -216,7 +216,7 @@ dword_t sys_read(fd_t fd_no, addr_t buf_addr, dword_t size) {
         return _ENOMEM;
     int_t res = 0;
     struct fd *fd = f_get(fd_no);
-    if (fd == NULL || fd->ops->read == NULL) {
+    if (fd == NULL) {
         res = _EBADF;
         goto out;
     }
@@ -224,7 +224,17 @@ dword_t sys_read(fd_t fd_no, addr_t buf_addr, dword_t size) {
         res = _EISDIR;
         goto out;
     }
-    res = fd->ops->read(fd, buf, size);
+    if (fd->ops->read) {
+        res = fd->ops->read(fd, buf, size);
+    } else if (fd->ops->pread) {
+        res = fd->ops->pread(fd, buf, size, fd->offset);
+        if (res > 0) {
+            fd->ops->lseek(fd, res, LSEEK_CUR);
+        }
+    } else {
+        res = _EBADF;
+        goto out;
+    }
     if (res >= 0) {
         buf[res] = '\0';
         STRACE(" \"%.99s\"", buf);
@@ -276,11 +286,16 @@ dword_t sys_write(fd_t fd_no, addr_t buf_addr, dword_t size) {
     buf[size] = '\0';
     STRACE("write(%d, \"%.100s\", %d)", fd_no, buf, size);
     struct fd *fd = f_get(fd_no);
-    if (fd == NULL || fd->ops->write == NULL) {
+    if (fd && fd->ops->write) {
+        res = fd->ops->write(fd, buf, size);
+    } else if (fd && fd->ops->pwrite) {
+        res = fd->ops->pwrite(fd, buf, size, fd->offset);
+        if (res > 0) {
+            fd->ops->lseek(fd, res, LSEEK_CUR);
+        }
+    } else {
         res = _EBADF;
-        goto out;
     }
-    res = fd->ops->write(fd, buf, size);
 out:
     free(buf);
     return res;
@@ -320,7 +335,7 @@ dword_t sys__llseek(fd_t f, dword_t off_high, dword_t off_low, addr_t res_addr, 
     if (!fd->ops->lseek)
         return _ESPIPE;
     lock(&fd->lock);
-    off_t_ off = ((off_t_) off_high << 32) | off_low;
+    off_t_ off = ((qword_t) off_high << 32) | off_low;
     STRACE("llseek(%d, %lu, %#x, %d)", f, off, res_addr, whence);
     off_t_ res = fd->ops->lseek(fd, off, whence);
     STRACE(" -> %lu", res);
@@ -355,11 +370,25 @@ dword_t sys_pread(fd_t f, addr_t buf_addr, dword_t size, off_t_ off) {
     if (buf == NULL)
         return _ENOMEM;
     lock(&fd->lock);
-    int_t res = fd->ops->lseek(fd, off, LSEEK_SET);
-    if (res < 0)
-        goto out;
-    res = fd->ops->read(fd, buf, size);
+    ssize_t res;
+    if (fd->ops->pread) {
+        res = fd->ops->pread(fd, buf, size, off);
+    } else {
+        off_t_ saved_off = fd->ops->lseek(fd, 0, LSEEK_CUR);
+        if ((res = fd->ops->lseek(fd, off, LSEEK_SET)) < 0) {
+            goto out;
+        }
+        res = fd->ops->read(fd, buf, size);
+        // This really shouldn't fail. The lseek man page lists these reasons:
+        // EBADF, ESPIPE: can't happen because the last lseek wouldn't have succeeded.
+        // EOVERFLOW: can't happen for LSEEK_SET.
+        // EINVAL: can't happen other than typoing LSEEK_SET, because we know saved_off is not negative.
+        off_t_ lseek_res = fd->ops->lseek(fd, saved_off, LSEEK_SET);
+        assert(lseek_res >= 0);
+    }
     if (res >= 0) {
+        buf[res] = '\0';
+        STRACE(" \"%.99s\"", buf);
         if (user_write(buf_addr, buf, res))
             res = _EFAULT;
     }
@@ -380,9 +409,21 @@ dword_t sys_pwrite(fd_t f, addr_t buf_addr, dword_t size, off_t_ off) {
     if (user_read(buf_addr, buf, size))
         return _EFAULT;
     lock(&fd->lock);
-    int_t res = fd->ops->lseek(fd, off, LSEEK_SET);
-    if (res >= 0)
-        res = fd->ops->write(fd, buf, size);
+    ssize_t res;
+    if (fd->ops->pwrite) {
+        res = fd->ops->pwrite(fd, buf, size, off);
+    } else {
+        off_t_ saved_off = fd->ops->lseek(fd, 0, LSEEK_CUR);
+        if ((res = fd->ops->lseek(fd, off, LSEEK_SET)) >= 0) {
+            res = fd->ops->write(fd, buf, size);
+            // This really shouldn't fail. The lseek man page lists these reasons:
+            // EBADF, ESPIPE: can't happen because the last lseek wouldn't have succeeded.
+            // EOVERFLOW: can't happen for LSEEK_SET.
+            // EINVAL: can't happen other than typoing LSEEK_SET, because we know saved_off is not negative.
+            off_t_ lseek_res = fd->ops->lseek(fd, saved_off, LSEEK_SET);
+            assert(lseek_res >= 0);
+        }
+    }
     unlock(&fd->lock);
     free(buf);
     return res;
@@ -793,7 +834,7 @@ dword_t sys_lchown(addr_t path_addr, uid_t_ owner, uid_t_ group) {
 }
 
 dword_t sys_truncate64(addr_t path_addr, dword_t size_low, dword_t size_high) {
-    off_t_ size = ((off_t_) size_high << 32) | size_low;
+    off_t_ size = ((qword_t) size_high << 32) | size_low;
     char path[MAX_PATH];
     if (user_read_string(path_addr, path, sizeof(path)))
         return _EFAULT;
@@ -801,7 +842,7 @@ dword_t sys_truncate64(addr_t path_addr, dword_t size_low, dword_t size_high) {
 }
 
 dword_t sys_ftruncate64(fd_t f, dword_t size_low, dword_t size_high) {
-    off_t_ size = ((off_t_) size_high << 32) | size_low;
+    off_t_ size = ((qword_t) size_high << 32) | size_low;
     struct fd *fd = f_get(f);
     if (fd == NULL)
         return _EBADF;
@@ -809,8 +850,8 @@ dword_t sys_ftruncate64(fd_t f, dword_t size_low, dword_t size_high) {
 }
 
 dword_t sys_fallocate(fd_t f, dword_t UNUSED(mode), dword_t offset_low, dword_t offset_high, dword_t len_low, dword_t len_high) {
-    off_t_ offset = ((off_t_) offset_high << 32) | offset_low;
-    off_t_ len = ((off_t_) len_high << 32) | len_low;
+    off_t_ offset = ((qword_t) offset_high << 32) | offset_low;
+    off_t_ len = ((qword_t) len_high << 32) | len_low;
     struct fd *fd = f_get(f);
     if (fd == NULL)
         return _EBADF;

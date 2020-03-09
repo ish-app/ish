@@ -132,6 +132,8 @@ struct fd_ops {
     // TODO make optional for non-files
     ssize_t (*read)(struct fd *fd, void *buf, size_t bufsize);
     ssize_t (*write)(struct fd *fd, const void *buf, size_t bufsize);
+    ssize_t (*pread)(struct fd *fd, void *buf, size_t bufsize, off_t off);
+    ssize_t (*pwrite)(struct fd *fd, const void *buf, size_t bufsize, off_t off);
     off_t_ (*lseek)(struct fd *fd, off_t_ off, int whence);
 
     // Reads a directory entry from the stream
