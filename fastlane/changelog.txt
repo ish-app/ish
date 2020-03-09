@@ -1,5 +1,3 @@
-I had planned to implement various cool features like opening directories in the file provider or supporting openrc, but all that took too long, so here's some accumulated bug fixes.
-
 New stuff:
 - Half-broken tmpfs implementation
 - Caps lock mapping is now gone on iOS 13, because 13.4 adds a system-wide option
