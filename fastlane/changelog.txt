@@ -1,11 +1,20 @@
 I had planned to implement various cool features like opening directories in the file provider or supporting openrc, but all that took too long, so here's some accumulated bug fixes.
 
+New stuff:
+- Half-broken tmpfs implementation
+- Caps lock mapping is now gone on iOS 13, because 13.4 adds a system-wide option
+- Kerberos works
+- AltStore installation is officially supported
+- adb works for connecting to Android devices over the network (not USB)
+- Added a way to fix your iSH setup if you mess up the launch/boot commands
+
 Fixed bugs:
-- VNC being really really slow. It's now just slow, rather than really really slow.
-- Deadlock that showed up for me when doing git clone
-- Memory leak for every exited process
-- Rare deadlock when running x11vnc
-- A few emulator fixes for Java
+- ceil(3) returning 4
+- R's nlm demo crashing
+- fish having some trouble changing process groups
+- git clone failing dramatically when your device only has one CPU
+- SO_ERROR codes not being translated
+- Java sockets failing with "not a tty"
 
 Send bug reports or feedback here: https://github.com/tbodt/ish/issues (or by email, if you prefer)
 Follow iSH on Twitter: https://twitter.com/iSH_app
