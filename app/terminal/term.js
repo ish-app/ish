@@ -84,7 +84,10 @@ term.scrollPort_.screen_.addEventListener('focus', (e) => native.syncFocus());
 
 // scrolling
 // Disable hterm builtin touch scrolling
-term.scrollPort_.onTouch = (e) => false;
+term.scrollPort_.onTouch = (e) => {
+    // Convince hterm that we called preventDefault() and that it shouldn't do more handling, but don't actually call it because that would break text selection
+    Object.defineProperty(e, 'defaultPrevented', true);
+};
 // Scroll to bottom wrapper
 exports.scrollToBottom = () => term.scrollEnd();
 // Set scroll position
