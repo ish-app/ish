@@ -81,7 +81,7 @@
     if (cell == self.sendFeedback) {
         [UIApplication openURL:@"mailto:tblodt@icloud.com?subject=Feedback%20for%20iSH"];
     } else if (cell == self.openGithub) {
-        [UIApplication openURL:@"https://github.com/tbodt/ish"];
+        [UIApplication openURL:@"https://github.com/ish-app/ish"];
     } else if (cell == self.openTwitter) {
         [UIApplication openURL:@"https://twitter.com/tblodt"];
     } else if (cell == self.openDiscord) {
