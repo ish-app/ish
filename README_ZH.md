@@ -1,8 +1,8 @@
 # [iSH](https://ish.app)
 
-[![Build Status](https://travis-ci.org/tbodt/ish.svg?branch=master)](https://travis-ci.org/tbodt/ish)
-[![goto counter](https://img.shields.io/github/search/tbodt/ish/goto.svg)](https://github.com/tbodt/ish/search?q=goto)
-[![fuck counter](https://img.shields.io/github/search/tbodt/ish/fuck.svg)](https://github.com/tbodt/ish/search?q=fuck)
+[![Build Status](https://travis-ci.org/ish-app/ish.svg?branch=master)](https://travis-ci.org/tbodt/ish)
+[![goto counter](https://img.shields.io/github/search/ish-app/ish/goto.svg)](https://github.com/tbodt/ish/search?q=goto)
+[![fuck counter](https://img.shields.io/github/search/ish-app/ish/fuck.svg)](https://github.com/tbodt/ish/search?q=fuck)
 
 <p align="center">
 <a href="https://ish.app">
@@ -16,7 +16,7 @@
 
 - [Testflight beta](https://testflight.apple.com/join/97i7KM8O)
 - [Discord server](https://discord.gg/SndDh5y)
-- [Wiki with help and tutorials](https://github.com/tbodt/ish/wiki)
+- [Wiki with help and tutorials](https://github.com/ish-app/ish/wiki)
 
 # 运行项目
 
