@@ -38,7 +38,7 @@
 
 设置你的运行环境, cd 到项目目录并且运行命令 `meson build`, 在 `build` 中创建构建目录. 然后 cd 到构建目录并执行 `ninja`.
 
-要设置自包含的 Alpine linux 文件系统, 请从 [Alpine 网站](https://alpinlinux.org/downloads/) 下载 Alpine minirotfs tarball for i386 并运行 `tools/fakefsify.py` 脚本. 将 minirotfs tarball 指定为第一个参数，将输出目录的名称指定为第二个参数. 然后可以使用 `/ish-f Alpine/bin/login-f root` 在 Alpine 文件系统中运行, 假设输出目录名为 `alpine`.
+要设置自包含的 Alpine linux 文件系统, 请从 [Alpine 网站](https://alpinelinux.org/downloads/) 下载 Alpine minirotfs tarball for i386 并运行 `tools/fakefsify.py` 脚本. 将 minirotfs tarball 指定为第一个参数，将输出目录的名称指定为第二个参数. 然后可以使用 `/ish-f Alpine/bin/login-f root` 在 Alpine 文件系统中运行, 假设输出目录名为 `alpine`.
 
 你可以使用 `tools/ptraceomatic` 替换 `ish`, 以便在实际进程和单个步骤运行程序, 并在每个步骤中比较寄存器. 我都用它来调试. 需要64位 Linux 4.11 或更高版本
 
