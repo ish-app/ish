@@ -10,6 +10,11 @@
 #import "UserPreferences.h"
 #import "UIApplication+OpenURL.h"
 
+struct rowcol {
+    int row;
+    int col;
+};
+
 @interface TerminalView ()
 
 @property (nonatomic) NSMutableArray<UIKeyCommand *> *keyCommands;
@@ -17,6 +22,9 @@
 @property (nonatomic) BOOL terminalFocused;
 
 @property (nullable) NSString *markedText;
+@property struct rowcol floatingCursor;
+@property CGSize floatingCursorSensitivity;
+@property CGSize actualFloatingCursorSensitivity;
 
 @end
 
@@ -130,7 +138,9 @@ static int kObserverStyling;
         @"backgroundColor": [self cssColor:prefs.theme.backgroundColor],
     };
     NSString *json = [[NSString alloc] initWithData:[NSJSONSerialization dataWithJSONObject:themeInfo options:0 error:nil] encoding:NSUTF8StringEncoding];
-    [self.terminal.webView evaluateJavaScript:[NSString stringWithFormat:@"exports.updateStyle(%@)", json] completionHandler:nil];
+    [self.terminal.webView evaluateJavaScript:[NSString stringWithFormat:@"exports.updateStyle(%@)", json] completionHandler:^(id result, NSError *error){
+        [self updateFloatingCursorSensitivity];
+    }];
 }
 
 - (void)setOverrideFontSize:(CGFloat)overrideFontSize {
@@ -311,6 +321,52 @@ static int kObserverStyling;
     if ([NSStringFromSelector(action) hasPrefix:@"_accessibility"] && [self.terminal.webView canPerformAction:action withSender:sender])
         return YES;
     return [super canPerformAction:action withSender:sender];
+}
+
+#pragma mark Floating cursor
+
+- (void)updateFloatingCursorSensitivity {
+    [self.terminal.webView evaluateJavaScript:@"exports.getCharacterSize()" completionHandler:^(NSArray *charSizeRaw, NSError *error) {
+        if (error != nil) {
+            NSLog(@"error getting character size: %@", error);
+            return;
+        }
+        CGSize charSize = CGSizeMake([charSizeRaw[0] doubleValue], [charSizeRaw[1] doubleValue]);
+        double sensitivity = 0.5;
+        self.floatingCursorSensitivity = CGSizeMake(charSize.width / sensitivity, charSize.height / sensitivity);
+    }];
+}
+
+- (struct rowcol)rowcolFromPoint:(CGPoint)point {
+    CGSize sensitivity = self.actualFloatingCursorSensitivity;
+    return (struct rowcol) {
+        .row = (int) (-point.y / sensitivity.height),
+        .col = (int) (point.x / sensitivity.width),
+    };
+}
+
+- (void)beginFloatingCursorAtPoint:(CGPoint)point {
+    self.actualFloatingCursorSensitivity = self.floatingCursorSensitivity;
+    self.floatingCursor = [self rowcolFromPoint:point];
+}
+
+- (void)updateFloatingCursorAtPoint:(CGPoint)point {
+    struct rowcol newPos = [self rowcolFromPoint:point];
+    int rowDiff = newPos.row - self.floatingCursor.row;
+    int colDiff = newPos.col - self.floatingCursor.col;
+    NSMutableString *arrows = [NSMutableString string];
+    for (int i = 0; i < abs(rowDiff); i++) {
+        [arrows appendString:[self.terminal arrow:rowDiff > 0 ? 'A': 'B']];
+    }
+    for (int i = 0; i < abs(colDiff); i++) {
+        [arrows appendString:[self.terminal arrow:colDiff > 0 ? 'C': 'D']];
+    }
+    [self insertText:arrows];
+    self.floatingCursor = newPos;
+}
+
+- (void)endFloatingCursor {
+    self.floatingCursor = (struct rowcol) {};
 }
 
 #pragma mark Keyboard Traits

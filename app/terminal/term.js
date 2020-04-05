@@ -125,6 +125,10 @@ exports.updateStyle = ({foregroundColor, backgroundColor, fontFamily, fontSize})
     term.getPrefs().set('font-family', fontFamily);
     term.getPrefs().set('font-size', fontSize);
 };
+    
+exports.getCharacterSize = () => {
+    return [term.scrollPort_.characterSize.width, term.scrollPort_.characterSize.height];
+};
 
 exports.clearScrollback = () => term.clearScrollback();
 exports.setUserGesture = () => term.accessibilityReader_.hasUserGesture = true;
