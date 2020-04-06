@@ -2,7 +2,7 @@ macros:
     - &linux
       language: c
       os: linux
-      dist: xenial
+      dist: bionic
       compiler: clang
       addons:
           apt:
