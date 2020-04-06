@@ -209,21 +209,14 @@ dword_t sys_mknod(addr_t path_addr, mode_t_ mode, dev_t_ dev) {
     return sys_mknodat(AT_FDCWD_, path_addr, mode, dev);
 }
 
-dword_t sys_read(fd_t fd_no, addr_t buf_addr, dword_t size) {
-    STRACE("read(%d, 0x%x, %d)", fd_no, buf_addr, size);
-    char *buf = (char *) malloc(size+1);
-    if (buf == NULL)
-        return _ENOMEM;
-    int_t res = 0;
+static ssize_t sys_read_buf(fd_t fd_no, void *buf, size_t size) {
     struct fd *fd = f_get(fd_no);
-    if (fd == NULL) {
-        res = _EBADF;
-        goto out;
-    }
-    if (S_ISDIR(fd->type)) {
-        res = _EISDIR;
-        goto out;
-    }
+    if (fd == NULL)
+        return _EBADF;
+    if (S_ISDIR(fd->type))
+        return _EISDIR;
+
+    ssize_t res;
     if (fd->ops->read) {
         res = fd->ops->read(fd, buf, size);
     } else if (fd->ops->pread) {
@@ -232,99 +225,159 @@ dword_t sys_read(fd_t fd_no, addr_t buf_addr, dword_t size) {
             fd->ops->lseek(fd, res, LSEEK_CUR);
         }
     } else {
-        res = _EBADF;
-        goto out;
+        return _EBADF;
     }
+
     if (res >= 0) {
-        buf[res] = '\0';
-        STRACE(" \"%.99s\"", buf);
+        size_t print_size = res;
+        if (print_size > 100) print_size = 100;
+        STRACE(" \"%.*s\"", print_size, buf);
+    }
+    return res;
+}
+
+dword_t sys_read(fd_t fd_no, addr_t buf_addr, dword_t size) {
+    STRACE("read(%d, 0x%x, %d)", fd_no, buf_addr, size);
+    char *buf = (char *) malloc(size);
+    if (buf == NULL)
+        return _ENOMEM;
+    int_t res = sys_read_buf(fd_no, buf, size);
+    if (res >= 0) {
         if (user_write(buf_addr, buf, res))
             res = _EFAULT;
     }
-out:
     free(buf);
     return res;
 }
 
-dword_t sys_readv(fd_t fd_no, addr_t iovec_addr, dword_t iovec_count) {
-    dword_t iovec_size = sizeof(struct iovec_) * iovec_count;
-    struct iovec_ *iovecs = malloc(iovec_size);
-    if (iovecs == NULL)
-        return _ENOMEM;
-    int res = 0;
-    if (user_read(iovec_addr, iovecs, iovec_size)) {
-        res = _EFAULT;
-        goto err;
-    }
-    dword_t count = 0;
-    for (unsigned i = 0; i < iovec_count; i++) {
-        res = sys_read(fd_no, iovecs[i].base, iovecs[i].len);
-        if (res < 0)
-            goto err;
-        count += res;
-        if ((unsigned) res < iovecs[i].len)
-            break;
-    }
-    free(iovecs);
-    return count;
-
-err:
-    free(iovecs);
-    return res;
-}
-
-dword_t sys_write(fd_t fd_no, addr_t buf_addr, dword_t size) {
-    // FIXME this is a DOS vector
-    char *buf = malloc(size + 1);
-    if (buf == NULL)
-        return _ENOMEM;
-    dword_t res = 0;
-    if (user_read(buf_addr, buf, size)) {
-        res = _EFAULT;
-        goto out;
-    }
-    buf[size] = '\0';
-    STRACE("write(%d, \"%.100s\", %d)", fd_no, buf, size);
+static ssize_t sys_write_buf(fd_t fd_no, void *buf, size_t size) {
     struct fd *fd = f_get(fd_no);
-    if (fd && fd->ops->write) {
+    if (fd == NULL)
+        return _EBADF;
+
+    ssize_t res;
+    if (fd->ops->write) {
         res = fd->ops->write(fd, buf, size);
-    } else if (fd && fd->ops->pwrite) {
+    } else if (fd->ops->pwrite) {
         res = fd->ops->pwrite(fd, buf, size, fd->offset);
         if (res > 0) {
             fd->ops->lseek(fd, res, LSEEK_CUR);
         }
     } else {
-        res = _EBADF;
+        return _EBADF;
     }
+    return res;
+}
+
+dword_t sys_write(fd_t fd_no, addr_t buf_addr, dword_t size) {
+    // FIXME this is a DOS vector, should ideally use vectorized I/O
+    char *buf = malloc(size);
+    if (buf == NULL)
+        return _ENOMEM;
+    dword_t res = _EFAULT;
+    if (user_read(buf_addr, buf, size))
+        goto out;
+
+    size_t print_size = size;
+    if (print_size > 100) print_size = 100;
+    STRACE("write(%d, \"%.*s\", %d)", fd_no, print_size, buf, size);
+
+    res = sys_write_buf(fd_no, buf, size);
 out:
     free(buf);
     return res;
 }
 
-dword_t sys_writev(fd_t fd_no, addr_t iovec_addr, dword_t iovec_count) {
-    dword_t iovec_size = sizeof(struct iovec_) * iovec_count;
-    struct iovec_ *iovecs = malloc(iovec_size);
-    if (iovecs == NULL)
-        return _ENOMEM;
-    int res = 0;
-    if (user_read(iovec_addr, iovecs, iovec_size)) {
-        res = _EFAULT;
-        goto err;
-    }
-    dword_t count = 0;
-    for (unsigned i = 0; i < iovec_count; i++) {
-        res = sys_write(fd_no, iovecs[i].base, iovecs[i].len);
-        if (res < 0)
-            goto err;
-        count += res;
-        if ((unsigned) res < iovecs[i].len)
-            break;
-    }
-    free(iovecs);
-    return count;
+// The vector operations work by flattening the vector into a malloc buffer.
+// This at least isn't much worse than what it was before, which copied each
+// element of the vector into a malloc buffer. The perfect solution would be to
+// construct a vector with an entry for each page of the buffer. I haven't done
+// that yet because it's more work and the efficiency gain from that is dwarfed
+// by the inefficiency of the emulator.
 
-err:
-    free(iovecs);
+static struct iovec_ *read_iovec(addr_t iovec_addr, unsigned iovec_count) {
+    dword_t iovec_size = sizeof(struct iovec_) * iovec_count;
+    struct iovec_ *iovec = malloc(iovec_size);
+    if (iovec == NULL)
+        return ERR_PTR(_ENOMEM);
+    if (user_read(iovec_addr, iovec, iovec_size)) {
+        free(iovec);
+        return ERR_PTR(_EFAULT);
+    }
+    return iovec;
+}
+
+static ssize_t iovec_size(struct iovec_ *iovec, unsigned iovec_count) {
+    size_t size = 0;
+    for (unsigned i = 0; i < iovec_count; i++)
+        size += iovec[i].len;
+    return size;
+}
+
+dword_t sys_readv(fd_t fd_no, addr_t iovec_addr, dword_t iovec_count) {
+    STRACE("readv(%d, %#x, %d)", fd_no, iovec_addr, iovec_count);
+    struct iovec_ *iovec = read_iovec(iovec_addr, iovec_count);
+    if (IS_ERR(iovec))
+        return PTR_ERR(iovec);
+    size_t io_size = iovec_size(iovec, iovec_count);
+    char *buf = malloc(io_size);
+    if (buf == NULL) {
+        free(iovec);
+        return _ENOMEM;
+    }
+    ssize_t res = sys_read_buf(fd_no, buf, io_size);
+    if (res < 0)
+        goto error;
+
+    size_t offset = 0;
+    for (unsigned i = 0; i < iovec_count; i++) {
+        size_t print_size = iovec[i].len;
+        if (print_size > 100) print_size = 100;
+        STRACE(" {\"%.*s\", %u}", print_size, buf + offset, iovec[i].len);
+
+        if (user_write(iovec[i].base, buf + offset, iovec[i].len)) {
+            res = _EFAULT;
+            goto error;
+        }
+        offset += iovec[i].len;
+    }
+
+error:
+    free(buf);
+    free(iovec);
+    return res;
+}
+
+dword_t sys_writev(fd_t fd_no, addr_t iovec_addr, dword_t iovec_count) {
+    STRACE("writev(%d, %#x, %d)", fd_no, iovec_addr, iovec_count);
+    struct iovec_ *iovec = read_iovec(iovec_addr, iovec_count);
+    if (IS_ERR(iovec))
+        return PTR_ERR(iovec);
+    size_t io_size = iovec_size(iovec, iovec_count);
+    char *buf = malloc(io_size);
+    if (buf == NULL) {
+        free(iovec);
+        return _ENOMEM;
+    }
+
+    ssize_t res = 0;
+    size_t offset = 0;
+    for (unsigned i = 0; i < iovec_count; i++) {
+        if (user_read(iovec[i].base, buf + offset, iovec[i].len)) {
+            res = _EFAULT;
+            goto error;
+        }
+
+        size_t print_size = iovec[i].len;
+        if (print_size > 100) print_size = 100;
+        STRACE(" {\"%.*s\", %u}", print_size, buf + offset, iovec[i].len);
+        offset += iovec[i].len;
+    }
+    res = sys_write_buf(fd_no, buf, io_size);
+
+error:
+    free(buf);
+    free(iovec);
     return res;
 }
 
