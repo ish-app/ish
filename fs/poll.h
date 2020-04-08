@@ -2,10 +2,15 @@
 #define FS_POLL_H
 #include "kernel/fs.h"
 
+struct real_poll {
+    int fd;
+};
+
 struct poll {
     struct list poll_fds;
+    struct real_poll real;
     int notify_pipe[2];
-    int waiters;
+    int waiters; // if nonzero, notify_pipe exists
     lock_t lock;
 };
 
@@ -36,6 +41,7 @@ struct poll_fd {
 #define POLL_ERR 8
 #define POLL_HUP 16
 #define POLL_NVAL 32
+#define POLL_ONESHOT (1 << 30)
 struct poll_event {
     struct fd *fd;
     int types;

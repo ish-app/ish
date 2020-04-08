@@ -53,13 +53,14 @@ dword_t sys_select(fd_t nfds, addr_t readfds_addr, addr_t writefds_addr, addr_t 
         timeout_ts.tv_sec = timeout_timeval.sec;
         timeout_ts.tv_nsec = timeout_timeval.usec * 1000;
     }
-    STRACE("select(%d, 0x%x, 0x%x, 0x%x, 0x%x {%lds %ldns})",
+
+    STRACE("select(%d, 0x%x, 0x%x, 0x%x, 0x%x {%lds %ldns}) ",
             nfds, readfds_addr, writefds_addr, exceptfds_addr,
             timeout_addr, timeout_ts.tv_sec, timeout_ts.tv_nsec);
 
     struct poll *poll = poll_create();
-    if (poll == NULL)
-        return _ENOMEM;
+    if (IS_ERR(poll))
+        return PTR_ERR(poll);
 
     for (fd_t i = 0; i < nfds; i++) {
         int events = 0;
@@ -70,6 +71,10 @@ dword_t sys_select(fd_t nfds, addr_t readfds_addr, addr_t writefds_addr, addr_t 
         if (bit_test(i, exceptfds))
             events |= SELECT_EX;
         if (events != 0) {
+            STRACE("%d{%s%s%s} ", i,
+                    bit_test(i, readfds) ? "r" : "",
+                    bit_test(i, writefds) ? "w" : "",
+                    bit_test(i, exceptfds) ? "x" : "");
             struct fd *fd = f_get(i);
             if (fd == NULL) {
                 poll_destroy(poll);
@@ -123,8 +128,8 @@ dword_t sys_poll(addr_t fds, dword_t nfds, int_t timeout) {
         if (user_read(fds, polls, sizeof(struct pollfd_) * nfds))
             return _EFAULT;
     struct poll *poll = poll_create();
-    if (poll == NULL)
-        return _ENOMEM;
+    if (IS_ERR(poll))
+        return PTR_ERR(poll);
 
     struct fd *files[nfds];
     for (unsigned i = 0; i < nfds; i++) {

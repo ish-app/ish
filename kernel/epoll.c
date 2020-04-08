@@ -11,7 +11,10 @@ fd_t sys_epoll_create(int_t flags) {
     struct fd *fd = adhoc_fd_create(&epoll_ops);
     if (fd == NULL)
         return _ENOMEM;
-    fd->epollfd.poll = poll_create();
+    struct poll *poll = poll_create();
+    if (IS_ERR(poll))
+        return PTR_ERR(poll);
+    fd->epollfd.poll = poll;
     return f_install(fd, flags);
 }
 fd_t sys_epoll_create0() {
@@ -47,11 +50,12 @@ int_t sys_epoll_ctl(fd_t epoll_f, int_t op, fd_t f, addr_t event_addr) {
     if (user_get(event_addr, event))
         return _EFAULT;
     STRACE(" {events: %#x, data: %#x}", event.events, event.data);
-    if (event.events & EPOLLET_)
+    if (event.events & EPOLLET_) {
+        // The exact semantics of EPOLLET are hard to emulate on Darwin, so
+        // let's play it safe. Common patterns using EPOLLET will work fine
+        // without it, albiet inefficiently.
         TRACE("ignoring EPOLLET\n");
-    if (event.events & EPOLLONESHOT_) {
-        printk("unimplemented epoll one-shot\n");
-        return _EINVAL;
+        event.events &= ~EPOLLET_;
     }
 
     if (op == EPOLL_CTL_ADD_) {
@@ -96,7 +100,9 @@ int_t sys_epoll_wait(fd_t epoll_f, addr_t events_addr, int_t max_events, int_t t
     struct epoll_event_ events[max_events];
 
     struct epoll_context context = {.events = events, .n = 0, .max_events = max_events};
+    STRACE("...\n");
     int res = poll_wait(epoll->epollfd.poll, epoll_callback, &context, timeout < 0 ? NULL : &timeout_ts);
+    STRACE("%d end epoll_wait", current->pid);
     if (res >= 0)
         if (user_write(events_addr, events, sizeof(struct epoll_event_) * res))
             return _EFAULT;
