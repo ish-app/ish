@@ -131,6 +131,10 @@ dword_t sys_poll(addr_t fds, dword_t nfds, int_t timeout) {
     if (IS_ERR(poll))
         return PTR_ERR(poll);
 
+    for (unsigned i = 0; i < nfds; i++)
+        STRACE(" {%d, %#x}", polls[i].fd, polls[i].events);
+    STRACE("...\n");
+
     struct fd *files[nfds];
     for (unsigned i = 0; i < nfds; i++) {
         files[i] = f_get(polls[i].fd);
@@ -181,6 +185,7 @@ dword_t sys_poll(addr_t fds, dword_t nfds, int_t timeout) {
         if (files[i] != NULL)
             fd_close(files[i]);
     }
+    STRACE("%d end poll", current->pid);
 
     if (res < 0)
         return res;
