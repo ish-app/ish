@@ -241,8 +241,10 @@ int realfs_poll(struct fd *fd) {
             if (poll(&p, 1, 0) > 0 && !(p.revents & POLLNVAL))
                 events |= p.revents;
         }
+        assert(!(events & POLLNVAL));
         return events;
     }
+    assert(!(p.revents & POLLNVAL));
     return p.revents;
 }
 
