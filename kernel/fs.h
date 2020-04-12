@@ -175,32 +175,14 @@ struct fs_ops {
 struct mount *find_mount_and_trim_path(char *path);
 const char *fix_path(const char *path); // TODO reconsider
 
-// real fs
-extern const struct fd_ops realfs_fdops;
-
-int realfs_truncate(struct mount *mount, const char *path, off_t_ size);
-int realfs_utime(struct mount *mount, const char *path, struct timespec atime, struct timespec mtime);
-
-int realfs_statfs(struct mount *mount, struct statfsbuf *stat);
-int realfs_flock(struct fd *fd, int operation);
-int realfs_getpath(struct fd *fd, char *buf);
-ssize_t realfs_read(struct fd *fd, void *buf, size_t bufsize);
-ssize_t realfs_write(struct fd *fd, const void *buf, size_t bufsize);
-int realfs_poll(struct fd *fd);
-int realfs_getflags(struct fd *fd);
-int realfs_setflags(struct fd *fd, dword_t arg);
-ssize_t realfs_ioctl_size(int cmd);
-int realfs_ioctl(struct fd *fd, int cmd, void *arg);
-int realfs_close(struct fd *fd);
-
 // adhoc fs
 struct fd *adhoc_fd_create(const struct fd_ops *ops);
 
 // filesystems
-extern const struct fs_ops realfs;
 extern const struct fs_ops procfs;
 extern const struct fs_ops fakefs;
 extern const struct fs_ops devptsfs;
 extern const struct fs_ops tmpfs;
+void fs_register(const struct fs_ops *fs);
 
 #endif

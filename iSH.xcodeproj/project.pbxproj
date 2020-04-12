@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		408A263A236440F8008A4E81 /* iOSFS.m in Sources */ = {isa = PBXBuildFile; fileRef = 408A2639236440F8008A4E81 /* iOSFS.m */; };
 		650B337422EA235C00B4C03E /* PasteboardDevice.m in Sources */ = {isa = PBXBuildFile; fileRef = 650B337322EA235C00B4C03E /* PasteboardDevice.m */; };
 		8632A7BF219A59FB00F02325 /* UserPreferences.m in Sources */ = {isa = PBXBuildFile; fileRef = 8632A7BE219A59FB00F02325 /* UserPreferences.m */; };
 		9A28E4EA219A8B670073D200 /* AboutAppearanceViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 9A28E4E9219A8B670073D200 /* AboutAppearanceViewController.m */; };
@@ -99,6 +100,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		408A2639236440F8008A4E81 /* iOSFS.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iOSFS.m; sourceTree = "<group>"; };
+		408A263B23644102008A4E81 /* iOSFS.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iOSFS.h; sourceTree = "<group>"; };
 		650B335A22E9E46A00B4C03E /* mem.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = mem.c; sourceTree = "<group>"; tabWidth = 4; };
 		650B335B22E9E46A00B4C03E /* mem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mem.h; sourceTree = "<group>"; tabWidth = 4; };
 		650B335D22E9EF9B00B4C03E /* proc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = proc.c; sourceTree = "<group>"; };
@@ -364,6 +367,8 @@
 				650B337322EA235C00B4C03E /* PasteboardDevice.m */,
 				BB235535235D489400139E00 /* LocationDevice.h */,
 				BB235533235D488400139E00 /* LocationDevice.m */,
+				408A263B23644102008A4E81 /* iOSFS.h */,
+				408A2639236440F8008A4E81 /* iOSFS.m */,
 			);
 			name = Devices;
 			sourceTree = "<group>";
@@ -1006,6 +1011,7 @@
 				BBFB5579215876CD00DFE6DE /* AboutViewController.m in Sources */,
 				650B337422EA235C00B4C03E /* PasteboardDevice.m in Sources */,
 				BBFB557121586C4800DFE6DE /* UIViewController+Back.m in Sources */,
+				408A263A236440F8008A4E81 /* iOSFS.m in Sources */,
 				BBFB558021587B6800DFE6DE /* ArrowBarButton.m in Sources */,
 				BB792B551F96D90D00FFB7A4 /* AppDelegate.m in Sources */,
 			);
@@ -1392,7 +1398,6 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = CK5SXRTBR7;
 				ENABLE_BITCODE = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -1459,7 +1464,6 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = CK5SXRTBR7;
 				ENABLE_BITCODE = NO;
 				ENABLE_NS_ASSERTIONS = NO;

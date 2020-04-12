@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include "kernel/calls.h"
 #include "fs/fd.h"
+#include "fs/real.h"
 #include "debug.h"
 
 static fd_t pipe_f_create(int pipe_fd, int flags) {

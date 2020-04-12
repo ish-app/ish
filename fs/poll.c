@@ -9,6 +9,7 @@
 #include "kernel/fs.h"
 #include "fs/fd.h"
 #include "fs/poll.h"
+#include "fs/real.h"
 
 #include "fs/sockrestart.h"
 

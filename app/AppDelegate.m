@@ -10,11 +10,13 @@
 #include <netdb.h>
 #import <SystemConfiguration/SystemConfiguration.h>
 #import "AppDelegate.h"
+#import "AppGroup.h"
+#import "iOSFS.h"
+#import "SceneDelegate.h"
 #import "PasteboardDevice.h"
 #import "LocationDevice.h"
 #import "TerminalViewController.h"
 #import "UserPreferences.h"
-#import "AppGroup.h"
 #include "kernel/init.h"
 #include "kernel/calls.h"
 #include "fs/dyndev.h"
@@ -85,6 +87,9 @@ static void ios_handle_die(const char *msg) {
     int err = mount_root(&fakefs, alpineRoot.fileSystemRepresentation);
     if (err < 0)
         return err;
+    
+    fs_register(&iosfs);
+    fs_register(&iosfs_unsafe);
     
     // need to do this first so that we can have a valid current for the generic_mknod calls
     err = become_first_process();
@@ -237,6 +242,7 @@ void NetworkReachabilityCallback(SCNetworkReachabilityRef target, SCNetworkReach
     if (self.window != nil) {
         // For iOS <13, where the app delegate owns the window instead of the scene
         TerminalViewController *vc = (TerminalViewController *) self.window.rootViewController;
+        currentTerminalViewController = vc;
         [vc startNewSession];
     }
     return YES;

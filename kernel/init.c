@@ -1,11 +1,12 @@
 #include <signal.h>
 #include <string.h>
 #include <sys/stat.h>
-#include "kernel/init.h"
-#include "kernel/calls.h"
-#include "fs/fd.h"
-#include "fs/tty.h"
 #include "fs/devices.h"
+#include "fs/fd.h"
+#include "fs/real.h"
+#include "fs/tty.h"
+#include "kernel/calls.h"
+#include "kernel/init.h"
 
 int mount_root(const struct fs_ops *fs, const char *source) {
     char source_realpath[MAX_PATH + 1];
