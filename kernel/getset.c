@@ -150,7 +150,7 @@ int_t sys_getgroups(dword_t size, addr_t list) {
         return _EINVAL;
     for (unsigned i = 0; i < current->ngroups; i++)
         STRACE(" %d", current->groups[i]);
-    if (user_write(list, current->groups, size * sizeof(uid_t_)))
+    if (user_write(list, current->groups, current->ngroups * sizeof(uid_t_)))
         return _EFAULT;
     return current->ngroups;
 }
