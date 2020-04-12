@@ -4,14 +4,23 @@
 #include "kernel/fs.h"
 #include "fs/path.h"
 
-const struct fs_ops *filesystems[] = {
+#define MAX_FILESYSTEMS 10
+static const struct fs_ops *filesystems[MAX_FILESYSTEMS] = {
     &realfs,
     &procfs,
     &devptsfs,
     &tmpfs,
-    [IOS_FILESYSTEM_ID] = NULL,
-    [IOS_UNSAFE_FILESYSTEM_ID] = NULL
 };
+
+void fs_register(const struct fs_ops *fs) {
+    for (unsigned i = 0; i < MAX_FILESYSTEMS; i++) {
+        if (filesystems[i] == NULL) {
+            filesystems[i] = fs;
+            break;
+        }
+    }
+    assert(!"reached filesystem limit");
+}
 
 struct mount *mount_find(char *path) {
     assert(path_is_normalized(path));

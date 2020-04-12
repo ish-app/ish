@@ -88,6 +88,9 @@ static void ios_handle_die(const char *msg) {
     if (err < 0)
         return err;
     
+    fs_register(&iosfs);
+    fs_register(&iosfs_unsafe);
+    
     // need to do this first so that we can have a valid current for the generic_mknod calls
     err = become_first_process();
     if (err < 0)
@@ -139,9 +142,7 @@ static void ios_handle_die(const char *msg) {
     die_handler = ios_handle_die;
     NSString *sockTmp = [NSTemporaryDirectory() stringByAppendingString:@"ishsock"];
     sock_tmp_prefix = strdup(sockTmp.UTF8String);
-
-    filesystems[IOS_FILESYSTEM_ID] = &iosfs;
-    filesystems[IOS_UNSAFE_FILESYSTEM_ID] = &iosfs_unsafe;
+    
     tty_drivers[TTY_CONSOLE_MAJOR] = &ios_console_driver;
     set_console_device(TTY_CONSOLE_MAJOR, 1);
     err = create_stdio("/dev/console", TTY_CONSOLE_MAJOR, 1);

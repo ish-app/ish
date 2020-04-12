@@ -231,9 +231,6 @@ extern const struct fs_ops procfs;
 extern const struct fs_ops fakefs;
 extern const struct fs_ops devptsfs;
 extern const struct fs_ops tmpfs;
-
-extern const struct fs_ops *filesystems[];
-#define IOS_FILESYSTEM_ID 3
-#define IOS_UNSAFE_FILESYSTEM_ID 4
+void fs_register(const struct fs_ops *fs);
 
 #endif
