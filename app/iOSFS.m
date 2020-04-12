@@ -19,30 +19,42 @@ const NSFileCoordinatorWritingOptions NSFileCoordinatorWritingForCreating = NSFi
 
 @interface DirectoryPickerDelegate : NSObject <UIDocumentPickerDelegate>
 
-@property NSURL *url;
-@property pthread_mutex_t *mutex;
+@property NSArray<NSURL *> *urls;
+@property lock_t lock;
+@property cond_t cond;
 
 @end
 
 @implementation DirectoryPickerDelegate
 
-- (instancetype)initWithMutex:(pthread_mutex_t *)mutex {
+- (instancetype)init {
     if (self = [super init]) {
-        self.mutex = mutex;
-        self.url = nil;
-        pthread_mutex_lock(mutex);
+        lock_init(&_lock);
+        cond_init(&_cond);
     }
     return self;
 }
 
 - (void)documentPickerWasCancelled:(UIDocumentPickerViewController *)controller {
-    pthread_mutex_unlock(self.mutex);
+    [self documentPicker:controller didPickDocumentsAtURLs:@[]];
+}
+- (void)documentPicker:(UIDocumentPickerViewController *)controller didPickDocumentsAtURLs:(NSArray<NSURL *> *)urls {
+    lock(&_lock);
+    self.urls = urls;
+    notify(&_cond);
+    unlock(&_lock);
 }
 
-- (void)documentPicker:(UIDocumentPickerViewController *)controller didPickDocumentsAtURLs:(NSArray<NSURL *> *)urls {
-    if (urls.count > 0)
-        self.url = urls[0];
-    pthread_mutex_unlock(self.mutex);
+- (NSArray<NSURL *> *)waitForUrls {
+    lock(&_lock);
+    while (_urls == nil)
+        wait_for(&_cond, &_lock, NULL);
+    unlock(&_lock);
+    return _urls;
+}
+
+- (void)dealloc {
+    cond_destroy(&_cond);
 }
 
 @end
@@ -98,30 +110,25 @@ static struct fd *iosfs_open(struct mount *mount, const char *path, int flags, i
     struct statbuf stats;
     int err = iosfs_stat(mount, path, &stats);
 
-    if (!err && S_ISREG(stats.mode)) {
+    if (err == 0 && S_ISREG(stats.mode)) {
         NSFileCoordinator *coordinator = [[NSFileCoordinator alloc] initWithFilePresenter:nil];
 
-        __block pthread_mutex_t open_mutex = PTHREAD_MUTEX_INITIALIZER;
-        pthread_mutex_lock(&open_mutex);
-
         __block NSError *error;
-        __block struct fd *openedFile;
+        __block struct fd *fd;
+        __block dispatch_semaphore_t file_opened = dispatch_semaphore_create(0);
 
-        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
+        dispatch_sync(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
             void (^operation)(NSURL *url) = ^(NSURL *url) {
-                openedFile = realfs_open(mount, path_for_url_in_mount(mount, url, path), flags, mode);
-                openedFile->ops = &iosfs_fdops;
+                fd = realfs_open(mount, path_for_url_in_mount(mount, url, path), flags, mode);
+                fd->ops = &iosfs_fdops;
 
-                if (IS_ERR(openedFile)) {
-                    pthread_mutex_unlock(&open_mutex);
+                if (IS_ERR(fd)) {
+                    dispatch_semaphore_signal(file_opened);
                 } else {
-                    pthread_mutex_t close_mutex = PTHREAD_MUTEX_INITIALIZER;
-                    pthread_mutex_lock(&close_mutex);
-                    openedFile->data = &close_mutex;
-                    pthread_mutex_unlock(&open_mutex);
-
-                    pthread_mutex_lock(&close_mutex);
-                    pthread_mutex_unlock(&close_mutex);
+                    dispatch_semaphore_t file_closed = dispatch_semaphore_create(0);
+                    fd->data = (__bridge void *) file_closed;
+                    dispatch_semaphore_signal(file_opened);
+                    dispatch_semaphore_wait(file_closed, DISPATCH_TIME_FOREVER);
                 }
             };
 
@@ -133,26 +140,20 @@ static struct fd *iosfs_open(struct mount *mount, const char *path, int flags, i
                 [coordinator coordinateWritingItemAtURL:url options:NSFileCoordinatorWritingForMerging error:&error byAccessor:operation];
             }
         });
-
-        pthread_mutex_lock(&open_mutex);
-        pthread_mutex_unlock(&open_mutex);
+        
+        dispatch_semaphore_wait(file_opened, DISPATCH_TIME_FOREVER);
 
         int posix_error = posixErrorFromNSError(error);
-        return posix_error ? ERR_PTR(posix_error) : openedFile;
-    } else {
-        struct fd *fd = realfs_open(mount, path, flags, mode);
-        fd->ops = &iosfs_fdops;
-        return fd;
+        return posix_error ? ERR_PTR(posix_error) : fd;
     }
+        
+    struct fd *fd = realfs_open(mount, path, flags, mode);
+    fd->ops = &iosfs_fdops;
+    return fd;
 }
 
 int iosfs_close(struct fd *fd) {
     int err = realfs.close(fd);
-
-    if (fd->data) {
-        pthread_mutex_t *mutex = (pthread_mutex_t *)fd->data;
-        pthread_mutex_unlock(mutex);
-    }
     return err;
 }
 
@@ -162,8 +163,7 @@ static int iosfs_ask_for_url(NSURL **url) {
     if (!terminalViewController)
         return _ENODEV;
 
-    pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-    DirectoryPickerDelegate *pickerDelegate = [[DirectoryPickerDelegate alloc] initWithMutex:&mutex];
+    DirectoryPickerDelegate *pickerDelegate = [DirectoryPickerDelegate new];
 
     dispatch_async(dispatch_get_main_queue(), ^(void) {
         UIDocumentPickerViewController *picker = [[UIDocumentPickerViewController alloc] initWithDocumentTypes:@[ @"public.folder" ] inMode:UIDocumentPickerModeOpen];
@@ -171,13 +171,10 @@ static int iosfs_ask_for_url(NSURL **url) {
         [terminalViewController presentViewController:picker animated:true completion:nil];
     });
 
-    pthread_mutex_lock(&mutex);
-    pthread_mutex_unlock(&mutex);
-
-    if (pickerDelegate.url == nil)
+    NSArray<NSURL *> *urls = [pickerDelegate waitForUrls];
+    if (urls.count == 0)
         return _ENODEV;
-
-    *url = pickerDelegate.url;
+    *url = urls[0];
     return 0;
 }
 
