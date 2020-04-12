@@ -17,7 +17,7 @@
 
 const NSFileCoordinatorWritingOptions NSFileCoordinatorWritingForCreating = NSFileCoordinatorWritingForMerging;
 
-@interface DirectoryPickerDelegate : NSObject <UIDocumentPickerDelegate>
+@interface DirectoryPicker : NSObject <UIDocumentPickerDelegate>
 
 @property NSArray<NSURL *> *urls;
 @property lock_t lock;
@@ -25,7 +25,7 @@ const NSFileCoordinatorWritingOptions NSFileCoordinatorWritingForCreating = NSFi
 
 @end
 
-@implementation DirectoryPickerDelegate
+@implementation DirectoryPicker
 
 - (instancetype)init {
     if (self = [super init]) {
@@ -45,12 +45,33 @@ const NSFileCoordinatorWritingOptions NSFileCoordinatorWritingForCreating = NSFi
     unlock(&_lock);
 }
 
-- (NSArray<NSURL *> *)waitForUrls {
+- (int)askForURL:(NSURL **)url {
+    TerminalViewController *terminalViewController = currentTerminalViewController;
+    if (!terminalViewController)
+        return _ENODEV;
+
+    dispatch_async(dispatch_get_main_queue(), ^(void) {
+        UIDocumentPickerViewController *picker = [[UIDocumentPickerViewController alloc] initWithDocumentTypes:@[ @"public.folder" ] inMode:UIDocumentPickerModeOpen];
+        picker.delegate = self;
+        [terminalViewController presentViewController:picker animated:true completion:nil];
+    });
+
     lock(&_lock);
-    while (_urls == nil)
-        wait_for(&_cond, &_lock, NULL);
+    while (_urls == nil) {
+        int err = wait_for(&_cond, &_lock, NULL);
+        if (err < 0) {
+            unlock(&_lock);
+            return err;
+        }
+    }
+    NSArray<NSURL *> *urls = _urls;
+    _urls = nil;
     unlock(&_lock);
-    return _urls;
+    
+    if (urls.count == 0)
+        return _ENODEV;
+    *url = urls[0];
+    return 0;
 }
 
 - (void)dealloc {
@@ -89,8 +110,7 @@ static int posixErrorFromNSError(NSError *error) {
     if (error != nil) {
         NSError *underlyingError = [error.userInfo objectForKey:NSUnderlyingErrorKey];
         if (underlyingError) {
-            return -(int)underlyingError.code
-            ;
+            return -(int)underlyingError.code;
         } else {
             return _EPERM;
         }
@@ -154,39 +174,24 @@ static struct fd *iosfs_open(struct mount *mount, const char *path, int flags, i
 
 int iosfs_close(struct fd *fd) {
     int err = realfs.close(fd);
+    if (fd->data != NULL) {
+        dispatch_semaphore_t file_closed = (__bridge dispatch_semaphore_t) fd->data;
+        dispatch_semaphore_signal(file_closed);
+    }
     return err;
-}
-
-static int iosfs_ask_for_url(NSURL **url) {
-    TerminalViewController *terminalViewController = currentTerminalViewController;
-
-    if (!terminalViewController)
-        return _ENODEV;
-
-    DirectoryPickerDelegate *pickerDelegate = [DirectoryPickerDelegate new];
-
-    dispatch_async(dispatch_get_main_queue(), ^(void) {
-        UIDocumentPickerViewController *picker = [[UIDocumentPickerViewController alloc] initWithDocumentTypes:@[ @"public.folder" ] inMode:UIDocumentPickerModeOpen];
-        picker.delegate = pickerDelegate;
-        [terminalViewController presentViewController:picker animated:true completion:nil];
-    });
-
-    NSArray<NSURL *> *urls = [pickerDelegate waitForUrls];
-    if (urls.count == 0)
-        return _ENODEV;
-    *url = urls[0];
-    return 0;
 }
 
 static int iosfs_mount(struct mount *mount) {
     NSURL *url;
 
-    int err = iosfs_ask_for_url(&url);
+    DirectoryPicker *picker = [DirectoryPicker new];
+    int err = [picker askForURL:&url];
     if (err)
         return err;
 
     // Overwrite url & base path
     mount->data = (void *)CFBridgingRetain(url);
+    free((void *) mount->source);
     mount->source = strdup([[url path] UTF8String]);
 
     if ([url startAccessingSecurityScopedResource] == NO) {
