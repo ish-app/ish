@@ -17,7 +17,7 @@ void fs_register(const struct fs_ops *fs) {
     for (unsigned i = 0; i < MAX_FILESYSTEMS; i++) {
         if (filesystems[i] == NULL) {
             filesystems[i] = fs;
-            break;
+            return;
         }
     }
     assert(!"reached filesystem limit");
@@ -63,6 +63,8 @@ int do_mount(const struct fs_ops *fs, const char *source, const char *point, int
     if (fs->mount) {
         int err = fs->mount(new_mount);
         if (err < 0) {
+            free((void *) new_mount->point);
+            free((void *) new_mount->source);
             free(new_mount);
             return err;
         }

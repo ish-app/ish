@@ -108,7 +108,6 @@ void mount_release(struct mount *mount);
 
 // must hold mounts_lock while calling these, or traversing mounts
 int do_mount(const struct fs_ops *fs, const char *source, const char *point, int flags);
-int do_mount_with_data(const struct fs_ops *fs, const char *source, const char *point, int flags, void *data);
 int do_umount(const char *point);
 int mount_remove(struct mount *mount);
 extern struct list mounts;

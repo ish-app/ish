@@ -68,6 +68,7 @@ const NSFileCoordinatorWritingOptions NSFileCoordinatorWritingForCreating = NSFi
     _urls = nil;
     unlock(&_lock);
     
+    assert(urls.count <= 1);
     if (urls.count == 0)
         return _ENODEV;
     *url = urls[0];
@@ -85,12 +86,14 @@ NSURL *url_for_mount(struct mount *mount) {
 }
 
 NSURL *url_for_path_in_mount(struct mount *mount, const char *path) {
-    return [[url_for_mount(mount) URLByAppendingPathComponent:[NSString stringWithUTF8String:path]] URLByStandardizingPath];
+    if (path[0] == '/')
+        path++;
+    return [url_for_mount(mount) URLByAppendingPathComponent:[NSString stringWithUTF8String:path] isDirectory:NO];
 }
 
 const char *path_for_url_in_mount(struct mount *mount, NSURL *url, const char *fallback) {
-    NSString *mount_path = [[url_for_mount(mount) URLByStandardizingPath] path];
-    NSString *url_path = [[url URLByStandardizingPath] path];
+    NSString *mount_path = url_for_mount(mount).path;
+    NSString *url_path = url.path;
 
     // The `/private` prefix is a special case as described in the documentation of `URLByStandardizingPath`.
     if ([mount_path hasPrefix:@"/private/"]) mount_path = [mount_path substringFromIndex:8];
@@ -99,23 +102,18 @@ const char *path_for_url_in_mount(struct mount *mount, NSURL *url, const char *f
     if (![url_path hasPrefix:mount_path])
         return fallback;
 
-    NSURL *new_url = [NSURL fileURLWithPath:[url_path substringFromIndex:[mount_path length]]];
-    return [new_url ? [new_url path] : @"" cStringUsingEncoding:NSUTF8StringEncoding];
+    return [url_path substringFromIndex:[mount_path length]].UTF8String;
 }
 
 static int iosfs_stat(struct mount *mount, const char *path, struct statbuf *fake_stat);
 const struct fd_ops iosfs_fdops;
 
 static int posixErrorFromNSError(NSError *error) {
-    if (error != nil) {
-        NSError *underlyingError = [error.userInfo objectForKey:NSUnderlyingErrorKey];
-        if (underlyingError) {
-            return -(int)underlyingError.code;
-        } else {
-            return _EPERM;
+    while (error != nil) {
+        if (error.domain == NSPOSIXErrorDomain) {
+            return err_map((int) error.code);
         }
     }
-
     return 0;
 }
 
@@ -127,6 +125,7 @@ static int combine_error(NSError *coordinatorError, int err) {
 static struct fd *iosfs_open(struct mount *mount, const char *path, int flags, int mode) {
     NSURL *url = url_for_path_in_mount(mount, path);
 
+    // FIXME: this does a redundant file coordination operation
     struct statbuf stats;
     int err = iosfs_stat(mount, path, &stats);
 
