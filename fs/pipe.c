@@ -1,3 +1,4 @@
+#include <sys/stat.h>
 #include <unistd.h>
 #include "kernel/calls.h"
 #include "fs/fd.h"
@@ -8,6 +9,9 @@ static fd_t pipe_f_create(int pipe_fd, int flags) {
     if (fd == NULL)
         return _ENOMEM;
     fd->real_fd = pipe_fd;
+    fd->stat.mode = S_IFIFO | 0660;
+    fd->stat.uid = current->uid;
+    fd->stat.gid = current->gid;
     return f_install(fd, flags);
 }
 
