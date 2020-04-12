@@ -143,20 +143,26 @@ int_t sys_getresgid(addr_t rgid_addr, addr_t egid_addr, addr_t sgid_addr) {
 }
 
 int_t sys_getgroups(dword_t size, addr_t list) {
+    STRACE("getgroups(%d, %#x)", size, list);
     if (size == 0)
         return current->ngroups;
     if (size < current->ngroups)
         return _EINVAL;
+    for (unsigned i = 0; i < current->ngroups; i++)
+        STRACE(" %d", current->groups[i]);
     if (user_write(list, current->groups, size * sizeof(uid_t_)))
         return _EFAULT;
-    return 0;
+    return current->ngroups;
 }
 
 int_t sys_setgroups(dword_t size, addr_t list) {
+    STRACE("setgroups(%d, %#x)", size, list);
     if (size > MAX_GROUPS)
         return _EINVAL;
     if (user_read(list, current->groups, size * sizeof(uid_t_)))
         return _EFAULT;
+    for (unsigned i = 0; i < size; i++)
+        STRACE(" %d", current->groups[i]);
     current->ngroups = size;
     return 0;
 }
