@@ -75,19 +75,15 @@ static int open_flags_fake_from_real(int flags) {
     return fake_flags;
 }
 
-struct fd *realfs_open_with_fdops(struct mount *mount, const char *path, int flags, int mode, const struct fd_ops *fdops) {
+struct fd *realfs_open(struct mount *mount, const char *path, int flags, int mode) {
     int real_flags = open_flags_real_from_fake(flags);
     int fd_no = openat(mount->root_fd, fix_path(path), real_flags, mode);
     if (fd_no < 0)
         return ERR_PTR(errno_map());
-    struct fd *fd = fd_create(fdops);
+    struct fd *fd = fd_create(&realfs_fdops);
     fd->real_fd = fd_no;
     fd->dir = NULL;
     return fd;
-}
-
-struct fd *realfs_open(struct mount *mount, const char *path, int flags, int mode) {
-    return realfs_open_with_fdops(mount, path, flags, mode, &realfs_fdops);
 }
 
 int realfs_close(struct fd *fd) {

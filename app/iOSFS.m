@@ -109,7 +109,8 @@ static struct fd *iosfs_open(struct mount *mount, const char *path, int flags, i
 
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
             void (^operation)(NSURL *url) = ^(NSURL *url) {
-                openedFile = realfs_open_with_fdops(mount, path_for_url_in_mount(mount, url, path), flags, mode, &iosfs_fdops);
+                openedFile = realfs_open(mount, path_for_url_in_mount(mount, url, path), flags, mode);
+                openedFile->ops = &iosfs_fdops;
 
                 if (IS_ERR(openedFile)) {
                     pthread_mutex_unlock(&open_mutex);
@@ -139,7 +140,9 @@ static struct fd *iosfs_open(struct mount *mount, const char *path, int flags, i
         int posix_error = posixErrorFromNSError(error);
         return posix_error ? ERR_PTR(posix_error) : openedFile;
     } else {
-        return realfs_open_with_fdops(mount, path, flags, mode, &iosfs_fdops);
+        struct fd *fd = realfs_open(mount, path, flags, mode);
+        fd->ops = &iosfs_fdops;
+        return fd;
     }
 }
 

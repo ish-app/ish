@@ -6,7 +6,6 @@
 extern const struct fd_ops realfs_fdops;
 extern const struct fs_ops realfs;
 
-struct fd *realfs_open_with_fdops(struct mount *mount, const char *path, int flags, int mode, const struct fd_ops *fdops);
 struct fd *realfs_open(struct mount *mount, const char *path, int flags, int mode);
 
 ssize_t realfs_readlink(struct mount *mount, const char *path, char *buf, size_t bufsize);
