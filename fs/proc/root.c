@@ -1,5 +1,6 @@
 #include <sys/stat.h>
 #include <inttypes.h>
+#include <string.h>
 #include "kernel/calls.h"
 #include "fs/proc.h"
 #include "platform/platform.h"
@@ -52,13 +53,28 @@ static int proc_readlink_self(struct proc_entry *UNUSED(entry), char *buf) {
     return 0;
 }
 
+static void proc_print_escaped(struct proc_data *buf, const char *str) {
+    // FIXME: this is hella slow
+    for (size_t i = 0; str[i] != '\0'; i++) {
+        if (strchr(" \t\\", str[i]) != NULL) {
+            proc_printf(buf, "\\%03o", str[i]);
+        } else {
+            proc_printf(buf, "%c", str[i]);
+        }
+    }
+}
+
 static int proc_show_mounts(struct proc_entry *UNUSED(entry), struct proc_data *buf) {
     struct mount *mount;
     list_for_each_entry(&mounts, mount, mounts) {
         const char *point = mount->point;
         if (point[0] == '\0')
             point = "/";
-        proc_printf(buf, "%s %s %s %s 0 0\n", mount->source, point, mount->fs->name, "rw");
+
+        proc_print_escaped(buf, mount->source);
+        proc_printf(buf, " ");
+        proc_print_escaped(buf, point);
+        proc_printf(buf, " %s %s 0 0\n", mount->fs->name, "rw");
     };
     return 0;
 }
