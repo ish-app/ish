@@ -12,6 +12,7 @@
 #include "fs/fd.h"
 #include "fs/dev.h"
 #include "fs/inode.h"
+#include "fs/real.h"
 #define ISH_INTERNAL
 #include "fs/fake.h"
 

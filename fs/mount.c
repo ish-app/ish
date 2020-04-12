@@ -3,6 +3,7 @@
 #include "kernel/calls.h"
 #include "kernel/fs.h"
 #include "fs/path.h"
+#include "fs/real.h"
 
 #define MAX_FILESYSTEMS 10
 static const struct fs_ops *filesystems[MAX_FILESYSTEMS] = {

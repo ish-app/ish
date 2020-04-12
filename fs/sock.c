@@ -8,6 +8,7 @@
 #include "fs/fd.h"
 #include "fs/inode.h"
 #include "fs/path.h"
+#include "fs/real.h"
 #include "fs/sock.h"
 #include "debug.h"
 

@@ -13,6 +13,7 @@
 #include "kernel/fs.h"
 #include "kernel/errno.h"
 #include "fs/path.h"
+#include "fs/real.h"
 
 const NSFileCoordinatorWritingOptions NSFileCoordinatorWritingForCreating = NSFileCoordinatorWritingForMerging;
 

@@ -16,6 +16,7 @@
 #include "kernel/calls.h"
 #include "kernel/fs.h"
 #include "fs/dev.h"
+#include "fs/real.h"
 #include "fs/tty.h"
 
 static int getpath(int fd, char *buf) {
