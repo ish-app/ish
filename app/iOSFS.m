@@ -381,7 +381,7 @@ static int iosfs_flock(struct fd *fd, int operation) {
 }
 
 const struct fs_ops iosfs = {
-    .name = "ios", .magic = 0x7265616d,
+    .name = "ios", .magic = 0x694f5320,
     .mount = iosfs_mount,
     .umount = iosfs_umount,
     .statfs = realfs_statfs,
@@ -408,7 +408,7 @@ const struct fs_ops iosfs = {
 };
 
 const struct fs_ops iosfs_unsafe = {
-    .name = "ios-unsafe", .magic = 0x7265616e,
+    .name = "ios-unsafe", .magic = 0x694f5321,
     .mount = iosfs_mount,
     .umount = iosfs_umount,
     .statfs = realfs_statfs,
