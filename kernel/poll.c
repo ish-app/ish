@@ -83,12 +83,14 @@ dword_t sys_select(fd_t nfds, addr_t readfds_addr, addr_t writefds_addr, addr_t 
             poll_add_fd(poll, fd, events, (union poll_fd_info) i);
         }
     }
+    STRACE("...\n");
 
     memset(readfds, 0, fdset_size);
     memset(writefds, 0, fdset_size);
     memset(exceptfds, 0, fdset_size);
     struct select_context context = {readfds, writefds, exceptfds};
     int err = poll_wait(poll, select_event_callback, &context, timeout_addr == 0 ? NULL : &timeout_ts);
+    STRACE("%d end select ", current->pid);
     poll_destroy(poll);
     if (err < 0)
         return err;

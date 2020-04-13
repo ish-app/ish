@@ -31,8 +31,11 @@ struct poll_fd {
 };
 
 // these are defined in system headers somewhere
-#undef POLL_PRI
+#undef POLL_IN
+#undef POLL_OUT
+#undef POLL_MSG
 #undef POLL_ERR
+#undef POLL_PRI
 #undef POLL_HUP
 
 #define POLL_READ 1

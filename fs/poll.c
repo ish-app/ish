@@ -318,19 +318,17 @@ int real_poll_init(struct real_poll *real) {
 }
 
 int real_poll_update(struct real_poll *real, int fd, int types) {
-    int add_flag = EV_ADD;
-
     struct kevent e[3]; // one for EVFILT_READ, EVFILT_WRITE, EVFILT_EXCEPT
-    if (types & POLL_IN) {
-        EV_SET(&e[0], fd, EVFILT_READ, add_flag, 0, 0, 0);
+    if (types & POLL_READ) {
+        EV_SET(&e[0], fd, EVFILT_READ, EV_ADD, 0, 0, 0);
     } else if (types & POLL_HUP) {
         // Set the low water mark really high so we'll only get woken up on a hangup
-        EV_SET(&e[0], fd, EVFILT_READ, add_flag, NOTE_LOWAT, INT_MAX, 0);
+        EV_SET(&e[0], fd, EVFILT_READ, EV_ADD, NOTE_LOWAT, INT_MAX, 0);
     } else {
         EV_SET(&e[0], fd, EVFILT_READ, EV_DELETE, 0, 0, 0);
     }
-    EV_SET(&e[1], fd, EVFILT_WRITE, types & POLL_OUT ? add_flag : EV_DELETE, 0, 0, 0);
-    EV_SET(&e[2], fd, EVFILT_EXCEPT, types & POLL_ERR ? add_flag : EV_DELETE, 0, 0, 0);
+    EV_SET(&e[1], fd, EVFILT_WRITE, types & POLL_WRITE ? EV_ADD : EV_DELETE, 0, 0, 0);
+    EV_SET(&e[2], fd, EVFILT_EXCEPT, types & POLL_ERR ? EV_ADD : EV_DELETE, 0, 0, 0);
     for (int i = 0; i < 3; i++) {
         e[i].flags |= EV_RECEIPT;
     }
