@@ -300,7 +300,11 @@ static ssize_t timerfd_read(struct fd *fd, void *buf, size_t bufsize) {
             unlock(&fd->lock);
             return _EAGAIN;
         }
-        wait_for(&fd->cond, &fd->lock, NULL);
+        int err = wait_for(&fd->cond, &fd->lock, NULL);
+        if (err < 0) {
+            unlock(&fd->lock);
+            return err;
+        }
     }
 
     *(uint64_t *) buf = fd->timerfd.expirations;
