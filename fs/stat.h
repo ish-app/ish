@@ -106,7 +106,7 @@ struct statfs_ {
     uint_t frsize;
     uint_t flags;
     uint_t spare[4];
-};
+} __attribute__((packed));
 
 struct statfs64_ {
     uint_t type;
