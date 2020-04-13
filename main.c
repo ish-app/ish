@@ -13,7 +13,7 @@ int main(int argc, char *const argv[]) {
         fprintf(stderr, "%s\n", strerror(-err));
         return err;
     }
-    do_mount(&procfs, "proc", "/proc", 0);
-    do_mount(&devptsfs, "devpts", "/dev/pts", 0);
+    do_mount(&procfs, "proc", "/proc", "", 0);
+    do_mount(&devptsfs, "devpts", "/dev/pts", "", 0);
     cpu_run(&current->cpu);
 }

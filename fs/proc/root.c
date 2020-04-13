@@ -64,6 +64,11 @@ static void proc_print_escaped(struct proc_data *buf, const char *str) {
     }
 }
 
+#define proc_printf_comma(buf, at_start, format, ...) do { \
+    proc_printf((buf), "%s" format, *(at_start) ? "" : ",", ##__VA_ARGS__); \
+    *(at_start) = false; \
+} while (0)
+
 static int proc_show_mounts(struct proc_entry *UNUSED(entry), struct proc_data *buf) {
     struct mount *mount;
     list_for_each_entry(&mounts, mount, mounts) {
@@ -74,7 +79,18 @@ static int proc_show_mounts(struct proc_entry *UNUSED(entry), struct proc_data *
         proc_print_escaped(buf, mount->source);
         proc_printf(buf, " ");
         proc_print_escaped(buf, point);
-        proc_printf(buf, " %s %s 0 0\n", mount->fs->name, "rw");
+        proc_printf(buf, " %s ", mount->fs->name);
+        bool at_start = true;
+        proc_printf_comma(buf, &at_start, "%s", mount->flags & MS_READONLY_ ? "ro" : "rw");
+        if (mount->flags & MS_NOSUID_)
+            proc_printf_comma(buf, &at_start, "nosuid");
+        if (mount->flags & MS_NODEV_)
+            proc_printf_comma(buf, &at_start, "nodev");
+        if (mount->flags & MS_NOEXEC_)
+            proc_printf_comma(buf, &at_start, "noexec");
+        if (strcmp(mount->info, "") != 0)
+            proc_printf_comma(buf, &at_start, "%s", mount->info);
+        proc_printf(buf, " 0 0\n");
     };
     return 0;
 }

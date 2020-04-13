@@ -133,8 +133,8 @@ static void ios_handle_die(const char *msg) {
         return err;
     generic_mknodat(AT_PWD, "/dev/location", S_IFCHR|0666, dev_make(DYN_DEV_MAJOR, DEV_LOCATION_MINOR));
 
-    do_mount(&procfs, "proc", "/proc", 0);
-    do_mount(&devptsfs, "devpts", "/dev/pts", 0);
+    do_mount(&procfs, "proc", "/proc", "", 0);
+    do_mount(&devptsfs, "devpts", "/dev/pts", "", 0);
     
     [self configureDns];
     

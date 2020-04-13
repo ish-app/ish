@@ -155,6 +155,11 @@ dword_t sys_statfs64(addr_t path_addr, dword_t buf_size, addr_t buf_addr);
 dword_t sys_fstatfs(fd_t f, addr_t buf_addr);
 dword_t sys_fstatfs64(fd_t f, addr_t buf_addr);
 
+#define MS_READONLY_ (1 << 0)
+#define MS_NOSUID_ (1 << 1)
+#define MS_NODEV_ (1 << 2)
+#define MS_NOEXEC_ (1 << 3)
+#define MS_SILENT_ (1 << 15)
 dword_t sys_mount(addr_t source_addr, addr_t target_addr, addr_t type_addr, dword_t flags, addr_t data_addr);
 dword_t sys_umount2(addr_t target_addr, dword_t flags);
 

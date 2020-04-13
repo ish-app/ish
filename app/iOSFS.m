@@ -70,7 +70,7 @@ const NSFileCoordinatorWritingOptions NSFileCoordinatorWritingForCreating = NSFi
     
     assert(urls.count <= 1);
     if (urls.count == 0)
-        return _ENODEV;
+        return _ECANCELED;
     *url = urls[0];
     return 0;
 }
@@ -196,6 +196,10 @@ static int iosfs_mount(struct mount *mount) {
     if ([url startAccessingSecurityScopedResource] == NO) {
         CFBridgingRelease(mount->data);
         return _EPERM;
+    }
+    
+    if (mount_param_flag(mount->info, "unsafe")) {
+        mount->fs = &iosfs_unsafe;
     }
 
     return realfs.mount(mount);

@@ -50,12 +50,13 @@ void mount_release(struct mount *mount) {
     unlock(&mounts_lock);
 }
 
-int do_mount(const struct fs_ops *fs, const char *source, const char *point, int flags) {
+int do_mount(const struct fs_ops *fs, const char *source, const char *point, const char *info, int flags) {
     struct mount *new_mount = malloc(sizeof(struct mount));
     if (new_mount == NULL)
         return _ENOMEM;
     new_mount->point = strdup(point);
     new_mount->source = strdup(source);
+    new_mount->info = strdup(info);
     new_mount->flags = flags;
     new_mount->fs = fs;
     new_mount->data = NULL;
@@ -87,6 +88,7 @@ int mount_remove(struct mount *mount) {
     if (mount->fs->umount)
         mount->fs->umount(mount);
     list_remove(&mount->mounts);
+    free((void *) mount->info);
     free((void *) mount->source);
     free((void *) mount->point);
     free(mount);
@@ -107,11 +109,16 @@ int do_umount(const char *point) {
     return mount_remove(mount);
 }
 
-#define MS_READONLY_ (1 << 0)
-#define MS_NOSUID_ (1 << 1)
-#define MS_NODEV_ (1 << 2)
-#define MS_NOEXEC_ (1 << 3)
-#define MS_SILENT_ (1 << 15)
+// FIXME: this is shit
+bool mount_param_flag(const char *info, const char *flag) {
+    while (*info != '\0') {
+        if (strncmp(info, flag, strlen(flag)) == 0)
+            return true;
+        info += strcspn(info, ",");
+    }
+    return false;
+}
+
 #define MS_SUPPORTED (MS_READONLY_|MS_NOSUID_|MS_NODEV_|MS_NOEXEC_|MS_SILENT_)
 #define MS_FLAGS (MS_READONLY_|MS_NOSUID_|MS_NODEV_|MS_NOEXEC_)
 
@@ -122,10 +129,15 @@ dword_t sys_mount(addr_t source_addr, addr_t point_addr, addr_t type_addr, dword
     char point_raw[MAX_PATH];
     if (user_read_string(point_addr, point_raw, sizeof(point_raw)))
         return _EFAULT;
+    char data[MAX_PATH];
+    if (data_addr != 0) {
+        if (user_read_string(data_addr, data, sizeof(data)))
+            return _EFAULT;
+    }
     char type[100];
     if (user_read_string(type_addr, type, sizeof(type)))
         return _EFAULT;
-    STRACE("mount(\"%s\", \"%s\", \"%s\", %#x, %#x)", source, point_raw, type, flags, data_addr);
+    STRACE("mount(\"%s\", \"%s\", \"%s\", %#x, \"%s\")", source, point_raw, type, flags, data_addr != 0 ? data : NULL);
 
     if (flags & ~MS_SUPPORTED) {
         FIXME("missing mount flags %#x", flags & ~MS_SUPPORTED);
@@ -155,7 +167,7 @@ dword_t sys_mount(addr_t source_addr, addr_t point_addr, addr_t type_addr, dword
         return err;
 
     lock(&mounts_lock);
-    err = do_mount(fs, source, point, flags & MS_FLAGS);
+    err = do_mount(fs, source, point, data, flags & MS_FLAGS);
     unlock(&mounts_lock);
     return err;
 }

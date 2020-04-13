@@ -111,6 +111,7 @@
 #define _EISNAM       -120 /* Is a named type file */
 #define _EREMOTEIO    -121 /* Remote I/O error */
 #define _EDQUOT       -122 /* Quota exceeded */
+#define _ECANCELED    -125 /* Operation Canceled */
 
 
 int err_map(int err);

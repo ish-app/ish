@@ -69,6 +69,7 @@ int access_check(struct statbuf *stat, int check);
 struct mount {
     const char *point;
     const char *source;
+    const char *info;
     int flags;
     const struct fs_ops *fs;
     unsigned refcount;
@@ -107,10 +108,12 @@ void mount_retain(struct mount *mount);
 void mount_release(struct mount *mount);
 
 // must hold mounts_lock while calling these, or traversing mounts
-int do_mount(const struct fs_ops *fs, const char *source, const char *point, int flags);
+int do_mount(const struct fs_ops *fs, const char *source, const char *point, const char *info, int flags);
 int do_umount(const char *point);
 int mount_remove(struct mount *mount);
 extern struct list mounts;
+
+bool mount_param_flag(const char *info, const char *flag);
 
 // open flags
 #define O_ACCMODE_ 3
