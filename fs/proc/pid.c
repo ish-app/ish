@@ -72,7 +72,7 @@ static int proc_pid_stat_show(struct proc_entry *entry, struct proc_data *buf) {
     // bunch of shit that can only be accessed by a debugger
     proc_printf(buf, "%lu ", 0l); // startcode
     proc_printf(buf, "%lu ", 0l); // endcode
-    proc_printf(buf, "%lu ", task->mm->stack_start);
+    proc_printf(buf, "%lu ", task->mm ? task->mm->stack_start : 0);
     proc_printf(buf, "%lu ", 0l); // kstkesp
     proc_printf(buf, "%lu ", 0l); // kstkeip
 
@@ -107,17 +107,21 @@ static int proc_pid_cmdline_show(struct proc_entry *entry, struct proc_data *buf
     struct task *task = proc_get_task(entry);
     if (task == NULL)
         return _ESRCH;
+    if (task->mm == NULL)
+        goto out_free_task;
+
     size_t size = task->mm->argv_end - task->mm->argv_start;
     uint8_t *data = malloc(size);
     if (data == NULL)
         return _ENOMEM;
-    int fail = user_read_task(task, task->mm->argv_start, data, size);
-    proc_buf_write(buf, data, size);
+    int err = user_read_task(task, task->mm->argv_start, data, size);
+    if (err == 0)
+        proc_buf_write(buf, data, size);
     free(data);
+
+out_free_task:
     proc_put_task(task);
-    if (fail)
-        return 0;
-    return size;
+    return 0;
 }
 
 static int proc_pid_maps_show(struct proc_entry *entry, struct proc_data *buf) {
@@ -125,6 +129,9 @@ static int proc_pid_maps_show(struct proc_entry *entry, struct proc_data *buf) {
     if (task == NULL)
         return _ESRCH;
     struct mem *mem = task->mem;
+    if (mem == NULL)
+        goto out_free_task;
+
     read_wrlock(&mem->lock);
     page_t page = 0;
     while (page < MEM_PAGES) {
@@ -172,6 +179,8 @@ static int proc_pid_maps_show(struct proc_entry *entry, struct proc_data *buf) {
                 path);
     }
     read_wrunlock(&mem->lock);
+
+out_free_task:
     proc_put_task(task);
     return 0;
 }

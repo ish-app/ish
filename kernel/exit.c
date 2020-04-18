@@ -49,8 +49,11 @@ noreturn void do_exit(int status) {
 
     // release all our resources
     mm_release(current->mm);
+    current->mm = NULL;
     fdtable_release(current->files);
+    current->files = NULL;
     fs_info_release(current->fs);
+    current->fs = NULL;
     // sighand must be released below so it can be protected by pids_lock
     // since it can be accessed by other threads
 
@@ -67,6 +70,7 @@ noreturn void do_exit(int status) {
     current->exiting = true;
     // release the sighand
     sighand_release(current->sighand);
+    current->sighand = NULL;
     struct sigqueue *sigqueue, *sigqueue_tmp;
     list_for_each_entry_safe(&current->queue, sigqueue, sigqueue_tmp, queue) {
         list_remove(&sigqueue->queue);
