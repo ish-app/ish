@@ -29,7 +29,10 @@ static ssize_t eventfd_read(struct fd *fd, void *buf, size_t bufsize) {
             unlock(&fd->lock);
             return _EAGAIN;
         }
-        wait_for(&fd->cond, &fd->lock, NULL);
+        if (wait_for(&fd->cond, &fd->lock, NULL)) {
+            unlock(&fd->lock);
+            return _EINTR;
+        }
     }
 
     *(uint64_t *) buf = fd->eventfd.val;
@@ -53,7 +56,10 @@ static ssize_t eventfd_write(struct fd *fd, const void *buf, size_t bufsize) {
             unlock(&fd->lock);
             return _EAGAIN;
         }
-        wait_for(&fd->cond, &fd->lock, NULL);
+        if (wait_for(&fd->cond, &fd->lock, NULL)) {
+            unlock(&fd->lock);
+            return _EINTR;
+        }
     }
 
     fd->eventfd.val += increment;

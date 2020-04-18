@@ -5,6 +5,7 @@
 #include <pthread.h>
 #include <stdbool.h>
 #include <setjmp.h>
+#include "misc.h"
 
 // locks, implemented using pthread
 
@@ -61,7 +62,8 @@ void cond_destroy(cond_t *cond);
 // Releases the lock, waits for the condition, and reacquires the lock.
 // Returns _EINTR if waiting stopped because the thread received a signal,
 // _ETIMEDOUT if waiting stopped because the timout expired, 0 otherwise.
-int wait_for(cond_t *cond, lock_t *lock, struct timespec *timeout);
+// Will never return _ETIMEDOUT if timeout is NULL.
+int must_check wait_for(cond_t *cond, lock_t *lock, struct timespec *timeout);
 // Same as wait_for, except it will never return _EINTR
 int wait_for_ignore_signals(cond_t *cond, lock_t *lock, struct timespec *timeout);
 // Wake up all waiters.

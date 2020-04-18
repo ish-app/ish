@@ -372,7 +372,7 @@ int_t sys_connect(fd_t sock_fd, addr_t sockaddr_addr, uint_t sockaddr_len) {
             // Wait for acknowledgement that it happened.
             lock(&peer_lock);
             while (sock->socket.unix_peer == NULL)
-                wait_for(&sock->socket.unix_got_peer, &peer_lock, NULL);
+                wait_for_ignore_signals(&sock->socket.unix_got_peer, &peer_lock, NULL);
             unlock(&peer_lock);
         }
     }
