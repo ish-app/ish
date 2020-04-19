@@ -38,8 +38,11 @@ static struct tgroup *tgroup_copy(struct tgroup *old_group) {
     list_init(&group->threads);
     list_add(&old_group->pgroup, &group->pgroup);
     list_add(&old_group->session, &group->session);
-    if (group->tty)
+    if (group->tty) {
+        lock(&group->tty->lock);
         group->tty->refcount++;
+        unlock(&group->tty->lock);
+    }
     group->timer = NULL;
     group->doing_group_exit = false;
     group->children_rusage = (struct rusage_) {};
