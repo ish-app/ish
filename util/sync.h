@@ -84,13 +84,24 @@ static inline void wrlock_init(wrlock_t *lock) {
     pthread_rwlockattr_init(pattr);
     pthread_rwlockattr_setkind_np(pattr, PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
 #endif
-    pthread_rwlock_init(lock, pattr);
+    if (pthread_rwlock_init(lock, pattr)) __builtin_trap();
 }
-#define wrlock_destroy(lock) pthread_rwlock_destroy(lock)
-#define read_wrlock(lock) pthread_rwlock_rdlock(lock)
-#define read_wrunlock(lock) pthread_rwlock_unlock(lock)
-#define write_wrlock(lock) pthread_rwlock_wrlock(lock)
-#define write_wrunlock(lock) pthread_rwlock_unlock(lock)
+
+static inline void wrlock_destroy(wrlock_t *lock) {
+    if (pthread_rwlock_destroy(lock) != 0) __builtin_trap();
+}
+static inline void read_wrlock(wrlock_t *lock) {
+    if (pthread_rwlock_rdlock(lock) != 0) __builtin_trap();
+}
+static inline void read_wrunlock(wrlock_t *lock) {
+    if (pthread_rwlock_unlock(lock) != 0) __builtin_trap();
+}
+static inline void write_wrlock(wrlock_t *lock) {
+    if (pthread_rwlock_wrlock(lock) != 0) __builtin_trap();
+}
+static inline void write_wrunlock(wrlock_t *lock) {
+    if (pthread_rwlock_unlock(lock) != 0) __builtin_trap();
+}
 
 extern __thread sigjmp_buf unwind_buf;
 extern __thread bool should_unwind;
