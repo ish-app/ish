@@ -1,3 +1,4 @@
+#include <string.h>
 #include "debug.h"
 #include "kernel/calls.h"
 #include "kernel/errno.h"
