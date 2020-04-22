@@ -814,6 +814,7 @@ static int generic_fsetattr(struct fd *fd, struct attr attr) {
 }
 
 dword_t sys_fchmod(fd_t f, dword_t mode) {
+    STRACE("fchmod(%d, %o)", f, mode);
     struct fd *fd = f_get(f);
     if (fd == NULL)
         return _EBADF;
@@ -838,6 +839,7 @@ dword_t sys_chmod(addr_t path_addr, dword_t mode) {
 }
 
 dword_t sys_fchown32(fd_t f, uid_t_ owner, uid_t_ group) {
+    STRACE("fchown(%d, %d, %d)", f, owner, group);
     struct fd *fd = f_get(f);
     if (fd == NULL)
         return _EBADF;
