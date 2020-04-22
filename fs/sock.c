@@ -967,7 +967,7 @@ int_t sys_recvmsg(fd_t sock_fd, addr_t msghdr_addr, int_t flags) {
         msg.msg_namelen = 0;
     }
 
-    char real_msg_control[CMSG_SPACE(sizeof(int))]; // only used if needed
+    char real_msg_control[CMSG_SPACE(sizeof(int))] = {}; // only used if needed
     if (msg_fake.msg_controllen != 0) {
         // msg_control, include room for one (1) fd
         msg.msg_control = real_msg_control;
