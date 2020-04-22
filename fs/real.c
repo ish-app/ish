@@ -228,6 +228,13 @@ int realfs_poll(struct fd *fd) {
         p.events |= POLLOUT;
     if (poll(&p, 1, 0) <= 0)
         return 0;
+
+#if defined(__APPLE__)
+    // https://github.com/apple/darwin-xnu/blob/a449c6a3b8014d9406c2ddbdc81795da24aa7443/bsd/kern/sys_generic.c#L1856
+    if (p.revents & POLLHUP)
+        p.revents |= POLLOUT;
+#endif
+
     if (p.revents & POLLNVAL) {
         printk("pollnval %d flags %d events %d revents %d\n", fd->real_fd, flags, p.events, p.revents);
         // Seriously, fuck Darwin. I just want to poll on POLLIN|POLLOUT|POLLPRI.
