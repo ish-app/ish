@@ -221,7 +221,7 @@
 }
 
 - (BOOL)prefersStatusBarHidden {
-    BOOL isIPhoneX = UIApplication.sharedApplication.delegate.window.safeAreaInsets.top > 20;
+    BOOL isIPhoneX = self.view.window.safeAreaInsets.top > 20;
     return !isIPhoneX;
 }
 
