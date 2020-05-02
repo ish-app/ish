@@ -22,6 +22,10 @@ struct rowcol {
 @property (nonatomic) BOOL terminalFocused;
 
 @property (nullable) NSString *markedText;
+@property (nullable) NSString *selectedText;
+@property UITextRange *markedRange;
+@property UITextRange *selectedRange;
+
 @property struct rowcol floatingCursor;
 @property CGSize floatingCursorSensitivity;
 @property CGSize actualFloatingCursorSensitivity;
@@ -54,6 +58,9 @@ static int kObserverStyling;
     [prefs addObserver:self forKeyPath:@"fontFamily" options:0 context:&kObserverStyling];
     [prefs addObserver:self forKeyPath:@"fontSize" options:0 context:&kObserverStyling];
     [prefs addObserver:self forKeyPath:@"theme" options:0 context:&kObserverStyling];
+
+    self.markedRange = [UITextRange new];
+    self.selectedRange = [UITextRange new];
 }
 
 - (void)dealloc {
@@ -272,27 +279,35 @@ static int kObserverStyling;
     return YES; // it's always ok to send a "delete"
 }
 
-#pragma mark IME Input
+#pragma mark IME Input and Selection
 
 - (void)setMarkedText:(nullable NSString *)markedText selectedRange:(NSRange)selectedRange {
     self.markedText = markedText;
-}
-
-- (UITextRange *)markedTextRange {
-    if (self.markedText == nil) {
-        return nil;
-    }
-    return [UITextRange new];
-}
-
-- (NSString *)textInRange:(UITextRange *)range {
-    return self.markedText;
 }
 
 - (void)unmarkText {
     [self insertText:self.markedText];
 }
 
+- (UITextRange *)markedTextRange {
+    if (self.markedText != nil)
+        return self.markedRange;
+    return nil;
+}
+
+// The only reason to have this selected range is to prevent the "speak selection" context action from failing to get the current selection and falling back on calling copy:. It doesn't even have to work, it seems...
+
+- (UITextRange *)selectedTextRange {
+    return self.selectedRange;
+}
+
+- (NSString *)textInRange:(UITextRange *)range {
+    if (range == self.markedRange)
+        return self.markedText;
+    if (range == self.selectedRange)
+        return @"";
+    return nil;
+}
 
 #pragma mark Keyboard Actions
 
@@ -309,18 +324,6 @@ static int kObserverStyling;
 
 - (void)clearScrollback:(UIKeyCommand *)command {
     [self.terminal.webView evaluateJavaScript:@"exports.clearScrollback()" completionHandler:nil];
-}
-
-- (id)forwardingTargetForSelector:(SEL)selector {
-    if ([NSStringFromSelector(selector) hasPrefix:@"_accessibility"])
-        return self.terminal.webView;
-    return nil;
-}
-
-- (BOOL)canPerformAction:(SEL)action withSender:(id)sender {
-    if ([NSStringFromSelector(action) hasPrefix:@"_accessibility"] && [self.terminal.webView canPerformAction:action withSender:sender])
-        return YES;
-    return [super canPerformAction:action withSender:sender];
 }
 
 #pragma mark Floating cursor
@@ -526,7 +529,6 @@ static const char *metaKeys = "abcdefghijklmnopqrstuvwxyz0123456789-=[]\\;',./";
 - (nullable UITextPosition *)positionFromPosition:(nonnull UITextPosition *)position offset:(NSInteger)offset { LogStub(); return nil; }
 - (nullable UITextPosition *)positionWithinRange:(nonnull UITextRange *)range farthestInDirection:(UITextLayoutDirection)direction { LogStub(); return nil; }
 - (void)replaceRange:(nonnull UITextRange *)range withText:(nonnull NSString *)text { LogStub(); }
-- (UITextRange *)selectedTextRange { LogStub(); return nil; }
 - (void)setSelectedTextRange:(UITextRange *)selectedTextRange { LogStub(); }
 - (nonnull NSArray<UITextSelectionRect *> *)selectionRectsForRange:(nonnull UITextRange *)range { LogStub(); return @[]; }
 - (nullable UITextRange *)textRangeFromPosition:(nonnull UITextPosition *)fromPosition toPosition:(nonnull UITextPosition *)toPosition { LogStub(); return nil; }

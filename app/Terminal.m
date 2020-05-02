@@ -35,7 +35,17 @@ extern struct tty_driver ios_pty_driver;
 @end
 @implementation CustomWebView
 - (BOOL)becomeFirstResponder {
+    if (@available(iOS 13.4, *)) {
+        return [super becomeFirstResponder];
+    }
     return NO;
+}
+
+- (BOOL)canPerformAction:(SEL)action withSender:(id)sender {
+    if (action == @selector(copy:) || action == @selector(paste:)) {
+        return NO;
+    }
+    return [super canPerformAction:action withSender:sender];
 }
 @end
 
