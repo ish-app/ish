@@ -45,6 +45,9 @@ float80 f80_sqrt(float80 x);
 
 float80 f80_scale(float80 x, int scale);
 
+// Used to implement fxtract
+void f80_xtract(float80 f, int *exp, float80 *signif);
+
 enum f80_rounding_mode {
     round_to_nearest = 0,
     round_down = 1,

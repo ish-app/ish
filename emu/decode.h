@@ -725,6 +725,7 @@ restart:
                     case 0xd960: TRACE("f2xm1"); F2XM1(); break;
                     case 0xd961: TRACE("fyl2x"); FYL2X(); break;
                     case 0xd963: TRACE("fpatan"); FPATAN(); break;
+                    case 0xd964: TRACE("fxtract"); FXTRACT(); break;
                     case 0xd967: TRACE("fincstp"); FINCSTP(); break;
                     case 0xd970: TRACE("fprem"); FPREM(); break;
                     case 0xd972: TRACE("fsqrt"); FSQRT(); break;

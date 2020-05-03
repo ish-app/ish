@@ -515,3 +515,9 @@ float80 f80_scale(float80 x, int scale) {
         return F80_NAN;
     return u128_normalize_round((uint128_t) x.signif << 64, unbias(x.exp) + scale, x.sign);
 }
+
+void f80_xtract(float80 f, int *exp, float80 *signif) {
+    *exp = unbias(f.exp);
+    *signif = f;
+    signif->exp = bias(0);
+}

@@ -274,6 +274,14 @@ void fpu_cos(struct cpu_state *cpu) {
     ST(0) = f80_from_double(cos(f80_to_double(ST(0))));
 }
 
+void fpu_xtract(struct cpu_state *cpu) {
+    int exp;
+    float80 signif;
+    f80_xtract(ST(0), &exp, &signif);
+    ST(0) = f80_from_int(exp);
+    fpush(signif);
+}
+
 void fpu_xam(struct cpu_state *cpu) {
     float80 f = ST(0);
     int outflags = 0;

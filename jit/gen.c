@@ -423,6 +423,7 @@ void helper_rdtsc(struct cpu_state *cpu);
 #define FPATAN() h(fpu_patan)
 #define FSIN() h(fpu_sin)
 #define FCOS() h(fpu_cos)
+#define FXTRACT() h(fpu_xtract)
 
 // vector
 

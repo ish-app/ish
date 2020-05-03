@@ -102,6 +102,7 @@ void fpu_patan(struct cpu_state *cpu);
 void fpu_sin(struct cpu_state *cpu);
 void fpu_cos(struct cpu_state *cpu);
 void fpu_xam(struct cpu_state *cpu);
+void fpu_xtract(struct cpu_state *cpu);
 
 void fpu_stcw16(struct cpu_state *cpu, uint16_t *i);
 void fpu_ldcw16(struct cpu_state *cpu, uint16_t *i);
