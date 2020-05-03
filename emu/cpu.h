@@ -12,6 +12,10 @@ void cpu_run(struct cpu_state *cpu);
 int cpu_step32(struct cpu_state *cpu, struct tlb *tlb);
 int cpu_step16(struct cpu_state *cpu, struct tlb *tlb);
 
+union mm_reg {
+    qword_t qw;
+    dword_t dw[2];
+};
 union xmm_reg {
     qword_t qw[2];
     dword_t dw[4];
@@ -48,8 +52,6 @@ struct cpu_state {
     _REG(sp);
 #undef REGX
 #undef REG
-
-    union xmm_reg xmm[8];
 
     dword_t eip;
 
@@ -100,6 +102,9 @@ struct cpu_state {
 #define AF_OPS (1 << 3)
         byte_t flags_res;
     };
+
+    union mm_reg mm[8];
+    union xmm_reg xmm[8];
 
     // fpu
     float80 fp[8];

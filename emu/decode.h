@@ -268,8 +268,7 @@ restart:
 #if OP_SIZE == 16
                 case 0x6e: TRACEI("movd modrm, xmm");
                            // TODO: REX.W = 1 might be needed later
-                           READMODRM; VZLOAD(modrm_val, xmm_modrm_reg,32);
-                           break;
+                           READMODRM; VZLOAD(modrm_val, xmm_modrm_reg,32); break;
 
                 case 0x6f: TRACEI("movdqa xmm:modrm, xmm");
                            READMODRM; VLOAD(xmm_modrm_val, xmm_modrm_reg,128); break;
@@ -284,15 +283,18 @@ restart:
 
                 case 0x7e: TRACEI("movd xmm, modrm");
                            // TODO: REX.W = 1 might be needed later
-                           READMODRM; VSTORE(xmm_modrm_reg, xmm_modrm_val,32);
-                           break;
+                           READMODRM; VSTORE(xmm_modrm_reg, xmm_modrm_val,32); break;
 
                 case 0x7f: TRACEI("movdqa xmm, xmm:modrm");
                            READMODRM; VSTORE(xmm_modrm_reg, xmm_modrm_val,128); break;
 
                 case 0xef: TRACEI("pxor xmm:modrm xmm");
-                           READMODRM; VXOR(xmm_modrm_val, xmm_modrm_reg,128);
-                           break;
+                           READMODRM; VXOR(xmm_modrm_val, xmm_modrm_reg,128); break;
+#else
+                case 0x6f: TRACEI("movq modrm, mm");
+                           READMODRM; VLOAD(mm_modrm_val, mm_modrm_reg, 64); break;
+                case 0x7f: TRACEI("movq mm, modrm");
+                           READMODRM; VSTORE(mm_modrm_reg, mm_modrm_val, 64); break;
 #endif
 
                 default: TRACEI("undefined");

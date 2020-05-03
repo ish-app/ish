@@ -1,4 +1,5 @@
 #include <math.h>
+#include <string.h>
 
 #include "emu/cpu.h"
 
@@ -35,14 +36,14 @@ void vec_compare32(struct cpu_state *cpu, float *f2, float *f1) {
     cpu->pf_res = 0;
 }
 
-void vec_load32(struct cpu_state *UNUSED(cpu), const union xmm_reg *src, union xmm_reg *dst) {
-    dst->dw[0] = src->dw[0];
+void vec_load32(struct cpu_state *UNUSED(cpu), const void *src, void *dst) {
+    memcpy(dst, src, 4);
 }
-void vec_load64(struct cpu_state *UNUSED(cpu), const union xmm_reg *src, union xmm_reg *dst) {
-    dst->qw[0] = src->qw[0];
+void vec_load64(struct cpu_state *UNUSED(cpu), const void *src, void *dst) {
+    memcpy(dst, src, 8);
 }
-void vec_load128(struct cpu_state *UNUSED(cpu), const union xmm_reg *src, union xmm_reg *dst) {
-    *dst = *src;
+void vec_load128(struct cpu_state *UNUSED(cpu), const void *src, void *dst) {
+    memcpy(dst, src, 16);
 }
 
 static inline void zero_xmm(union xmm_reg *xmm) {
@@ -59,14 +60,14 @@ ZLOAD(64)
 ZLOAD(128)
 #undef ZLOAD
 
-void vec_store32(struct cpu_state *UNUSED(cpu), union xmm_reg *dst, const union xmm_reg *src) {
-    dst->dw[0] = src->dw[0];
+void vec_store32(struct cpu_state *UNUSED(cpu), void *dst, void *src) {
+    memcpy(dst, src, 4);
 }
-void vec_store64(struct cpu_state *UNUSED(cpu), union xmm_reg *dst, const union xmm_reg *src) {
-    dst->qw[0] = src->qw[0];
+void vec_store64(struct cpu_state *UNUSED(cpu), void *dst, void *src) {
+    memcpy(dst, src, 8);
 }
-void vec_store128(struct cpu_state *UNUSED(cpu), union xmm_reg *dst, const union xmm_reg *src) {
-    *dst = *src;
+void vec_store128(struct cpu_state *UNUSED(cpu), void *dst, void *src) {
+    memcpy(dst, src, 16);
 }
 
 void vec_imm_shiftr64(struct cpu_state *UNUSED(cpu), const uint8_t amount, union xmm_reg *src) {

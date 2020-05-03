@@ -3,7 +3,7 @@
 #include "emu/modrm.h"
 #include "emu/cpuid.h"
 #include "emu/fpu.h"
-#include "emu/sse.h"
+#include "emu/vec.h"
 #include "emu/interrupt.h"
 
 static void gen(struct gen_state *state, unsigned long thing) {
@@ -95,6 +95,7 @@ enum arg {
     // the following should not be synced with the list mentioned above (no gadgets implement them)
     arg_modrm_val, arg_modrm_reg,
     arg_xmm_modrm_val, arg_xmm_modrm_reg,
+    arg_mm_modrm_val, arg_mm_modrm_reg,
     arg_mem_addr, arg_1,
 };
 
@@ -433,17 +434,29 @@ void helper_rdtsc(struct cpu_state *cpu);
 })
 
 static inline bool gen_vec(enum arg rm, enum arg reg, void (*helper)(), gadget_t mem_gadget, struct gen_state *state, struct modrm *modrm, uint8_t imm, dword_t saved_ip, bool seg_gs) {
-    assert(reg == arg_xmm_modrm_reg);
+    uint8_t reg_offset;
+    if (reg == arg_xmm_modrm_reg) {
+        reg_offset = CPU_OFFSET(xmm[modrm->opcode]);
+    } else if (reg == arg_mm_modrm_reg) {
+        reg_offset = CPU_OFFSET(mm[modrm->opcode]);
+    } else {
+        assert(!"bad reg in vector op");
+    }
 
-    if (modrm->type != modrm_reg && rm == arg_xmm_modrm_val)
+    if (modrm->type != modrm_reg && (rm == arg_xmm_modrm_val || rm == arg_mm_modrm_val))
         rm = arg_mem;
 
     switch (rm) {
         case arg_xmm_modrm_val:
             g(vec_helper_reg);
             GEN(helper);
-            GEN(CPU_OFFSET(xmm[modrm->opcode])
-                    | (CPU_OFFSET(xmm[modrm->rm_opcode]) << 8));
+            GEN(reg_offset | (CPU_OFFSET(xmm[modrm->rm_opcode]) << 8));
+            break;
+
+        case arg_mm_modrm_val:
+            g(vec_helper_reg);
+            GEN(helper);
+            GEN(reg_offset | (CPU_OFFSET(mm[modrm->rm_opcode]) << 8));
             break;
 
         case arg_mem:
@@ -451,7 +464,7 @@ static inline bool gen_vec(enum arg rm, enum arg reg, void (*helper)(), gadget_t
             GEN(mem_gadget);
             GEN(saved_ip);
             GEN(helper);
-            GEN(CPU_OFFSET(xmm[modrm->opcode]));
+            GEN(reg_offset);
             break;
 
         case arg_imm:
