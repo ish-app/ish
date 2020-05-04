@@ -96,9 +96,9 @@ test_teardown() {
 run_test() {
     ACTUAL_LOG="e2e_out/$1/actual.txt"
     if [ "$VERBOSE" = "true" ]; then
-        $ISH /usr/bin/env sh -c "source /etc/profile && cd /tmp/e2e/$1 && sh test.sh" | tee -a "$SUMMARY_LOG" | tee "$ACTUAL_LOG"
+        $ISH /usr/bin/env sh -c "source /etc/profile && cd /tmp/e2e/$1 && sh test.sh" 2>&1 | tee -a "$SUMMARY_LOG" | tee "$ACTUAL_LOG"
     else
-        $ISH /usr/bin/env sh -c "source /etc/profile && cd /tmp/e2e/$1 && sh test.sh" | tee -a "$SUMMARY_LOG" > "$ACTUAL_LOG"
+        $ISH /usr/bin/env sh -c "source /etc/profile && cd /tmp/e2e/$1 && sh test.sh" 2>&1 | tee -a "$SUMMARY_LOG" > "$ACTUAL_LOG"
     fi
 }
 
