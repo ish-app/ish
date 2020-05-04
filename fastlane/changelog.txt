@@ -1,18 +1,16 @@
 New stuff:
-- Half-broken tmpfs implementation
-- Caps lock mapping is now gone on iOS 13, because 13.4 adds a system-wide option
-- Kerberos works
-- AltStore installation is officially supported
-- adb works for connecting to Android devices over the network (not USB)
-- Added a way to fix your iSH setup if you mess up the launch/boot commands
+- Pressing the spacebar or using force touch on the keyboard and then dragging simulates arrow key presses
+- Go programs get off the ground
+- git-annex mostly works
+- You can mount directories from the Files app in iSH, using mount -t ios foo <destination>
+
+More on that last thing: The command is `mount -t ios <source> <destination>`. The `<source>` is ignored, the `<destination>` is where to mount the directory. This will pop up a directory picker, and mount the directory you selected. Not all file providers support selecting directories. iCloud Drive, local files ("On My iPad"), and Working Copy are known to work.
 
 Fixed bugs:
-- ceil(3) returning 4
-- R's nlm demo crashing
-- fish having some trouble changing process groups
-- git clone failing dramatically when your device only has one CPU
-- SO_ERROR codes not being translated
-- Java sockets failing with "not a tty"
+- writev not being atomic, which caused a race condition on mtr startup
+- Selection being impossible on iOS 13.4 (the keyboard goes away now which sucks, but at least is not impossible)
+- ssh with control master hanging randomly
+- Status bar not appearing on devices with rounded corners
 
 Send bug reports or feedback here: https://github.com/tbodt/ish/issues (or by email, if you prefer)
 Follow iSH on Twitter: https://twitter.com/iSH_app
