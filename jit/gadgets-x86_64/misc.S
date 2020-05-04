@@ -137,9 +137,6 @@ do_helper 2
     do_helper write, \size
 .endr
 
-# sync with enum vec_arg
-#define VEC_ARG_LIST reg,imm
-
 .macro do_vec_helper rm, size=
     .gadget vec_helper_\rm\size
         .ifin(\rm, read,write)
@@ -190,17 +187,10 @@ do_helper 2
 .irp rm, reg,imm
     do_vec_helper \rm
 .endr
-.gadget_list vec_helper, reg,imm
-
 .irp size, SIZE_LIST,64,128
     do_vec_helper read, \size
     do_vec_helper write, \size
 .endr
-
-# vec_helper_reg(reg, reg2): helper(&reg, &reg2)
-# vec_helper_imm(imm, reg): helper(imm, &reg)
-# vec_helper_read128(addr, reg): helper(addr, &reg)
-# vec_helper_write128(addr, reg): helper(addr, &reg)
 
 .gadget fstsw_ax
     movw CPU_fsw(%_cpu), %ax

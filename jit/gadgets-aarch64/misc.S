@@ -187,15 +187,64 @@ do_helper 2
     do_helper write, \size
 .endr
 
-# sync with enum vec_arg
-#define VEC_ARG_LIST xmm,reg
+.macro do_vec_helper rm, size=
+    .gadget vec_helper_\rm\size
+        .ifin(\rm, read,write)
+            \rm\()_prep (\size), vec_helper_\rm\size
+        .endifin
+        save_regs
+        save_c
+        mov x0, _cpu
 
-# important: this is VEC_ARG_LIST^2
-.gadget_list vec_helper_reg, xmm_xmm,xmm_reg,reg_xmm,reg_reg
+        # r/m argument, first
+        .ifin(\rm, reg)
+            ldrb w1, [_ip, 9]
+            add x1, x0, x1
+        .endifin
+        .ifin(\rm, read,write)
+            mov x1, _xaddr
+        .endifin
+        .ifin(\rm, imm)
+            ldrh w1, [_ip, 9]
+        .endifin
 
+        # reg argument, second
+        .ifin(\rm, read,write)
+            ldr x2, [_ip, 16]
+            add x2, x0, x2
+            ldr x8, [_ip, 8]
+        .endifin
+        .ifin(\rm, reg,imm)
+            ldr x2, [_ip, 8]
+            add x2, x0, x2
+            ldr x8, [_ip]
+        .endifin
+        blr x8
+
+        restore_c
+        load_regs
+        .ifc \rm,write
+            write_done (\size), vec_helper_\rm\size
+        .endif
+        .ifin(\rm, reg,imm)
+            gret 2
+        .endifin
+        .ifin(\rm, read,write)
+            gret 3
+        .endifin
+        .ifc \rm,read
+            read_bullshit (\size), vec_helper_\rm\size
+        .else N .ifc \rm,write
+            write_bullshit (\size), vec_helper_\rm\size
+        .endif N .endif
+.endm
+
+.irp rm, reg,imm
+    do_vec_helper \rm
+.endr
 .irp size, SIZE_LIST,64,128
-    .gadget_list vec_helper_load\size\(), VEC_ARG_LIST
-    .gadget_list vec_helper_store\size\(), VEC_ARG_LIST
+    do_vec_helper read, \size
+    do_vec_helper write, \size
 .endr
 
 .gadget fstsw_ax
