@@ -171,6 +171,7 @@ syscall_t syscall_table[] = {
     [271] = (syscall_t) sys_utimes,
     [272] = (syscall_t) syscall_success_stub,
     [274] = (syscall_t) sys_mbind,
+    [284] = (syscall_t) sys_waitid,
     [291] = (syscall_t) syscall_stub, // inotify_init
     [295] = (syscall_t) sys_openat,
     [296] = (syscall_t) sys_mkdirat,
