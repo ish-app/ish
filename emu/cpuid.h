@@ -16,8 +16,11 @@ static inline void do_cpuid(dword_t *eax, dword_t *ebx, dword_t *ecx, dword_t *e
         case 1:
             *eax = 0x0; // say nothing about cpu model number
             *ebx = 0x0; // processor number 0, flushes 0 bytes on clflush
-            *ecx = 0b00000000000000000000000000000000; // we support none of the features in ecx
-            *edx = 0b00000000000000001000000000000000; // just cmov
+            *ecx = 0; // we support none of the features in ecx
+            *edx = (1 << 0) // fpu
+                | (1 << 15) // cmov
+                | (1 << 23) // mmx
+                ;
             break;
     }
 }
