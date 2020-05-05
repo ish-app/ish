@@ -132,18 +132,18 @@ static struct fd *iosfs_open(struct mount *mount, const char *path, int flags, i
     if (err == 0 && S_ISREG(stats.mode)) {
         NSFileCoordinator *coordinator = [[NSFileCoordinator alloc] initWithFilePresenter:nil];
 
-        __block NSError *error;
+        __block NSError *error = nil;
         __block struct fd *fd;
         __block dispatch_semaphore_t file_opened = dispatch_semaphore_create(0);
 
-        dispatch_sync(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
             void (^operation)(NSURL *url) = ^(NSURL *url) {
                 fd = realfs_open(mount, path_for_url_in_mount(mount, url, path), flags, mode);
-                fd->ops = &iosfs_fdops;
 
                 if (IS_ERR(fd)) {
                     dispatch_semaphore_signal(file_opened);
                 } else {
+                    fd->ops = &iosfs_fdops;
                     dispatch_semaphore_t file_closed = dispatch_semaphore_create(0);
                     fd->data = (__bridge void *) file_closed;
                     dispatch_semaphore_signal(file_opened);
@@ -151,13 +151,15 @@ static struct fd *iosfs_open(struct mount *mount, const char *path, int flags, i
                 }
             };
 
+            int options;
             if (!(flags & O_WRONLY_) && !(flags & O_RDWR_)) {
-                [coordinator coordinateReadingItemAtURL:url options:NSFileCoordinatorReadingWithoutChanges error:&error byAccessor:operation];
+                options = NSFileCoordinatorReadingWithoutChanges;
             } else if (flags & O_CREAT_) {
-                [coordinator coordinateWritingItemAtURL:url options:NSFileCoordinatorWritingForCreating error:&error byAccessor:operation];
+                options = NSFileCoordinatorWritingForCreating;
             } else {
-                [coordinator coordinateWritingItemAtURL:url options:NSFileCoordinatorWritingForMerging error:&error byAccessor:operation];
+                options = NSFileCoordinatorWritingForMerging;
             }
+            [coordinator coordinateReadingItemAtURL:url options:options error:&error byAccessor:operation];
         });
         
         dispatch_semaphore_wait(file_opened, DISPATCH_TIME_FOREVER);
@@ -167,7 +169,8 @@ static struct fd *iosfs_open(struct mount *mount, const char *path, int flags, i
     }
         
     struct fd *fd = realfs_open(mount, path, flags, mode);
-    fd->ops = &iosfs_fdops;
+    if (!IS_ERR(fd))
+        fd->ops = &iosfs_fdops;
     return fd;
 }
 
