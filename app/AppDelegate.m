@@ -135,7 +135,9 @@ static void ios_handle_die(const char *msg) {
 
     do_mount(&procfs, "proc", "/proc", "", 0);
     do_mount(&devptsfs, "devpts", "/dev/pts", "", 0);
-    
+
+    iosfs_init(); // let it mount any filesystems from user defaults
+
     [self configureDns];
     
     exit_hook = ios_handle_exit;

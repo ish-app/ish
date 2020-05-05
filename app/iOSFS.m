@@ -81,11 +81,95 @@ const NSFileCoordinatorWritingOptions NSFileCoordinatorWritingForCreating = NSFi
 
 @end
 
-NSURL *url_for_mount(struct mount *mount) {
+static NSURL *url_for_mount(struct mount *mount) {
     return (__bridge NSURL *) mount->data;
 }
 
-NSURL *url_for_path_in_mount(struct mount *mount, const char *path) {
+static NSString *const kMountBookmarks = @"iOS Mount Bookmarks";
+#define BOOKMARK_PATH_ENCODING NSISOLatin1StringEncoding
+// To avoid locking issues, only access from the main thread
+static NSMutableDictionary<NSString *, NSData *> *ios_mount_bookmarks;
+static bool mount_from_bookmarks = false; // This is a hack because I am bad at parameter passing
+static void sync_bookmarks() {
+    [NSUserDefaults.standardUserDefaults setObject:ios_mount_bookmarks forKey:kMountBookmarks];
+}
+void iosfs_init() {
+    ios_mount_bookmarks = [NSUserDefaults.standardUserDefaults dictionaryForKey:kMountBookmarks].mutableCopy;
+    if (ios_mount_bookmarks == nil)
+        ios_mount_bookmarks = [NSMutableDictionary new];
+
+    mount_from_bookmarks = true;
+    for (NSString *path in ios_mount_bookmarks.allKeys) {
+        const char *point = [path cStringUsingEncoding:BOOKMARK_PATH_ENCODING];
+        int err = do_mount(&iosfs, point, point, "", 0);
+        if (err < 0) {
+            NSLog(@"restoring bookmark %@ failed with error %d", path, err);
+            [ios_mount_bookmarks removeObjectForKey:path];
+        }
+    }
+    mount_from_bookmarks = false;
+    sync_bookmarks();
+}
+
+static int iosfs_mount(struct mount *mount) {
+    NSURL *url = nil;
+    if (mount_from_bookmarks) {
+        NSString *bookmarkName = [NSString stringWithCString:mount->source encoding:BOOKMARK_PATH_ENCODING];
+        url = [NSURL URLByResolvingBookmarkData:ios_mount_bookmarks[bookmarkName]
+                                        options:0
+                                  relativeToURL:nil
+                            bookmarkDataIsStale:NULL
+                                          error:nil];
+        if (url != nil && ![url startAccessingSecurityScopedResource]) {
+            return _EPERM;
+        }
+    }
+
+    if (url == nil) {
+        DirectoryPicker *picker = [DirectoryPicker new];
+        int err = [picker askForURL:&url];
+        if (err)
+            return err;
+        if (![url startAccessingSecurityScopedResource])
+            return _EPERM;
+    }
+
+    // Overwrite url & base path
+    mount->data = (void *) CFBridgingRetain(url);
+    free((void *) mount->source);
+    mount->source = strdup([[url path] UTF8String]);
+
+    if (mount_param_flag(mount->info, "unsafe")) {
+        mount->fs = &iosfs_unsafe;
+    }
+
+    if (!mount_from_bookmarks) {
+        NSData *bookmark = [url bookmarkDataWithOptions:0 includingResourceValuesForKeys:nil relativeToURL:nil error:nil];
+        NSString *path = [NSString stringWithCString:mount->point encoding:BOOKMARK_PATH_ENCODING];
+        if (bookmark != nil) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                ios_mount_bookmarks[path] = bookmark;
+                sync_bookmarks();
+            });
+        }
+    }
+
+    return realfs.mount(mount);
+}
+
+static int iosfs_umount(struct mount *mount) {
+    NSString *path = [NSString stringWithCString:mount->point encoding:BOOKMARK_PATH_ENCODING];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [ios_mount_bookmarks removeObjectForKey:path];
+        sync_bookmarks();
+    });
+    NSURL *url = url_for_mount(mount);
+    [url stopAccessingSecurityScopedResource];
+    CFBridgingRelease(mount->data);
+    return 0;
+}
+
+static NSURL *url_for_path_in_mount(struct mount *mount, const char *path) {
     if (path[0] == '/')
         path++;
     return [url_for_mount(mount) URLByAppendingPathComponent:[NSString stringWithUTF8String:path] isDirectory:NO];
@@ -106,7 +190,7 @@ const char *path_for_url_in_mount(struct mount *mount, NSURL *url, const char *f
 }
 
 static int iosfs_stat(struct mount *mount, const char *path, struct statbuf *fake_stat);
-const struct fd_ops iosfs_fdops;
+extern const struct fd_ops iosfs_fdops;
 
 static int posixErrorFromNSError(NSError *error) {
     while (error != nil) {
@@ -181,39 +265,6 @@ int iosfs_close(struct fd *fd) {
         dispatch_semaphore_signal(file_closed);
     }
     return err;
-}
-
-static int iosfs_mount(struct mount *mount) {
-    NSURL *url;
-
-    DirectoryPicker *picker = [DirectoryPicker new];
-    int err = [picker askForURL:&url];
-    if (err)
-        return err;
-
-    // Overwrite url & base path
-    mount->data = (void *)CFBridgingRetain(url);
-    free((void *) mount->source);
-    mount->source = strdup([[url path] UTF8String]);
-
-    if ([url startAccessingSecurityScopedResource] == NO) {
-        CFBridgingRelease(mount->data);
-        return _EPERM;
-    }
-    
-    if (mount_param_flag(mount->info, "unsafe")) {
-        mount->fs = &iosfs_unsafe;
-    }
-
-    return realfs.mount(mount);
-}
-
-static int iosfs_umount(struct mount *mount) {
-    NSURL *url = url_for_mount(mount);
-    [url stopAccessingSecurityScopedResource];
-    CFBridgingRelease(mount->data);
-
-    return 0;
 }
 
 static int iosfs_rename(struct mount *mount, const char *src, const char *dst) {
