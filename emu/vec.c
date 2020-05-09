@@ -83,3 +83,13 @@ void vec_xor128(struct cpu_state *UNUSED(cpu), union xmm_reg *src, union xmm_reg
     dst->qw[0] ^= src->qw[0];
     dst->qw[1] ^= src->qw[1];
 }
+
+void vec_fadds64(struct cpu_state *UNUSED(cpu), const double *src, double *dst) {
+    *dst += *src;
+}
+void vec_fmuls64(struct cpu_state *UNUSED(cpu), const double *src, double *dst) {
+    *dst *= *src;
+}
+void vec_fsubs64(struct cpu_state *UNUSED(cpu), const double *src, double *dst) {
+    *dst -= *src;
+}

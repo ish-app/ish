@@ -509,6 +509,7 @@ static inline bool gen_vec(enum arg rm, enum arg reg, void (*helper)(), gadget_t
 #define VCOMPARE(src, dst,z) v(compare, src, dst,z)
 #define VSHIFTR_IMM(src, dst, z) v_imm(imm_shiftr, src, dst,z)
 #define VXOR(src, dst,z) v(xor, src, dst,z)
+#define VS_FMATH(op, src, dst,z) v(f##op##s, src, dst,z)
 
 #define DECODER_RET int
 #define DECODER_NAME gen_step

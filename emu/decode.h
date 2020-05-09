@@ -860,8 +860,6 @@ restart:
                 case 0xff: TRACEI("lock grp5 modrm\t");
                            READMODRM_MEM; GRP5_ATOMIC(modrm_val,oz); break;
 
-#undef GRP5_ATOMIC
-
                 default: TRACE("undefined"); UNDEFINED;
             }
             break;
@@ -873,11 +871,16 @@ restart:
                     READINSN;
                     switch (insn) {
                         case 0x10: TRACEI("movsd xmm:modrm, xmm");
-                                   READMODRM; VLOAD_PADMEM(xmm_modrm_val, xmm_modrm_reg,64);
-                                   break;
+                                   READMODRM; VLOAD_PADMEM(xmm_modrm_val, xmm_modrm_reg,64); break;
                         case 0x11: TRACEI("movsd xmm, xmm:modrm");
-                                   READMODRM; VSTORE(xmm_modrm_reg, xmm_modrm_val,64);
-                                   break;
+                                   READMODRM; VSTORE(xmm_modrm_reg, xmm_modrm_val,64); break;
+
+                        case 0x58: TRACEI("addsd xmm:modrm, xmm");
+                                   READMODRM; VS_FMATH(add, xmm_modrm_val, xmm_modrm_reg,64); break;
+                        case 0x59: TRACEI("mulsd xmm:modrm, xmm");
+                                   READMODRM; VS_FMATH(mul, xmm_modrm_val, xmm_modrm_reg,64); break;
+                        case 0x5c: TRACEI("subsd xmm:modrm, xmm");
+                                   READMODRM; VS_FMATH(sub, xmm_modrm_val, xmm_modrm_reg,64); break;
 
                         case 0x18 ... 0x1f: TRACEI("rep nop modrm\t"); READMODRM; break;
                         default: TRACE("undefined"); UNDEFINED;
