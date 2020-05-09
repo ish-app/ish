@@ -268,7 +268,7 @@ restart:
 #if OP_SIZE == 16
                 case 0x6e: TRACEI("movd modrm, xmm");
                            // TODO: REX.W = 1 might be needed later
-                           READMODRM; VZLOAD(modrm_val, xmm_modrm_reg,32); break;
+                           READMODRM; VZLOAD(xmm_modrm_val, xmm_modrm_reg,32); break;
 
                 case 0x6f: TRACEI("movdqa xmm:modrm, xmm");
                            READMODRM; VLOAD(xmm_modrm_val, xmm_modrm_reg,128); break;

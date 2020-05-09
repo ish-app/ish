@@ -482,6 +482,7 @@ static inline bool gen_vec(enum arg rm, enum arg reg, void (*helper)(), gadget_t
 }
 
 #define _v(src, dst, helper, rw, z) do { \
+    static_assert(src == arg_xmm_modrm_val || src == arg_mm_modrm_val || src == arg_imm, "vecarg not in switch statement"); \
     extern void gadget_vec_helper_##rw##z(void); \
     if (!gen_vec(src, dst, (void (*)()) helper, gadget_vec_helper_##rw##z, state, &modrm, imm, saved_ip, seg_gs)) return false; \
 } while (0)
