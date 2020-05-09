@@ -53,6 +53,8 @@ dword_t sys_select(fd_t nfds, addr_t readfds_addr, addr_t writefds_addr, addr_t 
         timeout_ts.tv_sec = timeout_timeval.sec;
         timeout_ts.tv_nsec = timeout_timeval.usec * 1000;
     }
+    // Emacs likes to pass invalid timeout values
+    timeout_ts = timespec_normalize(timeout_ts);
 
     STRACE("select(%d, 0x%x, 0x%x, 0x%x, 0x%x {%lds %ldns}) ",
             nfds, readfds_addr, writefds_addr, exceptfds_addr,

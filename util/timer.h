@@ -43,6 +43,12 @@ static inline bool timespec_positive(struct timespec ts) {
     return ts.tv_sec > 0 || (ts.tv_sec == 0 && ts.tv_nsec > 0);
 }
 
+static inline struct timespec timespec_normalize(struct timespec ts) {
+    ts.tv_sec += ts.tv_nsec / 1000000000;
+    ts.tv_nsec %= 1000000000;
+    return ts;
+}
+
 typedef void (*timer_callback_t)(void *data);
 struct timer {
     clockid_t clockid;
