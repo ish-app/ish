@@ -124,13 +124,10 @@ out_free_task:
     return 0;
 }
 
-static int proc_pid_maps_show(struct proc_entry *entry, struct proc_data *buf) {
-    struct task *task = proc_get_task(entry);
-    if (task == NULL)
-        return _ESRCH;
+void proc_maps_dump(struct task *task, struct proc_data *buf) {
     struct mem *mem = task->mem;
     if (mem == NULL)
-        goto out_free_task;
+        return;
 
     read_wrlock(&mem->lock);
     page_t page = 0;
@@ -179,8 +176,13 @@ static int proc_pid_maps_show(struct proc_entry *entry, struct proc_data *buf) {
                 path);
     }
     read_wrunlock(&mem->lock);
+}
 
-out_free_task:
+static int proc_pid_maps_show(struct proc_entry *entry, struct proc_data *buf) {
+    struct task *task = proc_get_task(entry);
+    if (task == NULL)
+        return _ESRCH;
+    proc_maps_dump(task, buf);
     proc_put_task(task);
     return 0;
 }

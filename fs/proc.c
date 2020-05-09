@@ -184,6 +184,8 @@ static ssize_t proc_readlink(struct mount *UNUSED(mount), const char *path, char
 void proc_buf_write(struct proc_data *buf, const void *data, size_t size) {
     if (buf->size + size > buf->capacity) {
         size_t new_capacity = buf->capacity;
+        if (new_capacity == 0)
+            new_capacity = 1;
         while (buf->size + size > new_capacity)
             new_capacity *= 2;
         char *new_data = realloc(buf->data, new_capacity);
