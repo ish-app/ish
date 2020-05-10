@@ -9,8 +9,7 @@
 struct cpu_state;
 struct tlb;
 void cpu_run(struct cpu_state *cpu);
-int cpu_step32(struct cpu_state *cpu, struct tlb *tlb);
-int cpu_step16(struct cpu_state *cpu, struct tlb *tlb);
+int cpu_step_to_interrupt(struct cpu_state *cpu, struct tlb *tlb);
 
 union mm_reg {
     qword_t qw;
@@ -30,6 +29,7 @@ static_assert(sizeof(union mm_reg) == 8, "mm_reg size");
 struct cpu_state {
     struct mem *mem;
     struct jit *jit;
+    long cycle;
 
     // general registers
     // assumes little endian (as does literally everything)
