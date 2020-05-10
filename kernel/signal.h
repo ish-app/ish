@@ -92,6 +92,12 @@ struct siginfo_ {
             addr_t addr;
             int_t syscall;
         } sigsys;
+        struct {
+            int_t timer;
+            int_t overrun;
+            union sigval_ value;
+            int_t _private;
+        } timer;
     };
 };
 
@@ -103,6 +109,13 @@ static const struct siginfo_ SIGINFO_NIL = {
 struct sigqueue {
     struct list queue;
     struct siginfo_ info;
+};
+
+struct sigevent_ {
+    union sigval_ value;
+    int_t signo;
+    int_t method;
+    pid_t_ tid;
 };
 
 // send a signal

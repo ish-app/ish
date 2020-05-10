@@ -16,8 +16,8 @@ static bool exit_tgroup(struct task *task) {
         // don't need to lock the group since the only pointers to it come from:
         // - other threads' current->group, but there are none left thanks to that list_empty call
         // - locking pids_lock first, which do_exit did
-        if (group->timer)
-            timer_free(group->timer);
+        if (group->itimer)
+            timer_free(group->itimer);
 
         // The group will be removed from its group and session by reap_if_zombie,
         // because fish tries to set the pgid to that of an exited but not reaped

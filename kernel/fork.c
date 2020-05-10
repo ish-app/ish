@@ -43,7 +43,7 @@ static struct tgroup *tgroup_copy(struct tgroup *old_group) {
         group->tty->refcount++;
         unlock(&group->tty->lock);
     }
-    group->timer = NULL;
+    group->itimer = NULL;
     group->doing_group_exit = false;
     group->children_rusage = (struct rusage_) {};
     cond_init(&group->child_exit);

@@ -50,12 +50,15 @@ struct tms_ {
 
 int_t sys_setitimer(int_t which, addr_t new_val, addr_t old_val);
 uint_t sys_alarm(uint_t seconds);
+int_t sys_timer_create(dword_t clock, addr_t sigevent_addr, addr_t timer_addr);
+int_t sys_timer_settime(dword_t timer, int_t flags, addr_t new_value_addr, addr_t old_value_addr);
+fd_t sys_timerfd_create(int_t clockid, int_t flags);
+int_t sys_timerfd_settime(fd_t f, int_t flags, addr_t new_value_addr, addr_t old_value_addr);
+
 dword_t sys_times(addr_t tbuf);
 dword_t sys_nanosleep(addr_t req, addr_t rem);
 dword_t sys_gettimeofday(addr_t tv, addr_t tz);
 dword_t sys_settimeofday(addr_t tv, addr_t tz);
 
-fd_t sys_timerfd_create(int_t clockid, int_t flags);
-int_t sys_timerfd_settime(fd_t f, int_t flags, addr_t new_value_addr, addr_t old_value_addr);
 
 #endif

@@ -12,6 +12,35 @@
 #include "kernel/time.h"
 #include "fs/poll.h"
 
+static int clockid_to_real(uint_t clock, clockid_t *real) {
+    switch (clock) {
+        case CLOCK_REALTIME_: *real = CLOCK_REALTIME; break;
+        case CLOCK_MONOTONIC_: *real = CLOCK_MONOTONIC; break;
+        default: return _EINVAL;
+    }
+    return 0;
+}
+
+static struct timer_spec timer_spec_to_real(struct itimerspec_ itspec) {
+    struct timer_spec spec = {
+        .value.tv_sec = itspec.value.sec,
+        .value.tv_nsec = itspec.value.nsec,
+        .interval.tv_sec = itspec.interval.sec,
+        .interval.tv_nsec = itspec.interval.nsec,
+    };
+    return spec;
+};
+
+static struct itimerspec_ timer_spec_from_real(struct timer_spec spec) {
+    struct itimerspec_ itspec = {
+        .value.sec = spec.value.tv_sec,
+        .value.nsec = spec.value.tv_nsec,
+        .interval.sec = spec.interval.tv_sec,
+        .interval.nsec = spec.interval.tv_nsec,
+    };
+    return itspec;
+};
+
 dword_t sys_time(addr_t time_out) {
     dword_t now = time(NULL);
     if (time_out != 0)
@@ -35,11 +64,7 @@ dword_t sys_clock_gettime(dword_t clock, addr_t tp) {
         ts.tv_nsec = rusage.utime.usec * 1000;
     } else {
         clockid_t clock_id;
-        switch (clock) {
-            case CLOCK_REALTIME_: clock_id = CLOCK_REALTIME; break;
-            case CLOCK_MONOTONIC_: clock_id = CLOCK_MONOTONIC; break;
-            default: return _EINVAL;
-        }
+        if (clockid_to_real(clock, &clock_id)) return _EINVAL;
         int err = clock_gettime(clock_id, &ts);
         if (err < 0)
             return errno_map();
@@ -56,11 +81,7 @@ dword_t sys_clock_gettime(dword_t clock, addr_t tp) {
 dword_t sys_clock_getres(dword_t clock, addr_t res_addr) {
     STRACE("clock_getres(%d, %#x)", clock, res_addr);
     clockid_t clock_id;
-    switch (clock) {
-        case CLOCK_REALTIME_: clock_id = CLOCK_REALTIME; break;
-        case CLOCK_MONOTONIC_: clock_id = CLOCK_MONOTONIC; break;
-        default: return _EINVAL;
-    }
+    if (clockid_to_real(clock, &clock_id)) return _EINVAL;
 
     struct timespec res;
     int err = clock_getres(clock_id, &res);
@@ -91,14 +112,14 @@ static int itimer_set(struct tgroup *group, int which, struct timer_spec spec, s
         return _EINVAL;
     }
 
-    if (!group->timer) {
+    if (!group->itimer) {
         struct timer *timer = timer_new(CLOCK_REALTIME, (timer_callback_t) itimer_notify, current);
         if (IS_ERR(timer))
             return PTR_ERR(timer);
-        group->timer = timer;
+        group->itimer = timer;
     }
 
-    return timer_set(group->timer, spec, old_spec);
+    return timer_set(group->itimer, spec, old_spec);
 }
 
 int_t sys_setitimer(int_t which, addr_t new_val_addr, addr_t old_val_addr) {
@@ -217,6 +238,97 @@ dword_t sys_settimeofday(addr_t UNUSED(tv), addr_t UNUSED(tz)) {
     return _EPERM;
 }
 
+static void posix_timer_callback(struct posix_timer *timer) {
+    if (timer->task == NULL)
+        return;
+    struct siginfo_ info = {
+        .code = SI_TIMER_,
+        .timer.timer = timer->timer_id,
+        .timer.overrun = 0,
+        .timer.value = timer->sig_value,
+    };
+    send_signal(timer->task, timer->signal, info);
+}
+
+#define SIGEV_SIGNAL_ 0
+#define SIGEV_NONE_ 1
+#define SIGEV_THREAD_ID_ 4
+
+int_t sys_timer_create(dword_t clock, addr_t sigevent_addr, addr_t timer_addr) {
+    STRACE("timer_create(%d, %#x, %#x)", clock, sigevent_addr, timer_addr);
+    clockid_t real_clockid;
+    if (clockid_to_real(clock, &real_clockid))
+        return _EINVAL;
+    struct sigevent_ sigev;
+    if (user_get(sigevent_addr, sigev))
+        return _EFAULT;
+    // SIGEV_THREAD_ID_ is not supported yet
+    if (sigev.method != SIGEV_SIGNAL_ && sigev.method != SIGEV_NONE_)
+        return _EINVAL;
+
+    struct tgroup *group = current->group;
+    lock(&group->lock);
+    unsigned timer_id;
+    for (timer_id = 0; timer_id < TIMERS_MAX; timer_id++) {
+        if (group->posix_timers[timer_id].timer == NULL)
+            break;
+    }
+    if (timer_id >= TIMERS_MAX) {
+        unlock(&group->lock);
+        return _ENOMEM;
+    }
+    if (user_put(timer_addr, timer_id)) {
+        unlock(&group->lock);
+        return _EFAULT;
+    }
+
+    struct posix_timer *timer = &group->posix_timers[timer_id];
+    timer->timer_id = timer_id;
+
+    timer->timer = timer_new(real_clockid, (timer_callback_t) posix_timer_callback, timer);
+    timer->sig_value = sigev.value;
+    if (sigev.method == SIGEV_NONE_) {
+        timer->task = NULL;
+    } else if (sigev.method == SIGEV_SIGNAL_) {
+        timer->task = group->leader;
+        timer->signal = sigev.signo;
+        timer->sig_value = sigev.value;
+    }
+    unlock(&group->lock);
+    return 0;
+}
+
+#define TIMER_ABSTIME_ (1 << 0)
+
+int_t sys_timer_settime(dword_t timer_id, int_t flags, addr_t new_value_addr, addr_t old_value_addr) {
+    STRACE("timer_settime(%d, %d, %#x, %#x)", timer_id, flags, new_value_addr, old_value_addr);
+    struct itimerspec_ value;
+    if (user_get(new_value_addr, value))
+        return _EFAULT;
+    if (timer_id > TIMERS_MAX)
+        return _EINVAL;
+
+    lock(&current->group->lock);
+    struct posix_timer *timer = &current->group->posix_timers[timer_id];
+    struct timer_spec spec = timer_spec_to_real(value);
+    struct timer_spec old_spec;
+    if (flags & TIMER_ABSTIME_) {
+        struct timespec now = timespec_now(timer->timer->clockid);
+        spec.value = timespec_subtract(spec.value, now);
+    }
+    int err = timer_set(timer->timer, spec, &old_spec);
+    unlock(&current->group->lock);
+    if (err < 0)
+        return err;
+
+    if (old_value_addr) {
+        struct itimerspec_ old_value = timer_spec_from_real(old_spec);
+        if (user_put(old_value_addr, old_value))
+            return _EFAULT;
+    }
+    return 0;
+}
+
 static struct fd_ops timerfd_ops;
 
 static void timerfd_callback(struct fd *fd) {
@@ -230,11 +342,7 @@ static void timerfd_callback(struct fd *fd) {
 fd_t sys_timerfd_create(int_t clockid, int_t flags) {
     STRACE("timerfd_create(%d, %#x)", clockid, flags);
     clockid_t real_clockid;
-    switch (clockid) {
-        case CLOCK_REALTIME_: real_clockid = CLOCK_REALTIME; break;
-        case CLOCK_MONOTONIC_: real_clockid = CLOCK_MONOTONIC; break;
-        default: FIXME("timerfd %d", clockid); return _EINVAL;
-    }
+    if (clockid_to_real(clockid, &real_clockid)) return _EINVAL;
 
     struct fd *fd = adhoc_fd_create(&timerfd_ops);
     if (fd == NULL)
@@ -244,11 +352,9 @@ fd_t sys_timerfd_create(int_t clockid, int_t flags) {
     return f_install(fd, flags);
 }
 
-#define TFD_TIMER_ABSTIME_ (1 << 0)
-
 int_t sys_timerfd_settime(fd_t f, int_t flags, addr_t new_value_addr, addr_t old_value_addr) {
     STRACE("timerfd_settime(%d, %d, %#x, %#x)", f, flags, new_value_addr, old_value_addr);
-    if (flags & ~(TFD_TIMER_ABSTIME_))
+    if (flags & ~(TIMER_ABSTIME_))
         return _EINVAL;
     struct fd *fd = f_get(f);
     if (fd == NULL)
@@ -258,15 +364,9 @@ int_t sys_timerfd_settime(fd_t f, int_t flags, addr_t new_value_addr, addr_t old
     struct itimerspec_ value;
     if (user_get(new_value_addr, value))
         return _EFAULT;
-
-    struct timer_spec spec = {
-        .value.tv_sec = value.value.sec,
-        .value.tv_nsec = value.value.nsec,
-        .interval.tv_sec = value.interval.sec,
-        .interval.tv_nsec = value.interval.nsec,
-    };
+    struct timer_spec spec = timer_spec_to_real(value);
     struct timer_spec old_spec;
-    if (flags & TFD_TIMER_ABSTIME_) {
+    if (flags & TIMER_ABSTIME_) {
         struct timespec now = timespec_now(fd->timerfd.timer->clockid);
         spec.value = timespec_subtract(spec.value, now);
     }
@@ -278,12 +378,7 @@ int_t sys_timerfd_settime(fd_t f, int_t flags, addr_t new_value_addr, addr_t old
         return err;
 
     if (old_value_addr) {
-        struct itimerspec_ old_value = {
-            .value.sec = old_spec.value.tv_sec,
-            .value.nsec = old_spec.value.tv_nsec,
-            .interval.sec = old_spec.interval.tv_sec,
-            .interval.nsec = old_spec.interval.tv_nsec,
-        };
+        struct itimerspec_ old_value = timer_spec_from_real(old_spec);
         if (user_put(old_value_addr, old_value))
             return _EFAULT;
     }

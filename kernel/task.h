@@ -101,6 +101,14 @@ void vfork_notify(struct task *task);
 pid_t_ task_setsid(struct task *task);
 void task_leave_session(struct task *task);
 
+struct posix_timer {
+    struct timer *timer;
+    int_t timer_id;
+    struct task *task;
+    int_t signal;
+    union sigval_ sig_value;
+};
+
 // struct thread_group is way too long to type comfortably
 struct tgroup {
     struct list threads; // locked by pids_lock, by majority vote
@@ -116,7 +124,9 @@ struct tgroup {
     cond_t stopped_cond;
 
     struct tty *tty;
-    struct timer *timer;
+    struct timer *itimer;
+#define TIMERS_MAX 16
+    struct posix_timer posix_timers[TIMERS_MAX];
 
     struct rlimit_ limits[RLIMIT_NLIMITS_];
 
