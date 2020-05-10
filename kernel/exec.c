@@ -683,16 +683,16 @@ dword_t sys_execve(addr_t filename_addr, addr_t argv_addr, addr_t envp_addr) {
     if (err < 0)
         goto err_free_envp;
 
-    STRACE("execve(\"%s\", {", filename);
+    STRACE("execve(\"%.1000s\", {", filename);
     const char *args = argv;
     while (*args != '\0') {
-        STRACE("\"%s\", ", args);
+        STRACE("\"%.1000s\", ", args);
         args += strlen(args) + 1;
     }
     STRACE("}, {");
     args = envp;
     while (*args != '\0') {
-        STRACE("\"%s\", ", args);
+        STRACE("\"%.1000s\", ", args);
         args += strlen(args) + 1;
     }
     STRACE("})");
