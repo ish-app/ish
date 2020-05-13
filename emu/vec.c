@@ -1,12 +1,8 @@
 #include <math.h>
 #include <string.h>
 
+#include "emu/vec.h"
 #include "emu/cpu.h"
-
-/////////////////////////////////////////////
-// See header file for the confusing thing //
-// that is argument ordering in this file  //
-/////////////////////////////////////////////
 
 void vec_compare32(struct cpu_state *cpu, float *f2, float *f1) {
     if (isnan(*f1) || isnan(*f2)) {
@@ -36,60 +32,51 @@ void vec_compare32(struct cpu_state *cpu, float *f2, float *f1) {
     cpu->pf_res = 0;
 }
 
-void vec_load32(struct cpu_state *UNUSED(cpu), const void *src, void *dst) {
-    memcpy(dst, src, 4);
-}
-void vec_load64(struct cpu_state *UNUSED(cpu), const void *src, void *dst) {
-    memcpy(dst, src, 8);
-}
-void vec_load128(struct cpu_state *UNUSED(cpu), const void *src, void *dst) {
-    memcpy(dst, src, 16);
-}
-
 static inline void zero_xmm(union xmm_reg *xmm) {
     xmm->qw[0] = 0;
     xmm->qw[1] = 0;
 }
-#define ZLOAD(sz) \
-void vec_zload##sz(struct cpu_state *cpu, const union xmm_reg *src, union xmm_reg *dst) { \
-    zero_xmm(dst); \
-    vec_load##sz(cpu, src, dst); \
-}
-ZLOAD(32)
-ZLOAD(64)
-ZLOAD(128)
-#undef ZLOAD
 
-void vec_store32(struct cpu_state *UNUSED(cpu), void *dst, void *src) {
+#define VEC_ZERO_COPY(zero, copy) \
+    void vec_zero##zero##_copy##copy(NO_CPU, const void *src, void *dst) { \
+        memset(dst, 0, zero/8); \
+        memcpy(dst, src, copy/8); \
+    }
+VEC_ZERO_COPY(128, 128)
+VEC_ZERO_COPY(128, 64)
+VEC_ZERO_COPY(128, 32)
+VEC_ZERO_COPY(64, 64)
+
+void vec_merge32(NO_CPU, const void *src, void *dst) {
     memcpy(dst, src, 4);
 }
-void vec_store64(struct cpu_state *UNUSED(cpu), void *dst, void *src) {
+void vec_merge64(NO_CPU, const void *src, void *dst) {
     memcpy(dst, src, 8);
 }
-void vec_store128(struct cpu_state *UNUSED(cpu), void *dst, void *src) {
+void vec_merge128(NO_CPU, const void *src, void *dst) {
     memcpy(dst, src, 16);
 }
 
-void vec_imm_shiftr64(struct cpu_state *UNUSED(cpu), const uint8_t amount, union xmm_reg *src) {
+void vec_imm_shiftr64(NO_CPU, const uint8_t amount, union xmm_reg *dst) {
     if (amount > 63) {
-        zero_xmm(src);
+        zero_xmm(dst);
     } else {
-        src->qw[0] >>= amount;
-        src->qw[1] >>= amount;
+        dst->qw[0] >>= amount;
+        dst->qw[1] >>= amount;
     }
 }
 
-void vec_xor128(struct cpu_state *UNUSED(cpu), union xmm_reg *src, union xmm_reg *dst) {
+void vec_xor128(NO_CPU, union xmm_reg *src, union xmm_reg *dst) {
     dst->qw[0] ^= src->qw[0];
     dst->qw[1] ^= src->qw[1];
 }
 
-void vec_fadds64(struct cpu_state *UNUSED(cpu), const double *src, double *dst) {
+void vec_fadds64(NO_CPU, const double *src, double *dst) {
     *dst += *src;
 }
-void vec_fmuls64(struct cpu_state *UNUSED(cpu), const double *src, double *dst) {
+void vec_fmuls64(NO_CPU, const double *src, double *dst) {
     *dst *= *src;
 }
-void vec_fsubs64(struct cpu_state *UNUSED(cpu), const double *src, double *dst) {
+void vec_fsubs64(NO_CPU, const double *src, double *dst) {
     *dst -= *src;
 }

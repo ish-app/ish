@@ -147,27 +147,41 @@ do_helper 2
         movq %_cpu, %rdi
         xorq %r14, %r14
 
-        # r/m argument, first
-        .ifin(\rm, reg)
-            movb 9(%_ip), %r14b
+        # the argument order should be a consistent src, dst
+        .ifc \rm,reg
+            # src
+            movb 8(%_ip), %r14b
             leaq (%_cpu,%r14), %rsi
-        .endifin
-        .ifin(\rm, read,write)
+            # dst
+            movb 9(%_ip), %r14b
+            leaq (%_cpu,%r14), %rdx
+        .endif
+        .ifc \rm,read
+            # src
             movq %_addrq, %rsi
-        .endifin
-        .ifin(\rm, imm)
-            movb 9(%_ip), %sil
-        .endifin
-
-        # reg argument, second
-        .ifin(\rm, read,write)
+            # dst
             movb 16(%_ip), %r14b
             leaq (%_cpu,%r14), %rdx
+        .endif
+        .ifc \rm,write
+            # src
+            movb 16(%_ip), %r14b
+            leaq (%_cpu,%r14), %rsi
+            # dst
+            movq %_addrq, %rdx
+        .endif
+        .ifc \rm,imm
+            # src
+            movw 8(%_ip), %si
+            # dst
+            movb 10(%_ip), %r14b
+            leaq (%_cpu,%r14), %rdx
+        .endif
+
+        .ifin(\rm, read,write)
             callq *8(%_ip)
         .endifin
         .ifin(\rm, reg,imm)
-            movb 8(%_ip), %r14b
-            leaq (%_cpu,%r14), %rdx
             callq *(%_ip)
         .endifin
 

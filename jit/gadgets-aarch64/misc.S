@@ -196,27 +196,41 @@ do_helper 2
         save_c
         mov x0, _cpu
 
-        # r/m argument, first
-        .ifin(\rm, reg)
-            ldrb w1, [_ip, 9]
+        # the argument order should be a consistent src, dst
+        .ifc \rm,reg
+            # src
+            ldrb w1, [_ip, 8]
             add x1, x0, x1
-        .endifin
-        .ifin(\rm, read,write)
-            mov x1, _xaddr
-        .endifin
-        .ifin(\rm, imm)
-            ldrh w1, [_ip, 9]
-        .endifin
-
-        # reg argument, second
-        .ifin(\rm, read,write)
-            ldr x2, [_ip, 16]
+            # dst
+            ldrb w2, [_ip, 9]
             add x2, x0, x2
+        .endif
+        .ifc \rm,read
+            # src
+            mov x1, _xaddr
+            # dst
+            ldrb w2, [_ip, 16]
+            add x2, x0, x2
+        .endif
+        .ifc \rm,write
+            # src
+            ldrb w1, [_ip, 16]
+            add x1, x0, x1
+            # dst
+            mov x2, _xaddr
+        .endif
+        .ifc \rm,imm
+            # src
+            ldrh w1, [_ip, 8]
+            # dst
+            ldrb w2, [_ip, 10]
+            add x2, x0, x2
+        .endif
+
+        .ifin(\rm, read,write)
             ldr x8, [_ip, 8]
         .endifin
         .ifin(\rm, reg,imm)
-            ldr x2, [_ip, 8]
-            add x2, x0, x2
             ldr x8, [_ip]
         .endifin
         blr x8

@@ -434,35 +434,46 @@ void helper_rdtsc(struct cpu_state *cpu);
     offsetof(struct cpu_state, field); \
 })
 
-static inline bool gen_vec(enum arg rm, enum arg reg, void (*helper)(), gadget_t mem_gadget, struct gen_state *state, struct modrm *modrm, uint8_t imm, dword_t saved_ip, bool seg_gs) {
-    uint8_t reg_offset;
-    if (reg == arg_xmm_modrm_reg) {
-        reg_offset = CPU_OFFSET(xmm[modrm->opcode]);
-    } else if (reg == arg_mm_modrm_reg) {
-        reg_offset = CPU_OFFSET(mm[modrm->opcode]);
-    } else {
-        assert(!"bad reg in vector op");
-    }
+static inline bool could_be_memory(enum arg arg) {
+    return arg == arg_modrm_val || arg == arg_mm_modrm_val || arg == arg_xmm_modrm_val;
+}
 
-    if (modrm->type != modrm_reg && (rm == arg_xmm_modrm_val || rm == arg_mm_modrm_val))
+static inline uint8_t cpu_reg_offset(enum arg arg, int index) {
+    if (arg == arg_xmm_modrm_reg || arg == arg_xmm_modrm_val)
+        return CPU_OFFSET(xmm[index]);
+    if (arg == arg_mm_modrm_reg || arg == arg_xmm_modrm_val)
+        return CPU_OFFSET(mm[index]);
+    return 0;
+}
+
+static inline bool gen_vec(enum arg src, enum arg dst, void (*helper)(), gadget_t read_mem_gadget, gadget_t write_mem_gadget, struct gen_state *state, struct modrm *modrm, uint8_t imm, dword_t saved_ip, bool seg_gs) {
+    bool rm_is_src = !could_be_memory(dst);
+    enum arg rm = rm_is_src ? src : dst;
+    enum arg reg = rm_is_src ? dst : src;
+
+    uint8_t reg_offset = cpu_reg_offset(reg, modrm->opcode);
+    uint8_t rm_reg_offset = cpu_reg_offset(rm, modrm->rm_opcode);
+    assert(reg_offset != 0);
+
+    if (could_be_memory(rm) && modrm->type != modrm_reg)
         rm = arg_mem;
 
     switch (rm) {
         case arg_xmm_modrm_val:
-            g(vec_helper_reg);
-            GEN(helper);
-            GEN(reg_offset | (CPU_OFFSET(xmm[modrm->rm_opcode]) << 8));
-            break;
-
         case arg_mm_modrm_val:
+            assert(rm_reg_offset != 0);
             g(vec_helper_reg);
             GEN(helper);
-            GEN(reg_offset | (CPU_OFFSET(mm[modrm->rm_opcode]) << 8));
+            // first byte is src, second byte is dst
+            if (rm_is_src)
+                GEN(rm_reg_offset | (reg_offset << 8));
+            else
+                GEN(reg_offset | (rm_reg_offset << 8));
             break;
 
         case arg_mem:
             gen_addr(state, modrm, seg_gs, saved_ip);
-            GEN(mem_gadget);
+            GEN(rm_is_src ? read_mem_gadget : write_mem_gadget);
             GEN(saved_ip);
             GEN(helper);
             GEN(reg_offset);
@@ -473,7 +484,7 @@ static inline bool gen_vec(enum arg rm, enum arg reg, void (*helper)(), gadget_t
             g(vec_helper_imm);
             GEN(helper);
             // This is rm_opcode instead of opcode because PSRLQ is weird like that
-            GEN(CPU_OFFSET(xmm[modrm->rm_opcode]) | (((uint16_t) imm) << 8));
+            GEN(((uint16_t) imm) | (CPU_OFFSET(xmm[modrm->rm_opcode]) << 16));
             break;
 
         default: die("unimplemented vecarg");
@@ -481,32 +492,35 @@ static inline bool gen_vec(enum arg rm, enum arg reg, void (*helper)(), gadget_t
     return true;
 }
 
-#define _v(src, dst, helper, rw, z) do { \
-    static_assert(src == arg_xmm_modrm_val || src == arg_mm_modrm_val || src == arg_imm, "vecarg not in switch statement"); \
-    extern void gadget_vec_helper_##rw##z(void); \
-    if (!gen_vec(src, dst, (void (*)()) helper, gadget_vec_helper_##rw##z, state, &modrm, imm, saved_ip, seg_gs)) return false; \
+#define _v(src, dst, helper, z) do { \
+    extern void gadget_vec_helper_read##z(void); \
+    extern void gadget_vec_helper_write##z(void); \
+    if (!gen_vec(src, dst, (void (*)()) helper, gadget_vec_helper_read##z, gadget_vec_helper_write##z, state, &modrm, imm, saved_ip, seg_gs)) return false; \
 } while (0)
-#define v(op, src, dst,z) _v(arg_##src, arg_##dst, vec_##op##z, read, z)
+#define v_(op, src, dst,z) _v(arg_##src, arg_##dst, vec_##op##z, z)
+#define v(op, src, dst,z) v_(op, src, dst,z)
 #define v_imm(op, _imm, dst,z) do { imm = _imm; v(op, imm, dst,z); } while (0)
-#define v_write(op, src, dst,z) _v(arg_##dst, arg_##src, vec_##op##z, write, z)
 
-#define VLOAD(src, dst,z) v(load, src, dst,z)
-#define VZLOAD(src, dst,z) v(zload, src, dst, z)
-#define VLOAD_PADNOTMEM(src, dst, z) do { \
-    if (arg_##src == arg_xmm_modrm_val && modrm.type != modrm_mem) { \
-        VZLOAD(src, dst, z); \
+#define vec_dst_size_mm_modrm_val 64
+#define vec_dst_size_mm_modrm_reg 64
+#define vec_dst_size_xmm_modrm_val 128
+#define vec_dst_size_xmm_modrm_reg 128
+// you always want to merge when storing to memory
+// default is to never merge otherwise
+#define VMOV(src, dst, z) \
+    if (could_be_memory(arg_##dst) && modrm.type != modrm_reg) { \
+        v(merge, src, dst,z); \
     } else { \
-        VLOAD(src, dst, z); \
-    } \
-} while (0)
-#define VLOAD_PADMEM(src, dst, z) do { \
-    if (arg_##src == arg_xmm_modrm_val && modrm.type != modrm_reg) { \
-        VZLOAD(src, dst, z); \
+        v(glue3(zero, vec_dst_size_##dst, _copy), src, dst,z); \
+    }
+// this will additionally merge if both src and dst are registers, e.g. movss
+#define VMOV_MERGE_REG(src, dst, z) \
+    if (modrm.type == modrm_reg || could_be_memory(arg_##dst)) { \
+        v(merge, src, dst,z); \
     } else { \
-        VLOAD(src, dst, z); \
-    } \
-} while (0)
-#define VSTORE(src, dst,z) v_write(store, src, dst,z)
+        v(glue3(zero, vec_dst_size_##dst, _copy), src, dst,z); \
+    }
+
 #define VCOMPARE(src, dst,z) v(compare, src, dst,z)
 #define VSHIFTR_IMM(src, dst, z) v_imm(imm_shiftr, src, dst,z)
 #define VXOR(src, dst,z) v(xor, src, dst,z)

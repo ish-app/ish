@@ -59,9 +59,9 @@ restart:
                 case 0x18 ... 0x1f: TRACEI("nop modrm\t"); READMODRM; break;
 
                 case 0x28: TRACEI("movaps xmm:modrm, xmm");
-                           READMODRM; VLOAD(xmm_modrm_val, xmm_modrm_reg,128); break;
+                           READMODRM; VMOV(xmm_modrm_val, xmm_modrm_reg,128); break;
                 case 0x29: TRACEI("movaps xmm, xmm:modrm");
-                           READMODRM; VSTORE(xmm_modrm_reg, xmm_modrm_val,128); break;
+                           READMODRM; VMOV(xmm_modrm_reg, xmm_modrm_val,128); break;
 
                 case 0x2e: TRACEI("ucomiss xmm, xmm:modrm");
                            READMODRM; VCOMPARE(xmm_modrm_val, xmm_modrm_reg,32);
@@ -267,11 +267,11 @@ restart:
 
 #if OP_SIZE == 16
                 case 0x6e: TRACEI("movd modrm, xmm");
-                           // TODO: REX.W = 1 might be needed later
-                           READMODRM; VZLOAD(xmm_modrm_val, xmm_modrm_reg,32); break;
+                           // TODO: this is supposed to use general registers!
+                           READMODRM; VMOV(xmm_modrm_val, xmm_modrm_reg,32); break;
 
                 case 0x6f: TRACEI("movdqa xmm:modrm, xmm");
-                           READMODRM; VLOAD(xmm_modrm_val, xmm_modrm_reg,128); break;
+                           READMODRM; VMOV(xmm_modrm_val, xmm_modrm_reg,128); break;
 
                 case 0x73: READMODRM;
                            switch (modrm.opcode) {
@@ -282,19 +282,22 @@ restart:
                            break;
 
                 case 0x7e: TRACEI("movd xmm, modrm");
-                           // TODO: REX.W = 1 might be needed later
-                           READMODRM; VSTORE(xmm_modrm_reg, xmm_modrm_val,32); break;
+                           // TODO: this is supposed to use general registers!
+                           READMODRM; VMOV(xmm_modrm_reg, xmm_modrm_val,32); break;
 
                 case 0x7f: TRACEI("movdqa xmm, xmm:modrm");
-                           READMODRM; VSTORE(xmm_modrm_reg, xmm_modrm_val,128); break;
+                           READMODRM; VMOV(xmm_modrm_reg, xmm_modrm_val,128); break;
+
+                case 0xd6: TRACEI("movq xmm, xmm:modrm");
+                           READMODRM; VMOV(xmm_modrm_reg, xmm_modrm_val,64); break;
 
                 case 0xef: TRACEI("pxor xmm:modrm xmm");
                            READMODRM; VXOR(xmm_modrm_val, xmm_modrm_reg,128); break;
 #else
                 case 0x6f: TRACEI("movq modrm, mm");
-                           READMODRM; VLOAD(mm_modrm_val, mm_modrm_reg, 64); break;
+                           READMODRM; VMOV(mm_modrm_val, mm_modrm_reg, 64); break;
                 case 0x7f: TRACEI("movq mm, modrm");
-                           READMODRM; VSTORE(mm_modrm_reg, mm_modrm_val, 64); break;
+                           READMODRM; VMOV(mm_modrm_reg, mm_modrm_val, 64); break;
 #endif
 
                 default: TRACEI("undefined");
@@ -871,9 +874,9 @@ restart:
                     READINSN;
                     switch (insn) {
                         case 0x10: TRACEI("movsd xmm:modrm, xmm");
-                                   READMODRM; VLOAD_PADMEM(xmm_modrm_val, xmm_modrm_reg,64); break;
+                                   READMODRM; VMOV_MERGE_REG(xmm_modrm_val, xmm_modrm_reg,64); break;
                         case 0x11: TRACEI("movsd xmm, xmm:modrm");
-                                   READMODRM; VSTORE(xmm_modrm_reg, xmm_modrm_val,64); break;
+                                   READMODRM; VMOV_MERGE_REG(xmm_modrm_reg, xmm_modrm_val,64); break;
 
                         case 0x58: TRACEI("addsd xmm:modrm, xmm");
                                    READMODRM; VS_FMATH(add, xmm_modrm_val, xmm_modrm_reg,64); break;
@@ -904,14 +907,14 @@ restart:
                     READINSN;
                     switch (insn) {
                         case 0x10: TRACEI("movss xmm:modrm, xmm");
-                                   READMODRM; VLOAD_PADMEM(xmm_modrm_val, xmm_modrm_reg,32);
+                                   READMODRM; VMOV_MERGE_REG(xmm_modrm_val, xmm_modrm_reg,32);
                                    break;
                         case 0x11: TRACEI("movss xmm, xmm:modrm");
-                                   READMODRM; VSTORE(xmm_modrm_reg, xmm_modrm_val,32);
+                                   READMODRM; VMOV_MERGE_REG(xmm_modrm_reg, xmm_modrm_val,32);
                                    break;
 
                         case 0x7e: TRACEI("movq xmm:modrm, xmm");
-                                   READMODRM; VZLOAD(xmm_modrm_val, xmm_modrm_reg,64);
+                                   READMODRM; VMOV(xmm_modrm_val, xmm_modrm_reg,64);
                                    break;
 
                         case 0x18 ... 0x1f: TRACEI("repz nop modrm\t"); READMODRM; break;
