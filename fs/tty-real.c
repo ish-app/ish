@@ -13,6 +13,8 @@
 // Only /dev/tty1 will be connected, the rest will go to a black hole.
 #define REAL_TTY_NUM 1
 
+void real_tty_reset_term(void);
+
 static void real_tty_read_thread(struct tty *tty) {
     char ch;
     for (;;) {
@@ -25,6 +27,7 @@ static void real_tty_read_thread(struct tty *tty) {
         }
         if (ch == '\x1c') {
             // ^\ (so ^C still works for emulated SIGINT)
+            real_tty_reset_term();
             raise(SIGINT);
         }
         tty_input(tty, &ch, 1, 0);
@@ -76,7 +79,8 @@ static struct termios_ termios_from_real(struct termios real) {
 }
 
 static struct termios old_termios;
-int real_tty_init(struct tty *tty) {
+static bool real_tty_is_open;
+static int real_tty_init(struct tty *tty) {
     if (tty->num != REAL_TTY_NUM)
         return 0;
 
@@ -109,20 +113,28 @@ notty:
         // ok if this actually happened it would be weird AF
         return _EIO;
     pthread_detach(tty->thread);
+    real_tty_is_open = true;
     return 0;
 }
 
-int real_tty_write(struct tty *tty, const void *buf, size_t len, bool UNUSED(blocking)) {
+static int real_tty_write(struct tty *tty, const void *buf, size_t len, bool UNUSED(blocking)) {
     if (tty->num != REAL_TTY_NUM)
         return len;
     return write(STDOUT_FILENO, buf, len);
 }
 
-void real_tty_cleanup(struct tty *tty) {
+void real_tty_reset_term() {
+    if (!real_tty_is_open) return;
+    if (tcsetattr(STDIN_FILENO, TCSANOW, &old_termios) < 0 && errno != ENOTTY) {
+        printk("failed to reset terminal: %s\n", strerror(errno));
+        abort();
+    }
+}
+
+static void real_tty_cleanup(struct tty *tty) {
     if (tty->num != REAL_TTY_NUM)
         return;
-    if (tcsetattr(STDIN_FILENO, TCSANOW, &old_termios) < 0 && errno != ENOTTY)
-        ERRNO_DIE("failed to reset terminal");
+    real_tty_reset_term();
     pthread_cancel(tty->thread);
 }
 

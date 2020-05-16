@@ -12,13 +12,15 @@
 #define IOPOL_VFS_HFS_CASE_SENSITIVITY_FORCE_CASE_SENSITIVE 1
 #endif
 
+void real_tty_reset_term(void);
+
 static void exit_handler(struct task *task, int code) {
     if (task->parent != NULL)
         return;
+    real_tty_reset_term();
     if (code & 0xff)
         raise(code & 0xff);
-    else
-        exit(code >> 8);
+    exit(code >> 8);
 }
 
 // this function parses command line arguments and initializes global

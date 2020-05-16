@@ -1,5 +1,7 @@
 #!/bin/sh
-mknod /dev/null c 1 3 # shell uses this internally
+if [ ! -e /dev/null ]; then
+    mknod /dev/null c 1 3 # shell uses this internally
+fi
 
 echo builtin echo
 /bin/echo real echo
