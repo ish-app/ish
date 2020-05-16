@@ -104,7 +104,7 @@ restart:
                            READMODRM; CMOVN(LE, modrm_val, modrm_reg,oz); break;
 
                 case 0x57: TRACEI("xorps xmm, xmm:modrm");
-                           READMODRM; VXOR(xmm_modrm_val, xmm_modrm_reg,128);
+                           READMODRM; V_OP(xor, xmm_modrm_val, xmm_modrm_reg,128);
                            break;
 
                 case 0x77: TRACEI("emms (ignored because there is no mmx)"); break;
@@ -292,7 +292,7 @@ restart:
                            READMODRM; VMOV(xmm_modrm_reg, xmm_modrm_val,64); break;
 
                 case 0xef: TRACEI("pxor xmm:modrm xmm");
-                           READMODRM; VXOR(xmm_modrm_val, xmm_modrm_reg,128); break;
+                           READMODRM; V_OP(xor, xmm_modrm_val, xmm_modrm_reg,128); break;
 #else
                 case 0x6f: TRACEI("movq modrm, mm");
                            READMODRM; VMOV(mm_modrm_val, mm_modrm_reg, 64); break;
@@ -878,12 +878,19 @@ restart:
                         case 0x11: TRACEI("movsd xmm, xmm:modrm");
                                    READMODRM; VMOV_MERGE_REG(xmm_modrm_reg, xmm_modrm_val,64); break;
 
+                        case 0x2a: TRACEI("cvtsi2sd modrm, xmm");
+                                   READMODRM; V_OP(cvtsi2sd, modrm_val, xmm_modrm_reg,32); break;
+                        case 0x2c: TRACEI("cvtsd2si reg, xmm:modrm");
+                                   READMODRM; V_OP(cvtsd2si, xmm_modrm_val, modrm_reg,32); break;
+
                         case 0x58: TRACEI("addsd xmm:modrm, xmm");
-                                   READMODRM; VS_FMATH(add, xmm_modrm_val, xmm_modrm_reg,64); break;
+                                   READMODRM; V_OP(fadds, xmm_modrm_val, xmm_modrm_reg,64); break;
                         case 0x59: TRACEI("mulsd xmm:modrm, xmm");
-                                   READMODRM; VS_FMATH(mul, xmm_modrm_val, xmm_modrm_reg,64); break;
+                                   READMODRM; V_OP(fmuls, xmm_modrm_val, xmm_modrm_reg,64); break;
                         case 0x5c: TRACEI("subsd xmm:modrm, xmm");
-                                   READMODRM; VS_FMATH(sub, xmm_modrm_val, xmm_modrm_reg,64); break;
+                                   READMODRM; V_OP(fsubs, xmm_modrm_val, xmm_modrm_reg,64); break;
+                        case 0x5e: TRACEI("divsd xmm:modrm, xmm");
+                                   READMODRM; V_OP(fdivs, xmm_modrm_val, xmm_modrm_reg,64); break;
 
                         case 0x18 ... 0x1f: TRACEI("rep nop modrm\t"); READMODRM; break;
                         default: TRACE("undefined"); UNDEFINED;

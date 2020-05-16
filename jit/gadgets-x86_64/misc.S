@@ -150,22 +150,22 @@ do_helper 2
         # the argument order should be a consistent src, dst
         .ifc \rm,reg
             # src
-            movb 8(%_ip), %r14b
+            movw 8(%_ip), %r14w
             leaq (%_cpu,%r14), %rsi
             # dst
-            movb 9(%_ip), %r14b
+            movw 10(%_ip), %r14w
             leaq (%_cpu,%r14), %rdx
         .endif
         .ifc \rm,read
             # src
             movq %_addrq, %rsi
             # dst
-            movb 16(%_ip), %r14b
+            movw 16(%_ip), %r14w
             leaq (%_cpu,%r14), %rdx
         .endif
         .ifc \rm,write
             # src
-            movb 16(%_ip), %r14b
+            movw 16(%_ip), %r14w
             leaq (%_cpu,%r14), %rsi
             # dst
             movq %_addrq, %rdx
@@ -174,7 +174,7 @@ do_helper 2
             # src
             movw 8(%_ip), %si
             # dst
-            movb 10(%_ip), %r14b
+            movw 10(%_ip), %r14w
             leaq (%_cpu,%r14), %rdx
         .endif
 

@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <stdint.h>
 #include "jit/gen.h"
 #include "emu/modrm.h"
 #include "emu/cpuid.h"
@@ -427,22 +428,17 @@ void helper_rdtsc(struct cpu_state *cpu);
 
 // vector
 
-// The offset will eventually exceed 1 byte. When that happens the gadgets will
-// need to be updated, and then the assert can be removed.
-#define CPU_OFFSET(field) ({ \
-    assert(offsetof(struct cpu_state, field) < 256); \
-    offsetof(struct cpu_state, field); \
-})
-
 static inline bool could_be_memory(enum arg arg) {
     return arg == arg_modrm_val || arg == arg_mm_modrm_val || arg == arg_xmm_modrm_val;
 }
 
-static inline uint8_t cpu_reg_offset(enum arg arg, int index) {
+static inline uint16_t cpu_reg_offset(enum arg arg, int index) {
     if (arg == arg_xmm_modrm_reg || arg == arg_xmm_modrm_val)
         return CPU_OFFSET(xmm[index]);
-    if (arg == arg_mm_modrm_reg || arg == arg_xmm_modrm_val)
+    if (arg == arg_mm_modrm_reg || arg == arg_mm_modrm_val)
         return CPU_OFFSET(mm[index]);
+    if (arg == arg_modrm_reg || arg == arg_modrm_val)
+        return CPU_OFFSET(regs[index]);
     return 0;
 }
 
@@ -451,8 +447,8 @@ static inline bool gen_vec(enum arg src, enum arg dst, void (*helper)(), gadget_
     enum arg rm = rm_is_src ? src : dst;
     enum arg reg = rm_is_src ? dst : src;
 
-    uint8_t reg_offset = cpu_reg_offset(reg, modrm->opcode);
-    uint8_t rm_reg_offset = cpu_reg_offset(rm, modrm->rm_opcode);
+    uint16_t reg_offset = cpu_reg_offset(reg, modrm->opcode);
+    uint16_t rm_reg_offset = cpu_reg_offset(rm, modrm->rm_opcode);
     assert(reg_offset != 0);
 
     if (could_be_memory(rm) && modrm->type != modrm_reg)
@@ -461,14 +457,15 @@ static inline bool gen_vec(enum arg src, enum arg dst, void (*helper)(), gadget_
     switch (rm) {
         case arg_xmm_modrm_val:
         case arg_mm_modrm_val:
+        case arg_modrm_val:
             assert(rm_reg_offset != 0);
             g(vec_helper_reg);
             GEN(helper);
             // first byte is src, second byte is dst
             if (rm_is_src)
-                GEN(rm_reg_offset | (reg_offset << 8));
+                GEN(rm_reg_offset | (reg_offset << 16));
             else
-                GEN(reg_offset | (rm_reg_offset << 8));
+                GEN(reg_offset | (rm_reg_offset << 16));
             break;
 
         case arg_mem:
@@ -523,8 +520,7 @@ static inline bool gen_vec(enum arg src, enum arg dst, void (*helper)(), gadget_
 
 #define VCOMPARE(src, dst,z) v(compare, src, dst,z)
 #define VSHIFTR_IMM(src, dst, z) v_imm(imm_shiftr, src, dst,z)
-#define VXOR(src, dst,z) v(xor, src, dst,z)
-#define VS_FMATH(op, src, dst,z) v(f##op##s, src, dst,z)
+#define V_OP(op, src, dst, z) v(op, src, dst, z)
 
 #define DECODER_RET int
 #define DECODER_NAME gen_step

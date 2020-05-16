@@ -19,19 +19,24 @@ union mm_reg {
 union xmm_reg {
     qword_t qw[2];
     dword_t dw[4];
+    float f32[4];
+    double f64[2];
     // TODO more forms
 };
+static_assert(sizeof(union xmm_reg) == 16, "xmm_reg size");
+static_assert(sizeof(union mm_reg) == 8, "mm_reg size");
 
 struct cpu_state {
     struct mem *mem;
     struct jit *jit;
 
+    // general registers
     // assumes little endian (as does literally everything)
 #define _REG(n) \
     union { \
         dword_t e##n; \
         word_t n; \
-    };
+    }
 #define _REGX(n) \
     union { \
         dword_t e##n##x; \
@@ -40,16 +45,21 @@ struct cpu_state {
             byte_t n##l; \
             byte_t n##h; \
         }; \
-    };
+    }
 
-    _REGX(a);
-    _REGX(b);
-    _REGX(c);
-    _REGX(d);
-    _REG(si);
-    _REG(di);
-    _REG(bp);
-    _REG(sp);
+    union {
+        struct {
+            _REGX(a);
+            _REGX(c);
+            _REGX(d);
+            _REGX(b);
+            _REG(sp);
+            _REG(bp);
+            _REG(si);
+            _REG(di);
+        };
+        dword_t regs[8];
+    };
 #undef REGX
 #undef REG
 
@@ -152,6 +162,18 @@ struct cpu_state {
 
     dword_t trapno;
 };
+
+#define CPU_OFFSET(field) offsetof(struct cpu_state, field)
+
+static_assert(CPU_OFFSET(eax) == CPU_OFFSET(regs[0]), "register order");
+static_assert(CPU_OFFSET(ecx) == CPU_OFFSET(regs[1]), "register order");
+static_assert(CPU_OFFSET(edx) == CPU_OFFSET(regs[2]), "register order");
+static_assert(CPU_OFFSET(ebx) == CPU_OFFSET(regs[3]), "register order");
+static_assert(CPU_OFFSET(esp) == CPU_OFFSET(regs[4]), "register order");
+static_assert(CPU_OFFSET(ebp) == CPU_OFFSET(regs[5]), "register order");
+static_assert(CPU_OFFSET(esi) == CPU_OFFSET(regs[6]), "register order");
+static_assert(CPU_OFFSET(edi) == CPU_OFFSET(regs[7]), "register order");
+static_assert(sizeof(struct cpu_state) < UINT16_MAX, "cpu struct is too big for vector gadgets");
 
 // flags
 #define ZF (cpu->zf_res ? cpu->res == 0 : cpu->zf)

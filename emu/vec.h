@@ -24,5 +24,9 @@ void vec_xor128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
 void vec_fadds64(NO_CPU, const double *src, double *dst);
 void vec_fmuls64(NO_CPU, const double *src, double *dst);
 void vec_fsubs64(NO_CPU, const double *src, double *dst);
+void vec_fdivs64(NO_CPU, const double *src, double *dst);
+
+void vec_cvtsi2sd32(NO_CPU, const uint32_t *src, union xmm_reg *dst);
+void vec_cvtsd2si32(NO_CPU, const union xmm_reg *src, uint32_t *dst);
 
 #endif
