@@ -17,7 +17,7 @@
 
 const NSFileCoordinatorWritingOptions NSFileCoordinatorWritingForCreating = NSFileCoordinatorWritingForMerging;
 
-@interface DirectoryPicker : NSObject <UIDocumentPickerDelegate>
+@interface DirectoryPicker : NSObject <UIDocumentPickerDelegate, UIAdaptivePresentationControllerDelegate>
 
 @property NSArray<NSURL *> *urls;
 @property lock_t lock;
@@ -38,6 +38,11 @@ const NSFileCoordinatorWritingOptions NSFileCoordinatorWritingForCreating = NSFi
 - (void)documentPickerWasCancelled:(UIDocumentPickerViewController *)controller {
     [self documentPicker:controller didPickDocumentsAtURLs:@[]];
 }
+
+- (void)presentationControllerDidDismiss:(UIPresentationController *)presentationController {
+    [self documentPickerWasCancelled:(UIDocumentPickerViewController *)presentationController];
+}
+
 - (void)documentPicker:(UIDocumentPickerViewController *)controller didPickDocumentsAtURLs:(NSArray<NSURL *> *)urls {
     lock(&_lock);
     self.urls = urls;
@@ -53,6 +58,7 @@ const NSFileCoordinatorWritingOptions NSFileCoordinatorWritingForCreating = NSFi
     dispatch_async(dispatch_get_main_queue(), ^(void) {
         UIDocumentPickerViewController *picker = [[UIDocumentPickerViewController alloc] initWithDocumentTypes:@[ @"public.folder" ] inMode:UIDocumentPickerModeOpen];
         picker.delegate = self;
+        picker.presentationController.delegate = self;
         [terminalViewController presentViewController:picker animated:true completion:nil];
     });
 
