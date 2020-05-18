@@ -772,6 +772,7 @@ void test_fops(double a, double b)
 
 void fpu_clear_exceptions(void)
 {
+#if 0
     struct QEMU_PACKED {
         uint16_t fpuc;
         uint16_t dummy1;
@@ -786,6 +787,7 @@ void fpu_clear_exceptions(void)
     asm volatile ("fnstenv %0\n" : "=m" (float_env32));
     float_env32.fpus &= ~0x7f;
     asm volatile ("fldenv %0\n" : : "m" (float_env32));
+#endif
 }
 
 /* XXX: display exception bits when supported */
@@ -1021,11 +1023,11 @@ void test_floats(void)
     test_fcvt(1.0/0.0);
     test_fcvt(q_nan.d);
     test_fconst();
-    test_fbcd(1234567890123456.0);
-    test_fbcd(-123451234567890.0);
-    test_fenv();
+    //test_fbcd(1234567890123456.0);
+    //test_fbcd(-123451234567890.0);
+    //test_fenv();
     if (TEST_CMOV) {
-        test_fcmov();
+        //test_fcmov();
     }
 }
 
@@ -2733,7 +2735,7 @@ int main(int argc, char **argv)
     test_mul();
     test_jcc();
     //test_loop();
-    //test_floats();
+    test_floats();
 #if !defined(__x86_64__)
     //test_bcd();
 #endif
