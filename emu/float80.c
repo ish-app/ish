@@ -209,7 +209,7 @@ int64_t f80_to_int(float80 f) {
     // if you need an exponent greater than 2^63 to represent this number, it
     // can't be represented as a 64-bit integer
     if (f.exp > bias(63))
-        return !f.sign ? INT64_MAX : INT64_MIN;
+        return INT64_MIN; // also indefinite
     // shift right (reduce precision) until the exponent is 2^63
     f = f80_shift_right(f, bias(63) - f.exp);
     // and the answer should be the significand!

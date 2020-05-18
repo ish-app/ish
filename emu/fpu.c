@@ -66,10 +66,16 @@ void fpu_st(struct cpu_state *cpu, int i) {
 }
 
 void fpu_ist16(struct cpu_state *cpu, int16_t *i) {
-    *i = (int16_t) f80_to_int(ST(0));
+    int64_t res = f80_to_int(ST(0));
+    if (res < INT16_MIN || res > INT16_MAX)
+        res = INT16_MIN;
+    *i = (int16_t) res;
 }
 void fpu_ist32(struct cpu_state *cpu, int32_t *i) {
-    *i = f80_to_int(ST(0));
+    int64_t res = f80_to_int(ST(0));
+    if (res < INT32_MIN || res > INT32_MAX)
+        res = INT32_MIN;
+    *i = (int32_t) res;
 }
 void fpu_ist64(struct cpu_state *cpu, int64_t *i) {
     *i = f80_to_int(ST(0));
