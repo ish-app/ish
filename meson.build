@@ -159,7 +159,7 @@ endforeach
 if not meson.is_cross_build()
     # test for floating point library
     float80_test = executable('float80_test', ['emu/float80.c', 'emu/float80-test.c'], dependencies: [libm])
-    test('float80', float80_test, should_fail: true)
+    test('float80', float80_test)
 endif
 
 e2e_test = find_program('tests/e2e/e2e.bash')
