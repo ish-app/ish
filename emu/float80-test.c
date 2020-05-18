@@ -52,7 +52,6 @@ void assertf(int cond, const char *msg, ...) {
     if (cond) {
         tests_passed++;
         suite_passed++;
-        return;
     }
 
     printf(cond ? "PASS ": "FAIL ");
@@ -152,7 +151,7 @@ void test_math() {
     ua.ld = a; ub.ld = b; \
     u.f = f80_##op(ua.f, ub.f); \
     expected = deconst((long double) a) cop_##op deconst((long double) b); \
-    assertf(bitwise_eq(u.ld, expected), "f80_"#op"(%.20Le, %.20Le) = %.20Le (%.20Le)", ua.ld, ub.ld, u.ld, expected)
+    assertf(bitwise_eq(u.ld, expected) || (isnan(u.ld) && isnan(expected)), "f80_"#op"(%.20Le, %.20Le) = %.20Le (%.20Le)", ua.ld, ub.ld, u.ld, expected)
 #define test(op, a, b) \
     _test(op, a, b); \
     _test(op, -a, b); \

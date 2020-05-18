@@ -58,7 +58,6 @@ enum f80_rounding_mode {
 extern __thread enum f80_rounding_mode f80_rounding_mode;
 
 #define F80_NAN ((float80) {.signif = 0xc000000000000000, .exp = 0x7fff, .sign = 0})
-#define F80_MINUS_NAN ((float80) {.signif = 0xc000000000000000, .exp = 0x7fff, .sign = 1})
 #define F80_INF ((float80) {.signif = 0x8000000000000000, .exp = 0x7fff, .sign = 0})
 
 #endif

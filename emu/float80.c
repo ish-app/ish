@@ -369,7 +369,7 @@ float80 f80_add(float80 a, float80 b) {
 
         // infinity - infinity is indefinite, not zero
         if (f80_isinf(a) && f80_isinf(b))
-            return F80_MINUS_NAN;
+            return F80_NAN;
 
         // When subtracting a (relatively) very small number in chop mode, all
         // the bits will get shifted out and nothing will happen, but this
@@ -444,7 +444,7 @@ float80 f80_div(float80 a, float80 b) {
         f = F80_INF;
         // except infinity / infinity is nan
         if (f80_isinf(b))
-            return F80_MINUS_NAN;
+            return F80_NAN;
     } else if (f80_isinf(b)) {
         // dividing by infinity gives zero
         f = (float80) {0};
