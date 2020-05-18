@@ -104,7 +104,7 @@ void fpu_scale(struct cpu_state *cpu) {
 void fpu_rndint(struct cpu_state *cpu) {
     if (f80_isinf(ST(0)) || f80_isnan(ST(0)))
         return;
-    ST(0) = f80_from_int(f80_to_int(ST(0)));
+    ST(0) = f80_round(ST(0));
 }
 
 void fpu_sqrt(struct cpu_state *cpu) {

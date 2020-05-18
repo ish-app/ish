@@ -1,10 +1,14 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <math.h>
+#include <fenv.h>
 #include "float80.h"
 
 //#define DENORMAL 1e-310
 #define DENORMAL 1.11253692925360069155e-308
+
+int deconst_dummy;
+#define deconst(x) (deconst_dummy? 0 : x)
 
 union f80 {
     float80 f;
@@ -27,7 +31,14 @@ static int suite_total = 0;
 #define suite_start() _suite_start(__FUNCTION__)
 #define suite_end() _suite_end(__FUNCTION__)
 void _suite_start(const char *suite) {
-    printf("==== %s ====\n", suite);
+    const char *rounding_mode_str;
+    switch (fegetround()) {
+        case FE_TONEAREST: rounding_mode_str = "nearest/even"; break;
+        case FE_DOWNWARD: rounding_mode_str = "down"; break;
+        case FE_UPWARD: rounding_mode_str = "up"; break;
+        case FE_TOWARDZERO: rounding_mode_str = "towards zero"; break;
+    }
+    printf("==== %s, round %s ====\n", suite, rounding_mode_str);
     suite_passed = 0;
     suite_total = 0;
 }
@@ -41,6 +52,7 @@ void assertf(int cond, const char *msg, ...) {
     if (cond) {
         tests_passed++;
         suite_passed++;
+        return;
     }
 
     printf(cond ? "PASS ": "FAIL ");
@@ -58,7 +70,7 @@ void test_int_convert() {
     int64_t i;
 #define test(x) \
     u.f = f80_from_int(x); \
-    assertf((int64_t) u.ld == x, "f80_from_int(%ld) = %.20Le", (int64_t) x, u.ld); \
+    assertf((int64_t) lrintl(u.ld) == x, "f80_from_int(%ld) = %.20Le", (int64_t) x, u.ld); \
     i = f80_to_int(u.f); \
     assertf(i == x, "f80_to_int(%.20Le) = %ld", u.ld, i)
 
@@ -71,7 +83,7 @@ void test_int_convert() {
 #define test(x) \
     u.f = f80_from_double(x); \
     i = f80_to_int(u.f); \
-    assertf(i == (int64_t)round(x), "f80_to_int(f80_from_double(%.20Le)) = %ld", u.ld, i)
+    assertf(i == (int64_t) lrintl(x), "f80_to_int(f80_from_double(%.20Le)) = %ld", u.ld, i)
 
     test(0.75); test(-0.75);
 #undef test
@@ -101,6 +113,33 @@ void test_double_convert() {
     suite_end();
 }
 
+void test_round() {
+    suite_start();
+    union f80 u, ur;
+    long double r;
+#define test(x) \
+    u.ld = x; \
+    ur.f = f80_round(u.f); \
+    r = rintl(u.ld); \
+    assertf(bitwise_eq(r, ur.ld), "f80_round(%Le) = %Le (%Le)", (long double) x, ur.ld, r)
+
+    test(0); test(-0);
+    test(1./2); test(-1./2);
+    test(1./65536); test(-1./65536);
+    test(1e-100); test(-1e-100);
+    test(1.5); test(-1.5);
+    test(123); test(-123);
+    test(3991994929919994995881.123);
+    test(9.223372036854776e18);
+    test(1e-4949l);
+    test(DENORMAL);
+    test(1e-310);
+    test(INFINITY); test(-INFINITY);
+    test(NAN);
+#undef test
+    suite_end();
+}
+
 void test_math() {
     suite_start();
     union f80 ua, ub, u;
@@ -112,8 +151,8 @@ void test_math() {
 #define _test(op, a, b) \
     ua.ld = a; ub.ld = b; \
     u.f = f80_##op(ua.f, ub.f); \
-    expected = (long double) a cop_##op (long double) b; \
-    assertf(bitwise_eq(u.ld, expected), "f80_"#op"(%Le, %Le) = %Le (%Le)", ua.ld, ub.ld, u.ld, expected)
+    expected = deconst((long double) a) cop_##op deconst((long double) b); \
+    assertf(bitwise_eq(u.ld, expected), "f80_"#op"(%.20Le, %.20Le) = %.20Le (%.20Le)", ua.ld, ub.ld, u.ld, expected)
 #define test(op, a, b) \
     _test(op, a, b); \
     _test(op, -a, b); \
@@ -131,6 +170,7 @@ void test_math() {
     test(add, 1e-4949l, 1e-4949l);
     test(add, 1e-4949l, 2e-4949l);
     test(add, 18446744073709551616.l, 1.5);
+    test(add, 1e4932l, 1e4932l);
     test(add, INFINITY, 1);
     test(add, INFINITY, 123);
     test(add, INFINITY, INFINITY);
@@ -212,10 +252,22 @@ uint64_t fnmulh(uint64_t a, uint64_t b) {
 }
 
 int main() {
-    test_int_convert();
-    test_double_convert();
-    test_math();
-    test_compare();
+    for (int rounding_mode = 0; rounding_mode < 4; rounding_mode++) {
+        f80_rounding_mode = rounding_mode;
+        switch (rounding_mode) {
+            case round_to_nearest: fesetround(FE_TONEAREST); break;
+            case round_down: fesetround(FE_DOWNWARD); break;
+            case round_up: fesetround(FE_UPWARD); break;
+            case round_chop: fesetround(FE_TOWARDZERO); break;
+        }
+        fesetround(rounding_mode);
+
+        test_int_convert();
+        test_double_convert();
+        test_round();
+        test_math();
+        test_compare();
+    }
     printf("%d/%d passed (%.0f%%)", tests_passed, tests_total, (double) tests_passed / tests_total * 100);
     return tests_passed == tests_total ? 0 : 1;
 }

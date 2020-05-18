@@ -19,6 +19,7 @@ float80 f80_from_int(int64_t i);
 int64_t f80_to_int(float80 f);
 float80 f80_from_double(double d);
 double f80_to_double(float80 f);
+float80 f80_round(float80 f);
 
 bool f80_isnan(float80 f);
 bool f80_isinf(float80 f);
@@ -57,6 +58,7 @@ enum f80_rounding_mode {
 extern __thread enum f80_rounding_mode f80_rounding_mode;
 
 #define F80_NAN ((float80) {.signif = 0xc000000000000000, .exp = 0x7fff, .sign = 0})
+#define F80_MINUS_NAN ((float80) {.signif = 0xc000000000000000, .exp = 0x7fff, .sign = 1})
 #define F80_INF ((float80) {.signif = 0x8000000000000000, .exp = 0x7fff, .sign = 0})
 
 #endif
