@@ -84,9 +84,13 @@ void vec_fdivs64(NO_CPU, const double *src, double *dst) {
     *dst /= *src;
 }
 
-void vec_cvtsi2sd32(NO_CPU, const uint32_t *src, union xmm_reg *dst) {
-    dst->f64[0] = *src;
+void vec_cvtsi2sd32(NO_CPU, const uint32_t *src, double *dst) {
+    *dst = *src;
 }
-void vec_cvtsd2si32(NO_CPU, const union xmm_reg *src, uint32_t *dst) {
-    *dst = src->f64[0];
+void vec_cvtsd2si64(NO_CPU, const double *src, uint32_t *dst) {
+    *dst = *src;
+}
+void vec_cvtsd2ss64(NO_CPU, const double *src, float *dst) {
+    printk("yo\n");
+    *dst = *src;
 }
