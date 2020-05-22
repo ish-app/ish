@@ -24,6 +24,8 @@
 
 @property (weak, nonatomic) IBOutlet UITableViewCell *exportContainerCell;
 
+@property (weak, nonatomic) IBOutlet UILabel *versionLabel;
+
 @end
 
 @implementation AboutViewController
@@ -45,6 +47,9 @@
                                                                                  action:@selector(exitRecovery:)];
         self.navigationItem.leftBarButtonItem = nil;
     }
+    _versionLabel.text = [NSString stringWithFormat:@"iSH %@ (Build %@)",
+                          [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"],
+                          [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"]];
 }
 
 - (void)exitRecovery:(id)sender {

@@ -17,6 +17,13 @@
                         <rect key="frame" x="0.0" y="0.0" width="320" height="548"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <color key="backgroundColor" cocoaTouchSystemColor="groupTableViewBackgroundColor"/>
+                        <label key="tableFooterView" opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="iSH unknown (Build unknown)" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="Xil-tm-WGD" userLabel="versionLabel">
+                            <rect key="frame" x="0.0" y="661" width="320" height="44"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                            <fontDescription key="fontDescription" type="system" pointSize="16"/>
+                            <color key="textColor" systemColor="secondaryLabelColor" red="0.23529411759999999" green="0.23529411759999999" blue="0.26274509800000001" alpha="0.59999999999999998" colorSpace="custom" customColorSpace="sRGB"/>
+                            <nil key="highlightedColor"/>
+                        </label>
                         <sections>
                             <tableViewSection headerTitle="Settings" id="tuR-Og-SE8">
                                 <cells>
@@ -318,6 +325,7 @@
                         <outlet property="openTwitter" destination="bge-GA-6p8" id="r0A-lN-0e0"/>
                         <outlet property="sendFeedback" destination="gMm-4C-5X3" id="nhX-ZH-zyP"/>
                         <outlet property="themeCell" destination="dqn-Cd-cNm" id="dfh-et-0o7"/>
+                        <outlet property="versionLabel" destination="Xil-tm-WGD" id="ZzC-E6-VER"/>
                     </connections>
                 </tableViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="OPJ-Ps-ATb" userLabel="First Responder" sceneMemberID="firstResponder"/>
