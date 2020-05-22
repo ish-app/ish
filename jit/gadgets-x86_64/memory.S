@@ -86,14 +86,14 @@ segfault_\type:
 
 .global crosspage_load
 crosspage_load:
-    save_c
+    save_c odd
     leaq -TLB_entries(%_tlb), %rdi
     movl %_addr, %esi
     leaq LOCAL_value(%_cpu), %rdx
     movq %r14, %rcx
     call NAME(__tlb_read_cross_page)
     movq %rax, %r14
-    restore_c
+    restore_c odd
     testq %r14, %r14
     jz segfault_read
     movl %_addr, LOCAL_value_addr(%_cpu)
@@ -102,14 +102,14 @@ crosspage_load:
 
 .global crosspage_store
 crosspage_store:
-    save_c
+    save_c odd
     leaq -TLB_entries(%_tlb), %rdi
     movl LOCAL_value_addr(%_cpu), %esi
     leaq LOCAL_value(%_cpu), %rdx
     movq %r14, %rcx
     call NAME(__tlb_write_cross_page)
     movq %rax, %r14
-    restore_c
+    restore_c odd
     testq %r14, %r14
     jz segfault_write
     ret

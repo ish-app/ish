@@ -158,7 +158,7 @@ crosspage_store_\id :
     orl $(ZF_RES|SF_RES|PF_RES), CPU_flags_res(%_cpu)
 .endm
 
-.macro save_c
+.macro save_c odd
     push %rax
     push %rcx
     push %rdx
@@ -168,10 +168,14 @@ crosspage_store_\id :
     push %r9
     push %r10
     push %r11
-    sub DOLLAR(8), %rsp # 16 byte alignment is so annoying
+    .ifnc \odd,odd
+        sub $8, %rsp # 16 byte alignment is so annoying
+    .endif
 .endm
-.macro restore_c
-    add DOLLAR(8), %rsp
+.macro restore_c odd
+    .ifnc \odd,odd
+        add $8, %rsp
+    .endif
     pop %r11
     pop %r10
     pop %r9
