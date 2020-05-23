@@ -255,3 +255,10 @@ int_t sys_sched_get_priority_max(int_t policy) {
         return 0;
     return _EINVAL;
 }
+
+int_t sys_ioprio_get(int_t UNUSED(which), int_t UNUSED(who), int_t UNUSED(ioprio)) {
+    return 0;
+}
+int_t sys_ioprio_set(int_t UNUSED(which), int_t UNUSED(who), int_t UNUSED(ioprio)) {
+    return 0;
+}
