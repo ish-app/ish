@@ -230,10 +230,14 @@ int realfs_poll(struct fd *fd) {
         return 0;
 
 #if defined(__APPLE__)
+    // this is the "WTF is apple smoking" section
+
     // https://github.com/apple/darwin-xnu/blob/a449c6a3b8014d9406c2ddbdc81795da24aa7443/bsd/kern/sys_generic.c#L1856
     if (p.revents & POLLHUP)
         p.revents |= POLLOUT;
-#endif
+    // apparently you can sometimes get POLLPRI on a pipe??? please ignore how much of a mess this condition is
+    if (is_adhoc_fd(fd) && S_ISFIFO(fd->stat.mode))
+        p.revents &= ~POLLPRI;
 
     if (p.revents & POLLNVAL) {
         printk("pollnval %d flags %d events %d revents %d\n", fd->real_fd, flags, p.events, p.revents);
@@ -252,6 +256,8 @@ int realfs_poll(struct fd *fd) {
         assert(!(events & POLLNVAL));
         return events;
     }
+#endif
+
     assert(!(p.revents & POLLNVAL));
     return p.revents;
 }

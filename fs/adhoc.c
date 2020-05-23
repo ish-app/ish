@@ -48,6 +48,10 @@ static int adhoc_getpath(struct fd *fd, char *buf) {
     return 0;
 }
 
+bool is_adhoc_fd(struct fd *fd) {
+    return fd->mount == &adhoc_mount;
+}
+
 static const struct fs_ops adhoc_fs = {
     .magic = 0x09041934, // FIXME wrong for pipes and sockets
     .fstat = adhoc_fstat,

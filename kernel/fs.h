@@ -180,6 +180,8 @@ const char *fix_path(const char *path); // TODO reconsider
 
 // adhoc fs
 struct fd *adhoc_fd_create(const struct fd_ops *ops);
+// this is for the "wtf is apple smoking" section
+bool is_adhoc_fd(struct fd *fd);
 
 // filesystems
 extern const struct fs_ops procfs;
