@@ -940,7 +940,6 @@
 			files = (
 			);
 			inputPaths = (
-				"$(SRCROOT)/app/terminal/libapps",
 			);
 			name = "Compile JavaScript";
 			outputPaths = (
