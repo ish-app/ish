@@ -700,6 +700,7 @@ restart:
                     case 0xdc6: TRACE("fdivr st, st(i)"); FDIVR(st_0, st_i); break;
                     case 0xdc7: TRACE("fdiv st, st(i)"); FDIV(st_0, st_i); break;
                     case 0xdd0: TRACE("ffree st(i) (lol)"); break;
+                    case 0xdd2: TRACE("fst st"); FST(); break;
                     case 0xdd3: TRACE("fstp st"); FST(); FPOP; break;
                     case 0xdd4: TRACE("fucom st"); FUCOM(); break;
                     case 0xdd5: TRACE("fucomp st"); FUCOM(); FPOP; break;
