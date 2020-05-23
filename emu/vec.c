@@ -91,6 +91,5 @@ void vec_cvtsd2si64(NO_CPU, const double *src, uint32_t *dst) {
     *dst = *src;
 }
 void vec_cvtsd2ss64(NO_CPU, const double *src, float *dst) {
-    printk("yo\n");
     *dst = *src;
 }
