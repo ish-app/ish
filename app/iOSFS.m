@@ -58,6 +58,10 @@ const NSFileCoordinatorWritingOptions NSFileCoordinatorWritingForCreating = NSFi
     dispatch_async(dispatch_get_main_queue(), ^(void) {
         UIDocumentPickerViewController *picker = [[UIDocumentPickerViewController alloc] initWithDocumentTypes:@[ @"public.folder" ] inMode:UIDocumentPickerModeOpen];
         picker.delegate = self;
+        if (@available(iOS 13, *)) {
+        } else {
+            picker.allowsMultipleSelection = YES;
+        }
         picker.presentationController.delegate = self;
         [terminalViewController presentViewController:picker animated:true completion:nil];
     });
@@ -74,7 +78,9 @@ const NSFileCoordinatorWritingOptions NSFileCoordinatorWritingForCreating = NSFi
     _urls = nil;
     unlock(&_lock);
     
-    assert(urls.count <= 1);
+    if (@available(iOS 13, *)) {
+        assert(urls.count <= 1);
+    }
     if (urls.count == 0)
         return _ECANCELED;
     *url = urls[0];
