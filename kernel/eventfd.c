@@ -39,7 +39,7 @@ static ssize_t eventfd_read(struct fd *fd, void *buf, size_t bufsize) {
     fd->eventfd.val = 0;
     notify(&fd->cond);
     unlock(&fd->lock);
-    poll_wakeup(fd);
+    poll_wakeup(fd, POLL_WRITE);
     return sizeof(uint64_t);
 }
 
@@ -65,7 +65,7 @@ static ssize_t eventfd_write(struct fd *fd, const void *buf, size_t bufsize) {
     fd->eventfd.val += increment;
     notify(&fd->cond);
     unlock(&fd->lock);
-    poll_wakeup(fd);
+    poll_wakeup(fd, POLL_READ);
     return sizeof(uint64_t);
 }
 

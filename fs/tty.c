@@ -80,12 +80,12 @@ struct tty *tty_get(struct tty_driver *driver, int type, int num) {
     return tty;
 }
 
-static void tty_poll_wakeup(struct tty *tty) {
+static void tty_poll_wakeup(struct tty *tty, int events) {
     unlock(&tty->lock);
     struct fd *fd;
     lock(&tty->fds_lock);
     list_for_each_entry(&tty->fds, fd, tty_other_fds) {
-        poll_wakeup(fd);
+        poll_wakeup(fd, events);
     }
     unlock(&tty->fds_lock);
     lock(&tty->lock);
@@ -109,7 +109,7 @@ void tty_release(struct tty *tty) {
         unlock(&tty->lock);
         if (master != NULL) {
             lock(&master->lock);
-            tty_poll_wakeup(master);
+            tty_poll_wakeup(master, POLL_READ | POLL_HUP);
             unlock(&master->lock);
         }
     }
@@ -211,7 +211,7 @@ static int tty_close(struct fd *fd) {
 
 static void tty_input_wakeup(struct tty *tty) {
     notify(&tty->produced);
-    tty_poll_wakeup(tty);
+    tty_poll_wakeup(tty, POLL_READ);
 }
 
 static int tty_push_char(struct tty *tty, char ch, bool flag, int blocking) {
@@ -767,7 +767,7 @@ void tty_set_winsize(struct tty *tty, struct winsize_ winsize) {
 
 void tty_hangup(struct tty *tty) {
     tty->hung_up = true;
-    tty_poll_wakeup(tty);
+    tty_poll_wakeup(tty, POLL_READ | POLL_WRITE | POLL_ERR | POLL_HUP);
 }
 
 struct dev_ops tty_dev = {

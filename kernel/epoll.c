@@ -50,13 +50,6 @@ int_t sys_epoll_ctl(fd_t epoll_f, int_t op, fd_t f, addr_t event_addr) {
     if (user_get(event_addr, event))
         return _EFAULT;
     STRACE(" {events: %#x, data: %#x}", event.events, event.data);
-    if (event.events & EPOLLET_) {
-        // The exact semantics of EPOLLET are hard to emulate on Darwin, so
-        // let's play it safe. Common patterns using EPOLLET will work fine
-        // without it, albiet inefficiently.
-        TRACE("ignoring EPOLLET\n");
-        event.events &= ~EPOLLET_;
-    }
 
     if (op == EPOLL_CTL_ADD_) {
         if (poll_has_fd(epoll->epollfd.poll, fd))
@@ -77,7 +70,6 @@ static int epoll_callback(void *context, int types, union poll_fd_info info) {
     struct epoll_context *c = context;
     if (c->n >= c->max_events)
         return 0;
-    STRACE(" {events: %#x, data: %#x}", types, info.num);
     c->events[c->n++] = (struct epoll_event_) {.events = types, .data = info.num};
     return 1;
 }
@@ -103,9 +95,13 @@ int_t sys_epoll_wait(fd_t epoll_f, addr_t events_addr, int_t max_events, int_t t
     STRACE("...\n");
     int res = poll_wait(epoll->epollfd.poll, epoll_callback, &context, timeout < 0 ? NULL : &timeout_ts);
     STRACE("%d end epoll_wait", current->pid);
-    if (res >= 0)
+    if (res >= 0) {
+        for (int i = 0; i < res; i++) {
+            STRACE(" {events: %#x, data: %#x}", events[i].events, events[i].data);
+        }
         if (user_write(events_addr, events, sizeof(struct epoll_event_) * res))
             return _EFAULT;
+    }
     return res;
 }
 

@@ -336,7 +336,7 @@ static void timerfd_callback(struct fd *fd) {
     fd->timerfd.expirations++;
     notify(&fd->cond);
     unlock(&fd->lock);
-    poll_wakeup(fd);
+    poll_wakeup(fd, POLL_READ);
 }
 
 fd_t sys_timerfd_create(int_t clockid, int_t flags) {
