@@ -137,10 +137,10 @@ do_helper 2
     do_helper write, \size
 .endr
 
-.macro do_vec_helper rm, size=
-    .gadget vec_helper_\rm\size
+.macro do_vec_helper rm, _imm, size=
+    .gadget vec_helper_\rm\size\_imm
         .ifin(\rm, read,write)
-            \rm\()_prep (\size), vec_helper_\rm\size
+            \rm\()_prep (\size), vec_helper_\rm\size\_imm
         .endifin
         save_regs
         save_c
@@ -178,6 +178,16 @@ do_helper 2
             leaq (%_cpu,%r14), %rdx
         .endif
 
+        .ifc _imm,_imm
+            # imm for third argument
+            .ifin(\rm, reg)
+                movl 12(%_ip), %ecx
+            .endifin
+            .ifin(\rm, read,write)
+                movl 20(%_ip), %ecx
+            .endifin
+        .endif
+
         .ifin(\rm, read,write)
             callq *8(%_ip)
         .endifin
@@ -188,7 +198,7 @@ do_helper 2
         restore_c
         load_regs
         .ifc \rm,write
-            write_done (\size), vec_helper_\rm\size
+            write_done (\size), vec_helper_\rm\size\_imm
         .endif
         .ifin(\rm, reg,imm)
             gret 2
@@ -198,12 +208,14 @@ do_helper 2
         .endifin
 .endm
 
-.irp rm, reg,imm
-    do_vec_helper \rm
-.endr
-.irp size, SIZE_LIST,64,128
-    do_vec_helper read, \size
-    do_vec_helper write, \size
+.irp _imm, ,_imm
+    .irp rm, reg,imm
+        do_vec_helper \rm, \_imm
+    .endr
+    .irp size, SIZE_LIST,64,128
+        do_vec_helper read, \_imm, \size
+        do_vec_helper write, \_imm, \size
+    .endr
 .endr
 
 .gadget fstsw_ax

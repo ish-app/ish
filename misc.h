@@ -54,6 +54,8 @@ static inline void __use(int dummy __attribute__((unused)), ...) {}
     })
 #endif
 
+#define array_size(arr) (sizeof(arr)/sizeof((arr)[0]))
+
 // types
 typedef int64_t sqword_t;
 typedef uint64_t qword_t;

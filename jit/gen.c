@@ -442,7 +442,7 @@ static inline uint16_t cpu_reg_offset(enum arg arg, int index) {
     return 0;
 }
 
-static inline bool gen_vec(enum arg src, enum arg dst, void (*helper)(), gadget_t read_mem_gadget, gadget_t write_mem_gadget, struct gen_state *state, struct modrm *modrm, uint8_t imm, dword_t saved_ip, bool seg_gs) {
+static inline bool gen_vec(enum arg src, enum arg dst, void (*helper)(), gadget_t read_mem_gadget, gadget_t write_mem_gadget, struct gen_state *state, struct modrm *modrm, uint8_t imm, dword_t saved_ip, bool seg_gs, bool has_imm) {
     bool rm_is_src = !could_be_memory(dst);
     enum arg rm = rm_is_src ? src : dst;
     enum arg reg = rm_is_src ? dst : src;
@@ -454,18 +454,27 @@ static inline bool gen_vec(enum arg src, enum arg dst, void (*helper)(), gadget_
     if (could_be_memory(rm) && modrm->type != modrm_reg)
         rm = arg_mem;
 
+    uint64_t imm_arg = 0;
+    if (has_imm)
+        imm_arg = (uint64_t) imm << 32;
+
     switch (rm) {
         case arg_xmm_modrm_val:
         case arg_mm_modrm_val:
         case arg_modrm_val:
             assert(rm_reg_offset != 0);
-            g(vec_helper_reg);
+            if (!has_imm)
+                g(vec_helper_reg);
+            else
+                g(vec_helper_reg_imm);
             GEN(helper);
             // first byte is src, second byte is dst
+            uint64_t arg;
             if (rm_is_src)
-                GEN(rm_reg_offset | (reg_offset << 16));
+                arg = rm_reg_offset | (reg_offset << 16);
             else
-                GEN(reg_offset | (rm_reg_offset << 16));
+                arg = reg_offset | (rm_reg_offset << 16);
+            GEN(arg | imm_arg);
             break;
 
         case arg_mem:
@@ -473,7 +482,7 @@ static inline bool gen_vec(enum arg src, enum arg dst, void (*helper)(), gadget_
             GEN(rm_is_src ? read_mem_gadget : write_mem_gadget);
             GEN(saved_ip);
             GEN(helper);
-            GEN(reg_offset);
+            GEN(reg_offset | imm_arg);
             break;
 
         case arg_imm:
@@ -489,15 +498,18 @@ static inline bool gen_vec(enum arg src, enum arg dst, void (*helper)(), gadget_
     return true;
 }
 
-#define _v(src, dst, helper, z) do { \
-    extern void gadget_vec_helper_read##z(void); \
-    extern void gadget_vec_helper_write##z(void); \
-    if (!gen_vec(src, dst, (void (*)()) helper, gadget_vec_helper_read##z, gadget_vec_helper_write##z, state, &modrm, imm, saved_ip, seg_gs)) return false; \
+#define has_imm_ false
+#define has_imm__imm true
+#define _v(src, dst, helper, _imm, z) do { \
+    extern void gadget_vec_helper_read##z##_imm(void); \
+    extern void gadget_vec_helper_write##z##_imm(void); \
+    if (!gen_vec(src, dst, (void (*)()) helper, gadget_vec_helper_read##z##_imm, gadget_vec_helper_write##z##_imm, state, &modrm, imm, saved_ip, seg_gs, has_imm_##_imm)) return false; \
 } while (0)
-#define v_(op, src, dst,z) _v(arg_##src, arg_##dst, vec_##op##z, z)
-#define v(op, src, dst,z) v_(op, src, dst,z)
-#define v_imm(op, _imm, dst,z) do { imm = _imm; v(op, imm, dst,z); } while (0)
+#define v_(op, src, dst, _imm,z) _v(arg_##src, arg_##dst, vec_##op##z, _imm,z)
+#define v(op, src, dst,z) v_(op, src, dst,,z)
+#define v_imm(op, src, dst,z) v_(op, src, dst, _imm,z)
 
+#define vec_dst_size_modrm_val 32
 #define vec_dst_size_mm_modrm_val 64
 #define vec_dst_size_mm_modrm_reg 64
 #define vec_dst_size_xmm_modrm_val 128
@@ -519,8 +531,9 @@ static inline bool gen_vec(enum arg src, enum arg dst, void (*helper)(), gadget_
     }
 
 #define VCOMPARE(src, dst,z) v(compare, src, dst,z)
-#define VSHIFTR_IMM(src, dst, z) v_imm(imm_shiftr, src, dst,z)
+#define VSHIFTR_IMM(src, dst, z) v(imm_shiftr, src, dst,z)
 #define V_OP(op, src, dst, z) v(op, src, dst, z)
+#define V_OP_IMM(op, src, dst, z) v_imm(op, src, dst, z)
 
 #define DECODER_RET int
 #define DECODER_NAME gen_step
