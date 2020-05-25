@@ -187,7 +187,7 @@ do_helper 2
     do_helper write, \size
 .endr
 
-.macro do_vec_helper rm, size=
+.macro do_vec_helper rm, _imm, size=
     .gadget vec_helper_\rm\size\_imm
         .ifin(\rm, read,write)
             \rm\()_prep (\size), vec_helper_\rm\size\_imm
@@ -231,7 +231,6 @@ do_helper 2
             # imm for third argument
             .ifin(\rm, reg)
                 ldr w3, [_ip, 12]
-                movl 12(%_ip), %ecx
             .endifin
             .ifin(\rm, read,write)
                 ldr w3, [_ip, 20]
@@ -269,7 +268,7 @@ do_helper 2
         do_vec_helper \rm, \_imm
     .endr
     .irp size, SIZE_LIST,64,128
-        do_vec_helper read, \_imm, size
+        do_vec_helper read, \_imm, \size
         do_vec_helper write, \_imm, \size
     .endr
 .endr
