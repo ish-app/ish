@@ -299,7 +299,9 @@ int cpu_step32(struct cpu_state *cpu, struct tlb *tlb) {
 
     struct jit_block *block = state.block;
     struct jit_frame frame = {.cpu = *cpu};
+    read_wrlock(&cpu->mem->lock);
     int interrupt = jit_enter(block, &frame, tlb);
+    read_wrunlock(&cpu->mem->lock);
     *cpu = frame.cpu;
     jit_block_free(NULL, block);
     return interrupt;
