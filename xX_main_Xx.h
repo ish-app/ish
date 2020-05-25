@@ -45,11 +45,12 @@ static inline int xX_main_Xx(int argc, char *const argv[], const char *envp) {
 
     // parse cli options
     int opt;
-    const char *root = "";
+    const char *root = NULL;
     bool has_root = false;
+    const char *workdir = NULL;
     const struct fs_ops *fs = &realfs;
     const char *console = "/dev/tty1";
-    while ((opt = getopt(argc, argv, "+r:f:c:")) != -1) {
+    while ((opt = getopt(argc, argv, "+r:f:d:c:")) != -1) {
         switch (opt) {
             case 'r':
             case 'f':
@@ -58,14 +59,18 @@ static inline int xX_main_Xx(int argc, char *const argv[], const char *envp) {
                 if (opt == 'f')
                     fs = &fakefs;
                 break;
+            case 'd':
+                workdir = optarg;
+                break;
             case 'c':
                 console = optarg;
                 break;
+
         }
     }
 
     char root_realpath[MAX_PATH + 1] = "/";
-    if (has_root && realpath(root, root_realpath) == NULL) {
+    if (root != NULL && realpath(root, root_realpath) == NULL) {
         perror(root);
         exit(1);
     }
@@ -77,10 +82,17 @@ static inline int xX_main_Xx(int argc, char *const argv[], const char *envp) {
 
     become_first_process();
     current->thread = pthread_self();
-    if (!has_root) {
-        char cwd[MAX_PATH + 1];
+    char cwd[MAX_PATH + 1];
+    if (root == NULL && workdir == NULL) {
         getcwd(cwd, sizeof(cwd));
-        struct fd *pwd = generic_open(cwd, O_RDONLY_, 0);
+        workdir = cwd;
+    }
+    if (workdir != NULL) {
+        struct fd *pwd = generic_open(workdir, O_RDONLY_, 0);
+        if (IS_ERR(pwd)) {
+            fprintf(stderr, "error opening working dir: %ld\n", PTR_ERR(pwd));
+            return 1;
+        }
         fs_chdir(current->fs, pwd);
     }
 
