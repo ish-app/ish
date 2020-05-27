@@ -220,8 +220,10 @@ static bool reap_if_zombie(struct task *task, struct siginfo_ *info_out, struct 
 }
 
 static bool notify_if_stopped(struct task *task, struct siginfo_ *info_out) {
-    // FIXME the check of task->group->stopped needs locking I think
-    if (!task->group->stopped || task->group->group_exit_code == 0)
+    lock(&task->group->lock);
+    bool stopped = task->group->stopped;
+    unlock(&task->group->lock);
+    if (!stopped || task->group->group_exit_code == 0)
         return false;
     dword_t exit_code = task->group->group_exit_code;
     task->group->group_exit_code = 0;

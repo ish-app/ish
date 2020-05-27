@@ -180,7 +180,9 @@ dword_t sys_clone(dword_t flags, addr_t stack, addr_t ptid, addr_t tls, addr_t c
             // FIXME this should stop waiting if a fatal signal is received
             wait_for_ignore_signals(&vfork.cond, &vfork.lock, NULL);
         unlock(&vfork.lock);
+        lock(&task->general_lock);
         task->vfork = NULL;
+        unlock(&task->general_lock);
         cond_destroy(&vfork.cond);
     }
     return pid;
@@ -195,10 +197,12 @@ dword_t sys_vfork() {
 }
 
 void vfork_notify(struct task *task) {
+    lock(&task->general_lock);
     if (task->vfork) {
         lock(&task->vfork->lock);
         task->vfork->done = true;
         notify(&task->vfork->cond);
         unlock(&task->vfork->lock);
     }
+    unlock(&task->general_lock);
 }
