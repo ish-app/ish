@@ -1,3 +1,5 @@
+#include "kernel/signal.h"
+#include "task.h"
 #define _GNU_SOURCE
 #include <unistd.h>
 #include <fcntl.h>
@@ -614,6 +616,17 @@ int __do_execve(const char *file, struct exec_args argv, struct exec_args envp) 
 
     current->did_exec = true;
     vfork_notify(current);
+
+    if (current->ptrace.traced) {
+        lock(&pids_lock);
+        send_signal(current, SIGTRAP_, (struct siginfo_) {
+            .code = SI_USER_,
+            .kill.pid = current->pid,
+            .kill.uid = current->uid,
+        });
+        unlock(&pids_lock);
+    }
+
     return 0;
 }
 

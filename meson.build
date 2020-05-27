@@ -66,6 +66,7 @@ src = [
     'kernel/misc.c',
     'kernel/eventfd.c',
     'kernel/ipc.c',
+    'kernel/ptrace.c',
 
     'kernel/fs.c',
     'kernel/fs_info.c',

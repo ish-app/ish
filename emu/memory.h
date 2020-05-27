@@ -3,6 +3,7 @@
 
 #include <stdatomic.h>
 #include <unistd.h>
+#include <stdbool.h>
 #include "util/list.h"
 #include "util/sync.h"
 #include "misc.h"
@@ -112,6 +113,7 @@ int pt_copy_on_write(struct mem *src, struct mem *dst, page_t start, page_t page
 
 #define MEM_READ 0
 #define MEM_WRITE 1
+#define MEM_WRITE_PTRACE 2
 // Must call with mem read-locked.
 void *mem_ptr(struct mem *mem, addr_t addr, int type);
 int mem_segv_reason(struct mem *mem, addr_t addr);

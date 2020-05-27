@@ -47,6 +47,18 @@ struct task {
     sigset_t_ saved_mask;
     bool has_saved_mask;
 
+    struct {
+        // Locks all ptrace-related things
+        lock_t lock;
+        cond_t cond;
+
+        bool traced;
+        bool stopped;
+        int signal;
+        struct siginfo_ info;
+        int trap_event;
+    } ptrace;
+
     // locked by pids_lock
     struct task *parent;
     struct list children;
@@ -137,6 +149,8 @@ struct tgroup {
 
     struct rusage_ children_rusage;
     cond_t child_exit;
+
+    dword_t personality;
 
     // for everything in this struct not locked by something else
     lock_t lock;

@@ -2,6 +2,8 @@
 #include "debug.h"
 #include "kernel/calls.h"
 #include "emu/interrupt.h"
+#include "kernel/signal.h"
+#include "kernel/task.h"
 
 dword_t syscall_stub() {
     return _ENOSYS;
@@ -34,6 +36,7 @@ syscall_t syscall_table[] = {
     [23]  = (syscall_t) sys_setuid,
     [24]  = (syscall_t) sys_getuid,
     [25]  = (syscall_t) sys_stime,
+    [26]  = (syscall_t) sys_ptrace,
     [27]  = (syscall_t) sys_alarm,
     [29]  = (syscall_t) sys_pause,
     [30]  = (syscall_t) sys_utime,
@@ -276,6 +279,20 @@ void handle_interrupt(int interrupt) {
             .fault.addr = cpu->eip,
         };
         deliver_signal(current, SIGILL_, info);
+    } else if (interrupt == INT_BREAKPOINT) {
+        lock(&pids_lock);
+        send_signal(current, SIGTRAP_, (struct siginfo_) {
+            .sig = SIGTRAP_,
+            .code = SI_KERNEL_,
+        });
+        unlock(&pids_lock);
+    } else if (interrupt == INT_DEBUG) {
+        lock(&pids_lock);
+        send_signal(current, SIGTRAP_, (struct siginfo_) {
+            .sig = SIGTRAP_,
+            .code = TRAP_TRACE_,
+        });
+        unlock(&pids_lock);
     } else if (interrupt != INT_TIMER) {
         printk("%d unhandled interrupt %d\n", current->pid, interrupt);
         sys_exit(interrupt);

@@ -1,4 +1,6 @@
 #include "kernel/calls.h"
+#include "kernel/task.h"
+#include "kernel/personality.h"
 
 pid_t_ sys_getpid() {
     STRACE("getpid()");
@@ -186,10 +188,15 @@ int_t sys_capset(addr_t header_addr, addr_t data_addr) {
 }
 
 // minimal version according to Linux sys/personality.h
-int_t sys_personality(dword_t pers) {
-    if (pers == 0xffffffff)  // get personality, return default (Linux)
-        return 0x00000000;
-    if (pers == 0x00000000)  // set personality to Linux
-        return 0x00000000;
-    return _EINVAL;  // otherwise return error
+int_t sys_personality(dword_t persona) {
+    STRACE("personality(%#x)", persona);
+    // Get the personality
+    if (persona == 0xffffffff)
+        return current->group->personality;
+
+    // ADDR_NO_RANDOMIZE is the only thing we support, and you can't turn it off
+    if (persona != ADDR_NO_RANDOMIZE_)
+        return _EINVAL;
+
+    return current->group->personality;
 }
