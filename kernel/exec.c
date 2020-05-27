@@ -598,11 +598,7 @@ int __do_execve(const char *file, struct exec_args argv, struct exec_args envp) 
     char threadname[16];
     strncpy(threadname, current->comm, sizeof(threadname)-1);
     threadname[15] = '\0';
-#if __APPLE__
-    pthread_setname_np(threadname);
-#else
-    pthread_setname_np(pthread_self(), threadname);
-#endif
+    set_thread_name(threadname);
 
     // cloexec
     // consider putting this in fd.c?
