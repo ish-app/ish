@@ -118,4 +118,10 @@ static inline void sigunwind_end() {
     should_unwind = false;
 }
 
+#if __APPLE__
+#define set_thread_name(threadname) pthread_setname_np(threadname)
+#else
+#define set_thread_name(threadname) pthread_setname_np(pthread_self(), threadname)
+#endif
+
 #endif
