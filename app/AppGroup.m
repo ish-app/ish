@@ -41,14 +41,14 @@ static NSDictionary *AppEntitlements() {
         return nil;
     if (dl_info.dli_fbase == NULL)
         return nil;
-    uint8_t *base = dl_info.dli_fbase;
+    char *base = dl_info.dli_fbase;
     struct mach_header_64 *header = dl_info.dli_fbase;
     if (header->magic != MH_MAGIC_64)
         return nil;
     
     // Simulator executables have fake entitlements in the code signature. The real entitlements can be found in an __entitlements section.
     size_t entitlements_size;
-    uint8_t *entitlements_data = getsectiondata(header, "__TEXT", "__entitlements", &entitlements_size);
+    char *entitlements_data = getsectiondata(header, "__TEXT", "__entitlements", &entitlements_size);
     if (entitlements_data != NULL) {
         NSData *data = [NSData dataWithBytesNoCopy:entitlements_data
                                             length:entitlements_size
@@ -67,7 +67,7 @@ static NSDictionary *AppEntitlements() {
             cs_lc = (void *) lc;
             break;
         }
-        lc = (void *) ((uint8_t *) lc + lc->cmdsize);
+        lc = (void *) ((char *) lc + lc->cmdsize);
     }
     if (cs_lc == NULL)
         return nil;
@@ -86,7 +86,7 @@ static NSDictionary *AppEntitlements() {
     // Find the entitlements in the code signature
     NSData *entitlementsData = nil;
     for (uint32_t i = 0; i < ntohl(cs->count); i++) {
-        struct cs_entitlements *ents = (void *) ((uint8_t *) cs + ntohl(cs->index[i].offset));
+        struct cs_entitlements *ents = (void *) ((char *) cs + ntohl(cs->index[i].offset));
         if (ntohl(ents->magic) == 0xfade7171) {
             entitlementsData = [NSData dataWithBytes:ents->entitlements
                                               length:ntohl(ents->length) - offsetof(struct cs_entitlements, entitlements)];
