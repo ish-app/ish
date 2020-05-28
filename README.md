@@ -15,7 +15,7 @@ A project to get a Linux shell running on iOS, using usermode x86 emulation and 
 For the current status of the project, check the issues tab, and the commit logs.
 
 - [Testflight beta](https://testflight.apple.com/join/97i7KM8O)
-- [Discord server](https://discord.gg/SndDh5y)
+- [Discord server](https://discord.gg/HFAXj44)
 - [Wiki with help and tutorials](https://github.com/ish-app/ish/wiki)
 - [README in Chinese](https://github.com/ish-app/ish/blob/master/README_ZH.md) (may be out of date, if so send PRs)
 
