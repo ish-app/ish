@@ -85,7 +85,7 @@
     } else if (cell == self.openTwitter) {
         [UIApplication openURL:@"https://twitter.com/tblodt"];
     } else if (cell == self.openDiscord) {
-        [UIApplication openURL:@"https://discord.gg/SndDh5y"];
+        [UIApplication openURL:@"https://discord.gg/HFAXj44"];
     } else if (cell == self.exportContainerCell) {
         // copy the files to the app container so they can be extracted from iTunes file sharing
         NSURL *container = ContainerURL();
