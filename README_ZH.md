@@ -15,7 +15,7 @@
 想要了解项目目前的状况, 详见 issue 和 提交记录.
 
 - [Testflight beta](https://testflight.apple.com/join/97i7KM8O)
-- [Discord server](https://discord.gg/SndDh5y)
+- [Discord server](https://discord.gg/HFAXj44)
 - [Wiki with help and tutorials](https://github.com/ish-app/ish/wiki)
 
 # 运行项目
