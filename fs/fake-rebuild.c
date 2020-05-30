@@ -71,7 +71,7 @@ int fakefs_rebuild(struct mount *mount) {
     for (unsigned i = 0; i < HASH_SIZE; i++)
         list_init(&hashtable[i]);
 
-    while (sqlite3_step(get_paths) == SQLITE_ROW) {
+    while (STEP(get_paths)) {
         const char *path = (const char *) sqlite3_column_text(get_paths, 0);
         ino_t inode = sqlite3_column_int64(get_paths, 1);
 
