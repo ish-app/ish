@@ -283,7 +283,15 @@ restart:
                 case 0x73: READMODRM;
                            switch (modrm.opcode) {
                                case 0x02: TRACEI("psrlq imm, xmm");
-                                          READIMM8; VSHIFTR_IMM(imm, xmm_modrm_reg,64); break;
+                                          READIMM8;
+                                          VSHIFTR_IMM(imm, xmm_modrm_reg,64);
+                                          break;
+
+                               case 0x06: TRACEI("psllq imm, xmm");
+                                          READIMM8;
+                                          VSHIFTL_IMM(imm, xmm_modrm_reg,64);
+                                          break;
+
                                default: UNDEFINED;
                            }
                            break;

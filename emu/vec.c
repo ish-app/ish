@@ -58,6 +58,15 @@ void vec_merge128(NO_CPU, const void *src, void *dst) {
     memcpy(dst, src, 16);
 }
 
+void vec_imm_shiftl64(NO_CPU, const uint8_t amount, union xmm_reg *dst) {
+    if (amount > 63) {
+        zero_xmm(dst);
+    } else {
+        dst->qw[0] <<= amount;
+        dst->qw[1] <<= amount;
+    }
+}
+
 void vec_imm_shiftr64(NO_CPU, const uint8_t amount, union xmm_reg *dst) {
     if (amount > 63) {
         zero_xmm(dst);
