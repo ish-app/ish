@@ -36,6 +36,8 @@
 #define __no_instrument
 #endif
 
+#define zero_init(type) ((type[1]){}[0])
+
 #define UNUSED(x) UNUSED_##x __attribute__((unused))
 static inline void __use(int dummy __attribute__((unused)), ...) {}
 #define use(...) __use(0, ##__VA_ARGS__)

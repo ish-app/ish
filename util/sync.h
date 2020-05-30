@@ -6,6 +6,7 @@
 #include <stdbool.h>
 #include <setjmp.h>
 #include "misc.h"
+#include "debug.h"
 
 // locks, implemented using pthread
 
@@ -43,7 +44,7 @@ static inline void unlock(lock_t *lock) {
 #if LOCK_DEBUG
     lock->debug = (struct lock_debug) {};
 #endif
-    lock->owner = NULL;
+    lock->owner = zero_init(pthread_t);
     pthread_mutex_unlock(&lock->m);
 }
 
