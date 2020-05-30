@@ -360,6 +360,8 @@ static void step_tracing(struct cpu_state *cpu, struct tlb *tlb, int pid, int se
                 pt_copy(pid, regs.rbx, sizeof(struct pollfd_) * regs.rcx); break;
             case 183: // getcwd
                 pt_copy(pid, regs.rbx, cpu->eax); break;
+            case 186: // sigaltstack
+                if (regs.rcx != 0) pt_copy(pid, regs.rcx, sizeof(struct stack_t_)); break;
             case 195: // stat64
             case 196: // lstat64
             case 197: // fstat64

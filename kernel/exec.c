@@ -14,6 +14,7 @@
 #include "fs/fd.h"
 #include "kernel/elf.h"
 #include "kernel/vdso.h"
+#include "tools/ptraceomatic-config.h"
 
 #define ARGV_MAX 32 * PAGE_SIZE
 
@@ -266,11 +267,10 @@ static int elf_exec(struct fd *fd, const char *file, struct exec_args argv, stru
     addr_t vdso_entry = current->mm->vdso + ((struct elf_header *) vdso_data)->entry_point;
 
     // map 3 empty "vvar" pages to satisfy ptraceomatic
-#define NUM_VVAR 3
-    page_t vvar_page = pt_find_hole(current->mem, NUM_VVAR);
+    page_t vvar_page = pt_find_hole(current->mem, VVAR_PAGES);
     if (vvar_page == BAD_PAGE)
         goto beyond_hope;
-    if ((err = pt_map_nothing(current->mem, vvar_page, NUM_VVAR, 0)) < 0)
+    if ((err = pt_map_nothing(current->mem, vvar_page, VVAR_PAGES, 0)) < 0)
         goto beyond_hope;
     mem_pt(current->mem, vvar_page)->data->name = "[vvar]";
 
