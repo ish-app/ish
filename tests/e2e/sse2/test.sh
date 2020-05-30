@@ -18,3 +18,7 @@ gcc -msse2 psllq.c -o test_psllq
 echo psrlq
 gcc -msse2 psrlq.c -o test_psrlq
 ./test_psrlq
+
+echo paddq
+gcc -msse2 paddq.c -o test_paddq
+./test_paddq

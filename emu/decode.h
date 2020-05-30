@@ -310,6 +310,9 @@ restart:
                 case 0xc5: TRACEI("pextrw xmm, modrm_val, imm8");
                            READMODRM_NOMEM; READIMM8; V_OP_IMM(extract_w, xmm_modrm_val, modrm_reg,128); break;
 
+                case 0xd4: TRACEI("paddq xmm:modrm, xmm");
+                           READMODRM; V_OP(add, xmm_modrm_val, xmm_modrm_reg, 64); break;
+
                 case 0xd6: TRACEI("movq xmm, xmm:modrm");
                            READMODRM; VMOV(xmm_modrm_reg, xmm_modrm_val,64); break;
 

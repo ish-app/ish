@@ -81,6 +81,11 @@ void vec_xor128(NO_CPU, union xmm_reg *src, union xmm_reg *dst) {
     dst->qw[1] ^= src->qw[1];
 }
 
+void vec_add64(NO_CPU, union xmm_reg *src, union xmm_reg *dst) {
+    dst->qw[0] += src->qw[0];
+    dst->qw[1] += src->qw[1];
+}
+
 void vec_fadds64(NO_CPU, const double *src, double *dst) {
     *dst += *src;
 }

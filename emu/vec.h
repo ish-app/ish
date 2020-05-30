@@ -22,6 +22,8 @@ void vec_imm_shiftl64(NO_CPU, const uint8_t amount, union xmm_reg *dst);
 void vec_imm_shiftr64(NO_CPU, const uint8_t amount, union xmm_reg *dst);
 void vec_xor128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
 
+void vec_add64(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
+
 void vec_fadds64(NO_CPU, const double *src, double *dst);
 void vec_fmuls64(NO_CPU, const double *src, double *dst);
 void vec_fsubs64(NO_CPU, const double *src, double *dst);
