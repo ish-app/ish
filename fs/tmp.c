@@ -240,7 +240,7 @@ static void tmpfs_unmount_tree(struct tmp_inode *tree) {
 }
 #endif
 
-static int tmpfs_umount(struct mount *mount) {
+static int tmpfs_umount(struct mount *UNUSED(mount)) {
     // big fat fuckin TODO
     // struct tmp_inode *root = mount->data;
     // tmpfs_unmount_tree(root);

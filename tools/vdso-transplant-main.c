@@ -16,7 +16,7 @@
 #include "ptutil.h"
 #include "transplant.h"
 
-int main(int argc, char *const argv[]) {
+int main(int UNUSED(argc), char *const argv[]) {
     char *const envp[] = {NULL};
     int pid = start_tracee(AT_FDCWD, argv[2], argv + 2, envp);
 

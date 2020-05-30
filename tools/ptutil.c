@@ -20,11 +20,6 @@ long trycall(long res, const char *msg) {
     return res;
 }
 
-// wow i'm sooo bleeding edge
-static int arch_prctl(int code, unsigned long arg) {
-    return syscall(SYS_arch_prctl, code, arg);
-}
-
 int start_tracee(int at, const char *path, char *const argv[], char *const envp[]) {
     // shut off aslr
     int persona = personality(0xffffffff);
@@ -40,7 +35,6 @@ int start_tracee(int at, const char *path, char *const argv[], char *const envp[
         // child
         // enable segfaulting on rdtsc and cpuid
         trycall(prctl(PR_SET_TSC, PR_TSC_SIGSEGV), "rdtsc faulting");
-        /* trycall(arch_prctl(ARCH_SET_CPUID, 0), "cpuid faulting"); */
         trycall(ptrace(PTRACE_TRACEME, 0, NULL, NULL), "ptrace traceme");
         // get rid of signal handlers
         for (int sig = 0; sig < SIGRTMIN - 1; sig++)
