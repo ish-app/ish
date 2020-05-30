@@ -531,8 +531,6 @@ static inline bool gen_vec(enum arg src, enum arg dst, void (*helper)(), gadget_
     }
 
 #define VCOMPARE(src, dst,z) v(compare, src, dst,z)
-#define VSHIFTL_IMM(src, dst, z) v(imm_shiftl, src, dst,z)
-#define VSHIFTR_IMM(src, dst, z) v(imm_shiftr, src, dst,z)
 #define V_OP(op, src, dst, z) v(op, src, dst, z)
 #define V_OP_IMM(op, src, dst, z) v_imm(op, src, dst, z)
 

@@ -58,7 +58,7 @@ void vec_merge128(NO_CPU, const void *src, void *dst) {
     memcpy(dst, src, 16);
 }
 
-void vec_imm_shiftl64(NO_CPU, const uint8_t amount, union xmm_reg *dst) {
+void vec_imm_shiftl_q128(NO_CPU, const uint8_t amount, union xmm_reg *dst) {
     if (amount > 63) {
         zero_xmm(dst);
     } else {
@@ -67,7 +67,7 @@ void vec_imm_shiftl64(NO_CPU, const uint8_t amount, union xmm_reg *dst) {
     }
 }
 
-void vec_imm_shiftr64(NO_CPU, const uint8_t amount, union xmm_reg *dst) {
+void vec_imm_shiftr_q128(NO_CPU, const uint8_t amount, union xmm_reg *dst) {
     if (amount > 63) {
         zero_xmm(dst);
     } else {
@@ -81,7 +81,7 @@ void vec_xor128(NO_CPU, union xmm_reg *src, union xmm_reg *dst) {
     dst->qw[1] ^= src->qw[1];
 }
 
-void vec_add64(NO_CPU, union xmm_reg *src, union xmm_reg *dst) {
+void vec_add_q128(NO_CPU, union xmm_reg *src, union xmm_reg *dst) {
     dst->qw[0] += src->qw[0];
     dst->qw[1] += src->qw[1];
 }
