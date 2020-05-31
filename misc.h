@@ -36,6 +36,8 @@
 #define must_check __attribute__((warn_unused_result))
 #if is_gcc(7) || is_clang(10)
 #define fallthrough __attribute__((fallthrough))
+#else
+#define fallthrough
 #endif
 
 #if defined(__has_attribute) && __has_attribute(no_sanitize)
