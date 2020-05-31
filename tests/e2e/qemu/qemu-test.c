@@ -2417,8 +2417,8 @@ void test_sse(void)
     // MMX_OP2(pmullw);
     // MMX_OP2(psubusb);
     // MMX_OP2(psubusw);
-    // MMX_OP2(pminub);
-    // MMX_OP2(pand);
+    SSE_OP2(pminub);
+    SSE_OP2(pand);
     // MMX_OP2(paddusb);
     // MMX_OP2(paddusw);
     // MMX_OP2(pmaxub);
@@ -2430,7 +2430,7 @@ void test_sse(void)
     // MMX_OP2(psubsb);
     // MMX_OP2(psubsw);
     // MMX_OP2(pminsw);
-    // MMX_OP2(por);
+    SSE_OP2(por);
     // MMX_OP2(paddsb);
     // MMX_OP2(paddsw);
     // MMX_OP2(pmaxsw);
@@ -2442,7 +2442,7 @@ void test_sse(void)
     // MMX_OP2(psubw);
     // MMX_OP2(psubd);
     // MMX_OP2(psubq);
-    // MMX_OP2(paddb);
+    SSE_OP2(paddb);
     // MMX_OP2(paddw);
     // MMX_OP2(paddd);
 
@@ -2497,14 +2497,14 @@ void test_sse(void)
 
     asm volatile ("emms");
 
-    // SSE_OP2(punpcklqdq);
+    SSE_OP2(punpcklqdq);
     // SSE_OP2(punpckhqdq);
     // SSE_OP2(andps);
     // SSE_OP2(andpd);
     // SSE_OP2(andnps);
     // SSE_OP2(andnpd);
     // SSE_OP2(orps);
-    // SSE_OP2(orpd);
+    SSE_OP2(orpd);
     // SSE_OP2(xorps);
     // SSE_OP2(xorpd);
 

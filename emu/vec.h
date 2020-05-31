@@ -22,10 +22,13 @@ void vec_imm_shiftl_q128(NO_CPU, const uint8_t amount, union xmm_reg *dst);
 void vec_imm_shiftr_q128(NO_CPU, const uint8_t amount, union xmm_reg *dst);
 void vec_shiftl_q128(NO_CPU, union xmm_reg *amount, union xmm_reg *dst);
 void vec_shiftr_q128(NO_CPU, union xmm_reg *amount, union xmm_reg *dst);
-
+void vec_and128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
+void vec_or128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
 void vec_xor128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
-
+void vec_add_b128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
 void vec_add_q128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
+
+void vec_min_ub128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
 
 void vec_fadds64(NO_CPU, const double *src, double *dst);
 void vec_fmuls64(NO_CPU, const double *src, double *dst);
@@ -38,6 +41,7 @@ void vec_cvtsd2ss64(NO_CPU, const double *src, float *dst);
 
 // TODO organize
 void vec_unpack_bw128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst);
+void vec_unpack_qdq128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst);
 void vec_shuffle_lw128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst, uint8_t encoding);
 void vec_shuffle_d128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst, uint8_t encoding);
 void vec_compare_eqb128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst);
