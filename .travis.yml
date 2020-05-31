@@ -35,6 +35,3 @@ jobs:
           script:
               - xcodebuild -project iSH.xcodeproj -scheme iSH -sdk iphoneos CODE_SIGNING_ALLOWED=NO
 
-    exclude:
-        - os: osx
-          compiler: gcc
