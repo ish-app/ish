@@ -76,6 +76,28 @@ void vec_imm_shiftr_q128(NO_CPU, const uint8_t amount, union xmm_reg *dst) {
     }
 }
 
+void vec_shiftl_q128(NO_CPU, union xmm_reg *amount, union xmm_reg *dst) {
+    uint64_t amount_qw = amount->qw[0];
+
+    if (amount_qw > 63) {
+        zero_xmm(dst);
+    } else {
+        dst->qw[0] <<= amount_qw;
+        dst->qw[1] <<= amount_qw;
+    }
+}
+
+void vec_shiftr_q128(NO_CPU, union xmm_reg *amount, union xmm_reg *dst) {
+    uint64_t amount_qw = amount->qw[0];
+
+    if (amount_qw > 63) {
+        zero_xmm(dst);
+    } else {
+        dst->qw[0] >>= amount_qw;
+        dst->qw[1] >>= amount_qw;
+    }
+}
+
 void vec_xor128(NO_CPU, union xmm_reg *src, union xmm_reg *dst) {
     dst->qw[0] ^= src->qw[0];
     dst->qw[1] ^= src->qw[1];
