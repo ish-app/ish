@@ -9,7 +9,7 @@ dword_t syscall_success_stub() {
     return 0;
 }
 
-#if defined(__GNUC__) && !defined(__clang__)
+#if is_gcc(8)
 #pragma GCC diagnostic ignored "-Wcast-function-type"
 #endif
 syscall_t syscall_table[] = {

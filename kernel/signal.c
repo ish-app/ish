@@ -7,7 +7,7 @@
 #include "kernel/vdso.h"
 #include "emu/interrupt.h"
 
-#if defined(__GNUC__) && !defined(__clang__)
+#if is_gcc(9)
 #pragma GCC diagnostic ignored "-Waddress-of-packed-member"
 #endif
 

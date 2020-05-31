@@ -18,6 +18,10 @@
 #define str(x) _str(x)
 #define _str(x) #x
 
+// compiler checks
+#define is_clang(version) (__clang__ && __clang_major__ >= version)
+#define is_gcc(version) (__GNUC__ >= version)
+
 // keywords
 #define bits unsigned int
 #define forceinline inline __attribute__((always_inline))
@@ -30,7 +34,9 @@
 #define unlikely(x) __builtin_expect((x), 0)
 #define typecheck(type, x) ({type _x = x; x;})
 #define must_check __attribute__((warn_unused_result))
+#if is_gcc(7) || is_clang(10)
 #define fallthrough __attribute__((fallthrough))
+#endif
 
 #if defined(__has_attribute) && __has_attribute(no_sanitize)
 #define __no_instrument_msan
