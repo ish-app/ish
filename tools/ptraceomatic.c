@@ -233,12 +233,15 @@ static void remote_close_fd(int pid, int fd, long int80_ip) {
     setregs(pid, &regs);
 }
 
+#define _ignore(x) {}; int UNUSED(x) =
+#define ignore _ignore(__COUNTER__)
+
 static void pt_copy(int pid, addr_t start, size_t size) {
     if (start == 0)
         return;
     byte_t byte;
     for (addr_t addr = start; addr < start + size; addr++) {
-        (void) user_get(addr, byte);
+        ignore user_get(addr, byte);
         pt_write8(pid, addr, byte);
     }
 }
@@ -248,7 +251,7 @@ static void pt_copy_to_real(int pid, addr_t start, size_t size) {
     byte_t byte;
     for (addr_t addr = start; addr < start + size; addr++) {
         pt_readn(pid, addr, &byte, sizeof(byte));
-        (void) user_put(addr, byte);
+        ignore user_put(addr, byte);
     }
 }
 
@@ -321,11 +324,11 @@ static void step_tracing(struct cpu_state *cpu, struct tlb *tlb, int pid, int se
                 pt_copy(pid, regs.rcx, regs.rdx); break;
             case 102: { // socketcall
                 dword_t args[6];
-                (void) user_get(regs.rcx, args);
+                ignore user_get(regs.rcx, args);
                 dword_t len;
                 switch (cpu->ebx) {
                     case 6: // getsockname
-                        (void) user_get(args[2], len);
+                        ;ignore user_get(args[2], len);
                         pt_copy(pid, args[1], len);
                         break;
                     case 8: // socketpair
@@ -333,7 +336,7 @@ static void step_tracing(struct cpu_state *cpu, struct tlb *tlb, int pid, int se
                         break;
                     case 12: // recvfrom
                         pt_copy(pid, args[1], args[2]);
-                        (void) user_get(args[5], len);
+                        ignore user_get(args[5], len);
                         pt_copy(pid, args[4], len);
                         break;
                 }
@@ -349,7 +352,7 @@ static void step_tracing(struct cpu_state *cpu, struct tlb *tlb, int pid, int se
                 pt_copy(pid, regs.rsi, 8); break;
             case 145: { // readv
                 struct iovec_ vecs[regs.rdx];
-                (void) user_get(regs.rcx, vecs);
+                ignore user_get(regs.rcx, vecs);
                 for (unsigned i = 0; i < regs.rdx; i++)
                     pt_copy(pid, vecs[i].base, vecs[i].len);
                 break;
@@ -361,7 +364,8 @@ static void step_tracing(struct cpu_state *cpu, struct tlb *tlb, int pid, int se
             case 183: // getcwd
                 pt_copy(pid, regs.rbx, cpu->eax); break;
             case 186: // sigaltstack
-                if (regs.rcx != 0) pt_copy(pid, regs.rcx, sizeof(struct stack_t_)); break;
+                if (regs.rcx != 0) pt_copy(pid, regs.rcx, sizeof(struct stack_t_));
+                break;
             case 195: // stat64
             case 196: // lstat64
             case 197: // fstat64
@@ -375,9 +379,11 @@ static void step_tracing(struct cpu_state *cpu, struct tlb *tlb, int pid, int se
             case 300: // fstatat64
                 pt_copy(pid, regs.rdx, sizeof(struct newstat64)); break;
             case 305: // readlinkat
-                if (cpu->eax < 0xffff000) pt_copy(pid, regs.rdx, cpu->eax); break;
+                if (cpu->eax < 0xffff000) pt_copy(pid, regs.rdx, cpu->eax);
+                break;
             case 340: // prlimit
-                if (regs.rsi != 0) pt_copy(pid, regs.rsi, sizeof(struct rlimit_)); break;
+                if (regs.rsi != 0) pt_copy(pid, regs.rsi, sizeof(struct rlimit_));
+                break;
             case 355: // getrandom
                 pt_copy(pid, regs.rbx, regs.rcx); break;
 

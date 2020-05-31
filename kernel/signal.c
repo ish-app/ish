@@ -7,6 +7,10 @@
 #include "kernel/vdso.h"
 #include "emu/interrupt.h"
 
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic ignored "-Waddress-of-packed-member"
+#endif
+
 int xsave_extra = 0;
 int fxsave_extra = 0;
 static void sigmask_set(sigset_t_ set);
@@ -285,9 +289,10 @@ static void receive_signal(struct sighand *sighand, struct siginfo_ *info) {
     }
 
     // install frame
-    (void) user_write(sp, &frame, frame_size);
-    // nothing we can do if that fails
-    // TODO do something other than nothing, like printk maybe
+    if (user_write(sp, &frame, frame_size)) {
+        printk("failed to install frame for %d at %#x\n", info->sig, sp);
+        deliver_signal(current, SIGSEGV_, SIGINFO_NIL);
+    }
 }
 
 void receive_signals() {
@@ -356,7 +361,10 @@ dword_t sys_rt_sigreturn() {
     struct cpu_state *cpu = &current->cpu;
     struct rt_sigframe_ frame;
     // esp points past the first field of the frame
-    (void) user_get(cpu->esp - offsetof(struct rt_sigframe_, sig), frame);
+    if (user_get(cpu->esp - offsetof(struct rt_sigframe_, sig), frame)) {
+        deliver_signal(current, SIGSEGV_, SIGINFO_NIL);
+        return _EFAULT;
+    }
     restore_sigcontext(&frame.uc.mcontext, cpu);
 
     lock(&current->sighand->lock);
@@ -375,8 +383,10 @@ dword_t sys_sigreturn() {
     struct cpu_state *cpu = &current->cpu;
     struct sigframe_ frame;
     // esp points past the first two fields of the frame
-    (void) user_get(cpu->esp - offsetof(struct sigframe_, sc), frame);
-    // TODO check for errors in that
+    if (user_get(cpu->esp - offsetof(struct sigframe_, sc), frame)) {
+        deliver_signal(current, SIGSEGV_, SIGINFO_NIL);
+        return _EFAULT;
+    }
     restore_sigcontext(&frame.sc, cpu);
 
     lock(&current->sighand->lock);

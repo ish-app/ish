@@ -9,6 +9,9 @@ dword_t syscall_success_stub() {
     return 0;
 }
 
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic ignored "-Wcast-function-type"
+#endif
 syscall_t syscall_table[] = {
     [1]   = (syscall_t) sys_exit,
     [2]   = (syscall_t) sys_fork,

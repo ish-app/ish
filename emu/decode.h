@@ -246,6 +246,7 @@ restart:
                                        CMPXCHG8B(modrm_val,64); break;
                                default: UNDEFINED;
                            };
+                           break;
 
 #if OP_SIZE != 16
                 case 0xc8: TRACEI("bswap eax");

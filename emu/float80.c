@@ -34,7 +34,7 @@ static int unbias_denormal(unsigned exp) {
 
 __thread enum f80_rounding_mode f80_rounding_mode;
 
-static bool round_away_from_zero(sign) {
+static bool round_away_from_zero(int sign) {
     return (f80_rounding_mode == round_up && !sign) ||
         (f80_rounding_mode == round_down && sign);
 }

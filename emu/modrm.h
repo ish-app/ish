@@ -12,14 +12,14 @@
 struct modrm {
     union {
         enum reg32 reg;
-        int opcode;
+        unsigned opcode;
     };
     enum {
         modrm_reg, modrm_mem, modrm_mem_si
     } type;
     union {
         enum reg32 base;
-        int rm_opcode;
+        unsigned rm_opcode;
     };
     int32_t offset;
     enum reg32 index;
@@ -30,11 +30,9 @@ struct modrm {
     } shift;
 };
 
-enum {
-    rm_sib = reg_esp,
-    rm_none = reg_esp,
-    rm_disp32 = reg_ebp,
-};
+static const unsigned rm_sib = reg_esp;
+static const unsigned rm_none = reg_esp;
+static const unsigned rm_disp32 = reg_ebp;
 #define MOD(byte) ((byte & 0b11000000) >> 6)
 #define REG(byte) ((byte & 0b00111000) >> 3)
 #define RM(byte)  ((byte & 0b00000111) >> 0)

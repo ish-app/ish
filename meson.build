@@ -1,6 +1,10 @@
 project('ish', 'c',
     default_options: ['default_library=static', 'c_std=gnu11', 'warning_level=2'])
 
+if meson.get_compiler('c').get_id() == 'clang'
+    add_project_arguments('-Wimplicit-fallthrough', '-Wtautological-constant-in-range-compare', language: 'c')
+endif
+
 log_on = get_option('log').split()
 log_off = get_option('nolog').split()
 foreach channel : log_on + log_off

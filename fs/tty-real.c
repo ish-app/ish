@@ -15,7 +15,8 @@
 
 void real_tty_reset_term(void);
 
-static void real_tty_read_thread(struct tty *tty) {
+static void *real_tty_read_thread(void *_tty) {
+    struct tty *tty = _tty;
     char ch;
     for (;;) {
         int err = read(STDIN_FILENO, &ch, 1);
@@ -32,6 +33,7 @@ static void real_tty_read_thread(struct tty *tty) {
         }
         tty_input(tty, &ch, 1, 0);
     }
+    return NULL;
 }
 
 static struct termios_ termios_from_real(struct termios real) {
@@ -109,7 +111,7 @@ static int real_tty_init(struct tty *tty) {
         ERRNO_DIE("failed to set terminal to raw mode");
 notty:
 
-    if (pthread_create(&tty->thread, NULL, (void *(*)(void *)) real_tty_read_thread, tty) < 0)
+    if (pthread_create(&tty->thread, NULL,  real_tty_read_thread, tty) < 0)
         // ok if this actually happened it would be weird AF
         return _EIO;
     pthread_detach(tty->thread);

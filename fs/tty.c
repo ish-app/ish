@@ -667,6 +667,7 @@ static int tty_mode_ioctl(struct tty *in_tty, int cmd, void *arg) {
         case TCSETSF_:
             tty->bufsize = 0;
             notify(&tty->consumed);
+            fallthrough;
         case TCSETSW_:
             // we have no output buffer currently
         case TCSETS_:
@@ -704,7 +705,7 @@ static int tty_ioctl(struct fd *fd, int cmd, void *arg) {
     switch (cmd) {
         case TCFLSH_:
             // only input flushing is currently useful
-            switch ((dword_t) arg) {
+            switch ((uintptr_t) arg) {
                 case TCIFLUSH_:
                 case TCIOFLUSH_:
                     tty->bufsize = 0;
@@ -719,7 +720,7 @@ static int tty_ioctl(struct fd *fd, int cmd, void *arg) {
             break;
 
         case TIOCSCTTY_:
-            err = tiocsctty(tty, (dword_t) arg);
+            err = tiocsctty(tty, (uintptr_t) arg);
             break;
 
         case TIOCGPRGP_:

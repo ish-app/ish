@@ -17,7 +17,7 @@ enum fpu_const {
     fconst_ln2 = 5,
     fconst_zero = 6,
 };
-static float80 fpu_consts[] = {
+static const float80 fpu_consts[] = {
     [fconst_one]   = (float80) {.signif = 0x8000000000000000, .signExp = 0x3fff},
     [fconst_log2t] = (float80) {.signif = 0xd49a784bcd1b8afe, .signExp = 0x4000},
     [fconst_log2e] = (float80) {.signif = 0xb8aa3b295c17f0bc, .signExp = 0x3fff},

@@ -30,8 +30,17 @@
 #define unlikely(x) __builtin_expect((x), 0)
 #define typecheck(type, x) ({type _x = x; x;})
 #define must_check __attribute__((warn_unused_result))
+#define fallthrough __attribute__((fallthrough))
+
 #if defined(__has_attribute) && __has_attribute(no_sanitize)
-#define __no_instrument __attribute__((no_sanitize("address", "thread", "undefined", "leak", "memory")))
+#define __no_instrument_msan
+#if defined(__has_feature)
+#if __has_feature(memory_sanitizer)
+#undef __no_instrument_msan
+#define __no_instrument_msan __attribute__((no_sanitize("memory"))
+#endif
+#endif
+#define __no_instrument __attribute__((no_sanitize("address", "thread", "undefined", "leak"))) __no_instrument_msan
 #else
 #define __no_instrument
 #endif

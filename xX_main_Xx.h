@@ -46,7 +46,6 @@ static inline int xX_main_Xx(int argc, char *const argv[], const char *envp) {
     // parse cli options
     int opt;
     const char *root = NULL;
-    bool has_root = false;
     const char *workdir = NULL;
     const struct fs_ops *fs = &realfs;
     const char *console = "/dev/tty1";
@@ -55,7 +54,6 @@ static inline int xX_main_Xx(int argc, char *const argv[], const char *envp) {
             case 'r':
             case 'f':
                 root = optarg;
-                has_root = true;
                 if (opt == 'f')
                     fs = &fakefs;
                 break;

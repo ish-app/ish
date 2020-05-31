@@ -1161,7 +1161,13 @@ const struct fd_ops socket_fdops = {
     .ioctl = realfs_ioctl,
 };
 
+#if defined(__GNUC__)
+#if defined(__clang__)
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+#else
+#pragma GCC diagnostic ignored "-Wcast-function-type"
+#endif
+#endif
 static struct socket_call {
     syscall_t func;
     int args;
