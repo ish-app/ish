@@ -11,6 +11,8 @@
 int deconst_dummy;
 #define deconst(x) (deconst_dummy? 0 : x)
 
+#define neg(x) (x == 0 ? -1e-200/1e200 : -x)
+
 union f80 {
     float80 f;
     long double ld;
@@ -156,9 +158,9 @@ void test_math() {
     assertf(bitwise_eq(u.ld, expected) || (isnan(u.ld) && isnan(expected)) || (ua.ld == 0 && ub.ld == 0 && u.ld == 0 && expected == 0), "f80_"#op"(%.20Le, %.20Le) = %.20Le (%.20Le)", ua.ld, ub.ld, u.ld, expected)
 #define test(op, a, b) \
     _test(op, a, b); \
-    _test(op, -a, b); \
-    _test(op, a, -b); \
-    _test(op, -a, -b)
+    _test(op, neg(a), b); \
+    _test(op, a, neg(b)); \
+    _test(op, neg(a), neg(b))
 
     test(add, 1, 1);
     test(add, 123, 123);
@@ -226,13 +228,14 @@ void test_compare() {
     assertf(actual == expected, "f80_"#op"(%Le, %Le) = %s", ua.ld, ub.ld, actual ? "true" : "false")
 #define test(op, a, b) \
     _test(op, a, b); \
-    _test(op, -a, b); \
-    _test(op, a, -b); \
-    _test(op, -a, -b)
+    _test(op, neg(a), b); \
+    _test(op, a, neg(b)); \
+    _test(op, neg(a), neg(b))
 
     test(eq, 0, 0);
     test(eq, 1, 1);
     test(eq, 0, 1);
+    test(eq, 1, 0);
     test(eq, INFINITY, INFINITY);
     test(eq, 1, INFINITY);
     test(eq, NAN, 123);
@@ -240,6 +243,7 @@ void test_compare() {
     test(lt, 0, 0);
     test(lt, 1, 1);
     test(lt, 0, 1);
+    test(lt, 1, 0);
     test(lt, INFINITY, INFINITY);
     test(lt, 1, INFINITY);
     test(lt, NAN, 123);

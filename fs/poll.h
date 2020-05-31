@@ -65,7 +65,7 @@ struct poll_fd {
 #define POLL_HUP 16
 #define POLL_NVAL 32
 #define POLL_ONESHOT (1 << 30)
-#define POLL_EDGETRIGGERED (1 << 31)
+#define POLL_EDGETRIGGERED (1ul << 31)
 struct poll_event {
     struct fd *fd;
     int types;
