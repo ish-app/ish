@@ -1528,7 +1528,7 @@ uint8_t str_buffer[4096];
                   : "=S" (esi), "=D" (edi), "=a" (eax), "=c" (ecx), "=g" (eflags)\
                   : "0" (esi), "1" (edi), "2" (eax), "3" (ecx));\
     printf("%-10s ESI=" FMTLX " EDI=" FMTLX " EAX=" FMTLX " ECX=" FMTLX " EFL=%04x\n",\
-           REP #OP size, esi, edi, eax, ecx,\
+           REP #OP size, esi - (long) str_buffer, edi - (long) str_buffer, eax, ecx,\
            (int)(eflags & (CC_C | CC_P | CC_Z | CC_S | CC_O | CC_A)));\
 }
 
