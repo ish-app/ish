@@ -203,7 +203,7 @@ static int elf_exec(struct fd *fd, const char *file, struct exec_args argv, stru
 
     current->mm->exefile = fd_retain(fd);
 
-    addr_t load_addr; // used for AX_PHDR
+    addr_t load_addr = 0; // used for AX_PHDR
     bool load_addr_set = false;
     addr_t bias = 0; // offset for loading shared libraries as executables
 

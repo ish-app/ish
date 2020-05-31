@@ -26,7 +26,7 @@ skip:
                 case 0xac:
                 case 0xad: {
                     ip++;
-                    byte_t shift;
+                    byte_t shift = -1;
                     if (opcode == 0xad)
                         shift = cpu->cl;
                     else
@@ -52,7 +52,7 @@ skip:
         case 0xd2:
         case 0xd3: {
             ip++; // skip modrm
-            byte_t shift_count;
+            byte_t shift_count = -1;
             if (opcode == 0xd0 || opcode == 0xd1)
                 shift_count = 1;
             else if (opcode == 0xd2 || opcode == 0xd3)
@@ -66,7 +66,7 @@ skip:
 
         case 0xf6: case 0xf7: {
             // group 3
-            byte_t modrm;
+            byte_t modrm = -1;
             read(modrm);
             switch (REG(modrm)) {
                 case 4: return S|Z|A|P; // mul

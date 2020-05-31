@@ -158,7 +158,8 @@ static int file_lock_from_flock(struct fd *fd, struct flock_ *flock, struct file
             offset = stat.size;
             break;
         }
-
+        default:
+            return _EINVAL;
     }
 
     lock->start = flock->start + offset;

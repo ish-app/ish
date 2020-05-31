@@ -81,7 +81,7 @@ void mem_next_page(struct mem *mem, page_t *page) {
 }
 
 page_t pt_find_hole(struct mem *mem, pages_t size) {
-    page_t hole_end;
+    page_t hole_end = 0; // this can never be used before initializing but gcc doesn't realize
     bool in_hole = false;
     for (page_t page = 0xf7ffd; page > 0x40000; page--) {
         // I don't know how this works but it does

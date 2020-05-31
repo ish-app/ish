@@ -401,6 +401,7 @@ int realfs_fsetattr(struct fd *fd, struct attr attr) {
         case attr_size:
             err = ftruncate(real_fd, attr.size);
             break;
+        default: abort();
     }
     if (err < 0)
         return errno_map();

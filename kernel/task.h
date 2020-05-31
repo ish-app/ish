@@ -30,7 +30,7 @@ struct task {
 #define MAX_GROUPS 32
     unsigned ngroups;
     uid_t_ groups[MAX_GROUPS];
-    char comm[16];
+    char comm[16] __strncpy_safe;
     bool did_exec; // for that one annoying setsid edge case
 
     struct fdtable *files;

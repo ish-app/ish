@@ -53,7 +53,14 @@
 #define __no_instrument
 #endif
 
+#if is_gcc(8)
+#define __strncpy_safe __attribute__((nonstring))
+#else
+#define __strncpy_safe
+#endif
+
 #define zero_init(type) ((type[1]){}[0])
+#define pun(type, x) (((union {typeof(x) _; type a;}) (x)).a)
 
 #define UNUSED(x) UNUSED_##x __attribute__((unused))
 static inline void __use(int dummy __attribute__((unused)), ...) {}

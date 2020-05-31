@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdarg.h>
 #include <math.h>
 #include <fenv.h>
@@ -37,6 +38,7 @@ void _suite_start(const char *suite) {
         case FE_DOWNWARD: rounding_mode_str = "down"; break;
         case FE_UPWARD: rounding_mode_str = "up"; break;
         case FE_TOWARDZERO: rounding_mode_str = "towards zero"; break;
+        default: abort();
     }
     printf("==== %s, round %s ====\n", suite, rounding_mode_str);
     suite_passed = 0;

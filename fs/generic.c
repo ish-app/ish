@@ -110,7 +110,7 @@ int generic_getpath(struct fd *fd, char *buf) {
     if (strlen(buf) + strlen(fd->mount->point) >= MAX_PATH)
         return _ENAMETOOLONG;
     memmove(buf + strlen(fd->mount->point), buf, strlen(buf) + 1);
-    strncpy(buf, fd->mount->point, strlen(fd->mount->point));
+    memcpy(buf, fd->mount->point, strlen(fd->mount->point));
     if (buf[0] == '\0')
         strcpy(buf, "/");
     return 0;

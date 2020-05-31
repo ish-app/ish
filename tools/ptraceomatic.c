@@ -92,8 +92,8 @@ static int compare_cpus(struct cpu_state *cpu, struct tlb *tlb, int pid, int und
         return -1;
     }
 #define CHECK_XMMREG(i) \
-    CHECK(*(uint64_t *) &fpregs.xmm_space[i * 4],   cpu->xmm[i].qw[0], "xmm" #i " low") \
-    CHECK(*(uint64_t *) &fpregs.xmm_space[i*4+2], cpu->xmm[i].qw[1], "xmm" #i " high")
+    CHECK(pun(uint64_t, fpregs.xmm_space[i * 4]), cpu->xmm[i].qw[0], "xmm" #i " low") \
+    CHECK(pun(uint64_t, fpregs.xmm_space[i*4+2]), cpu->xmm[i].qw[1], "xmm" #i " high")
     CHECK_XMMREG(0);
     CHECK_XMMREG(1);
     CHECK_XMMREG(2);
@@ -109,8 +109,8 @@ static int compare_cpus(struct cpu_state *cpu, struct tlb *tlb, int pid, int und
     fpregs.swd &= FSW_MASK;
 
 #define CHECK_FPREG(i) \
-    CHECK(*(uint64_t *) &fpregs.st_space[i * 4], cpu->fp[(cpu->top + i)%8].signif,  "st(" #i ") signif") \
-    CHECK(*(uint16_t *) &fpregs.st_space[i*4+2], cpu->fp[(cpu->top + i)%8].signExp, "st(" #i ") sign/exp")
+    CHECK(pun(uint64_t, fpregs.st_space[i * 4]), cpu->fp[(cpu->top + i)%8].signif,  "st(" #i ") signif") \
+    CHECK(pun(uint16_t, fpregs.st_space[i*4+2]), cpu->fp[(cpu->top + i)%8].signExp, "st(" #i ") sign/exp")
     CHECK_FPREG(0);
     CHECK_FPREG(1);
     CHECK_FPREG(2);
