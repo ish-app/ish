@@ -283,7 +283,11 @@ restart:
                 case 0x73: READMODRM;
                            switch (modrm.opcode) {
                                case 0x02: TRACEI("psrlq imm, xmm");
-                                          READIMM8; VSHIFTR_IMM(imm, xmm_modrm_reg,64); break;
+                                          READIMM8; V_OP(imm_shiftr_q, imm, xmm_modrm_reg, 128); break;
+
+                               case 0x06: TRACEI("psllq imm, xmm");
+                                          READIMM8; V_OP(imm_shiftl_q, imm, xmm_modrm_reg, 128); break;
+
                                default: UNDEFINED;
                            }
                            break;
@@ -301,6 +305,9 @@ restart:
 
                 case 0xc5: TRACEI("pextrw xmm, modrm_val, imm8");
                            READMODRM_NOMEM; READIMM8; V_OP_IMM(extract_w, xmm_modrm_val, modrm_reg,128); break;
+
+                case 0xd4: TRACEI("paddq xmm:modrm, xmm");
+                           READMODRM; V_OP(add_q, xmm_modrm_val, xmm_modrm_reg, 128); break;
 
                 case 0xd6: TRACEI("movq xmm, xmm:modrm");
                            READMODRM; VMOV(xmm_modrm_reg, xmm_modrm_val,64); break;

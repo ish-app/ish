@@ -2413,7 +2413,7 @@ void test_sse(void)
     // MMX_OP2(pcmpeqw);
     SSE_OP2(pcmpeqd);
 
-    // MMX_OP2(paddq);
+    SSE_OP2(paddq);
     // MMX_OP2(pmullw);
     // MMX_OP2(psubusb);
     // MMX_OP2(psubusw);
@@ -2543,6 +2543,10 @@ void test_sse(void)
     // SHIFT_IM(psrldq, 7);
     // SHIFT_IM(pslldq, 16);
     // SHIFT_IM(pslldq, 7);
+    SHIFT_IM(psrlq, 16);
+    SHIFT_IM(psrlq, 7);
+    SHIFT_IM(psllq, 16);
+    SHIFT_IM(psllq, 7);
 
     // MOVMSK(movmskps);
     // MOVMSK(movmskpd);
