@@ -1,26 +1,26 @@
-macros:
-    - &linux
-      language: c
-      os: linux
-      dist: bionic
-      compiler: clang
-      addons:
-          apt:
-              packages:
-                  - ninja-build
-      install:
-          - source ~/virtualenv/python3.6/bin/activate
-          - pip install meson
-      script:
-          - meson build $MESON_OPTS
-          - ninja -C build $NINJA_TARGET
+compiler:
+    - gcc
+    - clang
 
-matrix:
+jobs:
     include:
-        - <<: *linux
+        - language: c
+          os: linux
+          dist: bionic
+          addons:
+              apt:
+                  packages:
+                      - ninja-build
+          install:
+              - source ~/virtualenv/python3.6/bin/activate
+              - pip install meson
+          script:
+              - meson build $MESON_OPTS
+              - ninja -C build $NINJA_TARGET
           env:
               - MESON_OPTS=-Dengine=jit
               - NINJA_TARGET=test
+
         - language: objective-c
           os: osx
           osx_image: xcode11
@@ -34,3 +34,7 @@ matrix:
                   update: true
           script:
               - xcodebuild -project iSH.xcodeproj -scheme iSH -sdk iphoneos CODE_SIGNING_ALLOWED=NO
+
+    exclude:
+        - os: osx
+          compiler: gcc
