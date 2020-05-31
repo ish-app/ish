@@ -252,11 +252,16 @@ static int kObserverStyling;
 
 - (void)insertText:(NSString *)text {
     self.markedText = nil;
+
+    if (self.controlKey.highlighted)
+        self.controlKey.selected = YES;
     if (self.controlKey.selected) {
-        self.controlKey.selected = NO;
+        if (!self.controlKey.highlighted)
+            self.controlKey.selected = NO;
         if (text.length == 1)
             return [self insertControlChar:[text characterAtIndex:0]];
     }
+
     text = [text stringByReplacingOccurrencesOfString:@"\n" withString:@"\r"];
     NSData *data = [text dataUsingEncoding:NSUTF8StringEncoding];
     [self.terminal sendInput:data.bytes length:data.length];
