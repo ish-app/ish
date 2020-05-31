@@ -372,7 +372,7 @@
                                             </constraints>
                                         </tableViewCellContentView>
                                     </tableViewCell>
-                                    <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="none" indentationWidth="10" id="NQy-68-Suu" userLabel="Option to Meta">
+                                    <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="none" indentationWidth="10" id="NQy-68-Suu" userLabel="Backtick to Escape">
                                         <rect key="frame" x="0.0" y="267.5" width="320" height="44"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" preservesSuperviewLayoutMargins="YES" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="NQy-68-Suu" id="9xb-BP-fQ4">
@@ -402,6 +402,39 @@
                                     </tableViewCell>
                                 </cells>
                             </tableViewSection>
+                            <tableViewSection headerTitle="Extra keys" footerTitle="When extra keys are hidden, Settings can be opened with the ⌘, shortcut" id="Kaj-9x-pfF">
+                                <cells>
+                                    <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="none" indentationWidth="10" id="TM9-T2-EDa" userLabel="Backtick to Escape">
+                                        <rect key="frame" x="0.0" y="375" width="320" height="44"/>
+                                        <autoresizingMask key="autoresizingMask"/>
+                                        <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" preservesSuperviewLayoutMargins="YES" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="TM9-T2-EDa" id="K8q-us-D80">
+                                            <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
+                                            <autoresizingMask key="autoresizingMask"/>
+                                            <subviews>
+                                                <label opaque="NO" multipleTouchEnabled="YES" contentMode="left" insetsLayoutMarginsFromSafeArea="NO" text="Hide with external keyboard" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="PWB-d9-Zhd">
+                                                    <rect key="frame" x="16" y="11.5" width="213" height="21"/>
+                                                    <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                                    <nil key="textColor"/>
+                                                    <nil key="highlightedColor"/>
+                                                </label>
+                                                <switch opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" misplaced="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" on="YES" translatesAutoresizingMaskIntoConstraints="NO" id="IcN-9M-x1K">
+                                                    <rect key="frame" x="255" y="8.5" width="51" height="31"/>
+                                                    <connections>
+                                                        <action selector="backtickEscapeToggle:" destination="Zzy-IN-laJ" eventType="valueChanged" id="F0N-yF-KDZ"/>
+                                                        <action selector="hideExtraKeysToggle:" destination="Zzy-IN-laJ" eventType="valueChanged" id="kQA-Pi-MZM"/>
+                                                    </connections>
+                                                </switch>
+                                            </subviews>
+                                            <constraints>
+                                                <constraint firstItem="PWB-d9-Zhd" firstAttribute="leading" secondItem="K8q-us-D80" secondAttribute="leadingMargin" id="FGk-hn-hnq"/>
+                                                <constraint firstItem="PWB-d9-Zhd" firstAttribute="centerY" secondItem="K8q-us-D80" secondAttribute="centerY" id="I9n-5H-Jr4"/>
+                                                <constraint firstAttribute="trailingMargin" secondItem="IcN-9M-x1K" secondAttribute="trailing" id="fig-KE-i9e"/>
+                                                <constraint firstItem="IcN-9M-x1K" firstAttribute="centerY" secondItem="K8q-us-D80" secondAttribute="centerY" id="wZF-ty-HqH"/>
+                                            </constraints>
+                                        </tableViewCellContentView>
+                                    </tableViewCell>
+                                </cells>
+                            </tableViewSection>
                         </sections>
                         <connections>
                             <outlet property="dataSource" destination="Zzy-IN-laJ" id="NPA-6F-jMj"/>
@@ -410,6 +443,7 @@
                     </tableView>
                     <connections>
                         <outlet property="backtickEscapeSwitch" destination="8xc-Rx-eue" id="jkl-oc-V9N"/>
+                        <outlet property="hideExtraKeysWithExternalKeyboardSwitch" destination="IcN-9M-x1K" id="Lw3-4l-9R6"/>
                         <outlet property="optionMetaSwitch" destination="OEG-YY-LTw" id="b2K-Ug-Jij"/>
                     </connections>
                 </tableViewController>
