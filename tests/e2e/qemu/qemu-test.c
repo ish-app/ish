@@ -2534,10 +2534,10 @@ void test_sse(void)
     // SHIFT_OP(pslld, 7);
     // SHIFT_OP(pslld, 32);
 
-    // SHIFT_OP(psrlq, 7);
-    // SHIFT_OP(psrlq, 32);
-    // SHIFT_OP(psllq, 7);
-    // SHIFT_OP(psllq, 32);
+    SHIFT_OP(psrlq, 7);
+    SHIFT_OP(psrlq, 32);
+    SHIFT_OP(psllq, 7);
+    SHIFT_OP(psllq, 32);
 
     // SHIFT_IM(psrldq, 16);
     // SHIFT_IM(psrldq, 7);
