@@ -151,7 +151,7 @@ void test_math() {
     ua.ld = a; ub.ld = b; \
     u.f = f80_##op(ua.f, ub.f); \
     expected = deconst((long double) a) cop_##op deconst((long double) b); \
-    assertf(bitwise_eq(u.ld, expected) || (isnan(u.ld) && isnan(expected)), "f80_"#op"(%.20Le, %.20Le) = %.20Le (%.20Le)", ua.ld, ub.ld, u.ld, expected)
+    assertf(bitwise_eq(u.ld, expected) || (isnan(u.ld) && isnan(expected)) || (ua.ld == 0 && ub.ld == 0 && u.ld == 0 && expected == 0), "f80_"#op"(%.20Le, %.20Le) = %.20Le (%.20Le)", ua.ld, ub.ld, u.ld, expected)
 #define test(op, a, b) \
     _test(op, a, b); \
     _test(op, -a, b); \
