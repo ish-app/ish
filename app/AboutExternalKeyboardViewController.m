@@ -14,7 +14,6 @@ const int kCapsLockMappingSection = 0;
 
 @property (weak, nonatomic) IBOutlet UISwitch *optionMetaSwitch;
 @property (weak, nonatomic) IBOutlet UISwitch *backtickEscapeSwitch;
-@property (weak, nonatomic) IBOutlet UISwitch *hideExtraKeysWithExternalKeyboardSwitch;
 
 @end
 
@@ -39,7 +38,6 @@ const int kCapsLockMappingSection = 0;
 - (void)_update {
     self.optionMetaSwitch.on = UserPreferences.shared.optionMapping == OptionMapEsc;
     self.backtickEscapeSwitch.on = UserPreferences.shared.backtickMapEscape;
-    self.hideExtraKeysWithExternalKeyboardSwitch.on = UserPreferences.shared.hideExtraKeysWithExternalKeyboard;
 }
 
 - (IBAction)optionMetaToggle:(UISwitch *)sender {
@@ -47,9 +45,6 @@ const int kCapsLockMappingSection = 0;
 }
 - (IBAction)backtickEscapeToggle:(UISwitch *)sender {
     UserPreferences.shared.backtickMapEscape = sender.on;
-}
-- (IBAction)hideExtraKeysToggle:(UISwitch *)sender {
-    UserPreferences.shared.hideExtraKeysWithExternalKeyboard = sender.on;
 }
 
 - (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath {

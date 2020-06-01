@@ -45,9 +45,6 @@
 @property (nonatomic) Terminal *sessionTerminal;
 @property int sessionTerminalNumber;
 
-@property BOOL ignoreKeyboardMotion;
-@property (nonatomic) BOOL hasExternalKeyboard;
-
 @end
 
 @implementation TerminalViewController
@@ -72,10 +69,6 @@
     [center addObserver:self
                selector:@selector(keyboardDidSomething:)
                    name:UIKeyboardWillChangeFrameNotification
-                 object:nil];
-    [center addObserver:self
-               selector:@selector(keyboardDidSomething:)
-                   name:UIKeyboardDidChangeFrameNotification
                  object:nil];
 
     [self _updateStyleFromPreferences:NO];
@@ -112,7 +105,6 @@
                                                name:ProcessExitedNotification
                                              object:nil];
     [[UserPreferences shared] addObserver:self forKeyPath:@"theme" options:NSKeyValueObservingOptionNew context:nil];
-    [[UserPreferences shared] addObserver:self forKeyPath:@"hideExtraKeysWithExternalKeyboard" options:NSKeyValueObservingOptionNew context:nil];
 }
 
 - (void)startNewSession {
@@ -222,16 +214,6 @@
             control.tintColor = tintColor;
         }
     }];
-    if (UserPreferences.shared.hideExtraKeysWithExternalKeyboard && self.hasExternalKeyboard) {
-        self.termView.inputAccessoryView = nil;
-    } else {
-        self.termView.inputAccessoryView = self.barView;
-    }
-    if (self.termView.isFirstResponder) {
-        self.ignoreKeyboardMotion = YES; // avoid infinite recursion
-        [self.termView reloadInputViews];
-        self.ignoreKeyboardMotion = NO;
-    }
 }
 
 - (UIStatusBarStyle)preferredStatusBarStyle {
@@ -244,23 +226,26 @@
 }
 
 - (void)keyboardDidSomething:(NSNotification *)notification {
-    if (self.ignoreKeyboardMotion)
-        return;
-
+    // NSLog(@"%@", notification);
+    BOOL initialLayout = self.termView.needsUpdateConstraints;
+    
     CGRect keyboardFrame = [notification.userInfo[UIKeyboardFrameEndUserInfoKey] CGRectValue];
-    if (CGRectEqualToRect(keyboardFrame, CGRectZero))
-        return;
-    NSLog(@"%@ %@", notification.name, [NSValue valueWithCGRect:keyboardFrame]);
-    self.hasExternalKeyboard = keyboardFrame.size.height < 100;
-    CGFloat pad = UIScreen.mainScreen.bounds.size.height - keyboardFrame.origin.y;
+    CGFloat pad;
+    if (keyboardFrame.origin.x == 0 &&
+        keyboardFrame.origin.y == 0 &&
+        keyboardFrame.size.height == 0 &&
+        keyboardFrame.size.width == 0) {
+        pad = 0;
+    } else {
+        pad = UIScreen.mainScreen.bounds.size.height - keyboardFrame.origin.y;
+    }
     if (pad == 0) {
         pad = self.view.safeAreaInsets.bottom;
     }
     // NSLog(@"pad %f", pad);
     self.bottomConstraint.constant = -pad;
-
-    BOOL initialLayout = self.termView.needsUpdateConstraints;
     [self.view setNeedsUpdateConstraints];
+    
     if (!initialLayout) {
         // if initial layout hasn't happened yet, the terminal view is going to be at a really weird place, so animating it is going to look really bad
         NSNumber *interval = notification.userInfo[UIKeyboardAnimationDurationUserInfoKey];
@@ -273,11 +258,6 @@
                          }
                          completion:nil];
     }
-}
-
-- (void)setHasExternalKeyboard:(BOOL)hasExternalKeyboard {
-    _hasExternalKeyboard = hasExternalKeyboard;
-    [self _updateStyleFromPreferences:YES];
 }
 
 - (void)ishExited:(NSNotification *)notification {

@@ -43,7 +43,6 @@ extern NSString *const kThemeBackgroundColor;
 @property CapsLockMapping capsLockMapping;
 @property OptionMapping optionMapping;
 @property BOOL backtickMapEscape;
-@property BOOL hideExtraKeysWithExternalKeyboard;
 @property (nonatomic) Theme *theme;
 @property BOOL shouldDisableDimming;
 @property NSString *fontFamily;

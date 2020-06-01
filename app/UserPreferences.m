@@ -11,7 +11,6 @@
 static NSString *const kPreferenceCapsLockMappingKey = @"Caps Lock Mapping";
 static NSString *const kPreferenceOptionMappingKey = @"Option Mapping";
 static NSString *const kPreferenceBacktickEscapeKey = @"Backtick Mapping Escape";
-static NSString *const kPreferenceHideExtraKeysWithExternalKeyboard = @"Hide Extra Keys With External Keyboard";
 static NSString *const kPreferenceFontFamilyKey = @"Font Family";
 static NSString *const kPreferenceFontSizeKey = @"Font Size";
 static NSString *const kPreferenceThemeKey = @"Theme";
@@ -72,13 +71,6 @@ NSString *const kPreferenceBootCommandKey = @"Boot Command";
 }
 - (void)setBacktickMapEscape:(BOOL)backtickMapEscape {
     [_defaults setBool:backtickMapEscape forKey:kPreferenceBacktickEscapeKey];
-}
-
-- (BOOL)hideExtraKeysWithExternalKeyboard {
-    return [_defaults boolForKey:kPreferenceHideExtraKeysWithExternalKeyboard];
-}
-- (void)setHideExtraKeysWithExternalKeyboard:(BOOL)hideExtraKeysWithExternalKeyboard {
-    [_defaults setBool:hideExtraKeysWithExternalKeyboard forKey:kPreferenceHideExtraKeysWithExternalKeyboard];
 }
 
 - (NSNumber *)fontSize {
