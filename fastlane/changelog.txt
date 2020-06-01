@@ -1,21 +1,20 @@
-HOTFIX because fixing Go broke running commands in the background with "&". Previous release notes pasted below.
-
 New stuff:
-- Pressing the spacebar or using force touch on the keyboard and then dragging simulates arrow key presses
-- Go programs get off the ground
-- git-annex mostly works
-- You can mount directories from the Files app in iSH, using mount -t ios foo destination
-
-More on that last thing: The command is `mount -t ios source destination`. The `source` is ignored, the `destination` is where to mount the directory. This will pop up a directory picker, and mount the directory you selected. Not all file providers support selecting directories. iCloud Drive, local files ("On My iPad"), and Working Copy are known to work.
+- Most Go prebuilt binaries iSH will work (such as ngrok)
+- iOS file picker works on iOS 11 and 12 (thanks @kkk669)
+- Character under the cursor is now visible in the background color
+- You can press multiple keys while holding down the control button
+- There's a new setting that hides the extra keys if a hardware keyboard is connected
 
 Fixed bugs:
-- writev not being atomic, which caused a race condition on mtr startup
-- Selection being impossible on iOS 13.4 (the keyboard goes away now which sucks, but at least is not impossible)
-- ssh with control master hanging randomly
-- Status bar not appearing on devices with rounded corners
+- Frequent hangs when trying to use iOS mounted filesystems
+- Emacs not working at all, reporting "Failed select: Invalid argument"
+- Ruby crashing when you press ctrl-c
+- mount command hanging when you dismiss the folder picker by swiping it away (thanks @kkk669)
+- Rare "error -2" on initial installation (hopefully this is actually fixed, I've never been able to reproduce it)
+- Emacs printing negative numbers as NaN
 
-Send bug reports or feedback here: https://github.com/tbodt/ish/issues (or by email, if you prefer)
+Send bug reports or feedback here: https://github.com/ish-app/ish/issues (or by email, if you prefer)
 Follow iSH on Twitter: https://twitter.com/iSH_app
-Join the Discord: https://discord.gg/SndDh5y
+Join the Discord: https://discord.gg/HFAXj44
 Give me money here: https://patreon.com/tbodt
 
