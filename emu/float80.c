@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <math.h>
 #include "float80.h"
+#include "misc.h"
 
 typedef unsigned __int128 uint128_t;
 
@@ -557,6 +558,8 @@ float80 f80_log2(float80 x) {
 }
 
 float80 f80_sqrt(float80 x) {
+    if (f80_iszero(x))
+        return x;
     if (f80_isnan(x) || x.sign)
         return F80_NAN;
     // for a rough guess, just cut the exponent by 2
