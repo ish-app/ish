@@ -205,12 +205,15 @@ static int iosfs_stat(struct mount *mount, const char *path, struct statbuf *fak
 extern const struct fd_ops iosfs_fdops;
 
 static int posixErrorFromNSError(NSError *error) {
+    if (error == nil)
+        return 0;
     while (error != nil) {
-        if (error.domain == NSPOSIXErrorDomain) {
+        if ([error.domain isEqualToString:NSPOSIXErrorDomain]) {
             return err_map((int) error.code);
         }
+        error = error.userInfo[NSUnderlyingErrorKey];
     }
-    return 0;
+    return _EINVAL;
 }
 
 static int combine_error(NSError *coordinatorError, int err) {
