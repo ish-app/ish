@@ -1,3 +1,11 @@
+Fixed bugs:
+- Keyboard hiding not working at all
+  - This was caused by the extra key hiding setting, and fixed by reverting it. I'll figure out what was up in the next release.
+- sqrt(0) returning NaN
+- Hang when any iOSFS syscall tries to return an error
+
+This is a small bug fix release so here's the previous changelog for your convenience:
+
 New stuff:
 - Most Go prebuilt binaries iSH will work (such as ngrok)
 - iOS file picker works on iOS 11 and 12 (thanks @kkk669)
