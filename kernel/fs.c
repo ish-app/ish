@@ -961,6 +961,9 @@ dword_t sys_sendfile(fd_t UNUSED(out_fd), fd_t UNUSED(in_fd), addr_t UNUSED(offs
 dword_t sys_sendfile64(fd_t UNUSED(out_fd), fd_t UNUSED(in_fd), addr_t UNUSED(offset_addr), dword_t UNUSED(count)) {
     return _EINVAL;
 }
+dword_t sys_splice(fd_t UNUSED(in_fd), addr_t UNUSED(in_off_addr), fd_t UNUSED(out_fd), addr_t UNUSED(out_off_addr), dword_t UNUSED(count), dword_t UNUSED(flags)) {
+    return _EINVAL;
+}
 dword_t sys_copy_file_range(fd_t UNUSED(in_fd), addr_t UNUSED(in_off), fd_t UNUSED(out_fd),
         addr_t UNUSED(out_off), dword_t UNUSED(len), uint_t UNUSED(flags)) {
     return _EPERM; // good enough for ruby

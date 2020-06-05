@@ -196,6 +196,7 @@ syscall_t syscall_table[] = {
     [309] = (syscall_t) sys_ppoll,
     [311] = (syscall_t) sys_set_robust_list,
     [312] = (syscall_t) sys_get_robust_list,
+    [313] = (syscall_t) sys_splice,
     [319] = (syscall_t) sys_epoll_pwait,
     [320] = (syscall_t) sys_utimensat,
     [322] = (syscall_t) sys_timerfd_create,
