@@ -139,18 +139,15 @@ void vec_fdivs64(NO_CPU, const double *src, double *dst) {
     *dst /= *src;
 }
 
-void vec_cvtsi2sd32(NO_CPU, const uint32_t *src, double *dst) {
-    *dst = *src;
-}
-void vec_cvttsd2si64(NO_CPU, const double *src, uint32_t *dst) {
-    *dst = *src;
-}
-void vec_cvtsd2ss64(NO_CPU, const double *src, float *dst) {
-    *dst = *src;
-}
-void vec_cvtss2sd32(NO_CPU, const float *src, double *dst) {
-    *dst = *src;
-}
+#define VEC_CVT(name, src_t, dst_t) \
+    void vec_cvt##name(NO_CPU, const src_t *src, dst_t *dst) { \
+        *dst = *src; \
+    }
+VEC_CVT(si2sd32, uint32_t, double)
+VEC_CVT(si2ss32, uint32_t, float)
+VEC_CVT(tsd2si64, double, uint32_t)
+VEC_CVT(sd2ss64, double, float)
+VEC_CVT(ss2sd32, float, double)
 
 void vec_unpack_bw128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst) {
     for (int i = 7; i >= 0; i--) {
