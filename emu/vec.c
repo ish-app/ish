@@ -148,6 +148,9 @@ void vec_cvttsd2si64(NO_CPU, const double *src, uint32_t *dst) {
 void vec_cvtsd2ss64(NO_CPU, const double *src, float *dst) {
     *dst = *src;
 }
+void vec_cvtss2sd32(NO_CPU, const float *src, double *dst) {
+    *dst = *src;
+}
 
 void vec_unpack_bw128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst) {
     for (int i = 7; i >= 0; i--) {

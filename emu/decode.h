@@ -969,6 +969,9 @@ restart:
                         case 0x11: TRACEI("movss xmm, xmm:modrm");
                                    READMODRM; VMOV_MERGE_REG(xmm_modrm_reg, xmm_modrm_val,32); break;
 
+                        case 0x5a: TRACEI("cvtss2sd xmm:modrm, xmm");
+                                   READMODRM; V_OP(cvtss2sd, xmm_modrm_val, xmm_modrm_reg,32); break;
+
                         case 0x6f: TRACEI("movdqu xmm:modrm, xmm");
                                    READMODRM; VMOV(xmm_modrm_val, xmm_modrm_reg,128); break;
 

@@ -2628,7 +2628,7 @@ void test_sse(void)
     // a.s[2] = 4;
     // a.s[3] = -6.3;
     // CVT_OP_XMM(cvtps2pd);
-    // CVT_OP_XMM(cvtss2sd);
+    CVT_OP_XMM(cvtss2sd);
     // CVT_OP_XMM2MMX(cvtps2pi);
     // CVT_OP_XMM2MMX(cvttps2pi);
     // CVT_OP_XMM2REG(cvtss2si);

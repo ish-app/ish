@@ -38,6 +38,7 @@ void vec_fdivs64(NO_CPU, const double *src, double *dst);
 void vec_cvtsi2sd32(NO_CPU, const uint32_t *src, double *dst);
 void vec_cvttsd2si64(NO_CPU, const double *src, uint32_t *dst);
 void vec_cvtsd2ss64(NO_CPU, const double *src, float *dst);
+void vec_cvtss2sd32(NO_CPU, const float *src, double *dst);
 
 // TODO organize
 void vec_unpack_bw128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst);
