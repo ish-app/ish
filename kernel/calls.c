@@ -167,6 +167,7 @@ syscall_t syscall_table[] = {
     [258] = (syscall_t) sys_set_tid_address,
     [259] = (syscall_t) sys_timer_create,
     [260] = (syscall_t) sys_timer_settime,
+    [263] = (syscall_t) sys_timer_delete,
     [264] = (syscall_t) sys_clock_settime,
     [265] = (syscall_t) sys_clock_gettime,
     [266] = (syscall_t) sys_clock_getres,

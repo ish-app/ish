@@ -329,6 +329,20 @@ int_t sys_timer_settime(dword_t timer_id, int_t flags, addr_t new_value_addr, ad
     return 0;
 }
 
+int_t sys_timer_delete(dword_t timer_id) {
+    STRACE("timer_delete(%d)\n", timer_id);
+    lock(&current->group->lock);
+    struct posix_timer *timer = &current->group->posix_timers[timer_id];
+    if (timer->timer == NULL) {
+        unlock(&current->group->lock);
+        return _EINVAL;
+    }
+    timer_free(timer->timer);
+    timer->timer = NULL;
+    unlock(&current->group->lock);
+    return 0;
+}
+
 static struct fd_ops timerfd_ops;
 
 static void timerfd_callback(struct fd *fd) {
