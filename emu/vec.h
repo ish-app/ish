@@ -40,9 +40,10 @@ void vec_single_fsub32(NO_CPU, const float *src, float *dst);
 void vec_single_fdiv32(NO_CPU, const float *src, float *dst);
 
 void vec_cvtsi2sd32(NO_CPU, const uint32_t *src, double *dst);
-void vec_cvtsi2ss32(NO_CPU, const uint32_t *src, float *dst);
 void vec_cvttsd2si64(NO_CPU, const double *src, uint32_t *dst);
 void vec_cvtsd2ss64(NO_CPU, const double *src, float *dst);
+void vec_cvtsi2ss32(NO_CPU, const uint32_t *src, float *dst);
+void vec_cvttss2si32(NO_CPU, const float *src, uint32_t *dst);
 void vec_cvtss2sd32(NO_CPU, const float *src, double *dst);
 
 // TODO organize

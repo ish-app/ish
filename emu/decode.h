@@ -971,6 +971,8 @@ restart:
 
                         case 0x2a: TRACEI("cvtsi2ss modrm, xmm");
                                    READMODRM; V_OP(cvtsi2ss, modrm_val, xmm_modrm_reg,32); break;
+                        case 0x2c: TRACEI("cvttss2si reg, xmm:modrm");
+                                   READMODRM; V_OP(cvttss2si, xmm_modrm_val, modrm_reg,32); break;
                         case 0x5a: TRACEI("cvtss2sd xmm:modrm, xmm");
                                    READMODRM; V_OP(cvtss2sd, xmm_modrm_val, xmm_modrm_reg,32); break;
 

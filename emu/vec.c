@@ -140,9 +140,10 @@ void vec_single_fdiv32(NO_CPU, const float *src, float *dst) { *dst /= *src; }
         *dst = *src; \
     }
 VEC_CVT(si2sd32, uint32_t, double)
-VEC_CVT(si2ss32, uint32_t, float)
 VEC_CVT(tsd2si64, double, uint32_t)
 VEC_CVT(sd2ss64, double, float)
+VEC_CVT(si2ss32, uint32_t, float)
+VEC_CVT(tss2si32, float, uint32_t)
 VEC_CVT(ss2sd32, float, double)
 
 void vec_unpack_bw128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst) {
