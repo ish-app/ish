@@ -126,18 +126,14 @@ void vec_min_ub128(NO_CPU, union xmm_reg *src, union xmm_reg *dst) {
             dst->u8[i] = src->u8[i];
 }
 
-void vec_fadds64(NO_CPU, const double *src, double *dst) {
-    *dst += *src;
-}
-void vec_fmuls64(NO_CPU, const double *src, double *dst) {
-    *dst *= *src;
-}
-void vec_fsubs64(NO_CPU, const double *src, double *dst) {
-    *dst -= *src;
-}
-void vec_fdivs64(NO_CPU, const double *src, double *dst) {
-    *dst /= *src;
-}
+void vec_single_fadd64(NO_CPU, const double *src, double *dst) { *dst += *src; }
+void vec_single_fmul64(NO_CPU, const double *src, double *dst) { *dst *= *src; }
+void vec_single_fsub64(NO_CPU, const double *src, double *dst) { *dst -= *src; }
+void vec_single_fdiv64(NO_CPU, const double *src, double *dst) { *dst /= *src; }
+void vec_single_fadd32(NO_CPU, const float *src, float *dst) { *dst += *src; }
+void vec_single_fmul32(NO_CPU, const float *src, float *dst) { *dst *= *src; }
+void vec_single_fsub32(NO_CPU, const float *src, float *dst) { *dst -= *src; }
+void vec_single_fdiv32(NO_CPU, const float *src, float *dst) { *dst /= *src; }
 
 #define VEC_CVT(name, src_t, dst_t) \
     void vec_cvt##name(NO_CPU, const src_t *src, dst_t *dst) { \

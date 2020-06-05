@@ -30,10 +30,14 @@ void vec_add_q128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
 
 void vec_min_ub128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
 
-void vec_fadds64(NO_CPU, const double *src, double *dst);
-void vec_fmuls64(NO_CPU, const double *src, double *dst);
-void vec_fsubs64(NO_CPU, const double *src, double *dst);
-void vec_fdivs64(NO_CPU, const double *src, double *dst);
+void vec_single_fadd64(NO_CPU, const double *src, double *dst);
+void vec_single_fmul64(NO_CPU, const double *src, double *dst);
+void vec_single_fsub64(NO_CPU, const double *src, double *dst);
+void vec_single_fdiv64(NO_CPU, const double *src, double *dst);
+void vec_single_fadd32(NO_CPU, const float *src, float *dst);
+void vec_single_fmul32(NO_CPU, const float *src, float *dst);
+void vec_single_fsub32(NO_CPU, const float *src, float *dst);
+void vec_single_fdiv32(NO_CPU, const float *src, float *dst);
 
 void vec_cvtsi2sd32(NO_CPU, const uint32_t *src, double *dst);
 void vec_cvtsi2ss32(NO_CPU, const uint32_t *src, float *dst);
