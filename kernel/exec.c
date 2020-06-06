@@ -693,7 +693,7 @@ dword_t sys_execve(addr_t filename_addr, addr_t argv_addr, addr_t envp_addr) {
     }
     STRACE("})");
 
-    return do_execve(filename, argc, argv, envp);
+    err = do_execve(filename, argc, argv, envp);
 
 err_free_envp:
     free(envp);
