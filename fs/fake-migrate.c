@@ -1,6 +1,7 @@
 #include "kernel/fs.h"
 #include "debug.h"
 #include "kernel/errno.h"
+#include "fs/sqlutil.h"
 
 // The value of the user_version pragma is used to decide what needs migrating.
 
@@ -33,31 +34,8 @@ static struct migration {
 };
 
 int fakefs_migrate(struct mount *mount) {
+    sqlite3 *db = mount->db;
     int err;
-#define CHECK_ERR() \
-    if (err != SQLITE_OK && err != SQLITE_ROW && err != SQLITE_DONE) \
-        die("sqlite error while migrating: %s\n", sqlite3_errmsg(mount->db));
-#define EXEC(sql) \
-    err = sqlite3_exec(mount->db, sql, NULL, NULL, NULL); \
-    CHECK_ERR();
-#define PREPARE(sql) ({ \
-    sqlite3_stmt *stmt; \
-    err = sqlite3_prepare_v2(mount->db, sql, -1, &stmt, NULL); \
-    CHECK_ERR(); \
-    stmt; \
-})
-#define STEP(stmt) ({ \
-    err = sqlite3_step(stmt); \
-    CHECK_ERR(); \
-    err == SQLITE_ROW; \
-})
-#define RESET(stmt) \
-    err = sqlite3_reset(stmt); \
-    CHECK_ERR()
-#define FINALIZE(stmt) \
-    err = sqlite3_finalize(stmt); \
-    CHECK_ERR()
-
     sqlite3_stmt *user_version = PREPARE("pragma user_version");
     STEP(user_version);
     int version = sqlite3_column_int(user_version, 0);

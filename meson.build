@@ -1,8 +1,13 @@
 project('ish', 'c',
     default_options: ['default_library=static', 'c_std=gnu11', 'warning_level=2'])
+cc = meson.get_compiler('c')
 
-if meson.get_compiler('c').get_id() == 'clang'
+if cc.get_id() == 'clang'
     add_project_arguments('-Wimplicit-fallthrough', '-Wtautological-constant-in-range-compare', language: 'c')
+endif
+
+if get_option('b_sanitize').split(',').contains('undefined')
+    add_project_arguments('-fno-sanitize=alignment', language: 'c')
 endif
 
 log_on = get_option('log').split()
@@ -29,7 +34,6 @@ add_project_arguments('-Wno-switch', language: 'c')
 
 includes = [include_directories('.')]
 
-cc = meson.get_compiler('c')
 threads = dependency('threads')
 librt = cc.find_library('rt', required: false)
 libm = cc.find_library('m', required: false)
@@ -78,8 +82,8 @@ src = [
     'fs/path.c',
     'fs/real.c',
     'fs/fake.c',
-    'fs/fake-rebuild.c',
     'fs/fake-migrate.c',
+    'fs/fake-rebuild.c',
 
     'fs/proc.c',
     'fs/proc/entry.c',

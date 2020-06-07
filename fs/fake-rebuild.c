@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
-#include <sqlite3.h>
+#include "fs/sqlutil.h"
 #include "kernel/fs.h"
 #include "kernel/errno.h"
 #include "util/list.h"
@@ -29,30 +29,8 @@ struct entry {
 };
 
 int fakefs_rebuild(struct mount *mount) {
+    sqlite3 *db = mount->db;
     int err;
-#define CHECK_ERR() \
-    if (err != SQLITE_OK && err != SQLITE_ROW && err != SQLITE_DONE) \
-        die("sqlite error while rebuilding: %s\n", sqlite3_errmsg(mount->db))
-#define EXEC(sql) \
-    err = sqlite3_exec(mount->db, sql, NULL, NULL, NULL); \
-    CHECK_ERR();
-#define PREPARE(sql) ({ \
-    sqlite3_stmt *stmt; \
-    sqlite3_prepare_v2(mount->db, sql, -1, &stmt, NULL); \
-    CHECK_ERR(); \
-    stmt; \
-})
-#define STEP(stmt) ({ \
-    err = sqlite3_step(stmt); \
-    CHECK_ERR(); \
-    err == SQLITE_ROW; \
-})
-#define RESET(stmt) \
-    err = sqlite3_reset(stmt); \
-    CHECK_ERR()
-#define FINALIZE(stmt) \
-    err = sqlite3_finalize(stmt); \
-    CHECK_ERR()
 
     EXEC("begin");
     EXEC("create table paths_old (path blob primary key, inode integer)");

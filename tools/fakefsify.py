@@ -14,7 +14,6 @@ create table paths (path blob primary key, inode integer references stats(inode)
 create index inode_to_path on paths (inode, path);
 pragma user_version=3;
 """
-# no index is needed on stats, because the rows are ordered by the primary key
 
 
 def extract_member(archive, db, member):
