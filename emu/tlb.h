@@ -30,7 +30,7 @@ forceinline __no_instrument void *__tlb_read_ptr(struct tlb *tlb, addr_t addr) {
     struct tlb_entry entry = tlb->entries[TLB_INDEX(addr)];
     if (entry.page == TLB_PAGE(addr)) {
         void *address = (void *) (entry.data_minus_addr + addr);
-        postulate(address != NULL);
+        posit(address != NULL);
         return address;
     }
     return tlb_handle_miss(tlb, addr, MEM_READ);
@@ -51,7 +51,7 @@ forceinline __no_instrument void *__tlb_write_ptr(struct tlb *tlb, addr_t addr) 
     if (entry.page_if_writable == TLB_PAGE(addr)) {
         tlb->dirty_page = TLB_PAGE(addr);
         void *address = (void *) (entry.data_minus_addr + addr);
-        postulate(address != NULL);
+        posit(address != NULL);
         return address;
     }
     return tlb_handle_miss(tlb, addr, MEM_WRITE);

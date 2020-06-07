@@ -18,32 +18,43 @@
 #define str(x) _str(x)
 #define _str(x) #x
 
-// compiler checks
-#define is_clang(version) (__clang__ && __clang_major__ >= version)
+// compiler check
 #define is_gcc(version) (__GNUC__ >= version)
+
+#if !defined(__has_attribute)
+#define has_attribute(x) 0
+#else
+#define has_attribute __has_attribute
+#endif
+
+#if !defined(__has_feature)
+#define has_feature(x) 0
+#else
+#define has_feature __has_feature
+#endif
 
 // keywords
 #define bits unsigned int
 #define forceinline inline __attribute__((always_inline))
 #define flatten __attribute__((flatten))
 #ifdef NDEBUG
-#define postulate __builtin_assume
+#define posit __builtin_assume
 #else
-#define postulate assert
+#define posit assert
 #endif
 #define unlikely(x) __builtin_expect((x), 0)
 #define typecheck(type, x) ({type _x = x; x;})
 #define must_check __attribute__((warn_unused_result))
-#if is_gcc(7) || is_clang(10)
+#if has_attribute(fallthrough)
 #define fallthrough __attribute__((fallthrough))
 #else
 #define fallthrough
 #endif
 
-#if defined(__has_attribute) && __has_attribute(no_sanitize)
+#if has_attribute(no_sanitize)
 #define __no_instrument_msan
 #if defined(__has_feature)
-#if __has_feature(memory_sanitizer)
+#if has_feature(memory_sanitizer)
 #undef __no_instrument_msan
 #define __no_instrument_msan __attribute__((no_sanitize("memory"))
 #endif
@@ -53,7 +64,7 @@
 #define __no_instrument
 #endif
 
-#if is_gcc(8)
+#if has_attribute(nonstring)
 #define __strncpy_safe __attribute__((nonstring))
 #else
 #define __strncpy_safe
