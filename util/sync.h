@@ -1,6 +1,7 @@
 #ifndef UTIL_SYNC_H
 #define UTIL_SYNC_H
 
+#include <errno.h>
 #include <stdatomic.h>
 #include <pthread.h>
 #include <stdbool.h>
@@ -17,15 +18,25 @@ typedef struct {
     pthread_t owner;
 #if LOCK_DEBUG
     struct lock_debug {
-        const char *file;
+        const char *file; // doubles as locked
         int line;
         int pid;
+        bool initialized;
     } debug;
 #endif
 } lock_t;
-#define lock_init(lock) pthread_mutex_init(&(lock)->m, NULL)
+
+static inline void lock_init(lock_t *lock) {
+    pthread_mutex_init(&lock->m, NULL);
 #if LOCK_DEBUG
-#define LOCK_INITIALIZER {PTHREAD_MUTEX_INITIALIZER, 0, {}}
+    lock->debug = (struct lock_debug) {
+        .initialized = true,
+    };
+#endif
+}
+
+#if LOCK_DEBUG
+#define LOCK_INITIALIZER {PTHREAD_MUTEX_INITIALIZER, 0, { .initialized = true }}
 #else
 #define LOCK_INITIALIZER {PTHREAD_MUTEX_INITIALIZER, 0}
 #endif
@@ -33,6 +44,8 @@ static inline void __lock(lock_t *lock, __attribute__((unused)) const char *file
     pthread_mutex_lock(&lock->m);
     lock->owner = pthread_self();
 #if LOCK_DEBUG
+    assert(lock->debug.initialized);
+    assert(!lock->debug.file && "Attempting to recursively lock");
     lock->debug.file = file;
     lock->debug.line = line;
     extern int current_pid(void);
@@ -42,11 +55,27 @@ static inline void __lock(lock_t *lock, __attribute__((unused)) const char *file
 #define lock(lock) __lock(lock, __FILE__, __LINE__)
 static inline void unlock(lock_t *lock) {
 #if LOCK_DEBUG
-    lock->debug = (struct lock_debug) {};
+    assert(lock->debug.initialized);
+    assert(lock->debug.file && "Attempting to unlock an unlocked lock");
+    lock->debug = (struct lock_debug) { .initialized = true };
 #endif
     lock->owner = zero_init(pthread_t);
     pthread_mutex_unlock(&lock->m);
 }
+
+static inline int trylock(lock_t *lock, __attribute__((unused)) const char *file, __attribute__((unused)) int line) {
+    int status = pthread_mutex_trylock(&lock->m);
+#if LOCK_DEBUG
+    if (!status) {
+        lock->debug.file = file;
+        lock->debug.line = line;
+        extern int current_pid(void);
+        lock->debug.pid = current_pid();
+    }
+#endif
+    return status;
+}
+#define trylock(lock) trylock(lock, __FILE__, __LINE__)
 
 // conditions, implemented using pthread conditions but hacked so you can also
 // be woken by a signal

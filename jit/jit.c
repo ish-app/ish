@@ -160,26 +160,18 @@ static void jit_free_jetsam(struct jit *jit) {
 
 int jit_enter(struct jit_block *block, struct jit_frame *frame, struct tlb *tlb);
 
-#if 1
-
 static inline size_t jit_cache_hash(addr_t ip) {
     return (ip ^ (ip >> 12)) % JIT_CACHE_SIZE;
 }
 
-void cpu_run(struct cpu_state *cpu) {
-    struct tlb tlb;
-    tlb_init(&tlb, cpu->mem);
+int cpu_step_to_interrupt(struct cpu_state *cpu, struct tlb *tlb) {
     struct jit *jit = cpu->mem->jit;
     struct jit_block *cache[JIT_CACHE_SIZE] = {};
-    struct jit_frame frame = {.cpu = *cpu};
-    for (size_t i = 0; i < JIT_RETURN_CACHE_SIZE; i++)
-        frame.ret_cache[i] = 0;
+    struct jit_frame frame = {.cpu = *cpu, .ret_cache = {}};
 
-    int i = 0;
-    read_wrlock(&cpu->mem->lock);
-    unsigned changes = cpu->mem->changes;
+    int interrupt = INT_NONE;
 
-    while (true) {
+    while (interrupt == INT_NONE) {
         addr_t ip = frame.cpu.eip;
         size_t cache_index = jit_cache_hash(ip);
         struct jit_block *block = cache[cache_index];
@@ -187,7 +179,7 @@ void cpu_run(struct cpu_state *cpu) {
             lock(&jit->lock);
             block = jit_lookup(jit, ip);
             if (block == NULL) {
-                block = jit_block_compile(ip, &tlb);
+                block = jit_block_compile(ip, tlb);
                 jit_insert(jit, block);
             } else {
                 TRACE("%d %08x --- missed cache\n", current->pid, ip);
@@ -219,78 +211,32 @@ void cpu_run(struct cpu_state *cpu) {
         // block may be jetsam, but that's ok, because it can't be freed until
         // every thread on this jit is not executing anything
 
-        TRACE("%d %08x --- cycle %d\n", current->pid, ip, i);
-        int interrupt = jit_enter(block, &frame, &tlb);
-        if (interrupt == INT_NONE && ++i % (1 << 10) == 0)
+        TRACE("%d %08x --- cycle %ld\n", current->pid, ip, cpu->cycle);
+
+        interrupt = jit_enter(block, &frame, tlb);
+        *cpu = frame.cpu;
+        if (interrupt == INT_NONE && ++cpu->cycle % (1 << 10) == 0)
             interrupt = INT_TIMER;
-        if (interrupt != INT_NONE) {
-            *cpu = frame.cpu;
-            cpu->trapno = interrupt;
-            read_wrunlock(&cpu->mem->lock);
-            handle_interrupt(interrupt);
-
-            jit = cpu->mem->jit;
-            lock(&jit->lock);
-            if (!list_empty(&jit->jetsam)) {
-                // write-lock the mem to wait until other jit threads get to
-                // this point, so they will all clear out their block pointers
-                // TODO: use RCU for better performance
-                unlock(&jit->lock);
-                write_wrlock(&cpu->mem->lock);
-                lock(&jit->lock);
-                jit_free_jetsam(jit);
-                write_wrunlock(&cpu->mem->lock);
-            }
-            unlock(&jit->lock);
-            read_wrlock(&cpu->mem->lock);
-
-            tlb.mem = cpu->mem;
-            if (cpu->mem->changes != changes)
-                tlb_flush(&tlb);
-            changes = cpu->mem->changes;
-            frame.cpu = *cpu;
-            frame.last_block = NULL;
-            last_block = NULL;
-            // jit blocks might have been invalidated, flush caches
-            memset(frame.ret_cache, 0, sizeof(frame.ret_cache));
-            memset(cache, 0, sizeof(cache));
-        }
     }
+
+    jit = cpu->mem->jit;
+    lock(&jit->lock);
+    if (!list_empty(&jit->jetsam)) {
+        // write-lock the mem to wait until other jit threads get to
+        // this point, so they will all clear out their block pointers
+        // TODO: use RCU for better performance
+        unlock(&jit->lock);
+        write_wrlock(&cpu->mem->lock);
+        lock(&jit->lock);
+        jit_free_jetsam(jit);
+        write_wrunlock(&cpu->mem->lock);
+    }
+    unlock(&jit->lock);
+
+    return interrupt;
 }
 
-#else
-
-void cpu_run(struct cpu_state *cpu) {
-    int i = 0;
-    struct tlb tlb = {.mem = cpu->mem};
-    tlb_flush(&tlb);
-    read_wrlock(&cpu->mem->lock);
-    int changes = cpu->mem->changes;
-    while (true) {
-        int interrupt = cpu_step32(cpu, &tlb);
-        if (interrupt == INT_NONE && i++ >= 100000) {
-            i = 0;
-            interrupt = INT_TIMER;
-        }
-        if (interrupt != INT_NONE) {
-            cpu->trapno = interrupt;
-            read_wrunlock(&cpu->mem->lock);
-            handle_interrupt(interrupt);
-            read_wrlock(&cpu->mem->lock);
-            if (tlb.mem != cpu->mem)
-                tlb.mem = cpu->mem;
-            if (cpu->mem->changes != changes) {
-                tlb_flush(&tlb);
-                changes = cpu->mem->changes;
-            }
-        }
-    }
-}
-
-#endif
-
-// really only here for ptraceomatic
-int cpu_step32(struct cpu_state *cpu, struct tlb *tlb) {
+static int cpu_step(struct cpu_state *cpu, struct tlb *tlb) {
     struct gen_state state;
     gen_start(cpu->eip, &state);
     gen_step32(&state, tlb);
@@ -304,5 +250,29 @@ int cpu_step32(struct cpu_state *cpu, struct tlb *tlb) {
     read_wrunlock(&cpu->mem->lock);
     *cpu = frame.cpu;
     jit_block_free(NULL, block);
+    if (interrupt == INT_NONE && cpu->tf)
+        interrupt = INT_DEBUG;
     return interrupt;
+}
+
+void cpu_run(struct cpu_state *cpu) {
+    struct tlb tlb;
+    tlb_init(&tlb, cpu->mem);
+
+    read_wrlock(&cpu->mem->lock);
+    unsigned changes = cpu->mem->changes;
+
+    while (true) {
+        int interrupt = (cpu->tf ? cpu_step : cpu_step_to_interrupt)(cpu, &tlb);
+        if (interrupt != INT_NONE) {
+            read_wrunlock(&cpu->mem->lock);
+            handle_interrupt(cpu->trapno = interrupt);
+            read_wrlock(&cpu->mem->lock);
+
+            tlb.mem = cpu->mem;
+            if (cpu->mem->changes != changes)
+                tlb_flush(&tlb);
+            changes = cpu->mem->changes;
+        }
+    }
 }
