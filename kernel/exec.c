@@ -594,11 +594,7 @@ int __do_execve(const char *file, struct exec_args argv, struct exec_args envp) 
     strncpy(current->comm, basename, sizeof(current->comm));
     unlock(&current->general_lock);
 
-    // set the thread name
-    char threadname[16];
-    strncpy(threadname, current->comm, sizeof(threadname)-1);
-    threadname[15] = '\0';
-    set_thread_name(threadname);
+    update_thread_name();
 
     // cloexec
     // consider putting this in fd.c?

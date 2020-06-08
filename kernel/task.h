@@ -170,4 +170,8 @@ extern void (*exit_hook)(struct task *task, int code);
 
 #define superuser() (current != NULL && current->euid == 0)
 
+// Update the thread name to match the current task, in the format "comm-pid".
+// Will ensure that the -pid part always fits, then will fit as much of comm as possible.
+void update_thread_name(void);
+
 #endif
