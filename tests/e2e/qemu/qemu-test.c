@@ -2503,9 +2503,9 @@ void test_sse(void)
     // SSE_OP2(andpd);
     // SSE_OP2(andnps);
     // SSE_OP2(andnpd);
-    // SSE_OP2(orps);
+    SSE_OP2(orps);
     SSE_OP2(orpd);
-    // SSE_OP2(xorps);
+    SSE_OP2(xorps);
     // SSE_OP2(xorpd);
 
     // SSE_OP2(unpcklps);

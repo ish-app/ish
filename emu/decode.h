@@ -104,10 +104,6 @@ restart:
                 case 0x4f: TRACEI("cmovnle modrm, reg");
                            READMODRM; CMOVN(LE, modrm_val, modrm_reg,oz); break;
 
-                case 0x57: TRACEI("xorps xmm, xmm:modrm");
-                           READMODRM; V_OP(xor, xmm_modrm_val, xmm_modrm_reg,128);
-                           break;
-
                 case 0x77: TRACEI("emms (ignored because there is no mmx)"); break;
 
                 case 0x80: TRACEI("jo rel\t");
@@ -338,6 +334,11 @@ restart:
                            READMODRM; VMOV(xmm_modrm_val, xmm_modrm_reg,128); break;
                 case 0x11: TRACEI("movups xmm, xmm:modrm");
                            READMODRM; VMOV(xmm_modrm_reg, xmm_modrm_val,128); break;
+
+                case 0x56: TRACEI("orps xmm:modrm, xmm");
+                           READMODRM; V_OP(or, xmm_modrm_val, xmm_modrm_reg,128); break;
+                case 0x57: TRACEI("xorps xmm:modrm, xmm");
+                           READMODRM; V_OP(xor, xmm_modrm_val, xmm_modrm_reg,128); break;
 
                 case 0x6f: TRACEI("movq modrm, mm");
                            READMODRM; VMOV(mm_modrm_val, mm_modrm_reg, 64); break;
