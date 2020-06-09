@@ -15,6 +15,7 @@ struct tlb_entry {
 struct tlb {
     struct mem *mem;
     page_t dirty_page;
+    unsigned mem_changes;
     struct tlb_entry entries[TLB_SIZE];
 };
 
