@@ -205,14 +205,8 @@ static void _mem_sync(struct tlb *tlb, uc_engine *uc, addr_t addr, dword_t size)
 void step_tracing(struct cpu_state *cpu, struct tlb *tlb, uc_engine *uc) {
     // step ish
     addr_t old_brk = current->mm->brk; // this is important
-    unsigned changes = cpu->mem->changes;
-    int interrupt = cpu_step32(cpu, tlb);
-    if (interrupt != INT_NONE) {
-        cpu->trapno = interrupt;
-        handle_interrupt(interrupt);
-    }
-    if (cpu->mem->changes != changes)
-        tlb_flush(tlb);
+    int interrupt = cpu_run_to_interrupt(cpu, tlb);
+    handle_interrupt(interrupt);
 
     // step unicorn
     uc_interrupt = -1;
@@ -344,7 +338,7 @@ void step_tracing(struct cpu_state *cpu, struct tlb *tlb, uc_engine *uc) {
                 break;
 
             case 91: // munmap
-                if (cpu->eax >= 0)
+                if ((int) cpu->eax >= 0)
                     uc_unmap(uc, cpu->ebx, cpu->ecx);
                 break;
 
@@ -503,7 +497,7 @@ int main(int argc, char *const argv[]) {
             printk("resetting cpu\n");
             *cpu = old_cpu;
             debugger;
-            cpu_step32(cpu, &tlb);
+            cpu_run_to_interrupt(cpu, &tlb);
         }
         undefined_flags = undefined_flags_mask(cpu, &tlb);
         old_cpu = *cpu;

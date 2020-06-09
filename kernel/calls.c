@@ -236,7 +236,6 @@ syscall_t syscall_table[] = {
 #define NUM_SYSCALLS (sizeof(syscall_table) / sizeof(syscall_table[0]))
 
 void handle_interrupt(int interrupt) {
-    TRACE_(instr, "\n");
     struct cpu_state *cpu = &current->cpu;
     if (interrupt == INT_SYSCALL) {
         unsigned syscall_num = cpu->eax;

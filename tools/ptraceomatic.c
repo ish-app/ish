@@ -258,21 +258,15 @@ static void pt_copy_to_real(int pid, addr_t start, size_t size) {
 static void step_tracing(struct cpu_state *cpu, struct tlb *tlb, int pid, int sender, int receiver) {
     // step fake cpu
     cpu->tf = 1;
-    unsigned changes = cpu->mem->changes;
-    int interrupt = cpu_step_to_interrupt(cpu, tlb);
-    if (interrupt != INT_NONE) {
-        cpu->trapno = interrupt;
-        // hack to clean up before the exit syscall
-        if (interrupt == INT_SYSCALL && cpu->eax == 1) {
-            if (kill(pid, SIGKILL) < 0) {
-                perror("kill tracee during exit");
-                exit(1);
-            }
+    int interrupt = cpu_run_to_interrupt(cpu, tlb);
+    // hack to clean up before the exit syscall
+    if (interrupt == INT_SYSCALL && cpu->eax == 1) {
+        if (kill(pid, SIGKILL) < 0) {
+            perror("kill tracee during exit");
+            exit(1);
         }
-        handle_interrupt(interrupt);
     }
-    if (cpu->mem->changes != changes)
-        tlb_flush(tlb);
+    handle_interrupt(interrupt);
 
     // step real cpu
     // intercept cpuid, rdtsc, and int $0x80, though
@@ -501,7 +495,7 @@ int main(int argc, char *const argv[]) {
             printk("failure: resetting cpu\n");
             *cpu = old_cpu;
             __asm__("int3");
-            cpu_step_to_interrupt(cpu, &tlb);
+            cpu_run_to_interrupt(cpu, &tlb);
         }
         undefined_flags = undefined_flags_mask(cpu, &tlb);
         old_cpu = *cpu;

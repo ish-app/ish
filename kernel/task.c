@@ -5,6 +5,7 @@
 #include "kernel/calls.h"
 #include "kernel/task.h"
 #include "emu/memory.h"
+#include "emu/tlb.h"
 
 __thread struct task *current;
 
@@ -91,16 +92,21 @@ void task_destroy(struct task *task) {
     free(task);
 }
 
-void (*task_run_hook)(void) = NULL;
+void task_run_current() {
+    struct cpu_state *cpu = &current->cpu;
+    struct tlb tlb;
+    tlb_init(&tlb, current->mem);
+    while (true) {
+        int interrupt = cpu_run_to_interrupt(cpu, &tlb);
+        handle_interrupt(interrupt);
+    }
+}
 
-static void *task_run(void *task) {
+static void *task_thread(void *task) {
     current = task;
     set_thread_name(current->comm);
-    if (task_run_hook)
-        task_run_hook();
-    else
-        cpu_run(&current->cpu);
-    die("task_run returned"); // above function call should never return
+    task_run_current();
+    die("task_thread returned"); // above function call should never return
 }
 
 static pthread_attr_t task_thread_attr;
@@ -110,7 +116,7 @@ __attribute__((constructor)) static void create_attr() {
 }
 
 void task_start(struct task *task) {
-    if (pthread_create(&task->thread, &task_thread_attr, task_run, task) < 0)
+    if (pthread_create(&task->thread, &task_thread_attr, task_thread, task) < 0)
         die("could not create thread");
 }
 

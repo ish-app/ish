@@ -162,10 +162,9 @@ struct task *pid_get_task_zombie(dword_t id); // don't return null if the task e
 
 #define MAX_PID (1 << 15) // oughta be enough
 
-// When a thread is created to run a new process, this function is used.
-extern void (*task_run_hook)(void);
 // TODO document
 void task_start(struct task *task);
+void task_run_current();
 
 extern void (*exit_hook)(struct task *task, int code);
 

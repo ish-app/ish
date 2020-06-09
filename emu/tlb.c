@@ -4,6 +4,7 @@
 void tlb_init(struct tlb *tlb, struct mem *mem) {
     tlb->mem = mem;
     tlb->dirty_page = TLB_PAGE_EMPTY;
+    tlb->mem_changes = mem->changes;
     tlb_flush(tlb);
 }
 

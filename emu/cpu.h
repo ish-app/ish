@@ -8,8 +8,7 @@
 
 struct cpu_state;
 struct tlb;
-void cpu_run(struct cpu_state *cpu);
-int cpu_step_to_interrupt(struct cpu_state *cpu, struct tlb *tlb);
+int cpu_run_to_interrupt(struct cpu_state *cpu, struct tlb *tlb);
 
 union mm_reg {
     qword_t qw;
