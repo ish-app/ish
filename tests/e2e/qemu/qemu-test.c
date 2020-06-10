@@ -2512,7 +2512,7 @@ void test_sse(void)
     SSE_OP2(orps);
     SSE_OP2(orpd);
     SSE_OP2(xorps);
-    // SSE_OP2(xorpd);
+    SSE_OP2(xorpd);
 
     // SSE_OP2(unpcklps);
     // SSE_OP2(unpcklpd);
@@ -2614,7 +2614,7 @@ void test_sse(void)
         SSE_OPD_S(add);
         SSE_OPD_S(mul);
         SSE_OPD_S(sub);
-        // SSE_OPD(min);
+        SSE_OPD_S(min);
         SSE_OPD_S(div);
         SSE_OPD_S(max);
         // SSE_OPD(sqrt);

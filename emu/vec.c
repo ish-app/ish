@@ -134,6 +134,9 @@ void vec_single_fdiv32(NO_CPU, const float *src, float *dst) { *dst /= *src; }
 void vec_single_fmax64(NO_CPU, const double *src, double *dst) {
     if (*src > *dst || isnan(*src) || isnan(*dst)) *dst = *src;
 }
+void vec_single_fmin64(NO_CPU, const double *src, double *dst) {
+    if (*src < *dst || isnan(*src) || isnan(*dst)) *dst = *src;
+}
 
 void vec_single_ucomi32(struct cpu_state *cpu, const float *src, const float *dst) {
     cpu->zf_res = cpu->pf_res = 0;

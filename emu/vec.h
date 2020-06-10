@@ -42,6 +42,7 @@ void vec_single_fsub32(NO_CPU, const float *src, float *dst);
 void vec_single_fdiv32(NO_CPU, const float *src, float *dst);
 
 void vec_single_fmax64(NO_CPU, const double *src, double *dst);
+void vec_single_fmin64(NO_CPU, const double *src, double *dst);
 void vec_single_ucomi32(struct cpu_state *cpu, const float *src, const float *dst);
 void vec_single_ucomi64(struct cpu_state *cpu, const double *src, const double *dst);
 void vec_single_fcmp64(NO_CPU, const double *src, union xmm_reg *dst, uint8_t type);
