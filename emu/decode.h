@@ -806,6 +806,7 @@ restart:
                     case 0xd975: TRACE("fscale"); FSCALE(); break;
                     case 0xd976: TRACE("fsin"); FSIN(); break;
                     case 0xd977: TRACE("fcos"); FCOS(); break;
+                    case 0xdb42: TRACE("fnclex"); FCLEX(); break;
                     case 0xde31: TRACE("fcompp"); FCOM(); FPOP; FPOP; break;
                     case 0xdf40: TRACE("fnstsw ax"); FSTSW(reg_a); break;
                     default: TRACE("undefined"); UNDEFINED;

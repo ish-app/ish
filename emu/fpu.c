@@ -361,3 +361,7 @@ void fpu_restore32(struct cpu_state *cpu, struct fpu_state32 *state) {
     for (int i = 0; i < 8; i++)
         memcpy(&ST(i), state->regs[i], 10);
 }
+
+void fpu_clex(struct cpu_state *cpu) {
+    cpu->pe = cpu->ue = cpu->oe = cpu->ze = cpu->de = cpu->ie = cpu->es = cpu->sf = cpu->b = 0;
+}

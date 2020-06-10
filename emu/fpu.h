@@ -110,5 +110,6 @@ void fpu_stenv32(struct cpu_state *cpu, struct fpu_env32 *env);
 void fpu_ldenv32(struct cpu_state *cpu, struct fpu_env32 *env);
 void fpu_save32(struct cpu_state *cpu, struct fpu_state32 *state);
 void fpu_restore32(struct cpu_state *cpu, struct fpu_state32 *state);
+void fpu_clex(struct cpu_state *cpu);
 
 #endif
