@@ -7,4 +7,3 @@ option('engine', type: 'combo', choices: ['jit', 'interp'], value: 'jit')
 option('vdso_c_args', type: 'string', value: '')
 
 option('no_crlf', type: 'boolean', value: false)
-option('enable_unstable_sse', type: 'boolean', value: false)

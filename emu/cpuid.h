@@ -20,10 +20,7 @@ static inline void do_cpuid(dword_t *eax, dword_t *ebx, dword_t *ecx, dword_t *e
             *edx = (1 << 0) // fpu
                 | (1 << 15) // cmov
                 | (1 << 23) // mmx
-#ifdef ENABLE_UNSTABLE_SSE
-                // TODO: Remove ifdef guard when SSE2 is stable
                 | (1 << 26) // sse2
-#endif
                 ;
             break;
     }
