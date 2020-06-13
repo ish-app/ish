@@ -62,12 +62,13 @@ static int compare_cpus(struct cpu_state *cpu, struct tlb *tlb, int pid, int und
     getregs(pid, &regs);
     trycall(ptrace(PTRACE_GETFPREGS, pid, NULL, &fpregs), "ptrace getregs compare");
     collapse_flags(cpu);
-#define CHECK(real, fake, name) \
+#define CHECK(real, fake, fmt, ...) do { \
     if ((real) != (fake)) { \
-        printk(name ": real 0x%llx, fake 0x%llx\n", (unsigned long long) (real), (unsigned long long) (fake)); \
+        printk(fmt ": real 0x%llx, fake 0x%llx\n", ##__VA_ARGS__, (unsigned long long) (real), (unsigned long long) (fake)); \
         debugger; \
         return -1; \
-    }
+    } \
+} while (0)
 #define CHECK_REG(pt, cp) CHECK(regs.pt, cpu->cp, #cp)
     CHECK_REG(rax, eax);
     CHECK_REG(rbx, ebx);
@@ -91,34 +92,30 @@ static int compare_cpus(struct cpu_state *cpu, struct tlb *tlb, int pid, int und
         debugger;
         return -1;
     }
-#define CHECK_XMMREG(i) \
-    CHECK(pun(uint64_t, fpregs.xmm_space[i * 4]), cpu->xmm[i].qw[0], "xmm" #i " low") \
-    CHECK(pun(uint64_t, fpregs.xmm_space[i*4+2]), cpu->xmm[i].qw[1], "xmm" #i " high")
-    CHECK_XMMREG(0);
-    CHECK_XMMREG(1);
-    CHECK_XMMREG(2);
-    CHECK_XMMREG(3);
-    CHECK_XMMREG(4);
-    CHECK_XMMREG(5);
-    CHECK_XMMREG(6);
-    CHECK_XMMREG(7);
+
+    for (int i = 0; i < 8; i++) {
+        CHECK(*(uint64_t *) &fpregs.xmm_space[i * 4], cpu->xmm[i].qw[0], "xmm%d low", i);
+        CHECK(*(uint64_t *) &fpregs.xmm_space[i*4+2], cpu->xmm[i].qw[1], "xmm%d high", i);
+    }
 
 #define FSW_MASK 0x7d00 // only look at top, c0, c2, c3
     CHECK(fpregs.swd & FSW_MASK, cpu->fsw & FSW_MASK, "fsw");
     CHECK(fpregs.cwd, cpu->fcw, "fcw");
     fpregs.swd &= FSW_MASK;
-
-#define CHECK_FPREG(i) \
-    CHECK(pun(uint64_t, fpregs.st_space[i * 4]), cpu->fp[(cpu->top + i)%8].signif,  "st(" #i ") signif") \
-    CHECK(pun(uint16_t, fpregs.st_space[i*4+2]), cpu->fp[(cpu->top + i)%8].signExp, "st(" #i ") sign/exp")
-    CHECK_FPREG(0);
-    CHECK_FPREG(1);
-    CHECK_FPREG(2);
-    CHECK_FPREG(3);
-    CHECK_FPREG(4);
-    CHECK_FPREG(5);
-    CHECK_FPREG(6);
-    CHECK_FPREG(7);
+    for (int i = 0; i < 8; i++) {
+        int ii = (cpu->top + i) % 8;
+        uint64_t mm = cpu->mm[ii].qw;
+        uint64_t f_signif =  cpu->fp[ii].signif;
+        uint64_t expected = *(uint64_t *) &fpregs.st_space[i * 4];
+        if (f_signif != expected && mm != expected) {
+            printk("mm/st(%d) signif: real %#llx, fake fp %#llx, fake mm %#llx\n", i, (unsigned long long) expected, (unsigned long long) f_signif, (unsigned long long) mm);
+            debugger;
+            return -1;
+        }
+        if (f_signif == expected && mm != expected) {
+            CHECK(*(uint16_t *) &fpregs.st_space[i*4+2], cpu->fp[ii].signExp, "st(%d) sign/exp", i);
+        }
+    }
 
     // compare pages marked dirty
     if (tlb->dirty_page != TLB_PAGE_EMPTY) {
@@ -266,7 +263,8 @@ static void step_tracing(struct cpu_state *cpu, struct tlb *tlb, int pid, int se
             exit(1);
         }
     }
-    handle_interrupt(interrupt);
+    if (interrupt != INT_DEBUG)
+        handle_interrupt(interrupt);
 
     // step real cpu
     // intercept cpuid, rdtsc, and int $0x80, though
