@@ -2205,6 +2205,13 @@ static uint64_t __attribute__((aligned(16))) test_values[4][2] = {
            a.q[1], a.q[0],\
            ib,\
            r.q[1], r.q[0]);\
+    a.q[0] = test_values[2*i][0];\
+    asm volatile (#op " $" #ib ", %0" : "=y" (r.q[0]) : "0" (a.q[0]));\
+    printf("%-9s: a=" FMT64X " ib=%02x r=" FMT64X "\n",\
+           #op,\
+           a.q[0],\
+           ib,\
+           r.q[0]);\
     }\
 }
 
@@ -2419,12 +2426,12 @@ void test_sse(void)
     // MMX_OP2(pcmpeqw);
     SSE_OP2(pcmpeqd);
 
-    SSE_OP2(paddq);
+    MMX_OP2(paddq);
     // MMX_OP2(pmullw);
     // MMX_OP2(psubusb);
     // MMX_OP2(psubusw);
     SSE_OP2(pminub);
-    SSE_OP2(pand);
+    MMX_OP2(pand);
     // MMX_OP2(paddusb);
     // MMX_OP2(paddusw);
     // MMX_OP2(pmaxub);
@@ -2440,8 +2447,8 @@ void test_sse(void)
     // MMX_OP2(paddsb);
     // MMX_OP2(paddsw);
     // MMX_OP2(pmaxsw);
-    SSE_OP2(pxor);
-    // MMX_OP2(pmuludq);
+    MMX_OP2(pxor);
+    MMX_OP2(pmuludq);
     // MMX_OP2(pmaddwd);
     // MMX_OP2(psadbw);
     // MMX_OP2(psubb);
@@ -2558,6 +2565,7 @@ void test_sse(void)
     MOVMSK(movmskpd);
 
     /* FPU specific ops */
+    asm volatile ("emms");
 
     // {
         // uint32_t mxcsr;

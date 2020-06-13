@@ -491,7 +491,7 @@ static inline bool gen_vec(enum arg src, enum arg dst, void (*helper)(), gadget_
             g(vec_helper_imm);
             GEN(helper);
             // This is rm_opcode instead of opcode because PSRLQ is weird like that
-            GEN(((uint16_t) imm) | (CPU_OFFSET(xmm[modrm->rm_opcode]) << 16));
+            GEN(((uint16_t) imm) | (cpu_reg_offset(reg, modrm->rm_opcode) << 16));
             break;
 
         default: die("unimplemented vecarg");
