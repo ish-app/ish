@@ -285,6 +285,14 @@ void handle_interrupt(int interrupt) {
     unlock(&group->lock);
 }
 
+void dump_maps() {
+    extern void proc_maps_dump(struct task *task, struct proc_data *buf);
+    struct proc_data buf = {};
+    proc_maps_dump(current, &buf);
+    printk("%s\n", buf.data);
+    free(buf.data);
+}
+
 void dump_stack() {
     printk("stack at %x, base at %x, ip at %x\n", current->cpu.esp, current->cpu.ebp, current->cpu.eip);
     for (int i = 0; i < 64; i++) {
