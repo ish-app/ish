@@ -91,8 +91,8 @@ int err_map(int err) {
         ERRCASE(EDQUOT)
     }
 #undef ERRCASE
-    debugger;
-    return -1337; // TODO FIXME XXX
+    printk("unknown error %d\n", err);
+    return -(err | 0x1000);
 }
 
 int errno_map() {
