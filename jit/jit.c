@@ -158,7 +158,7 @@ static void jit_free_jetsam(struct jit *jit) {
     }
 }
 
-int jit_enter(struct jit_block *block, struct jit_frame *frame, struct tlb *tlb);
+int jit_enter(struct jit_block *block, struct cpu_state *cpu, struct tlb *tlb);
 
 static inline size_t jit_cache_hash(addr_t ip) {
     return (ip ^ (ip >> 12)) % JIT_CACHE_SIZE;
@@ -167,11 +167,11 @@ static inline size_t jit_cache_hash(addr_t ip) {
 static int cpu_step_to_interrupt(struct cpu_state *cpu, struct tlb *tlb) {
     struct jit *jit = cpu->mem->jit;
     struct jit_block *cache[JIT_CACHE_SIZE] = {};
-    struct jit_frame frame = {.cpu = *cpu, .ret_cache = {}};
+    cpu->frame = (struct jit_frame){};
 
     int interrupt = INT_NONE;
     while (interrupt == INT_NONE) {
-        addr_t ip = frame.cpu.eip;
+        addr_t ip = cpu->eip;
         size_t cache_index = jit_cache_hash(ip);
         struct jit_block *block = cache[cache_index];
         if (block == NULL || block->addr != ip) {
@@ -186,7 +186,7 @@ static int cpu_step_to_interrupt(struct cpu_state *cpu, struct tlb *tlb) {
             cache[cache_index] = block;
             unlock(&jit->lock);
         }
-        struct jit_block *last_block = frame.last_block;
+        struct jit_block *last_block = cpu->frame.last_block;
         if (last_block != NULL &&
                 (last_block->jump_ip[0] != NULL ||
                  last_block->jump_ip[1] != NULL)) {
@@ -205,15 +205,14 @@ static int cpu_step_to_interrupt(struct cpu_state *cpu, struct tlb *tlb) {
 
             unlock(&jit->lock);
         }
-        frame.last_block = block;
+        cpu->frame.last_block = block;
 
         // block may be jetsam, but that's ok, because it can't be freed until
         // every thread on this jit is not executing anything
 
         TRACE("%d %08x --- cycle %ld\n", current->pid, ip, cpu->cycle);
 
-        interrupt = jit_enter(block, &frame, tlb);
-        *cpu = frame.cpu;
+        interrupt = jit_enter(block, cpu, tlb);
         if (interrupt == INT_NONE && ++cpu->cycle % (1 << 10) == 0)
             interrupt = INT_TIMER;
     }
@@ -229,9 +228,8 @@ static int cpu_single_step(struct cpu_state *cpu, struct tlb *tlb) {
     gen_end(&state);
 
     struct jit_block *block = state.block;
-    struct jit_frame frame = {.cpu = *cpu};
-    int interrupt = jit_enter(block, &frame, tlb);
-    *cpu = frame.cpu;
+    cpu->frame = (struct jit_frame){};
+    int interrupt = jit_enter(block, cpu, tlb);
     jit_block_free(NULL, block);
     if (interrupt == INT_NONE)
         interrupt = INT_DEBUG;
