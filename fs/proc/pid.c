@@ -103,6 +103,27 @@ static int proc_pid_stat_show(struct proc_entry *entry, struct proc_data *buf) {
     return 0;
 }
 
+static int proc_pid_auxv_show(struct proc_entry *entry, struct proc_data *buf) {
+    struct task *task = proc_get_task(entry);
+    if (task == NULL)
+        return _ESRCH;
+    if (task->mm == NULL)
+        goto out_free_task;
+
+    size_t size = task->mm->auxv_end - task->mm->auxv_start;
+    char *data = malloc(size);
+    if (data == NULL)
+        return _ENOMEM;
+    int err = user_read_task(task, task->mm->auxv_start, data, size);
+    if (err == 0)
+        proc_buf_write(buf, data, size);
+    free(data);
+
+out_free_task:
+    proc_put_task(task);
+    return 0;
+}
+
 static int proc_pid_cmdline_show(struct proc_entry *entry, struct proc_data *buf) {
     struct task *task = proc_get_task(entry);
     if (task == NULL)
@@ -111,7 +132,7 @@ static int proc_pid_cmdline_show(struct proc_entry *entry, struct proc_data *buf
         goto out_free_task;
 
     size_t size = task->mm->argv_end - task->mm->argv_start;
-    uint8_t *data = malloc(size);
+    char *data = malloc(size);
     if (data == NULL)
         return _ENOMEM;
     int err = user_read_task(task, task->mm->argv_start, data, size);
@@ -230,6 +251,7 @@ static int proc_pid_exe_readlink(struct proc_entry *entry, char *buf) {
 }
 
 struct proc_dir_entry proc_pid_entries[] = {
+    {"auxv", .show = proc_pid_auxv_show},
     {"cmdline", .show = proc_pid_cmdline_show},
     {"exe", S_IFLNK, .readlink = proc_pid_exe_readlink},
     {"fd", S_IFDIR, .readdir = proc_pid_fd_readdir},

@@ -373,9 +373,11 @@ static int elf_exec(struct fd *fd, const char *file, struct exec_args argv, stru
     p += sizeof(dword_t); // null terminator
 
     // copy auxv
+    current->mm->auxv_start = p;
     if (user_put(p, aux))
         goto beyond_hope;
     p += sizeof(aux);
+    current->mm->auxv_end = p;
 
     current->mm->stack_start = sp;
     current->cpu.esp = sp;
