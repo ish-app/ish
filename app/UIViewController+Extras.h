@@ -1,5 +1,5 @@
 //
-//  UIViewController+Unwind.h
+//  UIViewController+Extras.h
 //  iSH
 //
 //  Created by Theodore Dubois on 9/23/18.
@@ -9,9 +9,10 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface UIViewController (Unwind)
+@interface UIViewController (Extras)
 
 - (IBAction)unwind:(UIStoryboardSegue *)segue;
+- (void)presentError:(NSError *)error title:(NSString *)title;
 
 @end
 

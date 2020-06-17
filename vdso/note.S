@@ -8,7 +8,7 @@ name:
 after_name:
     .balign 4
 note:
-    .long 0x030200 // let's pretend we're linux 3.2.0
+    .long (4 << 16) | (20 << 8) | 69 // 4.20.69
 after_note:
     .balign 4
 .popsection

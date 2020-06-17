@@ -18,27 +18,35 @@ struct task *fake_task;
 
 @interface FileProviderExtension ()
 @property NSURL *root;
-@property struct mount *mount;
+@property (readonly) struct mount *mount;
 @end
 
 @implementation FileProviderExtension
+@synthesize mount = _mount;
 
 - (instancetype)init {
-    if (self = [super init]) {
-        self.mount = malloc(sizeof(struct mount));
-        if (!self.mount)
-            return nil;
-        self.mount->fs = &fakefs;
-        NSURL *container = ContainerURL();
-        _root = [container URLByAppendingPathComponent:@"roots/alpine/data"];
-        self.mount->source = strdup(self.root.fileSystemRepresentation);
-        int err = self.mount->fs->mount(self.mount);
-        if (err < 0) {
-            NSLog(@"error opening root: %d", err);
-            return nil;
-        }
+    NSLog(@"yo");
+    return [super init];
+}
+
+- (struct mount *)mount {
+    if (_mount != NULL)
+        return _mount;
+    _mount = malloc(sizeof(struct mount));
+    if (!_mount)
+        return NULL;
+    _mount->fs = &fakefs;
+    NSURL *container = ContainerURL();
+    _root = [[[container URLByAppendingPathComponent:@"roots"]
+              URLByAppendingPathComponent:self.domain.identifier]
+             URLByAppendingPathComponent:@"data"];
+    _mount->source = strdup(self.root.fileSystemRepresentation);
+    int err = _mount->fs->mount(_mount);
+    if (err < 0) {
+        NSLog(@"error opening root: %d", err);
+        return NULL;
     }
-    return self;
+    return _mount;
 }
 
 - (nullable NSFileProviderItem)itemForIdentifier:(NSFileProviderItemIdentifier)identifier error:(NSError * _Nullable *)error {
@@ -58,6 +66,8 @@ struct task *fake_task;
     if (item == nil)
         return nil;
     NSURL *storage = NSFileProviderManager.defaultManager.documentStorageURL;
+    if (self.domain != nil)
+        storage = [storage URLByAppendingPathComponent:self.domain.pathRelativeToDocumentStorage isDirectory:YES];
     NSURL *url = [storage URLByAppendingPathComponent:identifier isDirectory:YES];
     url = [url URLByAppendingPathComponent:item.path.lastPathComponent isDirectory:NO];
     NSLog(@"url for id %@ = %@", identifier, url);

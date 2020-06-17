@@ -13,6 +13,11 @@
 		9A28E4EA219A8B670073D200 /* AboutAppearanceViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 9A28E4E9219A8B670073D200 /* AboutAppearanceViewController.m */; };
 		BB0FC5921F980A6C00803272 /* Terminal.m in Sources */ = {isa = PBXBuildFile; fileRef = BB0FC5911F980A6B00803272 /* Terminal.m */; };
 		BB101B382364CF57000A93BC /* FontPickerViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = BB101B372364CF57000A93BC /* FontPickerViewController.m */; };
+		BB10E5C3248DBA7B009C7A74 /* fakefsify.c in Sources */ = {isa = PBXBuildFile; fileRef = BB10E5C2248DBA7B009C7A74 /* fakefsify.c */; };
+		BB10E5C9248DBAAC009C7A74 /* libarchive.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BB10E5C8248DBAA1009C7A74 /* libarchive.a */; };
+		BB10E5CE248DBE66009C7A74 /* Roots.m in Sources */ = {isa = PBXBuildFile; fileRef = BB10E5CD248DBE66009C7A74 /* Roots.m */; };
+		BB10E5D0248DC21D009C7A74 /* Roots.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = BB10E5CF248DC21D009C7A74 /* Roots.storyboard */; };
+		BB10E5D3248DCFEA009C7A74 /* RootsTableViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = BB10E5D2248DCFEA009C7A74 /* RootsTableViewController.m */; };
 		BB13F7EA200ADCED003D1C4D /* libish.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BB13F7DC200AD81D003D1C4D /* libish.a */; };
 		BB1D9D93234A8FE100F364E8 /* AboutNavigationController.m in Sources */ = {isa = PBXBuildFile; fileRef = BB1D9D92234A8FE100F364E8 /* AboutNavigationController.m */; };
 		BB235534235D488500139E00 /* LocationDevice.m in Sources */ = {isa = PBXBuildFile; fileRef = BB235533235D488400139E00 /* LocationDevice.m */; };
@@ -24,7 +29,6 @@
 		BB2B4DAF231D998300CB578B /* term.html in Resources */ = {isa = PBXBuildFile; fileRef = BB4A53A91FAA496700A72ACE /* term.html */; };
 		BB455E111FB37F6600AFB48B /* DelayedUITask.m in Sources */ = {isa = PBXBuildFile; fileRef = BB455E101FB37F6600AFB48B /* DelayedUITask.m */; };
 		BB60F55221573FCA003A4E52 /* BarButton.m in Sources */ = {isa = PBXBuildFile; fileRef = BB60F55121573FCA003A4E52 /* BarButton.m */; };
-		BB623CF91FA7C68800932047 /* alpine in Resources */ = {isa = PBXBuildFile; fileRef = BBF124901FA7C3100088FB50 /* alpine */; };
 		BB6DB261216435340047A611 /* libiconv.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = BB6DB260216435330047A611 /* libiconv.tbd */; };
 		BB78AB2B1FAD22440013E782 /* TerminalView.m in Sources */ = {isa = PBXBuildFile; fileRef = BB78AB2A1FAD22440013E782 /* TerminalView.m */; };
 		BB792B551F96D90D00FFB7A4 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = BB792B541F96D90D00FFB7A4 /* AppDelegate.m */; };
@@ -46,8 +50,9 @@
 		BBBF7B5C2415CDBB00EC4C14 /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = BBBF7B5B2415CDBB00EC4C14 /* Settings.bundle */; };
 		BBBFE94921C5CFF100509DD5 /* NSError+ISHErrno.m in Sources */ = {isa = PBXBuildFile; fileRef = BB13F4DD21C5770000343E17 /* NSError+ISHErrno.m */; };
 		BBCC9D962365430800424C83 /* SceneDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = BBCC9D952365430800424C83 /* SceneDelegate.m */; };
+		BBCE66E2249A807700F45269 /* alpine.tar.gz in Resources */ = {isa = PBXBuildFile; fileRef = BBF124901FA7C3100088FB50 /* alpine.tar.gz */; };
 		BBFB55662158644C00DFE6DE /* libresolv.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = BBFB55652158644C00DFE6DE /* libresolv.tbd */; };
-		BBFB557121586C4800DFE6DE /* UIViewController+Back.m in Sources */ = {isa = PBXBuildFile; fileRef = BBFB557021586C4800DFE6DE /* UIViewController+Back.m */; };
+		BBFB557121586C4800DFE6DE /* UIViewController+Extras.m in Sources */ = {isa = PBXBuildFile; fileRef = BBFB557021586C4800DFE6DE /* UIViewController+Extras.m */; };
 		BBFB557621586F9200DFE6DE /* DismissSegue.m in Sources */ = {isa = PBXBuildFile; fileRef = BBFB557521586F9200DFE6DE /* DismissSegue.m */; };
 		BBFB5579215876CD00DFE6DE /* AboutViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = BBFB5578215876CD00DFE6DE /* AboutViewController.m */; };
 		BBFB557C215878C600DFE6DE /* UIApplication+OpenURL.m in Sources */ = {isa = PBXBuildFile; fileRef = BBFB557B215878C600DFE6DE /* UIApplication+OpenURL.m */; };
@@ -55,6 +60,20 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		BB10E5C7248DBAA1009C7A74 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = BB10E0C1248DA5B0009C7A74 /* libarchive.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = BB10E0D6248DA67B009C7A74;
+			remoteInfo = libarchive;
+		};
+		BB10E5CA248DBAB7009C7A74 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = BB10E0C1248DA5B0009C7A74 /* libarchive.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = BB10E0D5248DA67B009C7A74;
+			remoteInfo = libarchive;
+		};
 		BB13F7D4200ACCA8003D1C4D /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = BB792B461F96D8E000FFB7A4 /* Project object */;
@@ -146,6 +165,13 @@
 		BB101B6B2364EC2F000A93BC /* fifo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = fifo.h; sourceTree = "<group>"; };
 		BB101B6C2364EC2F000A93BC /* sync.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = sync.c; sourceTree = "<group>"; };
 		BB101B6D2364EC2F000A93BC /* fifo.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = fifo.c; sourceTree = "<group>"; };
+		BB10E0C1248DA5B0009C7A74 /* libarchive.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = libarchive.xcodeproj; path = ../deps/libarchive.xcodeproj; sourceTree = "<group>"; };
+		BB10E5C2248DBA7B009C7A74 /* fakefsify.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = fakefsify.c; path = fs/fakefsify.c; sourceTree = SOURCE_ROOT; };
+		BB10E5CC248DBE66009C7A74 /* Roots.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Roots.h; sourceTree = "<group>"; };
+		BB10E5CD248DBE66009C7A74 /* Roots.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Roots.m; sourceTree = "<group>"; };
+		BB10E5CF248DC21D009C7A74 /* Roots.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = Roots.storyboard; sourceTree = "<group>"; };
+		BB10E5D1248DCFEA009C7A74 /* RootsTableViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RootsTableViewController.h; sourceTree = "<group>"; };
+		BB10E5D2248DCFEA009C7A74 /* RootsTableViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = RootsTableViewController.m; sourceTree = "<group>"; };
 		BB13F4DC21C5770000343E17 /* NSError+ISHErrno.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSError+ISHErrno.h"; sourceTree = "<group>"; };
 		BB13F4DD21C5770000343E17 /* NSError+ISHErrno.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSError+ISHErrno.m"; sourceTree = "<group>"; };
 		BB13F7C8200ACC24003D1C4D /* xcode-meson.sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = "xcode-meson.sh"; sourceTree = "<group>"; };
@@ -304,10 +330,10 @@
 		BBBF7B5B2415CDBB00EC4C14 /* Settings.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = Settings.bundle; sourceTree = "<group>"; };
 		BBCC9D942365430800424C83 /* SceneDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SceneDelegate.h; sourceTree = "<group>"; };
 		BBCC9D952365430800424C83 /* SceneDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SceneDelegate.m; sourceTree = "<group>"; };
-		BBF124901FA7C3100088FB50 /* alpine */ = {isa = PBXFileReference; explicitFileType = folder; includeInIndex = 0; path = alpine; sourceTree = "<group>"; };
+		BBF124901FA7C3100088FB50 /* alpine.tar.gz */ = {isa = PBXFileReference; explicitFileType = folder; includeInIndex = 0; path = alpine.tar.gz; sourceTree = "<group>"; };
 		BBFB55652158644C00DFE6DE /* libresolv.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libresolv.tbd; path = usr/lib/libresolv.tbd; sourceTree = SDKROOT; };
-		BBFB556F21586C4800DFE6DE /* UIViewController+Back.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "UIViewController+Back.h"; sourceTree = "<group>"; };
-		BBFB557021586C4800DFE6DE /* UIViewController+Back.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "UIViewController+Back.m"; sourceTree = "<group>"; };
+		BBFB556F21586C4800DFE6DE /* UIViewController+Extras.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "UIViewController+Extras.h"; sourceTree = "<group>"; };
+		BBFB557021586C4800DFE6DE /* UIViewController+Extras.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "UIViewController+Extras.m"; sourceTree = "<group>"; };
 		BBFB557421586F9200DFE6DE /* DismissSegue.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DismissSegue.h; sourceTree = "<group>"; };
 		BBFB557521586F9200DFE6DE /* DismissSegue.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = DismissSegue.m; sourceTree = "<group>"; };
 		BBFB5577215876CD00DFE6DE /* AboutViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AboutViewController.h; sourceTree = "<group>"; };
@@ -323,6 +349,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BB10E5C9248DBAAC009C7A74 /* libarchive.a in Frameworks */,
 				BB235537235D49B300139E00 /* CoreLocation.framework in Frameworks */,
 				BBA8E2C1236FF5EA00515F76 /* SystemConfiguration.framework in Frameworks */,
 				BB6DB261216435340047A611 /* libiconv.tbd in Frameworks */,
@@ -350,6 +377,28 @@
 				650B336822E9F0B500B4C03E /* root.c */,
 			);
 			path = proc;
+			sourceTree = "<group>";
+		};
+		BB10E5C1248DB961009C7A74 /* Roots */ = {
+			isa = PBXGroup;
+			children = (
+				BB10E5CC248DBE66009C7A74 /* Roots.h */,
+				BB10E5CD248DBE66009C7A74 /* Roots.m */,
+				BB10E5CF248DC21D009C7A74 /* Roots.storyboard */,
+				BB10E5D1248DCFEA009C7A74 /* RootsTableViewController.h */,
+				BB10E5D2248DCFEA009C7A74 /* RootsTableViewController.m */,
+				BB10E5C2248DBA7B009C7A74 /* fakefsify.c */,
+				BB10E0C1248DA5B0009C7A74 /* libarchive.xcodeproj */,
+			);
+			name = Roots;
+			sourceTree = "<group>";
+		};
+		BB10E5C4248DBAA1009C7A74 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				BB10E5C8248DBAA1009C7A74 /* libarchive.a */,
+			);
+			name = Products;
 			sourceTree = "<group>";
 		};
 		BB18B27F1F97F2590059FCD8 /* Scripts */ = {
@@ -428,7 +477,7 @@
 			isa = PBXGroup;
 			children = (
 				BB792B501F96D90D00FFB7A4 /* iSH.app */,
-				BBF124901FA7C3100088FB50 /* alpine */,
+				BBF124901FA7C3100088FB50 /* alpine.tar.gz */,
 				BB13F7DC200AD81D003D1C4D /* libish.a */,
 				BB88F4902154760800A341FD /* iSHFileProvider.appex */,
 			);
@@ -444,7 +493,7 @@
 				BBCC9D952365430800424C83 /* SceneDelegate.m */,
 				BB792B561F96D90D00FFB7A4 /* TerminalViewController.h */,
 				BB792B571F96D90D00FFB7A4 /* TerminalViewController.m */,
-				BBBF7B5B2415CDBB00EC4C14 /* Settings.bundle */,
+				BB792B591F96D90D00FFB7A4 /* Main.storyboard */,
 				BBFB557D21587B2B00DFE6DE /* Bar */,
 				BB78AB291FAD22440013E782 /* TerminalView.h */,
 				BB78AB2A1FAD22440013E782 /* TerminalView.m */,
@@ -454,9 +503,10 @@
 				BB23F58C231E1D1400585522 /* ScrollbarView.m */,
 				BB4A53991FAA40FD00A72ACE /* terminal */,
 				BB235532235D472F00139E00 /* Devices */,
-				BB792B591F96D90D00FFB7A4 /* Main.storyboard */,
 				BBFB557321586C7600DFE6DE /* About */,
+				BB10E5C1248DB961009C7A74 /* Roots */,
 				BBFB557221586C6600DFE6DE /* Utilities */,
+				BBBF7B5B2415CDBB00EC4C14 /* Settings.bundle */,
 				BB792B5C1F96D90D00FFB7A4 /* Assets.xcassets */,
 				BB792B5E1F96D90D00FFB7A4 /* LaunchScreen.storyboard */,
 				BB792B611F96D90D00FFB7A4 /* Info.plist */,
@@ -692,8 +742,8 @@
 				BB9C7B84240A240E00F5D4F0 /* AppGroup.m */,
 				BB455E0F1FB37F6600AFB48B /* DelayedUITask.h */,
 				BB455E101FB37F6600AFB48B /* DelayedUITask.m */,
-				BBFB556F21586C4800DFE6DE /* UIViewController+Back.h */,
-				BBFB557021586C4800DFE6DE /* UIViewController+Back.m */,
+				BBFB556F21586C4800DFE6DE /* UIViewController+Extras.h */,
+				BBFB557021586C4800DFE6DE /* UIViewController+Extras.m */,
 				BBFB557A215878C600DFE6DE /* UIApplication+OpenURL.h */,
 				BBFB557B215878C600DFE6DE /* UIApplication+OpenURL.m */,
 				BBFB557421586F9200DFE6DE /* DismissSegue.h */,
@@ -791,7 +841,6 @@
 				BB792B4C1F96D90D00FFB7A4 /* Sources */,
 				BB792B4D1F96D90D00FFB7A4 /* Frameworks */,
 				BBF1248B1FA7BF530088FB50 /* Download Alpine */,
-				BBF1248A1FA7BDBA0088FB50 /* Create Alpine Filesystem */,
 				BB4A53AC1FAA49CA00A72ACE /* Compile JavaScript */,
 				BB792B4E1F96D90D00FFB7A4 /* Resources */,
 				BB88F4A32154760800A341FD /* Embed App Extensions */,
@@ -799,6 +848,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				BB10E5CB248DBAB7009C7A74 /* PBXTargetDependency */,
 				BB13F7E7200AD874003D1C4D /* PBXTargetDependency */,
 				BB88F49E2154760800A341FD /* PBXTargetDependency */,
 			);
@@ -881,6 +931,12 @@
 			mainGroup = BB792B451F96D8E000FFB7A4;
 			productRefGroup = BB792B511F96D90D00FFB7A4 /* Products */;
 			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = BB10E5C4248DBAA1009C7A74 /* Products */;
+					ProjectRef = BB10E0C1248DA5B0009C7A74 /* libarchive.xcodeproj */;
+				},
+			);
 			projectRoot = "";
 			targets = (
 				BB792B4F1F96D90D00FFB7A4 /* iSH */,
@@ -892,6 +948,16 @@
 		};
 /* End PBXProject section */
 
+/* Begin PBXReferenceProxy section */
+		BB10E5C8248DBAA1009C7A74 /* libarchive.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = libarchive.a;
+			remoteRef = BB10E5C7248DBAA1009C7A74 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+/* End PBXReferenceProxy section */
+
 /* Begin PBXResourcesBuildPhase section */
 		BB792B4E1F96D90D00FFB7A4 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
@@ -902,8 +968,9 @@
 				BBBF7B5C2415CDBB00EC4C14 /* Settings.bundle in Resources */,
 				BBBCE7E321D2F02200CA00B3 /* About.storyboard in Resources */,
 				BB792B5B1F96D90D00FFB7A4 /* Main.storyboard in Resources */,
-				BB623CF91FA7C68800932047 /* alpine in Resources */,
 				BB2B4DAF231D998300CB578B /* term.html in Resources */,
+				BB10E5D0248DC21D009C7A74 /* Roots.storyboard in Resources */,
+				BBCE66E2249A807700F45269 /* alpine.tar.gz in Resources */,
 				BB2B4DAC231D94C300CB578B /* hterm_all.js in Resources */,
 				BB2B4DAE231D998300CB578B /* term.css in Resources */,
 				BB2B4DAD231D998300CB578B /* term.js in Resources */,
@@ -948,23 +1015,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = "/bin/sh -e";
 			shellScript = "cd $SRCROOT/deps/libapps\n./hterm/bin/mkdist\n";
-		};
-		BBF1248A1FA7BDBA0088FB50 /* Create Alpine Filesystem */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-				"$(SRCROOT)/tools/fakefsify.py",
-				"$(SRCROOT)/alpine.tar.gz",
-			);
-			name = "Create Alpine Filesystem";
-			outputPaths = (
-				"$(SRCROOT)/alpine",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "rm -rf $SRCROOT/alpine\n$SRCROOT/tools/fakefsify.py $SRCROOT/alpine.tar.gz $SRCROOT/alpine\ncat <<EOF >$SRCROOT/alpine/data/etc/motd\nWelcome to Alpine!\n\nYou can install packages with: apk add <package>\n\nYou may change this message by editing /etc/motd.\n\nEOF\n";
 			showEnvVarsInLog = 0;
 		};
 		BBF1248B1FA7BF530088FB50 /* Download Alpine */ = {
@@ -980,7 +1030,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "curl -L http://dl-cdn.alpinelinux.org/alpine/v3.11/releases/x86/alpine-minirootfs-3.11.2-x86.tar.gz -o $SRCROOT/alpine.tar.gz";
+			shellScript = "curl -L http://dl-cdn.alpinelinux.org/alpine/v3.11/releases/x86/alpine-minirootfs-3.11.2-x86.tar.gz -o $SRCROOT/alpine.tar.gz\npython3 - \"$SRCROOT/alpine.tar.gz\" <<END\nimport gzip\nimport io\nimport tarfile\nimport sys\nMOTD = b\"\"\"Welcome to Alpine!\n\nYou can install packages with: apk add <package>\n\nYou may change this message by editing /etc/motd.\n\n\"\"\"\nwith gzip.open(sys.argv[1], 'rb') as f:\n    data = io.BytesIO(f.read())\ntar = tarfile.open(fileobj=data, mode='a')\ninfo = tar.getmember('./etc/motd')\ninfo.size = len(MOTD)\ntar.addfile(info, io.BytesIO(MOTD))\nwith gzip.open(sys.argv[1], 'wb') as f:\n    f.write(data.getbuffer())\nEND\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
@@ -1000,16 +1050,19 @@
 				BB455E111FB37F6600AFB48B /* DelayedUITask.m in Sources */,
 				BB0FC5921F980A6C00803272 /* Terminal.m in Sources */,
 				BB101B382364CF57000A93BC /* FontPickerViewController.m in Sources */,
+				BB10E5CE248DBE66009C7A74 /* Roots.m in Sources */,
 				BBCC9D962365430800424C83 /* SceneDelegate.m in Sources */,
 				BB82A7FD21B4C2E8006AA5FD /* AboutExternalKeyboardViewController.m in Sources */,
+				BB10E5C3248DBA7B009C7A74 /* fakefsify.c in Sources */,
 				8632A7BF219A59FB00F02325 /* UserPreferences.m in Sources */,
+				BB10E5D3248DCFEA009C7A74 /* RootsTableViewController.m in Sources */,
 				BB792B631F96D90D00FFB7A4 /* main.m in Sources */,
 				BB60F55221573FCA003A4E52 /* BarButton.m in Sources */,
 				BB9C7B85240A240E00F5D4F0 /* AppGroup.m in Sources */,
 				BBFB557C215878C600DFE6DE /* UIApplication+OpenURL.m in Sources */,
 				BBFB5579215876CD00DFE6DE /* AboutViewController.m in Sources */,
 				650B337422EA235C00B4C03E /* PasteboardDevice.m in Sources */,
-				BBFB557121586C4800DFE6DE /* UIViewController+Back.m in Sources */,
+				BBFB557121586C4800DFE6DE /* UIViewController+Extras.m in Sources */,
 				408A263A236440F8008A4E81 /* iOSFS.m in Sources */,
 				BBFB558021587B6800DFE6DE /* ArrowBarButton.m in Sources */,
 				BB792B551F96D90D00FFB7A4 /* AppDelegate.m in Sources */,
@@ -1031,6 +1084,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		BB10E5CB248DBAB7009C7A74 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = libarchive;
+			targetProxy = BB10E5CA248DBAB7009C7A74 /* PBXContainerItemProxy */;
+		};
 		BB13F7D5200ACCA8003D1C4D /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = BB13F7CA200ACC31003D1C4D /* Meson */;
@@ -1415,7 +1473,10 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = "$(SRCROOT)";
+				HEADER_SEARCH_PATHS = (
+					"$(SRCROOT)",
+					"$(SRCROOT)/deps/libarchive/libarchive",
+				);
 				INFOPLIST_FILE = app/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				MTL_ENABLE_DEBUG_INFO = YES;
@@ -1475,7 +1536,10 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = "$(SRCROOT)";
+				HEADER_SEARCH_PATHS = (
+					"$(SRCROOT)",
+					"$(SRCROOT)/deps/libarchive/libarchive",
+				);
 				INFOPLIST_FILE = app/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				MTL_ENABLE_DEBUG_INFO = NO;

@@ -15,6 +15,7 @@
 #import "SceneDelegate.h"
 #import "PasteboardDevice.h"
 #import "LocationDevice.h"
+#import "Roots.h"
 #import "TerminalViewController.h"
 #import "UserPreferences.h"
 #include "kernel/init.h"
@@ -59,11 +60,8 @@ static void ios_handle_die(const char *msg) {
 - (int)boot {
     NSFileManager *manager = [NSFileManager defaultManager];
     NSURL *container = ContainerURL();
-    NSURL *alpineRoot = [container URLByAppendingPathComponent:@"roots/alpine"];
-    [manager createDirectoryAtURL:[container URLByAppendingPathComponent:@"roots"]
-      withIntermediateDirectories:YES
-                       attributes:@{}
-                            error:nil];
+    NSURL *roots = [container URLByAppendingPathComponent:@"roots"];
+    NSURL *root = [roots URLByAppendingPathComponent:Roots.instance.defaultRoot];
     
 #if 0
     // copy the files to the app container so I can more easily get them out
@@ -74,17 +72,17 @@ static void ios_handle_die(const char *msg) {
                                           error:nil];
 #endif
     
-    if (![manager fileExistsAtPath:alpineRoot.path]) {
+    if (![manager fileExistsAtPath:root.path]) {
         NSURL *alpineMaster = [NSBundle.mainBundle URLForResource:@"alpine" withExtension:nil];
         NSError *error = nil;
-        [manager copyItemAtURL:alpineMaster toURL:alpineRoot error:&error];
+        [manager copyItemAtURL:alpineMaster toURL:root error:&error];
         if (error != nil) {
             NSLog(@"%@", error);
             exit(1);
         }
     }
-    alpineRoot = [alpineRoot URLByAppendingPathComponent:@"data"];
-    int err = mount_root(&fakefs, alpineRoot.fileSystemRepresentation);
+    root = [root URLByAppendingPathComponent:@"data"];
+    int err = mount_root(&fakefs, root.fileSystemRepresentation);
     if (err < 0)
         return err;
     
