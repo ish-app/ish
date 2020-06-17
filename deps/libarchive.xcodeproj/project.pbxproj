@@ -137,6 +137,7 @@
 		BB10E5B6248DA6F5009C7A74 /* archive_ppmd8.c in Sources */ = {isa = PBXBuildFile; fileRef = BB10E3FA248DA6F0009C7A74 /* archive_ppmd8.c */; };
 		BB10E5BA248DA6F5009C7A74 /* archive_read_support_filter_none.c in Sources */ = {isa = PBXBuildFile; fileRef = BB10E3FE248DA6F0009C7A74 /* archive_read_support_filter_none.c */; };
 		BB10E5BB248DA6F5009C7A74 /* archive_read_disk_windows.c in Sources */ = {isa = PBXBuildFile; fileRef = BB10E400248DA6F0009C7A74 /* archive_read_disk_windows.c */; };
+		BBCE66E8249A875400F45269 /* libxml2.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = BBCE66E7249A875400F45269 /* libxml2.tbd */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -310,6 +311,7 @@
 		BB10E400248DA6F0009C7A74 /* archive_read_disk_windows.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = archive_read_disk_windows.c; sourceTree = "<group>"; };
 		BB10E401248DA6F0009C7A74 /* archive_platform_xattr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = archive_platform_xattr.h; sourceTree = "<group>"; };
 		BBCE66E3249A836200F45269 /* config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = config.h; sourceTree = "<group>"; };
+		BBCE66E7249A875400F45269 /* libxml2.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libxml2.tbd; path = usr/lib/libxml2.tbd; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -317,6 +319,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BBCE66E8249A875400F45269 /* libxml2.tbd in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -329,6 +332,7 @@
 				BBCE66E3249A836200F45269 /* config.h */,
 				BB10E0E3248DA6EA009C7A74 /* libarchive */,
 				BB10E0C9248DA627009C7A74 /* Products */,
+				BBCE66E6249A875400F45269 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -514,6 +518,14 @@
 			);
 			name = libarchive;
 			path = libarchive/libarchive;
+			sourceTree = "<group>";
+		};
+		BBCE66E6249A875400F45269 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				BBCE66E7249A875400F45269 /* libxml2.tbd */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
