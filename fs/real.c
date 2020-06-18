@@ -263,9 +263,6 @@ int realfs_poll(struct fd *fd) {
 }
 
 int realfs_mmap(struct fd *fd, struct mem *mem, page_t start, pages_t pages, off_t offset, int prot, int flags) {
-    if (pages == 0)
-        return 0;
-
     int mmap_flags = 0;
     if (flags & MMAP_PRIVATE) mmap_flags |= MAP_PRIVATE;
     if (flags & MMAP_SHARED) mmap_flags |= MAP_SHARED;

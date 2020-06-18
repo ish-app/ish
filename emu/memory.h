@@ -45,7 +45,8 @@ void mem_next_page(struct mem *mem, page_t *page);
 #define PAGE(addr) ((addr) >> PAGE_BITS)
 #define PGOFFSET(addr) ((addr) & (PAGE_SIZE - 1))
 typedef dword_t pages_t;
-#define PAGE_ROUND_UP(bytes) (((bytes - 1) / PAGE_SIZE) + 1)
+// bytes MUST be unsigned if you would like this to overflow to zero
+#define PAGE_ROUND_UP(bytes) (PAGE((bytes) + PAGE_SIZE - 1))
 
 #define BYTES_ROUND_DOWN(bytes) (PAGE(bytes) << PAGE_BITS)
 #define BYTES_ROUND_UP(bytes) (PAGE_ROUND_UP(bytes) << PAGE_BITS)
