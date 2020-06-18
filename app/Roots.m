@@ -111,7 +111,7 @@ static NSString *kDefaultRoot = @"Default Root";
 - (BOOL)importRootFromArchive:(NSURL *)archive name:(NSString *)name error:(NSError **)error {
     NSAssert(![self.roots containsObject:name], @"root already exists: %@", name);
     struct fakefsify_error fs_err;
-    if (!fakefsify(archive.fileSystemRepresentation, [RootsDir() URLByAppendingPathComponent:name].fileSystemRepresentation, &fs_err)) {
+    if (!fakefs_import(archive.fileSystemRepresentation, [RootsDir() URLByAppendingPathComponent:name].fileSystemRepresentation, &fs_err)) {
         NSString *domain = NSPOSIXErrorDomain;
         if (fs_err.type == ERR_SQLITE)
             domain = @"SQLite";
@@ -122,6 +122,23 @@ static NSString *kDefaultRoot = @"Default Root";
         return NO;
     }
     [[self mutableOrderedSetValueForKey:@"roots"] addObject:name];
+    return YES;
+}
+
+- (BOOL)exportRootNamed:(NSString *)name toArchive:(NSURL *)archive error:(NSError **)error {
+    NSAssert([self.roots containsObject:name], @"trying to export a root that doesn't exist: %@", name);
+    struct fakefsify_error fs_err;
+    if (!fakefs_export([RootsDir() URLByAppendingPathComponent:name].fileSystemRepresentation, archive.fileSystemRepresentation, &fs_err)) {
+        // TODO: dedup with above method
+        NSString *domain = NSPOSIXErrorDomain;
+        if (fs_err.type == ERR_SQLITE)
+            domain = @"SQLite";
+        *error = [NSError errorWithDomain:domain
+                                     code:fs_err.code
+                                 userInfo:@{NSLocalizedDescriptionKey: [NSString stringWithUTF8String:fs_err.message]}];
+        free(fs_err.message);
+        return NO;
+    }
     return YES;
 }
 

@@ -13,9 +13,11 @@
 @interface RootsTableViewController ()
 @end
 
-@interface RootDetailViewController : UITableViewController
+@interface RootDetailViewController : UITableViewController <UIDocumentPickerDelegate>
 
 @property (nonatomic) NSString *rootName;
+@property (nonatomic) NSURL *exportURL;
+
 @property (weak, nonatomic) IBOutlet UILabel *nameLabel;
 @property (weak, nonatomic) IBOutlet UILabel *deleteLabel;
 @property (weak, nonatomic) IBOutlet UITableViewCell *deleteCell;
@@ -68,7 +70,6 @@
     UIDocumentPickerViewController *picker = [[UIDocumentPickerViewController alloc]
                                               initWithDocumentTypes:@[@"public.tar-archive", @"org.gnu.gnu-zip-archive"]
                                               inMode:UIDocumentPickerModeImport];
-    picker.navigationItem.prompt = @"Select a tarball to import";
     [self presentViewController:picker animated:YES completion:nil];
     if (@available(iOS 13, *)) {
         picker.shouldShowFileExtensions = YES;
@@ -130,6 +131,24 @@
         components.scheme = @"shareddocuments";
         [UIApplication openURL:components.string];
     }
+    if (indexPath.section == 0 && indexPath.row == 2) {
+        // export
+        self.exportURL = [NSFileManager.defaultManager.temporaryDirectory URLByAppendingPathComponent:[NSString stringWithFormat:@"%@.tar.gz", self.rootName]];
+        NSError *err;
+        if (![Roots.instance exportRootNamed:self.rootName toArchive:self.exportURL error:&err]) {
+            [self presentError:err title:@"Export failed"];
+            return;
+        }
+
+        UIDocumentPickerViewController *picker = [[UIDocumentPickerViewController alloc]
+                                                  initWithURL:self.exportURL
+                                                  inMode:UIDocumentPickerModeExportToService];
+        picker.delegate = self;
+        if (@available(iOS 13, *)) {
+            picker.shouldShowFileExtensions = YES;
+        }
+        [self presentViewController:picker animated:YES completion:nil];
+    }
     if (indexPath.section == 1 && indexPath.row == 0) {
         // boot this
         Roots.instance.defaultRoot = self.rootName;
@@ -141,6 +160,11 @@
             [self deleteFilesystem:nil];
     }
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
+}
+
+- (void)setExportURL:(NSURL *)exportURL {
+    [NSFileManager.defaultManager removeItemAtURL:self.exportURL error:nil];
+    _exportURL = exportURL;
 }
 
 - (void)deleteFilesystem:(id)sender {
@@ -159,5 +183,8 @@
     [self presentViewController:alert animated:YES completion:nil];
 }
 
+- (void)dealloc {
+    self.exportURL = nil; // get it deleted
+}
 
 @end

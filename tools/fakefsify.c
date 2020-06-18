@@ -2,6 +2,7 @@
 
 #define ISH_INTERNAL
 #include "fs/fake.h"
+#include "fs/fakefsify.h"
 
 int main(int argc, const char *argv[]) {
     if (argc != 3) {
@@ -11,5 +12,8 @@ int main(int argc, const char *argv[]) {
     }
     const char *archive_path = argv[1];
     const char *fs = argv[2];
-    fakefsify(archive_path, fs);
+    struct fakefsify_error err;
+    if (!fakefs_import(archive_path, fs, &err)) {
+        return 1;
+    }
 }

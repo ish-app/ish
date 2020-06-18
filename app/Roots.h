@@ -18,6 +18,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (readonly) NSOrderedSet<NSString *> *roots;
 @property NSString *defaultRoot;
 - (BOOL)importRootFromArchive:(NSURL *)archive name:(NSString *)name error:(NSError **)error;
+- (BOOL)exportRootNamed:(NSString *)name toArchive:(NSURL *)archive error:(NSError **)error;
 - (BOOL)destroyRootNamed:(NSString *)name error:(NSError **)error;
 
 @end

@@ -1,5 +1,6 @@
 #ifndef FS_FAKEFSIFY_H
 #define FS_FAKEFSIFY_H
+#include <stdbool.h>
 
 struct fakefsify_error {
     int line;
@@ -12,6 +13,7 @@ struct fakefsify_error {
     char *message;
 };
 
-bool fakefsify(const char *archive_path, const char *fs, struct fakefsify_error *err_out);
+bool fakefs_import(const char *archive_path, const char *fs, struct fakefsify_error *err_out);
+bool fakefs_export(const char *fs, const char *archive_path, struct fakefsify_error *err_out);
 
 #endif

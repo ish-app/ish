@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <archive.h>
 #include <archive_entry.h>
 
@@ -65,7 +66,7 @@ static const char *schema = Q(
     pragma user_version=3;
 );
 
-bool fakefsify(const char *archive_path, const char *fs, struct fakefsify_error *err_out) {
+bool fakefs_import(const char *archive_path, const char *fs, struct fakefsify_error *err_out) {
     int err = mkdir(fs, 0777);
     if (err < 0)
         POSIX_ERR();
@@ -153,8 +154,102 @@ bool fakefsify(const char *archive_path, const char *fs, struct fakefsify_error 
     FINALIZE(insert_path);
     EXEC("commit");
     sqlite3_close(db);
+    close(root_fd);
 
     if (archive_read_free(archive) != ARCHIVE_OK)
         ARCHIVE_ERR(archive);
+    return true;
+}
+
+bool fakefs_export(const char *fs, const char *archive_path, struct fakefsify_error *err_out) {
+    // open the archive
+    struct archive *archive = archive_write_new();
+    if (archive == NULL)
+        ARCHIVE_ERR(archive);
+    archive_write_add_filter_gzip(archive);
+    archive_write_set_format_pax_restricted(archive);
+    if (archive_write_open_filename(archive, archive_path) != ARCHIVE_OK)
+        ARCHIVE_ERR(archive);
+
+    // open the data root dir
+    char path_tmp[PATH_MAX];
+    snprintf(path_tmp, sizeof(path_tmp), "%s/data", fs);
+    int root_fd = open(path_tmp, O_RDONLY);
+    if (root_fd < 0)
+        POSIX_ERR();
+
+    // open the database
+    snprintf(path_tmp, sizeof(path_tmp), "%s/meta.db", fs);
+    sqlite3 *db;
+    int err = sqlite3_open_v2(path_tmp, &db, SQLITE_OPEN_READONLY, NULL);
+    CHECK_ERR();
+    EXEC("begin");
+
+    sqlite3_stmt *query = PREPARE("select path, stat from paths, stats using (inode)");
+    while (STEP(query)) {
+        struct archive_entry *entry = archive_entry_new();
+
+        const char *path_in_db = sqlite3_column_blob(query, 0);
+        size_t path_len = sqlite3_column_bytes(query, 0);
+        char *path = malloc(path_len + 2);
+        path[0] = '.';
+        memcpy(path + 1, path_in_db, path_len);
+        path[path_len + 1] = '\0';
+        archive_entry_set_pathname(entry, path);
+        printf("%s\n", path);
+
+        struct ish_stat stat = *(struct ish_stat *) sqlite3_column_blob(query, 1);
+        archive_entry_set_mode(entry, stat.mode);
+        archive_entry_set_uid(entry, stat.uid);
+        archive_entry_set_gid(entry, stat.gid);
+        archive_entry_set_rdev(entry, stat.rdev);
+
+        struct stat real_stat;
+        if (fstatat(root_fd, path, &real_stat, 0) < 0) {
+            if (errno == ENOENT) {
+                printf("skipping %s\n", path);
+                goto skip;
+            }
+            POSIX_ERR();
+        }
+        archive_entry_set_size(entry, real_stat.st_size);
+        archive_write_header(archive, entry);
+
+        int fd = -1;
+        if (S_ISREG(stat.mode) || S_ISLNK(stat.mode))
+            fd = openat(root_fd, path, O_RDONLY);
+        if (S_ISREG(stat.mode)) {
+            char buf[8192];
+            ssize_t len;
+            while ((len = read(fd, buf, sizeof(buf))) > 0) {
+                ssize_t written = archive_write_data(archive, buf, len);
+                if (written < 0)
+                    ARCHIVE_ERR(archive);
+                if (written != len)
+                    printf("uh oh\n");
+            }
+            if (len < 0)
+                POSIX_ERR();
+        } else if S_ISLNK(stat.mode) {
+            char buf[MAX_PATH+1];
+            ssize_t len = read(fd, buf, sizeof(buf)-1);
+            if (len < 0)
+                POSIX_ERR();
+            buf[len] = '\0';
+            archive_entry_set_symlink(entry, buf);
+        }
+        close(fd);
+
+    skip:
+        free(path);
+        archive_entry_free(entry);
+    }
+
+    FINALIZE(query);
+    sqlite3_close(db);
+    close(root_fd);
+    if (archive_write_close(archive) != ARCHIVE_OK)
+        ARCHIVE_ERR(archive);
+    archive_write_free(archive);
     return true;
 }
