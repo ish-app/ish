@@ -117,6 +117,8 @@
 
 - (NSString *)filename {
     NSString *filename = self.path.lastPathComponent;
+    if ([filename isEqualToString:@""])
+        filename = @"/";
     NSLog(@"filename %@", filename);
     return filename;
 }

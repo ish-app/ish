@@ -24,11 +24,6 @@ struct task *fake_task;
 @implementation FileProviderExtension
 @synthesize mount = _mount;
 
-- (instancetype)init {
-    NSLog(@"yo");
-    return [super init];
-}
-
 - (struct mount *)mount {
     if (_mount != NULL)
         return _mount;
@@ -62,12 +57,14 @@ struct task *fake_task;
 }
 
 - (nullable NSURL *)URLForItemWithPersistentIdentifier:(NSFileProviderItemIdentifier)identifier {
-    FileProviderItem *item = [self itemForIdentifier:identifier error:nil];
-    if (item == nil)
-        return nil;
     NSURL *storage = NSFileProviderManager.defaultManager.documentStorageURL;
     if (self.domain != nil)
         storage = [storage URLByAppendingPathComponent:self.domain.pathRelativeToDocumentStorage isDirectory:YES];
+    if ([identifier isEqualToString:NSFileProviderRootContainerItemIdentifier])
+        return storage;
+    FileProviderItem *item = [self itemForIdentifier:identifier error:nil];
+    if (item == nil)
+        return nil;
     NSURL *url = [storage URLByAppendingPathComponent:identifier isDirectory:YES];
     url = [url URLByAppendingPathComponent:item.path.lastPathComponent isDirectory:NO];
     NSLog(@"url for id %@ = %@", identifier, url);
@@ -75,6 +72,10 @@ struct task *fake_task;
 }
 
 - (nullable NSFileProviderItemIdentifier)persistentIdentifierForItemAtURL:(NSURL *)url {
+    if ([url.URLByDeletingLastPathComponent isEqual:NSFileProviderManager.defaultManager.documentStorageURL]) {
+        NSAssert([self.domain.identifier isEqualToString:url.lastPathComponent], @"url isn't the same as our domain");
+        return NSFileProviderRootContainerItemIdentifier;
+    }
     NSString *identifier = url.pathComponents[url.pathComponents.count - 2];
     if (identifier.longLongValue == 0)
         return nil; // something must be screwed I guess

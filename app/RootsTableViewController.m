@@ -7,6 +7,7 @@
 
 #import "Roots.h"
 #import "RootsTableViewController.h"
+#import "UIApplication+OpenURL.h"
 #import "UIViewController+Extras.h"
 
 @interface RootsTableViewController ()
@@ -122,6 +123,13 @@
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
+    if (indexPath.section == 0 && indexPath.row == 1) {
+        // browse files
+        NSURL *url = [NSFileProviderManager.defaultManager.documentStorageURL URLByAppendingPathComponent:self.rootName];
+        NSURLComponents *components = [NSURLComponents componentsWithURL:url resolvingAgainstBaseURL:NO];
+        components.scheme = @"shareddocuments";
+        [UIApplication openURL:components.string];
+    }
     if (indexPath.section == 1 && indexPath.row == 0) {
         // boot this
         Roots.instance.defaultRoot = self.rootName;
