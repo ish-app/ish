@@ -13,7 +13,12 @@ struct fakefsify_error {
     char *message;
 };
 
-bool fakefs_import(const char *archive_path, const char *fs, struct fakefsify_error *err_out);
-bool fakefs_export(const char *fs, const char *archive_path, struct fakefsify_error *err_out);
+struct progress {
+    void *cookie;
+    void (*callback)(void *cookie, double progress, const char *message);
+};
+
+bool fakefs_import(const char *archive_path, const char *fs, struct fakefsify_error *err_out, struct progress progress);
+bool fakefs_export(const char *fs, const char *archive_path, struct fakefsify_error *err_out, struct progress progress);
 
 #endif

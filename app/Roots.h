@@ -9,7 +9,11 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@class Root;
+@protocol ProgressReporter
+
+- (void)updateProgress:(double)progressFraction message:(NSString *)progressMessage;
+
+@end
 
 @interface Roots : NSObject
 
@@ -17,8 +21,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (readonly) NSOrderedSet<NSString *> *roots;
 @property NSString *defaultRoot;
-- (BOOL)importRootFromArchive:(NSURL *)archive name:(NSString *)name error:(NSError **)error;
-- (BOOL)exportRootNamed:(NSString *)name toArchive:(NSURL *)archive error:(NSError **)error;
+- (BOOL)importRootFromArchive:(NSURL *)archive name:(NSString *)name error:(NSError **)error progressReporter:(id<ProgressReporter> _Nullable)progress;
+- (BOOL)exportRootNamed:(NSString *)name toArchive:(NSURL *)archive error:(NSError **)error progressReporter:(id<ProgressReporter> _Nullable)progress;
 - (BOOL)destroyRootNamed:(NSString *)name error:(NSError **)error;
 
 @end

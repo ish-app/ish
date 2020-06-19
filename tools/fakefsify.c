@@ -13,7 +13,8 @@ int main(int argc, const char *argv[]) {
     const char *archive_path = argv[1];
     const char *fs = argv[2];
     struct fakefsify_error err;
-    if (!fakefs_import(archive_path, fs, &err)) {
+    if (!fakefs_import(archive_path, fs, &err, (struct progress) {})) {
+        fprintf(stderr, "error!!1! %d %d %s\n", err.line, err.type, err.message);
         return 1;
     }
 }

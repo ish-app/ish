@@ -27,6 +27,11 @@
 #undef HANDLE_ERR // for sqlite
 #define HANDLE_ERR(db) FILL_ERR(ERR_SQLITE, sqlite3_extended_errcode(db), sqlite3_errmsg(db))
 
+static void progress_update(struct progress *p, double progress, const char *message) {
+    if (p && p->callback)
+        p->callback(p->cookie, progress, message);
+}
+
 // This isn't linked with ish which is why there's so much copy/pasted code
 
 // I hate this code
@@ -66,7 +71,7 @@ static const char *schema = Q(
     pragma user_version=3;
 );
 
-bool fakefs_import(const char *archive_path, const char *fs, struct fakefsify_error *err_out) {
+bool fakefs_import(const char *archive_path, const char *fs, struct fakefsify_error *err_out, struct progress p) {
     int err = mkdir(fs, 0777);
     if (err < 0)
         POSIX_ERR();
@@ -97,6 +102,11 @@ bool fakefs_import(const char *archive_path, const char *fs, struct fakefsify_er
     if (archive_read_open_filename(archive, archive_path, 65536) != ARCHIVE_OK)
         ARCHIVE_ERR(archive);
 
+    struct stat real_stat;
+    if (stat(archive_path, &real_stat) < 0)
+        POSIX_ERR();
+    size_t archive_bytes = real_stat.st_size;
+
     sqlite3_stmt *insert_stat = PREPARE("insert into stats (stat) values (?)");
     sqlite3_stmt *insert_path = PREPARE("insert or replace into paths values (?, last_insert_rowid())");
 
@@ -109,6 +119,7 @@ bool fakefs_import(const char *archive_path, const char *fs, struct fakefsify_er
             fprintf(stderr, "warning: skipped possible path traversal %s\n", archive_entry_pathname(entry));
             continue;
         }
+        progress_update(&p, (double) archive_filter_bytes(archive, -1) / archive_bytes, entry_path);
 
         int fd = -1;
         if (archive_entry_filetype(entry) != AE_IFDIR) {
@@ -176,7 +187,7 @@ bool fakefs_import(const char *archive_path, const char *fs, struct fakefsify_er
     return true;
 }
 
-bool fakefs_export(const char *fs, const char *archive_path, struct fakefsify_error *err_out) {
+bool fakefs_export(const char *fs, const char *archive_path, struct fakefsify_error *err_out, struct progress p) {
     // open the archive
     struct archive *archive = archive_write_new();
     if (archive == NULL)
@@ -200,6 +211,12 @@ bool fakefs_export(const char *fs, const char *archive_path, struct fakefsify_er
     CHECK_ERR();
     EXEC("begin");
 
+    sqlite3_stmt *count_stmt = PREPARE("select count(path) from paths");
+    STEP(count_stmt);
+    int64_t paths_total = sqlite3_column_int64(count_stmt, 0);
+    FINALIZE(count_stmt);
+    int64_t paths_done = 0;
+
     sqlite3_stmt *query = PREPARE("select path, stat from paths, stats using (inode)");
     while (STEP(query)) {
         struct archive_entry *entry = archive_entry_new();
@@ -211,7 +228,8 @@ bool fakefs_export(const char *fs, const char *archive_path, struct fakefsify_er
         memcpy(path + 1, path_in_db, path_len);
         path[path_len + 1] = '\0';
         archive_entry_set_pathname(entry, path);
-        printf("%s\n", path);
+
+        progress_update(&p, (double) paths_done / paths_total, path);
 
         struct ish_stat stat = *(struct ish_stat *) sqlite3_column_blob(query, 1);
         archive_entry_set_mode(entry, stat.mode);
@@ -259,6 +277,7 @@ bool fakefs_export(const char *fs, const char *archive_path, struct fakefsify_er
             close(fd);
 
     skip:
+        paths_done++;
         free(path);
         archive_entry_free(entry);
     }

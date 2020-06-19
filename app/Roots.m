@@ -45,7 +45,8 @@ static NSString *kDefaultRoot = @"Default Root";
             NSError *error;
             if (![self importRootFromArchive:[NSBundle.mainBundle URLForResource:@"alpine" withExtension:@"tar.gz"]
                                         name:@"alpine"
-                                       error:&error]) {
+                                       error:&error
+                            progressReporter:nil]) {
                 NSAssert(NO, @"failed to import alpine, error %@", error);
             }
         }
@@ -108,27 +109,39 @@ static NSString *kDefaultRoot = @"Default Root";
     return YES;
 }
 
-- (BOOL)importRootFromArchive:(NSURL *)archive name:(NSString *)name error:(NSError **)error {
+void root_progress_callback(void *cookie, double progress, const char *message) {
+    id <ProgressReporter> reporter = (__bridge id<ProgressReporter>) cookie;
+    [reporter updateProgress:progress message:[NSString stringWithUTF8String:message]];
+}
+
+- (BOOL)importRootFromArchive:(NSURL *)archive name:(NSString *)name error:(NSError **)error progressReporter:(id<ProgressReporter> _Nullable)progress {
     NSAssert(![self.roots containsObject:name], @"root already exists: %@", name);
     struct fakefsify_error fs_err;
-    if (!fakefs_import(archive.fileSystemRepresentation, [RootsDir() URLByAppendingPathComponent:name].fileSystemRepresentation, &fs_err)) {
+    if (!fakefs_import(archive.fileSystemRepresentation,
+                       [RootsDir() URLByAppendingPathComponent:name].fileSystemRepresentation,
+                       &fs_err, (struct progress) {(__bridge void *) progress, root_progress_callback})) {
         NSString *domain = NSPOSIXErrorDomain;
         if (fs_err.type == ERR_SQLITE)
             domain = @"SQLite";
         *error = [NSError errorWithDomain:domain
                                      code:fs_err.code
-                                 userInfo:@{NSLocalizedDescriptionKey: [NSString stringWithUTF8String:fs_err.message]}];
+                                 userInfo:@{NSLocalizedDescriptionKey:
+                                                [NSString stringWithFormat:@"%s, line %d", fs_err.message, fs_err.line]}];
         free(fs_err.message);
         return NO;
     }
-    [[self mutableOrderedSetValueForKey:@"roots"] addObject:name];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [[self mutableOrderedSetValueForKey:@"roots"] addObject:name];
+    });
     return YES;
 }
 
-- (BOOL)exportRootNamed:(NSString *)name toArchive:(NSURL *)archive error:(NSError **)error {
+- (BOOL)exportRootNamed:(NSString *)name toArchive:(NSURL *)archive error:(NSError **)error progressReporter:(id<ProgressReporter> _Nullable)progress {
     NSAssert([self.roots containsObject:name], @"trying to export a root that doesn't exist: %@", name);
     struct fakefsify_error fs_err;
-    if (!fakefs_export([RootsDir() URLByAppendingPathComponent:name].fileSystemRepresentation, archive.fileSystemRepresentation, &fs_err)) {
+    if (!fakefs_export([RootsDir() URLByAppendingPathComponent:name].fileSystemRepresentation,
+                       archive.fileSystemRepresentation,
+                       &fs_err, (struct progress) {(__bridge void *) progress, root_progress_callback})) {
         // TODO: dedup with above method
         NSString *domain = NSPOSIXErrorDomain;
         if (fs_err.type == ERR_SQLITE)

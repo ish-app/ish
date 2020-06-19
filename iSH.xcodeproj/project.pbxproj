@@ -47,6 +47,7 @@
 		BB9C7B87240A2B1E00F5D4F0 /* AppGroup.m in Sources */ = {isa = PBXBuildFile; fileRef = BB9C7B84240A240E00F5D4F0 /* AppGroup.m */; };
 		BBA8E2C1236FF5EA00515F76 /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BBA8E2C0236FF5EA00515F76 /* SystemConfiguration.framework */; };
 		BBAEE339249B58E80069EBB5 /* libbz2.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = BBAEE338249B58E80069EBB5 /* libbz2.tbd */; };
+		BBAEE33C249BDADC0069EBB5 /* ProgressReportViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = BBAEE33B249BDADC0069EBB5 /* ProgressReportViewController.m */; };
 		BBBCE7E321D2F02200CA00B3 /* About.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = BBBCE7E521D2F02200CA00B3 /* About.storyboard */; };
 		BBBF7B5C2415CDBB00EC4C14 /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = BBBF7B5B2415CDBB00EC4C14 /* Settings.bundle */; };
 		BBBFE94921C5CFF100509DD5 /* NSError+ISHErrno.m in Sources */ = {isa = PBXBuildFile; fileRef = BB13F4DD21C5770000343E17 /* NSError+ISHErrno.m */; };
@@ -328,6 +329,8 @@
 		BB9C7B88240A343400F5D4F0 /* iSH.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = iSH.xcconfig; sourceTree = "<group>"; };
 		BBA8E2C0236FF5EA00515F76 /* SystemConfiguration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SystemConfiguration.framework; path = System/Library/Frameworks/SystemConfiguration.framework; sourceTree = SDKROOT; };
 		BBAEE338249B58E80069EBB5 /* libbz2.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libbz2.tbd; path = usr/lib/libbz2.tbd; sourceTree = SDKROOT; };
+		BBAEE33A249BDADC0069EBB5 /* ProgressReportViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ProgressReportViewController.h; sourceTree = "<group>"; };
+		BBAEE33B249BDADC0069EBB5 /* ProgressReportViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ProgressReportViewController.m; sourceTree = "<group>"; };
 		BBBCE7E421D2F02200CA00B3 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/About.storyboard; sourceTree = "<group>"; };
 		BBBF7B5B2415CDBB00EC4C14 /* Settings.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = Settings.bundle; sourceTree = "<group>"; };
 		BBCC9D942365430800424C83 /* SceneDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SceneDelegate.h; sourceTree = "<group>"; };
@@ -390,6 +393,8 @@
 				BB10E5CF248DC21D009C7A74 /* Roots.storyboard */,
 				BB10E5D1248DCFEA009C7A74 /* RootsTableViewController.h */,
 				BB10E5D2248DCFEA009C7A74 /* RootsTableViewController.m */,
+				BBAEE33A249BDADC0069EBB5 /* ProgressReportViewController.h */,
+				BBAEE33B249BDADC0069EBB5 /* ProgressReportViewController.m */,
 				BB10E5C2248DBA7B009C7A74 /* fakefsify.c */,
 				BB10E0C1248DA5B0009C7A74 /* libarchive.xcodeproj */,
 			);
@@ -1048,6 +1053,7 @@
 				BB1D9D93234A8FE100F364E8 /* AboutNavigationController.m in Sources */,
 				BB235534235D488500139E00 /* LocationDevice.m in Sources */,
 				BB792B581F96D90D00FFB7A4 /* TerminalViewController.m in Sources */,
+				BBAEE33C249BDADC0069EBB5 /* ProgressReportViewController.m in Sources */,
 				BB78AB2B1FAD22440013E782 /* TerminalView.m in Sources */,
 				BB23F58D231E1D1400585522 /* ScrollbarView.m in Sources */,
 				BBFB557621586F9200DFE6DE /* DismissSegue.m in Sources */,

@@ -7,6 +7,7 @@
 
 #import "Roots.h"
 #import "RootsTableViewController.h"
+#import "ProgressReportViewController.h"
 #import "UIApplication+OpenURL.h"
 #import "UIViewController+Extras.h"
 
@@ -80,7 +81,6 @@
 - (void)documentPicker:(UIDocumentPickerViewController *)controller didPickDocumentsAtURLs:(NSArray<NSURL *> *)urls {
     NSAssert(urls.count == 1, @"somehow picked multiple documents");
     NSURL *url = urls[0];
-
     NSString *fileName = url.lastPathComponent.stringByDeletingPathExtension;
     if ([fileName hasSuffix:@".tar"])
         fileName = fileName.stringByDeletingPathExtension;
@@ -89,10 +89,20 @@
     while ([Roots.instance.roots containsObject:name]) {
         name = [NSString stringWithFormat:@"%@ %u", fileName, i++];
     }
-    NSError *error;
-    if (![Roots.instance importRootFromArchive:urls[0] name:name error:&error]) {
-        [self presentError:error title:@"Import failed"];
-    }
+
+    ProgressReportViewController *progressVC = [self.storyboard instantiateViewControllerWithIdentifier:@"progress"];
+    progressVC.title = [NSString stringWithFormat:@"Importing %@", name];
+    [self presentViewController:progressVC animated:YES completion:nil];
+
+    dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
+        NSError *error;
+        BOOL success = [Roots.instance importRootFromArchive:urls[0] name:name error:&error progressReporter:progressVC];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [progressVC dismissViewControllerAnimated:YES completion:nil];
+            if (!success)
+                [self presentError:error title:@"Import failed"];
+        });
+    });
 }
 
 @end
@@ -124,50 +134,66 @@
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
-    if (indexPath.section == 0 && indexPath.row == 1) {
-        // browse files
-        NSURL *url = [NSFileProviderManager.defaultManager.documentStorageURL URLByAppendingPathComponent:self.rootName];
-        NSURLComponents *components = [NSURLComponents componentsWithURL:url resolvingAgainstBaseURL:NO];
-        components.scheme = @"shareddocuments";
-        [UIApplication openURL:components.string];
-    }
-    if (indexPath.section == 0 && indexPath.row == 2) {
-        // export
-        self.exportURL = [NSFileManager.defaultManager.temporaryDirectory URLByAppendingPathComponent:[NSString stringWithFormat:@"%@.tar.gz", self.rootName]];
-        NSError *err;
-        if (![Roots.instance exportRootNamed:self.rootName toArchive:self.exportURL error:&err]) {
-            [self presentError:err title:@"Export failed"];
-            return;
-        }
-
-        UIDocumentPickerViewController *picker = [[UIDocumentPickerViewController alloc]
-                                                  initWithURL:self.exportURL
-                                                  inMode:UIDocumentPickerModeExportToService];
-        picker.delegate = self;
-        if (@available(iOS 13, *)) {
-            picker.shouldShowFileExtensions = YES;
-        }
-        [self presentViewController:picker animated:YES completion:nil];
-    }
-    if (indexPath.section == 1 && indexPath.row == 0) {
-        // boot this
-        Roots.instance.defaultRoot = self.rootName;
-        exit(0);
-    }
-    if (indexPath.section == 2 && indexPath.row == 0) {
-        // delete
-        if (!self.isDefaultRoot)
-            [self deleteFilesystem:nil];
-    }
+    if (indexPath.section == 0 && indexPath.row == 1)
+        [self browseFiles];
+    if (indexPath.section == 0 && indexPath.row == 2)
+        [self exportFilesystem];
+    if (indexPath.section == 1 && indexPath.row == 0)
+        [self bootThis];
+    if (indexPath.section == 2 && indexPath.row == 0)
+        [self deleteFilesystem];
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
 }
 
+- (void)browseFiles {
+    NSURL *url = [NSFileProviderManager.defaultManager.documentStorageURL URLByAppendingPathComponent:self.rootName];
+    NSURLComponents *components = [NSURLComponents componentsWithURL:url resolvingAgainstBaseURL:NO];
+    components.scheme = @"shareddocuments";
+    [UIApplication openURL:components.string];
+}
+
+- (void)exportFilesystem {
+    self.exportURL = [NSFileManager.defaultManager.temporaryDirectory URLByAppendingPathComponent:[NSString stringWithFormat:@"%@.tar.gz", self.rootName]];
+    ProgressReportViewController *progressVC = [self.storyboard instantiateViewControllerWithIdentifier:@"progress"];
+    progressVC.title = [NSString stringWithFormat:@"Exporting %@", self.rootName];
+    [self presentViewController:progressVC animated:YES completion:nil];
+
+    // witness the callback hell
+    dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
+        NSError *err;
+        BOOL success = [Roots.instance exportRootNamed:self.rootName toArchive:self.exportURL error:&err progressReporter:progressVC];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [progressVC dismissViewControllerAnimated:YES completion:nil];
+            if (!success) {
+                [self presentError:err title:@"Export failed"];
+                return;
+            }
+
+            UIDocumentPickerViewController *picker = [[UIDocumentPickerViewController alloc]
+                                                      initWithURL:self.exportURL
+                                                      inMode:UIDocumentPickerModeExportToService];
+            picker.delegate = self;
+            if (@available(iOS 13, *)) {
+                picker.shouldShowFileExtensions = YES;
+            }
+            [self presentViewController:picker animated:YES completion:nil];
+        });
+    });
+}
+
 - (void)setExportURL:(NSURL *)exportURL {
-    [NSFileManager.defaultManager removeItemAtURL:self.exportURL error:nil];
+    [NSFileManager.defaultManager removeItemAtURL:_exportURL error:nil];
     _exportURL = exportURL;
 }
 
-- (void)deleteFilesystem:(id)sender {
+- (void)bootThis {
+    Roots.instance.defaultRoot = self.rootName;
+    exit(0);
+}
+
+- (void)deleteFilesystem {
+    if (self.isDefaultRoot)
+        return;
     UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Really delete?"
                                                                    message:@"I can't be bothered to implement any undo or regret UI so this is irreversable."
                                                             preferredStyle:UIAlertControllerStyleAlert];
