@@ -109,16 +109,23 @@ static NSString *kDefaultRoot = @"Default Root";
     return YES;
 }
 
-void root_progress_callback(void *cookie, double progress, const char *message) {
+void root_progress_callback(void *cookie, double progress, const char *message, bool *should_cancel) {
     id <ProgressReporter> reporter = (__bridge id<ProgressReporter>) cookie;
     [reporter updateProgress:progress message:[NSString stringWithUTF8String:message]];
+    if ([reporter shouldCancel])
+        *should_cancel = true;
 }
 
 - (BOOL)importRootFromArchive:(NSURL *)archive name:(NSString *)name error:(NSError **)error progressReporter:(id<ProgressReporter> _Nullable)progress {
     NSAssert(![self.roots containsObject:name], @"root already exists: %@", name);
     struct fakefsify_error fs_err;
+    NSURL *destination = [RootsDir() URLByAppendingPathComponent:name];
+    NSURL *tempDestination = [NSFileManager.defaultManager.temporaryDirectory
+                              URLByAppendingPathComponent:[NSProcessInfo.processInfo globallyUniqueString]];
+    if (tempDestination == nil)
+        return NO;
     if (!fakefs_import(archive.fileSystemRepresentation,
-                       [RootsDir() URLByAppendingPathComponent:name].fileSystemRepresentation,
+                       tempDestination.fileSystemRepresentation,
                        &fs_err, (struct progress) {(__bridge void *) progress, root_progress_callback})) {
         NSString *domain = NSPOSIXErrorDomain;
         if (fs_err.type == ERR_SQLITE)
@@ -127,9 +134,14 @@ void root_progress_callback(void *cookie, double progress, const char *message) 
                                      code:fs_err.code
                                  userInfo:@{NSLocalizedDescriptionKey:
                                                 [NSString stringWithFormat:@"%s, line %d", fs_err.message, fs_err.line]}];
+        if (fs_err.type == ERR_CANCELLED)
+            *error = nil;
         free(fs_err.message);
+        [NSFileManager.defaultManager removeItemAtURL:tempDestination error:nil];
         return NO;
     }
+    if (![NSFileManager.defaultManager moveItemAtURL:tempDestination toURL:destination error:error])
+        return NO;
     dispatch_async(dispatch_get_main_queue(), ^{
         [[self mutableOrderedSetValueForKey:@"roots"] addObject:name];
     });
@@ -149,6 +161,8 @@ void root_progress_callback(void *cookie, double progress, const char *message) 
         *error = [NSError errorWithDomain:domain
                                      code:fs_err.code
                                  userInfo:@{NSLocalizedDescriptionKey: [NSString stringWithUTF8String:fs_err.message]}];
+        if (fs_err.type == ERR_CANCELLED)
+            *error = nil;
         free(fs_err.message);
         return NO;
     }

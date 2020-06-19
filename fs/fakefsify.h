@@ -8,6 +8,7 @@ struct fakefsify_error {
         ERR_ARCHIVE,
         ERR_SQLITE,
         ERR_POSIX,
+        ERR_CANCELLED,
     } type;
     int code;
     char *message;
@@ -15,7 +16,7 @@ struct fakefsify_error {
 
 struct progress {
     void *cookie;
-    void (*callback)(void *cookie, double progress, const char *message);
+    void (*callback)(void *cookie, double progress, const char *message, bool *cancel_out);
 };
 
 bool fakefs_import(const char *archive_path, const char *fs, struct fakefsify_error *err_out, struct progress progress);

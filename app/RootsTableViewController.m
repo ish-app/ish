@@ -98,9 +98,10 @@
         NSError *error;
         BOOL success = [Roots.instance importRootFromArchive:urls[0] name:name error:&error progressReporter:progressVC];
         dispatch_async(dispatch_get_main_queue(), ^{
-            [progressVC dismissViewControllerAnimated:YES completion:nil];
-            if (!success)
-                [self presentError:error title:@"Import failed"];
+            [progressVC dismissViewControllerAnimated:YES completion:^{
+                if (!success && error != nil)
+                    [self presentError:error title:@"Import failed"];
+            }];
         });
     });
 }
@@ -153,7 +154,13 @@
 }
 
 - (void)exportFilesystem {
-    self.exportURL = [NSFileManager.defaultManager.temporaryDirectory URLByAppendingPathComponent:[NSString stringWithFormat:@"%@.tar.gz", self.rootName]];
+    self.exportURL = [[NSFileManager.defaultManager.temporaryDirectory
+                       URLByAppendingPathComponent:[NSProcessInfo.processInfo globallyUniqueString]]
+                      URLByAppendingPathComponent:[NSString stringWithFormat:@"%@.tar.gz", self.rootName]];
+    [NSFileManager.defaultManager createDirectoryAtURL:self.exportURL.URLByDeletingLastPathComponent
+                           withIntermediateDirectories:YES
+                                            attributes:nil
+                                                 error:nil];
     ProgressReportViewController *progressVC = [self.storyboard instantiateViewControllerWithIdentifier:@"progress"];
     progressVC.title = [NSString stringWithFormat:@"Exporting %@", self.rootName];
     [self presentViewController:progressVC animated:YES completion:nil];
@@ -163,26 +170,28 @@
         NSError *err;
         BOOL success = [Roots.instance exportRootNamed:self.rootName toArchive:self.exportURL error:&err progressReporter:progressVC];
         dispatch_async(dispatch_get_main_queue(), ^{
-            [progressVC dismissViewControllerAnimated:YES completion:nil];
-            if (!success) {
-                [self presentError:err title:@"Export failed"];
-                return;
-            }
+            [progressVC dismissViewControllerAnimated:YES completion:^{
+                if (!success) {
+                    if (err != nil)
+                        [self presentError:err title:@"Export failed"];
+                    return;
+                }
 
-            UIDocumentPickerViewController *picker = [[UIDocumentPickerViewController alloc]
-                                                      initWithURL:self.exportURL
-                                                      inMode:UIDocumentPickerModeExportToService];
-            picker.delegate = self;
-            if (@available(iOS 13, *)) {
-                picker.shouldShowFileExtensions = YES;
-            }
-            [self presentViewController:picker animated:YES completion:nil];
+                UIDocumentPickerViewController *picker = [[UIDocumentPickerViewController alloc]
+                                                          initWithURL:self.exportURL
+                                                          inMode:UIDocumentPickerModeExportToService];
+                picker.delegate = self;
+                if (@available(iOS 13, *)) {
+                    picker.shouldShowFileExtensions = YES;
+                }
+                [self presentViewController:picker animated:YES completion:nil];
+            }];
         });
     });
 }
 
 - (void)setExportURL:(NSURL *)exportURL {
-    [NSFileManager.defaultManager removeItemAtURL:_exportURL error:nil];
+    [NSFileManager.defaultManager removeItemAtURL:_exportURL.URLByDeletingLastPathComponent error:nil];
     _exportURL = exportURL;
 }
 

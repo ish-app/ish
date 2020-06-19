@@ -223,12 +223,12 @@
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="2X7-vG-Bav">
-                                <rect key="frame" x="149" y="111" width="270" height="98.5"/>
+                                <rect key="frame" x="149" y="96" width="270" height="128.5"/>
                                 <subviews>
                                     <visualEffectView opaque="NO" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="fRw-kV-GMw">
-                                        <rect key="frame" x="0.0" y="0.0" width="270" height="98.5"/>
+                                        <rect key="frame" x="0.0" y="0.0" width="270" height="128.5"/>
                                         <view key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" insetsLayoutMarginsFromSafeArea="NO" id="X5o-tI-i04">
-                                            <rect key="frame" x="0.0" y="0.0" width="270" height="98.5"/>
+                                            <rect key="frame" x="0.0" y="0.0" width="270" height="128.5"/>
                                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                         </view>
                                         <blurEffect style="systemMaterial"/>
@@ -253,6 +253,19 @@
                                             </progressView>
                                         </subviews>
                                     </stackView>
+                                    <stackView opaque="NO" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="dPf-45-cvF" userLabel="Buttons Stack View">
+                                        <rect key="frame" x="0.0" y="88.5" width="270" height="30"/>
+                                        <subviews>
+                                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Uvf-lb-Web">
+                                                <rect key="frame" x="0.0" y="0.0" width="270" height="30"/>
+                                                <fontDescription key="fontDescription" type="boldSystem" pointSize="15"/>
+                                                <state key="normal" title="Cancel"/>
+                                                <connections>
+                                                    <action selector="cancel:" destination="KZI-b6-Ikz" eventType="touchUpInside" id="qYx-d0-Bt9"/>
+                                                </connections>
+                                            </button>
+                                        </subviews>
+                                    </stackView>
                                 </subviews>
                                 <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <constraints>
@@ -260,11 +273,14 @@
                                     <constraint firstAttribute="width" constant="270" id="1Wv-C6-zec">
                                         <variation key="widthClass=regular" constant="500"/>
                                     </constraint>
-                                    <constraint firstAttribute="bottom" secondItem="kaW-sc-dJA" secondAttribute="bottom" constant="20" id="EaF-lb-XpA"/>
                                     <constraint firstAttribute="trailing" secondItem="fRw-kV-GMw" secondAttribute="trailing" id="Q3p-TZ-7yO"/>
+                                    <constraint firstAttribute="trailing" secondItem="dPf-45-cvF" secondAttribute="trailing" id="TAx-BY-2Ot"/>
+                                    <constraint firstItem="dPf-45-cvF" firstAttribute="leading" secondItem="2X7-vG-Bav" secondAttribute="leading" id="TXU-sz-q8H"/>
                                     <constraint firstItem="kaW-sc-dJA" firstAttribute="top" secondItem="2X7-vG-Bav" secondAttribute="top" constant="20" id="V7X-IN-6rE"/>
                                     <constraint firstItem="fRw-kV-GMw" firstAttribute="top" secondItem="2X7-vG-Bav" secondAttribute="top" id="inx-IG-lJ3"/>
                                     <constraint firstItem="kaW-sc-dJA" firstAttribute="leading" secondItem="2X7-vG-Bav" secondAttribute="leading" constant="20" id="l5t-QP-ZpO"/>
+                                    <constraint firstItem="dPf-45-cvF" firstAttribute="top" secondItem="kaW-sc-dJA" secondAttribute="bottom" constant="10" id="mVP-ot-7GR"/>
+                                    <constraint firstAttribute="bottom" secondItem="dPf-45-cvF" secondAttribute="bottom" constant="10" id="nzx-Po-AXk"/>
                                     <constraint firstAttribute="bottom" secondItem="fRw-kV-GMw" secondAttribute="bottom" id="vIb-Jh-Roo"/>
                                     <constraint firstAttribute="trailing" secondItem="kaW-sc-dJA" secondAttribute="trailing" constant="20" id="zVd-X8-Plf"/>
                                 </constraints>
@@ -280,6 +296,7 @@
                     <value key="contentSizeForViewInPopover" type="size" width="100" height="100"/>
                     <connections>
                         <outlet property="bar" destination="G6p-Tb-Jdw" id="8cY-YK-FAJ"/>
+                        <outlet property="cancelButton" destination="Uvf-lb-Web" id="fJC-F3-qiT"/>
                         <outlet property="popupView" destination="2X7-vG-Bav" id="1DC-WM-4JH"/>
                         <outlet property="statusLabel" destination="QK2-Aw-TuX" id="1LM-hx-ZjX"/>
                         <outlet property="titleLabel" destination="uls-2R-fu1" id="m0x-lG-u1k"/>

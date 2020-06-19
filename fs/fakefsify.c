@@ -26,10 +26,13 @@
 #define POSIX_ERR() FILL_ERR(ERR_POSIX, errno, strerror(errno))
 #undef HANDLE_ERR // for sqlite
 #define HANDLE_ERR(db) FILL_ERR(ERR_SQLITE, sqlite3_extended_errcode(db), sqlite3_errmsg(db))
+#define CANCEL() FILL_ERR(ERR_CANCELLED, 0, "");
 
-static void progress_update(struct progress *p, double progress, const char *message) {
+static bool progress_update(struct progress *p, double progress, const char *message) {
+    bool cancelled = false;
     if (p && p->callback)
-        p->callback(p->cookie, progress, message);
+        p->callback(p->cookie, progress, message, &cancelled);
+    return !cancelled;
 }
 
 // This isn't linked with ish which is why there's so much copy/pasted code
@@ -119,7 +122,8 @@ bool fakefs_import(const char *archive_path, const char *fs, struct fakefsify_er
             fprintf(stderr, "warning: skipped possible path traversal %s\n", archive_entry_pathname(entry));
             continue;
         }
-        progress_update(&p, (double) archive_filter_bytes(archive, -1) / archive_bytes, entry_path);
+        if (!progress_update(&p, (double) archive_filter_bytes(archive, -1) / archive_bytes, entry_path))
+            CANCEL();
 
         int fd = -1;
         if (archive_entry_filetype(entry) != AE_IFDIR) {
@@ -229,7 +233,8 @@ bool fakefs_export(const char *fs, const char *archive_path, struct fakefsify_er
         path[path_len + 1] = '\0';
         archive_entry_set_pathname(entry, path);
 
-        progress_update(&p, (double) paths_done / paths_total, path);
+        if (!progress_update(&p, (double) paths_done / paths_total, path))
+            CANCEL();
 
         struct ish_stat stat = *(struct ish_stat *) sqlite3_column_blob(query, 1);
         archive_entry_set_mode(entry, stat.mode);

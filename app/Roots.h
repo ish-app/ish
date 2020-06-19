@@ -12,6 +12,7 @@ NS_ASSUME_NONNULL_BEGIN
 @protocol ProgressReporter
 
 - (void)updateProgress:(double)progressFraction message:(NSString *)progressMessage;
+- (BOOL)shouldCancel;
 
 @end
 

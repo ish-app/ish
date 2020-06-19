@@ -13,9 +13,11 @@
 @property (weak, nonatomic) IBOutlet UILabel *titleLabel;
 @property (weak, nonatomic) IBOutlet UILabel *statusLabel;
 @property (weak, nonatomic) IBOutlet UIProgressView *bar;
+@property (weak, nonatomic) IBOutlet UIButton *cancelButton;
 
 @property (nonatomic) double progress;
 @property (nonatomic) NSString *message;
+@property (nonatomic) BOOL cancelled;
 
 @property CADisplayLink *timer;
 
@@ -52,10 +54,23 @@
     }
 }
 
+- (BOOL)shouldCancel {
+    @synchronized (self) {
+        return _cancelled;
+    }
+}
+
 - (void)update {
     @synchronized (self) {
         self.bar.progress = _progress;
         self.statusLabel.text = _message;
+    }
+}
+
+- (IBAction)cancel:(id)sender {
+    @synchronized (self) {
+        self.cancelled = YES;
+        self.cancelButton.enabled = NO;
     }
 }
 
