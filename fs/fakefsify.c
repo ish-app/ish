@@ -213,11 +213,20 @@ bool fakefs_export(const char *fs, const char *archive_path, struct fakefsify_er
             POSIX_ERR();
         }
         archive_entry_set_size(entry, real_stat.st_size);
-        archive_write_header(archive, entry);
 
         int fd = -1;
         if (S_ISREG(stat.mode) || S_ISLNK(stat.mode))
             fd = openat(root_fd, path, O_RDONLY);
+        if S_ISLNK(stat.mode) {
+            char buf[MAX_PATH+1];
+            ssize_t len = read(fd, buf, sizeof(buf)-1);
+            if (len < 0)
+                POSIX_ERR();
+            buf[len] = '\0';
+            archive_entry_set_symlink(entry, buf);
+        }
+        archive_write_header(archive, entry);
+
         if (S_ISREG(stat.mode)) {
             char buf[8192];
             ssize_t len;
@@ -230,15 +239,9 @@ bool fakefs_export(const char *fs, const char *archive_path, struct fakefsify_er
             }
             if (len < 0)
                 POSIX_ERR();
-        } else if S_ISLNK(stat.mode) {
-            char buf[MAX_PATH+1];
-            ssize_t len = read(fd, buf, sizeof(buf)-1);
-            if (len < 0)
-                POSIX_ERR();
-            buf[len] = '\0';
-            archive_entry_set_symlink(entry, buf);
         }
-        close(fd);
+        if (fd != -1)
+            close(fd);
 
     skip:
         free(path);
