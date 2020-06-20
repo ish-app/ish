@@ -175,6 +175,7 @@ static int kObserverStyling;
 
 - (BOOL)becomeFirstResponder {
     self.terminalFocused = YES;
+    [self reloadInputViews];
     return [super becomeFirstResponder];
 }
 - (BOOL)resignFirstResponder {
