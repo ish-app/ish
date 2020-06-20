@@ -231,7 +231,7 @@
                                             <rect key="frame" x="0.0" y="0.0" width="270" height="128.5"/>
                                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                         </view>
-                                        <blurEffect style="systemMaterial"/>
+                                        <blurEffect style="extraLight"/>
                                     </visualEffectView>
                                     <stackView opaque="NO" contentMode="scaleToFill" axis="vertical" spacing="10" translatesAutoresizingMaskIntoConstraints="NO" id="kaW-sc-dJA">
                                         <rect key="frame" x="20" y="20" width="230" height="58.5"/>
@@ -295,6 +295,7 @@
                     </view>
                     <value key="contentSizeForViewInPopover" type="size" width="100" height="100"/>
                     <connections>
+                        <outlet property="backdrop" destination="fRw-kV-GMw" id="dZp-lQ-c12"/>
                         <outlet property="bar" destination="G6p-Tb-Jdw" id="8cY-YK-FAJ"/>
                         <outlet property="cancelButton" destination="Uvf-lb-Web" id="fJC-F3-qiT"/>
                         <outlet property="popupView" destination="2X7-vG-Bav" id="1DC-WM-4JH"/>

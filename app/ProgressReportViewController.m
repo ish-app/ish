@@ -10,6 +10,7 @@
 @interface ProgressReportViewController ()
 
 @property (weak, nonatomic) IBOutlet UIView *popupView;
+@property (weak, nonatomic) IBOutlet UIVisualEffectView *backdrop;
 @property (weak, nonatomic) IBOutlet UILabel *titleLabel;
 @property (weak, nonatomic) IBOutlet UILabel *statusLabel;
 @property (weak, nonatomic) IBOutlet UIProgressView *bar;
@@ -27,6 +28,9 @@
 
 - (void)viewDidLoad {
     self.titleLabel.text = self.title;
+    if (@available(iOS 13, *)) {
+        self.backdrop.effect = [UIBlurEffect effectWithStyle:UIBlurEffectStyleSystemMaterial];
+    }
 }
 
 - (void)viewDidLayoutSubviews {
