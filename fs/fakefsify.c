@@ -112,11 +112,12 @@ bool fakefs_import(const char *archive_path, const char *fs, struct fakefsify_er
 
     sqlite3_stmt *insert_stat = PREPARE("insert into stats (stat) values (?)");
     sqlite3_stmt *insert_path = PREPARE("insert or replace into paths values (?, last_insert_rowid())");
+    sqlite3_stmt *insert_hardlink = PREPARE("insert or replace into paths values (?, (select inode from paths where path = ? limit 1))");
 
     // do actual shit
     struct archive_entry *entry;
     while ((err = archive_read_next_header(archive, &entry)) == ARCHIVE_OK) {
-        char entry_path[PATH_MAX];
+        char entry_path[MAX_PATH];
         if (!path_normalize(archive_entry_pathname(entry), entry_path)) {
             // Avoid pwnage
             fprintf(stderr, "warning: skipped possible path traversal %s\n", archive_entry_pathname(entry));
@@ -124,6 +125,21 @@ bool fakefs_import(const char *archive_path, const char *fs, struct fakefsify_er
         }
         if (!progress_update(&p, (double) archive_filter_bytes(archive, -1) / archive_bytes, entry_path))
             CANCEL();
+
+        const char *hardlink = archive_entry_hardlink(entry);
+        if (hardlink) {
+            char hardlink_path[MAX_PATH];
+            if (!path_normalize(hardlink, hardlink_path)) {
+                fprintf(stderr, "warning: almost pwned by hardlink %s\n", hardlink);
+                continue;
+            }
+            if (linkat(root_fd, fix_path(hardlink_path), root_fd, fix_path(entry_path), 0) < 0)
+                POSIX_ERR();
+            sqlite3_bind_blob64(insert_hardlink, 1, entry_path, strlen(entry_path), SQLITE_TRANSIENT);
+            sqlite3_bind_blob64(insert_hardlink, 2, hardlink_path, strlen(hardlink_path), SQLITE_TRANSIENT);
+            STEP_RESET(insert_hardlink);
+            continue;
+        }
 
         int fd = -1;
         if (archive_entry_filetype(entry) != AE_IFDIR) {
@@ -138,7 +154,6 @@ bool fakefs_import(const char *archive_path, const char *fs, struct fakefsify_er
                     if (errno == EEXIST) continue;
                     POSIX_ERR();
                 }
-                printf("created %s\n", entry_path_copy);
             }
             free(entry_path_copy);
 
@@ -148,6 +163,7 @@ bool fakefs_import(const char *archive_path, const char *fs, struct fakefsify_er
                 POSIX_ERR();
             }
         }
+
         switch (archive_entry_filetype(entry)) {
             case AE_IFDIR:
                 err = mkdirat(root_fd, fix_path(entry_path), 0777);
@@ -182,6 +198,7 @@ bool fakefs_import(const char *archive_path, const char *fs, struct fakefsify_er
 
     FINALIZE(insert_stat);
     FINALIZE(insert_path);
+    FINALIZE(insert_hardlink);
     EXEC("commit");
     sqlite3_close(db);
     close(root_fd);
@@ -221,7 +238,10 @@ bool fakefs_export(const char *fs, const char *archive_path, struct fakefsify_er
     FINALIZE(count_stmt);
     int64_t paths_done = 0;
 
-    sqlite3_stmt *query = PREPARE("select path, stat from paths, stats using (inode)");
+    struct archive_entry_linkresolver *linkresolver = archive_entry_linkresolver_new();
+    archive_entry_linkresolver_set_strategy(linkresolver, ARCHIVE_FORMAT_TAR_PAX_RESTRICTED);
+
+    sqlite3_stmt *query = PREPARE("select path, inode, stat from paths, stats using (inode)");
     while (STEP(query)) {
         struct archive_entry *entry = archive_entry_new();
 
@@ -236,7 +256,8 @@ bool fakefs_export(const char *fs, const char *archive_path, struct fakefsify_er
         if (!progress_update(&p, (double) paths_done / paths_total, path))
             CANCEL();
 
-        struct ish_stat stat = *(struct ish_stat *) sqlite3_column_blob(query, 1);
+        archive_entry_set_ino64(entry, sqlite3_column_int64(query, 1));
+        struct ish_stat stat = *(struct ish_stat *) sqlite3_column_blob(query, 2);
         archive_entry_set_mode(entry, stat.mode);
         archive_entry_set_uid(entry, stat.uid);
         archive_entry_set_gid(entry, stat.gid);
@@ -253,9 +274,10 @@ bool fakefs_export(const char *fs, const char *archive_path, struct fakefsify_er
         archive_entry_set_size(entry, real_stat.st_size);
 
         int fd = -1;
+        S_IFMT;
         if (S_ISREG(stat.mode) || S_ISLNK(stat.mode))
             fd = openat(root_fd, path, O_RDONLY);
-        if S_ISLNK(stat.mode) {
+        if (S_ISLNK(stat.mode)) {
             char buf[MAX_PATH+1];
             ssize_t len = read(fd, buf, sizeof(buf)-1);
             if (len < 0)
@@ -263,9 +285,15 @@ bool fakefs_export(const char *fs, const char *archive_path, struct fakefsify_er
             buf[len] = '\0';
             archive_entry_set_symlink(entry, buf);
         }
-        archive_write_header(archive, entry);
 
-        if (S_ISREG(stat.mode)) {
+        struct archive_entry *sparse;
+        archive_entry_linkify(linkresolver, &entry, &sparse);
+        if (entry != NULL)
+            archive_write_header(archive, entry);
+        if (sparse != NULL)
+            archive_write_header(archive, sparse);
+
+        if (S_ISREG(stat.mode) && archive_entry_size(entry) != 0) {
             char buf[8192];
             ssize_t len;
             while ((len = read(fd, buf, sizeof(buf))) > 0) {
@@ -288,6 +316,7 @@ bool fakefs_export(const char *fs, const char *archive_path, struct fakefsify_er
     }
 
     FINALIZE(query);
+    archive_entry_linkresolver_free(linkresolver);
     sqlite3_close(db);
     close(root_fd);
     if (archive_write_close(archive) != ARCHIVE_OK)
