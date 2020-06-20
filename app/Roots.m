@@ -56,7 +56,7 @@ static NSString *kDefaultRoot = @"Default Root";
         self.defaultRoot = [NSUserDefaults.standardUserDefaults stringForKey:kDefaultRoot];
         [self addObserver:self forKeyPath:@"defaultRoot" options:0 context:nil];
         if ((!self.defaultRoot || ![self.roots containsObject:self.defaultRoot]) && self.roots.count)
-            self.defaultRoot = self.roots[0];
+            self.defaultRoot = self.roots.firstObject;
     }
     return self;
 }
@@ -142,9 +142,14 @@ void root_progress_callback(void *cookie, double progress, const char *message, 
     }
     if (![NSFileManager.defaultManager moveItemAtURL:tempDestination toURL:destination error:error])
         return NO;
-    dispatch_async(dispatch_get_main_queue(), ^{
+
+    void (^addRoot)(void) = ^{
         [[self mutableOrderedSetValueForKey:@"roots"] addObject:name];
-    });
+    };
+    if (!NSThread.isMainThread)
+        dispatch_sync(dispatch_get_main_queue(), addRoot);
+    else
+        addRoot();
     return YES;
 }
 
