@@ -7,7 +7,7 @@ with GPLv2 licensed projects such as Linux and QEMU.
 The following authors have agreed to relicense their past contributions under GPLv2:
 - Theodore Dubois <tblodt@icloud.com>
 - Saagar Jha <saagar@saagarjha.com>
-- Christoffer Tønnessen <christoffertonnessen@icloud.com>
+- Christoffer Tønnessen <christoffertonnessen@icloud.com> <christoffer.tonnessen@gmail.com>
 
 [GPLv3]: https://www.gnu.org/licenses/gpl-3.0.html
 [GPLv2]: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html
