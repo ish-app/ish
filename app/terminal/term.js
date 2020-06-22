@@ -25,10 +25,6 @@ x-screen {
 x-screen::-webkit-scrollbar {
     display: none;
 }
-x-row {
-  text-rendering: optimizeLegibility;
-  font-variant-ligatures: normal;
-}
 `;
 
 function onTerminalReady() {
