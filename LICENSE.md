@@ -9,6 +9,7 @@ The following authors have agreed to relicense their past contributions under GP
 - Saagar Jha <saagar@saagarjha.com>
 - Christoffer Tønnessen <christoffertonnessen@icloud.com> <christoffer.tonnessen@gmail.com>
 - Philipp Wallisch <philipp.wallisch@inode.at>
+- Ed Luff <beartechtalks@gmail.com>
 
 [GPLv3]: https://www.gnu.org/licenses/gpl-3.0.html
 [GPLv2]: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html
