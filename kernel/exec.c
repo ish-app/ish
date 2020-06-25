@@ -675,9 +675,15 @@ dword_t sys_execve(addr_t filename_addr, addr_t argv_addr, addr_t envp_addr) {
     char *envp = malloc(ARGV_MAX);
     if (envp == NULL)
         goto err_free_envp;
-    err = user_read_string_array(envp_addr, envp, ARGV_MAX);
-    if (err < 0)
-        goto err_free_envp;
+    if (envp_addr != 0) {
+        err = user_read_string_array(envp_addr, envp, ARGV_MAX);
+        if (err < 0)
+            goto err_free_envp;
+    } else {
+        // Do not take advantage of this nonstandard and nonportable misfeature!
+        // - Michael Kerrisk, execve(2)
+        envp[0] = envp[1] = '\0';
+    }
 
     STRACE("execve(\"%.1000s\", {", filename);
     const char *args = argv;
