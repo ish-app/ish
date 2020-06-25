@@ -524,10 +524,14 @@ dword_t sys_ioctl(fd_t f, dword_t cmd, dword_t arg) {
     switch (cmd) {
         case FIONBIO_:
             return set_nonblock(fd, arg);
-        default:
-            return fd_ioctl(fd, cmd, arg);
+        case FIOCLEX_:
+            bit_set(f, current->files->cloexec);
+            return 0;
+        case FIONCLEX_:
+            bit_clear(f, current->files->cloexec);
+            return 0;
     }
-    return 0;
+    return fd_ioctl(fd, cmd, arg);
 }
 
 dword_t sys_getcwd(addr_t buf_addr, dword_t size) {

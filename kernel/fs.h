@@ -132,6 +132,8 @@ bool mount_param_flag(const char *info, const char *flag);
 // generic ioctls
 #define FIONREAD_ 0x541b
 #define FIONBIO_ 0x5421
+#define FIONCLEX_ 0x5450
+#define FIOCLEX_ 0x5451
 
 // All operations are optional unless otherwise specified
 struct fs_ops {
