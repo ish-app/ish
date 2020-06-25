@@ -293,6 +293,9 @@ static void receive_signal(struct sighand *sighand, struct siginfo_ *info) {
         printk("failed to install frame for %d at %#x\n", info->sig, sp);
         deliver_signal(current, SIGSEGV_, SIGINFO_NIL);
     }
+
+    if (action->flags & SA_RESETHAND_)
+        *action = (struct sigaction_) {.handler = SIG_DFL_};
 }
 
 void receive_signals() {
@@ -443,7 +446,9 @@ dword_t sys_rt_sigaction(dword_t signum, addr_t action_addr, addr_t oldaction_ad
     if (action_addr != 0)
         if (user_get(action_addr, action))
             return _EFAULT;
-    STRACE("rt_sigaction(%d, 0x%x, 0x%x, %d)", signum, action_addr, oldaction_addr, sigset_size);
+    STRACE("rt_sigaction(%d, %#x {handler=%#x, flags=%#x, restorer=%#x, mask=%#llx}, 0x%x, %d)", signum,
+            action_addr, action.handler, action.flags, action.restorer,
+            (unsigned long long) action.mask, oldaction_addr, sigset_size);
 
     int err = do_sigaction(signum,
             action_addr ? &action : NULL,
