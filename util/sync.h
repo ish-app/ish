@@ -83,7 +83,7 @@ static inline int trylock(lock_t *lock, __attribute__((unused)) const char *file
 typedef struct {
     pthread_cond_t cond;
 } cond_t;
-#define COND_INITIALIZER {PTHREAD_COND_INITIALIZER}
+#define COND_INITIALIZER ((cond_t) {PTHREAD_COND_INITIALIZER})
 
 // Must call before using the condition
 void cond_init(cond_t *cond);
