@@ -21,5 +21,5 @@ endif
 
 libarchive = cc.find_library('libarchive', required: false)
 if libarchive.found()
-    executable('fakefsify', 'fakefsify.c', dependencies: [ish, libarchive])
+    executable('fakefsify', ['fakefsify.c', '../fs/fakefsify.c'], dependencies: [ish, libarchive])
 endif
