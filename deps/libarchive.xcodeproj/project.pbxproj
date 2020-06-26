@@ -21,9 +21,7 @@
 		BB10E410248DA6F1009C7A74 /* archive_read_support_filter_compress.c in Sources */ = {isa = PBXBuildFile; fileRef = BB10E0F5248DA6EA009C7A74 /* archive_read_support_filter_compress.c */; };
 		BB10E411248DA6F1009C7A74 /* archive_util.c in Sources */ = {isa = PBXBuildFile; fileRef = BB10E0F6248DA6EA009C7A74 /* archive_util.c */; };
 		BB10E412248DA6F1009C7A74 /* archive_read_extract.c in Sources */ = {isa = PBXBuildFile; fileRef = BB10E0F7248DA6EA009C7A74 /* archive_read_extract.c */; };
-		BB10E413248DA6F1009C7A74 /* archive.h in Headers */ = {isa = PBXBuildFile; fileRef = BB10E0F8248DA6EA009C7A74 /* archive.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		BB10E414248DA6F1009C7A74 /* archive_write_add_filter_lzop.c in Sources */ = {isa = PBXBuildFile; fileRef = BB10E0F9248DA6EA009C7A74 /* archive_write_add_filter_lzop.c */; };
-		BB10E415248DA6F1009C7A74 /* archive_entry.h in Headers */ = {isa = PBXBuildFile; fileRef = BB10E0FB248DA6EA009C7A74 /* archive_entry.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		BB10E416248DA6F1009C7A74 /* archive_write_add_filter_grzip.c in Sources */ = {isa = PBXBuildFile; fileRef = BB10E0FC248DA6EA009C7A74 /* archive_write_add_filter_grzip.c */; };
 		BB10E417248DA6F1009C7A74 /* archive_write_set_format_by_name.c in Sources */ = {isa = PBXBuildFile; fileRef = BB10E0FD248DA6EA009C7A74 /* archive_write_set_format_by_name.c */; };
 		BB10E41A248DA6F1009C7A74 /* archive_cmdline.c in Sources */ = {isa = PBXBuildFile; fileRef = BB10E103248DA6EA009C7A74 /* archive_cmdline.c */; };
@@ -530,24 +528,11 @@
 		};
 /* End PBXGroup section */
 
-/* Begin PBXHeadersBuildPhase section */
-		BB10E0E2248DA6D5009C7A74 /* Headers */ = {
-			isa = PBXHeadersBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				BB10E413248DA6F1009C7A74 /* archive.h in Headers */,
-				BB10E415248DA6F1009C7A74 /* archive_entry.h in Headers */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXHeadersBuildPhase section */
-
 /* Begin PBXNativeTarget section */
 		BB10E0D5248DA67B009C7A74 /* libarchive */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = BB10E0DC248DA67B009C7A74 /* Build configuration list for PBXNativeTarget "libarchive" */;
 			buildPhases = (
-				BB10E0E2248DA6D5009C7A74 /* Headers */,
 				BB10E0D2248DA67B009C7A74 /* Sources */,
 				BB10E0D3248DA67B009C7A74 /* Frameworks */,
 			);
