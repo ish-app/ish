@@ -11,8 +11,8 @@ static inline void zero_xmm(union xmm_reg *xmm) {
 
 #define VEC_ZERO_COPY(zero, copy) \
     void vec_zero##zero##_copy##copy(NO_CPU, const void *src, void *dst) { \
-        memset(dst, 0, zero/8); \
         memcpy(dst, src, copy/8); \
+        memset((char *) dst + copy/8, 0, (zero-copy)/8); \
     }
 VEC_ZERO_COPY(128, 128)
 VEC_ZERO_COPY(128, 64)
