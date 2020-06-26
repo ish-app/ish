@@ -137,6 +137,7 @@ static int futex_wakelike(int op, addr_t uaddr, dword_t wake_max, dword_t requeu
             assert(futex->refcount > 1); // should be true because this function keeps a reference
             futex->refcount--;
             futex2->refcount++;
+            wait->futex = futex2;
             requeued++;
         }
         futex_put_unlocked(futex2);
