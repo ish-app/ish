@@ -213,6 +213,7 @@ syscall_t syscall_table[] = {
     [332] = (syscall_t) syscall_stub, // inotify_init1
     [340] = (syscall_t) sys_prlimit64,
     [345] = (syscall_t) sys_sendmmsg,
+    [352] = (syscall_t) syscall_stub, // sched_getattr
     [353] = (syscall_t) sys_renameat2,
     [355] = (syscall_t) sys_getrandom,
     [359] = (syscall_t) sys_socket,
