@@ -21,9 +21,8 @@ lib.init(function() {
 var termCss = `
 x-screen {
     background: transparent !important;
-}
-x-screen::-webkit-scrollbar {
-    display: none;
+    overflow: hidden !important;
+    -webkit-tap-highlight-color: transparent;
 }
 x-row {
   text-rendering: optimizeLegibility;
