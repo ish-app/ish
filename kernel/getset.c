@@ -81,6 +81,10 @@ int_t sys_getresuid(addr_t ruid_addr, addr_t euid_addr, addr_t suid_addr) {
     return 0;
 }
 
+int_t sys_setreuid(uid_t_ ruid, uid_t_ euid) {
+    return sys_setresuid(ruid, euid, -1);
+}
+
 dword_t sys_getgid32() {
     STRACE("getgid32()");
     return current->gid;
@@ -140,6 +144,10 @@ int_t sys_getresgid(addr_t rgid_addr, addr_t egid_addr, addr_t sgid_addr) {
     if (user_put(sgid_addr, current->sgid))
         return _EFAULT;
     return 0;
+}
+
+int_t sys_setregid(uid_t_ rgid, uid_t_ egid) {
+    return sys_setresgid(rgid, egid, -1);
 }
 
 int_t sys_getgroups(dword_t size, addr_t list) {
