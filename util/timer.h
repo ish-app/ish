@@ -56,12 +56,14 @@ struct timer {
     struct timespec end;
     struct timespec interval;
 
-    bool running;
+    bool active;
+    bool thread_running;
     pthread_t thread;
     timer_callback_t callback;
     void *data;
     lock_t lock;
-    bool dead;
+
+    bool dead; // set by timer_free, the thread will free the timer if this is set when it finishes
 };
 
 struct timer *timer_new(clockid_t clockid, timer_callback_t callback, void *data);
