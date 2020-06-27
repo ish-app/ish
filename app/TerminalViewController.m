@@ -254,6 +254,9 @@
     NSLog(@"%@ %@", notification.name, [NSValue valueWithCGRect:keyboardFrame]);
     self.hasExternalKeyboard = keyboardFrame.size.height < 100;
     CGFloat pad = UIScreen.mainScreen.bounds.size.height - keyboardFrame.origin.y;
+    if (pad != keyboardFrame.size.height) {
+        pad = 0; // keyboard is not right at the bottom of the screen, must be floating or something
+    }
     if (pad == 0) {
         pad = self.view.safeAreaInsets.bottom;
     }
