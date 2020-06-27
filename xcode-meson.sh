@@ -41,6 +41,9 @@ if [[ $CONFIGURATION == Release ]]; then
     b_ndebug=true
 fi
 b_sanitize=none
+if [[ -n "$ENABLE_ADDRESS_SANITIZER" ]]; then
+    b_sanitize=address
+fi
 log=$ISH_LOG
 log_handler=nslog
 jit=true
