@@ -264,6 +264,14 @@ int poll_wait(struct poll *poll_, poll_callback_t callback, void *context, struc
         if (res > 0)
             break;
 
+        lock(&current->sighand->lock);
+        bool signal_pending = !!(current->pending & ~current->blocked);
+        unlock(&current->sighand->lock);
+        if (signal_pending) {
+            res = _EINTR;
+            break;
+        }
+
         // wait for a ready notification
         list_for_each_entry(&poll_->poll_fds, poll_fd, fds) {
             sockrestart_begin_listen_wait(poll_fd->fd);

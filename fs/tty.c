@@ -356,7 +356,8 @@ canon_wake:
             assert(tty->bufsize < sizeof(tty->buf));
             tty->buf[tty->bufsize++] = input[i];
         }
-        tty_input_wakeup(tty);
+        if (tty->bufsize > 0)
+            tty_input_wakeup(tty);
     }
 
     pid_t_ fg_group = tty->fg_group;
