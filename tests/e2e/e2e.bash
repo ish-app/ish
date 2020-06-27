@@ -137,6 +137,11 @@ for e2e_test in $(ls tests/e2e | grep -E "^[a-zA-Z0-9_]+$" | grep -E "$TEST_PATT
     fi
 done
 
+if [ "$NUM_TOTAL" -eq 0 ]; then
+    printf "### No tests were run" | tee -a "$SUMMARY_LOG" 
+    exit 0
+fi
+
 NUM_PASSES=$((NUM_TOTAL-NUM_FAILS))
 PERCENT_PASSES=$(echo "scale=2; 100 * $NUM_PASSES / $NUM_TOTAL" | bc)
 PASSED_STR="$NUM_PASSES/$NUM_TOTAL ($PERCENT_PASSES%)"
