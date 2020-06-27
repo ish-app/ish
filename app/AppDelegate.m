@@ -140,8 +140,10 @@ static void ios_handle_die(const char *msg) {
     
     exit_hook = ios_handle_exit;
     die_handler = ios_handle_die;
+#if !TARGET_OS_SIMULATOR
     NSString *sockTmp = [NSTemporaryDirectory() stringByAppendingString:@"ishsock"];
     sock_tmp_prefix = strdup(sockTmp.UTF8String);
+#endif
     
     tty_drivers[TTY_CONSOLE_MAJOR] = &ios_console_driver;
     set_console_device(TTY_CONSOLE_MAJOR, 1);
