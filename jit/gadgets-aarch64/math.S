@@ -135,9 +135,11 @@
         .gadget \op\size\()_mem
             .ifc \op,store
                 write_prep \size, \op\size\()_mem
+            .else; .if \op,xchg
+                write_prep \size, \op\size\()_mem
             .else
                 read_prep \size, \op\size\()_mem
-            .endif
+            .endif N .endif
             ldr\s w8, [_xaddr]
             do_op \armop, \size, w8
             .ifc \op,store
@@ -147,9 +149,11 @@
             gret 1
             .ifc \op,store
                 write_bullshit \size, \op\size\()_mem
+            .else; .if \op,xchg
+                write_bullshit \size, \op\size\()_mem
             .else
                 read_bullshit \size, \op\size\()_mem
-            .endif
+            .endif N .endif
     .else
         # xchg must be atomic
         .gadget \op\size\()_mem

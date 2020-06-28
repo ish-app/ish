@@ -84,13 +84,17 @@
     .gadget \op\size\()_mem
         .ifc \op,store
             write_prep \size, \op\size\()_mem
+        .else; .ifc \op,xchg
+            write_prep \size, \op\size\()_mem
         .else
             read_prep \size, \op\size\()_mem
-        .endif
+        .endif; .endif
         do_op \op, \size, (%_addrq)
         .ifc \op,store
             write_done \size, \op\size\()_mem
-        .endif
+        .else; .ifc \op,xchg
+            write_done \size, \op\size\()_mem
+        .endif; .endif
         gret 1
 
     .irp reg, a,b,c,d
