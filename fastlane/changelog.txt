@@ -1,22 +1,15 @@
-Fixed bugs:
-- Keyboard hiding not working at all
-  - This was caused by the extra key hiding setting, and fixed by reverting it. I'll figure out what was up in the next release.
-- sqrt(0) returning NaN
-- Hang when any iOSFS syscall tries to return an error
-
-This is a small bug fix release so here's the previous changelog for your convenience:
-
 New stuff:
-- Most Go prebuilt binaries iSH will work (such as ngrok)
-- iOS file picker works on iOS 11 and 12 (thanks @kkk669)
-- Character under the cursor is now visible in the background color
-- You can press multiple keys while holding down the control button
-- There's a new setting that hides the extra keys if a hardware keyboard is connected
+- The SSE2 bit in cpuid is enabled! Enough instructions have been implemented for gcc, openssl, and node (mostly).
+- Unknown errors will log a message instead of crashing the app
+- The new filesystems management screen lets you export and import your data, and have multiple root filesystems so you can "dual boot"
+- New switch to hide the extra row of keys when a hardware keyboard is connected
+- procmail seems to work
 
 Fixed bugs:
-- Frequent hangs when trying to use iOS mounted filesystems
-- Emacs not working at all, reporting "Failed select: Invalid argument"
-- Ruby crashing when you press ctrl-c
-- mount command hanging when you dismiss the folder picker by swiping it away (thanks @kkk669)
-- Rare "error -2" on initial installation (hopefully this is actually fixed, I've never been able to reproduce it)
-- Emacs printing negative numbers as NaN
+- ghc-alt-libc installation failing (it doesn't fail quite as much now)
+- execve leaking a copy of its arguments
+- ag (the silver searcher) and node hanging on exit, due to missing FUTEX_REQUEUE
+- Scrolling not behaving sanely on iOS 11 and 12
+- Ctrl-C in bash and fish not doing anything
+- GPG being broken on alpine 3.12
+- Ligatures not working
