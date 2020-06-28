@@ -1,3 +1,4 @@
+#include <string.h>
 #include "debug.h"
 #include "kernel/calls.h"
 #include "emu/interrupt.h"
@@ -292,13 +293,22 @@ void dump_maps() {
     extern void proc_maps_dump(struct task *task, struct proc_data *buf);
     struct proc_data buf = {};
     proc_maps_dump(current, &buf);
-    printk("%s\n", buf.data);
-    free(buf.data);
+    // go a line at a time because it can be fucking enormous
+    char *orig_data = buf.data;
+    while (buf.size > 0) {
+        size_t chunk_size = buf.size;
+        if (chunk_size > 1024)
+            chunk_size = 1024;
+        printk("%.*s", chunk_size, buf.data);
+        buf.data += chunk_size;
+        buf.size -= chunk_size;
+    }
+    free(orig_data);
 }
 
-void dump_stack() {
+void dump_stack(int lines) {
     printk("stack at %x, base at %x, ip at %x\n", current->cpu.esp, current->cpu.ebp, current->cpu.eip);
-    for (int i = 0; i < 64; i++) {
+    for (int i = 0; i < lines*8; i++) {
         dword_t stackword;
         if (user_get(current->cpu.esp + (i * 4), stackword))
             break;
