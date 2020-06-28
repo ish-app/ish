@@ -135,7 +135,7 @@
         .gadget \op\size\()_mem
             .ifc \op,store
                 write_prep \size, \op\size\()_mem
-            .else; .if \op,xchg
+            .else N .ifc \op,xchg
                 write_prep \size, \op\size\()_mem
             .else
                 read_prep \size, \op\size\()_mem
@@ -149,7 +149,7 @@
             gret 1
             .ifc \op,store
                 write_bullshit \size, \op\size\()_mem
-            .else; .if \op,xchg
+            .else N .ifc \op,xchg
                 write_bullshit \size, \op\size\()_mem
             .else
                 read_bullshit \size, \op\size\()_mem
