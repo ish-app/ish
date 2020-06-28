@@ -1,11 +1,9 @@
-require './secrets'
-
 lane :beta do
     changelog = File.read('changelog.txt')
     tag = `git describe --tags --abbrev=0 --match builds/beta/\*`.chomp
     testflight_changelog = changelog + "\n" + File.read("footer.txt") + `git shortlog #{tag}..HEAD`
 
-    build_number = 70
+    build_number = latest_testflight_build_number + 1
     increment_build_number(build_number: build_number)
     commit_version_bump(
         xcodeproj: 'iSH.xcodeproj',
