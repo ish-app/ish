@@ -72,7 +72,7 @@
                         </connections>
                     </tableView>
                     <navigationItem key="navigationItem" title="Filesystems" leftItemsSupplementBackButton="YES" id="10D-7Y-shL">
-                        <barButtonItem key="rightBarButtonItem" systemItem="add" id="8Bo-9f-BwE">
+                        <barButtonItem key="rightBarButtonItem" title="Import" id="8Bo-9f-BwE">
                             <connections>
                                 <action selector="importFilesystem:" destination="6Vk-68-e3U" id="wwh-UQ-gZ2"/>
                             </connections>
@@ -237,19 +237,19 @@
                                         <rect key="frame" x="20" y="20" width="230" height="58.5"/>
                                         <subviews>
                                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="natural" lineBreakMode="middleTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="uls-2R-fu1">
-                                                <rect key="frame" x="0.0" y="0.0" width="230" height="20"/>
+                                                <rect key="frame" x="0.0" y="0.0" width="230" height="20.5"/>
                                                 <fontDescription key="fontDescription" type="boldSystem" pointSize="17"/>
                                                 <nil key="textColor"/>
                                                 <nil key="highlightedColor"/>
                                             </label>
                                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="natural" lineBreakMode="middleTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="QK2-Aw-TuX">
-                                                <rect key="frame" x="0.0" y="30" width="230" height="16"/>
+                                                <rect key="frame" x="0.0" y="30.5" width="230" height="16"/>
                                                 <fontDescription key="fontDescription" type="system" pointSize="13"/>
                                                 <nil key="textColor"/>
                                                 <nil key="highlightedColor"/>
                                             </label>
                                             <progressView opaque="NO" contentMode="scaleToFill" verticalHuggingPriority="750" progress="0.5" translatesAutoresizingMaskIntoConstraints="NO" id="G6p-Tb-Jdw">
-                                                <rect key="frame" x="0.0" y="56" width="230" height="2"/>
+                                                <rect key="frame" x="0.0" y="56.5" width="230" height="2"/>
                                             </progressView>
                                         </subviews>
                                     </stackView>
