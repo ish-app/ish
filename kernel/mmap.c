@@ -213,24 +213,22 @@ addr_t sys_brk(addr_t new_brk) {
     STRACE("brk(0x%x)", new_brk);
     struct mm *mm = current->mm;
 
-    if (new_brk != 0 && new_brk < mm->start_brk)
-        return _EINVAL;
     write_wrlock(&mm->mem.lock);
+    if (new_brk < mm->start_brk)
+        goto out;
     addr_t old_brk = mm->brk;
-    if (new_brk == 0) {
-        write_wrunlock(&mm->mem.lock);
-        return old_brk;
-    }
-    // TODO check for not going too high
 
     if (new_brk > old_brk) {
         // expand heap: map region from old_brk to new_brk
-        int err = pt_map_nothing(&mm->mem, PAGE_ROUND_UP(old_brk),
-                PAGE_ROUND_UP(new_brk) - PAGE_ROUND_UP(old_brk), P_WRITE);
-        if (err < 0) {
-            write_wrunlock(&mm->mem.lock);
-            return err;
-        }
+        // round up because of the definition of brk: "the first location after the end of the uninitialized data segment." (brk(2))
+        // if the brk is 0x2000, page 0x2000 shouldn't be mapped, but it should be if the brk is 0x2001.
+        page_t start = PAGE_ROUND_UP(old_brk);
+        pages_t size = PAGE_ROUND_UP(new_brk) - PAGE_ROUND_UP(old_brk);
+        if (!pt_is_hole(&mm->mem, start, size))
+            goto out;
+        int err = pt_map_nothing(&mm->mem, start, size, P_WRITE);
+        if (err < 0)
+            goto out;
     } else if (new_brk < old_brk) {
         // shrink heap: unmap region from new_brk to old_brk
         // first page to unmap is PAGE(new_brk)
@@ -239,6 +237,8 @@ addr_t sys_brk(addr_t new_brk) {
     }
 
     mm->brk = new_brk;
+out:;
+    addr_t brk = mm->brk;
     write_wrunlock(&mm->mem.lock);
-    return new_brk;
+    return brk;
 }
