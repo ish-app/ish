@@ -111,8 +111,10 @@ bool fakefs_import(const char *archive_path, const char *fs, struct fakefsify_er
     size_t archive_bytes = real_stat.st_size;
 
     sqlite3_stmt *insert_stat = PREPARE("insert into stats (stat) values (?)");
-    sqlite3_stmt *insert_path = PREPARE("insert or replace into paths values (?, last_insert_rowid())");
+    sqlite3_stmt *insert_path = PREPARE("insert or replace into paths values (?, ?)");
     sqlite3_stmt *insert_hardlink = PREPARE("insert or replace into paths values (?, (select inode from paths where path = ? limit 1))");
+
+    bool archive_has_root = false;
 
     // do actual shit
     struct archive_entry *entry;
@@ -125,6 +127,8 @@ bool fakefs_import(const char *archive_path, const char *fs, struct fakefsify_er
         }
         if (!progress_update(&p, (double) archive_filter_bytes(archive, -1) / archive_bytes, entry_path))
             CANCEL();
+        if (strcmp(entry_path, "") == 0)
+            archive_has_root = true;
 
         const char *hardlink = archive_entry_hardlink(entry);
         if (hardlink) {
@@ -148,6 +152,7 @@ bool fakefs_import(const char *archive_path, const char *fs, struct fakefsify_er
             char *slash = entry_path_copy;
             while ((slash = strchr(slash + 1, '/')) != NULL) {
                 *slash = '\0';
+                size_t len = strlen(entry_path_copy);
                 int err = mkdirat(root_fd, fix_path(entry_path_copy), 0777);
                 *slash = '/';
                 if (err < 0) {
@@ -191,10 +196,21 @@ bool fakefs_import(const char *archive_path, const char *fs, struct fakefsify_er
         sqlite3_bind_blob64(insert_stat, 1, &stat, sizeof(stat), SQLITE_TRANSIENT);
         STEP_RESET(insert_stat);
         sqlite3_bind_blob64(insert_path, 1, entry_path, strlen(entry_path), SQLITE_TRANSIENT);
+        sqlite3_bind_int64(insert_path, 2, sqlite3_last_insert_rowid(db));
         STEP_RESET(insert_path);
     }
     if (err != ARCHIVE_EOF)
         ARCHIVE_ERR(archive);
+
+    // Add a path entry for the root if it's missing
+    if (!archive_has_root) {
+        struct ish_stat stat = {.mode = 0755};
+        sqlite3_bind_blob64(insert_stat, 1, &stat, sizeof(stat), SQLITE_TRANSIENT);
+        STEP_RESET(insert_stat);
+        sqlite3_bind_blob64(insert_path, 1, "", 0, SQLITE_TRANSIENT);
+        sqlite3_bind_int64(insert_path, 2, sqlite3_last_insert_rowid(db));
+        STEP_RESET(insert_path);
+    }
 
     FINALIZE(insert_stat);
     FINALIZE(insert_path);
