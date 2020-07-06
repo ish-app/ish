@@ -6,6 +6,7 @@
 //
 
 #import "SceneDelegate.h"
+#import "AboutViewController.h"
 
 TerminalViewController *currentTerminalViewController = NULL;
 
@@ -20,6 +21,14 @@ static NSString *const TerminalUUID = @"TerminalUUID";
 @implementation SceneDelegate
 
 - (void)scene:(UIScene *)scene willConnectToSession:(UISceneSession *)session options:(UISceneConnectionOptions *)connectionOptions {
+    if ([NSUserDefaults.standardUserDefaults boolForKey:@"recovery"]) {
+        UINavigationController *vc = [[UIStoryboard storyboardWithName:@"About" bundle:nil] instantiateInitialViewController];
+        AboutViewController *avc = vc.topViewController;
+        avc.recoveryMode = YES;
+        self.window.rootViewController = vc;
+        return;
+    }
+
     TerminalViewController *vc = (TerminalViewController *) self.window.rootViewController;
     vc.sceneSession = session;
     if (session.stateRestorationActivity == nil) {

@@ -9,6 +9,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #import <SystemConfiguration/SystemConfiguration.h>
+#import "AboutViewController.h"
 #import "AppDelegate.h"
 #import "AppGroup.h"
 #import "iOSFS.h"
@@ -208,7 +209,9 @@ static int bootError;
         [defaults removeObjectForKey:kPreferenceLaunchCommandKey];
         [defaults setBool:NO forKey:@"hail mary"];
     }
-    
+    if ([NSUserDefaults.standardUserDefaults boolForKey:@"recovery"])
+        return YES;
+
     bootError = [self boot];
     return YES;
 }
@@ -243,6 +246,13 @@ void NetworkReachabilityCallback(SCNetworkReachabilityRef target, SCNetworkReach
     
     if (self.window != nil) {
         // For iOS <13, where the app delegate owns the window instead of the scene
+        if ([NSUserDefaults.standardUserDefaults boolForKey:@"recovery"]) {
+            UINavigationController *vc = [[UIStoryboard storyboardWithName:@"About" bundle:nil] instantiateInitialViewController];
+            AboutViewController *avc = vc.topViewController;
+            avc.recoveryMode = YES;
+            self.window.rootViewController = vc;
+            return YES;
+        }
         TerminalViewController *vc = (TerminalViewController *) self.window.rootViewController;
         currentTerminalViewController = vc;
         [vc startNewSession];

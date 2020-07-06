@@ -8,15 +8,15 @@
 			<key>Type</key>
 			<string>PSGroupSpecifier</string>
 			<key>FooterText</key>
-			<string>Danger zone: Only touch this if you know what you&apos;re doing but you messed up anyway</string>
+			<string>Opens the app straight to the settings menu. Useful if you changed anything there and need to change it back but the app won&apos;t start.</string>
 		</dict>
 		<dict>
 			<key>Type</key>
 			<string>PSToggleSwitchSpecifier</string>
 			<key>Title</key>
-			<string>Reset launch and boot commands</string>
+			<string>Recovery Mode</string>
 			<key>Key</key>
-			<string>hail mary</string>
+			<string>recovery</string>
 			<key>DefaultValue</key>
 			<false/>
 		</dict>

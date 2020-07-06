@@ -36,6 +36,20 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     [self _updatePreferenceUI];
+    if (self.recoveryMode) {
+        self.includeDebugPanel = YES;
+        self.navigationItem.title = @"Recovery Mode";
+        self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"Exit"
+                                                                                  style:UIBarButtonItemStyleDone
+                                                                                 target:self
+                                                                                 action:@selector(exitRecovery:)];
+        self.navigationItem.leftBarButtonItem = nil;
+    }
+}
+
+- (void)exitRecovery:(id)sender {
+    [NSUserDefaults.standardUserDefaults setBool:NO forKey:@"recovery"];
+    exit(0);
 }
 
 - (void)dealloc {

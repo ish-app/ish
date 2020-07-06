@@ -33,7 +33,7 @@
 		BB78AB2B1FAD22440013E782 /* TerminalView.m in Sources */ = {isa = PBXBuildFile; fileRef = BB78AB2A1FAD22440013E782 /* TerminalView.m */; };
 		BB792B551F96D90D00FFB7A4 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = BB792B541F96D90D00FFB7A4 /* AppDelegate.m */; };
 		BB792B581F96D90D00FFB7A4 /* TerminalViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = BB792B571F96D90D00FFB7A4 /* TerminalViewController.m */; };
-		BB792B5B1F96D90D00FFB7A4 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = BB792B591F96D90D00FFB7A4 /* Main.storyboard */; };
+		BB792B5B1F96D90D00FFB7A4 /* Terminal.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = BB792B591F96D90D00FFB7A4 /* Terminal.storyboard */; };
 		BB792B5D1F96D90D00FFB7A4 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BB792B5C1F96D90D00FFB7A4 /* Assets.xcassets */; };
 		BB792B601F96D90D00FFB7A4 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = BB792B5E1F96D90D00FFB7A4 /* LaunchScreen.storyboard */; };
 		BB792B631F96D90D00FFB7A4 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = BB792B621F96D90D00FFB7A4 /* main.m */; };
@@ -204,7 +204,7 @@
 		BB792B541F96D90D00FFB7A4 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
 		BB792B561F96D90D00FFB7A4 /* TerminalViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TerminalViewController.h; sourceTree = "<group>"; };
 		BB792B571F96D90D00FFB7A4 /* TerminalViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TerminalViewController.m; sourceTree = "<group>"; };
-		BB792B5A1F96D90D00FFB7A4 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
+		BB792B5A1F96D90D00FFB7A4 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Terminal.storyboard; sourceTree = "<group>"; };
 		BB792B5C1F96D90D00FFB7A4 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		BB792B5F1F96D90D00FFB7A4 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		BB792B611F96D90D00FFB7A4 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -501,7 +501,7 @@
 				BBCC9D952365430800424C83 /* SceneDelegate.m */,
 				BB792B561F96D90D00FFB7A4 /* TerminalViewController.h */,
 				BB792B571F96D90D00FFB7A4 /* TerminalViewController.m */,
-				BB792B591F96D90D00FFB7A4 /* Main.storyboard */,
+				BB792B591F96D90D00FFB7A4 /* Terminal.storyboard */,
 				BBFB557D21587B2B00DFE6DE /* Bar */,
 				BB78AB291FAD22440013E782 /* TerminalView.h */,
 				BB78AB2A1FAD22440013E782 /* TerminalView.m */,
@@ -976,7 +976,7 @@
 				BB792B601F96D90D00FFB7A4 /* LaunchScreen.storyboard in Resources */,
 				BBBF7B5C2415CDBB00EC4C14 /* Settings.bundle in Resources */,
 				BBBCE7E321D2F02200CA00B3 /* About.storyboard in Resources */,
-				BB792B5B1F96D90D00FFB7A4 /* Main.storyboard in Resources */,
+				BB792B5B1F96D90D00FFB7A4 /* Terminal.storyboard in Resources */,
 				BB2B4DAF231D998300CB578B /* term.html in Resources */,
 				BB10E5D0248DC21D009C7A74 /* Roots.storyboard in Resources */,
 				BBCE66E2249A807700F45269 /* alpine.tar.gz in Resources */,
@@ -1122,12 +1122,12 @@
 /* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
-		BB792B591F96D90D00FFB7A4 /* Main.storyboard */ = {
+		BB792B591F96D90D00FFB7A4 /* Terminal.storyboard */ = {
 			isa = PBXVariantGroup;
 			children = (
 				BB792B5A1F96D90D00FFB7A4 /* Base */,
 			);
-			name = Main.storyboard;
+			name = Terminal.storyboard;
 			sourceTree = "<group>";
 		};
 		BB792B5E1F96D90D00FFB7A4 /* LaunchScreen.storyboard */ = {

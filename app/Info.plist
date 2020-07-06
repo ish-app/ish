@@ -42,9 +42,9 @@
 					<key>UISceneDelegateClassName</key>
 					<string>SceneDelegate</string>
 					<key>UISceneConfigurationName</key>
-					<string>Terminal</string>
+					<string>Main App</string>
 					<key>UISceneStoryboardFile</key>
-					<string>Main</string>
+					<string>Terminal</string>
 				</dict>
 			</array>
 		</dict>
@@ -60,7 +60,7 @@
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
-	<string>Main</string>
+	<string>Terminal</string>
 	<key>UIRequiredDeviceCapabilities</key>
 	<array>
 		<string>armv7</string>

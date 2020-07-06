@@ -12,6 +12,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface AboutViewController : UITableViewController
 
 @property BOOL includeDebugPanel;
+@property BOOL recoveryMode;
 
 @end
 
