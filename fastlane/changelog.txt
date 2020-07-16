@@ -1,15 +1,5 @@
-New stuff:
-- The SSE2 bit in cpuid is enabled! Enough instructions have been implemented for gcc, openssl, and node (mostly).
-- Unknown errors will log a message instead of crashing the app
-- The new filesystems management screen lets you export and import your data, and have multiple root filesystems so you can "dual boot"
-- New switch to hide the extra row of keys when a hardware keyboard is connected
-- procmail seems to work
-
-Fixed bugs:
-- ghc-alt-libc installation failing (it doesn't fail quite as much now)
-- execve leaking a copy of its arguments
-- ag (the silver searcher) and node hanging on exit, due to missing FUTEX_REQUEUE
-- Scrolling not behaving sanely on iOS 11 and 12
-- Ctrl-C in bash and fish not doing anything
-- GPG being broken on alpine 3.12
-- Ligatures not working
+Bug fixes and stability improvements!
+- Recovery mode now allows you to make the app open straight into settings, so you can still change settings if the app crashes on launch
+- Fixed node/npm segfaulting randomly
+- Fixed crash if the filesystem's root can't be opened, which would happen when importing an Ubuntu Base rootfs (now shows an error instead)
+- Importing a filesystem now always creats a root inode
