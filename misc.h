@@ -18,6 +18,9 @@
 #define str(x) _str(x)
 #define _str(x) #x
 
+#define container_of(ptr, type, member) \
+    ((type *) ((char *) (ptr) - offsetof(type, member)))
+
 // compiler check
 #define is_gcc(version) (__GNUC__ >= version)
 

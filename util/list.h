@@ -64,7 +64,7 @@ static inline void list_remove_safe(struct list *item) {
 }
 
 #define list_entry(item, type, member) \
-    ((type *) ((char *) (item) - offsetof(type, member)))
+    container_of(item, type, member)
 #define list_first_entry(list, type, member) \
     list_entry((list)->next, type, member)
 #define list_next_entry(item, member) \

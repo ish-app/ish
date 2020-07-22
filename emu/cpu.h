@@ -3,8 +3,8 @@
 
 #include <stddef.h>
 #include "misc.h"
+#include "emu/mmu.h"
 #include "emu/float80.h"
-#include "emu/memory.h"
 
 struct cpu_state;
 struct tlb;
@@ -27,8 +27,7 @@ static_assert(sizeof(union xmm_reg) == 16, "xmm_reg size");
 static_assert(sizeof(union mm_reg) == 8, "mm_reg size");
 
 struct cpu_state {
-    struct mem *mem;
-    struct jit *jit;
+    struct mmu *mmu;
     long cycle;
 
     // general registers
