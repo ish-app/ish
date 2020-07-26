@@ -35,6 +35,8 @@ You'll need these things to build the project:
 
 Open the project in Xcode, open iSH.xcconfig, and change `ROOT_BUNDLE_IDENTIFIER` to something unique. Then click Run. There are scripts that should do everything else automatically. If you run into any problems, open an issue and I'll try to help.
 
+If you want to deploy the project onto your own devices, you'll need a valid developer account. Sign in to your account via Xcode: Xcode -> Preferences -> Accounts. Now go to the project settings and change the value for Signing > Development Team under Build Settings to your development team. To do this a bit more automatically, change the value for one project and then change all occurances of `CK5SXRTBR7` in `iSH.xcodeproj/project.pbxproj` to your development ID for all `DevelopmentTeam` fields. Your ID will be the one not matching `CK5SXRTBR7`.
+
 ## Build command line tool for testing
 
 To set up your environment, cd to the project and run `meson build` to create a build directory in `build`. Then cd to the build directory and run `ninja`.
