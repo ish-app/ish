@@ -1223,8 +1223,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				B5A7C41924CD7D8C00747DC0 /* HostingController.swift in Sources */,
+				B5CD9F3A24CD96BE00DE7A15 /* DetailView.swift in Sources */,
 				B5A7C41724CD7D8C00747DC0 /* ContentView.swift in Sources */,
 				B5A7C41D24CD7D8C00747DC0 /* NotificationController.swift in Sources */,
+				B5CD9F3E24CDB50400DE7A15 /* ErrorView.swift in Sources */,
 				B5A7C41B24CD7D8C00747DC0 /* ExtensionDelegate.swift in Sources */,
 				B5A7C41F24CD7D8C00747DC0 /* NotificationView.swift in Sources */,
 			);
@@ -1416,6 +1418,7 @@
 				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_ENTITLEMENTS = watch/watchRelease.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
@@ -1504,6 +1507,7 @@
 				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_ENTITLEMENTS = "watch Extension/watch ExtensionRelease.entitlements";
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;

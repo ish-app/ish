@@ -19,13 +19,14 @@
 #import "Roots.h"
 #import "TerminalViewController.h"
 #import "UserPreferences.h"
+#import <WatchConnectivity/WatchConnectivity.h>
 #include "kernel/init.h"
 #include "kernel/calls.h"
 #include "fs/dyndev.h"
 #include "fs/devices.h"
 #include "fs/path.h"
 
-@interface AppDelegate ()
+@interface AppDelegate () <WCSessionDelegate>
 
 @property BOOL exiting;
 @property NSString *unameVersion;
@@ -203,6 +204,15 @@ static int bootError;
 }
 
 - (BOOL)application:(UIApplication *)application willFinishLaunchingWithOptions:(NSDictionary<UIApplicationLaunchOptionsKey,id> *)launchOptions {
+    if(WCSession.isSupported){
+        WCSession* session = WCSession.defaultSession;
+        session.delegate = self;
+        [session activateSession];
+        NSLog(@"Started watch session");
+    } else {
+        NSLog(@"Watch communication not supported");
+    }
+
     NSUserDefaults *defaults = NSUserDefaults.standardUserDefaults;
     if ([defaults boolForKey:@"hail mary"]) {
         [defaults removeObjectForKey:kPreferenceBootCommandKey];
@@ -287,6 +297,56 @@ void NetworkReachabilityCallback(SCNetworkReachabilityRef target, SCNetworkReach
 - (void)applicationDidEnterBackground:(UIApplication *)application {
     if (self.exiting)
         exit(0);
+}
+
+- (void)session:(WCSession *)session didReceiveMessage:(NSDictionary<NSString *, id> *)message replyHandler:(void(^)(NSDictionary<NSString *, id> *replyMessage))replyHandler
+{
+    NSLog(@"Received message from watch");
+    
+    if (message) {
+        NSString* text = [message objectForKey:@"message"];
+        
+        NSLog(@"Got message string %@", text);
+    }
+}
+
+-(void)sessionWatchStateDidChange:(nonnull WCSession *)session
+{
+    
+    if(WCSession.isSupported){
+        WCSession* session = WCSession.defaultSession;
+        session.delegate = self;
+        [session activateSession];
+        
+        
+        if(session.reachable){
+            NSLog(@"session.reachable");
+        }
+        
+        if(session.paired){
+            NSLog(@"watch is paired");
+            if(session.isWatchAppInstalled){
+                NSLog(@"watch app is installed");
+                if(session.watchDirectoryURL != nil) {
+                    NSLog(@"watch got directory URL %@", session.watchDirectoryURL);
+                }
+            }
+        }
+        
+        
+    }
+}
+
+- (void)session:(nonnull WCSession *)session activationDidCompleteWithState:(WCSessionActivationState)activationState error:(nullable NSError *)error {
+    NSLog(@"Watch session became active with status: %ld", activationState);
+}
+
+- (void)sessionDidBecomeInactive:(nonnull WCSession *)session {
+    NSLog(@"Watch session became inactive");
+}
+
+- (void)sessionDidDeactivate:(nonnull WCSession *)session {
+    NSLog(@"Watch session became deactivated");
 }
 
 @end
