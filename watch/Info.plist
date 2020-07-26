@@ -15,21 +15,19 @@
 	<key>CFBundleName</key>
 	<string>$(PRODUCT_NAME)</string>
 	<key>CFBundlePackageType</key>
-	<string>XPC!</string>
+	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
 	<key>CFBundleShortVersionString</key>
 	<string>1.0</string>
 	<key>CFBundleVersion</key>
 	<string>$(PRODUCT_VERSION)</string>
-	<key>NSExtension</key>
-	<dict>
-		<key>NSExtensionFileProviderDocumentGroup</key>
-		<string>$(PRODUCT_APP_GROUP_IDENTIFIER)</string>
-		<key>NSExtensionFileProviderSupportsEnumeration</key>
-		<true/>
-		<key>NSExtensionPointIdentifier</key>
-		<string>com.apple.fileprovider-nonui</string>
-		<key>NSExtensionPrincipalClass</key>
-		<string>FileProviderExtension</string>
-	</dict>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationPortraitUpsideDown</string>
+	</array>
+	<key>WKCompanionAppBundleIdentifier</key>
+	<string>$(ROOT_BUNDLE_IDENTIFIER)</string>
+	<key>WKWatchKitApp</key>
+	<true/>
 </dict>
 </plist>

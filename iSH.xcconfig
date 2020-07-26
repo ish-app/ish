@@ -5,3 +5,6 @@ ROOT_BUNDLE_IDENTIFIER = app.ish.iSH
 ISH_LOG =
 
 PRODUCT_APP_GROUP_IDENTIFIER = group.$(ROOT_BUNDLE_IDENTIFIER)
+
+// Change this to change all versions of the app and watch app
+PRODUCT_VERSION = 73
