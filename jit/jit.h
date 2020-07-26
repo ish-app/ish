@@ -66,9 +66,12 @@ struct jit_block {
 struct jit *jit_new(struct mmu *mmu);
 void jit_free(struct jit *jit);
 
-// Invalidate all jit blocks in the given page. Locks the jit. Should only be
-// called by memory.c in conjunction with mem_changed.
+// Invalidate all jit blocks in pages start (inclusive) to end (exclusive).
+// Locks the jit. Should only be called by memory.c in conjunction with
+// mem_changed.
+void jit_invalidate_range(struct jit *jit, page_t start, page_t end);
 void jit_invalidate_page(struct jit *jit, page_t page);
+void jit_invalidate_all(struct jit *jit);
 
 #endif
 

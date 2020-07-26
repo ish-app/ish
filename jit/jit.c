@@ -19,10 +19,6 @@ struct jit *jit_new(struct mmu *mmu) {
     jit->mmu = mmu;
     jit_resize_hash(jit, JIT_INITIAL_HASH_SIZE);
     jit->page_hash = calloc(JIT_PAGE_HASH_SIZE, sizeof(*jit->page_hash));
-    for (size_t i = 0; i < JIT_PAGE_HASH_SIZE; i++) {
-        list_init(&jit->page_hash[i].blocks[0]);
-        list_init(&jit->page_hash[i].blocks[1]);
-    }
     list_init(&jit->jetsam);
     lock_init(&jit->lock);
     wrlock_init(&jit->jetsam_lock);
@@ -48,20 +44,29 @@ static inline struct list *blocks_list(struct jit *jit, page_t page, int i) {
     return &jit->page_hash[page % JIT_PAGE_HASH_SIZE].blocks[i];
 }
 
-void jit_invalidate_page(struct jit *jit, page_t page) {
+void jit_invalidate_range(struct jit *jit, page_t start, page_t end) {
     lock(&jit->lock);
     struct jit_block *block, *tmp;
-    for (int i = 0; i <= 1; i++) {
-        struct list *blocks = blocks_list(jit, page, i);
-        if (list_null(blocks))
-            continue;
-        list_for_each_entry_safe(blocks, block, tmp, page[i]) {
-            jit_block_disconnect(jit, block);
-            block->is_jetsam = true;
-            list_add(&jit->jetsam, &block->jetsam);
+    for (page_t page = start; page < end; page++) {
+        for (int i = 0; i <= 1; i++) {
+            struct list *blocks = blocks_list(jit, page, i);
+            if (list_null(blocks))
+                continue;
+            list_for_each_entry_safe(blocks, block, tmp, page[i]) {
+                jit_block_disconnect(jit, block);
+                block->is_jetsam = true;
+                list_add(&jit->jetsam, &block->jetsam);
+            }
         }
     }
     unlock(&jit->lock);
+}
+
+void jit_invalidate_page(struct jit *jit, page_t page) {
+    jit_invalidate_range(jit, page, page + 1);
+}
+void jit_invalidate_all(struct jit *jit) {
+    jit_invalidate_range(jit, 0, MEM_PAGES);
 }
 
 static void jit_resize_hash(struct jit *jit, size_t new_size) {
@@ -89,8 +94,6 @@ static void jit_insert(struct jit *jit, struct jit_block *block) {
         jit_resize_hash(jit, jit->hash_size * 2);
 
     list_init_add(&jit->hash[block->addr % jit->hash_size], &block->chain);
-    if (blocks_list(jit, PAGE(block->addr), 0) == NULL)
-        return;
     list_init_add(blocks_list(jit, PAGE(block->addr), 0), &block->page[0]);
     if (PAGE(block->addr) != PAGE(block->end_addr))
         list_init_add(blocks_list(jit, PAGE(block->end_addr), 1), &block->page[1]);
