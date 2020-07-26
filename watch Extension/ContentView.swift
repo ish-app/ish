@@ -8,8 +8,30 @@
 import SwiftUI
 
 struct ContentView: View {
+    @State var showingDetail = false
+    @ObservedObject var detail = Detail()
+
     var body: some View {
-        Text("Hello, World!")
+        List {
+            Button(action: {
+                self.detail.name = "Google DNS"
+                self.showingDetail.toggle()
+            }) {
+                Text("Google DNS")
+            }.sheet(isPresented: $showingDetail) {
+                DetailView(name: self.$detail.name)
+            }
+            
+            Button(action: {
+                self.detail.name = "Ping servers"
+                self.showingDetail.toggle()
+            }) {
+                Text("Ping servers")
+            }.sheet(isPresented: $showingDetail) {
+                DetailView(name: self.$detail.name)
+            }
+        }
+        .navigationBarTitle("iSH")
     }
 }
 
