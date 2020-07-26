@@ -304,9 +304,23 @@ void NetworkReachabilityCallback(SCNetworkReachabilityRef target, SCNetworkReach
     NSLog(@"Received message from watch");
     
     if (message) {
-        NSString* text = [message objectForKey:@"message"];
+        NSString* command = [message objectForKey:@"command"];
         
-        NSLog(@"Got message string %@", text);
+        NSLog(@"Got command: %@", command);
+        
+        if (currentTerminalViewController == NULL) {
+            NSLog(@"No terminal view controller available");
+            NSDictionary* response = @{@"error" : @"The terminal view is not available"};
+            replyHandler(response);
+        } else {
+            NSLog(@"Sending command");
+            NSData *input = [command dataUsingEncoding:NSUTF8StringEncoding];
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [currentTerminalViewController.sessionTerminal sendInput:input.bytes length:input.length];
+            });
+            NSDictionary* response = @{@"message" : @". .."};
+            replyHandler(response);
+        }
     }
 }
 

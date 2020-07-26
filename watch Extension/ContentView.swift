@@ -25,7 +25,7 @@ struct ContentView: View {
 
                 if WCSession.isSupported() {
                     if WCSession.default.isReachable {
-                        WCSession.default.sendMessage(["message": "Hello, world!"], replyHandler: { reply -> Void in
+                        WCSession.default.sendMessage(["command": "ls -l\n"], replyHandler: { reply -> Void in
                             print("Got reply: \(reply)")
                         }, errorHandler: { (error) -> Void in
                             self.errorMessage = "Sending message failed"
