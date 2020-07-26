@@ -7,6 +7,7 @@
 typedef dword_t page_t;
 #define BAD_PAGE 0x10000
 
+#ifndef __KERNEL__
 #define PAGE_BITS 12
 #undef PAGE_SIZE // defined in system headers somewhere
 #define PAGE_SIZE (1 << PAGE_BITS)
@@ -15,6 +16,7 @@ typedef dword_t page_t;
 typedef dword_t pages_t;
 // bytes MUST be unsigned if you would like this to overflow to zero
 #define PAGE_ROUND_UP(bytes) (PAGE((bytes) + PAGE_SIZE - 1))
+#endif
 
 struct mmu {
     struct mmu_ops *ops;

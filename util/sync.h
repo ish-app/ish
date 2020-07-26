@@ -1,7 +1,6 @@
 #ifndef UTIL_SYNC_H
 #define UTIL_SYNC_H
 
-#include <errno.h>
 #include <stdatomic.h>
 #include <pthread.h>
 #include <stdbool.h>

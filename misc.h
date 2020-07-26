@@ -1,13 +1,14 @@
 #ifndef MISC_H
 #define MISC_H
 
+#ifndef __KERNEL__
 #include <assert.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <stdbool.h>
-#include <stdnoreturn.h>
 #include <sys/types.h>
+#include <stdnoreturn.h>
+#include <stdbool.h>
+#endif
+
+#include <stdint.h>
 
 // utility macros
 #define glue(a, b) _glue(a, b)
@@ -17,9 +18,6 @@
 
 #define str(x) _str(x)
 #define _str(x) #x
-
-#define container_of(ptr, type, member) \
-    ((type *) ((char *) (ptr) - offsetof(type, member)))
 
 // compiler check
 #define is_gcc(version) (__GNUC__ >= version)
@@ -37,21 +35,26 @@
 #endif
 
 // keywords
-#define bits unsigned int
+#define bitfield unsigned int
 #define forceinline inline __attribute__((always_inline))
 #define flatten __attribute__((flatten))
-#ifdef NDEBUG
+#if defined(NDEBUG) || defined(__KERNEL__)
 #define posit __builtin_assume
 #else
 #define posit assert
 #endif
+#define must_check __attribute__((warn_unused_result))
+
+#ifndef __KERNEL__
 #define unlikely(x) __builtin_expect((x), 0)
 #define typecheck(type, x) ({type _x = x; x;})
-#define must_check __attribute__((warn_unused_result))
+#define container_of(ptr, type, member) \
+    ((type *) ((char *) (ptr) - offsetof(type, member)))
 #if has_attribute(fallthrough)
 #define fallthrough __attribute__((fallthrough))
 #else
 #define fallthrough
+#endif
 #endif
 
 #if has_attribute(no_sanitize)
@@ -94,7 +97,9 @@ static inline void __use(int dummy __attribute__((unused)), ...) {}
     })
 #endif
 
+#ifndef __KERNEL__
 #define array_size(arr) (sizeof(arr)/sizeof((arr)[0]))
+#endif
 
 // types
 typedef int64_t sqword_t;
@@ -118,8 +123,10 @@ typedef dword_t clock_t_;
 #define uint(size) glue3(uint,size,_t)
 #define sint(size) glue3(int,size,_t)
 
+#ifndef __KERNEL__
 #define ERR_PTR(err) (void *) (intptr_t) (err)
 #define PTR_ERR(ptr) (intptr_t) (ptr)
 #define IS_ERR(ptr) ((uintptr_t) (ptr) > (uintptr_t) -0xfff)
+#endif
 
 #endif

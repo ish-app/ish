@@ -387,15 +387,15 @@ struct gdt_entry {
     uint16_t limit0;
     uint16_t base0;
     uint8_t base1;
-    bits type:4;
-    bits system:1;
-    bits dpl:2;
-    bits present:1;
+    bitfield type:4;
+    bitfield system:1;
+    bitfield dpl:2;
+    bitfield present:1;
     unsigned limit1:4;
-    bits avail:1;
-    bits is_64_code:1;
-    bits db:1;
-    bits granularity:1;
+    bitfield avail:1;
+    bitfield is_64_code:1;
+    bitfield db:1;
+    bitfield granularity:1;
     uint8_t base2;
 } __attribute__((packed));
 

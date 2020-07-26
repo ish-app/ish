@@ -69,19 +69,19 @@ struct cpu_state {
     union {
         dword_t eflags;
         struct {
-            bits cf_bit:1;
-            bits pad1_1:1;
-            bits pf:1;
-            bits pad2_0:1;
-            bits af:1;
-            bits pad3_0:1;
-            bits zf:1;
-            bits sf:1;
-            bits tf:1;
-            bits if_:1;
-            bits df:1;
-            bits of_bit:1;
-            bits iopl:2;
+            bitfield cf_bit:1;
+            bitfield pad1_1:1;
+            bitfield pf:1;
+            bitfield pad2_0:1;
+            bitfield af:1;
+            bitfield pad3_0:1;
+            bitfield zf:1;
+            bitfield sf:1;
+            bitfield tf:1;
+            bitfield if_:1;
+            bitfield df:1;
+            bitfield of_bit:1;
+            bitfield iopl:2;
         };
         // for asm
 #define PF_FLAG (1 << 2)
@@ -100,10 +100,10 @@ struct cpu_state {
     dword_t res, op1, op2;
     union {
         struct {
-            bits pf_res:1;
-            bits zf_res:1;
-            bits sf_res:1;
-            bits af_ops:1;
+            bitfield pf_res:1;
+            bitfield zf_res:1;
+            bitfield sf_res:1;
+            bitfield af_ops:1;
         };
         // for asm
 #define PF_RES (1 << 0)
@@ -121,35 +121,35 @@ struct cpu_state {
     union {
         word_t fsw;
         struct {
-            bits ie:1; // invalid operation
-            bits de:1; // denormalized operand
-            bits ze:1; // divide by zero
-            bits oe:1; // overflow
-            bits ue:1; // underflow
-            bits pe:1; // precision
-            bits stf:1; // stack fault
-            bits es:1; // exception status
-            bits c0:1;
-            bits c1:1;
-            bits c2:1;
+            bitfield ie:1; // invalid operation
+            bitfield de:1; // denormalized operand
+            bitfield ze:1; // divide by zero
+            bitfield oe:1; // overflow
+            bitfield ue:1; // underflow
+            bitfield pe:1; // precision
+            bitfield stf:1; // stack fault
+            bitfield es:1; // exception status
+            bitfield c0:1;
+            bitfield c1:1;
+            bitfield c2:1;
             unsigned top:3;
-            bits c3:1;
-            bits b:1; // fpu busy (?)
+            bitfield c3:1;
+            bitfield b:1; // fpu busy (?)
         };
     };
     union {
         word_t fcw;
         struct {
-            bits im:1;
-            bits dm:1;
-            bits zm:1;
-            bits om:1;
-            bits um:1;
-            bits pm:1;
-            bits pad4:2;
-            bits pc:2;
-            bits rc:2;
-            bits y:1;
+            bitfield im:1;
+            bitfield dm:1;
+            bitfield zm:1;
+            bitfield om:1;
+            bitfield um:1;
+            bitfield pm:1;
+            bitfield pad4:2;
+            bitfield pc:2;
+            bitfield rc:2;
+            bitfield y:1;
         };
     };
 
