@@ -15,6 +15,7 @@
 - (void)startNewSession;
 - (void)reconnectSessionFromTerminalUUID:(NSUUID *)uuid;
 @property (readonly) NSUUID *sessionTerminalUUID; // 0 means invalid
+@property (nonatomic) Terminal *sessionTerminal;
 @property UISceneSession *sceneSession API_AVAILABLE(ios(13.0));
 
 @end

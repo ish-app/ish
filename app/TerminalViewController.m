@@ -42,7 +42,6 @@
 @property (weak, nonatomic) IBOutlet UIButton *hideKeyboardButton;
 
 @property int sessionPid;
-@property (nonatomic) Terminal *sessionTerminal;
 @property int sessionTerminalNumber;
 
 @property BOOL ignoreKeyboardMotion;
