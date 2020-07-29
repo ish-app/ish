@@ -7,7 +7,8 @@
 #include "emu/memory.h"
 #include "emu/interrupt.h"
 #include "util/list.h"
-#include "kernel/calls.h"
+
+extern int current_pid(void);
 
 static void jit_block_disconnect(struct jit *jit, struct jit_block *block);
 static void jit_block_free(struct jit *jit, struct jit_block *block);
@@ -70,7 +71,7 @@ void jit_invalidate_all(struct jit *jit) {
 }
 
 static void jit_resize_hash(struct jit *jit, size_t new_size) {
-    TRACE_(verbose, "%d resizing hash to %lu, using %lu bytes for gadgets\n", current ? current->pid : 0, new_size, jit->mem_used);
+    TRACE_(verbose, "%d resizing hash to %lu, using %lu bytes for gadgets\n", current_pid(), new_size, jit->mem_used);
     struct list *new_hash = calloc(new_size, sizeof(struct list));
     for (size_t i = 0; i < jit->hash_size; i++) {
         if (list_null(&jit->hash[i]))
@@ -113,7 +114,7 @@ static struct jit_block *jit_lookup(struct jit *jit, addr_t addr) {
 
 static struct jit_block *jit_block_compile(addr_t ip, struct tlb *tlb) {
     struct gen_state state;
-    TRACE("%d %08x --- compiling:\n", current->pid, ip);
+    TRACE("%d %08x --- compiling:\n", current_pid(), ip);
     gen_start(ip, &state);
     while (true) {
         if (!gen_step32(&state, tlb))
@@ -196,7 +197,7 @@ static int cpu_step_to_interrupt(struct cpu_state *cpu, struct tlb *tlb) {
                 block = jit_block_compile(ip, tlb);
                 jit_insert(jit, block);
             } else {
-                TRACE("%d %08x --- missed cache\n", current->pid, ip);
+                TRACE("%d %08x --- missed cache\n", current_pid(), ip);
             }
             cache[cache_index] = block;
             unlock(&jit->lock);
@@ -225,12 +226,12 @@ static int cpu_step_to_interrupt(struct cpu_state *cpu, struct tlb *tlb) {
         // block may be jetsam, but that's ok, because it can't be freed until
         // every thread on this jit is not executing anything
 
-        TRACE("%d %08x --- cycle %ld\n", current->pid, ip, cpu->cycle);
+        TRACE("%d %08x --- cycle %ld\n", current_pid(), ip, frame->cpu.cycle);
 
         interrupt = jit_enter(block, frame, tlb);
-        *cpu = frame->cpu;
-        if (interrupt == INT_NONE && ++cpu->cycle % (1 << 10) == 0)
+        if (interrupt == INT_NONE && ++frame->cpu.cycle % (1 << 10) == 0)
             interrupt = INT_TIMER;
+        *cpu = frame->cpu;
     }
 
     free(frame);
