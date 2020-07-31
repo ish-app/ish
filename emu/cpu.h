@@ -159,6 +159,7 @@ struct cpu_state {
 
     // for the page fault handler
     addr_t segfault_addr;
+    bool segfault_was_write;
 
     dword_t trapno;
 };

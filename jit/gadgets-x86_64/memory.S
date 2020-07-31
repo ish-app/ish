@@ -79,6 +79,11 @@
 
 segfault_\type:
     movl %_addr, CPU_segfault_addr(%_cpu)
+    .ifc \type,read
+        movb $0, CPU_segfault_was_write(%_cpu)
+    .else
+        movb $1, CPU_segfault_was_write(%_cpu)
+    .endif
     movl (%_ip), %_eip
     movl $INT_GPF, %_tmp
     jmp jit_exit
