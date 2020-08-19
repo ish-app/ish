@@ -4,48 +4,48 @@
 <dict>
 	<key></key>
 	<dict>
-		<key>description</key>
-		<string>Default</string>
-		<key>author</key>
-		<string>@tbodt</string>
 		<key>link</key>
 		<string>https://twitter.com/tblodt</string>
-	</dict>
-	<key>ihash1</key>
-	<dict>
-		<key>description</key>
-		<string>i#</string>
 		<key>author</key>
-		<string>@01010101lzy</string>
-		<key>link</key>
-		<string>https://github.com/tbodt/ish/issues/578#issuecomment-562960935</string>
+		<string>@tbodt</string>
+		<key>description</key>
+		<string>Default</string>
 	</dict>
 	<key>uninspired</key>
 	<dict>
-		<key>description</key>
-		<string>uninspired</string>
+		<key>link</key>
+		<string>https://github.com/ish-app/ish/issues/578#issuecomment-562906800</string>
 		<key>author</key>
 		<string>@saagarjha</string>
+		<key>description</key>
+		<string>uninspired</string>
+	</dict>
+	<key>ihash1</key>
+	<dict>
 		<key>link</key>
-		<string>https://github.com/tbodt/ish/issues/578#issuecomment-562906800</string>
+		<string>https://github.com/ish-app/ish/issues/578#issuecomment-562960935</string>
+		<key>author</key>
+		<string>@01010101lzy</string>
+		<key>description</key>
+		<string>i#</string>
 	</dict>
 	<key>pydann2</key>
 	<dict>
-		<key>description</key>
-		<string>&gt;| Light</string>
+		<key>link</key>
+		<string>https://github.com/ish-app/ish/issues/578#issuecomment-562897067</string>
 		<key>author</key>
 		<string>@PyDann</string>
-		<key>link</key>
-		<string>https://github.com/tbodt/ish/issues/578#issuecomment-562897067</string>
+		<key>description</key>
+		<string>&gt;| Light</string>
 	</dict>
 	<key>pydann1</key>
 	<dict>
-		<key>description</key>
-		<string>&gt;| Dark</string>
+		<key>link</key>
+		<string>https://github.com/ish-app/ish/issues/578#issuecomment-562897067</string>
 		<key>author</key>
 		<string>@PyDann</string>
-		<key>link</key>
-		<string>https://github.com/tbodt/ish/issues/578#issuecomment-562897067</string>
+		<key>description</key>
+		<string>&gt;| Dark</string>
 	</dict>
 </dict>
 </plist>

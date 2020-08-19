@@ -6,6 +6,20 @@
 	objectVersion = 47;
 	objects = {
 
+/* Begin PBXAggregateTarget section */
+		BB4A922324ED9402002F5A96 /* iSH pre */ = {
+			isa = PBXAggregateTarget;
+			buildConfigurationList = BB4A922424ED9402002F5A96 /* Build configuration list for PBXAggregateTarget "iSH pre" */;
+			buildPhases = (
+				BB4A922A24ED9421002F5A96 /* Add icons to Info.plist */,
+			);
+			dependencies = (
+			);
+			name = "iSH pre";
+			productName = "iSH pre";
+		};
+/* End PBXAggregateTarget section */
+
 /* Begin PBXBuildFile section */
 		408A263A236440F8008A4E81 /* iOSFS.m in Sources */ = {isa = PBXBuildFile; fileRef = 408A2639236440F8008A4E81 /* iOSFS.m */; };
 		650B337422EA235C00B4C03E /* PasteboardDevice.m in Sources */ = {isa = PBXBuildFile; fileRef = 650B337322EA235C00B4C03E /* PasteboardDevice.m */; };
@@ -103,6 +117,13 @@
 			proxyType = 1;
 			remoteGlobalIDString = BB13F7D0200ACCA2003D1C4D;
 			remoteInfo = Ninja;
+		};
+		BB4A922724ED940C002F5A96 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = BB792B461F96D8E000FFB7A4 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = BB4A922324ED9402002F5A96;
+			remoteInfo = "iSH pre";
 		};
 		BB88F49D2154760800A341FD /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -888,6 +909,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				BB4A922824ED940C002F5A96 /* PBXTargetDependency */,
 				BB10E5CB248DBAB7009C7A74 /* PBXTargetDependency */,
 				BB13F7E7200AD874003D1C4D /* PBXTargetDependency */,
 				BB88F49E2154760800A341FD /* PBXTargetDependency */,
@@ -938,6 +960,11 @@
 						DevelopmentTeam = CK5SXRTBR7;
 						ProvisioningStyle = Automatic;
 					};
+					BB4A922324ED9402002F5A96 = {
+						CreatedOnToolsVersion = 11.5;
+						DevelopmentTeam = CK5SXRTBR7;
+						ProvisioningStyle = Automatic;
+					};
 					BB792B4F1F96D90D00FFB7A4 = {
 						CreatedOnToolsVersion = 9.0;
 						DevelopmentTeam = CK5SXRTBR7;
@@ -984,6 +1011,7 @@
 				BB13F7CA200ACC31003D1C4D /* Meson */,
 				BB13F7D0200ACCA2003D1C4D /* Ninja */,
 				BB13F7DB200AD81D003D1C4D /* libish */,
+				BB4A922324ED9402002F5A96 /* iSH pre */,
 			);
 		};
 /* End PBXProject section */
@@ -1062,6 +1090,26 @@
 			shellPath = "/bin/sh -e";
 			shellScript = "cd $SRCROOT/deps/libapps\n./hterm/bin/mkdist\n";
 			showEnvVarsInLog = 0;
+		};
+		BB4A922A24ED9421002F5A96 /* Add icons to Info.plist */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/app/Icons/Icons.plist",
+			);
+			name = "Add icons to Info.plist";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(BUILT_PRODUCTS_DIR)/infoplisticons.h",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "python3 - \"${SRCROOT}/app/Icons/Icons.plist\" \"${BUILT_PRODUCTS_DIR}/infoplisticons.h\" <<END\nimport plistlib\nimport sys\nprint(sys.argv)\nwith open(sys.argv[1], 'rb') as plist:\n    icons = plistlib.load(plist)\nalt_icons = '<key>CFBundleAlternateIcons</key><dict>'\nfor icon in icons.keys():\n    if icon == '': continue\n    alt_icons += '''<key>{0}</key>\n<dict>\n<key>CFBundleIconFiles</key>\n<array><string>{0}</string></array>\n</dict>'''.format(icon)\nalt_icons += '</dict>'\nicon_stuff = '''</string>\n<key>CFBundleIcons</key><dict>{0}</dict>\n<key>CFBundleIcons~ipad</key><dict>{0}</dict>\n<key>kxcode</key><string>'''.format(alt_icons)\nicon_define = '#define ICON_STUFF ' + icon_stuff.replace('\\n', '')\nwith open(sys.argv[2], 'w') as output:\n    output.write(icon_define)\nEND\ntouch \"${SRCROOT}/app/Info.plist\"\n";
 		};
 		BBF1248B1FA7BF530088FB50 /* Download Alpine */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -1151,6 +1199,11 @@
 			isa = PBXTargetDependency;
 			target = BB13F7D0200ACCA2003D1C4D /* Ninja */;
 			targetProxy = BB13F7E8200AD967003D1C4D /* PBXContainerItemProxy */;
+		};
+		BB4A922824ED940C002F5A96 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = BB4A922324ED9402002F5A96 /* iSH pre */;
+			targetProxy = BB4A922724ED940C002F5A96 /* PBXContainerItemProxy */;
 		};
 		BB88F49E2154760800A341FD /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -1385,6 +1438,24 @@
 			};
 			name = Release;
 		};
+		BB4A922524ED9402002F5A96 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = CK5SXRTBR7;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		BB4A922624ED9402002F5A96 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = CK5SXRTBR7;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
 		BB792B4A1F96D8E000FFB7A4 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = BB9C7B88240A343400F5D4F0 /* iSH.xcconfig */;
@@ -1526,6 +1597,8 @@
 					"$(SRCROOT)/deps/libarchive/libarchive",
 				);
 				INFOPLIST_FILE = app/Info.plist;
+				INFOPLIST_PREFIX_HEADER = "$(BUILT_PRODUCTS_DIR)/infoplisticons.h";
+				INFOPLIST_PREPROCESS = YES;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -1589,6 +1662,8 @@
 					"$(SRCROOT)/deps/libarchive/libarchive",
 				);
 				INFOPLIST_FILE = app/Info.plist;
+				INFOPLIST_PREFIX_HEADER = "$(BUILT_PRODUCTS_DIR)/infoplisticons.h";
+				INFOPLIST_PREPROCESS = YES;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				MTL_ENABLE_DEBUG_INFO = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = "$(PRODUCT_BUNDLE_IDENTIFIER)";
@@ -1707,6 +1782,15 @@
 			buildConfigurations = (
 				BB13F7E3200AD81E003D1C4D /* Debug */,
 				BB13F7E4200AD81E003D1C4D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		BB4A922424ED9402002F5A96 /* Build configuration list for PBXAggregateTarget "iSH pre" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BB4A922524ED9402002F5A96 /* Debug */,
+				BB4A922624ED9402002F5A96 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

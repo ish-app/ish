@@ -2,85 +2,12 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>fuc</key>
+	<string>ICON_STUFF</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
-	<key>CFBundleIcons</key>
-	<dict>
-		<key>CFBundleAlternateIcons</key>
-		<dict>
-			<key>ihash1</key>
-			<dict>
-				<key>CFBundleIconFiles</key>
-				<array>
-					<string>ihash1</string>
-				</array>
-			</dict>
-			<key>pydann1</key>
-			<dict>
-				<key>CFBundleIconFiles</key>
-				<array>
-					<string>pydann1</string>
-				</array>
-			</dict>
-			<key>pydann2</key>
-			<dict>
-				<key>CFBundleIconFiles</key>
-				<array>
-					<string>pydann2</string>
-				</array>
-			</dict>
-			<key>uninspired</key>
-			<dict>
-				<key>CFBundleIconFiles</key>
-				<array>
-					<string>uninspired</string>
-				</array>
-			</dict>
-		</dict>
-		<key>CFBundlePrimaryIcon</key>
-		<dict>
-			<key>CFBundleIconFiles</key>
-			<array>
-				<string>icon</string>
-			</array>
-		</dict>
-	</dict>
-	<key>CFBundleIcons~ipad</key>
-	<dict>
-		<key>CFBundleAlternateIcons</key>
-		<dict>
-			<key>ihash1</key>
-			<dict>
-				<key>CFBundleIconFiles</key>
-				<array>
-					<string>ihash1</string>
-				</array>
-			</dict>
-			<key>pydann1</key>
-			<dict>
-				<key>CFBundleIconFiles</key>
-				<array>
-					<string>pydann1</string>
-				</array>
-			</dict>
-			<key>pydann2</key>
-			<dict>
-				<key>CFBundleIconFiles</key>
-				<array>
-					<string>pydann2</string>
-				</array>
-			</dict>
-			<key>uninspired</key>
-			<dict>
-				<key>CFBundleIconFiles</key>
-				<array>
-					<string>uninspired</string>
-				</array>
-			</dict>
-		</dict>
-	</dict>
 	<key>CFBundleIdentifier</key>
 	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	<key>CFBundleInfoDictionaryVersion</key>
