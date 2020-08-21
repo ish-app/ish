@@ -49,6 +49,9 @@
 		BB2B4DAE231D998300CB578B /* term.css in Resources */ = {isa = PBXBuildFile; fileRef = BB4A53AF1FAA787900A72ACE /* term.css */; };
 		BB2B4DAF231D998300CB578B /* term.html in Resources */ = {isa = PBXBuildFile; fileRef = BB4A53A91FAA496700A72ACE /* term.html */; };
 		BB455E111FB37F6600AFB48B /* DelayedUITask.m in Sources */ = {isa = PBXBuildFile; fileRef = BB455E101FB37F6600AFB48B /* DelayedUITask.m */; };
+		BB4A922E24EDA461002F5A96 /* icon1337.png in Resources */ = {isa = PBXBuildFile; fileRef = BB4A922D24EDA461002F5A96 /* icon1337.png */; };
+		BB4A923024EDA55C002F5A96 /* colontildehash.png in Resources */ = {isa = PBXBuildFile; fileRef = BB4A922F24EDA55C002F5A96 /* colontildehash.png */; };
+		BB4A923224EDA560002F5A96 /* 3d.png in Resources */ = {isa = PBXBuildFile; fileRef = BB4A923124EDA560002F5A96 /* 3d.png */; };
 		BB60F55221573FCA003A4E52 /* BarButton.m in Sources */ = {isa = PBXBuildFile; fileRef = BB60F55121573FCA003A4E52 /* BarButton.m */; };
 		BB6DB261216435340047A611 /* libiconv.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = BB6DB260216435330047A611 /* libiconv.tbd */; };
 		BB78AB2B1FAD22440013E782 /* TerminalView.m in Sources */ = {isa = PBXBuildFile; fileRef = BB78AB2A1FAD22440013E782 /* TerminalView.m */; };
@@ -72,6 +75,9 @@
 		BBBCE7E321D2F02200CA00B3 /* About.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = BBBCE7E521D2F02200CA00B3 /* About.storyboard */; };
 		BBBF7B5C2415CDBB00EC4C14 /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = BBBF7B5B2415CDBB00EC4C14 /* Settings.bundle */; };
 		BBBFE94921C5CFF100509DD5 /* NSError+ISHErrno.m in Sources */ = {isa = PBXBuildFile; fileRef = BB13F4DD21C5770000343E17 /* NSError+ISHErrno.m */; };
+		BBC8297E24EDAC11009D042C /* idollarhash.png in Resources */ = {isa = PBXBuildFile; fileRef = BBC8297D24EDAC11009D042C /* idollarhash.png */; };
+		BBC8298124EDACBB009D042C /* iinhash.png in Resources */ = {isa = PBXBuildFile; fileRef = BBC8298024EDACBB009D042C /* iinhash.png */; };
+		BBC8298724EE5853009D042C /* metal.png in Resources */ = {isa = PBXBuildFile; fileRef = BBC8298624EE5853009D042C /* metal.png */; };
 		BBCC9D962365430800424C83 /* SceneDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = BBCC9D952365430800424C83 /* SceneDelegate.m */; };
 		BBCE66E2249A807700F45269 /* alpine.tar.gz in Resources */ = {isa = PBXBuildFile; fileRef = BBF124901FA7C3100088FB50 /* alpine.tar.gz */; };
 		BBFB55662158644C00DFE6DE /* libresolv.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = BBFB55652158644C00DFE6DE /* libresolv.tbd */; };
@@ -230,6 +236,9 @@
 		BB4A539C1FAA490C00A72ACE /* term.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; path = term.js; sourceTree = "<group>"; };
 		BB4A53A91FAA496700A72ACE /* term.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = term.html; sourceTree = "<group>"; };
 		BB4A53AF1FAA787900A72ACE /* term.css */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.css; path = term.css; sourceTree = "<group>"; };
+		BB4A922D24EDA461002F5A96 /* icon1337.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon1337.png; sourceTree = "<group>"; };
+		BB4A922F24EDA55C002F5A96 /* colontildehash.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = colontildehash.png; sourceTree = "<group>"; };
+		BB4A923124EDA560002F5A96 /* 3d.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = 3d.png; sourceTree = "<group>"; };
 		BB60F55021573FCA003A4E52 /* BarButton.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BarButton.h; sourceTree = "<group>"; };
 		BB60F55121573FCA003A4E52 /* BarButton.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = BarButton.m; sourceTree = "<group>"; };
 		BB6DB260216435330047A611 /* libiconv.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libiconv.tbd; path = usr/lib/libiconv.tbd; sourceTree = SDKROOT; };
@@ -369,6 +378,9 @@
 		BBAEE33B249BDADC0069EBB5 /* ProgressReportViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ProgressReportViewController.m; sourceTree = "<group>"; };
 		BBBCE7E421D2F02200CA00B3 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/About.storyboard; sourceTree = "<group>"; };
 		BBBF7B5B2415CDBB00EC4C14 /* Settings.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = Settings.bundle; sourceTree = "<group>"; };
+		BBC8297D24EDAC11009D042C /* idollarhash.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = idollarhash.png; sourceTree = "<group>"; };
+		BBC8298024EDACBB009D042C /* iinhash.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = iinhash.png; sourceTree = "<group>"; };
+		BBC8298624EE5853009D042C /* metal.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = metal.png; sourceTree = "<group>"; };
 		BBCC9D942365430800424C83 /* SceneDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SceneDelegate.h; sourceTree = "<group>"; };
 		BBCC9D952365430800424C83 /* SceneDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SceneDelegate.m; sourceTree = "<group>"; };
 		BBF124901FA7C3100088FB50 /* alpine.tar.gz */ = {isa = PBXFileReference; explicitFileType = folder; includeInIndex = 0; path = alpine.tar.gz; sourceTree = "<group>"; };
@@ -457,11 +469,17 @@
 			isa = PBXGroup;
 			children = (
 				BB0F552D239F8A790032A2A1 /* Icons.plist */,
+				BB4A923124EDA560002F5A96 /* 3d.png */,
+				BB4A922F24EDA55C002F5A96 /* colontildehash.png */,
 				BB1B9A4223A5E96900414052 /* icon.png */,
-				BB0F552F239F8B360032A2A1 /* uninspired.png */,
+				BB4A922D24EDA461002F5A96 /* icon1337.png */,
+				BBC8297D24EDAC11009D042C /* idollarhash.png */,
+				BB0F553323A0AC760032A2A1 /* ihash1.png */,
+				BBC8298024EDACBB009D042C /* iinhash.png */,
 				BB0F553123A0AB9B0032A2A1 /* pydann1.png */,
 				BB0F553523A0ACFC0032A2A1 /* pydann2.png */,
-				BB0F553323A0AC760032A2A1 /* ihash1.png */,
+				BB0F552F239F8B360032A2A1 /* uninspired.png */,
+				BBC8298624EE5853009D042C /* metal.png */,
 			);
 			path = Icons;
 			sourceTree = "<group>";
@@ -1031,6 +1049,9 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BB4A923224EDA560002F5A96 /* 3d.png in Resources */,
+				BB4A923024EDA55C002F5A96 /* colontildehash.png in Resources */,
+				BBC8298724EE5853009D042C /* metal.png in Resources */,
 				BB792B5D1F96D90D00FFB7A4 /* Assets.xcassets in Resources */,
 				BB792B601F96D90D00FFB7A4 /* LaunchScreen.storyboard in Resources */,
 				BBBF7B5C2415CDBB00EC4C14 /* Settings.bundle in Resources */,
@@ -1039,12 +1060,15 @@
 				BB792B5B1F96D90D00FFB7A4 /* Terminal.storyboard in Resources */,
 				BB0F552E239F8A790032A2A1 /* Icons.plist in Resources */,
 				BB0F5530239F8B360032A2A1 /* uninspired.png in Resources */,
+				BBC8298124EDACBB009D042C /* iinhash.png in Resources */,
 				BB0F553623A0ACFC0032A2A1 /* pydann2.png in Resources */,
 				BB0F553423A0AC760032A2A1 /* ihash1.png in Resources */,
 				BB2B4DAF231D998300CB578B /* term.html in Resources */,
 				BB10E5D0248DC21D009C7A74 /* Roots.storyboard in Resources */,
 				BBCE66E2249A807700F45269 /* alpine.tar.gz in Resources */,
+				BBC8297E24EDAC11009D042C /* idollarhash.png in Resources */,
 				BB2B4DAC231D94C300CB578B /* hterm_all.js in Resources */,
+				BB4A922E24EDA461002F5A96 /* icon1337.png in Resources */,
 				BB2B4DAE231D998300CB578B /* term.css in Resources */,
 				BB2B4DAD231D998300CB578B /* term.js in Resources */,
 				BB1B9A4323A5E96900414052 /* icon.png in Resources */,

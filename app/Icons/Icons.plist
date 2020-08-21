@@ -11,6 +11,15 @@
 		<key>description</key>
 		<string>Default</string>
 	</dict>
+	<key>ihash1</key>
+	<dict>
+		<key>link</key>
+		<string>https://github.com/ish-app/ish/issues/578#issuecomment-562960935</string>
+		<key>author</key>
+		<string>@01010101lzy</string>
+		<key>description</key>
+		<string>i#</string>
+	</dict>
 	<key>uninspired</key>
 	<dict>
 		<key>link</key>
@@ -20,14 +29,23 @@
 		<key>description</key>
 		<string>uninspired</string>
 	</dict>
-	<key>ihash1</key>
+	<key>3d</key>
 	<dict>
 		<key>link</key>
-		<string>https://github.com/ish-app/ish/issues/578#issuecomment-562960935</string>
+		<string>https://github.com/ish-app/ish/issues/578#issuecomment-567060974</string>
 		<key>author</key>
-		<string>@01010101lzy</string>
+		<string>@ricardohnn</string>
 		<key>description</key>
-		<string>i#</string>
+		<string>3D</string>
+	</dict>
+	<key>icon1337</key>
+	<dict>
+		<key>link</key>
+		<string>https://github.com/ish-app/ish/issues/578#issuecomment-675671406</string>
+		<key>author</key>
+		<string>@AudioBra4n</string>
+		<key>description</key>
+		<string>1337</string>
 	</dict>
 	<key>pydann2</key>
 	<dict>
@@ -46,6 +64,42 @@
 		<string>@PyDann</string>
 		<key>description</key>
 		<string>&gt;| Dark</string>
+	</dict>
+	<key>colontildehash</key>
+	<dict>
+		<key>link</key>
+		<string>https://github.com/ish-app/ish/issues/578#issuecomment-566759722</string>
+		<key>author</key>
+		<string>@TechUpdateGuy</string>
+		<key>description</key>
+		<string>:~#</string>
+	</dict>
+	<key>idollarhash</key>
+	<dict>
+		<key>link</key>
+		<string>https://github.com/ish-app/ish/issues/578#issuecomment-566855431</string>
+		<key>author</key>
+		<string>@TechUpdateGuy</string>
+		<key>description</key>
+		<string>i$#</string>
+	</dict>
+	<key>iinhash</key>
+	<dict>
+		<key>link</key>
+		<string>https://github.com/ish-app/ish/issues/578#issuecomment-576352583</string>
+		<key>author</key>
+		<string>@relikd</string>
+		<key>description</key>
+		<string>i in #</string>
+	</dict>
+	<key>metal</key>
+	<dict>
+		<key>link</key>
+		<string>https://github.com/ish-app/ish/issues/578#issuecomment-676845860</string>
+		<key>author</key>
+		<string>@heronwr</string>
+		<key>description</key>
+		<string>iS̈H</string>
 	</dict>
 </dict>
 </plist>
