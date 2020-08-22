@@ -146,7 +146,7 @@ static int proc_readdir(struct fd *fd, struct dir_entry *entry) {
     if (!any_left)
         return 0;
     proc_entry_getname(&proc_entry, entry->name);
-    entry->inode = 0;
+    entry->inode = proc_entry.meta->inode;
     return 1;
 }
 
