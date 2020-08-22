@@ -2215,6 +2215,21 @@ static uint64_t __attribute__((aligned(16))) test_values[4][2] = {
     }\
 }
 
+#define SHIFT_DQ_IM(op, ib)\
+{\
+    int i;\
+    for(i=0;i<2;i++) {\
+    a.q[0] = test_values[2*i][0];\
+    a.q[1] = test_values[2*i][1];\
+    asm volatile (#op " $" #ib ", %0" : "=x" (r.dq) : "0" (a.dq));\
+    printf("%-9s: a=" FMT64X "" FMT64X " ib=%02x r=" FMT64X "" FMT64X "\n",\
+           #op,\
+           a.q[1], a.q[0],\
+           ib,\
+           r.q[1], r.q[0]);\
+    }\
+}
+
 #define SHIFT_OP(op, ib)\
 {\
     int i;\
@@ -2552,10 +2567,10 @@ void test_sse(void)
     SHIFT_OP(psllq, 7);
     SHIFT_OP(psllq, 32);
 
-    // SHIFT_IM(psrldq, 16);
-    // SHIFT_IM(psrldq, 7);
-    // SHIFT_IM(pslldq, 16);
-    // SHIFT_IM(pslldq, 7);
+    // SHIFT_DQ_IM(psrldq, 16);
+    // SHIFT_DQ_IM(psrldq, 7);
+    SHIFT_DQ_IM(pslldq, 16);
+    SHIFT_DQ_IM(pslldq, 7);
     SHIFT_IM(psrlq, 16);
     SHIFT_IM(psrlq, 7);
     SHIFT_IM(psllq, 16);

@@ -61,6 +61,13 @@ void vec_imm_shiftr_q64(NO_CPU, const uint8_t amount, union mm_reg *dst) {
         dst->qw >>= amount;
 }
 
+void vec_imm_shiftl_dq128(NO_CPU, uint8_t amount, union xmm_reg *dst) {
+    if (amount >= 16)
+        zero_xmm(dst);
+    else
+        dst->u128 <<= amount * 8;
+}
+
 void vec_shiftl_q128(NO_CPU, union xmm_reg *amount, union xmm_reg *dst) {
     uint64_t amount_qw = amount->qw[0];
 

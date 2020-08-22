@@ -15,6 +15,7 @@ union mm_reg {
     dword_t dw[2];
 };
 union xmm_reg {
+    unsigned __int128 u128;
     qword_t qw[2];
     uint32_t u32[4];
     uint16_t u16[8];
