@@ -161,6 +161,8 @@ void vec_single_fsub32(NO_CPU, const float *src, float *dst) { *dst -= *src; }
 void vec_single_fdiv64(NO_CPU, const double *src, double *dst) { *dst /= *src; }
 void vec_single_fdiv32(NO_CPU, const float *src, float *dst) { *dst /= *src; }
 
+void vec_single_fsqrt64(NO_CPU, const double *src, double *dst) { *dst = sqrt(*src); }
+
 void vec_single_fmax64(NO_CPU, const double *src, double *dst) {
     if (*src > *dst || isnan(*src) || isnan(*dst)) *dst = *src;
 }

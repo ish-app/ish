@@ -987,6 +987,8 @@ restart:
                         case 0x5a: TRACEI("cvtsd2ss xmm:modrm, xmm");
                                    READMODRM; V_OP(cvtsd2ss, xmm_modrm_val, xmm_modrm_reg,64); break;
 
+                        case 0x51: TRACEI("sqrtsd xmm:modrm, xmm");
+                                   READMODRM; V_OP(single_fsqrt, xmm_modrm_val, xmm_modrm_reg,64); break;
                         case 0x58: TRACEI("addsd xmm:modrm, xmm");
                                    READMODRM; V_OP(single_fadd, xmm_modrm_val, xmm_modrm_reg,64); break;
                         case 0x59: TRACEI("mulsd xmm:modrm, xmm");

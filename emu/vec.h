@@ -48,6 +48,7 @@ void vec_single_fsub64(NO_CPU, const double *src, double *dst);
 void vec_single_fsub32(NO_CPU, const float *src, float *dst);
 void vec_single_fdiv64(NO_CPU, const double *src, double *dst);
 void vec_single_fdiv32(NO_CPU, const float *src, float *dst);
+void vec_single_fsqrt64(NO_CPU, const double *src, double *dst);
 
 void vec_single_fmax64(NO_CPU, const double *src, double *dst);
 void vec_single_fmin64(NO_CPU, const double *src, double *dst);

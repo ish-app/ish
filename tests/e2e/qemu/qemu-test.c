@@ -2625,7 +2625,7 @@ void test_sse(void)
         SSE_OPD_S(min);
         SSE_OPD_S(div);
         SSE_OPD_S(max);
-        // SSE_OPD(sqrt);
+        SSE_OPD_S(sqrt);
         SSE_OPD_S(cmpeq);
         SSE_OPD_S(cmplt);
         SSE_OPD_S(cmple);
