@@ -448,10 +448,42 @@
                                     </tableViewCell>
                                 </cells>
                             </tableViewSection>
+                            <tableViewSection footerTitle="If this is off, ctrl-space switches keyboard layouts." id="Ucf-cb-qkd">
+                                <cells>
+                                    <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="none" indentationWidth="10" id="9gO-wR-cmz" userLabel="Backtick to Escape">
+                                        <rect key="frame" x="0.0" y="347.5" width="320" height="44"/>
+                                        <autoresizingMask key="autoresizingMask"/>
+                                        <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" preservesSuperviewLayoutMargins="YES" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="9gO-wR-cmz" id="v3f-Ht-Vrg">
+                                            <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
+                                            <autoresizingMask key="autoresizingMask"/>
+                                            <subviews>
+                                                <label opaque="NO" multipleTouchEnabled="YES" contentMode="left" insetsLayoutMarginsFromSafeArea="NO" text="Send ctrl-space to terminal" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="KvX-Y2-vlm">
+                                                    <rect key="frame" x="16" y="11.5" width="209" height="21"/>
+                                                    <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                                    <nil key="textColor"/>
+                                                    <nil key="highlightedColor"/>
+                                                </label>
+                                                <switch opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" on="YES" translatesAutoresizingMaskIntoConstraints="NO" id="554-OF-h41">
+                                                    <rect key="frame" x="255" y="6.5" width="51" height="31"/>
+                                                    <connections>
+                                                        <action selector="overrideControlSpaceToggle:" destination="Zzy-IN-laJ" eventType="valueChanged" id="IxB-9q-539"/>
+                                                    </connections>
+                                                </switch>
+                                            </subviews>
+                                            <constraints>
+                                                <constraint firstItem="KvX-Y2-vlm" firstAttribute="leading" secondItem="v3f-Ht-Vrg" secondAttribute="leadingMargin" id="O30-Pm-qhg"/>
+                                                <constraint firstAttribute="trailingMargin" secondItem="554-OF-h41" secondAttribute="trailing" id="fXw-Jh-WJU"/>
+                                                <constraint firstItem="KvX-Y2-vlm" firstAttribute="centerY" secondItem="v3f-Ht-Vrg" secondAttribute="centerY" id="nMZ-KF-V5c"/>
+                                                <constraint firstItem="554-OF-h41" firstAttribute="centerY" secondItem="v3f-Ht-Vrg" secondAttribute="centerY" id="ud3-BX-Rdt"/>
+                                            </constraints>
+                                        </tableViewCellContentView>
+                                    </tableViewCell>
+                                </cells>
+                            </tableViewSection>
                             <tableViewSection headerTitle="Extra keys" footerTitle="When extra keys are hidden, Settings can be opened with the ⌘, shortcut" id="Kaj-9x-pfF">
                                 <cells>
                                     <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="none" indentationWidth="10" id="TM9-T2-EDa" userLabel="Backtick to Escape">
-                                        <rect key="frame" x="0.0" y="375" width="320" height="44"/>
+                                        <rect key="frame" x="0.0" y="483" width="320" height="44"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" preservesSuperviewLayoutMargins="YES" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="TM9-T2-EDa" id="K8q-us-D80">
                                             <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
@@ -466,7 +498,6 @@
                                                 <switch opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" misplaced="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" on="YES" translatesAutoresizingMaskIntoConstraints="NO" id="IcN-9M-x1K">
                                                     <rect key="frame" x="255" y="8.5" width="51" height="31"/>
                                                     <connections>
-                                                        <action selector="backtickEscapeToggle:" destination="Zzy-IN-laJ" eventType="valueChanged" id="F0N-yF-KDZ"/>
                                                         <action selector="hideExtraKeysToggle:" destination="Zzy-IN-laJ" eventType="valueChanged" id="kQA-Pi-MZM"/>
                                                     </connections>
                                                 </switch>
@@ -491,6 +522,7 @@
                         <outlet property="backtickEscapeSwitch" destination="8xc-Rx-eue" id="jkl-oc-V9N"/>
                         <outlet property="hideExtraKeysWithExternalKeyboardSwitch" destination="IcN-9M-x1K" id="Lw3-4l-9R6"/>
                         <outlet property="optionMetaSwitch" destination="OEG-YY-LTw" id="b2K-Ug-Jij"/>
+                        <outlet property="overrideControlSpaceSwitch" destination="554-OF-h41" id="js8-8D-1Ua"/>
                     </connections>
                 </tableViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="XlH-jX-0dL" userLabel="First Responder" sceneMemberID="firstResponder"/>

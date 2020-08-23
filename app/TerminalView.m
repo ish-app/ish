@@ -55,6 +55,7 @@ static int kObserverStyling;
     [prefs addObserver:self forKeyPath:@"capsLockMapping" options:0 context:&kObserverMappings];
     [prefs addObserver:self forKeyPath:@"optionMapping" options:0 context:&kObserverMappings];
     [prefs addObserver:self forKeyPath:@"backtickMapEscape" options:0 context:&kObserverMappings];
+    [prefs addObserver:self forKeyPath:@"overrideControlSpace" options:0 context:&kObserverMappings];
     [prefs addObserver:self forKeyPath:@"fontFamily" options:0 context:&kObserverStyling];
     [prefs addObserver:self forKeyPath:@"fontSize" options:0 context:&kObserverStyling];
     [prefs addObserver:self forKeyPath:@"theme" options:0 context:&kObserverStyling];
@@ -68,6 +69,7 @@ static int kObserverStyling;
     [prefs removeObserver:self forKeyPath:@"capsLockMapping"];
     [prefs removeObserver:self forKeyPath:@"optionMapping"];
     [prefs removeObserver:self forKeyPath:@"backtickMapEscape"];
+    [prefs removeObserver:self forKeyPath:@"overrideControlSpace"];
     [prefs removeObserver:self forKeyPath:@"fontFamily"];
     [prefs removeObserver:self forKeyPath:@"fontSize"];
     [prefs removeObserver:self forKeyPath:@"theme"];
@@ -509,6 +511,18 @@ static const char *metaKeys = "abcdefghijklmnopqrstuvwxyz0123456789-=[]\\;',./";
                                                    modifierFlags:flags
                                                           action:@selector(keyCommandTriggered:)];
     [self handleKeyCommand:newCommand];
+}
+
+- (void)pressesBegan:(NSSet<UIPress *> *)presses withEvent:(UIPressesEvent *)event {
+    if (@available(iOS 13.4, *)) {
+        UIKey *key = presses.anyObject.key;
+        if (UserPreferences.shared.overrideControlSpace &&
+            key.keyCode == UIKeyboardHIDUsageKeyboardSpacebar &&
+            key.modifierFlags & UIKeyModifierControl) {
+            return [self insertControlChar:' '];
+        }
+    }
+    return [super pressesBegan:presses withEvent:event];
 }
 
 #pragma mark UITextInput stubs
