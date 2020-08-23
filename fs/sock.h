@@ -28,13 +28,15 @@ int_t sys_sendmsg(fd_t sock_fd, addr_t msghdr_addr, int_t flags);
 int_t sys_recvmsg(fd_t sock_fd, addr_t msghdr_addr, int_t flags);
 int_t sys_sendmmsg(fd_t sock_fd, addr_t msgvec_addr, uint_t msgvec_len, int_t flags);
 
+#define SOCKADDR_DATA_MAX 108
+
 struct sockaddr_ {
     uint16_t family;
     char data[14];
 };
 struct sockaddr_max_ {
     uint16_t family;
-    char data[108];
+    char data[SOCKADDR_DATA_MAX];
 };
 
 size_t sockaddr_size(void *p);

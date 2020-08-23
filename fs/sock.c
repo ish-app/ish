@@ -225,7 +225,7 @@ const char *sock_tmp_prefix = "/tmp/ishsock";
 
 static int sockaddr_read_bind(addr_t sockaddr_addr, void *sockaddr, uint_t *sockaddr_len, struct fd *bind_fd) {
     // Make sure we can read things without overflowing buffers
-    if (*sockaddr_len < sizeof(socklen_t))
+    if (*sockaddr_len < 2)
         return _EINVAL;
     if (*sockaddr_len > sizeof(struct sockaddr_max_))
         return _EINVAL;
@@ -248,7 +248,7 @@ static int sockaddr_read_bind(addr_t sockaddr_addr, void *sockaddr, uint_t *sock
 
         case PF_LOCAL: {
             // First pull out the path, being careful to not overflow anything.
-            char path[sizeof(struct sockaddr_max_) - offsetof(struct sockaddr_max_, data) + 1]; // big enough
+            char path[SOCKADDR_DATA_MAX + 1];
             size_t path_size = *sockaddr_len - offsetof(struct sockaddr_, data);
             memcpy(path, fake_addr->data, path_size);
             path[path_size] = '\0';
@@ -266,6 +266,10 @@ static int sockaddr_read_bind(addr_t sockaddr_addr, void *sockaddr, uint_t *sock
             }
             if (err < 0)
                 return err;
+            if (bind_fd != NULL) {
+                bind_fd->socket.unix_name_len = path_size;
+                memcpy(bind_fd->socket.unix_name, path, path_size);
+            }
 
             struct sockaddr_un *real_addr_un = sockaddr;
             size_t path_len = sprintf(real_addr_un->sun_path, "%s%d.%u", sock_tmp_prefix, getpid(), socket_id);
@@ -446,6 +450,19 @@ int_t sys_accept(fd_t sock_fd, addr_t sockaddr_addr, addr_t sockaddr_len_addr) {
     return client_f;
 }
 
+static void copy_unix_name(char *sockaddr, dword_t *sockaddr_len, struct fd *sock) {
+    struct sockaddr_ *fake_addr = (void *) sockaddr;
+    fake_addr->family = PF_LOCAL_;
+
+    size_t data_len = *sockaddr_len - offsetof(struct sockaddr_, data);
+    size_t name_len = sock->socket.unix_name_len;
+    if (name_len > data_len)
+        name_len = data_len;
+    memset(fake_addr->data, 0, data_len);
+    memcpy(fake_addr->data, sock->socket.unix_name, name_len);
+    *sockaddr_len = offsetof(struct sockaddr_, data) + name_len;
+}
+
 int_t sys_getsockname(fd_t sock_fd, addr_t sockaddr_addr, addr_t sockaddr_len_addr) {
     STRACE("getsockname(%d, 0x%x, 0x%x)", sock_fd, sockaddr_addr, sockaddr_len_addr);
     struct fd *sock = sock_getfd(sock_fd);
@@ -454,10 +471,18 @@ int_t sys_getsockname(fd_t sock_fd, addr_t sockaddr_addr, addr_t sockaddr_len_ad
     dword_t sockaddr_len;
     if (user_get(sockaddr_len_addr, sockaddr_len))
         return _EFAULT;
-
-    // TODO if this is a unix socket, return the same string passed to bind
-
     char sockaddr[sockaddr_len];
+
+    // if this is a unix socket, return the same string passed to bind
+    if (sock->socket.domain == PF_LOCAL_) {
+        copy_unix_name(sockaddr, &sockaddr_len, sock);
+        if (user_write(sockaddr_addr, sockaddr, sizeof(sockaddr)))
+            return _EFAULT;
+        if (user_put(sockaddr_len_addr, sockaddr_len))
+            return _EFAULT;
+        return 0;
+    }
+
     int res = getsockname(sock->real_fd, (void *) sockaddr, &sockaddr_len);
     if (res < 0)
         return errno_map();

@@ -48,7 +48,8 @@ struct fd {
             // alive while there is a listener.
             struct inode_data *unix_name_inode;
             struct unix_abstract *unix_name_abstract;
-            // TODO add a field for unix socket name
+            uint8_t unix_name_len;
+            char unix_name[108];
             struct fd *unix_peer; // locked by peer_lock, for simplicity
             cond_t unix_got_peer;
             // Queue of struct scm for sending file descriptors
