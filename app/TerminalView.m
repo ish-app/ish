@@ -270,9 +270,11 @@ static int kObserverStyling;
 
 - (void)insertControlChar:(char)ch {
     if (strchr(controlKeys, ch) != NULL) {
+        if (ch == ' ') ch = '\0';
         if (ch == '2') ch = '@';
         if (ch == '6') ch = '^';
-        ch = toupper(ch) ^ 0x40;
+        if (ch != '\0')
+            ch = toupper(ch) ^ 0x40;
         [self.terminal sendInput:&ch length:1];
     }
 }
@@ -434,7 +436,7 @@ static int kObserverStyling;
 }
 
 static const char *alphabet = "abcdefghijklmnopqrstuvwxyz";
-static const char *controlKeys = "abcdefghijklmnopqrstuvwxyz@^26-=[]\\";
+static const char *controlKeys = "abcdefghijklmnopqrstuvwxyz@^26-=[]\\ ";
 static const char *metaKeys = "abcdefghijklmnopqrstuvwxyz0123456789-=[]\\;',./";
 
 - (NSArray<UIKeyCommand *> *)keyCommands {
