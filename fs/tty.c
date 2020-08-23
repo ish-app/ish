@@ -232,10 +232,12 @@ static void tty_echo(struct tty *tty, const char *data, size_t size) {
 
 static bool tty_send_input_signal(struct tty *tty, char ch, sigset_t_ *queue) {
     if (!(tty->termios.lflags & ISIG_))
-        return 0;
+        return false;
     unsigned char *cc = tty->termios.cc;
     int sig;
-    if (ch == cc[VINTR_])
+    if (ch == '\0')
+        return false; // '\0' is used to disable cc entries
+    else if (ch == cc[VINTR_])
         sig = SIGINT_;
     else if (ch == cc[VQUIT_])
         sig = SIGQUIT_;
@@ -280,7 +282,10 @@ ssize_t tty_input(struct tty *tty, const char *input, size_t size, bool blocking
             if (iflags & IGNCR_ && ch == '\r')
                 continue;
 
-            if (ch == cc[VERASE_] || ch == cc[VKILL_]) {
+            if (ch == '\0') {
+                // '\0' is used to disable cc entries
+                goto no_special;
+            } else if (ch == cc[VERASE_] || ch == cc[VKILL_]) {
                 // FIXME ECHOE and ECHOK are supposed to enable these
                 // ECHOKE enables erasing the line instead of echoing the kill char and outputting a newline
                 echo = lflags & ECHOK_;
@@ -306,7 +311,7 @@ ssize_t tty_input(struct tty *tty, const char *input, size_t size, bool blocking
             } else if (ch == cc[VEOF_]) {
                 ch = '\0';
                 goto canon_wake;
-            } else if (ch == '\n' || (cc[VEOL_] != '\0' && ch == cc[VEOL_])) {
+            } else if (ch == '\n' || ch == cc[VEOL_]) {
                 // echo it now, before the read call goes through
                 if (echo)
                     tty_echo(tty, "\r\n", 2);
@@ -320,6 +325,7 @@ canon_wake:
                 tty_input_wakeup(tty);
             } else {
                 if (!tty_send_input_signal(tty, ch, &queue)) {
+no_special:
                     err = tty_push_char(tty, ch, /*flag*/false, blocking);
                     if (err < 0) {
                         done_size--;
