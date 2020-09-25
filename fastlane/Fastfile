@@ -1,7 +1,7 @@
 lane :beta do
     changelog = File.read('changelog.txt')
-    tag = `git describe --tags --abbrev=0 --match builds/beta/\*`.chomp
-    testflight_changelog = changelog + "\n" + File.read("footer.txt") + `git shortlog #{tag}..HEAD`
+    last_tag = `git describe --tags --abbrev=0 --match builds/\*`.chomp
+    testflight_changelog = changelog + "\n" + File.read("footer.txt") + `git shortlog #{last_tag}..HEAD`
 
     build_number = latest_testflight_build_number + 1
     increment_build_number(build_number: build_number)
@@ -20,8 +20,18 @@ lane :beta do
         groups: ["People"]
     )
 
-    add_git_tag
+    tag = "builds/#{build_number}"
+    add_git_tag(tag: tag)
     push_to_git_remote
+    set_github_release(
+        repository_name: 'ish-app/ish',
+        tag_name: tag,
+        commitish: "00000000", # the tag better exist
+        name: "Build #{build_number}",
+        description: changelog,
+        upload_assets: ['iSH.ipa'],
+        api_token: ENV['GITHUB_TOKEN'],
+    )
     slack(
         message: "New build available!",
         default_payloads: [],
