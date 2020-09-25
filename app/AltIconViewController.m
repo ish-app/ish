@@ -21,7 +21,6 @@
 
 @property (weak, nonatomic) IBOutlet UIImageView *imageView;
 @property (weak, nonatomic) IBOutlet UIImageView *checkboxImageView;
-@property (weak, nonatomic) IBOutlet UILabel *descriptionLabel;
 @property (weak, nonatomic) IBOutlet UIButton *authorButton;
 
 @property (nonatomic) NSString *link;
@@ -128,15 +127,18 @@
 //        self.checkboxImageView.backgroundColor = UIColor.whiteColor;
 //        self.checkboxImageView.layer.cornerRadius = self.checkboxImageView.bounds.size.width / 2;
     }
-    
+
     self.authorButton.titleLabel.adjustsFontForContentSizeCategory = YES;
+
+    self.isAccessibilityElement = YES;
+    self.accessibilityCustomActions = @[[[UIAccessibilityCustomAction alloc] initWithName:@"Open link" target:self selector:@selector(openSource:)]];
 }
 
 - (void)updateImage:(UIImage *)image description:(NSString *)description author:(NSString *)author link:(NSString *)url {
     self.imageView.image = image;
-    self.descriptionLabel.text = description;
     [self.authorButton setTitle:[NSString stringWithFormat:@"by %@", author] forState:UIControlStateNormal];
     self.link = url;
+    self.accessibilityLabel = [NSString stringWithFormat:@"%@ by %@", description, author];
 }
 
 - (IBAction)openSource:(id)sender {
@@ -146,6 +148,7 @@
 - (void)setSelected:(BOOL)selected {
     [super setSelected:selected];
     self.checkboxImageView.hidden = !selected;
+    self.accessibilityTraits = selected ? UIAccessibilityTraitSelected : 0;
 }
 
 @end

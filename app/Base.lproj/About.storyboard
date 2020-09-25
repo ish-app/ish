@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="16097" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="0yy-Uo-cZb">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="16097.3" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="0yy-Uo-cZb">
     <device id="retina4_0" orientation="portrait" appearance="light"/>
     <dependencies>
         <deployment identifier="iOS"/>
@@ -551,10 +551,10 @@
                                 </collectionViewFlowLayout>
                                 <cells>
                                     <collectionViewCell opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" reuseIdentifier="icon" id="S3m-Be-XtT" customClass="AltIconCell">
-                                        <rect key="frame" x="30" y="30" width="120" height="175.5"/>
+                                        <rect key="frame" x="30" y="30" width="120" height="147"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                         <collectionViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" insetsLayoutMarginsFromSafeArea="NO" id="IWa-a1-skf">
-                                            <rect key="frame" x="0.0" y="0.0" width="120" height="175.5"/>
+                                            <rect key="frame" x="0.0" y="0.0" width="120" height="147"/>
                                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                             <subviews>
                                                 <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="icon.png" translatesAutoresizingMaskIntoConstraints="NO" id="9aw-Kk-k95">
@@ -564,12 +564,6 @@
                                                         <constraint firstAttribute="height" constant="120" id="Zde-qc-BM8"/>
                                                     </constraints>
                                                 </imageView>
-                                                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Description" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontForContentSizeCategory="YES" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="L8N-WR-seO">
-                                                    <rect key="frame" x="0.0" y="128" width="120" height="20.5"/>
-                                                    <fontDescription key="fontDescription" style="UICTFontTextStyleHeadline"/>
-                                                    <nil key="textColor"/>
-                                                    <nil key="highlightedColor"/>
-                                                </label>
                                                 <imageView hidden="YES" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="Checkbox" translatesAutoresizingMaskIntoConstraints="NO" id="cAC-0O-uY6">
                                                     <rect key="frame" x="74" y="74" width="38" height="38"/>
                                                     <constraints>
@@ -578,7 +572,7 @@
                                                     </constraints>
                                                 </imageView>
                                                 <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="WNa-qg-ZN5">
-                                                    <rect key="frame" x="0.0" y="148.5" width="120" height="27"/>
+                                                    <rect key="frame" x="0.0" y="120" width="120" height="27"/>
                                                     <fontDescription key="fontDescription" style="UICTFontTextStyleCaption1"/>
                                                     <state key="normal" title="by @author"/>
                                                     <connections>
@@ -590,27 +584,23 @@
                                                 <constraint firstItem="9aw-Kk-k95" firstAttribute="bottom" secondItem="cAC-0O-uY6" secondAttribute="bottom" constant="8" id="1Nx-lw-WeM"/>
                                                 <constraint firstAttribute="trailing" secondItem="WNa-qg-ZN5" secondAttribute="trailing" id="1QP-qJ-bqg"/>
                                                 <constraint firstItem="9aw-Kk-k95" firstAttribute="top" secondItem="IWa-a1-skf" secondAttribute="top" id="79p-Wm-2JF"/>
-                                                <constraint firstItem="L8N-WR-seO" firstAttribute="leading" secondItem="IWa-a1-skf" secondAttribute="leading" id="7aw-Xv-bcY"/>
-                                                <constraint firstItem="WNa-qg-ZN5" firstAttribute="top" secondItem="L8N-WR-seO" secondAttribute="bottom" id="B7h-4W-Kad"/>
-                                                <constraint firstAttribute="trailing" secondItem="L8N-WR-seO" secondAttribute="trailing" id="Itz-cf-WxT"/>
-                                                <constraint firstItem="L8N-WR-seO" firstAttribute="top" secondItem="9aw-Kk-k95" secondAttribute="bottom" constant="8" symbolic="YES" id="P1X-sO-yLj"/>
                                                 <constraint firstItem="9aw-Kk-k95" firstAttribute="leading" secondItem="IWa-a1-skf" secondAttribute="leading" id="aFx-qK-TC2"/>
                                                 <constraint firstAttribute="bottom" secondItem="WNa-qg-ZN5" secondAttribute="bottom" id="aGh-9T-AGA"/>
                                                 <constraint firstItem="WNa-qg-ZN5" firstAttribute="leading" secondItem="IWa-a1-skf" secondAttribute="leading" id="cdk-fK-xdr"/>
                                                 <constraint firstAttribute="trailing" secondItem="9aw-Kk-k95" secondAttribute="trailing" id="jeT-pz-ZFy"/>
                                                 <constraint firstAttribute="trailing" secondItem="cAC-0O-uY6" secondAttribute="trailing" constant="8" id="l0V-Kb-Ul1"/>
+                                                <constraint firstItem="WNa-qg-ZN5" firstAttribute="top" secondItem="9aw-Kk-k95" secondAttribute="bottom" id="oF2-JH-EmI"/>
                                             </constraints>
                                         </collectionViewCellContentView>
                                         <connections>
                                             <outlet property="authorButton" destination="WNa-qg-ZN5" id="3mb-95-R06"/>
                                             <outlet property="checkboxImageView" destination="cAC-0O-uY6" id="9Jd-uf-T9P"/>
-                                            <outlet property="descriptionLabel" destination="L8N-WR-seO" id="4Ku-3c-ZsI"/>
                                             <outlet property="imageView" destination="9aw-Kk-k95" id="tW1-tN-k8G"/>
                                         </connections>
                                     </collectionViewCell>
                                 </cells>
                                 <collectionReusableView key="sectionFooterView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" insetsLayoutMarginsFromSafeArea="NO" reuseIdentifier="footer" id="lNw-1e-UqP">
-                                    <rect key="frame" x="0.0" y="235.5" width="320" height="50"/>
+                                    <rect key="frame" x="0.0" y="207" width="320" height="50"/>
                                     <autoresizingMask key="autoresizingMask"/>
                                     <subviews>
                                         <visualEffectView opaque="NO" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="L98-Nf-4Wv">
