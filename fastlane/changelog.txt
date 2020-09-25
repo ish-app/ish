@@ -1,4 +1,12 @@
 New stuff:
-- You can change the app icon! Also includes a link to submit your own app icon designs.
+- More new icons
+- Ctrl-Space can be mapped
+
+Fixed bugs:
+- Illegal instruction from node/npm
+- Illegal instruction from composer
+- Files in /proc on Ubuntu being invisible
+- ^Space in emacs behaving like ^Z
+- Terraform crashing
 
 that's about it
