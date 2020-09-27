@@ -59,30 +59,7 @@ static void ios_handle_die(const char *msg) {
 @implementation AppDelegate
 
 - (int)boot {
-    NSFileManager *manager = [NSFileManager defaultManager];
-    NSURL *container = ContainerURL();
-    NSURL *roots = [container URLByAppendingPathComponent:@"roots"];
-    NSURL *root = [roots URLByAppendingPathComponent:Roots.instance.defaultRoot];
-    
-#if 0
-    // copy the files to the app container so I can more easily get them out
-    NSURL *documents = [NSFileManager.defaultManager URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask][0];
-    [NSFileManager.defaultManager removeItemAtURL:[documents URLByAppendingPathComponent:@"roots copy"] error:nil];
-    [NSFileManager.defaultManager copyItemAtURL:[container URLByAppendingPathComponent:@"roots"]
-                                          toURL:[documents URLByAppendingPathComponent:@"roots copy"]
-                                          error:nil];
-#endif
-    
-    if (![manager fileExistsAtPath:root.path]) {
-        NSURL *alpineMaster = [NSBundle.mainBundle URLForResource:@"alpine" withExtension:nil];
-        NSError *error = nil;
-        [manager copyItemAtURL:alpineMaster toURL:root error:&error];
-        if (error != nil) {
-            NSLog(@"%@", error);
-            exit(1);
-        }
-    }
-    root = [root URLByAppendingPathComponent:@"data"];
+    NSURL *root = [[Roots.instance rootUrl:Roots.instance.defaultRoot] URLByAppendingPathComponent:@"data"];
     int err = mount_root(&fakefs, root.fileSystemRepresentation);
     if (err < 0)
         return err;

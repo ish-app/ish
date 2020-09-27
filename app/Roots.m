@@ -71,6 +71,10 @@ static NSString *kDefaultRoot = @"Default Root";
     }
 }
 
+- (NSURL *)rootUrl:(NSString *)name {
+    return [RootsDir() URLByAppendingPathComponent:name];
+}
+
 - (void)syncFileProviderDomains {
     if (self.updatingDomains) {
         self.domainsNeedUpdate = YES;
@@ -119,7 +123,7 @@ void root_progress_callback(void *cookie, double progress, const char *message, 
 - (BOOL)importRootFromArchive:(NSURL *)archive name:(NSString *)name error:(NSError **)error progressReporter:(id<ProgressReporter> _Nullable)progress {
     NSAssert(![self.roots containsObject:name], @"root already exists: %@", name);
     struct fakefsify_error fs_err;
-    NSURL *destination = [RootsDir() URLByAppendingPathComponent:name];
+    NSURL *destination = [self rootUrl:name];
     NSURL *tempDestination = [NSFileManager.defaultManager.temporaryDirectory
                               URLByAppendingPathComponent:[NSProcessInfo.processInfo globallyUniqueString]];
     if (tempDestination == nil)
@@ -156,7 +160,7 @@ void root_progress_callback(void *cookie, double progress, const char *message, 
 - (BOOL)exportRootNamed:(NSString *)name toArchive:(NSURL *)archive error:(NSError **)error progressReporter:(id<ProgressReporter> _Nullable)progress {
     NSAssert([self.roots containsObject:name], @"trying to export a root that doesn't exist: %@", name);
     struct fakefsify_error fs_err;
-    if (!fakefs_export([RootsDir() URLByAppendingPathComponent:name].fileSystemRepresentation,
+    if (!fakefs_export([self rootUrl:name].fileSystemRepresentation,
                        archive.fileSystemRepresentation,
                        &fs_err, (struct progress) {(__bridge void *) progress, root_progress_callback})) {
         // TODO: dedup with above method
@@ -175,15 +179,32 @@ void root_progress_callback(void *cookie, double progress, const char *message, 
 }
 
 - (BOOL)destroyRootNamed:(NSString *)name error:(NSError **)error {
-    if (name == self.defaultRoot) {
-        *error = [NSError errorWithDomain:@"iSH" code:0 userInfo:@{NSLocalizedDescriptionKey: @"Cannot delete the default root"}];
+    if ([name isEqualToString:self.defaultRoot]) {
+        *error = [NSError errorWithDomain:@"iSH" code:0 userInfo:@{NSLocalizedDescriptionKey: @"Cannot delete the default filesystem"}];
         return NO;
     }
     NSAssert([self.roots containsObject:name], @"root does not exist: %@", name);
-    NSURL *rootUrl = [RootsDir() URLByAppendingPathComponent:name];
-    if (![NSFileManager.defaultManager removeItemAtURL:rootUrl error:error])
+    if (![NSFileManager.defaultManager removeItemAtURL:[self rootUrl:name] error:error])
         return NO;
     [[self mutableOrderedSetValueForKey:@"roots"] removeObject:name];
+    return YES;
+}
+
+- (BOOL)renameRoot:(NSString *)name toName:(NSString *)newName error:(NSError **)error {
+    if (name.length == 0) {
+        *error = [NSError errorWithDomain:@"iSH" code:0 userInfo:@{NSLocalizedDescriptionKey: @"Filesystem name can't be empty"}];
+        return NO;
+    }
+    if ([name isEqualToString:self.defaultRoot]) {
+        *error = [NSError errorWithDomain:@"iSH" code:0 userInfo:@{NSLocalizedDescriptionKey: @"Cannot rename the default filesystem"}];
+        return NO;
+    }
+    NSAssert([self.roots containsObject:name], @"root does not exist: %@", name);
+    
+    if (![NSFileManager.defaultManager moveItemAtURL:[self rootUrl:name] toURL:[self rootUrl:newName] error:error])
+        return NO;
+    NSUInteger index = [self.roots indexOfObject:name];
+    [[self mutableOrderedSetValueForKey:@"roots"] replaceObjectAtIndex:index withObject:newName];
     return YES;
 }
 

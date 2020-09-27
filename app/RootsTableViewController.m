@@ -14,12 +14,12 @@
 @interface RootsTableViewController ()
 @end
 
-@interface RootDetailViewController : UITableViewController <UIDocumentPickerDelegate>
+@interface RootDetailViewController : UITableViewController <UIDocumentPickerDelegate, UITextFieldDelegate>
 
 @property (nonatomic) NSString *rootName;
 @property (nonatomic) NSURL *exportURL;
 
-@property (weak, nonatomic) IBOutlet UILabel *nameLabel;
+@property (weak, nonatomic) IBOutlet UITextField *nameField;
 @property (weak, nonatomic) IBOutlet UILabel *deleteLabel;
 @property (weak, nonatomic) IBOutlet UITableViewCell *deleteCell;
 
@@ -31,10 +31,8 @@
     [super awakeFromNib];
     [Roots.instance addObserver:self forKeyPath:@"roots" options:0 context:nil];
     [Roots.instance addObserver:self forKeyPath:@"defaultRoot" options:0 context:nil];
-    NSLog(@"%@ hi", self);
 }
 - (void)dealloc {
-    NSLog(@"%@ bye", self);
     [Roots.instance removeObserver:self forKeyPath:@"roots"];
     [Roots.instance removeObserver:self forKeyPath:@"defaultRoot"];
 }
@@ -111,15 +109,34 @@
 @implementation RootDetailViewController
 
 - (void)viewWillAppear:(BOOL)animated {
-    self.navigationItem.title = self.rootName;
-    self.nameLabel.text = self.rootName;
+    self.nameField.text = self.rootName;
     [self update];
 }
 
 - (void)update {
+    self.navigationItem.title = self.rootName;
+    self.nameField.enabled = !self.isDefaultRoot;
+    self.nameField.clearButtonMode = self.isDefaultRoot ? UITextFieldViewModeNever : UITextFieldViewModeUnlessEditing;
     self.deleteLabel.enabled = !self.isDefaultRoot;
     self.deleteCell.selectionStyle = !self.isDefaultRoot ? UITableViewCellSelectionStyleDefault : UITableViewCellSelectionStyleNone;
     [self.tableView reloadData];
+}
+
+- (IBAction)nameChanged:(id)sender {
+    NSString *newName = self.nameField.text;
+    NSError *err;
+    if (![Roots.instance renameRoot:self.rootName toName:newName error:&err]) {
+        self.nameField.text = self.rootName;
+        [self presentError:err title:@"Rename failed"];
+        return;
+    }
+    self.rootName = newName;
+    [self update];
+}
+
+- (BOOL)textFieldShouldReturn:(UITextField *)textField {
+    [textField resignFirstResponder];
+    return NO;
 }
 
 - (BOOL)isDefaultRoot {
