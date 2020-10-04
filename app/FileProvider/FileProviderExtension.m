@@ -16,32 +16,50 @@
 
 struct task *fake_task;
 
-@interface FileProviderExtension ()
+@interface FileProviderExtension () {
+    dispatch_once_t _mountOnce;
+};
 @property NSURL *root;
 @property (readonly) struct mount *mount;
+@property NSTimer *cleanupStorageTimer;
 @end
 
 @implementation FileProviderExtension
 @synthesize mount = _mount;
 
-- (struct mount *)mount {
-    if (_mount != NULL)
-        return _mount;
-    _mount = malloc(sizeof(struct mount));
-    if (!_mount)
-        return NULL;
-    _mount->fs = &fakefs;
-    NSURL *container = ContainerURL();
-    _root = [[[container URLByAppendingPathComponent:@"roots"]
-              URLByAppendingPathComponent:self.domain.identifier]
-             URLByAppendingPathComponent:@"data"];
-    _mount->source = strdup(self.root.fileSystemRepresentation);
-    int err = _mount->fs->mount(_mount);
-    if (err < 0) {
-        NSLog(@"error opening root: %d", err);
-        return NULL;
+- (instancetype)init {
+    if (self = [super init]) {
+        [self startCleanupTimer];
     }
+    return self;
+}
+
+- (struct mount *)mount {
+    dispatch_once(&_mountOnce, ^{
+        _mount = malloc(sizeof(struct mount));
+        if (!_mount)
+            return;
+        _mount->fs = &fakefs;
+        NSURL *container = ContainerURL();
+        _root = [[[container URLByAppendingPathComponent:@"roots"]
+                  URLByAppendingPathComponent:self.domain.identifier]
+                 URLByAppendingPathComponent:@"data"];
+        _mount->source = strdup(self.root.fileSystemRepresentation);
+        int err = _mount->fs->mount(_mount);
+        if (err < 0) {
+            NSLog(@"error opening root: %d", err);
+            _mount = NULL;
+            return;
+        }
+    });
     return _mount;
+}
+
+- (NSURL *)storageURL {
+    NSURL *storage = NSFileProviderManager.defaultManager.documentStorageURL;
+    if (self.domain != nil)
+        storage = [storage URLByAppendingPathComponent:self.domain.pathRelativeToDocumentStorage isDirectory:YES];
+    return storage;
 }
 
 - (nullable NSFileProviderItem)itemForIdentifier:(NSFileProviderItemIdentifier)identifier error:(NSError * _Nullable *)error {
@@ -57,15 +75,12 @@ struct task *fake_task;
 }
 
 - (nullable NSURL *)URLForItemWithPersistentIdentifier:(NSFileProviderItemIdentifier)identifier {
-    NSURL *storage = NSFileProviderManager.defaultManager.documentStorageURL;
-    if (self.domain != nil)
-        storage = [storage URLByAppendingPathComponent:self.domain.pathRelativeToDocumentStorage isDirectory:YES];
     if ([identifier isEqualToString:NSFileProviderRootContainerItemIdentifier])
-        return storage;
+        return self.storageURL;
     FileProviderItem *item = [self itemForIdentifier:identifier error:nil];
     if (item == nil)
         return nil;
-    NSURL *url = [storage URLByAppendingPathComponent:identifier isDirectory:YES];
+    NSURL *url = [self.storageURL URLByAppendingPathComponent:identifier isDirectory:YES];
     url = [url URLByAppendingPathComponent:item.path.lastPathComponent isDirectory:NO];
     NSLog(@"url for id %@ = %@", identifier, url);
     return url;
@@ -136,17 +151,6 @@ struct task *fake_task;
     if (item == nil)
         return;
     [item saveFromURL:url];
-}
-
-- (void)stopProvidingItemAtURL:(NSURL *)url {
-    FileProviderItem *item = [self itemForIdentifier:[self persistentIdentifierForItemAtURL:url] error:nil];
-    if (item == nil)
-        return;
-    [item saveFromURL:url];
-    [[NSFileManager defaultManager] removeItemAtURL:url error:nil];
-    [NSFileProviderManager writePlaceholderAtURL:[NSFileProviderManager placeholderURLForURL:url]
-                                    withMetadata:item
-                                           error:nil];
 }
 
 #pragma mark - Action helpers
@@ -365,6 +369,52 @@ struct task *fake_task;
 - (void)dealloc {
     self.mount->fs->umount(self.mount);
     free(self.mount);
+}
+
+#pragma mark - Storage deletion
+
+// According to an engineer I talked to at WWDC, -stopProvidingItemAtURL: is never ever called, so that can't be used to free up disk space.
+// Solution for now is to periodically look for and delete files in file provider storage where the original is missing.
+// TODO: Delete files in file provider storage when the original file is deleted
+// TODO: Create hardlinks into file provider storage instead of copies
+//
+
+- (void)startCleanupTimer {
+    [NSRunLoop.mainRunLoop performBlock:^{
+        [self cleanupStorage];
+        self.cleanupStorageTimer = [NSTimer scheduledTimerWithTimeInterval:60 target:self selector:@selector(cleanupStorage) userInfo:nil repeats:YES];
+    }];
+}
+
+- (void)cleanupStorage {
+    NSFileManager *manager = NSFileManager.defaultManager;
+    NSArray<NSURL *> *storageDirs = [manager contentsOfDirectoryAtURL:self.storageURL includingPropertiesForKeys:nil options:0 error:nil];
+    for (NSURL *dir in storageDirs) {
+        ino_t inode = dir.lastPathComponent.longLongValue;
+        if (inode == 0)
+            continue;
+        struct fd *fd = fakefs_open_inode(self.mount, inode);
+        if (IS_ERR(fd)) {
+            NSLog(@"removing dead inode %llu", inode);
+            NSError *err;
+            if (![manager removeItemAtURL:dir error:&err])
+                NSLog(@"failed to remove dead inode: %@", err);
+        } else {
+            fd_close(fd);
+        }
+    }
+}
+
+// Dead code, leaving it here just in case
+- (void)stopProvidingItemAtURL:(NSURL *)url {
+    FileProviderItem *item = [self itemForIdentifier:[self persistentIdentifierForItemAtURL:url] error:nil];
+    if (item == nil)
+        return;
+    [item saveFromURL:url];
+    [[NSFileManager defaultManager] removeItemAtURL:url error:nil];
+    [NSFileProviderManager writePlaceholderAtURL:[NSFileProviderManager placeholderURLForURL:url]
+                                    withMetadata:item
+                                           error:nil];
 }
 
 @end

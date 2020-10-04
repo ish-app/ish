@@ -94,6 +94,10 @@ static NSString *kDefaultRoot = @"Default Root";
             if ([missingRoots containsObject:domain.identifier]) {
                 [missingRoots removeObject:domain.identifier];
             } else {
+                [NSFileManager.defaultManager removeItemAtURL:
+                 [NSFileProviderManager.defaultManager.documentStorageURL
+                  URLByAppendingPathComponent:domain.pathRelativeToDocumentStorage]
+                                                        error:nil];
                 [NSFileProviderManager removeDomain:domain completionHandler:onError];
             }
         }
