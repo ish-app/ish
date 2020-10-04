@@ -319,6 +319,12 @@ static int kObserverStyling;
     return nil;
 }
 
+- (id)insertDictationResultPlaceholder {
+    return @"";
+}
+- (void)removeDictationResultPlaceholder:(id)placeholder willInsertResult:(BOOL)willInsertResult {
+}
+
 #pragma mark Keyboard Actions
 
 - (void)paste:(id)sender {
