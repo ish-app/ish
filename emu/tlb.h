@@ -22,7 +22,7 @@ struct tlb {
 #define TLB_INDEX(addr) (((addr >> PAGE_BITS) & (TLB_SIZE - 1)) ^ (addr >> (PAGE_BITS + TLB_BITS)))
 #define TLB_PAGE(addr) (addr & 0xfffff000)
 #define TLB_PAGE_EMPTY 1
-void tlb_init(struct tlb *tlb, struct mem *mem);
+void tlb_refresh(struct tlb *tlb, struct mem *mem);
 void tlb_free(struct tlb *tlb);
 void tlb_flush(struct tlb *tlb);
 void *tlb_handle_miss(struct tlb *tlb, addr_t addr, int type);

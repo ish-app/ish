@@ -95,7 +95,7 @@ void task_destroy(struct task *task) {
 void task_run_current() {
     struct cpu_state *cpu = &current->cpu;
     struct tlb tlb;
-    tlb_init(&tlb, current->mem);
+    tlb_refresh(&tlb, current->mem);
     while (true) {
         int interrupt = cpu_run_to_interrupt(cpu, &tlb);
         handle_interrupt(interrupt);

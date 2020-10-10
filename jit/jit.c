@@ -240,8 +240,8 @@ static int cpu_single_step(struct cpu_state *cpu, struct tlb *tlb) {
 
 int cpu_run_to_interrupt(struct cpu_state *cpu, struct tlb *tlb) {
     read_wrlock(&cpu->mem->lock);
-    if (cpu->mem->changes != tlb->mem_changes)
-        tlb_init(tlb, cpu->mem);
+    printk("%d cpu run with mem %p %d, tlb->mem %p %d\n", current->pid, cpu->mem, cpu->mem->changes, tlb->mem, tlb->mem_changes);
+    tlb_refresh(tlb, cpu->mem);
     int interrupt = (cpu->tf ? cpu_single_step : cpu_step_to_interrupt)(cpu, tlb);
     cpu->trapno = interrupt;
     read_wrunlock(&cpu->mem->lock);

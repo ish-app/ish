@@ -1,7 +1,9 @@
 #include "emu/cpu.h"
 #include "emu/tlb.h"
 
-void tlb_init(struct tlb *tlb, struct mem *mem) {
+void tlb_refresh(struct tlb *tlb, struct mem *mem) {
+    if (tlb->mem == mem && tlb->mem_changes == mem->changes)
+        return;
     tlb->mem = mem;
     tlb->dirty_page = TLB_PAGE_EMPTY;
     tlb->mem_changes = mem->changes;
