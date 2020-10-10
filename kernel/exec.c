@@ -197,10 +197,8 @@ static int elf_exec(struct fd *fd, const char *file, struct exec_args argv, stru
     // from this point on, if any error occurs the process will have to be
     // killed before it even starts. please don't be too sad about it, it's
     // just a process.
-    struct mm *old_mm = current->mm;
     mm_release(current->mm);
     task_set_mm(current, mm_new());
-    printk("%d replacing %p with %p\n", current->pid, &old_mm->mem, &current->mm->mem);
     write_wrlock(&current->mem->lock);
 
     current->mm->exefile = fd_retain(fd);
