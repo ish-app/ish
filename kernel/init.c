@@ -77,7 +77,7 @@ static struct task *construct_task(struct task *parent) {
     current = task;
     task->fs->root = generic_open("/", O_RDONLY_, 0);
     if (IS_ERR(task->fs->root))
-        return PTR_ERR(ERR_PTR(task->fs->root));
+        return ERR_PTR(task->fs->root);
     task->fs->pwd = fd_retain(task->fs->root);
     current = old_current;
 
