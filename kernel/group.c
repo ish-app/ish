@@ -59,12 +59,15 @@ dword_t sys_setpgrp() {
 
 pid_t_ sys_getpgid(pid_t_ pid) {
     STRACE("getpgid(%d)", pid);
-    if (pid != 0 && pid != current->pid)
-        return _EPERM;
     lock(&pids_lock);
-    pid_t_ pgid = current->group->pgid;
+    struct task *task;
+    if (!(task = !pid ? current : pid_get_task(pid))) {
+        unlock(&pids_lock);
+        return _ESRCH;
+    }
+    pid = task->group->pgid;
     unlock(&pids_lock);
-    return pgid;
+    return pid;
 }
 pid_t_ sys_getpgrp() {
     return sys_getpgid(0);
