@@ -1,8 +1,10 @@
 #include <pthread.h>
 #include <signal.h>
+#include <string.h>
 #include "kernel/calls.h"
 #include "kernel/mm.h"
 #include "kernel/futex.h"
+#include "kernel/ptrace.h"
 #include "fs/fd.h"
 #include "fs/tty.h"
 
@@ -178,6 +180,7 @@ dword_t sys_exit_group(dword_t status) {
 #define WEXITED_ (1 << 2)
 #define WCONTINUED_ (1 << 3)
 #define WNOWAIT_ (1 << 24)
+#define __WALL_ (1 << 30)
 
 #define P_ALL_ 0
 #define P_PID_ 1
@@ -233,17 +236,29 @@ static bool notify_if_stopped(struct task *task, struct siginfo_ *info_out) {
 
 static bool reap_if_needed(struct task *task, struct siginfo_ *info_out, struct rusage_ *rusage_out, int options) {
     assert(task_is_leader(task));
-    if (options & WUNTRACED_ && notify_if_stopped(task, info_out))
+    if ((options & WUNTRACED_ && notify_if_stopped(task, info_out)) ||
+        (options & WEXITED_ && reap_if_zombie(task, info_out, rusage_out, options))) {
+        info_out->sig = SIGCHLD_;
         return true;
-    if (options & WEXITED_ && reap_if_zombie(task, info_out, rusage_out, options))
+    }
+    lock(&task->ptrace.lock);
+    if (task->ptrace.stopped && task->ptrace.signal) {
+        // I had this code here because it made something work, but it's now
+        // making GDB think we support events (we don't). I can't remember what
+        // it fixed but until then commenting it out for now.
+        info_out->child.status = /* task->ptrace.trap_event << 16 |*/ task->ptrace.signal << 8 | 0x7f;
+        task->ptrace.signal = 0;
+        unlock(&task->ptrace.lock);
         return true;
+    }
+    unlock(&task->ptrace.lock);
     return false;
 }
 
 int do_wait(int idtype, pid_t_ id, struct siginfo_ *info, struct rusage_ *rusage, int options) {
     if (idtype != P_ALL_ && idtype != P_PID_ && idtype != P_PGID_)
         return _EINVAL;
-    if (options & ~(WNOHANG_|WUNTRACED_|WEXITED_|WCONTINUED_|WNOWAIT_))
+    if (options & ~(WNOHANG_|WUNTRACED_|WEXITED_|WCONTINUED_|WNOWAIT_|__WALL_))
         return _EINVAL;
 
     lock(&pids_lock);
@@ -265,7 +280,7 @@ retry:
                 no_children = false;
                 info->child.pid = task->pid;
                 if (reap_if_needed(task, info, rusage, options))
-                    goto found_zombie;
+                    goto found_something;
             }
         }
         err = _ECHILD;
@@ -280,14 +295,16 @@ retry:
         task = task->group->leader;
         info->child.pid = id;
         if (reap_if_needed(task, info, rusage, options))
-            goto found_zombie;
+            goto found_something;
     }
 
     // WNOHANG leaves the info in an implementation-defined state. set the pid
     // to 0 so wait4 can pass that along correctly.
     info->child.pid = 0;
-    if (options & WNOHANG_)
-        goto found_zombie;
+    if (options & WNOHANG_) {
+        info->sig = SIGCHLD_;
+        goto found_something;
+    }
 
     err = _EINTR;
     if (got_signal)
@@ -302,8 +319,8 @@ retry:
     }
     goto retry;
 
-found_zombie:
     info->sig = SIGCHLD_;
+found_something:
     unlock(&pids_lock);
     return 0;
 

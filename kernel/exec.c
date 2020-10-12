@@ -1,3 +1,5 @@
+#include "kernel/signal.h"
+#include "task.h"
 #define _GNU_SOURCE
 #include <unistd.h>
 #include <fcntl.h>
@@ -373,9 +375,11 @@ static int elf_exec(struct fd *fd, const char *file, struct exec_args argv, stru
     p += sizeof(dword_t); // null terminator
 
     // copy auxv
+    current->mm->auxv_start = p;
     if (user_put(p, aux))
         goto beyond_hope;
     p += sizeof(aux);
+    current->mm->auxv_end = p;
 
     current->mm->stack_start = sp;
     current->cpu.esp = sp;
@@ -594,11 +598,7 @@ int __do_execve(const char *file, struct exec_args argv, struct exec_args envp) 
     strncpy(current->comm, basename, sizeof(current->comm));
     unlock(&current->general_lock);
 
-    // set the thread name
-    char threadname[16];
-    strncpy(threadname, current->comm, sizeof(threadname)-1);
-    threadname[15] = '\0';
-    set_thread_name(threadname);
+    update_thread_name();
 
     // cloexec
     // consider putting this in fd.c?
@@ -616,6 +616,17 @@ int __do_execve(const char *file, struct exec_args argv, struct exec_args envp) 
 
     current->did_exec = true;
     vfork_notify(current);
+
+    if (current->ptrace.traced) {
+        lock(&pids_lock);
+        send_signal(current, SIGTRAP_, (struct siginfo_) {
+            .code = SI_USER_,
+            .kill.pid = current->pid,
+            .kill.uid = current->uid,
+        });
+        unlock(&pids_lock);
+    }
+
     return 0;
 }
 

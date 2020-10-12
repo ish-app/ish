@@ -4,6 +4,7 @@
 #include "kernel/calls.h"
 #include "fs/tty.h"
 #include "kernel/mm.h"
+#include "kernel/ptrace.h"
 
 #define CSIGNAL_ 0x000000ff
 #define CLONE_VM_ 0x00000100
@@ -172,6 +173,12 @@ dword_t sys_clone(dword_t flags, addr_t stack, addr_t ptid, addr_t tls, addr_t c
 
     // task might be destroyed by the time we finish, so save the pid
     pid_t pid = task->pid;
+
+    if (current->ptrace.traced) {
+        current->ptrace.trap_event = PTRACE_EVENT_FORK_;
+        send_signal(current, SIGTRAP_, SIGINFO_NIL);
+    }
+
     task_start(task);
 
     if (flags & CLONE_VFORK_) {
@@ -185,6 +192,7 @@ dword_t sys_clone(dword_t flags, addr_t stack, addr_t ptid, addr_t tls, addr_t c
         unlock(&task->general_lock);
         cond_destroy(&vfork.cond);
     }
+
     return pid;
 }
 

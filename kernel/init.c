@@ -7,6 +7,7 @@
 #include "fs/tty.h"
 #include "kernel/calls.h"
 #include "kernel/init.h"
+#include "kernel/personality.h"
 
 int mount_root(const struct fs_ops *fs, const char *source) {
     char source_realpath[MAX_PATH + 1];
@@ -61,6 +62,7 @@ static struct task *construct_task(struct task *parent) {
     cond_init(&group->stopped_cond);
     memcpy(group->limits, init_rlimits, sizeof(init_rlimits));
     group->leader = task;
+    group->personality = ADDR_NO_RANDOMIZE_;
     list_add(&group->threads, &task->group_links);
     task->group = group;
     task->tgid = task->pid;
@@ -77,7 +79,7 @@ static struct task *construct_task(struct task *parent) {
     current = task;
     task->fs->root = generic_open("/", O_RDONLY_, 0);
     if (IS_ERR(task->fs->root))
-        return PTR_ERR(ERR_PTR(task->fs->root));
+        return ERR_PTR(task->fs->root);
     task->fs->pwd = fd_retain(task->fs->root);
     current = old_current;
 

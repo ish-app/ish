@@ -256,10 +256,14 @@ void *mem_ptr(struct mem *mem, addr_t addr, int type) {
         entry = mem_pt(mem, page);
     }
 
-    if (entry != NULL && type == MEM_WRITE) {
+    if (entry != NULL && (type == MEM_WRITE || type == MEM_WRITE_PTRACE)) {
         // if page is unwritable, well tough luck
-        if (!(entry->flags & P_WRITE))
+        if (type != MEM_WRITE_PTRACE && !(entry->flags & P_WRITE))
             return NULL;
+        if (type == MEM_WRITE_PTRACE) {
+            // TODO: Is P_WRITE really correct? The page shouldn't be writable without ptrace.
+            entry->flags |= P_WRITE | P_COW;
+        }
         // if page is cow, ~~milk~~ copy it
         if (entry->flags & P_COW) {
             void *data = (char *) entry->data->data + entry->offset;

@@ -83,6 +83,9 @@ struct task *task_create_(struct task *parent) {
     task->waiting_lock = NULL;
     lock_init(&task->waiting_cond_lock);
     cond_init(&task->pause);
+
+    lock_init(&task->ptrace.lock);
+    cond_init(&task->ptrace.cond);
     return task;
 }
 
@@ -104,7 +107,7 @@ void task_run_current() {
 
 static void *task_thread(void *task) {
     current = task;
-    set_thread_name(current->comm);
+    update_thread_name();
     task_run_current();
     die("task_thread returned"); // above function call should never return
 }
@@ -124,4 +127,17 @@ int_t sys_sched_yield() {
     STRACE("sched_yield()");
     sched_yield();
     return 0;
+}
+
+void update_thread_name() {
+    char name[16]; // As long as Linux will let us make this
+    snprintf(name, sizeof(name), "-%d", current->pid);
+    size_t pid_width = strlen(name);
+    size_t name_width = snprintf(name, sizeof(name), "%s", current->comm);
+    sprintf(name + (name_width < sizeof(name) - 1 - pid_width ? name_width : sizeof(name) - 1 - pid_width), "-%d", current->pid);
+#if __APPLE__
+    pthread_setname_np(name);
+#else
+    pthread_setname_np(pthread_self(), name);
+#endif
 }

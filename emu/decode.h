@@ -696,6 +696,8 @@ restart:
         case 0xc9: TRACEI("leave");
                    MOV(reg_bp, reg_sp,oz); POP(reg_bp,oz); break;
 
+        case 0xcc: TRACEI("int3");
+                   INT(INT_BREAKPOINT); break;
         case 0xcd: TRACEI("int imm8\t");
                    READIMM8; INT(imm); break;
 

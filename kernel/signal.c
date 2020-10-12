@@ -218,7 +218,6 @@ static void setup_rt_sigframe(struct siginfo_ *info, struct rt_sigframe_ *frame)
 static void receive_signal(struct sighand *sighand, struct siginfo_ *info) {
     int sig = info->sig;
     STRACE("%d receiving signal %d\n", current->pid, sig);
-    sigset_del(&current->pending, sig);
 
     switch (signal_action(sighand, sig)) {
         case SIGNAL_IGNORE:
@@ -298,6 +297,33 @@ static void receive_signal(struct sighand *sighand, struct siginfo_ *info) {
         *action = (struct sigaction_) {.handler = SIG_DFL_};
 }
 
+void signal_delivery_stop(int sig, struct siginfo_ *info) {
+    lock(&current->ptrace.lock);
+    current->ptrace.stopped = true;
+    current->ptrace.signal = sig;
+    current->ptrace.info = *info;
+    unlock(&current->ptrace.lock);
+    notify(&current->parent->group->child_exit);
+    // TODO add siginfo
+    send_signal(current->parent, current->group->leader->exit_signal, SIGINFO_NIL);
+
+    unlock(&current->sighand->lock);
+    lock(&current->ptrace.lock);
+    while (current->ptrace.stopped) {
+        wait_for_ignore_signals(&current->ptrace.cond, &current->ptrace.lock, NULL);
+        lock(&current->sighand->lock);
+        bool got_sigkill = sigset_has(current->pending, SIGKILL_);
+        unlock(&current->sighand->lock);
+        if (got_sigkill) {
+            STRACE("%d received a SIGKILL in signal delivery stop\n", current->pid);
+            unlock(&current->ptrace.lock);
+            do_exit_group(SIGKILL_);
+        }
+    }
+    unlock(&current->ptrace.lock);
+    lock(&current->sighand->lock);
+}
+
 void receive_signals() {
     lock(&current->group->lock);
     bool was_stopped = current->group->stopped;
@@ -319,10 +345,21 @@ void receive_signals() {
 
     struct sigqueue *sigqueue, *tmp;
     list_for_each_entry_safe(&current->queue, sigqueue, tmp, queue) {
-        if (sigset_has(blocked, sigqueue->info.sig))
+        int sig = sigqueue->info.sig;
+        if (sigset_has(blocked, sig))
             continue;
         list_remove(&sigqueue->queue);
-        receive_signal(sighand, &sigqueue->info);
+        sigset_del(&current->pending, sig);
+
+        if (current->ptrace.traced && sig != SIGKILL_) {
+            // This notifies the parent, goes to sleep, and waits for the
+            // parent to tell it to continue.
+            // Any signals received while waiting are left on the queue, except
+            // for SIGKILL_, which causes an immediate exit.
+            signal_delivery_stop(sig, &sigqueue->info);
+        } else {
+            receive_signal(sighand, &sigqueue->info);
+        }
         free(sigqueue);
     }
 

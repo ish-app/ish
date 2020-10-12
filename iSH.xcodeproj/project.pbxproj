@@ -157,6 +157,9 @@
 /* Begin PBXFileReference section */
 		408A2639236440F8008A4E81 /* iOSFS.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iOSFS.m; sourceTree = "<group>"; };
 		408A263B23644102008A4E81 /* iOSFS.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iOSFS.h; sourceTree = "<group>"; };
+		49146E272490649A00514457 /* personality.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = personality.h; sourceTree = "<group>"; };
+		49E2B95224775D3700892BFF /* ptrace.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ptrace.h; sourceTree = "<group>"; };
+		49E2B95324775D3700892BFF /* ptrace.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ptrace.c; sourceTree = "<group>"; };
 		650B335A22E9E46A00B4C03E /* mem.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = mem.c; sourceTree = "<group>"; tabWidth = 4; };
 		650B335B22E9E46A00B4C03E /* mem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mem.h; sourceTree = "<group>"; tabWidth = 4; };
 		650B335D22E9EF9B00B4C03E /* proc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = proc.c; sourceTree = "<group>"; };
@@ -633,9 +636,9 @@
 				BB7D93422087C2880008DA78 /* exec.c */,
 				BB7D93432087C2880008DA78 /* exit.c */,
 				BB7D93442087C2880008DA78 /* fork.c */,
+				BB7D93472087C2880008DA78 /* fs_info.c */,
 				BB7D93452087C2880008DA78 /* fs.c */,
 				BB7D93462087C2880008DA78 /* fs.h */,
-				BB7D93472087C2880008DA78 /* fs_info.c */,
 				BB7D93482087C2880008DA78 /* futex.c */,
 				BB101B5C2364EB88000A93BC /* futex.h */,
 				BB7D93492087C2880008DA78 /* getset.c */,
@@ -646,7 +649,10 @@
 				BB101B632364EB89000A93BC /* misc.c */,
 				BB101B602364EB88000A93BC /* mm.h */,
 				BB7D934D2087C2880008DA78 /* mmap.c */,
+				49146E272490649A00514457 /* personality.h */,
 				BB7D934E2087C2880008DA78 /* poll.c */,
+				49E2B95324775D3700892BFF /* ptrace.c */,
+				49E2B95224775D3700892BFF /* ptrace.h */,
 				BB101B5E2364EB88000A93BC /* random.c */,
 				BB101B612364EB88000A93BC /* random.h */,
 				BB7D934F2087C2880008DA78 /* resource.c */,

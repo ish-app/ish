@@ -18,6 +18,8 @@ struct mm {
     addr_t argv_end;
     addr_t env_start;
     addr_t env_end;
+    addr_t auxv_start;
+    addr_t auxv_end;
     addr_t stack_start;
     struct fd *exefile;
 };
