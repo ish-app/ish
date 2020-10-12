@@ -60,8 +60,10 @@ dword_t sys_setpgrp() {
 pid_t_ sys_getpgid(pid_t_ pid) {
     STRACE("getpgid(%d)", pid);
     lock(&pids_lock);
-    struct task *task;
-    if (!(task = !pid ? current : pid_get_task(pid))) {
+    struct task *task = current;
+    if (pid != 0)
+        task = pid_get_task(pid);
+    if (!task) {
         unlock(&pids_lock);
         return _ESRCH;
     }
