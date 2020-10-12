@@ -1,12 +1,7 @@
 New stuff:
-- More new icons
-- Ctrl-Space can be mapped
+- Filesystems can be renamed
+- GDB works a little bit
 
 Fixed bugs:
-- Illegal instruction from node/npm
-- Illegal instruction from composer
-- Files in /proc on Ubuntu being invisible
-- ^Space in emacs behaving like ^Z
-- Terraform crashing
-
-that's about it
+- Dictation doesn't insert 10 useless spaces
+- Files that are copied out in the Files app and then deleted no longer take up space
