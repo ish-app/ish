@@ -8,7 +8,7 @@
 #import <FileProvider/FileProvider.h>
 #import "Roots.h"
 #import "AppGroup.h"
-#include "fs/fakefsify.h"
+#include "tools/fakefs.h"
 
 static NSURL *RootsDir() {
     static NSURL *rootsDir;

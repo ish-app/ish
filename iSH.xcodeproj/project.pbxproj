@@ -32,7 +32,7 @@
 		BB0F553623A0ACFC0032A2A1 /* pydann2.png in Resources */ = {isa = PBXBuildFile; fileRef = BB0F553523A0ACFC0032A2A1 /* pydann2.png */; };
 		BB0FC5921F980A6C00803272 /* Terminal.m in Sources */ = {isa = PBXBuildFile; fileRef = BB0FC5911F980A6B00803272 /* Terminal.m */; };
 		BB101B382364CF57000A93BC /* FontPickerViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = BB101B372364CF57000A93BC /* FontPickerViewController.m */; };
-		BB10E5C3248DBA7B009C7A74 /* fakefsify.c in Sources */ = {isa = PBXBuildFile; fileRef = BB10E5C2248DBA7B009C7A74 /* fakefsify.c */; };
+		BB10E5C3248DBA7B009C7A74 /* fakefs.c in Sources */ = {isa = PBXBuildFile; fileRef = BB10E5C2248DBA7B009C7A74 /* fakefs.c */; };
 		BB10E5C9248DBAAC009C7A74 /* libarchive.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BB10E5C8248DBAA1009C7A74 /* libarchive.a */; };
 		BB10E5CE248DBE66009C7A74 /* Roots.m in Sources */ = {isa = PBXBuildFile; fileRef = BB10E5CD248DBE66009C7A74 /* Roots.m */; };
 		BB10E5D0248DC21D009C7A74 /* Roots.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = BB10E5CF248DC21D009C7A74 /* Roots.storyboard */; };
@@ -210,7 +210,7 @@
 		BB101B6C2364EC2F000A93BC /* sync.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = sync.c; sourceTree = "<group>"; };
 		BB101B6D2364EC2F000A93BC /* fifo.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = fifo.c; sourceTree = "<group>"; };
 		BB10E0C1248DA5B0009C7A74 /* libarchive.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = libarchive.xcodeproj; path = ../deps/libarchive.xcodeproj; sourceTree = "<group>"; };
-		BB10E5C2248DBA7B009C7A74 /* fakefsify.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = fakefsify.c; path = fs/fakefsify.c; sourceTree = SOURCE_ROOT; };
+		BB10E5C2248DBA7B009C7A74 /* fakefs.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = fakefs.c; path = tools/fakefs.c; sourceTree = SOURCE_ROOT; };
 		BB10E5CC248DBE66009C7A74 /* Roots.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Roots.h; sourceTree = "<group>"; };
 		BB10E5CD248DBE66009C7A74 /* Roots.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Roots.m; sourceTree = "<group>"; };
 		BB10E5CF248DC21D009C7A74 /* Roots.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = Roots.storyboard; sourceTree = "<group>"; };
@@ -446,7 +446,7 @@
 				BB10E5D2248DCFEA009C7A74 /* RootsTableViewController.m */,
 				BBAEE33A249BDADC0069EBB5 /* ProgressReportViewController.h */,
 				BBAEE33B249BDADC0069EBB5 /* ProgressReportViewController.m */,
-				BB10E5C2248DBA7B009C7A74 /* fakefsify.c */,
+				BB10E5C2248DBA7B009C7A74 /* fakefs.c */,
 				BB10E0C1248DA5B0009C7A74 /* libarchive.xcodeproj */,
 			);
 			name = Roots;
@@ -1179,7 +1179,7 @@
 				BB10E5CE248DBE66009C7A74 /* Roots.m in Sources */,
 				BBCC9D962365430800424C83 /* SceneDelegate.m in Sources */,
 				BB82A7FD21B4C2E8006AA5FD /* AboutExternalKeyboardViewController.m in Sources */,
-				BB10E5C3248DBA7B009C7A74 /* fakefsify.c in Sources */,
+				BB10E5C3248DBA7B009C7A74 /* fakefs.c in Sources */,
 				8632A7BF219A59FB00F02325 /* UserPreferences.m in Sources */,
 				BB10E5D3248DCFEA009C7A74 /* RootsTableViewController.m in Sources */,
 				BB792B631F96D90D00FFB7A4 /* main.m in Sources */,
