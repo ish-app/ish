@@ -6,8 +6,9 @@ jobs:
       dist: bionic
       addons:
         apt:
-            packages:
-                - ninja-build
+          packages:
+            - ninja-build
+            - libarchive-dev
       install:
         - source ~/virtualenv/python3.6/bin/activate
         - pip install meson
@@ -20,6 +21,7 @@ jobs:
       compiler: gcc
     - <<: *linux
       compiler: clang
+
     - language: objective-c
       os: osx
       osx_image: xcode11.5
@@ -30,6 +32,7 @@ jobs:
           packages:
             - ninja
             - llvm
+            - libarchive
           update: true
       script:
         - xcodebuild -project iSH.xcodeproj -scheme iSH -sdk iphoneos CODE_SIGNING_ALLOWED=NO

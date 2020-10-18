@@ -10,8 +10,8 @@
 
 #define ISH_INTERNAL
 #include "fs/fake.h"
-#include "fs/fakefsify.h"
 #include "fs/sqlutil.h"
+#include "tools/fakefs.h"
 #include "misc.h"
 
 // I have a weird way of error handling

@@ -68,7 +68,7 @@ if [ ! -d "$FS" ]; then
             echo "###### Downloading Alpine"
             wget "$ALPINE_IMAGE" -O e2e_out/alpine.tar.gz
             echo "###### Unpacking Alpine"
-            ./tools/fakefsify.py e2e_out/alpine.tar.gz "$FS"
+            ./build/tools/fakefsify e2e_out/alpine.tar.gz "$FS"
             echo "###### Configuring iSH and installing base libraries"
             grep -E "^nameserver" /etc/resolv.conf | head -1 | $ISH /bin/sed -n "w /etc/resolv.conf"
             $ISH /bin/sh -c "apk update && apk add build-base python2 python3"

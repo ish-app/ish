@@ -33,6 +33,9 @@ includes = [include_directories('.')]
 threads = dependency('threads')
 librt = cc.find_library('rt', required: false)
 libm = cc.find_library('m', required: false)
+sqlite3 = cc.find_library('sqlite3')
+
+dependencies = [librt, libm, threads, sqlite3]
 
 subdir('vdso') # ish depends on the vdso
 
@@ -138,10 +141,6 @@ else
         'emu/interp.c',
     ]
 endif
-
-sqlite3 = cc.find_library('sqlite3')
-
-dependencies = [librt, libm, threads, sqlite3]
 
 libish = library('ish', src,
     include_directories: includes)
