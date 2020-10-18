@@ -54,9 +54,13 @@ struct task {
 
         bool traced;
         bool stopped;
+        bool sysgood;
+        bool stop_at_syscall;
+        bool syscall_stopped;
         int signal;
         struct siginfo_ info;
         int trap_event;
+        int syscall;
     } ptrace;
 
     // locked by pids_lock
