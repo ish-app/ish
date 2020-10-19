@@ -3,7 +3,7 @@ xcuserdata/
 .floo
 
 cross-*.txt
-alpine.tar.gz
+root.tar.gz
 
 node_modules
 app/xtermjs/xterm-dist

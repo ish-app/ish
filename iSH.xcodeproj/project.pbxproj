@@ -79,7 +79,7 @@
 		BBC8298124EDACBB009D042C /* iinhash.png in Resources */ = {isa = PBXBuildFile; fileRef = BBC8298024EDACBB009D042C /* iinhash.png */; };
 		BBC8298724EE5853009D042C /* metal.png in Resources */ = {isa = PBXBuildFile; fileRef = BBC8298624EE5853009D042C /* metal.png */; };
 		BBCC9D962365430800424C83 /* SceneDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = BBCC9D952365430800424C83 /* SceneDelegate.m */; };
-		BBCE66E2249A807700F45269 /* alpine.tar.gz in Resources */ = {isa = PBXBuildFile; fileRef = BBF124901FA7C3100088FB50 /* alpine.tar.gz */; };
+		BBCE66E2249A807700F45269 /* root.tar.gz in Resources */ = {isa = PBXBuildFile; fileRef = BBF124901FA7C3100088FB50 /* root.tar.gz */; };
 		BBFB55662158644C00DFE6DE /* libresolv.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = BBFB55652158644C00DFE6DE /* libresolv.tbd */; };
 		BBFB557121586C4800DFE6DE /* UIViewController+Extras.m in Sources */ = {isa = PBXBuildFile; fileRef = BBFB557021586C4800DFE6DE /* UIViewController+Extras.m */; };
 		BBFB557621586F9200DFE6DE /* DismissSegue.m in Sources */ = {isa = PBXBuildFile; fileRef = BBFB557521586F9200DFE6DE /* DismissSegue.m */; };
@@ -386,7 +386,7 @@
 		BBC8298624EE5853009D042C /* metal.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = metal.png; sourceTree = "<group>"; };
 		BBCC9D942365430800424C83 /* SceneDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SceneDelegate.h; sourceTree = "<group>"; };
 		BBCC9D952365430800424C83 /* SceneDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SceneDelegate.m; sourceTree = "<group>"; };
-		BBF124901FA7C3100088FB50 /* alpine.tar.gz */ = {isa = PBXFileReference; explicitFileType = folder; includeInIndex = 0; path = alpine.tar.gz; sourceTree = "<group>"; };
+		BBF124901FA7C3100088FB50 /* root.tar.gz */ = {isa = PBXFileReference; explicitFileType = folder; includeInIndex = 0; path = root.tar.gz; sourceTree = "<group>"; };
 		BBFB55652158644C00DFE6DE /* libresolv.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libresolv.tbd; path = usr/lib/libresolv.tbd; sourceTree = SDKROOT; };
 		BBFB556F21586C4800DFE6DE /* UIViewController+Extras.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "UIViewController+Extras.h"; sourceTree = "<group>"; };
 		BBFB557021586C4800DFE6DE /* UIViewController+Extras.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "UIViewController+Extras.m"; sourceTree = "<group>"; };
@@ -555,7 +555,7 @@
 			isa = PBXGroup;
 			children = (
 				BB792B501F96D90D00FFB7A4 /* iSH.app */,
-				BBF124901FA7C3100088FB50 /* alpine.tar.gz */,
+				BBF124901FA7C3100088FB50 /* root.tar.gz */,
 				BB13F7DC200AD81D003D1C4D /* libish.a */,
 				BB88F4902154760800A341FD /* iSHFileProvider.appex */,
 			);
@@ -925,7 +925,7 @@
 			buildPhases = (
 				BB792B4C1F96D90D00FFB7A4 /* Sources */,
 				BB792B4D1F96D90D00FFB7A4 /* Frameworks */,
-				BBF1248B1FA7BF530088FB50 /* Download Alpine */,
+				BBF1248B1FA7BF530088FB50 /* Download Root */,
 				BB4A53AC1FAA49CA00A72ACE /* Compile JavaScript */,
 				BB792B4E1F96D90D00FFB7A4 /* Resources */,
 				BB88F4A32154760800A341FD /* Embed App Extensions */,
@@ -1071,7 +1071,7 @@
 				BB0F553423A0AC760032A2A1 /* ihash1.png in Resources */,
 				BB2B4DAF231D998300CB578B /* term.html in Resources */,
 				BB10E5D0248DC21D009C7A74 /* Roots.storyboard in Resources */,
-				BBCE66E2249A807700F45269 /* alpine.tar.gz in Resources */,
+				BBCE66E2249A807700F45269 /* root.tar.gz in Resources */,
 				BBC8297E24EDAC11009D042C /* idollarhash.png in Resources */,
 				BB2B4DAC231D94C300CB578B /* hterm_all.js in Resources */,
 				BB4A922E24EDA461002F5A96 /* icon1337.png in Resources */,
@@ -1141,20 +1141,20 @@
 			shellPath = /bin/sh;
 			shellScript = "python3 - \"${SRCROOT}/app/Icons/Icons.plist\" \"${BUILT_PRODUCTS_DIR}/infoplisticons.h\" <<END\nimport plistlib\nimport sys\nprint(sys.argv)\nwith open(sys.argv[1], 'rb') as plist:\n    icons = plistlib.load(plist)\nalt_icons = '<key>CFBundleAlternateIcons</key><dict>'\nfor icon in icons.keys():\n    if icon == '': continue\n    alt_icons += '''<key>{0}</key>\n<dict>\n<key>CFBundleIconFiles</key>\n<array><string>{0}</string></array>\n</dict>'''.format(icon)\nalt_icons += '</dict>'\nicon_stuff = '''</string>\n<key>CFBundleIcons</key><dict>{0}</dict>\n<key>CFBundleIcons~ipad</key><dict>{0}</dict>\n<key>kxcode</key><string>'''.format(alt_icons)\nicon_define = '#define ICON_STUFF ' + icon_stuff.replace('\\n', '')\nwith open(sys.argv[2], 'w') as output:\n    output.write(icon_define)\nEND\ntouch \"${SRCROOT}/app/Info.plist\"\n";
 		};
-		BBF1248B1FA7BF530088FB50 /* Download Alpine */ = {
+		BBF1248B1FA7BF530088FB50 /* Download Root */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputPaths = (
 			);
-			name = "Download Alpine";
+			name = "Download Root";
 			outputPaths = (
 				"$(SRCROOT)/alpine.tar.gz",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "curl -L http://dl-cdn.alpinelinux.org/alpine/v3.11/releases/x86/alpine-minirootfs-3.11.2-x86.tar.gz -o $SRCROOT/alpine.tar.gz\npython3 - \"$SRCROOT/alpine.tar.gz\" <<END\nimport gzip\nimport io\nimport tarfile\nimport sys\nMOTD = b\"\"\"Welcome to Alpine!\n\nYou can install packages with: apk add <package>\n\nYou may change this message by editing /etc/motd.\n\n\"\"\"\nwith gzip.open(sys.argv[1], 'rb') as f:\n    data = io.BytesIO(f.read())\ntar = tarfile.open(fileobj=data, mode='a')\ninfo = tar.getmember('./etc/motd')\ninfo.size = len(MOTD)\ntar.addfile(info, io.BytesIO(MOTD))\nwith gzip.open(sys.argv[1], 'wb') as f:\n    f.write(data.getbuffer())\nEND\n";
+			shellScript = "curl -L https://github.com/ish-app/roots/releases/download/v1/appstore.tar.gz -o $SRCROOT/root.tar.gz\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
