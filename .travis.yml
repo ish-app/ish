@@ -8,7 +8,7 @@ jobs:
         apt:
           packages:
             - ninja-build
-            - libarchive-dev
+            - cmake
       install:
         - source ~/virtualenv/python3.6/bin/activate
         - pip install meson
@@ -32,7 +32,7 @@ jobs:
           packages:
             - ninja
             - llvm
-            - libarchive
+            - cmake
           update: true
       script:
         - xcodebuild -project iSH.xcodeproj -scheme iSH -sdk iphoneos CODE_SIGNING_ALLOWED=NO
