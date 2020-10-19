@@ -11,7 +11,7 @@ struct fd *adhoc_fd_create(const struct fd_ops *ops) {
     struct fd *fd = fd_create(ops);
     if (fd == NULL)
         return NULL;
-    adhoc_mount.refcount++;
+    mount_retain(&adhoc_mount);
     fd->mount = &adhoc_mount;
     fd->stat = (struct statbuf) {};
     return fd;
