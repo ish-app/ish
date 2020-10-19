@@ -43,8 +43,8 @@ static NSString *kDefaultRoot = @"Default Root";
         if (!self.roots.count) {
             // import alpine
             NSError *error;
-            if (![self importRootFromArchive:[NSBundle.mainBundle URLForResource:@"alpine" withExtension:@"tar.gz"]
-                                        name:@"alpine"
+            if (![self importRootFromArchive:[NSBundle.mainBundle URLForResource:@"root" withExtension:@"tar.gz"]
+                                        name:@"default"
                                        error:&error
                             progressReporter:nil]) {
                 NSAssert(NO, @"failed to import alpine, error %@", error);
