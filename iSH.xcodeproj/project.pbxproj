@@ -1154,7 +1154,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "curl -L https://github.com/ish-app/roots/releases/download/v1/appstore.tar.gz -o $SRCROOT/root.tar.gz\n";
+			shellScript = "#curl -L https://github.com/ish-app/roots/releases/download/v1/appstore.tar.gz -o $SRCROOT/root.tar.gz\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
