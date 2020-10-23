@@ -38,7 +38,6 @@ buildtype=debug
 b_ndebug=false
 if [[ $CONFIGURATION == Release ]]; then
     buildtype=debugoptimized
-    b_ndebug=true
 fi
 b_sanitize=none
 if [[ -n "$ENABLE_ADDRESS_SANITIZER" ]]; then
