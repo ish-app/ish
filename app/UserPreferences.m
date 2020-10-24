@@ -171,10 +171,14 @@ static UIColor *UnarchiveColor(id data) {
 - (UIStatusBarStyle)statusBarStyle {
     CGFloat lightness;
     [self.backgroundColor getWhite:&lightness alpha:nil];
-    if (lightness > 0.5)
-        return UIStatusBarStyleDefault;
-    else
+    if (lightness > 0.5) {
+        if (@available(iOS 13, *))
+            return UIStatusBarStyleDarkContent;
+        else
+            return UIStatusBarStyleDefault;
+    } else {
         return UIStatusBarStyleLightContent;
+    }
 }
 
 - (UIKeyboardAppearance)keyboardAppearance {

@@ -233,6 +233,7 @@
         [self.termView reloadInputViews];
         self.ignoreKeyboardMotion = NO;
     }
+    [self setNeedsStatusBarAppearanceUpdate];
 }
 
 - (UIStatusBarStyle)preferredStatusBarStyle {
