@@ -1,7 +1,8 @@
 New stuff:
-- Filesystems can be renamed
-- GDB works a little bit
+- About page shows the app version at the bottom
+- The default rootfs no longer includes apk, to match the app store version
 
 Fixed bugs:
-- Dictation doesn't insert 10 useless spaces
-- Files that are copied out in the Files app and then deleted no longer take up space
+- Status bar being invisible when the device is in dark mode and the terminal has a light background
+
+iSH is on the app store now! https://apps.apple.com/us/app/ish-shell/id1436902243
