@@ -263,10 +263,11 @@ NSData *removeInvalidUTF8(NSData *data) {
 }
 
 - (void)destroy {
-    if (self.tty != NULL) {
-        lock(&self.tty->lock);
-        tty_hangup(self.tty);
-        unlock(&self.tty->lock);
+    struct tty *tty = self.tty;
+    if (tty != NULL) {
+        lock(&tty->lock);
+        tty_hangup(tty);
+        unlock(&tty->lock);
     }
     [terminals removeObjectForKey:self.terminalsKey];
 }
