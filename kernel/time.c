@@ -14,7 +14,9 @@
 
 static int clockid_to_real(uint_t clock, clockid_t *real) {
     switch (clock) {
-        case CLOCK_REALTIME_: *real = CLOCK_REALTIME; break;
+        case CLOCK_REALTIME_:
+        case CLOCK_REALTIME_COARSE_:
+            *real = CLOCK_REALTIME; break;
         case CLOCK_MONOTONIC_: *real = CLOCK_MONOTONIC; break;
         default: return _EINVAL;
     }
