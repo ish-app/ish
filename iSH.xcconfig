@@ -4,4 +4,6 @@ ROOT_BUNDLE_IDENTIFIER = app.ish.iSH
 // Choose logging channels to enable. Separate by spaces. Try "verbose strace".
 ISH_LOG =
 
+ROOTFS_URL = github.com/ish-app/roots/releases/download/g9ce02ec1eddbf4beee99c6aeca3c99bd4f8b5943/appstore.tar.gz
+
 PRODUCT_APP_GROUP_IDENTIFIER = group.$(ROOT_BUNDLE_IDENTIFIER)
