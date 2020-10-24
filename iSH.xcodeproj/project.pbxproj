@@ -887,7 +887,7 @@
 		};
 		BB13F7D0200ACCA2003D1C4D /* Ninja */ = {
 			isa = PBXLegacyTarget;
-			buildArgumentsString = "";
+			buildArgumentsString = libish.a;
 			buildConfigurationList = BB13F7D1200ACCA2003D1C4D /* Build configuration list for PBXLegacyTarget "Ninja" */;
 			buildPhases = (
 			);
