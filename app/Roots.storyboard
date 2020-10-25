@@ -33,9 +33,6 @@
                                         </label>
                                     </subviews>
                                 </tableViewCellContentView>
-                                <connections>
-                                    <segue destination="2wD-dq-vPG" kind="show" id="qCX-jp-cr9"/>
-                                </connections>
                             </tableViewCell>
                             <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="default" accessoryType="disclosureIndicator" indentationWidth="10" reuseIdentifier="Default Root" textLabel="c8w-0c-rgD" detailTextLabel="s1e-Wg-AtO" style="IBUITableViewCellStyleSubtitle" id="o8d-j7-u1g">
                                 <rect key="frame" x="0.0" y="99" width="736" height="55.666667938232422"/>
