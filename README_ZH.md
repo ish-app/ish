@@ -10,13 +10,14 @@
 </a>
 </p>
 
-这项目是一个使用用户模式 x86 仿真和系统调用转换, 运行在 iOS 上的 Linux shell.
+这项目是一个使用用户模式 x86 仿真和系统调用转换, 运行在 iOS 上的 Linux 殻層.
 
 想要了解项目目前的状况, 详见 issue 和 提交记录.
 
+- [AppStore頁面](https://apps.apple.com/us/app/ish-shell/id1436902243)
 - [Testflight beta](https://testflight.apple.com/join/97i7KM8O)
-- [Discord server](https://discord.gg/HFAXj44)
-- [Wiki with help and tutorials](https://github.com/ish-app/ish/wiki)
+- [Discord 伺服器](https://discord.gg/HFAXj44)
+- [Wiki上的幫助和教程](https://github.com/ish-app/ish/wiki)
 
 # 运行项目
 
@@ -29,6 +30,7 @@
  - Meson (`pip install meson`)
  - Clang and LLD (在 mac 上`brew install llvm`, 在 linux 上`sudo apt install clang lld` 或者 `sudo pacman -S clang lld` 亦或 随你便)
  - sqlite3 (这个很基础，或许已经安装在 Linux 上了, 并且肯定已经安装在 Mac 上了. 如果没有你可以运行像这样的命令 `sudo apt install libsqlite3-dev`)
+ - libarchive (`brew install libarchive`, `sudo port install libarchive`, `sudo apt install libarchive-dev`) 
 
 ## 为 iOS 构建
 
@@ -38,7 +40,8 @@
 
 设置你的运行环境, cd 到项目目录并且运行命令 `meson build`，以在 `build` 中创建构建目录. 然后 cd 到构建目录并执行 `ninja`.
 
-要建立一个自包含的 Alpine linux 文件系统, 请从 [Alpine 网站](https://alpinelinux.org/downloads/) 下载 Alpine minirotfs tarball for i386 并运行 `tools/fakefsify.py` 脚本. 将 minirotfs tarball 指定为第一个参数，将输出目录的名称指定为第二个参数. 然后可以使用 `/ish-f Alpine/bin/login-f root` 在 Alpine 文件系统中运行, 假设输出目录名为 `alpine`.
+要建立一个自包含的 Alpine linux 文件系统, 请从 [Alpine 网站](https://alpinelinux.org/downloads/) 下载 Alpine minirotfs tarball for x86 并运行 `tools/fakefsify.py` 脚本. 将 minirotfs tarball 指定为第一个参数，将输出目录的名称指定为第二个参数. 然后可以使用 `./ish -f alpine /bin/login-f root` 在 Alpine 文件系统中运行, 假设输出目录名为 `alpine`. 如果 `tools/fakefsify` 不存在，可能是因為找不到libarchive所導致的。（上方有安
+的方法）
 
 你可以使用 `tools/ptraceomatic` 替换 `ish`, 以便在实际进程和单个步骤运行程序, 并在每个步骤中比较寄存器. 我都用它来调试. 需要64位 Linux 4.11 或更高版本
 
