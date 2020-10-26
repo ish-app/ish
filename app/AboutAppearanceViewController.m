@@ -19,13 +19,12 @@ static NSString *const PreviewCellIdentifier = @"Preview";
 
 @implementation AboutAppearanceViewController
 
-- (void)awakeFromNib {
-    [super awakeFromNib];
+- (void)viewDidLoad {
+    [super viewDidLoad];
     [[UserPreferences shared] addObserver:self forKeyPath:@"theme" options:NSKeyValueObservingOptionNew context:nil];
     [[UserPreferences shared] addObserver:self forKeyPath:@"fontSize" options:NSKeyValueObservingOptionNew context:nil];
     [[UserPreferences shared] addObserver:self forKeyPath:@"fontFamily" options:NSKeyValueObservingOptionNew context:nil];
 }
-
 - (void)dealloc {
     [[UserPreferences shared] removeObserver:self forKeyPath:@"theme"];
     [[UserPreferences shared] removeObserver:self forKeyPath:@"fontSize"];

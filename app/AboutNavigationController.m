@@ -14,11 +14,10 @@
 
 @implementation AboutNavigationController
 
-- (void)awakeFromNib {
-    [super awakeFromNib];
+- (void)viewDidLoad {
+    [super viewDidLoad];
     [[UserPreferences shared] addObserver:self forKeyPath:@"theme" options:NSKeyValueObservingOptionNew|NSKeyValueObservingOptionInitial context:nil];
 }
-
 - (void)dealloc {
     [[UserPreferences shared] removeObserver:self forKeyPath:@"theme"];
 }
