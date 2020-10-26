@@ -27,8 +27,8 @@
 
 @implementation RootsTableViewController
 
-- (void)awakeFromNib {
-    [super awakeFromNib];
+- (void)viewDidLoad {
+    [super viewDidLoad];
     [Roots.instance addObserver:self forKeyPath:@"roots" options:0 context:nil];
     [Roots.instance addObserver:self forKeyPath:@"defaultRoot" options:0 context:nil];
 }
