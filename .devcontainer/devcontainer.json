@@ -22,8 +22,8 @@
 	// "postCreateCommand": "uname -a",
 
 	// Uncomment when using a ptrace-based debugger like C++, Go, and Rust
-	// "runArgs": [ "--cap-add=SYS_PTRACE", "--security-opt", "seccomp=unconfined" ],
-	"runArgs": [ "--cap-add=ALL", "--security-opt", "seccomp=unconfined" ],
+	"runArgs": [ "--cap-add=SYS_PTRACE", "--security-opt", "seccomp=unconfined" ],
+	// "runArgs": [ "--cap-add=ALL", "--security-opt", "seccomp=unconfined" ],
 
 	// Uncomment to connect as a non-root user. See https://aka.ms/vscode-remote/containers/non-root.
 	// "remoteUser": "vscode"
