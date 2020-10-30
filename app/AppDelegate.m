@@ -225,7 +225,7 @@ void NetworkReachabilityCallback(SCNetworkReachabilityRef target, SCNetworkReach
         // For iOS <13, where the app delegate owns the window instead of the scene
         if ([NSUserDefaults.standardUserDefaults boolForKey:@"recovery"]) {
             UINavigationController *vc = [[UIStoryboard storyboardWithName:@"About" bundle:nil] instantiateInitialViewController];
-            AboutViewController *avc = vc.topViewController;
+            AboutViewController *avc = (AboutViewController *) vc.topViewController;
             avc.recoveryMode = YES;
             self.window.rootViewController = vc;
             return YES;
