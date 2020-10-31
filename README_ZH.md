@@ -10,9 +10,9 @@
 </a>
 </p>
 
-iSH 是一个运行在 iOS 上的 Linux shell。 本项目使用了 x86 用户模式仿真和系统调用翻译转换。
+iSH 是一个运行在 iOS 上的 Linux shell。本项目使用了 x86 用户模式仿真和系统调用翻译转换。
 
-请查看 issue 和 提交记录以了解本项目当前的状态。
+请查看 issue 和提交记录以了解本项目当前的状态。
 
 - [App Store 页面](https://apps.apple.com/us/app/ish-shell/id1436902243)
 - [Testflight 测试](https://testflight.apple.com/join/97i7KM8O)
@@ -21,48 +21,48 @@ iSH 是一个运行在 iOS 上的 Linux shell。 本项目使用了 x86 用户�
 
 # 依赖
 
-本项目下包含了其他 git 项目作为子模块， 请确保在克隆时使用参数`--recurse-submodules`， 即 `git clone --recurse-submodules https://github.com/ish-app/ish.git`。或是在克隆好了之后执行 `git submodule update --init`。
+本项目下包含了其他 git 项目作为子模块，请确保在克隆时使用参数`--recurse-submodules`，即 `git clone --recurse-submodules https://github.com/ish-app/ish.git`。或是在克隆好了之后执行 `git submodule update --init`。
 
 编译此项目需要以下依赖:
 
  - Python 3
     + Meson (`pip3 install meson`)
  - Ninja 请查看[此处](https://ninja-build.org/)
- - Clang and LLD (在安装了 `brew` 的 macOS 系统上运行 `brew install llvm` ； 在 Linux 系统上运行 `sudo apt install clang lld` 或者 `sudo pacman -S clang lld` ，请根据你的包管理器选择相应安装命令)
+ - Clang and LLD (在安装了 `brew` 的 macOS 系统上运行 `brew install llvm`。在 Linux 系统上运行 `sudo apt install clang lld` 或者 `sudo pacman -S clang lld` ，请根据你的包管理器选择相应安装命令)
  - sqlite3 (sqlite3 非常常见。它在 macOS 上是预安装的，但它或许没有安装在你的 Linux 上，运行 `which sqlite3` 以查看它是否存在。如果没有，你可以根据你的包管理器运行 `sudo apt install libsqlite3-dev` 之类的安装命令)
 
 ## 创建iOS应用
 
-使用 Xcode 打开项目， 选择 iSH.xcconfig， 并且修改 `ROOT_BUNDLE_IDENTIFIER` 为你的[唯一值](https://help.apple。com/xcode/mac/current/#/dev91fe7130a)。 然后点击 `运行`， 之后应该有脚本帮你自动执行相关操作。 如果遇到了任何问题， 请提交 issue， 我们会帮你解决。
+使用 Xcode 打开项目，选择 iSH.xcconfig，并且修改 `ROOT_BUNDLE_IDENTIFIER` 为你的[唯一值](https://help.apple.com/xcode/mac/current/#/dev91fe7130a)。然后点击 `运行`，之后应该有脚本帮你自动执行相关操作。如果遇到了任何问题，请提交 issue，我们会帮你解决。
 
 ## 为测试构建命令行工具
 
-在项目目录中运行命令 `meson build`，之后 `build` 目录会被创建。 进入到 `build` 目录并运行命令 `ninja`。
+在项目目录中运行命令 `meson build`，之后 `build` 目录会被创建。进入到 `build` 目录并运行命令 `ninja`。
 
-为了建立一个自有的 Alpine linux 文件系统， 请从 [Alpine 网站](https://alpinelinux.org/downloads/) 下载 `Alpine minirotfs tarball for i386` 并运行 `tools/fakefsify.py` 脚本。 将 minirotfs tarball 指定为第一个参数，将输出目录的名称（如`alpine`）指定为第二个参数，即 `tools/fakefsify.py $MinirotfsTarballFilename alpine` 然后在 Alpine 文件系统中运行 `/ish -f alpine/bin/login-f root`。如果 `build` 目录下找不到 `tools/fakefsify`，那可能是系统上并没有相应的依赖，请参照前面的章节进行安装。
+为了建立一个自有的 Alpine linux 文件系统，请从 [Alpine 网站](https://alpinelinux.org/downloads/) 下载 `Alpine minirotfs tarball for i386` 并运行 `tools/fakefsify.py` 脚本。将 minirotfs tarball 指定为第一个参数，将输出目录的名称（如`alpine`）指定为第二个参数，即 `tools/fakefsify.py $MinirotfsTarballFilename alpine` 然后在 Alpine 文件系统中运行 `/ish -f alpine/bin/login-f root`。如果 `build` 目录下找不到 `tools/fakefsify`，那可能是系统上并没有相应的依赖，请参照前面的章节进行安装。
 
-除了可以使用 `ish`， 你也可以使用 `tools/ptraceomatic` 替代它， 以便在某个真实进程中或在某个步骤比较寄存器。 我通常使用它来进行调试（需要64位 Linux 4.11 或更高版本）。
+除了可以使用 `ish`，你也可以使用 `tools/ptraceomatic` 替代它，以便在某个真实进程中或在某个步骤比较寄存器。我通常使用它来进行调试（需要64位 Linux 4.11 或更高版本）。
 
 
 ## 日志
 
-在编译过程中，iSH 提供数种日志类型， 默认情况下它们都被禁用，想要启用它们需要:
+在编译过程中，iSH 提供数种日志类型，默认情况下它们都被禁用，想要启用它们需要:
 
 - 在 Xcode 中将 iSH.xcconfig 中 `ISH_LOG` 设置为以空格分隔的日志类型列表。
 - 在 Meson (测试使用的命令行工具) 中执行命令 `meson configure -Dlog="<space-separated list of log channels>`。
 
 可用的日志类型:
 
-- `strace`: 最有用的类型， 记录几乎每个系统调用的参数和返回值。
-- `instr`: 记录模拟器执行的每个指令， 这会让所有执行变得很慢。
+- `strace`: 最有用的类型，记录几乎每个系统调用的参数和返回值。
+- `instr`: 记录模拟器执行的每个指令，这会让所有执行变得很慢。
 - `verbose`: 记录不属于其他类别的调试日志。
 - `DEFAULT_CHANNEL` 查看收否在更新此列表后添加了更多日志频道。
 
 # 关于 JIT
 
-可能我在写 iSH 中最有趣的部分就是 JIT 了。它实际上不是真正的 JIT， 因为它实际上不以机器代码为目标，而是生成一个称为 gadgets 的函数指针数组， 并且每个 gadget 都结束与对下一个函数的尾调用，类似于一些 Forth 解释器使用的线程化代码技术。好处就是， 与纯仿真相比， 它的速度提高了3-5倍。
+可能我在写 iSH 中最有趣的部分就是 JIT 了。它实际上不是真正的 JIT，因为它实际上不以机器代码为目标，而是生成一个称为 gadgets 的函数指针数组，并且每个 gadget 都结束与对下一个函数的尾调用，类似于一些 Forth 解释器使用的线程化代码技术。好处就是，与纯仿真相比，它的速度提高了3-5倍。
 
-但不幸的是， 我最开始决定用汇编语言编写几乎所有的 gadgets。这可能从性能方面来说是一个好的决定（虽然我永远也不确定）， 但是从可读性、可维护性和我的理智来说， 这是一个可怕的决定。我承受了大量来自编译器、汇编程序以及链接器的乱七八糟的东西。那里面就像有一个魔鬼， 把我的代码搞得畸形，就算没有畸形， 也会编造一些愚蠢的理由说它不能够编译。 为了在编写代码时保持理智， 我不得不忽略代码结构和命名方面的最佳实践。你会发现宏和变量具有诸如 `ss`、`s` 和 `a` 等描述性的名称，并且汇编器的宏嵌套超出传统的写法，最重要的是它们几乎没有注释。
+但不幸的是，我最开始决定用汇编语言编写几乎所有的 gadgets。这可能从性能方面来说是一个好的决定（虽然我永远也不确定），但是从可读性、可维护性和我的理智来说，这是一个可怕的决定。我承受了大量来自编译器、汇编程序以及链接器的乱七八糟的东西。那里面就像有一个魔鬼，把我的代码搞得畸形，就算没有畸形，也会编造一些愚蠢的理由说它不能够编译。为了在编写代码时保持理智，我不得不忽略代码结构和命名方面的最佳实践。你会发现宏和变量具有诸如 `ss`、`s` 和 `a` 等描述性的名称，并且汇编器的宏嵌套超出传统的写法，最重要的是它们几乎没有注释。
 
 所以这是一个警告: 长期接触此代码可能会使你失去理智、对 GAS 宏和链接器错误产生噩梦，或是任何其他使人虚弱的副作用。在加利福尼亚，众所周知的是，这些代码会导致癌症、生产缺陷和重复伤害。
 
