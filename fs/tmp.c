@@ -433,6 +433,7 @@ static off_t_ tmpfs_lseek(struct fd *fd, off_t_ off, int whence) {
         struct tmp_inode *inode = tmpfs_fd_inode(fd);
         lock(&inode->lock);
         size = inode->stat.size;
+        unlock(&inode->lock);
     }
 
     int err = generic_seek(fd, off, whence, size);
