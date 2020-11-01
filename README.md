@@ -18,7 +18,7 @@ For the current status of the project, check the issues tab, and the commit logs
 - [TestFlight beta](https://testflight.apple.com/join/97i7KM8O)
 - [Discord server](https://discord.gg/HFAXj44)
 - [Wiki with help and tutorials](https://github.com/ish-app/ish/wiki)
-- [README in Chinese](https://github.com/ish-app/ish/blob/master/README_ZH.md) (may be out of date, if so send PRs)
+- [README中文](https://github.com/ish-app/ish/blob/master/README_ZH.md) (如若未能保持最新，请提交PR以更新)
 
 # Hacking
 
@@ -27,8 +27,8 @@ This project has a git submodule, make sure to clone with `--recurse-submodules`
 You'll need these things to build the project:
 
  - Python 3
+   + Meson (`pip3 install meson`)
  - Ninja
- - Meson (`pip install meson`)
  - Clang and LLD (on mac, `brew install llvm`, on linux, `sudo apt install clang lld` or `sudo pacman -S clang lld` or whatever)
  - sqlite3 (this is so common it may already be installed on linux and is definitely already installed on mac. if not, do something like `sudo apt install libsqlite3-dev`)
  - libarchive (`brew install libarchive`, `sudo port install libarchive`, `sudo apt install libarchive-dev`) TODO: bundle this dependency
