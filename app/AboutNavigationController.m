@@ -18,9 +18,6 @@
     [super viewDidLoad];
     [[UserPreferences shared] addObserver:self forKeyPath:@"theme" options:NSKeyValueObservingOptionNew|NSKeyValueObservingOptionInitial context:nil];
 }
-- (void)dealloc {
-    [[UserPreferences shared] removeObserver:self forKeyPath:@"theme"];
-}
 
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context {
     if (@available(iOS 13, *)) {

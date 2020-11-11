@@ -54,16 +54,8 @@
     [prefs addObserver:self forKeyPath:@"bootCommand" options:opts context:nil];
 }
 
-- (void)dealloc {
-    UserPreferences *prefs = [UserPreferences shared];
-    [prefs removeObserver:self forKeyPath:@"capsLockMapping"];
-    [prefs removeObserver:self forKeyPath:@"fontSize"];
-    [prefs removeObserver:self forKeyPath:@"launchCommand"];
-    [prefs removeObserver:self forKeyPath:@"bootCommand"];
-}
-
 - (IBAction)dismiss:(id)sender {
-	[self dismissViewControllerAnimated:self completion:nil];
+    [self dismissViewControllerAnimated:self completion:nil];
 }
 
 - (void)exitRecovery:(id)sender {

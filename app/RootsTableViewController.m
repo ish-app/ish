@@ -32,10 +32,6 @@
     [Roots.instance addObserver:self forKeyPath:@"roots" options:0 context:nil];
     [Roots.instance addObserver:self forKeyPath:@"defaultRoot" options:0 context:nil];
 }
-- (void)dealloc {
-    [Roots.instance removeObserver:self forKeyPath:@"roots"];
-    [Roots.instance removeObserver:self forKeyPath:@"defaultRoot"];
-}
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context {
     [self.tableView reloadData];
 }

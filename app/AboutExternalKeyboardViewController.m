@@ -28,11 +28,6 @@ const int kCapsLockMappingSection = 0;
     [self _update];
 }
 
-- (void)dealloc {
-    [UserPreferences.shared removeObserver:self forKeyPath:@"capsLockMapping"];
-    [UserPreferences.shared removeObserver:self forKeyPath:@"optionMapping"];
-}
-
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context {
     [self.tableView reloadData];
 }

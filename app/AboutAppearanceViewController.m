@@ -25,11 +25,6 @@ static NSString *const PreviewCellIdentifier = @"Preview";
     [[UserPreferences shared] addObserver:self forKeyPath:@"fontSize" options:NSKeyValueObservingOptionNew context:nil];
     [[UserPreferences shared] addObserver:self forKeyPath:@"fontFamily" options:NSKeyValueObservingOptionNew context:nil];
 }
-- (void)dealloc {
-    [[UserPreferences shared] removeObserver:self forKeyPath:@"theme"];
-    [[UserPreferences shared] removeObserver:self forKeyPath:@"fontSize"];
-    [[UserPreferences shared] removeObserver:self forKeyPath:@"fontFamily"];
-}
 
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context {
     [self.tableView reloadData];

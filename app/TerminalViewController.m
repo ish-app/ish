@@ -108,11 +108,6 @@
     [[UserPreferences shared] addObserver:self forKeyPath:@"hideExtraKeysWithExternalKeyboard" options:NSKeyValueObservingOptionNew context:nil];
 }
 
-- (void)dealloc {
-    [[UserPreferences shared] removeObserver:self forKeyPath:@"theme"];
-    [[UserPreferences shared] removeObserver:self forKeyPath:@"hideExtraKeysWithExternalKeyboard"];
-}
-
 - (void)awakeFromNib {
     [super awakeFromNib];
     [NSNotificationCenter.defaultCenter addObserver:self

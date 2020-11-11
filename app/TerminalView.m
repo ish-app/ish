@@ -65,16 +65,6 @@ static int kObserverStyling;
 }
 
 - (void)dealloc {
-    UserPreferences *prefs = UserPreferences.shared;
-    [prefs removeObserver:self forKeyPath:@"capsLockMapping"];
-    [prefs removeObserver:self forKeyPath:@"optionMapping"];
-    [prefs removeObserver:self forKeyPath:@"backtickMapEscape"];
-    [prefs removeObserver:self forKeyPath:@"overrideControlSpace"];
-    [prefs removeObserver:self forKeyPath:@"fontFamily"];
-    [prefs removeObserver:self forKeyPath:@"fontSize"];
-    [prefs removeObserver:self forKeyPath:@"theme"];
-    if (self.terminal)
-        [self.terminal removeObserver:self forKeyPath:@"loaded"];
     self.terminal = nil;
 }
 
