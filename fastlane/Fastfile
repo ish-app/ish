@@ -13,7 +13,7 @@ lane :beta do
         force: true,
     )
 
-    build_app(project: 'iSH.xcodeproj')
+    build_app(project: 'iSH.xcodeproj', scheme: 'iSH')
     upload_to_testflight(
         changelog: testflight_changelog,
         wait_for_uploaded_build: true,
