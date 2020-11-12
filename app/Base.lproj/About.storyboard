@@ -305,14 +305,11 @@
                         </connections>
                     </tableView>
                     <navigationItem key="navigationItem" title="About" id="bpe-0g-cWF">
-                        <barButtonItem key="leftBarButtonItem" style="done" systemItem="done" id="vOn-qw-XSp">
+                        <barButtonItem key="rightBarButtonItem" style="done" systemItem="done" id="vOn-qw-XSp">
                             <connections>
-                                <segue destination="0yy-Uo-cZb" kind="custom" customClass="DismissSegue" id="xBv-BT-uv2"/>
+                                <action selector="dismiss:" destination="yJz-O7-jlW" id="q2h-Xl-XBU"/>
                             </connections>
                         </barButtonItem>
-                        <connections>
-                            <outlet property="rightBarButtonItem" destination="vOn-qw-XSp" id="KNd-k0-V0z"/>
-                        </connections>
                     </navigationItem>
                     <connections>
                         <outlet property="bootCommandField" destination="bKw-tV-nX1" id="MVz-gk-QE7"/>
