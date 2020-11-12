@@ -8,6 +8,7 @@
 #import <FileProvider/FileProvider.h>
 #import "Roots.h"
 #import "AppGroup.h"
+#import "NSObject+SaneKVO.h"
 #include "tools/fakefs.h"
 
 static NSURL *RootsDir() {
@@ -50,25 +51,24 @@ static NSString *kDefaultRoot = @"Default Root";
                 NSAssert(NO, @"failed to import alpine, error %@", error);
             }
         }
-        [self addObserver:self forKeyPath:@"roots" options:0 context:nil];
+        [self observe:@[@"roots"] options:0 owner:self usingBlock:^(typeof(self) self) {
+            if (self.defaultRoot == nil && self.roots.count)
+                self.defaultRoot = self.roots[0];
+            [self syncFileProviderDomains];
+        }];
         [self syncFileProviderDomains];
 
-        self.defaultRoot = [NSUserDefaults.standardUserDefaults stringForKey:kDefaultRoot];
-        [self addObserver:self forKeyPath:@"defaultRoot" options:0 context:nil];
         if ((!self.defaultRoot || ![self.roots containsObject:self.defaultRoot]) && self.roots.count)
             self.defaultRoot = self.roots.firstObject;
     }
     return self;
 }
 
-- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context {
-    if ([keyPath isEqualToString:@"defaultRoot"]) {
-        [NSUserDefaults.standardUserDefaults setObject:self.defaultRoot forKey:kDefaultRoot];
-    } else if ([keyPath isEqualToString:@"roots"]) {
-        if (self.defaultRoot == nil && self.roots.count)
-            self.defaultRoot = self.roots[0];
-        [self syncFileProviderDomains];
-    }
+- (NSString *)defaultRoot {
+    return [NSUserDefaults.standardUserDefaults stringForKey:kDefaultRoot];
+}
+- (void)setDefaultRoot:(NSString *)defaultRoot {
+    [NSUserDefaults.standardUserDefaults setObject:defaultRoot forKey:kDefaultRoot];
 }
 
 - (NSURL *)rootUrl:(NSString *)name {

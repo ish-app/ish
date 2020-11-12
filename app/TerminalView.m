@@ -9,6 +9,7 @@
 #import "TerminalView.h"
 #import "UserPreferences.h"
 #import "UIApplication+OpenURL.h"
+#import "NSObject+SaneKVO.h"
 
 struct rowcol {
     int row;
@@ -36,9 +37,6 @@ struct rowcol {
 @synthesize inputDelegate;
 @synthesize tokenizer;
 
-static int kObserverMappings;
-static int kObserverStyling;
-
 - (void)awakeFromNib {
     [super awakeFromNib];
     self.inputAssistantItem.leadingBarButtonGroups = @[];
@@ -52,13 +50,14 @@ static int kObserverStyling;
     [self addSubview:scrollbarView];
     
     UserPreferences *prefs = UserPreferences.shared;
-    [prefs addObserver:self forKeyPath:@"capsLockMapping" options:0 context:&kObserverMappings];
-    [prefs addObserver:self forKeyPath:@"optionMapping" options:0 context:&kObserverMappings];
-    [prefs addObserver:self forKeyPath:@"backtickMapEscape" options:0 context:&kObserverMappings];
-    [prefs addObserver:self forKeyPath:@"overrideControlSpace" options:0 context:&kObserverMappings];
-    [prefs addObserver:self forKeyPath:@"fontFamily" options:0 context:&kObserverStyling];
-    [prefs addObserver:self forKeyPath:@"fontSize" options:0 context:&kObserverStyling];
-    [prefs addObserver:self forKeyPath:@"theme" options:0 context:&kObserverStyling];
+    [prefs observe:@[@"capsLockMapping", @"optionMapping", @"backtickMapEscape", @"overrideControlSpace"]
+           options:0 owner:self usingBlock:^(typeof(self) self) {
+        self->_keyCommands = nil;
+    }];
+    [prefs observe:@[@"fontFamily", @"fontSize", @"theme"]
+           options:0 owner:self usingBlock:^(typeof(self) self) {
+        [self _updateStyle];
+    }];
 
     self.markedRange = [UITextRange new];
     self.selectedRange = [UITextRange new];
@@ -73,10 +72,6 @@ static int kObserverStyling;
         if (self.terminal.loaded) {
             [self _updateStyle];
         }
-    } else if (context == &kObserverMappings) {
-        _keyCommands = nil;
-    } else if (context == &kObserverStyling) {
-        [self _updateStyle];
     }
 }
 

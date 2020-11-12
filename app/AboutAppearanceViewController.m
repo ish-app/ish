@@ -8,6 +8,7 @@
 #import "AboutAppearanceViewController.h"
 #import "FontPickerViewController.h"
 #import "UserPreferences.h"
+#import "NSObject+SaneKVO.h"
 
 static NSString *const ThemeNameCellIdentifier = @"Theme Name";
 static NSString *const FontSizeCellIdentifier = @"Font Size";
@@ -21,14 +22,11 @@ static NSString *const PreviewCellIdentifier = @"Preview";
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    [[UserPreferences shared] addObserver:self forKeyPath:@"theme" options:NSKeyValueObservingOptionNew context:nil];
-    [[UserPreferences shared] addObserver:self forKeyPath:@"fontSize" options:NSKeyValueObservingOptionNew context:nil];
-    [[UserPreferences shared] addObserver:self forKeyPath:@"fontFamily" options:NSKeyValueObservingOptionNew context:nil];
-}
-
-- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context {
-    [self.tableView reloadData];
-    [self setNeedsStatusBarAppearanceUpdate];
+    [UserPreferences.shared observe:@[@"theme", @"fontSize", @"fontFamily"]
+                            options:0 owner:self usingBlock:^(typeof(self) self) {
+        [self.tableView reloadData];
+        [self setNeedsStatusBarAppearanceUpdate];
+    }];
 }
 
 #pragma mark - Table view data source

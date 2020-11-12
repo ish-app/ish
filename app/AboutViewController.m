@@ -9,6 +9,7 @@
 #import "AboutViewController.h"
 #import "UserPreferences.h"
 #import "AppGroup.h"
+#import "NSObject+SaneKVO.h"
 
 @interface AboutViewController ()
 @property (weak, nonatomic) IBOutlet UITableViewCell *capsLockMappingCell;
@@ -46,12 +47,10 @@
                           [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"],
                           [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"]];
 
-    UserPreferences *prefs = [UserPreferences shared];
-    NSKeyValueObservingOptions opts = NSKeyValueObservingOptionNew;
-    [prefs addObserver:self forKeyPath:@"capsLockMapping" options:opts context:nil];
-    [prefs addObserver:self forKeyPath:@"fontSize" options:opts context:nil];
-    [prefs addObserver:self forKeyPath:@"launchCommand" options:opts context:nil];
-    [prefs addObserver:self forKeyPath:@"bootCommand" options:opts context:nil];
+    [UserPreferences.shared observe:@[@"capsLockMapping", @"fontSize", @"launchCommand", @"bootCommand"]
+                            options:0 owner:self usingBlock:^(typeof(self) self) {
+        [self _updatePreferenceUI];
+    }];
 }
 
 - (IBAction)dismiss:(id)sender {
@@ -61,14 +60,6 @@
 - (void)exitRecovery:(id)sender {
     [NSUserDefaults.standardUserDefaults setBool:NO forKey:@"recovery"];
     exit(0);
-}
-
-- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context {
-    if ([object isKindOfClass:[UserPreferences class]]) {
-        [self _updatePreferenceUI];
-    } else {
-        [super observeValueForKeyPath:keyPath ofObject:object change:change context:context];
-    }
 }
 
 - (void)_updatePreferenceUI {
