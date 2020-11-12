@@ -23,7 +23,7 @@ static NSString *const TerminalUUID = @"TerminalUUID";
 - (void)scene:(UIScene *)scene willConnectToSession:(UISceneSession *)session options:(UISceneConnectionOptions *)connectionOptions {
     if ([NSUserDefaults.standardUserDefaults boolForKey:@"recovery"]) {
         UINavigationController *vc = [[UIStoryboard storyboardWithName:@"About" bundle:nil] instantiateInitialViewController];
-        AboutViewController *avc = vc.topViewController;
+        AboutViewController *avc = (AboutViewController *) vc.topViewController;
         avc.recoveryMode = YES;
         self.window.rootViewController = vc;
         return;

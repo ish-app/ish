@@ -428,28 +428,18 @@ out:
 }
 
 static off_t_ tmpfs_lseek(struct fd *fd, off_t_ off, int whence) {
-    qword_t size;
+    qword_t size = 0;
     if (whence == LSEEK_END) {
         struct tmp_inode *inode = tmpfs_fd_inode(fd);
         lock(&inode->lock);
         size = inode->stat.size;
+        unlock(&inode->lock);
     }
 
-    // TODO: dedupe code with procfs
-    off_t_ old_off = fd->offset;
-    if (whence == LSEEK_SET)
-        fd->offset = off;
-    else if (whence == LSEEK_CUR)
-        fd->offset += off;
-    else if (whence == LSEEK_END)
-        fd->offset = size + off;
-    else
-        return _EINVAL;
+    int err = generic_seek(fd, off, whence, size);
+    if (err < 0)
+        return err;
 
-    if (fd->offset < 0) {
-        fd->offset = old_off;
-        return _EINVAL;
-    }
     return fd->offset;
 }
 

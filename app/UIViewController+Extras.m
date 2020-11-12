@@ -9,9 +9,6 @@
 
 @implementation UIViewController (Extras)
 
-- (IBAction)unwind:(UIStoryboardSegue *)segue {
-}
-
 - (void)presentError:(NSError *)error title:(NSString *)title {
     UIAlertController *alert = [UIAlertController alertControllerWithTitle:title message:error.localizedDescription preferredStyle:UIAlertControllerStyleAlert];
     [alert addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil]];
