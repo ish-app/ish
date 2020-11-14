@@ -37,6 +37,16 @@
          </BuildableReference>
       </MacroExpansion>
       <Testables>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "BB41591B255EF9E300E0950C"
+               BuildableName = "iSHUITests.xctest"
+               BlueprintName = "iSHUITests"
+               ReferencedContainer = "container:iSH.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
    </TestAction>
    <LaunchAction
