@@ -149,8 +149,12 @@ static void ios_handle_die(const char *msg) {
         exit(2);
     }
     NSMutableString *resolvConf = [NSMutableString new];
-    for (int i = 0; res.dnsrch[i] != NULL; i++) {
-        [resolvConf appendFormat:@"search %s\n", res.dnsrch[i]];
+    if (res.dnsrch[0] != NULL) {
+        [resolvConf appendString:@"search"];
+        for (int i = 0; res.dnsrch[i] != NULL; i++) {
+            [resolvConf appendFormat:@" %s", res.dnsrch[i]];
+        }
+        [resolvConf appendString:@"\n"];
     }
     union res_sockaddr_union servers[NI_MAXSERV];
     int serversFound = res_getservers(&res, servers, NI_MAXSERV);
