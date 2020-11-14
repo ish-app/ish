@@ -199,6 +199,14 @@ void root_progress_callback(void *cookie, double progress, const char *message, 
         *error = [NSError errorWithDomain:@"iSH" code:0 userInfo:@{NSLocalizedDescriptionKey: @"Filesystem name can't be empty"}];
         return NO;
     }
+    if ([name containsString:@"/"]) {
+        *error = [NSError errorWithDomain:@"iSH" code:0 userInfo:@{NSLocalizedDescriptionKey: @"Filesystem name can't contain /"}];
+        return NO;
+    }
+    if ([name isEqualToString:@"."] || [name isEqualToString:@".."]) {
+        *error = [NSError errorWithDomain:@"iSH" code:0 userInfo:@{NSLocalizedDescriptionKey: @"Filesystem name can't be . or .."}];
+        return NO;
+    }
     if ([name isEqualToString:self.defaultRoot]) {
         *error = [NSError errorWithDomain:@"iSH" code:0 userInfo:@{NSLocalizedDescriptionKey: @"Cannot rename the default filesystem"}];
         return NO;
