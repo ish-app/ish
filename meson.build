@@ -1,5 +1,6 @@
 project('ish', 'c',
-    default_options: ['default_library=static', 'c_std=gnu11', 'warning_level=2'])
+    default_options: ['default_library=static', 'c_std=gnu11', 'warning_level=2'],
+    subproject_dir: 'deps')
 cc = meson.get_compiler('c')
 
 if cc.get_id() == 'clang'
@@ -34,6 +35,7 @@ threads = dependency('threads')
 librt = cc.find_library('rt', required: false)
 libm = cc.find_library('m', required: false)
 sqlite3 = cc.find_library('sqlite3')
+subdir('deps/script')
 
 dependencies = [librt, libm, threads, sqlite3]
 

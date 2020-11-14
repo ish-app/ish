@@ -19,19 +19,8 @@ if unicorn.found()
     configure_file(input: 'ptraceomatic-gdb.gdb', output: 'unicornomatic-gdb.gdb', copy: true)
 endif
 
-libarchive = dependency('libarchive', required: false)
-if not libarchive.found()
-    # homebrew
-    libarchive_lib = cc.find_library('libarchive', dirs: ['/usr/local/opt/libarchive/lib'], required: false)
-    if libarchive_lib.found()
-        libarchive = declare_dependency(dependencies: [libarchive_lib], include_directories: include_directories(['/usr/local/opt/libarchive/include']))
-    endif
-endif
-
-if libarchive.found()
-    fakefsify = executable('fakefsify', ['fakefsify.c', 'fakefs.c'], dependencies: [ish, libarchive])
-    custom_target('unfakefsify',
-        build_by_default: true,
-        command: ['ln', '-sf', 'fakefsify', '@OUTPUT@'],
-        output: 'unfakefsify')
-endif
+fakefsify = executable('fakefsify', ['fakefsify.c', 'fakefs.c'], dependencies: [ish, libarchive])
+custom_target('unfakefsify',
+    build_by_default: true,
+    command: ['ln', '-sf', 'fakefsify', '@OUTPUT@'],
+    output: 'unfakefsify')
