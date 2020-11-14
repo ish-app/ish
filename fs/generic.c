@@ -287,3 +287,22 @@ int generic_rmdirat(struct fd *at, const char *path_raw) {
     mount_release(mount);
     return err;
 }
+
+int generic_seek(struct fd *fd, off_t_ off, int whence, size_t size) {
+    off_t_ new_off = fd->offset;
+    if (whence == LSEEK_SET) {
+        fd->offset = off;
+    } else if (whence == LSEEK_CUR) {
+        if (__builtin_add_overflow(new_off, off, &new_off) || new_off < 0)
+            return _EINVAL;
+        fd->offset = new_off;
+    } else if (whence == LSEEK_END) {
+        new_off = size + off;
+        if (new_off < 0)
+            return _EINVAL;
+        fd->offset = new_off;
+    } else {
+        return _EINVAL;
+    }
+    return 0;
+}

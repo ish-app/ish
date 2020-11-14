@@ -178,7 +178,7 @@ struct task *pid_get_task_zombie(dword_t id); // don't return null if the task e
 
 // TODO document
 void task_start(struct task *task);
-void task_run_current();
+void task_run_current(void);
 
 extern void (*exit_hook)(struct task *task, int code);
 

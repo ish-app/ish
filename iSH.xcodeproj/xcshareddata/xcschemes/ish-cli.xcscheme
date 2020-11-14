@@ -14,9 +14,9 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "BB792B4F1F96D90D00FFB7A4"
-               BuildableName = "iSH.app"
-               BlueprintName = "iSH"
+               BlueprintIdentifier = "497F6D46254E605F00C82F46"
+               BuildableName = "ish"
+               BlueprintName = "ish"
                ReferencedContainer = "container:iSH.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -27,26 +27,7 @@
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       shouldUseLaunchSchemeArgsEnv = "YES">
-      <MacroExpansion>
-         <BuildableReference
-            BuildableIdentifier = "primary"
-            BlueprintIdentifier = "BB792B4F1F96D90D00FFB7A4"
-            BuildableName = "iSH.app"
-            BlueprintName = "iSH"
-            ReferencedContainer = "container:iSH.xcodeproj">
-         </BuildableReference>
-      </MacroExpansion>
       <Testables>
-         <TestableReference
-            skipped = "NO">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "BB41591B255EF9E300E0950C"
-               BuildableName = "iSHUITests.xctest"
-               BlueprintName = "iSHUITests"
-               ReferencedContainer = "container:iSH.xcodeproj">
-            </BuildableReference>
-         </TestableReference>
       </Testables>
    </TestAction>
    <LaunchAction
@@ -63,9 +44,9 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "BB792B4F1F96D90D00FFB7A4"
-            BuildableName = "iSH.app"
-            BlueprintName = "iSH"
+            BlueprintIdentifier = "497F6D46254E605F00C82F46"
+            BuildableName = "ish"
+            BlueprintName = "ish"
             ReferencedContainer = "container:iSH.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
@@ -80,9 +61,9 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "BB792B4F1F96D90D00FFB7A4"
-            BuildableName = "iSH.app"
-            BlueprintName = "iSH"
+            BlueprintIdentifier = "497F6D46254E605F00C82F46"
+            BuildableName = "ish"
+            BlueprintName = "ish"
             ReferencedContainer = "container:iSH.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>

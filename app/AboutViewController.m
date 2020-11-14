@@ -62,6 +62,10 @@
     [prefs removeObserver:self forKeyPath:@"bootCommand"];
 }
 
+- (IBAction)dismiss:(id)sender {
+	[self dismissViewControllerAnimated:self completion:nil];
+}
+
 - (void)exitRecovery:(id)sender {
     [NSUserDefaults.standardUserDefaults setBool:NO forKey:@"recovery"];
     exit(0);

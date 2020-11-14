@@ -44,7 +44,7 @@ if [[ -n "$ENABLE_ADDRESS_SANITIZER" ]]; then
     b_sanitize=address
 fi
 log=$ISH_LOG
-log_handler=nslog
+log_handler=$ISH_LOGGER
 jit=true
 for var in buildtype log b_ndebug b_sanitize log_handler jit; do
     old_value=$(python3 -c "import sys, json; v = next(x['value'] for x in json.load(sys.stdin) if x['name'] == '$var'); print(str(v).lower() if isinstance(v, bool) else v)" <<< $config)

@@ -1,5 +1,6 @@
 Fixed bugs:
-- Crash when trying to boot or import a filesystem after closing and reopening the filesystems page
-- Crash in the file provider when you open it before opening the app for the first time
+- Upside-down orientation is disabled to match other apps on notchless iPhones
+- Crash when tapping Done in settings
+- UAF after typing exit on iPhone
 
 iSH is on the app store now! https://apps.apple.com/us/app/ish-shell/id1436902243

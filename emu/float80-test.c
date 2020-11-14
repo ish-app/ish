@@ -5,6 +5,8 @@
 #include <fenv.h>
 #include "float80.h"
 
+#pragma GCC diagnostic ignored "-Wliteral-range"
+
 //#define DENORMAL 1e-310
 #define DENORMAL 1.11253692925360069155e-308
 

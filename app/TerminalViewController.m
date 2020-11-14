@@ -189,6 +189,7 @@
             return;
         }
     }
+    current = NULL; // it's been freed
     [self startNewSession];
 }
 

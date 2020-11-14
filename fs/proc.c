@@ -104,20 +104,10 @@ static off_t_ proc_seek(struct fd *fd, off_t_ off, int whence) {
     if (err < 0)
         return err;
 
-    off_t_ old_off = fd->offset;
-    if (whence == LSEEK_SET)
-        fd->offset = off;
-    else if (whence == LSEEK_CUR)
-        fd->offset += off;
-    else if (whence == LSEEK_END)
-        fd->offset = fd->proc.data.size + off;
-    else
-        return _EINVAL;
+    err = generic_seek(fd, off, whence, fd->proc.data.size);
+    if (err < 0)
+        return err;
 
-    if (fd->offset < 0) {
-        fd->offset = old_off;
-        return _EINVAL;
-    }
     return fd->offset;
 }
 

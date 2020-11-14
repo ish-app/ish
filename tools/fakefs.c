@@ -152,7 +152,6 @@ bool fakefs_import(const char *archive_path, const char *fs, struct fakefsify_er
             char *slash = entry_path_copy;
             while ((slash = strchr(slash + 1, '/')) != NULL) {
                 *slash = '\0';
-                size_t len = strlen(entry_path_copy);
                 int err = mkdirat(root_fd, fix_path(entry_path_copy), 0777);
                 *slash = '/';
                 if (err < 0) {

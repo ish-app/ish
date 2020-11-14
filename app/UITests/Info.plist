@@ -4,8 +4,6 @@
 <dict>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
-	<key>CFBundleDisplayName</key>
-	<string>iSH</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -15,21 +13,10 @@
 	<key>CFBundleName</key>
 	<string>$(PRODUCT_NAME)</string>
 	<key>CFBundlePackageType</key>
-	<string>XPC!</string>
+	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.0.2</string>
+	<string>1.0</string>
 	<key>CFBundleVersion</key>
-	<string>79</string>
-	<key>NSExtension</key>
-	<dict>
-		<key>NSExtensionFileProviderDocumentGroup</key>
-		<string>$(PRODUCT_APP_GROUP_IDENTIFIER)</string>
-		<key>NSExtensionFileProviderSupportsEnumeration</key>
-		<true/>
-		<key>NSExtensionPointIdentifier</key>
-		<string>com.apple.fileprovider-nonui</string>
-		<key>NSExtensionPrincipalClass</key>
-		<string>FileProviderExtension</string>
-	</dict>
+	<string>1</string>
 </dict>
 </plist>
