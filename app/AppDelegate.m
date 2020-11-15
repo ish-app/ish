@@ -16,6 +16,7 @@
 #import "SceneDelegate.h"
 #import "PasteboardDevice.h"
 #import "LocationDevice.h"
+#import "NSObject+SaneKVO.h"
 #import "Roots.h"
 #import "TerminalViewController.h"
 #import "UserPreferences.h"
@@ -149,8 +150,12 @@ static void ios_handle_die(const char *msg) {
         exit(2);
     }
     NSMutableString *resolvConf = [NSMutableString new];
-    for (int i = 0; res.dnsrch[i] != NULL; i++) {
-        [resolvConf appendFormat:@"search %s\n", res.dnsrch[i]];
+    if (res.dnsrch[0] != NULL) {
+        [resolvConf appendString:@"search"];
+        for (int i = 0; res.dnsrch[i] != NULL; i++) {
+            [resolvConf appendFormat:@" %s", res.dnsrch[i]];
+        }
+        [resolvConf appendString:@"\n"];
     }
     union res_sockaddr_union servers[NI_MAXSERV];
     int serversFound = res_getservers(&res, servers, NI_MAXSERV);
@@ -208,7 +213,10 @@ void NetworkReachabilityCallback(SCNetworkReachabilityRef target, SCNetworkReach
     extern const char *uname_version;
     uname_version = self.unameVersion.UTF8String;
     
-    [UserPreferences.shared addObserver:self forKeyPath:@"shouldDisableDimming" options:NSKeyValueObservingOptionInitial context:nil];
+    [UserPreferences.shared observe:@[@"shouldDisableDimming"] options:NSKeyValueObservingOptionInitial
+                              owner:self usingBlock:^(typeof(self) self) {
+        UIApplication.sharedApplication.idleTimerDisabled = UserPreferences.shared.shouldDisableDimming;
+    }];
     
     struct sockaddr_in6 address = {
         .sin6_len = sizeof(address),
@@ -225,7 +233,7 @@ void NetworkReachabilityCallback(SCNetworkReachabilityRef target, SCNetworkReach
         // For iOS <13, where the app delegate owns the window instead of the scene
         if ([NSUserDefaults.standardUserDefaults boolForKey:@"recovery"]) {
             UINavigationController *vc = [[UIStoryboard storyboardWithName:@"About" bundle:nil] instantiateInitialViewController];
-            AboutViewController *avc = vc.topViewController;
+            AboutViewController *avc = (AboutViewController *) vc.topViewController;
             avc.recoveryMode = YES;
             self.window.rootViewController = vc;
             return YES;
@@ -235,10 +243,6 @@ void NetworkReachabilityCallback(SCNetworkReachabilityRef target, SCNetworkReach
         [vc startNewSession];
     }
     return YES;
-}
-
-- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context {
-    UIApplication.sharedApplication.idleTimerDisabled = UserPreferences.shared.shouldDisableDimming;
 }
 
 - (void)application:(UIApplication *)application didDiscardSceneSessions:(NSSet<UISceneSession *> *)sceneSessions API_AVAILABLE(ios(13.0)) {

@@ -12,6 +12,7 @@
 #import "ArrowBarButton.h"
 #import "UserPreferences.h"
 #import "AboutViewController.h"
+#import "NSObject+SaneKVO.h"
 #include "kernel/init.h"
 #include "kernel/task.h"
 #include "kernel/calls.h"
@@ -104,13 +105,10 @@
         [self.escapeKey setImage:[UIImage systemImageNamed:@"escape"] forState:UIControlStateNormal];
     }
 
-    [[UserPreferences shared] addObserver:self forKeyPath:@"theme" options:NSKeyValueObservingOptionNew context:nil];
-    [[UserPreferences shared] addObserver:self forKeyPath:@"hideExtraKeysWithExternalKeyboard" options:NSKeyValueObservingOptionNew context:nil];
-}
-
-- (void)dealloc {
-    [[UserPreferences shared] removeObserver:self forKeyPath:@"theme"];
-    [[UserPreferences shared] removeObserver:self forKeyPath:@"hideExtraKeysWithExternalKeyboard"];
+    [UserPreferences.shared observe:@[@"theme", @"hideExtraKeysWithExternalKeyboard"]
+                            options:0 owner:self usingBlock:^(typeof(self) self) {
+        [self _updateStyleFromPreferences:YES];
+    }];
 }
 
 - (void)awakeFromNib {
@@ -189,6 +187,7 @@
             return;
         }
     }
+    current = NULL; // it's been freed
     [self startNewSession];
 }
 
@@ -236,6 +235,9 @@
         self.ignoreKeyboardMotion = NO;
     }
     [self setNeedsStatusBarAppearanceUpdate];
+}
+- (void)_updateStyleAnimated {
+    [self _updateStyleFromPreferences:YES];
 }
 
 - (UIStatusBarStyle)preferredStatusBarStyle {

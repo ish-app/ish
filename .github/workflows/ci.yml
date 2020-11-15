@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+      branches: [master]
+  pull_request:
+      branches: [master]
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-18.04
+    strategy:
+      matrix:
+        cc: [clang, gcc]
+    steps:
+      - uses: actions/checkout@v2
+        with:
+            submodules: true
+      - uses: actions/setup-python@v2
+        with:
+            python-version: '3.x'
+      - name: Install dependencies
+        run: |
+          sudo apt-get install ninja-build libarchive-dev
+          pip3 install meson
+      - name: Build
+        run: |
+          meson build -Dengine=jit
+          ninja -C build
+        env:
+          CC: ${{matrix.cc}}
+      - name: Test
+        run: ninja -C build test
+
+  build-mac:
+    runs-on: macos-10.15
+    steps:
+      - uses: actions/checkout@v2
+        with:
+            submodules: true
+      - name: Install dependencies
+        run: |
+          brew install llvm ninja libarchive
+          pip3 install meson
+      - name: Build
+        run: xcodebuild -project iSH.xcodeproj -scheme iSH -sdk iphoneos CODE_SIGNING_ALLOWED=NO

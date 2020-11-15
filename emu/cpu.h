@@ -219,8 +219,8 @@ static inline const char *reg32_name(enum reg32 reg) {
         case reg_ebp: return "ebp";
         case reg_esi: return "esi";
         case reg_edi: return "edi";
+        default: return "?";
     }
-    return "?";
 }
 
 #endif

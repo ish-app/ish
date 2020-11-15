@@ -57,7 +57,7 @@ static ssize_t null_read(struct fd *UNUSED(fd), void *UNUSED(buf), size_t UNUSED
 static ssize_t null_write(struct fd *UNUSED(fd), const void *UNUSED(buf), size_t bufsize) {
     return bufsize;
 }
-static off_t_ null_lseek(struct fd *fd, off_t_ off, int whence) {
+static off_t_ null_lseek(struct fd *UNUSED(fd), off_t_ UNUSED(off), int UNUSED(whence)) {
     return 0;
 }
 struct dev_ops null_dev = {

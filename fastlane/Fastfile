@@ -13,7 +13,7 @@ lane :beta do
         force: true,
     )
 
-    build_app(project: 'iSH.xcodeproj')
+    build_app(project: 'iSH.xcodeproj', scheme: 'iSH')
     upload_to_testflight(
         changelog: testflight_changelog,
         wait_for_uploaded_build: true,
@@ -27,7 +27,7 @@ lane :beta do
     set_github_release(
         repository_name: 'ish-app/ish',
         tag_name: tag,
-        commitish: null, # the tag better exist
+        commitish: nil, # the tag better exist
         name: "Build #{build_number}",
         description: changelog,
         upload_assets: ['iSH.ipa'],

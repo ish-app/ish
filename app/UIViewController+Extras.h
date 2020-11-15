@@ -11,7 +11,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface UIViewController (Extras)
 
-- (IBAction)unwind:(UIStoryboardSegue *)segue;
 - (void)presentError:(NSError *)error title:(NSString *)title;
 
 @end

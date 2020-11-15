@@ -7,6 +7,7 @@
 
 #import "AboutExternalKeyboardViewController.h"
 #import "UserPreferences.h"
+#import "NSObject+SaneKVO.h"
 
 const int kCapsLockMappingSection = 0;
 
@@ -23,18 +24,11 @@ const int kCapsLockMappingSection = 0;
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    [UserPreferences.shared addObserver:self forKeyPath:@"capsLockMapping" options:NSKeyValueObservingOptionNew context:nil];
-    [UserPreferences.shared addObserver:self forKeyPath:@"optionMapping" options:NSKeyValueObservingOptionNew context:nil];
+    [UserPreferences.shared observe:@[@"capsLockMapping", @"optionMapping"]
+                            options:0 owner:self usingBlock:^(typeof(self) self) {
+        [self.tableView reloadData];
+    }];
     [self _update];
-}
-
-- (void)dealloc {
-    [UserPreferences.shared removeObserver:self forKeyPath:@"capsLockMapping"];
-    [UserPreferences.shared removeObserver:self forKeyPath:@"optionMapping"];
-}
-
-- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context {
-    [self.tableView reloadData];
 }
 
 - (void)_update {
