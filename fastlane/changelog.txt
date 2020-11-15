@@ -1,7 +1,1 @@
-Fixed bugs:
-- Crash when entering recovery mode
-- Other KVO-related crashes
-- Incorrect syntax for multiple DNS search domains in resolv.conf (thanks @mitchblank)
-- Broken seek in procfs, causing many things dependent on it to hang
-- Directory traversal in filesystem renaming
-
+Version bump
