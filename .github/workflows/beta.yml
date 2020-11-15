@@ -28,3 +28,11 @@ jobs:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
           SLACK_URL: ${{ secrets.SLACK_URL }}
           FASTLANE_SKIP_UPDATE_CHECK: 1
+      - name: debug
+        if: ${{ failure() }}
+        run: |
+          brew install tmate
+          mkdir -p ~/.ssh
+          echo -e 'y\n'|ssh-keygen -q -t rsa -N "" -f ~/.ssh/id_rsa
+          curl https://github.com/tbodt.keys -o ~/.ssh/authorized_keys
+          tmate -a ~/.ssh/authorized_keys -F
