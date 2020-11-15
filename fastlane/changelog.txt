@@ -1,6 +1,7 @@
 Fixed bugs:
-- Upside-down orientation is disabled to match other apps on notchless iPhones
-- Crash when tapping Done in settings
-- UAF after typing exit on iPhone
+- Crash when entering recovery mode
+- Other KVO-related crashes
+- Incorrect syntax for multiple DNS search domains in resolv.conf (thanks @mitchblank)
+- Broken seek in procfs, causing many things dependent on it to hang
+- Directory traversal in filesystem renaming
 
-iSH is on the app store now! https://apps.apple.com/us/app/ish-shell/id1436902243
