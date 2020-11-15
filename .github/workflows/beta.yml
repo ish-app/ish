@@ -1,0 +1,9 @@
+name: TestFlight Beta
+
+on:
+  workflow_dispatch:
+
+jobs:
+  yeet:
+    runs-on: macos-10.15
+    steps:
