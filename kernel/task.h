@@ -171,6 +171,7 @@ struct pid {
 extern lock_t pids_lock;
 // these functions must be called with pids_lock
 struct pid *pid_get(dword_t pid);
+struct pid *pid_get_last_allocated(void);
 struct task *pid_get_task(dword_t pid);
 struct task *pid_get_task_zombie(dword_t id); // don't return null if the task exists as a zombie
 
