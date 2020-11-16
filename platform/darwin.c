@@ -61,3 +61,10 @@ struct uptime_info get_uptime() {
     };
     return uptime;
 }
+
+int get_cpu_count() {
+    int ncpu;
+    size_t size = sizeof(int);
+    sysctlbyname("hw.ncpu", &ncpu, &size, NULL, 0);
+    return ncpu;
+}

@@ -51,3 +51,7 @@ struct uptime_info get_uptime() {
     };
     return uptime;
 }
+
+int get_cpu_count() {
+    return get_nprocs();
+}
