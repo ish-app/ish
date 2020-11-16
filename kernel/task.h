@@ -71,6 +71,7 @@ struct task {
     dword_t exit_code;
     bool zombie;
     bool exiting;
+    bool io_block;
 
     // this structure is allocated on the stack of the parent's clone() call
     struct vfork_info {
@@ -163,9 +164,15 @@ static inline bool task_is_leader(struct task *task) {
 struct pid {
     dword_t id;
     struct task *task;
+    struct list alive; // list of alive pids
     struct list session;
     struct list pgroup;
 };
+
+// @alive_pids_list is used as a head of all active pids.
+// Scanning this list, you should start list_for_each from alive_pids_list,
+// to avoid having this head element in your cycle.
+extern struct list alive_pids_list;
 
 // synchronizes obtaining a pointer to a task and freeing that task
 extern lock_t pids_lock;
@@ -174,6 +181,9 @@ struct pid *pid_get(dword_t pid);
 struct pid *pid_get_last_allocated(void);
 struct task *pid_get_task(dword_t pid);
 struct task *pid_get_task_zombie(dword_t id); // don't return null if the task exists as a zombie
+
+dword_t get_count_of_blocked_tasks(void);
+dword_t get_count_of_alive_tasks(void);
 
 #define MAX_PID (1 << 15) // oughta be enough
 
@@ -188,5 +198,25 @@ extern void (*exit_hook)(struct task *task, int code);
 // Update the thread name to match the current task, in the format "comm-pid".
 // Will ensure that the -pid part always fits, then will fit as much of comm as possible.
 void update_thread_name(void);
+
+// To collect statics on which tasks are blocked we need to proccess areas
+// of code which could block our task (e.g reads or writes). Before executing
+// of functions which can block the task, we mark our task as blocked and
+// unblock it after the function is executed.
+__attribute__((always_inline)) inline int task_may_block_start(void) {
+    lock(&pids_lock);
+    current->io_block = 1;
+    unlock(&pids_lock);
+    return 0;
+}
+
+__attribute__((always_inline)) inline int task_may_block_end(void) {
+    lock(&pids_lock);
+    current->io_block = 0;
+    unlock(&pids_lock);
+    return 0;
+}
+
+#define TASK_MAY_BLOCK for (int i = task_may_block_start(); i < 1; task_may_block_end(), i++)
 
 #endif

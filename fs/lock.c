@@ -226,12 +226,14 @@ int fcntl_setlk(struct fd *fd, struct flock_ *flock, bool blocking) {
     int err = file_lock_from_flock(fd, flock, &request);
     if (err < 0)
         goto out;
-    while ((err = file_lock_acquire(inode, &request)) == _EAGAIN) {
-        if (!blocking)
-            break;
-        err = wait_for(&inode->posix_unlock, &inode->lock, NULL);
-        if (err < 0)
-            break;
+    TASK_MAY_BLOCK {
+        while ((err = file_lock_acquire(inode, &request)) == _EAGAIN) {
+            if (!blocking)
+                break;
+            err = wait_for(&inode->posix_unlock, &inode->lock, NULL);
+            if (err < 0)
+                break;
+        }
     }
 out:
     unlock(&inode->lock);

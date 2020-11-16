@@ -12,6 +12,7 @@ __thread struct task *current;
 static dword_t last_allocated_pid = 0;
 static struct pid pids[MAX_PID + 1] = {};
 lock_t pids_lock = LOCK_INITIALIZER;
+struct list alive_pids_list;
 
 static bool pid_empty(struct pid *pid) {
     return pid->task == NULL && list_empty(&pid->session) && list_empty(&pid->pgroup);
@@ -48,6 +49,30 @@ struct pid *pid_get_last_allocated() {
     return pid_get(last_allocated_pid);
 }
 
+dword_t get_count_of_blocked_tasks() {
+    lock(&pids_lock);
+    dword_t res = 0;
+    struct pid *pid_entry;
+    list_for_each_entry(&alive_pids_list, pid_entry, alive) {
+        if (pid_entry->task->io_block) {
+            res++;
+        }
+    }
+    unlock(&pids_lock);
+    return res;
+}
+
+dword_t get_count_of_alive_tasks() {
+    lock(&pids_lock);
+    dword_t res = 0;
+    struct list *item;
+    list_for_each(&alive_pids_list, item) {
+        res++;
+    }
+    unlock(&pids_lock);
+    return res;
+}
+
 struct task *task_create_(struct task *parent) {
     lock(&pids_lock);
     do {
@@ -56,6 +81,7 @@ struct task *task_create_(struct task *parent) {
     } while (!pid_empty(&pids[last_allocated_pid]));
     struct pid *pid = &pids[last_allocated_pid];
     pid->id = last_allocated_pid;
+    list_init(&pid->alive);
     list_init(&pid->session);
     list_init(&pid->pgroup);
 
@@ -67,6 +93,7 @@ struct task *task_create_(struct task *parent) {
         *task = *parent;
     task->pid = pid->id;
     pid->task = task;
+    list_add(&alive_pids_list, &pid->alive);
 
     list_init(&task->children);
     list_init(&task->siblings);
@@ -98,7 +125,9 @@ struct task *task_create_(struct task *parent) {
 
 void task_destroy(struct task *task) {
     list_remove(&task->siblings);
-    pid_get(task->pid)->task = NULL;
+    struct pid *pid = pid_get(task->pid);
+    pid->task = NULL;
+    list_remove(&pid->alive);
     free(task);
 }
 
