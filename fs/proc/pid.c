@@ -32,12 +32,17 @@ static int proc_pid_stat_show(struct proc_entry *entry, struct proc_data *buf) {
     lock(&task->group->lock);
     lock(&task->sighand->lock);
 
+    // program reads this using read-like syscall, so we are in blocking area,
+    // which means its io_block is set to true. When a proc reads an
+    // information about itself, but it shouldn't be marked as blocked.
+    char proc_state = (task->zombie ? 'Z' :
+                       task->group->stopped ? 'T' :
+                       task->io_block && task->pid != current->pid ? 'S' :
+                       'R');
+    
     proc_printf(buf, "%d ", task->pid);
     proc_printf(buf, "(%.16s) ", task->comm);
-    proc_printf(buf, "%c ",
-            task->zombie ? 'Z' :
-            task->group->stopped ? 'T' :
-            'R'); // I have no visibility into sleep state at the moment
+    proc_printf(buf, "%c ", proc_state);
     proc_printf(buf, "%d ", task->parent ? task->parent->pid : 0);
     proc_printf(buf, "%d ", task->group->pgid);
     proc_printf(buf, "%d ", task->group->sid);
