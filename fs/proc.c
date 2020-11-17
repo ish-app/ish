@@ -62,7 +62,7 @@ static int proc_getpath(struct fd *fd, char *buf) {
         p -= component_len;
         n += component_len;
         *p = '/';
-        memcpy(p + 1, component, component_len);
+        memcpy(p + 1, component, component_len - 1);
         entry.meta = entry.meta->parent;
     }
     memmove(buf, p, n + 1); // plus one for the null
