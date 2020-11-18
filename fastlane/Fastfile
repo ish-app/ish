@@ -3,20 +3,6 @@ lane :beta do
     setup_ci
     sync_code_signing
     sync_code_signing(type: 'appstore')
-    if is_ci
-      update_code_signing_settings(
-        path: 'iSH.xcodeproj',
-        targets: 'iSH',
-        use_automatic_signing: false,
-        profile_uuid: ENV['sigh_app.ish.iSH_development'],
-      )
-      update_code_signing_settings(
-        path: 'iSH.xcodeproj',
-        targets: 'iSHFileProvider',
-        use_automatic_signing: false,
-        profile_uuid: ENV['sigh_app.ish.iSH.FileProvider_development'],
-      )
-    end
 
     changelog = File.read('changelog.txt')
     last_tag = `git describe --tags --abbrev=0 --match builds/\*`.chomp
@@ -33,6 +19,22 @@ lane :beta do
     )
     tag = "builds/#{build_number}"
     add_git_tag(tag: tag)
+
+    # do this after commiting the version bump but before building the app
+    if is_ci
+      update_code_signing_settings(
+        path: 'iSH.xcodeproj',
+        targets: 'iSH',
+        use_automatic_signing: false,
+        profile_uuid: ENV['sigh_app.ish.iSH_development'],
+      )
+      update_code_signing_settings(
+        path: 'iSH.xcodeproj',
+        targets: 'iSHFileProvider',
+        use_automatic_signing: false,
+        profile_uuid: ENV['sigh_app.ish.iSH.FileProvider_development'],
+      )
+    end
 
     build_app(
       project: 'iSH.xcodeproj',
