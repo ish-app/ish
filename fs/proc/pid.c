@@ -108,6 +108,17 @@ static int proc_pid_stat_show(struct proc_entry *entry, struct proc_data *buf) {
     return 0;
 }
 
+static int proc_pid_statm_show(struct proc_entry *UNUSED(entry), struct proc_data *buf) {
+    proc_printf(buf, "%lu ", 0l); // size
+    proc_printf(buf, "%lu ", 0l); // resident
+    proc_printf(buf, "%lu ", 0l); // shared
+    proc_printf(buf, "%lu ", 0l); // text
+    proc_printf(buf, "%lu ", 0l); // lib (unused since Linux 2.6)
+    proc_printf(buf, "%lu ", 0l); // data
+    proc_printf(buf, "%lu\n", 0l); // dt (unused since Linux 2.6)
+    return 0;
+}
+
 static int proc_pid_auxv_show(struct proc_entry *entry, struct proc_data *buf) {
     struct task *task = proc_get_task(entry);
     if (task == NULL)
@@ -262,6 +273,7 @@ struct proc_dir_entry proc_pid_entries[] = {
     {"fd", S_IFDIR, .readdir = proc_pid_fd_readdir},
     {"maps", .show = proc_pid_maps_show},
     {"stat", .show = proc_pid_stat_show},
+    {"statm", .show = proc_pid_statm_show},
 };
 
 struct proc_dir_entry proc_pid = {NULL, S_IFDIR,
