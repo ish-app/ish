@@ -1,0 +1,30 @@
+name: TestFlight Beta
+
+on:
+  workflow_dispatch:
+
+jobs:
+  push-beta:
+    runs-on: macos-10.15
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Install deps
+        run: |
+            pip3 install meson
+            brew install ninja
+            bundle install
+            git config --global user.name iSH
+            git config --global user.email 74480058+ish-actions@users.noreply.github.com
+      - name: Fastlane
+        run: bundle exec fastlane beta
+        env:
+          APP_STORE_CONNECT_API_KEY_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_API_KEY_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_API_KEY_KEY: ${{ secrets.APP_STORE_CONNECT_KEY }}
+          MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.MATCH_GITHUB_AUTH }}
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSPHRASE }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          SLACK_URL: ${{ secrets.SLACK_URL }}
+          FASTLANE_SKIP_UPDATE_CHECK: 1

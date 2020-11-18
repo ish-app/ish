@@ -1,0 +1,2 @@
+git_url("https://github.com/ish-app/certificates")
+app_identifier(["app.ish.iSH", "app.ish.iSH.FileProvider"])

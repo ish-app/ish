@@ -1,4 +1,9 @@
 lane :beta do
+    app_store_connect_api_key
+    setup_ci
+    sync_code_signing
+    sync_code_signing(type: 'appstore')
+
     changelog = File.read('changelog.txt')
     last_tag = `git describe --tags --abbrev=0 --match builds/\*`.chomp
     testflight_changelog = changelog + "\n" + File.read("footer.txt") + `git shortlog #{last_tag}..HEAD`
@@ -12,17 +17,35 @@ lane :beta do
         include: "fastlane/changelog.txt",
         force: true,
     )
+    tag = "builds/#{build_number}"
+    add_git_tag(tag: tag)
 
-    build_app(project: 'iSH.xcodeproj', scheme: 'iSH')
+    # do this after commiting the version bump but before building the app
+    if is_ci
+      update_code_signing_settings(
+        path: 'iSH.xcodeproj',
+        targets: 'iSH',
+        use_automatic_signing: false,
+        profile_uuid: ENV['sigh_app.ish.iSH_development'],
+      )
+      update_code_signing_settings(
+        path: 'iSH.xcodeproj',
+        targets: 'iSHFileProvider',
+        use_automatic_signing: false,
+        profile_uuid: ENV['sigh_app.ish.iSH.FileProvider_development'],
+      )
+    end
+
+    build_app(
+      project: 'iSH.xcodeproj',
+      scheme: 'iSH',
+    )
     upload_to_testflight(
         changelog: testflight_changelog,
-        wait_for_uploaded_build: true,
         distribute_external: true,
         groups: ["People"]
     )
 
-    tag = "builds/#{build_number}"
-    add_git_tag(tag: tag)
     push_to_git_remote
     set_github_release(
         repository_name: 'ish-app/ish',
@@ -31,7 +54,7 @@ lane :beta do
         name: "Build #{build_number}",
         description: changelog,
         upload_assets: ['iSH.ipa'],
-        api_token: ENV['GITHUB_TOKEN'],
+        api_token: ENV['GH_TOKEN'],
     )
     slack(
         message: "New build available!",

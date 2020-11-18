@@ -1,0 +1,17 @@
+name: Auto-Label
+on:
+  issues:
+    types: [opened]
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: satackey/action-js-inline@bf6fcaf35de1ed03bcfd25a0a8b1fa4c551ec908
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const core = require('@actions/core');
+            const github = require('@actions/github');
+            const octokit = github.getOctokit(core.getInput('token'));
+            const {repo, owner, number} = github.context.issue;
+            await octokit.issues.addLabels({repo, owner, issue_number: number, labels: ['unconfirmed']});
