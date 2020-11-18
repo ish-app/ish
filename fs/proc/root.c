@@ -1,7 +1,9 @@
+#include <sys/param.h> // for MIN and MAX
 #include <sys/stat.h>
 #include <inttypes.h>
 #include <string.h>
 #include "kernel/calls.h"
+#include "kernel/task.h"
 #include "fs/proc.h"
 #include "platform/platform.h"
 
@@ -45,6 +47,21 @@ static int proc_show_uptime(struct proc_entry *UNUSED(entry), struct proc_data *
     struct uptime_info uptime_info = get_uptime();
     unsigned uptime = uptime_info.uptime_ticks;
     proc_printf(buf, "%u.%u %u.%u\n", uptime / 100, uptime % 100, uptime / 100, uptime % 100);
+    return 0;
+}
+
+static int proc_show_loadavg(struct proc_entry *UNUSED(entry), struct proc_data *buf) {
+    struct uptime_info uptime = get_uptime();
+    struct pid *last_pid = pid_get_last_allocated();
+    int last_pid_id = last_pid ? last_pid->id : 0;
+    double load_1m = uptime.load_1m / 65536.0;
+    double load_5m = uptime.load_5m / 65536.0;
+    double load_15m = uptime.load_15m / 65536.0;
+    int blocked_task_count = get_count_of_blocked_tasks();
+    int alive_task_count = get_count_of_alive_tasks();
+    // running_task_count is calculated approximetly, since we don't know the real number of currently running tasks.
+    int running_task_count = MIN(get_cpu_count(), (int)(alive_task_count - blocked_task_count));
+    proc_printf(buf, "%.2f %.2f %.2f %u/%u %u\n", load_1m, load_5m, load_15m, running_task_count, alive_task_count, last_pid_id);
     return 0;
 }
 
@@ -97,6 +114,7 @@ static int proc_show_mounts(struct proc_entry *UNUSED(entry), struct proc_data *
 
 // in alphabetical order
 struct proc_dir_entry proc_root_entries[] = {
+    {"loadavg", .show = proc_show_loadavg},
     {"meminfo", .show = proc_show_meminfo},
     {"mounts", .show = proc_show_mounts},
     {"self", S_IFLNK, .readlink = proc_readlink_self},
