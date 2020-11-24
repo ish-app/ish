@@ -20,6 +20,7 @@
 #import "Roots.h"
 #import "TerminalViewController.h"
 #import "UserPreferences.h"
+#import "APKServer.h"
 #include "kernel/init.h"
 #include "kernel/calls.h"
 #include "fs/dyndev.h"
@@ -31,6 +32,7 @@
 @property BOOL exiting;
 @property NSString *unameVersion;
 @property SCNetworkReachabilityRef reachability;
+@property APKServer *apkServer;
 
 @end
 
@@ -228,7 +230,11 @@ void NetworkReachabilityCallback(SCNetworkReachabilityRef target, SCNetworkReach
     };
     SCNetworkReachabilitySetCallback(self.reachability, NetworkReachabilityCallback, &context);
     SCNetworkReachabilityScheduleWithRunLoop(self.reachability, CFRunLoopGetMain(), kCFRunLoopCommonModes);
-    
+
+    if ([NSBundle.mainBundle URLForResource:@"OnDemandResources" withExtension:@"plist"] != nil) {
+        self.apkServer = [APKServer new];
+    }
+
     if (self.window != nil) {
         // For iOS <13, where the app delegate owns the window instead of the scene
         if ([NSUserDefaults.standardUserDefaults boolForKey:@"recovery"]) {
