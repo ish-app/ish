@@ -31,6 +31,7 @@ static NSString *kDefaultRoot = @"Default Root";
 @property NSMutableOrderedSet<NSString *> *roots;
 @property BOOL updatingDomains;
 @property BOOL domainsNeedUpdate;
+@property BOOL wantsVersionFile;
 @end
 
 @implementation Roots
@@ -50,6 +51,7 @@ static NSString *kDefaultRoot = @"Default Root";
                             progressReporter:nil]) {
                 NSAssert(NO, @"failed to import default root, error %@", error);
             }
+            _wantsVersionFile = YES;
         }
         [self observe:@[@"roots"] options:0 owner:self usingBlock:^(typeof(self) self) {
             if (self.defaultRoot == nil && self.roots.count)

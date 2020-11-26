@@ -16,23 +16,37 @@
                         <rect key="frame" x="0.0" y="0.0" width="320" height="568"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="FQi-r8-odu" customClass="TerminalView">
+                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="l9z-h1-AR7">
                                 <rect key="frame" x="0.0" y="0.0" width="320" height="568"/>
+                                <subviews>
+                                    <view contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="FQi-r8-odu" customClass="TerminalView">
+                                        <rect key="frame" x="0.0" y="0.0" width="320" height="568"/>
+                                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                        <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                        <connections>
+                                            <outlet property="controlKey" destination="W9v-cj-FWz" id="HgQ-u7-5IL"/>
+                                            <outlet property="inputAccessoryView" destination="GyN-ob-WFz" id="rBB-FQ-HiM"/>
+                                        </connections>
+                                    </view>
+                                    <containerView opaque="NO" contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4UX-TH-4BQ" customClass="PassthroughView">
+                                        <rect key="frame" x="0.0" y="0.0" width="320" height="568"/>
+                                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                        <connections>
+                                            <segue destination="hWN-qz-BEH" kind="embed" id="mcY-QX-RE9"/>
+                                        </connections>
+                                    </containerView>
+                                </subviews>
                                 <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-                                <connections>
-                                    <outlet property="controlKey" destination="W9v-cj-FWz" id="HgQ-u7-5IL"/>
-                                    <outlet property="inputAccessoryView" destination="GyN-ob-WFz" id="rBB-FQ-HiM"/>
-                                </connections>
                             </view>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="IVs-Oh-AhK"/>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                         <gestureRecognizers/>
                         <constraints>
-                            <constraint firstItem="FQi-r8-odu" firstAttribute="trailing" secondItem="IVs-Oh-AhK" secondAttribute="trailing" id="EeQ-tO-BY6"/>
-                            <constraint firstItem="FQi-r8-odu" firstAttribute="top" secondItem="IVs-Oh-AhK" secondAttribute="top" id="Fd5-I9-Qjs"/>
-                            <constraint firstItem="FQi-r8-odu" firstAttribute="leading" secondItem="IVs-Oh-AhK" secondAttribute="leading" id="VUM-Zu-VAQ"/>
-                            <constraint firstItem="FQi-r8-odu" firstAttribute="bottom" secondItem="8bC-Xf-vdC" secondAttribute="bottom" identifier="bottom constraint" id="fXD-Y3-UQj"/>
+                            <constraint firstItem="l9z-h1-AR7" firstAttribute="top" secondItem="IVs-Oh-AhK" secondAttribute="top" id="4yg-Pg-9be"/>
+                            <constraint firstItem="l9z-h1-AR7" firstAttribute="leading" secondItem="IVs-Oh-AhK" secondAttribute="leading" id="AUH-Aa-7PU"/>
+                            <constraint firstItem="l9z-h1-AR7" firstAttribute="trailing" secondItem="IVs-Oh-AhK" secondAttribute="trailing" id="Ge3-sv-TgP"/>
+                            <constraint firstItem="l9z-h1-AR7" firstAttribute="bottom" secondItem="IVs-Oh-AhK" secondAttribute="bottom" id="lUN-Pb-ODn"/>
                         </constraints>
                     </view>
                     <connections>
@@ -43,7 +57,7 @@
                         <outlet property="barTop" destination="gtD-Rx-Gdo" id="zXm-Bb-ZyO"/>
                         <outlet property="barTrailing" destination="RAD-x5-aAI" id="Ele-Ty-xAK"/>
                         <outlet property="barView" destination="GyN-ob-WFz" id="lVV-s6-cQt"/>
-                        <outlet property="bottomConstraint" destination="fXD-Y3-UQj" id="dpH-0p-KEx"/>
+                        <outlet property="bottomConstraint" destination="lUN-Pb-ODn" id="3Hl-UZ-jjM"/>
                         <outlet property="controlKey" destination="W9v-cj-FWz" id="c9i-VC-j7f"/>
                         <outlet property="escapeKey" destination="IPm-l0-f25" id="QBn-lt-GPd"/>
                         <outlet property="hideKeyboardButton" destination="7qw-ie-p4d" id="n5f-XX-i98"/>
@@ -193,7 +207,15 @@
                     </connections>
                 </pongPressGestureRecognizer>
             </objects>
-            <point key="canvasLocation" x="32.799999999999997" y="32.833583208395808"/>
+            <point key="canvasLocation" x="31.875" y="32.74647887323944"/>
+        </scene>
+        <!--APKDownloads-->
+        <scene sceneID="cCe-Da-UCg">
+            <objects>
+                <viewControllerPlaceholder storyboardName="APKDownloads" id="hWN-qz-BEH" sceneMemberID="viewController"/>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="OiW-pN-fBS" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="755" y="33"/>
         </scene>
     </scenes>
     <resources>
