@@ -42,13 +42,13 @@ static NSString *kDefaultRoot = @"Default Root";
         NSAssert(error == nil, @"couldn't list roots: %@", error);
         self.roots = [rootNames mutableCopy];
         if (!self.roots.count) {
-            // import alpine
+            // import default root
             NSError *error;
             if (![self importRootFromArchive:[NSBundle.mainBundle URLForResource:@"root" withExtension:@"tar.gz"]
                                         name:@"default"
                                        error:&error
                             progressReporter:nil]) {
-                NSAssert(NO, @"failed to import alpine, error %@", error);
+                NSAssert(NO, @"failed to import default root, error %@", error);
             }
         }
         [self observe:@[@"roots"] options:0 owner:self usingBlock:^(typeof(self) self) {

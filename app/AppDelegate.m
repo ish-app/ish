@@ -74,7 +74,16 @@ static void ios_handle_die(const char *msg) {
     err = become_first_process();
     if (err < 0)
         return err;
-    
+
+    // /etc/ish-version is the last ish version that opened this root. Not used for anything yet, but could be used to know whether to change the root if needed in a future update.
+    struct fd *ish_version = generic_open("/etc/ish-version", O_WRONLY_|O_TRUNC_, 0644);
+    if (!IS_ERR(ish_version)) {
+        NSString *version = NSBundle.mainBundle.infoDictionary[(__bridge NSString *) kCFBundleVersionKey];
+        NSString *file = [NSString stringWithFormat:@"%@\n", version];
+        ish_version->ops->write(ish_version, file.UTF8String, [file lengthOfBytesUsingEncoding:NSUTF8StringEncoding]);
+        fd_close(ish_version);
+    }
+
     // create some device nodes
     // this will do nothing if they already exist
     generic_mknodat(AT_PWD, "/dev/tty1", S_IFCHR|0666, dev_make(TTY_CONSOLE_MAJOR, 1));

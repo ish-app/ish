@@ -145,22 +145,22 @@ bool fakefs_import(const char *archive_path, const char *fs, struct fakefsify_er
             continue;
         }
 
+        // mkdir -p
+        char *entry_path_copy = strdup(entry_path);
+        char *slash = entry_path_copy;
+        while ((slash = strchr(slash + 1, '/')) != NULL) {
+            *slash = '\0';
+            int err = mkdirat(root_fd, fix_path(entry_path_copy), 0777);
+            *slash = '/';
+            if (err < 0) {
+                if (errno == EEXIST) continue;
+                POSIX_ERR();
+            }
+        }
+        free(entry_path_copy);
+
         int fd = -1;
         if (archive_entry_filetype(entry) != AE_IFDIR) {
-            // mkdir -p
-            char *entry_path_copy = strdup(entry_path);
-            char *slash = entry_path_copy;
-            while ((slash = strchr(slash + 1, '/')) != NULL) {
-                *slash = '\0';
-                int err = mkdirat(root_fd, fix_path(entry_path_copy), 0777);
-                *slash = '/';
-                if (err < 0) {
-                    if (errno == EEXIST) continue;
-                    POSIX_ERR();
-                }
-            }
-            free(entry_path_copy);
-
             fd = openat(root_fd, fix_path(entry_path), O_WRONLY | O_CREAT | O_TRUNC, 0666);
             if (fd < 0) {
                 if (errno == EISDIR) continue; // assuming it's case insensitivity

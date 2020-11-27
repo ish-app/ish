@@ -7,4 +7,8 @@ function sync_repo() {
     date=$(date +%F)
     rclone moveto "b2:alpine-archive/$path/APKINDEX.tar.gz" "b2:alpine-archive/$path/APKINDEX-$version-$date.tar.gz"
 }
+if [[ "$#" != 2 ]]; then
+    echo "usage: $0 version path" >&2
+    exit 1
+fi
 sync_repo "$@"

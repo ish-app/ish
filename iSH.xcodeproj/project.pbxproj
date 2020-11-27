@@ -1400,7 +1400,7 @@
 			);
 			name = "Download Root";
 			outputPaths = (
-				"$(SRCROOT)/alpine.tar.gz",
+				"$(SRCROOT)/root.tar.gz",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;

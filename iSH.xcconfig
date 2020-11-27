@@ -10,7 +10,7 @@ ISH_LOGGER_macosx = dprintf
 
 ENABLE_APK_ODRS = NO
 ROOTFS_URL = $(ROOTFS_URL_IF_ODRS_$(ENABLE_APK_ODRS))
-ROOTFS_URL_IF_ODRS_YES = github.com/ish-app/roots/releases/download/g89bf0c2c93abd3080f6909041f9c659cf076f2fd/appstore-odrs.tar.gz
-ROOTFS_URL_IF_ODRS_NO = github.com/ish-app/roots/releases/download/g9ce02ec1eddbf4beee99c6aeca3c99bd4f8b5943/appstore.tar.gz
+ROOTFS_URL_IF_ODRS_YES = github.com/ish-app/roots/releases/download/ge69d2565ba237547370b89fc5468bde4b3352767/appstore-apk.tar.gz
+ROOTFS_URL_IF_ODRS_NO = github.com/ish-app/roots/releases/download/ge69d2565ba237547370b89fc5468bde4b3352767/appstore.tar.gz
 
 PRODUCT_APP_GROUP_IDENTIFIER = group.$(ROOT_BUNDLE_IDENTIFIER)
