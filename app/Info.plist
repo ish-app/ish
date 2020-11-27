@@ -2,8 +2,6 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>fuc</key>
-	<string>ICON_STUFF</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleExecutable</key>
@@ -22,6 +20,8 @@
 	<string>82</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>This is required for connecting to localhost and using the ping command.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>Programs running in iSH will be allowed to track your location in the background.</string>
 	<key>NSLocationAlwaysUsageDescription</key>
@@ -82,5 +82,7 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>fuc</key>
+	<string>ICON_STUFF</string>
 </dict>
 </plist>
