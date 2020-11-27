@@ -30,6 +30,7 @@ iSH 是一个运行在 iOS 上的 Linux shell。本项目使用了 x86 用户模
  - Ninja 请查看[此处](https://ninja-build.org/)
  - Clang and LLD (在安装了 `brew` 的 macOS 系统上运行 `brew install llvm`。在 Linux 系统上运行 `sudo apt install clang lld` 或者 `sudo pacman -S clang lld` ，请根据你的包管理器选择相应安装命令)
  - sqlite3 (sqlite3 非常常见。它在 macOS 上是预安装的，但它或许没有安装在你的 Linux 上，运行 `which sqlite3` 以查看它是否存在。如果没有，你可以根据你的包管理器运行 `sudo apt install libsqlite3-dev` 之类的安装命令)
+ - libarchive (`brew install libarchive`，`sudo port install libarchive`，`sudo apt install libarchive-dev`) TODO: 捆绑该依赖
 
 ## 创建iOS应用
 
