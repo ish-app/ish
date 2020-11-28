@@ -58,7 +58,7 @@ static dword_t sys_stat_path(fd_t at_f, addr_t path_addr, addr_t statbuf_addr, b
     struct fd *at = at_fd(at_f);
     if (at == NULL)
         return _EBADF;
-    struct statbuf stat;
+    struct statbuf stat = {};
     if ((err = generic_statat(at, path, &stat, follow_links)) < 0)
         return err;
     struct newstat64 newstat = stat_convert_newstat64(stat);
