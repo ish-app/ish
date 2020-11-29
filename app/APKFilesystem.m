@@ -154,6 +154,16 @@ static int apkfs_close(struct fd *fd) {
     return 0;
 }
 
+static int apkfs_getpath(struct fd *fd, char *buf) {
+    if (fd->ops == &apkfs_dir_ops) {
+        strcpy(buf, "");
+    } else if (fd->ops == &apkfs_file_ops) {
+        NSBundleResourceRequest *req = (__bridge NSBundleResourceRequest *) fd->data;
+        strcpy(buf, [@"/" stringByAppendingString:[req.tags.anyObject stringByReplacingOccurrencesOfString:@":" withString:@"/"]].UTF8String);
+    }
+    return 0;
+}
+
 static int apkfs_dir_readdir(struct fd *fd, struct dir_entry *entry) {
     return 0;
 }
@@ -164,6 +174,7 @@ const struct fs_ops apkfs = {
     .open = apkfs_open,
     .fstat = apkfs_fstat,
     .close = apkfs_close,
+    .getpath = apkfs_getpath,
 };
 
 static const struct fd_ops apkfs_dir_ops = {
