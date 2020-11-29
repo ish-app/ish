@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="17506" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="BYZ-38-t0r">
-    <device id="retina4_0" orientation="portrait" appearance="light"/>
+    <device id="retina6_5" orientation="portrait" appearance="light"/>
     <dependencies>
         <deployment identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="17505"/>
@@ -13,40 +13,33 @@
             <objects>
                 <viewController id="BYZ-38-t0r" customClass="TerminalViewController" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="8bC-Xf-vdC">
-                        <rect key="frame" x="0.0" y="0.0" width="320" height="568"/>
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="l9z-h1-AR7">
-                                <rect key="frame" x="0.0" y="0.0" width="320" height="568"/>
-                                <subviews>
-                                    <view contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="FQi-r8-odu" customClass="TerminalView">
-                                        <rect key="frame" x="0.0" y="0.0" width="320" height="568"/>
-                                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                                        <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-                                        <connections>
-                                            <outlet property="controlKey" destination="W9v-cj-FWz" id="HgQ-u7-5IL"/>
-                                            <outlet property="inputAccessoryView" destination="GyN-ob-WFz" id="rBB-FQ-HiM"/>
-                                        </connections>
-                                    </view>
-                                    <containerView opaque="NO" contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4UX-TH-4BQ" customClass="PassthroughView">
-                                        <rect key="frame" x="0.0" y="0.0" width="320" height="568"/>
-                                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                                        <connections>
-                                            <segue destination="hWN-qz-BEH" kind="embed" id="mcY-QX-RE9"/>
-                                        </connections>
-                                    </containerView>
-                                </subviews>
+                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="FQi-r8-odu" customClass="TerminalView">
+                                <rect key="frame" x="0.0" y="44" width="414" height="852"/>
                                 <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                <connections>
+                                    <outlet property="controlKey" destination="W9v-cj-FWz" id="HgQ-u7-5IL"/>
+                                    <outlet property="inputAccessoryView" destination="GyN-ob-WFz" id="rBB-FQ-HiM"/>
+                                </connections>
                             </view>
+                            <containerView opaque="NO" contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4UX-TH-4BQ" customClass="PassthroughView">
+                                <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                <connections>
+                                    <segue destination="hWN-qz-BEH" kind="embed" id="mcY-QX-RE9"/>
+                                </connections>
+                            </containerView>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="IVs-Oh-AhK"/>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                         <gestureRecognizers/>
                         <constraints>
-                            <constraint firstItem="l9z-h1-AR7" firstAttribute="top" secondItem="IVs-Oh-AhK" secondAttribute="top" id="4yg-Pg-9be"/>
-                            <constraint firstItem="l9z-h1-AR7" firstAttribute="leading" secondItem="IVs-Oh-AhK" secondAttribute="leading" id="AUH-Aa-7PU"/>
-                            <constraint firstItem="l9z-h1-AR7" firstAttribute="trailing" secondItem="IVs-Oh-AhK" secondAttribute="trailing" id="Ge3-sv-TgP"/>
-                            <constraint firstItem="l9z-h1-AR7" firstAttribute="bottom" secondItem="IVs-Oh-AhK" secondAttribute="bottom" id="lUN-Pb-ODn"/>
+                            <constraint firstAttribute="bottom" secondItem="FQi-r8-odu" secondAttribute="bottom" id="TjH-PI-NBO"/>
+                            <constraint firstItem="FQi-r8-odu" firstAttribute="top" secondItem="IVs-Oh-AhK" secondAttribute="top" id="WI3-Ir-VlB"/>
+                            <constraint firstItem="FQi-r8-odu" firstAttribute="leading" secondItem="IVs-Oh-AhK" secondAttribute="leading" id="qb1-5r-6hA"/>
+                            <constraint firstItem="FQi-r8-odu" firstAttribute="trailing" secondItem="IVs-Oh-AhK" secondAttribute="trailing" id="rki-R2-KeY"/>
                         </constraints>
                     </view>
                     <connections>
@@ -57,7 +50,7 @@
                         <outlet property="barTop" destination="gtD-Rx-Gdo" id="zXm-Bb-ZyO"/>
                         <outlet property="barTrailing" destination="RAD-x5-aAI" id="Ele-Ty-xAK"/>
                         <outlet property="barView" destination="GyN-ob-WFz" id="lVV-s6-cQt"/>
-                        <outlet property="bottomConstraint" destination="lUN-Pb-ODn" id="3Hl-UZ-jjM"/>
+                        <outlet property="bottomConstraint" destination="TjH-PI-NBO" id="ZSq-o1-EC4"/>
                         <outlet property="controlKey" destination="W9v-cj-FWz" id="c9i-VC-j7f"/>
                         <outlet property="escapeKey" destination="IPm-l0-f25" id="QBn-lt-GPd"/>
                         <outlet property="hideKeyboardButton" destination="7qw-ie-p4d" id="n5f-XX-i98"/>

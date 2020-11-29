@@ -266,7 +266,7 @@
         pad = self.view.safeAreaInsets.bottom;
     }
     // NSLog(@"pad %f", pad);
-    self.bottomConstraint.constant = -pad;
+    self.bottomConstraint.constant = pad;
 
     BOOL initialLayout = self.termView.needsUpdateConstraints;
     [self.view setNeedsUpdateConstraints];
