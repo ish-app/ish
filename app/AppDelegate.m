@@ -75,7 +75,7 @@ static void ios_handle_die(const char *msg) {
 
     // /etc/ish-version is the last ish version that opened this root. Not used for anything yet, but could be used to know whether to change the root if needed in a future update.
     BOOL has_ish_version = NO;
-    struct fd *ish_version = generic_open("/etc/ish-version", O_WRONLY_|O_TRUNC_, 0644);
+    struct fd *ish_version = generic_open("/ish/version", O_WRONLY_|O_TRUNC_, 0644);
     if (!IS_ERR(ish_version)) {
         has_ish_version = YES;
         NSString *version = NSBundle.mainBundle.infoDictionary[(__bridge NSString *) kCFBundleVersionKey];
@@ -86,9 +86,8 @@ static void ios_handle_die(const char *msg) {
 
     if (has_ish_version && [NSBundle.mainBundle URLForResource:@"OnDemandResources" withExtension:@"plist"] != nil) {
         fs_register(&apkfs);
-        generic_mkdirat(AT_PWD, "/ios", 0755);
-        generic_mkdirat(AT_PWD, "/ios/apk", 0755);
-        do_mount(&apkfs, "apk", "/ios/apk", "", 0);
+        generic_mkdirat(AT_PWD, "/ish/apk", 0755);
+        do_mount(&apkfs, "apk", "/ish/apk", "", 0);
     }
 
     // create some device nodes
