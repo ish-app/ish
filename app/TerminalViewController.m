@@ -304,6 +304,14 @@
     [self presentViewController:alert animated:YES completion:nil];
 }
 
+- (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
+    if ([segue.identifier isEqualToString:@"embed"]) {
+        // You might want to check if this is your embed segue here
+        // in case there are other segues triggered from this view controller.
+        segue.destinationViewController.view.translatesAutoresizingMaskIntoConstraints = NO;
+    }
+}
+
 #pragma mark Bar
 
 - (IBAction)showAbout:(id)sender {

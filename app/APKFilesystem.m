@@ -6,6 +6,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "APKFilesystem.h"
 #include "kernel/errno.h"
 #include "kernel/fs.h"
 #include "fs/real.h"
@@ -72,6 +73,18 @@ static int apkfs_fstat(struct fd *fd, struct statbuf *stat) {
     return 0;
 }
 
+// The original plan was to declare a __block lock_t complete_lock, but it turns out capturing a __block var moves it from the stack to the heap, and locks can't be moved.
+@interface DownloadCompletion : NSObject {
+    @public
+    BOOL complete;
+    NSError *error;
+    lock_t complete_lock;
+    cond_t complete_cond;
+}
+@end
+@implementation DownloadCompletion
+@end
+
 static struct fd *apkfs_open(struct mount *mount, const char *path, int flags, int mode) {
     int type = apkfs_path_type(path);
     if (type == 0)
@@ -80,52 +93,56 @@ static struct fd *apkfs_open(struct mount *mount, const char *path, int flags, i
         return fd_create(&apkfs_dir_ops);
 
     if (type == S_IFREG) {
-        __block BOOL complete = NO;
-        __block NSError *error;
-        __block lock_t complete_lock;
-        __block cond_t complete_cond;
-        lock_init(&complete_lock);
-        cond_init(&complete_cond);
+        DownloadCompletion *c = [DownloadCompletion new];
+        lock_init(&c->complete_lock);
+        cond_init(&c->complete_cond);
+        __weak DownloadCompletion *wc = c;
 
         NSString *tag = TagForPath(path);
         NSBundleResourceRequest *request = [[NSBundleResourceRequest alloc] initWithTags:[NSSet setWithObject:tag]];
+        request.loadingPriority = NSBundleResourceRequestLoadingPriorityUrgent;
+        __weak NSBundleResourceRequest *weakRequest = request;
+        [NSNotificationCenter.defaultCenter postNotificationName:APKDownloadStartedNotification object:request userInfo:nil];
         [request beginAccessingResourcesWithCompletionHandler:^(NSError * _Nullable err) {
-            lock(&complete_lock);
-            error = err;
-            complete = YES;
-            notify(&complete_cond);
-            unlock(&complete_lock);
+            [NSNotificationCenter.defaultCenter postNotificationName:APKDownloadFinishedNotification object:weakRequest userInfo:nil];
+            DownloadCompletion *c = wc;
+            if (c) {
+                lock(&c->complete_lock);
+                c->error = err;
+                c->complete = YES;
+                notify(&c->complete_cond);
+                unlock(&c->complete_lock);
+            }
         }];
 
-        while (!complete) {
-            int err = wait_for(&complete_cond, &complete_lock, NULL);
+        while (!c->complete) {
+            int err = wait_for(&c->complete_cond, &c->complete_lock, NULL);
             if (err == _EINTR) {
                 [request.progress cancel];
-                [request endAccessingResources];
                 return ERR_PTR(err);
             }
         }
 
+        NSError *error = c->error;
         if (error != nil) {
             int err = _EIO;
-            if (error.code == NSBundleOnDemandResourceInvalidTagError)
-                err = _ENOENT;
-            if (error.code == NSBundleOnDemandResourceOutOfSpaceError)
-                err = _ENOSPC;
+            if ([error.domain isEqualToString:NSCocoaErrorDomain]) {
+                if (error.code == NSBundleOnDemandResourceInvalidTagError)
+                    err = _ENOENT;
+                if (error.code == NSBundleOnDemandResourceOutOfSpaceError)
+                    err = _ENOSPC;
+                if (error.code == NSUserCancelledError)
+                    err = _ECANCELED;
+            }
             return ERR_PTR(err);
         }
 
         struct fd *fd = fd_create(&apkfs_file_ops);
-        if (fd == NULL) {
-            [request endAccessingResources];
+        if (fd == NULL)
             return ERR_PTR(_ENOMEM);
-        }
-        const char *real_path = [request.bundle URLForResource:tag withExtension:nil].fileSystemRepresentation;
-        fd->real_fd = open(real_path, O_RDONLY);
-        if (fd->real_fd < 0) {
-            [request endAccessingResources];
+        fd->real_fd = open([request.bundle URLForResource:tag withExtension:nil].fileSystemRepresentation, O_RDONLY);
+        if (fd->real_fd < 0)
             return ERR_PTR(errno_map());
-        }
         fd->data = (void *) CFBridgingRetain(request);
         return fd;
     }
@@ -133,8 +150,7 @@ static struct fd *apkfs_open(struct mount *mount, const char *path, int flags, i
 }
 
 static int apkfs_close(struct fd *fd) {
-    NSBundleResourceRequest *request = CFBridgingRelease(fd->data);
-    [request endAccessingResources];
+    CFBridgingRelease(fd->data);
     return 0;
 }
 
@@ -158,3 +174,6 @@ static const struct fd_ops apkfs_file_ops = {
     .lseek = realfs_lseek,
     .close = realfs_close,
 };
+
+NSString *const APKDownloadStartedNotification = @"APKDownloadStartedNotification";
+NSString *const APKDownloadFinishedNotification = @"APKDownloadFinishedNotification";

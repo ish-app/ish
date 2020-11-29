@@ -6,3 +6,6 @@
 //
 
 extern const struct fs_ops apkfs;
+
+extern NSString *const APKDownloadStartedNotification;
+extern NSString *const APKDownloadFinishedNotification;

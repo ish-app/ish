@@ -113,6 +113,9 @@
 		BB10E5D0248DC21D009C7A74 /* Roots.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = BB10E5CF248DC21D009C7A74 /* Roots.storyboard */; };
 		BB10E5D3248DCFEA009C7A74 /* RootsTableViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = BB10E5D2248DCFEA009C7A74 /* RootsTableViewController.m */; };
 		BB13F7EA200ADCED003D1C4D /* libish.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BB13F7DC200AD81D003D1C4D /* libish.a */; };
+		BB149E32256CFFFC00F57815 /* APKDownloads.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = BB149E31256CFFFC00F57815 /* APKDownloads.storyboard */; };
+		BB149E3C256D09AD00F57815 /* APKDownloadsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = BB149E3B256D09AC00F57815 /* APKDownloadsViewController.m */; };
+		BB149E80256DC97C00F57815 /* PassthroughView.m in Sources */ = {isa = PBXBuildFile; fileRef = BB149E7F256DC97C00F57815 /* PassthroughView.m */; };
 		BB1B9A4323A5E96900414052 /* icon.png in Resources */ = {isa = PBXBuildFile; fileRef = BB1B9A4223A5E96900414052 /* icon.png */; };
 		BB1D9D93234A8FE100F364E8 /* AboutNavigationController.m in Sources */ = {isa = PBXBuildFile; fileRef = BB1D9D92234A8FE100F364E8 /* AboutNavigationController.m */; };
 		BB235534235D488500139E00 /* LocationDevice.m in Sources */ = {isa = PBXBuildFile; fileRef = BB235533235D488400139E00 /* LocationDevice.m */; };
@@ -435,6 +438,11 @@
 		BB13F4DD21C5770000343E17 /* NSError+ISHErrno.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSError+ISHErrno.m"; sourceTree = "<group>"; };
 		BB13F7C8200ACC24003D1C4D /* xcode-meson.sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = "xcode-meson.sh"; sourceTree = "<group>"; };
 		BB13F7DC200AD81D003D1C4D /* libish.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libish.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		BB149E31256CFFFC00F57815 /* APKDownloads.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = APKDownloads.storyboard; sourceTree = "<group>"; };
+		BB149E3A256D09AC00F57815 /* APKDownloadsViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = APKDownloadsViewController.h; sourceTree = "<group>"; };
+		BB149E3B256D09AC00F57815 /* APKDownloadsViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = APKDownloadsViewController.m; sourceTree = "<group>"; };
+		BB149E7E256DC97C00F57815 /* PassthroughView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PassthroughView.h; sourceTree = "<group>"; };
+		BB149E7F256DC97C00F57815 /* PassthroughView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PassthroughView.m; sourceTree = "<group>"; };
 		BB1B9A4223A5E96900414052 /* icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = icon.png; path = app/Icons/icon.png; sourceTree = SOURCE_ROOT; };
 		BB1D9D91234A8FE100F364E8 /* AboutNavigationController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AboutNavigationController.h; sourceTree = "<group>"; };
 		BB1D9D92234A8FE100F364E8 /* AboutNavigationController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AboutNavigationController.m; sourceTree = "<group>"; };
@@ -633,6 +641,16 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		BB149E30256CFFD200F57815 /* APK */ = {
+			isa = PBXGroup;
+			children = (
+				BB149E31256CFFFC00F57815 /* APKDownloads.storyboard */,
+				BB149E3A256D09AC00F57815 /* APKDownloadsViewController.h */,
+				BB149E3B256D09AC00F57815 /* APKDownloadsViewController.m */,
+			);
+			name = APK;
+			sourceTree = "<group>";
+		};
 		BB18B27F1F97F2590059FCD8 /* Scripts */ = {
 			isa = PBXGroup;
 			children = (
@@ -771,6 +789,7 @@
 				BB235532235D472F00139E00 /* Devices */,
 				BBFB557321586C7600DFE6DE /* About */,
 				BB10E5C1248DB961009C7A74 /* Roots */,
+				BB149E30256CFFD200F57815 /* APK */,
 				BBFB557221586C6600DFE6DE /* Utilities */,
 				BBBF7B5B2415CDBB00EC4C14 /* Settings.bundle */,
 				BB792B5C1F96D90D00FFB7A4 /* Assets.xcassets */,
@@ -985,6 +1004,8 @@
 				BBFB557B215878C600DFE6DE /* UIApplication+OpenURL.m */,
 				BBCED895255BB65A00CA0701 /* NSObject+SaneKVO.h */,
 				BBCED896255BB65A00CA0701 /* NSObject+SaneKVO.m */,
+				BB149E7E256DC97C00F57815 /* PassthroughView.h */,
+				BB149E7F256DC97C00F57815 /* PassthroughView.m */,
 			);
 			name = Utilities;
 			sourceTree = "<group>";
@@ -1300,6 +1321,7 @@
 				BB0F5530239F8B360032A2A1 /* uninspired.png in Resources */,
 				BBC8298124EDACBB009D042C /* iinhash.png in Resources */,
 				BB0F553623A0ACFC0032A2A1 /* pydann2.png in Resources */,
+				BB149E32256CFFFC00F57815 /* APKDownloads.storyboard in Resources */,
 				BB0F553423A0AC760032A2A1 /* ihash1.png in Resources */,
 				BB2B4DAF231D998300CB578B /* term.html in Resources */,
 				BB10E5D0248DC21D009C7A74 /* Roots.storyboard in Resources */,
@@ -1513,6 +1535,7 @@
 				9A28E4EA219A8B670073D200 /* AboutAppearanceViewController.m in Sources */,
 				BB267FA623A48F1500ED7CAF /* AltIconViewController.m in Sources */,
 				BB1D9D93234A8FE100F364E8 /* AboutNavigationController.m in Sources */,
+				BB149E3C256D09AD00F57815 /* APKDownloadsViewController.m in Sources */,
 				BB235534235D488500139E00 /* LocationDevice.m in Sources */,
 				BB792B581F96D90D00FFB7A4 /* TerminalViewController.m in Sources */,
 				BBAEE33C249BDADC0069EBB5 /* ProgressReportViewController.m in Sources */,
@@ -1524,6 +1547,7 @@
 				BB10E5CE248DBE66009C7A74 /* Roots.m in Sources */,
 				BBCC9D962365430800424C83 /* SceneDelegate.m in Sources */,
 				BB82A7FD21B4C2E8006AA5FD /* AboutExternalKeyboardViewController.m in Sources */,
+				BB149E80256DC97C00F57815 /* PassthroughView.m in Sources */,
 				BB10E5C3248DBA7B009C7A74 /* fakefs.c in Sources */,
 				8632A7BF219A59FB00F02325 /* UserPreferences.m in Sources */,
 				BB10E5D3248DCFEA009C7A74 /* RootsTableViewController.m in Sources */,

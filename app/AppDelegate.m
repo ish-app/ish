@@ -65,10 +65,9 @@ static void ios_handle_die(const char *msg) {
     int err = mount_root(&fakefs, root.fileSystemRepresentation);
     if (err < 0)
         return err;
-    
     fs_register(&iosfs);
     fs_register(&iosfs_unsafe);
-    
+
     // need to do this first so that we can have a valid current for the generic_mknod calls
     err = become_first_process();
     if (err < 0)

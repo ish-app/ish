@@ -817,7 +817,6 @@
         <!--About Navigation Controller-->
         <scene sceneID="Vga-Xh-1SC">
             <objects>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="b5y-3s-wrw" userLabel="First Responder" sceneMemberID="firstResponder"/>
                 <navigationController modalPresentationStyle="formSheet" id="0yy-Uo-cZb" customClass="AboutNavigationController" sceneMemberID="viewController">
                     <navigationBar key="navigationBar" contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" id="q93-rv-TwM">
                         <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
@@ -830,6 +829,7 @@
                         <segue destination="yJz-O7-jlW" kind="relationship" relationship="rootViewController" id="xMq-rt-IoW"/>
                     </connections>
                 </navigationController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="b5y-3s-wrw" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="-527" y="158"/>
         </scene>
