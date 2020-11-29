@@ -59,3 +59,4 @@ def download_many(downloads):
 
 if __name__ == '__main__':
     download_repo('https://f001.backblazeb2.com/file/alpine-archive', 'main/x86', 'APKINDEX-v3.12-2020-11-15.tar.gz')
+    download_repo('https://f001.backblazeb2.com/file/alpine-archive', 'community/x86', 'APKINDEX-v3.12-2020-11-15.tar.gz')
