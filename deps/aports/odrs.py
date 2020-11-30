@@ -45,6 +45,9 @@ def main():
     tags, files = [], {}
     pack_size = 0
     for file, size in repo_files:
+        # App Store Connect will reject an app that contains asset packs larger than 512MB. Just give up on such files for now. At the time of writing, this excludes texmf-dist-fontsextra and supertuxkart-data.
+        if size > 500000000:
+            continue
         new_tags, new_files = file_pack(file)
         tags.extend(new_tags)
         files.update(new_files)
