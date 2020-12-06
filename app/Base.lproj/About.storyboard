@@ -529,7 +529,7 @@
                             <outlet property="delegate" destination="Zzy-IN-laJ" id="g26-vd-TC5"/>
                         </connections>
                     </tableView>
-                    <navigationItem key="navigationItem" id="s64-vm-Jln"/>
+                    <navigationItem key="navigationItem" title="External Keyboard" id="s64-vm-Jln"/>
                     <connections>
                         <outlet property="backtickEscapeSwitch" destination="8xc-Rx-eue" id="jkl-oc-V9N"/>
                         <outlet property="hideExtraKeysWithExternalKeyboardSwitch" destination="IcN-9M-x1K" id="Lw3-4l-9R6"/>
@@ -661,7 +661,7 @@
                             <constraint firstItem="G6v-G0-r5a" firstAttribute="bottom" secondItem="wGQ-0K-Rcg" secondAttribute="bottom" id="pTK-0F-HyJ"/>
                         </constraints>
                     </view>
-                    <navigationItem key="navigationItem" id="5QX-R3-V8P"/>
+                    <navigationItem key="navigationItem" title="App Icon" id="5QX-R3-V8P"/>
                     <connections>
                         <outlet property="collectionView" destination="wGQ-0K-Rcg" id="GJB-nY-8gE"/>
                     </connections>
@@ -772,7 +772,7 @@
                             <outlet property="delegate" destination="ItN-wa-djf" id="tN2-nE-bIM"/>
                         </connections>
                     </tableView>
-                    <navigationItem key="navigationItem" id="dzn-ZK-t3V"/>
+                    <navigationItem key="navigationItem" title="Appearance" id="dzn-ZK-t3V"/>
                 </tableViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="qup-pC-GMP" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
