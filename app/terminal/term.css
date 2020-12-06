@@ -6,6 +6,6 @@ body {
 
 #terminal {
     position: absolute;
-    top: 3px; bottom: 3px;
-    left: 5px; right: 5px;
+    top: 0; bottom: 0;
+    left: 0; right: 0;
 }

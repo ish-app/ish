@@ -1,22 +1,23 @@
 hterm.defaultStorage = new lib.Storage.Memory();
-lib.init(function() {
+window.onload = async function() {
+    await lib.init();
     window.term = new hterm.Terminal();
-    
+
     // make everything invisible so as to not be embarrassing
     term.getPrefs().set('background-color', 'transparent');
     term.getPrefs().set('foreground-color', 'transparent');
     term.getPrefs().set('cursor-color', 'transparent');
+
     term.getPrefs().set('terminal-encoding', 'iso-2022');
-    
-    term.getPrefs().set('font-family', 'Menlo');
     term.getPrefs().set('enable-resize-status', false);
     term.getPrefs().set('copy-on-select', false);
     term.getPrefs().set('enable-clipboard-notice', false);
     term.getPrefs().set('user-css-text', termCss);
+    term.getPrefs().set('screen-padding-size', 4);
 
     term.onTerminalReady = onTerminalReady;
     term.decorate(document.getElementById('terminal'));
-});
+};
 
 var termCss = `
 x-screen {
