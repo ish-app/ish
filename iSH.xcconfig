@@ -1,5 +1,5 @@
 // Change this to change all the bundle IDs and app groups
-ROOT_BUNDLE_IDENTIFIER = app.ish.iSH
+ROOT_BUNDLE_IDENTIFIER = app.ish.mke    iSH
 
 // Choose logging channels to enable. Separate by spaces. Try "verbose strace".
 ISH_LOG =

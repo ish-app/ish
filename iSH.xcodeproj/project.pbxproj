@@ -1199,11 +1199,9 @@
 				TargetAttributes = {
 					497F6CE3254E5E4C00C82F46 = {
 						CreatedOnToolsVersion = 12.2;
-						DevelopmentTeam = CK5SXRTBR7;
 					};
 					497F6D46254E605F00C82F46 = {
 						CreatedOnToolsVersion = 12.2;
-						DevelopmentTeam = CK5SXRTBR7;
 						ProvisioningStyle = Automatic;
 					};
 					BB13F7CA200ACC31003D1C4D = {
@@ -1223,7 +1221,6 @@
 					};
 					BB41591B255EF9E300E0950C = {
 						CreatedOnToolsVersion = 12.2;
-						DevelopmentTeam = CK5SXRTBR7;
 						ProvisioningStyle = Automatic;
 						TestTargetID = BB792B4F1F96D90D00FFB7A4;
 					};
@@ -1234,7 +1231,6 @@
 					};
 					BB792B4F1F96D90D00FFB7A4 = {
 						CreatedOnToolsVersion = 9.0;
-						DevelopmentTeam = CK5SXRTBR7;
 						ProvisioningStyle = Automatic;
 						SystemCapabilities = {
 							com.apple.ApplicationGroups.iOS = {
@@ -1244,7 +1240,6 @@
 					};
 					BB88F48F2154760800A341FD = {
 						CreatedOnToolsVersion = 10.0;
-						DevelopmentTeam = CK5SXRTBR7;
 						ProvisioningStyle = Automatic;
 						SystemCapabilities = {
 							com.apple.ApplicationGroups.iOS = {
@@ -1666,6 +1661,7 @@
 		497F6CE9254E5E4C00C82F46 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				DEVELOPMENT_TEAM = UYU5FM4LQ4;
 			};
 			name = Release;
 		};
@@ -1687,6 +1683,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = UYU5FM4LQ4;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
@@ -1724,6 +1721,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = UYU5FM4LQ4;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_NS_ASSERTIONS = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -1997,7 +1995,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = CK5SXRTBR7;
+				DEVELOPMENT_TEAM = UYU5FM4LQ4;
 				ENABLE_NS_ASSERTIONS = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
@@ -2158,6 +2156,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
+				DEVELOPMENT_TEAM = UYU5FM4LQ4;
 				ENABLE_BITCODE = NO;
 				ENABLE_ON_DEMAND_RESOURCES = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -2232,6 +2231,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
+				DEVELOPMENT_TEAM = UYU5FM4LQ4;
 				ENABLE_BITCODE = NO;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_ON_DEMAND_RESOURCES = NO;
@@ -2286,6 +2286,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = UYU5FM4LQ4;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_OPTIMIZATION_LEVEL = 0;
@@ -2334,6 +2335,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = UYU5FM4LQ4;
 				ENABLE_NS_ASSERTIONS = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
