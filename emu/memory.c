@@ -269,11 +269,11 @@ void *mem_ptr(struct mem *mem, addr_t addr, int type) {
             void *data = (char *) entry->data->data + entry->offset;
             void *copy = mmap(NULL, PAGE_SIZE, PROT_READ | PROT_WRITE,
                     MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
-            memcpy(copy, data, PAGE_SIZE);
 
             // copy/paste from above
             read_wrunlock(&mem->lock);
             write_wrlock(&mem->lock);
+            memcpy(copy, data, PAGE_SIZE);
             pt_map(mem, page, 1, copy, 0, entry->flags &~ P_COW);
             write_wrunlock(&mem->lock);
             read_wrlock(&mem->lock);
