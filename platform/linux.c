@@ -40,9 +40,6 @@ struct mem_usage get_mem_usage() {
     read_proc_line("/proc/meminfo", "Cached:", buf);
     sscanf(buf, "Cached: %"PRIu64" kB\n", &usage.cached);
     
-    read_proc_line("/proc/meminfo", "MemShared:", buf);
-    sscanf(buf, "MemShared: %"PRIu64" kB\n", &usage.shared);
-    
     read_proc_line("/proc/meminfo", "Active:", buf);
     sscanf(buf, "Active: %"PRIu64" kB\n", &usage.active);
     

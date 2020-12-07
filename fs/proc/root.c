@@ -5,7 +5,6 @@
 #include "fs/proc.h"
 #include "platform/platform.h"
 #include "emu/cpuid.h"
-#include "kernel/fs.h"
 
 static int proc_show_version(struct proc_entry *UNUSED(entry), struct proc_data *buf) {
     struct uname uts;
@@ -162,11 +161,7 @@ static int proc_show_cpu(struct proc_entry *UNUSED(entry), struct proc_data *buf
 
 static int proc_show_filesystems(struct proc_entry *UNUSED(entry), struct proc_data *buf) {
     char* filesystems = get_filesystems();
-    
     proc_printf(buf, "%s", filesystems);
-/*    proc_printf(buf, "nodev    tmpfs\n");
-    proc_printf(buf, "nodev    proc\n");
-    proc_printf(buf, "nodev    devpts\n"); */
     return 0;
 }
 
