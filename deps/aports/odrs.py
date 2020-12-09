@@ -18,32 +18,41 @@ def main():
         (resources_dir/'OnDemandResources.plist').unlink(missing_ok=True)
         return
 
-    # get all the files in the repo
     root = pathlib.Path(os.environ['SRCROOT'])/'deps'/'aports'
-    repo_path = root/'main'/'x86'
+    repo_paths = [root/repo/'x86' for repo in ['main', 'community']]
+
+    # get all the files in the repo
     repo_files = []
-    for file in repo_path.iterdir():
-        if file.name == 'APKINDEX.tar.gz':
-            continue
-        repo_files.append((file, file.stat().st_size))
+    for repo_path in repo_paths:
+        for file in repo_path.iterdir():
+            if file.name == 'APKINDEX.tar.gz':
+                continue
+            repo_files.append((file, file.stat().st_size))
     repo_files.sort(key=lambda f: f[1])
+
+    # batch them into asset packs
+    
+    MIN_PACK_SIZE = 5200000
+    def is_pack_full(pack_size, tags, files):
+        return pack_size > MIN_PACK_SIZE
 
     def file_pack(file):
         tag = ':'.join(file.relative_to(root).parts)
         files = {tag: str(file)}
         return [tag], files
-
-    # batch them into asset packs
-    MIN_PACK_SIZE = 1000000
+        
     packs = []
     tags, files = [], {}
     pack_size = 0
     for file, size in repo_files:
+        # App Store Connect will reject an app that contains asset packs larger than 512MB. Just give up on such files for now. At the time of writing, this excludes texmf-dist-fontsextra and supertuxkart-data.
+        if size > 500000000:
+            continue
         new_tags, new_files = file_pack(file)
         tags.extend(new_tags)
         files.update(new_files)
         pack_size += size
-        if pack_size > MIN_PACK_SIZE:
+        if is_pack_full(pack_size, tags, files):
             packs.append((tags, files))
             tags, files = [], {}
             pack_size = 0
@@ -51,10 +60,12 @@ def main():
         packs.append((tags, files))
 
     # APKINDEX gets its own pack
-    packs.append(file_pack(repo_path/'APKINDEX.tar.gz'))
+    for repo_path in repo_paths:
+        packs.append(file_pack(repo_path/'APKINDEX.tar.gz'))
 
-    print('collected packs')
-    print(len(packs))
+    print('collected', len(packs), 'packs containing', sum(len(files) for tags, files in packs), 'files')
+    if len(packs) > 1000:
+        raise Exception(f'too many packs! {len(packs)}, app store limit is 1000')
     process_odrs(packs)
 
 # packs: [([tag], {resource_name: file_name}])]

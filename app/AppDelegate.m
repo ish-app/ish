@@ -12,6 +12,7 @@
 #import "AboutViewController.h"
 #import "AppDelegate.h"
 #import "AppGroup.h"
+#import "APKFilesystem.h"
 #import "iOSFS.h"
 #import "SceneDelegate.h"
 #import "PasteboardDevice.h"
@@ -20,7 +21,7 @@
 #import "Roots.h"
 #import "TerminalViewController.h"
 #import "UserPreferences.h"
-#import "APKFilesystem.h"
+#import "UIApplication+OpenURL.h"
 #include "kernel/init.h"
 #include "kernel/calls.h"
 #include "fs/dyndev.h"
@@ -58,6 +59,10 @@ static void ios_handle_die(const char *msg) {
     pthread_setname_np(newName.UTF8String);
 }
 
+static int bootError;
+static BOOL has_ish_version;
+static NSString *const kSkipStartupMessage = @"Skip Startup Message";
+
 @implementation AppDelegate
 
 - (int)boot {
@@ -76,7 +81,7 @@ static void ios_handle_die(const char *msg) {
         return err;
 
     // /ish/version is the last ish version that opened this root. Not used for anything yet, but could be used to know whether to change the root if needed in a future update.
-    BOOL has_ish_version = NO;
+    has_ish_version = NO;
     struct fd *ish_version = generic_open("/ish/version", O_WRONLY_|O_CREAT_|O_TRUNC_, 0644);
     if (!IS_ERR(ish_version)) {
         has_ish_version = YES;
@@ -90,6 +95,7 @@ static void ios_handle_die(const char *msg) {
         generic_mkdirat(AT_PWD, "/ish/apk", 0755);
         do_mount(&apkfs, "apk", "/ish/apk", "", 0);
     }
+
 
     // create some device nodes
     // this will do nothing if they already exist
@@ -196,10 +202,28 @@ static void ios_handle_die(const char *msg) {
     }
 }
 
-static int bootError;
-
 + (int)bootError {
     return bootError;
+}
+
++ (void)maybePresentStartupMessageOnViewController:(UIViewController *)vc {
+    if ([NSUserDefaults.standardUserDefaults integerForKey:kSkipStartupMessage] >= 1)
+        return;
+    if (!has_ish_version) {
+        UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Install iSH’s built-in APK?"
+                                                                       message:@"iSH now includes the APK package manager, but it must be manually activated."
+                                                                preferredStyle:UIAlertControllerStyleAlert];
+        [alert addAction:[UIAlertAction actionWithTitle:@"Show me how"
+                                                  style:UIAlertActionStyleDefault
+                                                handler:^(UIAlertAction * _Nonnull action) {
+            [UIApplication openURL:@"https://go.ish.app/get-apk"];
+        }]];
+        [alert addAction:[UIAlertAction actionWithTitle:@"Don't show again"
+                                                  style:UIAlertActionStyleDefault
+                                                handler:nil]];
+        [vc presentViewController:alert animated:YES completion:nil];
+    }
+    [NSUserDefaults.standardUserDefaults setInteger:1 forKey:kSkipStartupMessage];
 }
 
 - (BOOL)application:(UIApplication *)application willFinishLaunchingWithOptions:(NSDictionary<UIApplicationLaunchOptionsKey,id> *)launchOptions {
