@@ -23,20 +23,6 @@ void fs_register(const struct fs_ops *fs) {
     assert(!"reached filesystem limit");
 }
 
-char* get_filesystems(void) {
-    char *fs_list = malloc(MAX_FILESYSTEMS * 50); // Reasonable assumption?
-    
-    for (unsigned i = 0; i < MAX_FILESYSTEMS; i++) {
-        if (filesystems[i] != NULL) {
-            fs_list = strcat(fs_list, "nodev    ");
-            fs_list = strcat(fs_list, filesystems[i]->name);
-            fs_list = strcat(fs_list, "\n");
-        }
-    }
-  
-    return fs_list;
-}
-
 struct mount *mount_find(char *path) {
     assert(path_is_normalized(path));
     lock(&mounts_lock);
@@ -206,4 +192,3 @@ dword_t sys_umount2(addr_t target_addr, dword_t flags) {
 
 struct list mounts = {&mounts, &mounts};
 lock_t mounts_lock = LOCK_INITIALIZER;
-
