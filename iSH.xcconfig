@@ -1,0 +1,16 @@
+// Change this to change all the bundle IDs and app groups
+ROOT_BUNDLE_IDENTIFIER = app.ish.iSH
+
+// Choose logging channels to enable. Separate by spaces. Try "verbose strace".
+ISH_LOG =
+ISH_LOGGER = $(ISH_LOGGER_$(PLATFORM_NAME))
+ISH_LOGGER_iphoneos = nslog
+ISH_LOGGER_iphonesimulator = nslog
+ISH_LOGGER_macosx = dprintf
+
+ENABLE_APK_ODRS = YES
+ROOTFS_URL = $(ROOTFS_URL_IF_ODRS_$(ENABLE_APK_ODRS))
+ROOTFS_URL_IF_ODRS_YES = github.com/ish-app/roots/releases/download/g31251b2000a4378e65839b357dfc4dbf28a9dfb5/appstore-apk.tar.gz
+ROOTFS_URL_IF_ODRS_NO = github.com/ish-app/roots/releases/download/g31251b2000a4378e65839b357dfc4dbf28a9dfb5/appstore.tar.gz
+
+PRODUCT_APP_GROUP_IDENTIFIER = group.$(ROOT_BUNDLE_IDENTIFIER)
