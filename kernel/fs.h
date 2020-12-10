@@ -191,9 +191,6 @@ extern const struct fs_ops procfs;
 extern const struct fs_ops fakefs;
 extern const struct fs_ops devptsfs;
 extern const struct fs_ops tmpfs;
-
 void fs_register(const struct fs_ops *fs);
-
-char* get_filesystems(void);
 
 #endif
