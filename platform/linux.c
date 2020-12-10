@@ -30,13 +30,31 @@ struct mem_usage get_mem_usage() {
 
     read_proc_line("/proc/meminfo", "MemTotal:", buf);
     sscanf(buf, "MemTotal: %"PRIu64" kB\n", &usage.total);
+    
     read_proc_line("/proc/meminfo", "MemFree:", buf);
     sscanf(buf, "MemFree: %"PRIu64" kB\n", &usage.free);
+    
+    read_proc_line("/proc/meminfo", "MemAvailable:", buf);
+    sscanf(buf, "MemAvailable: %"PRIu64" kB\n", &usage.available);
+    
+    read_proc_line("/proc/meminfo", "Cached:", buf);
+    sscanf(buf, "Cached: %"PRIu64" kB\n", &usage.cached);
+    
     read_proc_line("/proc/meminfo", "Active:", buf);
     sscanf(buf, "Active: %"PRIu64" kB\n", &usage.active);
+    
     read_proc_line("/proc/meminfo", "Inactive:", buf);
     sscanf(buf, "Inactive: %"PRIu64" kB\n", &usage.inactive);
+    
+    read_proc_line("/proc/meminfo", "Swapins:", buf);
+    sscanf(buf, "Swapins: %"PRIu64" kB\n", &usage.swapins);
+ 
+    read_proc_line("/proc/meminfo", "Swapouts:", buf);
+    sscanf(buf, "Swapouts: %"PRIu64" kB\n", &usage.swapouts);
 
+    read_proc_line("/proc/meminfo", "Wirecount:", buf);
+    sscanf(buf, "Wirecount: %"PRIu64" kB\n", &usage.wirecount);
+    
     return usage;
 }
 
