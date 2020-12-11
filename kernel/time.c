@@ -190,7 +190,11 @@ dword_t sys_nanosleep(addr_t req_addr, addr_t rem_addr) {
     req.tv_sec = req_ts.sec;
     req.tv_nsec = req_ts.nsec;
     struct timespec rem;
-    if (nanosleep(&req, &rem) < 0)
+    int res = 0;
+    TASK_MAY_BLOCK {
+        res = nanosleep(&req, &rem);
+    }
+    if (res < 0)
         return errno_map();
     if (rem_addr != 0) {
         struct timespec_ rem_ts;
