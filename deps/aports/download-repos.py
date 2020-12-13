@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
+import socket
 import urllib.request
 import urllib.parse
 import tarfile
 import pathlib
 import concurrent.futures
 
+socket.setdefaulttimeout(5)
+
 IX_NAME = 'P'
 IX_VERSION = 'V'
+IX_SIZE = 'S'
 
 def read_index(index):
     index = index.read()
@@ -34,7 +38,8 @@ def download_repo(root_url, repo_name, index_name):
         pkg_file = f'{pkg[IX_NAME]}-{pkg[IX_VERSION]}.apk'
         url = f'{root_url}/{repo_name}/{urllib.parse.quote(pkg_file)}'
         path = repo/pkg_file
-        if path.exists(): continue
+        if path.exists() and path.stat().st_size == int(pkg[IX_SIZE]):
+            continue
         downloads.append((url, path))
     download_many(downloads)
 
@@ -58,5 +63,5 @@ def download_many(downloads):
             print(f'{done}/{len(futures)}', str(path))
 
 if __name__ == '__main__':
-    download_repo('https://f001.backblazeb2.com/file/alpine-archive', 'main/x86', 'APKINDEX-v3.12-2020-11-15.tar.gz')
-    download_repo('https://f001.backblazeb2.com/file/alpine-archive', 'community/x86', 'APKINDEX-v3.12-2020-11-15.tar.gz')
+    download_repo('https://b2-f001.ish.app/file/alpine-archive', 'main/x86', 'APKINDEX-v3.12-2020-11-15.tar.gz')
+    download_repo('https://b2-f001.ish.app/file/alpine-archive', 'community/x86', 'APKINDEX-v3.12-2020-11-15.tar.gz')
