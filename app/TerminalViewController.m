@@ -119,6 +119,11 @@
                                              object:nil];
 }
 
+- (void)viewDidAppear:(BOOL)animated {
+    [AppDelegate maybePresentStartupMessageOnViewController:self];
+    [super viewDidAppear:animated];
+}
+
 - (void)startNewSession {
     int err = [self startSession];
     if (err < 0) {
