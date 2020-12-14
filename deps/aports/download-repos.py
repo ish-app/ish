@@ -6,7 +6,7 @@ import tarfile
 import pathlib
 import concurrent.futures
 
-socket.setdefaulttimeout(5)
+socket.setdefaulttimeout(10)
 
 IX_NAME = 'P'
 IX_VERSION = 'V'
