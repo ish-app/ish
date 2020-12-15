@@ -1,11 +1,12 @@
-name: TestFlight Build
+name: Upload Build
 
 on:
   workflow_dispatch:
 
 jobs:
-  push-beta:
+  upload-build:
     runs-on: macos-10.15
+    timeout-minutes: 720
     steps:
       - uses: actions/checkout@v2
         with:
