@@ -24,6 +24,83 @@ static void proc_put_task(struct task *UNUSED(task)) {
     unlock(&pids_lock);
 }
 
+static int proc_pid_status_show(struct proc_entry *entry, struct proc_data *buf) {
+
+    struct task *task = proc_get_task(entry);
+    if (task == NULL)
+        return _ESRCH;
+    lock(&task->general_lock);
+    lock(&task->group->lock);
+    lock(&task->sighand->lock);
+
+    proc_printf(buf, "Name: %.16s\n", task->comm);
+    int umask = task->fs->umask & 0777;
+    proc_printf(buf, "Umask:    00%o\n", umask);
+    char proc_state =  (task->zombie ? 'Z' : task->group->stopped ? 'T' : 'R');
+    char* long_proc_state = malloc(15);
+    switch(proc_state) {
+        case 'Z' :
+            strcpy(long_proc_state, "Z (Zombie)");
+        case 'T' :
+            strcpy(long_proc_state, "T (Stopped)");
+        case 'R':
+            strcpy(long_proc_state, "R (Running)");
+    }
+    proc_printf(buf, "State: %s\n", long_proc_state);
+    proc_printf(buf, "Tgid: %d\n", task->tgid);
+    proc_printf(buf, "Pid: %d\n", task->pid);
+    proc_printf(buf, "PPid:  %d\n", task->parent ? task->parent->pid : 0);
+    proc_printf(buf, "TracePid: %d\n", 0);
+    proc_printf(buf, "Uid: %d   %d  %d  %d\n", task->uid, task->uid, task->uid, task->uid);
+    proc_printf(buf, "Gid: %d   %d  %d  %d\n", task->gid, task->gid, task->gid, task->gid);
+    proc_printf(buf, "FDSize: %d\n", 0);
+    proc_printf(buf, "Groups: %d\n", 0);
+    proc_printf(buf, "NStgid: %d\n", 0);
+    proc_printf(buf, "NSpid: %d\n", 0);
+    proc_printf(buf, "NSpgid: %d\n", 0);
+    proc_printf(buf, "NSsid: %d\n", 0);
+    proc_printf(buf, "VmPeak: %d\n", 0);
+    proc_printf(buf, "VmSize: %d\n", 0);
+    proc_printf(buf, "VmLck: %d\n", 0);
+    proc_printf(buf, "VmPin: %d\n", 0);
+    proc_printf(buf, "VmHWM: %d\n", 0);
+    proc_printf(buf, "VmRSS: %d\n", 0);
+    proc_printf(buf, "RssAnon: %d\n", 0);
+    proc_printf(buf, "RssFile: %d\n", 0);
+    proc_printf(buf, "RssShmem: %d\n", 0);
+    proc_printf(buf, "VmData: %d\n", 0);
+    proc_printf(buf, "VmStk: %d\n", 0);
+    proc_printf(buf, "VmExe: %d\n", 0);
+    proc_printf(buf, "VmLib: %d\n", 0);
+    proc_printf(buf, "VmPTE: %d\n", 0);
+    proc_printf(buf, "VmSwap: %d\n", 0);
+    proc_printf(buf, "THP_enabled: %d\n", 0);
+    proc_printf(buf, "Threads: %d\n", 0);
+    proc_printf(buf, "SigQ: %d\n", 0);
+    proc_printf(buf, "SigPnd: 0000000000000000\n");
+    proc_printf(buf, "ShdPnd: 0000000000000000\n");
+    proc_printf(buf, "SigBlk: 0000000000000000\n");
+    proc_printf(buf, "SigIgn: 0000000000000000\n");
+    proc_printf(buf, "CapInh: 0000000000000000\n");
+    proc_printf(buf, "CapPrm: 0000000000000000\n");
+    proc_printf(buf, "CapEff: 0000000000000000\n");
+    proc_printf(buf, "CapBnd: 0000000000000000\n");
+    proc_printf(buf, "CapAmb: 0000000000000000\n");
+    proc_printf(buf, "NoNewPrivs:   %d\n",0);
+    proc_printf(buf, "Speculation_Store_Bypass):   %d\n",0);
+    proc_printf(buf, "Cpus_allowed:   %s\n", "ffffffff");
+    proc_printf(buf, "Cpus_allowed_list:   %s\n", "0-31");
+    proc_printf(buf, "voluntary_ctxt_switches:   %s\n", "0");
+    proc_printf(buf, "nonvoluntary_ctxt_switches:   %s\n", "0");
+
+    unlock(&task->sighand->lock);
+    unlock(&task->group->lock);
+    unlock(&task->general_lock);
+    proc_put_task(task);
+
+    return 0;
+}
+
 static int proc_pid_stat_show(struct proc_entry *entry, struct proc_data *buf) {
     struct task *task = proc_get_task(entry);
     if (task == NULL)
@@ -257,6 +334,7 @@ struct proc_dir_entry proc_pid_entries[] = {
     {"fd", S_IFDIR, .readdir = proc_pid_fd_readdir},
     {"maps", .show = proc_pid_maps_show},
     {"stat", .show = proc_pid_stat_show},
+    {"status", .show = proc_pid_status_show},
 };
 
 struct proc_dir_entry proc_pid = {NULL, S_IFDIR,
