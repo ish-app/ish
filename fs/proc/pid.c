@@ -107,42 +107,50 @@ static int proc_pid_auxv_show(struct proc_entry *entry, struct proc_data *buf) {
     struct task *task = proc_get_task(entry);
     if (task == NULL)
         return _ESRCH;
+    int err = 0;
+    lock(&task->general_lock);
     if (task->mm == NULL)
         goto out_free_task;
 
     size_t size = task->mm->auxv_end - task->mm->auxv_start;
     char *data = malloc(size);
-    if (data == NULL)
-        return _ENOMEM;
-    int err = user_read_task(task, task->mm->auxv_start, data, size);
-    if (err == 0)
+    if (data == NULL) {
+        err = _ENOMEM;
+        goto out_free_task;
+    }
+    if (user_read_task(task, task->mm->auxv_start, data, size) == 0)
         proc_buf_write(buf, data, size);
     free(data);
 
 out_free_task:
+    unlock(&task->general_lock);
     proc_put_task(task);
-    return 0;
+    return err;
 }
 
 static int proc_pid_cmdline_show(struct proc_entry *entry, struct proc_data *buf) {
     struct task *task = proc_get_task(entry);
     if (task == NULL)
         return _ESRCH;
+    int err = 0;
+    lock(&task->general_lock);
     if (task->mm == NULL)
         goto out_free_task;
 
     size_t size = task->mm->argv_end - task->mm->argv_start;
     char *data = malloc(size);
-    if (data == NULL)
-        return _ENOMEM;
-    int err = user_read_task(task, task->mm->argv_start, data, size);
-    if (err == 0)
+    if (data == NULL) {
+        err = _ENOMEM;
+        goto out_free_task;
+    }
+    if (user_read_task(task, task->mm->argv_start, data, size) == 0)
         proc_buf_write(buf, data, size);
     free(data);
 
 out_free_task:
+    unlock(&task->general_lock);
     proc_put_task(task);
-    return 0;
+    return err;
 }
 
 void proc_maps_dump(struct task *task, struct proc_data *buf) {
@@ -245,7 +253,9 @@ static int proc_pid_exe_readlink(struct proc_entry *entry, char *buf) {
     struct task *task = proc_get_task(entry);
     if (task == NULL)
         return _ESRCH;
+    lock(&task->general_lock);
     int err = generic_getpath(task->mm->exefile, buf);
+    unlock(&task->general_lock);
     proc_put_task(task);
     return err;
 }

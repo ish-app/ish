@@ -199,8 +199,14 @@ static int elf_exec(struct fd *fd, const char *file, struct exec_args argv, stru
     // from this point on, if any error occurs the process will have to be
     // killed before it even starts. please don't be too sad about it, it's
     // just a process.
+    //
+    // general_lock protects current->mm. otherwise procfs might read the
+    // pointer before it's released and then try to lock it after it's
+    // released.
+    lock(&current->general_lock);
     mm_release(current->mm);
     task_set_mm(current, mm_new());
+    unlock(&current->general_lock);
     write_wrlock(&current->mem->lock);
 
     current->mm->exefile = fd_retain(fd);
