@@ -675,6 +675,8 @@
 		BB149E30256CFFD200F57815 /* APK */ = {
 			isa = PBXGroup;
 			children = (
+				BBE482782571B12A00115CFD /* APKFilesystem.m */,
+				BBE482812571B13300115CFD /* APKFilesystem.h */,
 				BB149E31256CFFFC00F57815 /* APKDownloads.storyboard */,
 				BB149E3A256D09AC00F57815 /* APKDownloadsViewController.h */,
 				BB149E3B256D09AC00F57815 /* APKDownloadsViewController.m */,
@@ -723,8 +725,6 @@
 				BB235533235D488400139E00 /* LocationDevice.m */,
 				408A263B23644102008A4E81 /* iOSFS.h */,
 				408A2639236440F8008A4E81 /* iOSFS.m */,
-				BBE482812571B13300115CFD /* APKFilesystem.h */,
-				BBE482782571B12A00115CFD /* APKFilesystem.m */,
 			);
 			name = Devices;
 			sourceTree = "<group>";
