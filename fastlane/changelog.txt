@@ -1,0 +1,9 @@
+New stuff:
+- Added some more icons
+- APK over on-demand resources (for App Store and TestFlight)
+- Can use fonts installed via profile on iOS 14
+
+Fixed bugs:
+- `cd /proc/self/fd` not doing anything in busybox ash (thanks @nimelehin)
+- Crash when running `ps` many times in parallel (thanks @emkey1)
+- Titles missing in some settings pages
