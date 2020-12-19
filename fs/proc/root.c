@@ -154,31 +154,36 @@ static int proc_show_cpu(struct proc_entry *UNUSED(entry), struct proc_data *buf
     *eax = 1;
     do_cpuid(eax, &ebx, &ecx, &edx);
     flags = edx_flags(edx);
-
-    proc_printf(buf, "processor       : 0\n");
-    proc_printf(buf, "vendor_id       : %s\n", vendor_id);
-    proc_printf(buf, "cpu family      : 1\n");
-    proc_printf(buf, "model           : 1\n");
-    proc_printf(buf, "model name      : iSH Virtual i686-compatible CPU @ 1.066GHz\n");
-    proc_printf(buf, "stepping        : 1\n");
-    proc_printf(buf, "CPU MHz         : 1066.00\n");
-    proc_printf(buf, "cache size      : 0 KB\n");
-    proc_printf(buf, "pysical id      : 0\n");
-    proc_printf(buf, "siblings        : 0\n");
-    proc_printf(buf, "core id         : 0\n");
-    proc_printf(buf, "cpu cores       : 1\n");
-    proc_printf(buf, "apicid          : 0\n");
-    proc_printf(buf, "initial apicid  : 0\n");
-    proc_printf(buf, "fpu             : yes\n");
-    proc_printf(buf, "fpu_exception   : yes\n");
-    proc_printf(buf, "cpuid level     : 13\n");
-    proc_printf(buf, "wp              : yes\n");
-    proc_printf(buf, "flags           : %s\n", flags); // Pulled from do_cpuid
-    proc_printf(buf, "bogomips        : 1066.00\n");
-    proc_printf(buf, "clflush size    : %d\n", ebx);
-    proc_printf(buf, "cache_alignment : 64\n");
-    proc_printf(buf, "address sizes   : 36 bits physical, 32 bits virtual\n");
-    proc_printf(buf, "power management:\n");
+    int cpu_count = get_cpu_count(); // One entry per device processor
+    int i;
+    
+    for(i=0;i<cpu_count;i++) {
+        proc_printf(buf, "processor       : %d\n",i);
+        proc_printf(buf, "vendor_id       : %s\n", vendor_id);
+        proc_printf(buf, "cpu family      : 1\n");
+        proc_printf(buf, "model           : 1\n");
+        proc_printf(buf, "model name      : iSH Virtual i686-compatible CPU @ 1.066GHz\n");
+        proc_printf(buf, "stepping        : 1\n");
+        proc_printf(buf, "CPU MHz         : 1066.00\n");
+        proc_printf(buf, "cache size      : 0 KB\n");
+        proc_printf(buf, "pysical id      : 0\n");
+        proc_printf(buf, "siblings        : 0\n");
+        proc_printf(buf, "core id         : 0\n");
+        proc_printf(buf, "cpu cores       : 1\n");
+        proc_printf(buf, "apicid          : 0\n");
+        proc_printf(buf, "initial apicid  : 0\n");
+        proc_printf(buf, "fpu             : yes\n");
+        proc_printf(buf, "fpu_exception   : yes\n");
+        proc_printf(buf, "cpuid level     : 13\n");
+        proc_printf(buf, "wp              : yes\n");
+        proc_printf(buf, "flags           : %s\n", flags); // Pulled from do_cpuid
+        proc_printf(buf, "bogomips        : 1066.00\n");
+        proc_printf(buf, "clflush size    : %d\n", ebx);
+        proc_printf(buf, "cache_alignment : 64\n");
+        proc_printf(buf, "address sizes   : 36 bits physical, 32 bits virtual\n");
+        proc_printf(buf, "power management:\n");
+        proc_printf(buf, "\n");
+    }
     return 0;
     
 }
