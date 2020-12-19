@@ -1811,7 +1811,6 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = BB0B85A42586F1CB00208600 /* ProjectDebug.xcconfig */;
 			buildSettings = {
-<<<<<<< HEAD
 				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
 				CLANG_WARN_BOOL_CONVERSION = YES;
 				CLANG_WARN_COMMA = YES;
@@ -1848,10 +1847,6 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "$(ROOT_BUNDLE_IDENTIFIER)";
 				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos macosx";
 				VERSIONING_SYSTEM = "apple-generic";
-=======
-				CURRENT_PROJECT_VERSION = 87;
-				DEVELOPMENT_TEAM = CK5SXRTBR7;
->>>>>>> 58000929a7f1c308ceeaaf0394993a4a95e7b08a
 			};
 			name = Debug;
 		};
@@ -1859,7 +1854,6 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = BB0B85A52586F1E100208600 /* ProjectRelease.xcconfig */;
 			buildSettings = {
-<<<<<<< HEAD
 				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
 				CLANG_WARN_BOOL_CONVERSION = YES;
 				CLANG_WARN_COMMA = YES;
@@ -1894,10 +1888,6 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "$(ROOT_BUNDLE_IDENTIFIER)";
 				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos macosx";
 				VERSIONING_SYSTEM = "apple-generic";
-=======
-				CURRENT_PROJECT_VERSION = 87;
-				DEVELOPMENT_TEAM = CK5SXRTBR7;
->>>>>>> 58000929a7f1c308ceeaaf0394993a4a95e7b08a
 			};
 			name = Release;
 		};
