@@ -19,12 +19,12 @@
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="Tix-gN-n1j">
-                                <rect key="frame" x="274" y="20" width="400" height="47.5"/>
+                                <rect key="frame" x="274" y="20" width="400" height="48"/>
                                 <subviews>
                                     <visualEffectView opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="kZU-5J-Yl6">
-                                        <rect key="frame" x="0.0" y="0.0" width="400" height="47.5"/>
+                                        <rect key="frame" x="0.0" y="0.0" width="400" height="48"/>
                                         <view key="contentView" opaque="NO" multipleTouchEnabled="YES" contentMode="center" insetsLayoutMarginsFromSafeArea="NO" id="GSx-k0-3JF">
-                                            <rect key="frame" x="0.0" y="0.0" width="400" height="47.5"/>
+                                            <rect key="frame" x="0.0" y="0.0" width="400" height="48"/>
                                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                             <subviews>
                                                 <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="aK9-xh-Zzr">
@@ -47,6 +47,7 @@
                                                         <constraint firstItem="HkK-dO-u44" firstAttribute="leading" secondItem="aK9-xh-Zzr" secondAttribute="leadingMargin" id="GIh-Ji-TUu"/>
                                                         <constraint firstItem="xnd-Ip-thn" firstAttribute="leading" secondItem="aK9-xh-Zzr" secondAttribute="leadingMargin" id="irh-TP-mBZ"/>
                                                         <constraint firstAttribute="bottomMargin" secondItem="xnd-Ip-thn" secondAttribute="bottom" id="qUG-wH-pmI"/>
+                                                        <constraint firstAttribute="trailingMargin" relation="greaterThanOrEqual" secondItem="HkK-dO-u44" secondAttribute="trailing" id="w3C-4b-R6c"/>
                                                     </constraints>
                                                 </view>
                                                 <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="R4q-gD-tCk">

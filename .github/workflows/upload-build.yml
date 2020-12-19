@@ -1,15 +1,17 @@
-name: TestFlight Beta
+name: Upload Build
 
 on:
   workflow_dispatch:
 
 jobs:
-  push-beta:
+  upload-build:
     runs-on: macos-10.15
+    timeout-minutes: 720
     steps:
       - uses: actions/checkout@v2
         with:
           submodules: true
+
       - name: Install deps
         run: |
             pip3 install meson
@@ -17,8 +19,11 @@ jobs:
             bundle install
             git config --global user.name iSH
             git config --global user.email 74480058+ish-actions@users.noreply.github.com
+            cd deps/aports
+            ./download-repos.py
+
       - name: Fastlane
-        run: bundle exec fastlane beta
+        run: bundle exec fastlane upload_build
         env:
           APP_STORE_CONNECT_API_KEY_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           APP_STORE_CONNECT_API_KEY_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
@@ -28,3 +33,11 @@ jobs:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
           SLACK_URL: ${{ secrets.SLACK_URL }}
           FASTLANE_SKIP_UPDATE_CHECK: 1
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: App
+          path: |
+            iSH.ipa
+            iSH.app.dSYM.zip
+            iSH-appstore.app.dSYM.zip
