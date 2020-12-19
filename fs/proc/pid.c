@@ -41,10 +41,13 @@ static int proc_pid_status_show(struct proc_entry *entry, struct proc_data *buf)
     switch(proc_state) {
         case 'Z' :
             strcpy(long_proc_state, "Z (Zombie)");
+            break;
         case 'T' :
             strcpy(long_proc_state, "T (Stopped)");
+            break;
         case 'R':
             strcpy(long_proc_state, "R (Running)");
+            break;
     }
     proc_printf(buf, "State: %s\n", long_proc_state);
     proc_printf(buf, "Tgid: %d\n", task->tgid);
