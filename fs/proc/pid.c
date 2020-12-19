@@ -37,7 +37,26 @@ static int proc_pid_status_show(struct proc_entry *entry, struct proc_data *buf)
     int umask = task->fs->umask & 0777;
     proc_printf(buf, "Umask:    00%o\n", umask);
     char* status = malloc(sizeof(entry->meta->name));
-    proc_printf(buf, "State: %s\n", status);
+    char proc_state = (task->zombie ? 'Z' :
+                       task->group->stopped ? 'T' :
+                       task->io_block && task->pid != current->pid ? 'S' :
+                       'R');
+    char *long_proc_state = malloc(15);
+    switch(proc_state) {
+        case 'Z' :
+            strcpy(long_proc_state, "Z  (Zombie)");
+            break;
+        case 'T' :
+            strcpy(long_proc_state, "T  (Stopped)");
+            break;
+        case 'S' :
+            strcpy(long_proc_state, "S  (Sleep)");
+            break;
+        case 'R' :
+            strcpy(long_proc_state, "R  (Running)");
+            break;
+    }
+    proc_printf(buf, "State: %s\n", long_proc_state);
     proc_printf(buf, "Tgid: %d\n", task->tgid);
     proc_printf(buf, "Pid: %d\n", task->pid);
     proc_printf(buf, "PPid:  %d\n", task->parent ? task->parent->pid : 0);
