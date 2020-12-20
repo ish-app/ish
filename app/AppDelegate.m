@@ -32,6 +32,7 @@
 
 @property BOOL exiting;
 @property NSString *unameVersion;
+@property NSString *unameHostname;
 @property SCNetworkReachabilityRef reachability;
 
 @end
@@ -275,12 +276,19 @@ void NetworkReachabilityCallback(SCNetworkReachabilityRef target, SCNetworkReach
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     // get the network permissions popup to appear on chinese devices
     [[NSURLSession.sharedSession dataTaskWithURL:[NSURL URLWithString:@"http://captive.apple.com"]] resume];
+
+    if ([NSUserDefaults.standardUserDefaults boolForKey:@"FASTLANE_SNAPSHOT"])
+        [UIView setAnimationsEnabled:NO];
     
     self.unameVersion = [NSString stringWithFormat:@"iSH %@ (%@)",
                          [NSBundle.mainBundle objectForInfoDictionaryKey:@"CFBundleShortVersionString"],
                          [NSBundle.mainBundle objectForInfoDictionaryKey:(NSString *) kCFBundleVersionKey]];
     extern const char *uname_version;
     uname_version = self.unameVersion.UTF8String;
+    // this defaults key is set when taking app store screenshots
+    self.unameHostname = [NSUserDefaults.standardUserDefaults stringForKey:@"hostnameOverride"];
+    extern const char *uname_hostname_override;
+    uname_hostname_override = self.unameHostname.UTF8String;
     
     [UserPreferences.shared observe:@[@"shouldDisableDimming"] options:NSKeyValueObservingOptionInitial
                               owner:self usingBlock:^(typeof(self) self) {

@@ -1,0 +1,25 @@
+scheme("Screenshots")
+
+devices([
+  "iPhone 11",
+  "iPhone X",
+  "iPhone 8 Plus",
+  "iPhone 8",
+  "iPhone SE (1st generation)",
+  "iPad Pro (12.9-inch) (3rd generation)",
+  "iPad Pro (12.9-inch) (2nd generation)",
+  "iPad Pro (11-inch) (2nd generation)",
+  "iPad Pro (10.5-inch)",
+  "iPad Pro (9.7-inch)",
+])
+
+languages([
+  "en-US",
+])
+
+override_status_bar(true)
+xcconfig("app/AppStore.xcconfig")
+reinstall_app(true)
+clear_previous_screenshots(true)
+stop_after_first_error(true)
+number_of_retries(2) # it's buggy
