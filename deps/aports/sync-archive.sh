@@ -1,4 +1,4 @@
-#!/bin/sh -x
+#!/bin/bash -ex
 # This script only works on my machine
 cd "$(dirname $0)"
 
