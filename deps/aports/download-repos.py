@@ -24,9 +24,11 @@ def read_index(index):
         packages.append(package)
     return packages
 
-def download_repo(root_url, repo_name, index_name):
+def download_repo(root_url, repo_name, index_name=None):
     repo = pathlib.Path(repo_name)
     repo.mkdir(parents=True, exist_ok=True)
+    if index_name is None:
+        index_name = (repo/'index.txt').read_text()
     index_path = repo/'APKINDEX.tar.gz'
     index_url = f'{root_url}/{repo_name}/{index_name}'
     urllib.request.urlretrieve(index_url, index_path)
@@ -63,5 +65,5 @@ def download_many(downloads):
             print(f'{done}/{len(futures)}', str(path))
 
 if __name__ == '__main__':
-    download_repo('https://b2-f001.ish.app/file/alpine-archive', 'main/x86', 'APKINDEX-v3.12-2020-11-15.tar.gz')
-    download_repo('https://b2-f001.ish.app/file/alpine-archive', 'community/x86', 'APKINDEX-v3.12-2020-11-15.tar.gz')
+    download_repo('https://b2-f001.ish.app/file/alpine-archive', 'main/x86')
+    download_repo('https://b2-f001.ish.app/file/alpine-archive', 'community/x86')
