@@ -1,0 +1,25 @@
+name: "Update Alpine Repo"
+on:
+    workflow_dispatch:
+    schedule:
+        - cron: "0 0 * * *"
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Update main
+        run: deps/aports/sync-archive.sh v3.12 main/x86
+      - name: Update community
+        run: deps/aports/sync-archive.sh v3.12 community/x86
+      - name: Commit
+        id: commit
+        run: |
+          git add deps/aports/{main,community}/x86/index.txt
+          git commit -m"Update Alpine repositories"
+          # TODO add a summary of changes in the commit description
+        continue-on-error: true
+      - name: Push
+        if: ${{ steps.commit.outcome == 'success' }}
+        run: git push
