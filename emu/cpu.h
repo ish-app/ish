@@ -5,6 +5,7 @@
 #include "misc.h"
 #include "emu/float80.h"
 #include "emu/memory.h"
+#include "jit/frame.h"
 
 struct cpu_state;
 struct tlb;
@@ -27,8 +28,13 @@ static_assert(sizeof(union xmm_reg) == 16, "xmm_reg size");
 static_assert(sizeof(union mm_reg) == 8, "mm_reg size");
 
 struct cpu_state {
+    // DO NOT MOVE THIS!
+    // ...or do, i'm a comment, not a cop
+    struct jit_frame frame;
+
     struct mem *mem;
     struct jit *jit;
+
     long cycle;
 
     // general registers
