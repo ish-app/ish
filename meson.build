@@ -43,6 +43,36 @@ offsets = custom_target('offsets',
     output: 'cpu-offsets.h', input: 'jit/offsets.c', depfile: 'cpu-offsets.h.d',
     command: [find_program('tools/staticdefine.sh'), '@OUTDIR@/compile_commands.json', '@INPUT@', '@OUTPUT@', '@DEPFILE@'])
 
+emu_src = [
+    'emu/tlb.c',
+    'emu/fpu.c',
+    'emu/vec.c',
+    'emu/float80.c',
+
+]
+if get_option('engine') == 'jit'
+    gadgets = 'jit/gadgets-' + host_machine.cpu_family()
+    emu_src += [
+        'jit/jit.c',
+        'jit/gen.c',
+        'jit/helpers.c',
+        gadgets+'/entry.S',
+        gadgets+'/memory.S',
+        gadgets+'/control.S',
+        gadgets+'/math.S',
+        gadgets+'/bits.S',
+        gadgets+'/string.S',
+        gadgets+'/misc.S',
+        offsets,
+    ]
+else
+    emu_src += [
+        'emu/interp.c',
+    ]
+endif
+
+libish_emu = library('ish_emu', emu_src, include_directories: includes)
+
 src = [
     'kernel/init.c',
     'kernel/errno.c',
@@ -114,38 +144,14 @@ src = [
     'util/fifo.c',
 
     'emu/memory.c',
-    'emu/tlb.c',
-    'emu/fpu.c',
-    'emu/vec.c',
-    'emu/float80.c',
 
     'platform/' + host_machine.system() + '.c',
 ]
-if get_option('engine') == 'jit'
-    gadgets = 'jit/gadgets-' + host_machine.cpu_family()
-    src += [
-        'jit/jit.c',
-        'jit/gen.c',
-        'jit/helpers.c',
-        gadgets+'/entry.S',
-        gadgets+'/memory.S',
-        gadgets+'/control.S',
-        gadgets+'/math.S',
-        gadgets+'/bits.S',
-        gadgets+'/string.S',
-        gadgets+'/misc.S',
-        offsets,
-    ]
-else
-    src += [
-        'emu/interp.c',
-    ]
-endif
 
 libish = library('ish', src,
     include_directories: includes)
 ish = declare_dependency(
-    link_with: libish,
+    link_with: [libish, libish_emu],
     dependencies: dependencies,
     include_directories: includes)
 

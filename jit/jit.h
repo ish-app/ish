@@ -1,7 +1,7 @@
 #ifndef JIT_H
 #define JIT_H
 #include "misc.h"
-#include "emu/memory.h"
+#include "emu/mmu.h"
 #include "util/list.h"
 #include "util/sync.h"
 
@@ -9,10 +9,11 @@
 
 #define JIT_INITIAL_HASH_SIZE (1 << 10)
 #define JIT_CACHE_SIZE (1 << 10)
+#define JIT_PAGE_HASH_SIZE (1 << 10)
 
 struct jit {
     // there is one jit per address space
-    struct mem *mem;
+    struct mmu *mmu;
     size_t mem_used;
     size_t num_blocks;
 
@@ -23,7 +24,13 @@ struct jit {
     // period, if we had such a thing)
     struct list jetsam;
 
+    // A way to look up blocks in a page
+    struct {
+        struct list blocks[2];
+    } *page_hash;
+
     lock_t lock;
+    wrlock_t jetsam_lock;
 };
 
 // this is roughly the average number of instructions in a basic block according to anonymous sources
@@ -56,12 +63,15 @@ struct jit_block {
 };
 
 // Create a new jit
-struct jit *jit_new(struct mem *mem);
+struct jit *jit_new(struct mmu *mmu);
 void jit_free(struct jit *jit);
 
-// Invalidate all jit blocks in the given page. Locks the jit. Should only be
-// called by memory.c in conjunction with mem_changed.
+// Invalidate all jit blocks in pages start (inclusive) to end (exclusive).
+// Locks the jit. Should only be called by memory.c in conjunction with
+// mem_changed.
+void jit_invalidate_range(struct jit *jit, page_t start, page_t end);
 void jit_invalidate_page(struct jit *jit, page_t page);
+void jit_invalidate_all(struct jit *jit);
 
 #endif
 
