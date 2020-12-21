@@ -23,7 +23,8 @@ jobs:
             ./download-repos.py
 
       - name: Fastlane
-        run: bundle exec fastlane upload_build
+        timeout-minutes: 720
+        run: script fastlane.log bundle exec fastlane upload_build
         env:
           APP_STORE_CONNECT_API_KEY_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           APP_STORE_CONNECT_API_KEY_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
@@ -41,3 +42,9 @@ jobs:
             iSH.ipa
             iSH.app.dSYM.zip
             iSH-appstore.app.dSYM.zip
+
+      - uses: actions/upload-artifact@v2
+        if: ${{ always() }}
+        with:
+          name: Fastlane Logs
+          path: fastlane.log
