@@ -17,8 +17,8 @@ jobs:
             pip3 install meson
             brew install ninja
             bundle install
-            git config --global user.name iSH
-            git config --global user.email 74480058+ish-actions@users.noreply.github.com
+            git config user.name github-actions
+            git config user.email github-actions@github.cog
             cd deps/aports
             ./download-repos.py
 

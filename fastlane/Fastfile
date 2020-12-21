@@ -62,6 +62,8 @@ lane :upload_build do
         changelog: testflight_changelog,
     )
 
+    # uploading a build takes about 5 hours, so merge master back in if there have been any commits during that
+    git_pull(rebase: false)
     push_to_git_remote
     set_github_release(
         repository_name: "ish-app/ish",
