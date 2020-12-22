@@ -20,8 +20,7 @@ function update_repo() {
     new_index_name="$(cat "$path/index.txt")"
     rclone cat "b2:alpine-archive/$path/$new_index_name" | tar -xzOf - -O APKINDEX | format_index > /tmp/APKINDEX.new
     rclone cat "b2:alpine-archive/$path/$old_index_name" | tar -xzOf - -O APKINDEX | format_index > /tmp/APKINDEX.old
-    diff -u /tmp/APKINDEX.new /tmp/APKINDEX.old
-    if cmp -s /tmp/APKINDEX.new /tmp/APKINDEX.old; then
+    if diff -u /tmp/APKINDEX.new /tmp/APKINDEX.old; then
         echo "nothing new"
         echo "$old_index_name" > "$path/index.txt"
     fi
