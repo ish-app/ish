@@ -18,9 +18,21 @@ mode_t_ proc_entry_mode(struct proc_entry *entry) {
     return mode;
 }
 
-int proc_entry_stat(struct proc_entry *entry, struct statbuf *stat) {
-    memset(stat, 0, sizeof(*stat));
+int proc_entry_stat(struct proc_entry *entry, struct statbuf stat) {
+    memset(stat, 0, sizeof(stat));
     stat->mode = proc_entry_mode(entry);
+
+    lock(&pids_lock);
+    struct task *task = pid_get_task(entry->pid);
+    if (task != NULL) {
+       stat->uid = task->uid;
+       stat->gid = task->gid;
+    } else {
+        stat->uid = 0;
+        stat->gid = 0;
+    }
+    unlock(&pids_lock);
+
     stat->inode = entry->meta->inode | entry->pid << 16 | (uint64_t) entry->fd << 48;
     return 0;
 }
