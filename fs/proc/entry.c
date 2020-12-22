@@ -18,8 +18,8 @@ mode_t_ proc_entry_mode(struct proc_entry *entry) {
     return mode;
 }
 
-int proc_entry_stat(struct proc_entry *entry, struct statbuf stat) {
-    memset(stat, 0, sizeof(stat));
+int proc_entry_stat(struct proc_entry *entry, struct statbuf *stat) {
+    memset(stat, 0, sizeof(*stat));
     stat->mode = proc_entry_mode(entry);
 
     lock(&pids_lock);
