@@ -50,7 +50,7 @@ jobs:
           path: fastlane.log
 
       - name: Delete changelog
-        run:
+        run: |
           git rm fastlane/changelog.txt
           git commit -m "Make sure a new changelog is written for the next build"
           git push
