@@ -25,7 +25,6 @@ static void proc_put_task(struct task *UNUSED(task)) {
 }
 
 static int proc_pid_status_show(struct proc_entry *entry, struct proc_data *buf) {
-
     struct task *task = proc_get_task(entry);
     if (task == NULL)
         return _ESRCH;
@@ -36,7 +35,6 @@ static int proc_pid_status_show(struct proc_entry *entry, struct proc_data *buf)
     proc_printf(buf, "Name: %.16s\n", task->comm);
     int umask = task->fs->umask & 0777;
     proc_printf(buf, "Umask:    00%o\n", umask);
-    char* status = malloc(sizeof(entry->meta->name));
     char proc_state = (task->zombie ? 'Z' :
                        task->group->stopped ? 'T' :
                        task->io_block && task->pid != current->pid ? 'S' :

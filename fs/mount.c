@@ -23,10 +23,11 @@ void fs_register(const struct fs_ops *fs) {
     assert(!"reached filesystem limit");
 }
 
-char* get_filesystems(void) {
-    char *fs_list = malloc(MAX_FILESYSTEMS * 50); // Reasonable assumption?
+char * get_filesystems(void) {
+    char *fs_list = calloc(MAX_FILESYSTEMS * 50, sizeof(char)); // Reasonable assumption?
+    unsigned int i;
     
-    for (unsigned i = 0; i < MAX_FILESYSTEMS; i++) {
+    for ( i = 0; i < MAX_FILESYSTEMS; i++ ) {
         if (filesystems[i] != NULL) {
             fs_list = strcat(fs_list, "nodev    ");
             fs_list = strcat(fs_list, filesystems[i]->name);
