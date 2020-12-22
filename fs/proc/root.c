@@ -118,7 +118,7 @@ char * parse_edx_flags(dword_t edx, char *edx_flags) { /* Translate edx bit flag
 }
 
 char * translate_vendor_id(dword_t *ebx, dword_t *ecx, dword_t *edx) {
-    char *byteArray = malloc(12 + 1); // vendor_id is fixed at 12 bytes
+    char *byteArray = calloc(12 + 1, sizeof(char)); // vendor_id is fixed at 12 bytes
                                         
     // convert from an unsigned long int to a 4-byte array
     byteArray[0] = (int)((*ebx & 0XFF));
