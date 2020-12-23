@@ -1,0 +1,6 @@
+#include "XcodeDefault.xcconfig"
+
+DEBUG_INFORMATION_FORMAT = dwarf-with-dsym;
+ENABLE_NS_ASSERTIONS = NO;
+MTL_ENABLE_DEBUG_INFO = NO;
+VALIDATE_PRODUCT = YES;

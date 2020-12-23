@@ -50,6 +50,7 @@ void cpu() {
     OFFSET(LOCAL, jit_frame, last_block);
     OFFSET(LOCAL, jit_frame, ret_cache);
     OFFSET(CPU, cpu_state, segfault_addr);
+    OFFSET(CPU, cpu_state, segfault_was_write);
     MACRO(MEM_READ);
     MACRO(MEM_WRITE);
 

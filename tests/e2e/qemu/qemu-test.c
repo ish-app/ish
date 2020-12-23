@@ -2450,7 +2450,7 @@ void test_sse(void)
     // MMX_OP2(paddusb);
     // MMX_OP2(paddusw);
     // MMX_OP2(pmaxub);
-    // MMX_OP2(pandn);
+    SSE_OP2(pandn);
 
     // MMX_OP2(pmulhuw);
     // MMX_OP2(pmulhw);
@@ -2472,7 +2472,7 @@ void test_sse(void)
     SSE_OP2(psubq);
     SSE_OP2(paddb);
     // MMX_OP2(paddw);
-    // MMX_OP2(paddd);
+    SSE_OP2(paddd);
 
     // MMX_OP2(pavgb);
     // MMX_OP2(pavgw);

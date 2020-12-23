@@ -14,6 +14,8 @@
 
 + (int)bootError;
 
++ (void)maybePresentStartupMessageOnViewController:(UIViewController *)vc;
+
 @end
 
 extern NSString *const ProcessExitedNotification;

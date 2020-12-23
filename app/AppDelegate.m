@@ -12,6 +12,7 @@
 #import "AboutViewController.h"
 #import "AppDelegate.h"
 #import "AppGroup.h"
+#import "APKFilesystem.h"
 #import "iOSFS.h"
 #import "SceneDelegate.h"
 #import "PasteboardDevice.h"
@@ -20,7 +21,7 @@
 #import "Roots.h"
 #import "TerminalViewController.h"
 #import "UserPreferences.h"
-#import "APKFilesystem.h"
+#import "UIApplication+OpenURL.h"
 #include "kernel/init.h"
 #include "kernel/calls.h"
 #include "fs/dyndev.h"
@@ -31,6 +32,7 @@
 
 @property BOOL exiting;
 @property NSString *unameVersion;
+@property NSString *unameHostname;
 @property SCNetworkReachabilityRef reachability;
 
 @end
@@ -58,6 +60,10 @@ static void ios_handle_die(const char *msg) {
     pthread_setname_np(newName.UTF8String);
 }
 
+static int bootError;
+static int fs_ish_version;
+static NSString *const kSkipStartupMessage = @"Skip Startup Message";
+
 @implementation AppDelegate
 
 - (int)boot {
@@ -75,20 +81,48 @@ static void ios_handle_die(const char *msg) {
     if (err < 0)
         return err;
 
-    // /ish/version is the last ish version that opened this root. Not used for anything yet, but could be used to know whether to change the root if needed in a future update.
-    BOOL has_ish_version = NO;
-    struct fd *ish_version = generic_open("/ish/version", O_WRONLY_|O_CREAT_|O_TRUNC_, 0644);
-    if (!IS_ERR(ish_version)) {
-        has_ish_version = YES;
-        NSString *version = NSBundle.mainBundle.infoDictionary[(__bridge NSString *) kCFBundleVersionKey];
-        NSString *file = [NSString stringWithFormat:@"%@\n", version];
-        ish_version->ops->write(ish_version, file.UTF8String, [file lengthOfBytesUsingEncoding:NSUTF8StringEncoding]);
-        fd_close(ish_version);
-    }
+    // /ish/version is the last ish version that opened this root. Used to migrate the filesystem.
+    struct fd *ish_version_fd = generic_open("/ish/version", O_RDONLY_, 0);
+    if (!IS_ERR(ish_version_fd)) {
+        char buf[100];
+        ssize_t n = ish_version_fd->ops->read(ish_version_fd, buf, sizeof(buf));
+        if (n < 0)
+            return (int) n;
+        NSString *version = [[NSString alloc] initWithBytesNoCopy:buf length:n encoding:NSUTF8StringEncoding freeWhenDone:NO];
+        version = [version stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
+        fs_ish_version = version.intValue;
+        fd_close(ish_version_fd);
 
-    if (has_ish_version && [NSBundle.mainBundle URLForResource:@"OnDemandResources" withExtension:@"plist"] != nil) {
-        generic_mkdirat(AT_PWD, "/ish/apk", 0755);
-        do_mount(&apkfs, "apk", "/ish/apk", "", 0);
+        // I forgot to add the community repo
+        if (fs_ish_version < 88) {
+            NSData *repositoriesData = [NSData dataWithContentsOfURL:[root URLByAppendingPathComponent:@"etc/apk/repositories"]];
+            NSString *repositories = [[NSString alloc] initWithData:repositoriesData encoding:NSUTF8StringEncoding];
+            NSString *communityRepo = @"file:///ish/apk/community";
+            if (![[repositories componentsSeparatedByString:@"\n"] containsObject:communityRepo]) {
+                NSString *addend = [communityRepo stringByAppendingString:@"\n"];
+                struct fd *repositories_fd = generic_open("/etc/apk/repositories", O_WRONLY_|O_APPEND_, 0);
+                if (!IS_ERR(repositories_fd)) {
+                    repositories_fd->ops->write(repositories_fd, addend.UTF8String, [addend lengthOfBytesUsingEncoding:NSUTF8StringEncoding]);
+                    fd_close(repositories_fd);
+                }
+            }
+        }
+
+        NSString *currentVersion = NSBundle.mainBundle.infoDictionary[(__bridge NSString *) kCFBundleVersionKey];
+        if (currentVersion.intValue > fs_ish_version) {
+            fs_ish_version = currentVersion.intValue;
+            ish_version_fd = generic_open("/ish/version", O_WRONLY_|O_TRUNC_, 0644);
+            if (!IS_ERR(ish_version_fd)) {
+                NSString *file = [NSString stringWithFormat:@"%@\n", currentVersion];
+                ish_version_fd->ops->write(ish_version_fd, file.UTF8String, [file lengthOfBytesUsingEncoding:NSUTF8StringEncoding]);
+                fd_close(ish_version_fd);
+            }
+        }
+
+        if ([NSBundle.mainBundle URLForResource:@"OnDemandResources" withExtension:@"plist"] != nil) {
+            generic_mkdirat(AT_PWD, "/ish/apk", 0755);
+            do_mount(&apkfs, "apk", "/ish/apk", "", 0);
+        }
     }
 
     // create some device nodes
@@ -196,10 +230,28 @@ static void ios_handle_die(const char *msg) {
     }
 }
 
-static int bootError;
-
 + (int)bootError {
     return bootError;
+}
+
++ (void)maybePresentStartupMessageOnViewController:(UIViewController *)vc {
+    if ([NSUserDefaults.standardUserDefaults integerForKey:kSkipStartupMessage] >= 1)
+        return;
+    if (fs_ish_version == 0) {
+        UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Install iSH’s built-in APK?"
+                                                                       message:@"iSH now includes the APK package manager, but it must be manually activated."
+                                                                preferredStyle:UIAlertControllerStyleAlert];
+        [alert addAction:[UIAlertAction actionWithTitle:@"Show me how"
+                                                  style:UIAlertActionStyleDefault
+                                                handler:^(UIAlertAction * _Nonnull action) {
+            [UIApplication openURL:@"https://go.ish.app/get-apk"];
+        }]];
+        [alert addAction:[UIAlertAction actionWithTitle:@"Don't show again"
+                                                  style:UIAlertActionStyleDefault
+                                                handler:nil]];
+        [vc presentViewController:alert animated:YES completion:nil];
+    }
+    [NSUserDefaults.standardUserDefaults setInteger:1 forKey:kSkipStartupMessage];
 }
 
 - (BOOL)application:(UIApplication *)application willFinishLaunchingWithOptions:(NSDictionary<UIApplicationLaunchOptionsKey,id> *)launchOptions {
@@ -224,12 +276,19 @@ void NetworkReachabilityCallback(SCNetworkReachabilityRef target, SCNetworkReach
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     // get the network permissions popup to appear on chinese devices
     [[NSURLSession.sharedSession dataTaskWithURL:[NSURL URLWithString:@"http://captive.apple.com"]] resume];
+
+    if ([NSUserDefaults.standardUserDefaults boolForKey:@"FASTLANE_SNAPSHOT"])
+        [UIView setAnimationsEnabled:NO];
     
     self.unameVersion = [NSString stringWithFormat:@"iSH %@ (%@)",
                          [NSBundle.mainBundle objectForInfoDictionaryKey:@"CFBundleShortVersionString"],
                          [NSBundle.mainBundle objectForInfoDictionaryKey:(NSString *) kCFBundleVersionKey]];
     extern const char *uname_version;
     uname_version = self.unameVersion.UTF8String;
+    // this defaults key is set when taking app store screenshots
+    self.unameHostname = [NSUserDefaults.standardUserDefaults stringForKey:@"hostnameOverride"];
+    extern const char *uname_hostname_override;
+    uname_hostname_override = self.unameHostname.UTF8String;
     
     [UserPreferences.shared observe:@[@"shouldDisableDimming"] options:NSKeyValueObservingOptionInitial
                               owner:self usingBlock:^(typeof(self) self) {

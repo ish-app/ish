@@ -1,67 +1,79 @@
-lane :beta do
-    app_store_connect_api_key
+before_all do
+    ensure_bundle_exec
+end
+
+lane :build do |options|
     setup_ci
     sync_code_signing
     sync_code_signing(type: 'appstore')
 
-    changelog = File.read('changelog.txt')
+    # do this after commiting the version bump but before building the app
+    if is_ci
+      update_code_signing_settings(
+        path: "iSH.xcodeproj",
+        targets: "iSH",
+        use_automatic_signing: false,
+        profile_uuid: ENV["sigh_app.ish.iSH_development"],
+      )
+      update_code_signing_settings(
+        path: "iSH.xcodeproj",
+        targets: "iSHFileProvider",
+        use_automatic_signing: false,
+        profile_uuid: ENV["sigh_app.ish.iSH.FileProvider_development"],
+      )
+    end
+
+    config = options[:config]
+    config = "app/#{config}.xcconfig" if config
+    build_app(
+      project: "iSH.xcodeproj",
+      scheme: "iSH",
+      xcconfig: config,
+      output_name: options[:output],
+    )
+end
+
+lane :upload_build do
+    app_store_connect_api_key
+
+    changelog = File.read("changelog.txt")
     last_tag = `git describe --tags --abbrev=0 --match builds/\*`.chomp
-    testflight_changelog = changelog + "\n" + File.read("footer.txt") + `git shortlog #{last_tag}..HEAD`
+    shortlog = `git shortlog #{last_tag}..HEAD`
+    testflight_changelog = changelog + "\n" + File.read("footer.txt") + shortlog
 
     latest = latest_testflight_build_number.to_s.scan(/^\d+(?=\.|$)/).first.to_i
     build_number = latest + 1
-    increment_build_number(build_number: build_number)
+    Dir.chdir("..") do
+        sh "agvtool", "new-version", build_number.to_s
+    end
     commit_version_bump(
-        xcodeproj: 'iSH.xcodeproj',
-        message: "Release build #{build_number} to testflight",
-        include: "fastlane/changelog.txt",
+        xcodeproj: "iSH.xcodeproj",
+        message: "Bump version to #{build_number}",
         force: true,
     )
     tag = "builds/#{build_number}"
     add_git_tag(tag: tag)
 
-    # do this after commiting the version bump but before building the app
-    if is_ci
-      update_code_signing_settings(
-        path: 'iSH.xcodeproj',
-        targets: 'iSH',
-        use_automatic_signing: false,
-        profile_uuid: ENV['sigh_app.ish.iSH_development'],
-      )
-      update_code_signing_settings(
-        path: 'iSH.xcodeproj',
-        targets: 'iSHFileProvider',
-        use_automatic_signing: false,
-        profile_uuid: ENV['sigh_app.ish.iSH.FileProvider_development'],
-      )
-    end
-
-    build_app(
-      project: 'iSH.xcodeproj',
-      scheme: 'iSH',
-    )
+    build
+    build(config: "AppStore", output: "iSH-appstore")
+    puts testflight_changelog
     upload_to_testflight(
+        ipa: "iSH-appstore.ipa",
         changelog: testflight_changelog,
-        distribute_external: true,
-        groups: ["People"]
+        wait_processing_interval: 300, # the processing is expected to take a total of 5 hours, so don't logspam too much
     )
 
+    # uploading a build takes about 5 hours, so merge master back in if there have been any commits during that
+    git_pull(rebase: false)
     push_to_git_remote
     set_github_release(
-        repository_name: 'ish-app/ish',
+        repository_name: "ish-app/ish",
         tag_name: tag,
         commitish: nil, # the tag better exist
         name: "Build #{build_number}",
         description: changelog,
-        upload_assets: ['iSH.ipa'],
-        api_token: ENV['GH_TOKEN'],
+        is_prerelease: true,
+        upload_assets: ["iSH.ipa", "iSH.app.dSYM.zip", "iSH-appstore.app.dSYM.zip"],
+        api_token: ENV["GH_TOKEN"],
     )
-    slack(
-        message: "New build available!",
-        default_payloads: [],
-        payload: {
-            "Changelog" => changelog
-        },
-        use_webhook_configured_username_and_icon: true,
-     )
 end

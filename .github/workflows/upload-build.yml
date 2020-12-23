@@ -1,0 +1,57 @@
+name: Upload Build
+
+on:
+  workflow_dispatch:
+
+jobs:
+  upload-build:
+    runs-on: macos-10.15
+    timeout-minutes: 720
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+
+      - name: Install deps
+        run: |
+            pip3 install meson
+            brew install ninja
+            bundle install
+            git config user.name github-actions
+            git config user.email github-actions@github.cog
+            cd deps/aports
+            ./download-repos.py
+
+      - name: Fastlane
+        timeout-minutes: 720
+        run: script fastlane.log bundle exec fastlane upload_build
+        env:
+          APP_STORE_CONNECT_API_KEY_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_API_KEY_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_API_KEY_KEY: ${{ secrets.APP_STORE_CONNECT_KEY }}
+          MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.MATCH_GITHUB_AUTH }}
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSPHRASE }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          SLACK_URL: ${{ secrets.SLACK_URL }}
+          FASTLANE_SKIP_UPDATE_CHECK: 1
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: App
+          path: |
+            iSH.ipa
+            iSH.app.dSYM.zip
+            iSH-appstore.app.dSYM.zip
+
+      - uses: actions/upload-artifact@v2
+        if: ${{ always() }}
+        with:
+          name: Fastlane Logs
+          path: fastlane.log
+
+      - name: Delete changelog
+        run: |
+          git rm fastlane/changelog.txt
+          git commit -m "Make sure a new changelog is written for the next build"
+          git push
+

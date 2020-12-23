@@ -2,7 +2,7 @@
 #define TLB_H
 
 #include <string.h>
-#include "emu/memory.h"
+#include "emu/mmu.h"
 #include "debug.h"
 
 struct tlb_entry {
@@ -13,7 +13,7 @@ struct tlb_entry {
 #define TLB_BITS 10
 #define TLB_SIZE (1 << TLB_BITS)
 struct tlb {
-    struct mem *mem;
+    struct mmu *mmu;
     page_t dirty_page;
     unsigned mem_changes;
     struct tlb_entry entries[TLB_SIZE];
@@ -22,7 +22,7 @@ struct tlb {
 #define TLB_INDEX(addr) (((addr >> PAGE_BITS) & (TLB_SIZE - 1)) ^ (addr >> (PAGE_BITS + TLB_BITS)))
 #define TLB_PAGE(addr) (addr & 0xfffff000)
 #define TLB_PAGE_EMPTY 1
-void tlb_refresh(struct tlb *tlb, struct mem *mem);
+void tlb_refresh(struct tlb *tlb, struct mmu *mmu);
 void tlb_free(struct tlb *tlb);
 void tlb_flush(struct tlb *tlb);
 void *tlb_handle_miss(struct tlb *tlb, addr_t addr, int type);

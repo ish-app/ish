@@ -333,6 +333,8 @@ restart:
                            READMODRM; V_OP(min_ub, xmm_modrm_val, xmm_modrm_reg,128); break;
                 case 0xdb: TRACEI("pand xmm:modrm, xmm");
                            READMODRM; V_OP(and, xmm_modrm_val, xmm_modrm_reg,128); break;
+                case 0xdf: TRACEI("pandn xmm:modrm, xmm");
+                           READMODRM; V_OP(andn, xmm_modrm_val, xmm_modrm_reg,128); break;
                 case 0xeb: TRACEI("por xmm:modrm, xmm");
                            READMODRM; V_OP(or, xmm_modrm_val, xmm_modrm_reg,128); break;
                 case 0xef: TRACEI("pxor xmm:modrm, xmm");
@@ -345,6 +347,8 @@ restart:
                            READMODRM; V_OP(sub_q, xmm_modrm_val, xmm_modrm_reg,128); break;
                 case 0xfc: TRACEI("paddb xmm:modrm, xmm");
                            READMODRM; V_OP(add_b, xmm_modrm_val, xmm_modrm_reg,128); break;
+                case 0xfe: TRACEI("paddd xmm:modrm, xmm");
+                           READMODRM; V_OP(add_d, xmm_modrm_val, xmm_modrm_reg,128); break;
 #else
                 case 0x10: TRACEI("movups xmm:modrm, xmm");
                            READMODRM; VMOV(xmm_modrm_val, xmm_modrm_reg,128); break;
@@ -387,6 +391,9 @@ restart:
                            READMODRM; VMOV(mm_modrm_reg, modrm_val,32); break;
                 case 0x7f: TRACEI("movq mm, mm:modrm");
                            READMODRM_MEM; VMOV(mm_modrm_reg, mm_modrm_val,64); break;
+
+                case 0xc6: TRACEI("shufps xmm:modrm, xmm, imm8");
+                           READMODRM; READIMM8; V_OP_IMM(shuffle_d, xmm_modrm_val, xmm_modrm_reg,128); break;
 
                 case 0xd4: TRACEI("paddq mm:modrm, mm");
                            READMODRM; V_OP(add_q, mm_modrm_val, mm_modrm_reg,64); break;

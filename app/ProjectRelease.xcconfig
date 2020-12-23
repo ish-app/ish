@@ -1,0 +1,2 @@
+#include "XcodeRelease.xcconfig"
+#include "Project.xcconfig"

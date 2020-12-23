@@ -1,12 +1,13 @@
 #include "gadgets.h"
 
 .gadget call
-    sub esp, esp, 4
-    mov _addr, esp
     // save return address
+    sub _addr, esp, 4
     write_prep 32, call
     ldr w8, [_ip, 16]
     str w8, [_xaddr]
+    // push stack pointer
+    sub esp, esp, 4
     // save ip-to-arguments to return cache
     ubfx w12, w8, 4, 12
     write_done 32, call // clobbers w8
@@ -18,12 +19,13 @@
     write_bullshit 32, call
 
 .gadget call_indir
-    sub esp, esp, 4
-    mov _addr, esp
     // save return address
+    sub _addr, esp, 4
     write_prep 32, call_indir
     ldr w8, [_ip, 16]
     str w8, [_xaddr]
+    // push stack pointer
+    sub esp, esp, 4
     // save ip-to-arguments to return cache
     ubfx w12, w8, 4, 12
     write_done 32, call_indir // clobbers w8
@@ -36,11 +38,12 @@
 
 .gadget ret
     mov _addr, esp
-    ldr w8, [_ip, 8]
-    add esp, esp, w8
     // load return address and save to _tmp
     read_prep 32, ret
     ldr _tmp, [_xaddr]
+    // pop stack pointer
+    ldr w8, [_ip, 8]
+    add esp, esp, w8
     // load saved ip in return cache
     ubfx w12, _tmp, 4, 12
     add x13, _cpu, LOCAL_ret_cache

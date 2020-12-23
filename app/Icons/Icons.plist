@@ -101,5 +101,41 @@
 		<key>description</key>
 		<string>iS̈H</string>
 	</dict>
+	<key>notsurewhatthisis</key>
+	<dict>
+		<key>link</key>
+		<string>https://github.com/ish-app/ish/issues/578#issuecomment-725585045</string>
+		<key>author</key>
+		<string>@wack-inc</string>
+		<key>description</key>
+		<string>Not sure what this is</string>
+	</dict>
+	<key>reworked</key>
+	<dict>
+		<key>link</key>
+		<string>https://github.com/ish-app/ish/issues/578#issuecomment-717395400</string>
+		<key>author</key>
+		<string>@peterlewis</string>
+		<key>description</key>
+		<string>iSH: Reworked</string>
+	</dict>
+	<key>rgb</key>
+	<dict>
+		<key>link</key>
+		<string>https://github.com/ish-app/ish/issues/578#issuecomment-713075148</string>
+		<key>author</key>
+		<string>@FelixTornqvist</string>
+		<key>description</key>
+		<string>RGB</string>
+	</dict>
+	<key>sprite64</key>
+	<dict>
+		<key>link</key>
+		<string>https://github.com/ish-app/ish/issues/578#issuecomment-716465657</string>
+		<key>author</key>
+		<string>@peterlewis</string>
+		<key>description</key>
+		<string>Sprite 64</string>
+	</dict>
 </dict>
 </plist>

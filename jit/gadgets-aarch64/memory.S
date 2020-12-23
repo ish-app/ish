@@ -2,11 +2,11 @@
 #include "emu/interrupt.h"
 
 .gadget push
-    sub esp, esp, 4
-    mov _addr, esp
+    sub _addr, esp, 4
     write_prep 32, push
     str _tmp, [_xaddr]
     write_done 32, push
+    sub esp, esp, 4
     gret 1
     write_bullshit 32, push
 

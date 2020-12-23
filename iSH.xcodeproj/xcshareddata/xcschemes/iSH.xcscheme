@@ -46,6 +46,11 @@
                BlueprintName = "iSHUITests"
                ReferencedContainer = "container:iSH.xcodeproj">
             </BuildableReference>
+            <SkippedTests>
+               <Test
+                  Identifier = "Screenshots">
+               </Test>
+            </SkippedTests>
          </TestableReference>
       </Testables>
    </TestAction>
