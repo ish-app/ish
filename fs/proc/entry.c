@@ -25,10 +25,11 @@ int proc_entry_stat(struct proc_entry *entry, struct statbuf *stat) {
     
     lock(&pids_lock);
     struct task *task = pid_get_task(entry->pid);
+    
     if (task != NULL) {
         stat->uid = task->uid;
         stat->gid = task->gid;
-    } // Otherwise the memset above ill have initialized memory to zero, which is the root uid/gid
+    } // else the memset above will have initialized memory to zero, which is the root uid/gid
     
     unlock(&pids_lock);
     
