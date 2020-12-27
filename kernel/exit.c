@@ -50,8 +50,10 @@ noreturn void do_exit(int status) {
     }
 
     // release all our resources
+    lock(&current->general_lock); //mke
     mm_release(current->mm);
     current->mm = NULL;
+    unlock(&current->general_lock); //mke
     fdtable_release(current->files);
     current->files = NULL;
     fs_info_release(current->fs);

@@ -39,12 +39,14 @@ void mm_retain(struct mm *mm) {
 }
 
 void mm_release(struct mm *mm) {
+    //lock(&current->general_lock); //mke
     if (--mm->refcount == 0) {
         if (mm->exefile != NULL)
             fd_close(mm->exefile);
         mem_destroy(&mm->mem);
         free(mm);
     }
+    //unlock(&current->general_lock); //mke
 }
 
 static addr_t do_mmap(addr_t addr, dword_t len, dword_t prot, dword_t flags, fd_t fd_no, dword_t offset) {

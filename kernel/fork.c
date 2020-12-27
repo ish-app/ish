@@ -132,7 +132,9 @@ fail_free_fs:
 fail_free_files:
     fdtable_release(task->files);
 fail_free_mem:
+    lock(&current->general_lock); //mke
     mm_release(task->mm);
+    unlock(&current->general_lock); //mke
     return err;
 }
 
