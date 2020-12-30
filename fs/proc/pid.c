@@ -115,7 +115,11 @@ static int proc_pid_stat_show(struct proc_entry *entry, struct proc_data *buf) {
         return _ESRCH;
     lock(&task->general_lock);
     lock(&task->group->lock);
-    lock(&task->sighand->lock);
+    if(task->sighand != NULL) {//mke
+        lock(&task->sighand->lock);
+    } else {
+        printk("%d task->sighand=NULL : ", current->pid);
+    }
 
     // program reads this using read-like syscall, so we are in blocking area,
     // which means its io_block is set to true. When a proc reads an
@@ -186,7 +190,8 @@ static int proc_pid_stat_show(struct proc_entry *entry, struct proc_data *buf) {
     // that's enough for now
     proc_printf(buf, "\n");
 
-    unlock(&task->sighand->lock);
+    if(task->sighand != NULL) //mke
+        unlock(&task->sighand->lock);
     unlock(&task->group->lock);
     unlock(&task->general_lock);
     proc_put_task(task);
@@ -198,9 +203,9 @@ static int proc_pid_statm_show(struct proc_entry *UNUSED(entry), struct proc_dat
     proc_printf(buf, "%lu ", 0l); // resident
     proc_printf(buf, "%lu ", 0l); // shared
     proc_printf(buf, "%lu ", 0l); // text
-    proc_printf(buf, "%lu ", 0l); // lib (unused since Linux 2.6)
+    proc_printf(buf, "%lu ", 00); // lib (unused since Linux 2.6)
     proc_printf(buf, "%lu ", 0l); // data
-    proc_printf(buf, "%lu\n", 0l); // dt (unused since Linux 2.6)
+    proc_printf(buf, "%lu\n", 00); // dt (unused since Linux 2.6)
     return 0;
 }
 
