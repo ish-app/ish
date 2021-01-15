@@ -32,7 +32,7 @@ def main():
 
     # batch them into asset packs
     
-    MIN_PACK_SIZE = 5200000
+    MIN_PACK_SIZE = 6000000
     def is_pack_full(pack_size, tags, files):
         return pack_size > MIN_PACK_SIZE
 
