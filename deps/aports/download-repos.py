@@ -65,5 +65,5 @@ def download_many(downloads):
             print(f'{done}/{len(futures)}', str(path))
 
 if __name__ == '__main__':
-    download_repo('https://b2-f001.ish.app/file/alpine-archive', 'main/x86')
-    download_repo('https://b2-f001.ish.app/file/alpine-archive', 'community/x86')
+    download_repo('https://f001.backblazeb2.cf/file/alpine-archive', 'main/x86')
+    download_repo('https://f001.backblazeb2.cf/file/alpine-archive', 'community/x86')
