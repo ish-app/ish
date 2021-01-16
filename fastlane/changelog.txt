@@ -1,4 +1,0 @@
-New stuff:
-- Logged the ODR download error in dmesg, so you can see something more than "IO ERROR"
-
-Alpine repositories are up-to-date as of 2020-01-15.
