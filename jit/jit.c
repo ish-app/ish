@@ -117,7 +117,7 @@ static struct jit_block *jit_block_compile(addr_t ip, struct tlb *tlb) {
     TRACE("%d %08x --- compiling:\n", current_pid(), ip);
     gen_start(ip, &state);
     while (true) {
-        if (!gen_step32(&state, tlb))
+        if (!gen_step(&state, tlb))
             break;
         // no block should span more than 2 pages
         // guarantee this by limiting total block size to 1 page
@@ -243,7 +243,7 @@ static int cpu_step_to_interrupt(struct cpu_state *cpu, struct tlb *tlb) {
 static int cpu_single_step(struct cpu_state *cpu, struct tlb *tlb) {
     struct gen_state state;
     gen_start(cpu->eip, &state);
-    gen_step32(&state, tlb);
+    gen_step(&state, tlb);
     gen_exit(&state);
     gen_end(&state);
 

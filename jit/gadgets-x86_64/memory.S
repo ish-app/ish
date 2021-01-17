@@ -78,6 +78,7 @@
         ret
 
 segfault_\type:
+    movl -TLB_entries+TLB_segfault_addr(%_tlb), %_addr
     movl %_addr, CPU_segfault_addr(%_cpu)
     .ifc \type,read
         movb $0, CPU_segfault_was_write(%_cpu)

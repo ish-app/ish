@@ -58,6 +58,7 @@ void cpu() {
 
     OFFSET(TLB, tlb, entries);
     OFFSET(TLB, tlb, dirty_page);
+    OFFSET(TLB, tlb, segfault_addr);
     OFFSET(TLB_ENTRY, tlb_entry, page);
     OFFSET(TLB_ENTRY, tlb_entry, page_if_writable);
     OFFSET(TLB_ENTRY, tlb_entry, data_minus_addr);

@@ -84,6 +84,7 @@ NAME(si_gadgets):
         ret
 
 segfault_\type:
+    ldr _addr, [_tlb, -TLB_entries+TLB_segfault_addr]
     str _addr, [_cpu, CPU_segfault_addr]
     ldr eip, [_ip]
     mov x0, INT_GPF

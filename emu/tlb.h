@@ -16,6 +16,9 @@ struct tlb {
     struct mmu *mmu;
     page_t dirty_page;
     unsigned mem_changes;
+    // this is basically one of the return values of tlb_handle_miss, tlb_{read,write}, and __tlb_{read,write}_cross_page
+    // yes, this sucks
+    addr_t segfault_addr;
     struct tlb_entry entries[TLB_SIZE];
 };
 
