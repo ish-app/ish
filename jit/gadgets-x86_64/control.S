@@ -1,12 +1,13 @@
 #include "gadgets.h"
 
 .gadget call
-    subl $4, %_esp
-    movl %_esp, %_addr
     // save return address
+    leal -4(%_esp), %_addr
     write_prep 32, call
     movl 16(%_ip), %r14d
     movl %r14d, (%_addrq)
+    // push stack pointer
+    subl $4, %_esp
     // save ip-to-arguments to return cache
     shrw $4, %r14w
     movzwl %r14w, %r14d
@@ -17,12 +18,13 @@
     jmp jit_ret_chain
 
 .gadget call_indir
-    subl $4, %_esp
-    movl %_esp, %_addr
     // save return address
+    leal -4(%_esp), %_addr
     write_prep 32, call_indir
     movl 16(%_ip), %r14d
     movl %r14d, (%_addrq)
+    // push stack pointer
+    subl $4, %_esp
     // save ip-to-arguments to return cache
     shrw $4, %r14w
     movzwl %r14w, %r14d
@@ -34,11 +36,12 @@
 
 .gadget ret
     movl %_esp, %_addr
-    addl 8(%_ip), %_esp
     // load return address and save to _tmp
     read_prep 32, ret
     movl (%_addrq), %tmpd
     movl %tmpd, %r14d
+    // pop stack pointer
+    addl 8(%_ip), %_esp
     // load saved ip in return cache
     shrw $4, %r14w
     movzwq %r14w, %r14

@@ -7,19 +7,22 @@
 #include "emu/memory.h"
 #include "emu/interrupt.h"
 #include "util/list.h"
-#include "kernel/calls.h"
+
+extern int current_pid(void);
 
 static void jit_block_disconnect(struct jit *jit, struct jit_block *block);
 static void jit_block_free(struct jit *jit, struct jit_block *block);
 static void jit_free_jetsam(struct jit *jit);
 static void jit_resize_hash(struct jit *jit, size_t new_size);
 
-struct jit *jit_new(struct mem *mem) {
+struct jit *jit_new(struct mmu *mmu) {
     struct jit *jit = calloc(1, sizeof(struct jit));
-    jit->mem = mem;
+    jit->mmu = mmu;
     jit_resize_hash(jit, JIT_INITIAL_HASH_SIZE);
+    jit->page_hash = calloc(JIT_PAGE_HASH_SIZE, sizeof(*jit->page_hash));
     list_init(&jit->jetsam);
     lock_init(&jit->lock);
+    wrlock_init(&jit->jetsam_lock);
     return jit;
 }
 
@@ -38,27 +41,37 @@ void jit_free(struct jit *jit) {
 }
 
 static inline struct list *blocks_list(struct jit *jit, page_t page, int i) {
-    return &mem_pt(jit->mem, page)->blocks[i];
+    // TODO is this a good hash function?
+    return &jit->page_hash[page % JIT_PAGE_HASH_SIZE].blocks[i];
 }
 
-void jit_invalidate_page(struct jit *jit, page_t page) {
+void jit_invalidate_range(struct jit *jit, page_t start, page_t end) {
     lock(&jit->lock);
     struct jit_block *block, *tmp;
-    for (int i = 0; i <= 1; i++) {
-        struct list *blocks = blocks_list(jit, page, i);
-        if (list_null(blocks))
-            continue;
-        list_for_each_entry_safe(blocks, block, tmp, page[i]) {
-            jit_block_disconnect(jit, block);
-            block->is_jetsam = true;
-            list_add(&jit->jetsam, &block->jetsam);
+    for (page_t page = start; page < end; page++) {
+        for (int i = 0; i <= 1; i++) {
+            struct list *blocks = blocks_list(jit, page, i);
+            if (list_null(blocks))
+                continue;
+            list_for_each_entry_safe(blocks, block, tmp, page[i]) {
+                jit_block_disconnect(jit, block);
+                block->is_jetsam = true;
+                list_add(&jit->jetsam, &block->jetsam);
+            }
         }
     }
     unlock(&jit->lock);
 }
 
+void jit_invalidate_page(struct jit *jit, page_t page) {
+    jit_invalidate_range(jit, page, page + 1);
+}
+void jit_invalidate_all(struct jit *jit) {
+    jit_invalidate_range(jit, 0, MEM_PAGES);
+}
+
 static void jit_resize_hash(struct jit *jit, size_t new_size) {
-    TRACE_(verbose, "%d resizing hash to %lu, using %lu bytes for gadgets\n", current ? current->pid : 0, new_size, jit->mem_used);
+    TRACE_(verbose, "%d resizing hash to %lu, using %lu bytes for gadgets\n", current_pid(), new_size, jit->mem_used);
     struct list *new_hash = calloc(new_size, sizeof(struct list));
     for (size_t i = 0; i < jit->hash_size; i++) {
         if (list_null(&jit->hash[i]))
@@ -82,8 +95,6 @@ static void jit_insert(struct jit *jit, struct jit_block *block) {
         jit_resize_hash(jit, jit->hash_size * 2);
 
     list_init_add(&jit->hash[block->addr % jit->hash_size], &block->chain);
-    if (mem_pt(jit->mem, PAGE(block->addr)) == NULL)
-        return;
     list_init_add(blocks_list(jit, PAGE(block->addr), 0), &block->page[0]);
     if (PAGE(block->addr) != PAGE(block->end_addr))
         list_init_add(blocks_list(jit, PAGE(block->end_addr), 1), &block->page[1]);
@@ -103,10 +114,10 @@ static struct jit_block *jit_lookup(struct jit *jit, addr_t addr) {
 
 static struct jit_block *jit_block_compile(addr_t ip, struct tlb *tlb) {
     struct gen_state state;
-    TRACE("%d %08x --- compiling:\n", current->pid, ip);
+    TRACE("%d %08x --- compiling:\n", current_pid(), ip);
     gen_start(ip, &state);
     while (true) {
-        if (!gen_step32(&state, tlb))
+        if (!gen_step(&state, tlb))
             break;
         // no block should span more than 2 pages
         // guarantee this by limiting total block size to 1 page
@@ -165,13 +176,18 @@ static inline size_t jit_cache_hash(addr_t ip) {
 }
 
 static int cpu_step_to_interrupt(struct cpu_state *cpu, struct tlb *tlb) {
-    struct jit *jit = cpu->mem->jit;
-    struct jit_block *cache[JIT_CACHE_SIZE] = {};
-    struct jit_frame frame = {.cpu = *cpu, .ret_cache = {}};
+    struct jit *jit = cpu->mmu->jit;
+    read_wrlock(&jit->jetsam_lock);
+
+    struct jit_block **cache = calloc(JIT_CACHE_SIZE, sizeof(*cache));
+    struct jit_frame *frame = malloc(sizeof(struct jit_frame));
+    memset(frame, 0, sizeof(*frame));
+    frame->cpu = *cpu;
+    assert(jit->mmu == cpu->mmu);
 
     int interrupt = INT_NONE;
     while (interrupt == INT_NONE) {
-        addr_t ip = frame.cpu.eip;
+        addr_t ip = frame->cpu.eip;
         size_t cache_index = jit_cache_hash(ip);
         struct jit_block *block = cache[cache_index];
         if (block == NULL || block->addr != ip) {
@@ -181,12 +197,12 @@ static int cpu_step_to_interrupt(struct cpu_state *cpu, struct tlb *tlb) {
                 block = jit_block_compile(ip, tlb);
                 jit_insert(jit, block);
             } else {
-                TRACE("%d %08x --- missed cache\n", current->pid, ip);
+                TRACE("%d %08x --- missed cache\n", current_pid(), ip);
             }
             cache[cache_index] = block;
             unlock(&jit->lock);
         }
-        struct jit_block *last_block = frame.last_block;
+        struct jit_block *last_block = frame->last_block;
         if (last_block != NULL &&
                 (last_block->jump_ip[0] != NULL ||
                  last_block->jump_ip[1] != NULL)) {
@@ -205,26 +221,29 @@ static int cpu_step_to_interrupt(struct cpu_state *cpu, struct tlb *tlb) {
 
             unlock(&jit->lock);
         }
-        frame.last_block = block;
+        frame->last_block = block;
 
         // block may be jetsam, but that's ok, because it can't be freed until
         // every thread on this jit is not executing anything
 
-        TRACE("%d %08x --- cycle %ld\n", current->pid, ip, cpu->cycle);
+        TRACE("%d %08x --- cycle %ld\n", current_pid(), ip, frame->cpu.cycle);
 
-        interrupt = jit_enter(block, &frame, tlb);
-        *cpu = frame.cpu;
-        if (interrupt == INT_NONE && ++cpu->cycle % (1 << 10) == 0)
+        interrupt = jit_enter(block, frame, tlb);
+        if (interrupt == INT_NONE && ++frame->cpu.cycle % (1 << 10) == 0)
             interrupt = INT_TIMER;
+        *cpu = frame->cpu;
     }
 
+    free(frame);
+    free(cache);
+    read_wrunlock(&jit->jetsam_lock);
     return interrupt;
 }
 
 static int cpu_single_step(struct cpu_state *cpu, struct tlb *tlb) {
     struct gen_state state;
     gen_start(cpu->eip, &state);
-    gen_step32(&state, tlb);
+    gen_step(&state, tlb);
     gen_exit(&state);
     gen_end(&state);
 
@@ -239,23 +258,21 @@ static int cpu_single_step(struct cpu_state *cpu, struct tlb *tlb) {
 }
 
 int cpu_run_to_interrupt(struct cpu_state *cpu, struct tlb *tlb) {
-    read_wrlock(&cpu->mem->lock);
-    tlb_refresh(tlb, cpu->mem);
+    tlb_refresh(tlb, cpu->mmu);
     int interrupt = (cpu->tf ? cpu_single_step : cpu_step_to_interrupt)(cpu, tlb);
     cpu->trapno = interrupt;
-    read_wrunlock(&cpu->mem->lock);
 
-    struct jit *jit = cpu->mem->jit;
+    struct jit *jit = cpu->mmu->jit;
     lock(&jit->lock);
     if (!list_empty(&jit->jetsam)) {
-        // write-lock the mem to wait until other jit threads get to
+        // write-lock the jetsam_lock to wait until other jit threads get to
         // this point, so they will all clear out their block pointers
         // TODO: use RCU for better performance
         unlock(&jit->lock);
-        write_wrlock(&cpu->mem->lock);
+        write_wrlock(&jit->jetsam_lock);
         lock(&jit->lock);
         jit_free_jetsam(jit);
-        write_wrunlock(&cpu->mem->lock);
+        write_wrunlock(&jit->jetsam_lock);
     }
     unlock(&jit->lock);
 

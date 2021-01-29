@@ -1,2 +1,3 @@
-main/
-community/
+main/*/*
+community/*/*
+!index.txt

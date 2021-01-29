@@ -53,9 +53,10 @@
         .else; .ifc \op, scas
             mov %edi, %_addr
             read_prep \size, \op\size\()_\rep
-            mov\ss (%_addrq), %tmp\s
-            setf_a src=%\a, dst=%tmp\s, ss=\ss
-            sub\ss %\a, %tmp\s
+            mov\ss (%_addrq), %r14\s
+            setf_a src=%\a, dst=%r14\s, ss=\ss
+            mov\ss %\a, %tmp\s
+            sub\ss %r14\s, %tmp\s
             setf_oc
             setf_zsp %tmp\s, \ss
 

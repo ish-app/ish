@@ -18,14 +18,16 @@
 
 // increment the change count
 static void mem_changed(struct mem *mem);
+static struct mmu_ops mem_mmu_ops;
 
 void mem_init(struct mem *mem) {
     mem->pgdir = calloc(MEM_PGDIR_SIZE, sizeof(struct pt_entry *));
     mem->pgdir_used = 0;
-    mem->changes = 0;
+    mem->mmu.ops = &mem_mmu_ops;
 #if ENGINE_JIT
-    mem->jit = jit_new(mem);
+    mem->mmu.jit = jit_new(&mem->mmu);
 #endif
+    mem->mmu.changes = 0;
     wrlock_init(&mem->lock);
 }
 
@@ -33,7 +35,7 @@ void mem_destroy(struct mem *mem) {
     write_wrlock(&mem->lock);
     pt_unmap_always(mem, 0, MEM_PAGES);
 #if ENGINE_JIT
-    jit_free(mem->jit);
+    jit_free(mem->mmu.jit);
 #endif
     for (int i = 0; i < MEM_PGDIR_SIZE; i++) {
         if (mem->pgdir[i] != NULL)
@@ -150,7 +152,7 @@ int pt_unmap_always(struct mem *mem, page_t start, pages_t pages) {
         if (pt == NULL)
             continue;
 #if ENGINE_JIT
-        jit_invalidate_page(mem->jit, page);
+        jit_invalidate_page(mem->mmu.jit, page);
 #endif
         struct data *data = pt->data;
         mem_pt_del(mem, page);
@@ -210,7 +212,6 @@ int pt_copy_on_write(struct mem *src, struct mem *dst, page_t start, page_t page
             return -1;
         if (!(entry->flags & P_SHARED))
             entry->flags |= P_COW;
-        entry->flags &= ~P_COMPILED;
         entry->data->refcount++;
         struct pt_entry *dst_entry = mem_pt_new(dst, page);
         dst_entry->data = entry->data;
@@ -223,7 +224,7 @@ int pt_copy_on_write(struct mem *src, struct mem *dst, page_t start, page_t page
 }
 
 static void mem_changed(struct mem *mem) {
-    mem->changes++;
+    mem->mmu.changes++;
 }
 
 void *mem_ptr(struct mem *mem, addr_t addr, int type) {
@@ -264,6 +265,10 @@ void *mem_ptr(struct mem *mem, addr_t addr, int type) {
             // TODO: Is P_WRITE really correct? The page shouldn't be writable without ptrace.
             entry->flags |= P_WRITE | P_COW;
         }
+#if ENGINE_JIT
+        // get rid of any compiled blocks in this page
+        jit_invalidate_page(mem->mmu.jit, page);
+#endif
         // if page is cow, ~~milk~~ copy it
         if (entry->flags & P_COW) {
             void *data = (char *) entry->data->data + entry->offset;
@@ -278,16 +283,20 @@ void *mem_ptr(struct mem *mem, addr_t addr, int type) {
             write_wrunlock(&mem->lock);
             read_wrlock(&mem->lock);
         }
-#if ENGINE_JIT
-        // get rid of any compiled blocks in this page
-        jit_invalidate_page(mem->jit, page);
-#endif
     }
 
     if (entry == NULL)
         return NULL;
     return entry->data->data + entry->offset + PGOFFSET(addr);
 }
+
+static void *mem_mmu_translate(struct mmu *mmu, addr_t addr, int type) {
+    return mem_ptr(container_of(mmu, struct mem, mmu), addr, type);
+}
+
+static struct mmu_ops mem_mmu_ops = {
+    .translate = mem_mmu_translate,
+};
 
 int mem_segv_reason(struct mem *mem, addr_t addr) {
     struct pt_entry *pt = mem_pt(mem, PAGE(addr));

@@ -4,6 +4,7 @@
 #include <stdatomic.h>
 #include <unistd.h>
 #include <stdbool.h>
+#include "emu/mmu.h"
 #include "util/list.h"
 #include "util/sync.h"
 #include "misc.h"
@@ -11,19 +12,14 @@
 struct jit;
 #endif
 
-// top 20 bits of an address, i.e. address >> 12
-typedef dword_t page_t;
-#define BAD_PAGE 0x10000
-
 struct mem {
-    atomic_uint changes; // increment whenever a tlb flush is needed
     struct pt_entry **pgdir;
     int pgdir_used;
 
-    // TODO put these in their own mm struct maybe
 #if ENGINE_JIT
     struct jit *jit;
 #endif
+    struct mmu mmu;
 
     wrlock_t lock;
 };
@@ -39,15 +35,6 @@ struct pt_entry *mem_pt(struct mem *mem, page_t page);
 // Increment *page, skipping over unallocated page directories. Intended to be
 // used as the incremenent in a for loop to traverse mappings.
 void mem_next_page(struct mem *mem, page_t *page);
-
-#define PAGE_BITS 12
-#undef PAGE_SIZE // defined in system headers somewhere
-#define PAGE_SIZE (1 << PAGE_BITS)
-#define PAGE(addr) ((addr) >> PAGE_BITS)
-#define PGOFFSET(addr) ((addr) & (PAGE_SIZE - 1))
-typedef dword_t pages_t;
-// bytes MUST be unsigned if you would like this to overflow to zero
-#define PAGE_ROUND_UP(bytes) (PAGE((bytes) + PAGE_SIZE - 1))
 
 #define BYTES_ROUND_DOWN(bytes) (PAGE(bytes) << PAGE_BITS)
 #define BYTES_ROUND_UP(bytes) (PAGE_ROUND_UP(bytes) << PAGE_BITS)
@@ -86,7 +73,6 @@ struct pt_entry {
 #define P_GROWSDOWN (1 << 3)
 #define P_COW (1 << 4)
 #define P_WRITABLE(flags) (flags & P_WRITE && !(flags & P_COW))
-#define P_COMPILED (1 << 5)
 
 // mapping was created with pt_map_nothing
 #define P_ANONYMOUS (1 << 6)
@@ -111,9 +97,6 @@ int pt_set_flags(struct mem *mem, page_t start, pages_t pages, int flags);
 // Copy pages from src memory to dst memory using copy-on-write
 int pt_copy_on_write(struct mem *src, struct mem *dst, page_t start, page_t pages);
 
-#define MEM_READ 0
-#define MEM_WRITE 1
-#define MEM_WRITE_PTRACE 2
 // Must call with mem read-locked.
 void *mem_ptr(struct mem *mem, addr_t addr, int type);
 int mem_segv_reason(struct mem *mem, addr_t addr);

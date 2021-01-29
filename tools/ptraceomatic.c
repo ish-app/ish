@@ -125,7 +125,7 @@ static int compare_cpus(struct cpu_state *cpu, struct tlb *tlb, int pid, int und
         trycall(lseek(fd, dirty_page, SEEK_SET), "compare seek mem");
         trycall(read(fd, real_page, PAGE_SIZE), "compare read mem");
         close(fd);
-        struct pt_entry entry = *mem_pt(cpu->mem, PAGE(dirty_page));
+        struct pt_entry entry = *mem_pt(current->mem, PAGE(dirty_page));
         void *fake_page = entry.data->data + entry.offset;
 
         if (memcmp(real_page, fake_page, PAGE_SIZE) != 0) {
@@ -484,7 +484,7 @@ int main(int argc, char *const argv[]) {
     struct cpu_state *cpu = &current->cpu;
     cpu->tf = true;
     struct tlb tlb;
-    tlb_refresh(&tlb, cpu->mem);
+    tlb_refresh(&tlb, cpu->mmu);
     int undefined_flags = 2;
     struct cpu_state old_cpu = *cpu;
     int i = 0;

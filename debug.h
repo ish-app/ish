@@ -3,8 +3,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-void printk(const char *msg, ...);
-void vprintk(const char *msg, va_list args);
+void ish_printk(const char *msg, ...);
+void ish_vprintk(const char *msg, va_list args);
+#define printk ish_printk
 
 // debug output utilities
 // save me

@@ -1,8 +1,7 @@
 #ifndef FLOAT80_H
 #define FLOAT80_H
 
-#include <stdint.h>
-#include <stdbool.h>
+#include "misc.h"
 
 typedef struct {
     uint64_t signif;

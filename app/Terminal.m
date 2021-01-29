@@ -14,12 +14,16 @@
 
 extern struct tty_driver ios_pty_driver;
 
-@interface Terminal () <WKScriptMessageHandler>
+@interface Terminal () <WKScriptMessageHandler> {
+    lock_t _dataLock;
+    cond_t _dataConsumed;
+}
 
 @property WKWebView *webView;
 @property BOOL loaded;
 @property (nonatomic) struct tty *tty;
-@property NSMutableData *pendingData;
+@property (nonatomic) NSMutableData *pendingData;
+@property (nonatomic) BOOL processingPendingData;
 
 @property DelayedUITask *refreshTask;
 @property DelayedUITask *scrollToBottomTask;
@@ -64,6 +68,8 @@ static NSMapTable<NSUUID *, Terminal *> *terminalsByUUID;
         self.pendingData = [NSMutableData new];
         self.refreshTask = [[DelayedUITask alloc] initWithTarget:self action:@selector(refresh)];
         self.scrollToBottomTask = [[DelayedUITask alloc] initWithTarget:self action:@selector(scrollToBottom)];
+        lock_init(&_dataLock);
+        cond_init(&_dataConsumed);
         
         WKWebViewConfiguration *config = [WKWebViewConfiguration new];
         [config.userContentController addScriptMessageHandler:self name:@"load"];
@@ -138,10 +144,16 @@ static NSMapTable<NSUUID *, Terminal *> *terminalsByUUID;
 }
 
 - (int)write:(const void *)buf length:(size_t)len {
-    @synchronized (self) {
-        [self.pendingData appendData:[NSData dataWithBytes:buf length:len]];
-        [self.refreshTask schedule];
+    lock(&_dataLock);
+    if (!NSThread.isMainThread) {
+        // The main thread is the only one that can unblock this, so sleeping here would be a deadlock.
+        // The only reason for this to be called on the main thread is if input is echoed.
+        while (_processingPendingData || _pendingData.length > 10000)
+            wait_for_ignore_signals(&_dataConsumed, &_dataLock, NULL);
     }
+    [self.pendingData appendData:[NSData dataWithBytes:buf length:len]];
+    [self.refreshTask schedule];
+    unlock(&_dataLock);
     return 0;
 }
 
@@ -161,83 +173,38 @@ static NSMapTable<NSUUID *, Terminal *> *terminalsByUUID;
     return [NSString stringWithFormat:@"\x1b%c%c", self.applicationCursor ? 'O' : '[', direction];
 }
 
-NSData *removeInvalidUTF8(NSData *data) {
-    static const uint32_t mins[4] = {0, 128, 2048, 65536};
-    NSMutableData *cleanData = [NSMutableData dataWithLength:data.length];
-    const uint8_t *bytes = data.bytes;
-    uint8_t *clean_bytes = cleanData.mutableBytes;
-    size_t clean_length = 0;
-    size_t clean_i = 0;
-    unsigned continuations = 0;
-    uint32_t c = 0;
-    uint32_t min_c = 0;
-    for (size_t i = 0; i < data.length; i++) {
-        if (bytes[i] >> 6 != 0b10) {
-            // start of new sequence
-            if (continuations != 0)
-                goto discard;
-            if (bytes[i] >> 7 == 0b0) {
-                continuations = 0;
-                c = bytes[i] & 0b1111111;
-            } else if (bytes[i] >> 5 == 0b110) {
-                continuations = 1;
-                c = bytes[i] & 0b11111;
-            } else if (bytes[i] >> 4 == 0b1110) {
-                continuations = 2;
-                c = bytes[i] & 0b1111;
-            } else if (bytes[i] >> 3 == 0b11110) {
-                continuations = 3;
-                c = bytes[i] & 0b111;
-            } else {
-                goto discard;
-            }
-            min_c = mins[continuations];
-        } else {
-            // continuation
-            if (continuations == 0)
-                goto discard;
-            continuations--;
-            c = (c << 6) | (bytes[i] & 0b111111);
-        }
-        clean_bytes[clean_i++] = bytes[i];
-        if (continuations == 0) {
-            if (c < min_c || c > 0x10FFFF)
-                goto discard; // out of range
-            if ((c >> 11) == 0x1b)
-                goto discard; // surrogate pair (this isn't cesu8)
-            clean_length = clean_i;
-        }
-        continue;
-        
-    discard:
-        // if we were in the middle of the sequence, see if this byte could start a sequence
-        if (clean_i != clean_length)
-            i--;
-        clean_i = clean_length;
-        continuations = 0;
-    }
-    cleanData.length = clean_length;
-    return cleanData;
-}
-
 - (void)refresh {
     if (!self.loaded)
         return;
-    
-    NSData *data;
-    @synchronized (self) {
-        data = self.pendingData;
-        self.pendingData = [NSMutableData new];
-    }
-    NSData *cleanData = removeInvalidUTF8(data);
-    NSString *str = [[NSString alloc] initWithData:cleanData encoding:NSUTF8StringEncoding];
 
-    NSError *err = nil;
-    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:@[str] options:0 error:&err];
-    NSString *json = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
-    NSAssert(err == nil, @"JSON serialization failed, wtf");
-    NSString *jsToEvaluate = [NSString stringWithFormat:@"exports.write(%@[0])", json];
-    [self.webView evaluateJavaScript:jsToEvaluate completionHandler:nil];
+    lock(&_dataLock);
+    if (_processingPendingData) {
+        unlock(&_dataLock);
+        [self.refreshTask schedule];
+        return;
+    }
+    NSData *data = self.pendingData;
+    _pendingData = [NSMutableData new];;
+    _processingPendingData = YES;
+    unlock(&_dataLock);
+
+    NSString *dataString = [[NSString alloc] initWithBytes:data.bytes length:data.length encoding:NSISOLatin1StringEncoding];
+    // escape for javascript. only have to worry about the first 256 codepoints, because of the latin-1 encoding.
+    dataString = [dataString stringByReplacingOccurrencesOfString:@"\\" withString:@"\\\\"];
+    dataString = [dataString stringByReplacingOccurrencesOfString:@"\r" withString:@"\\r"];
+    dataString = [dataString stringByReplacingOccurrencesOfString:@"\n" withString:@"\\n"];
+    dataString = [dataString stringByReplacingOccurrencesOfString:@"\"" withString:@"\\\""];
+    NSString *jsToEvaluate = [NSString stringWithFormat:@"exports.write(\"%@\")", dataString];
+    [self.webView evaluateJavaScript:jsToEvaluate completionHandler:^(id result, NSError *error) {
+        lock(&self->_dataLock);
+        self->_processingPendingData = NO;
+        notify(&self->_dataConsumed);
+        unlock(&self->_dataLock);
+        if (error != nil) {
+            NSLog(@"error sending bytes to the terminal: %@", error);
+            return;
+        }
+    }];
 }
 
 + (void)convertCommand:(NSArray<NSString *> *)command toArgs:(char *)argv limitSize:(size_t)maxSize {
