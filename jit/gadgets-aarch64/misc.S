@@ -158,8 +158,11 @@
         .endif
         .ifin(\type, read,write)
             mov x1, _xaddr
+            ldr x8, [_ip, 8]
         .endifin
-        ldr x8, [_ip]
+        .ifin(\type, 0,1,2)
+            ldr x8, [_ip]
+        .endifin
         blr x8
         restore_c
         load_regs

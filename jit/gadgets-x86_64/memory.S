@@ -2,11 +2,11 @@
 #include "emu/interrupt.h"
 
 .gadget push
-    sub $4, %_esp
-    movl %_esp, %_addr
+    leal -4(%_esp), %_addr
     write_prep 32, push
     movl %_tmp, (%_addrq)
     write_done 32, push
+    sub $4, %_esp
     gret 1
 .gadget pop
     movl %_esp, %_addr
@@ -78,7 +78,13 @@
         ret
 
 segfault_\type:
+    movl -TLB_entries+TLB_segfault_addr(%_tlb), %_addr
     movl %_addr, CPU_segfault_addr(%_cpu)
+    .ifc \type,read
+        movb $0, CPU_segfault_was_write(%_cpu)
+    .else
+        movb $1, CPU_segfault_was_write(%_cpu)
+    .endif
     movl (%_ip), %_eip
     movl $INT_GPF, %_tmp
     jmp jit_exit

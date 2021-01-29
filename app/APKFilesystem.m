@@ -125,6 +125,7 @@ static struct fd *apkfs_open(struct mount *mount, const char *path, int flags, i
 
         NSError *error = c->error;
         if (error != nil) {
+            printk("error fetching ODR %s: %s\n", tag.UTF8String, error.description.UTF8String);
             int err = _EIO;
             if ([error.domain isEqualToString:NSCocoaErrorDomain]) {
                 if (error.code == NSBundleOnDemandResourceInvalidTagError)

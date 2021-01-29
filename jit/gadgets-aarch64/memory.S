@@ -2,11 +2,11 @@
 #include "emu/interrupt.h"
 
 .gadget push
-    sub esp, esp, 4
-    mov _addr, esp
+    sub _addr, esp, 4
     write_prep 32, push
     str _tmp, [_xaddr]
     write_done 32, push
+    sub esp, esp, 4
     gret 1
     write_bullshit 32, push
 
@@ -84,6 +84,7 @@ NAME(si_gadgets):
         ret
 
 segfault_\type:
+    ldr _addr, [_tlb, -TLB_entries+TLB_segfault_addr]
     str _addr, [_cpu, CPU_segfault_addr]
     ldr eip, [_ip]
     mov x0, INT_GPF

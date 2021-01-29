@@ -114,8 +114,11 @@
         .endif
         .ifin(\type, read,write)
             movq %_addrq, %rsi
+            callq *8(%_ip)
         .endifin
-        callq *(%_ip)
+        .ifin(\type, 0,1,2)
+            callq *(%_ip)
+        .endifin
         restore_c
         load_regs
         .ifc \type,write

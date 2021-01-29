@@ -32,7 +32,7 @@ def main():
 
     # batch them into asset packs
     
-    MIN_PACK_SIZE = 5200000
+    MIN_PACK_SIZE = 6000000
     def is_pack_full(pack_size, tags, files):
         return pack_size > MIN_PACK_SIZE
 
@@ -78,6 +78,14 @@ def process_odrs(packs):
     odrs_dir = pathlib.Path(os.environ.get('ASSET_PACK_FOLDER_PATH', target_build_dir/'OnDemandResources'))
     odrs_dir.mkdir(exist_ok=True)
 
+    old_pack_manifests = {}
+    manifest = resources_dir/'AssetPackManifestTemplate.plist'
+    if manifest.exists():
+        with manifest.open('rb') as f:
+            manifest = plistlib.load(f)
+        for pack in manifest['resources']:
+            old_pack_manifests[pack['bundleKey']] = pack
+
     packs = [(gen_pack_id(tags), tags, files) for (tags, files) in packs]
     odr_tags_plist = {}
     odr_packs_plist = {}
@@ -87,31 +95,44 @@ def process_odrs(packs):
     }
     packs_manifest_plist = {'resources': []}
     for pack_id, tags, files in packs:
+        # collect stats
+        newest_mtime = 0
+        total_size = 0
+        for file, file_src in files.items():
+            file_src = files[file] = os.path.join(os.environ['SRCROOT'], file_src)
+            file_stat = os.stat(file_src)
+            total_size += file_stat.st_size
+            if newest_mtime < file_stat.st_mtime:
+                newest_mtime = file_stat.st_mtime
+
+        # add pack to OnDemandResources.plist
         for tag in tags:
             if tag not in odr_tags_plist:
                 odr_tags_plist[tag] = {'NSAssetPacks': []}
             odr_tags_plist[tag]['NSAssetPacks'].append(pack_id)
         odr_packs_plist[pack_id] = list(files.keys())
 
+        # check if this pack can be skipped
+        if pack_id in old_pack_manifests:
+            old_mtime = old_pack_manifests[pack_id]['primaryContentHash']['hash']
+            old_mtime = datetime.datetime.fromisoformat(old_mtime).timestamp()
+            # use an epsilon here because the timestamp->isoformat->timestamp roundtrip is lossy
+            if old_mtime + 0.000001 >= newest_mtime:
+                packs_manifest_plist['resources'].append(old_pack_manifests[pack_id])
+                continue
+
+        # materialize pack
         pack_path = odrs_dir/(pack_id+'.assetpack')
         if pack_path.exists():
             shutil.rmtree(pack_path)
         pack_path.mkdir()
-        total_size = 0
         with (pack_path/'Info.plist').open('wb') as f:
             plistlib.dump({
                 'CFBundleIdentifier': pack_id,
                 'Tags': tags,
             }, f, fmt=plistlib.FMT_BINARY)
             total_size += f.tell()
-        newest_mtime = 0
         for file, file_src in files.items():
-            if not os.path.isabs(file_src):
-                file_src = os.path.join(os.environ['SRCROOT'], file_src)
-            file_stat = os.stat(file_src)
-            total_size += file_stat.st_size
-            if newest_mtime < file_stat.st_mtime:
-                newest_mtime = file_stat.st_mtime
             copy_file(pathlib.Path(file_src), pack_path/file)
         packs_manifest_plist['resources'].append({
             'URL': f'http://127.0.0.1{pack_path.resolve()}',
