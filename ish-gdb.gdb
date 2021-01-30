@@ -6,7 +6,7 @@ set print thread-events off
 define hook-run
     python
 import subprocess
-if subprocess.call('ninja') != 0:
+if subprocess.call('/opt/homebrew/bin/ninja') != 0:
     raise gdb.CommandError('compilation failed')
     end
 end

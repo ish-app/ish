@@ -1,8 +1,9 @@
 #!/bin/bash -x
 mkdir -p $MESON_BUILD_DIR
 cd $MESON_BUILD_DIR
+PATH="$PATH:/opt/homebrew/bin" 
 
-config=$(meson introspect --buildoptions)
+config=$(/opt/homebrew/bin/meson introspect --buildoptions)
 if [[ $? -ne 0 ]]; then
     export CC_FOR_BUILD="env -u SDKROOT -u IPHONEOS_DEPLOYMENT_TARGET xcrun clang"
     export CC="$CC_FOR_BUILD" # compatibility with meson < 0.54.0
@@ -17,6 +18,7 @@ if [[ $? -ne 0 ]]; then
     esac
     cat > $crossfile <<EOF
 [binaries]
+# c = '/opt/homebrew/bin/clang'
 c = 'clang'
 ar = 'ar'
 
@@ -30,8 +32,8 @@ endian = 'little'
 c_args = ['-arch', '$arch']
 needs_exe_wrapper = true
 EOF
-    meson $SRCROOT --cross-file $crossfile || exit $?
-    config=$(meson introspect --buildoptions)
+    /opt/homebrew/bin/meson $SRCROOT --cross-file $crossfile || exit $?
+    config=$(/opt/homebrew/bin/meson introspect --buildoptions)
 fi
 
 buildtype=debug
@@ -49,6 +51,6 @@ for var in buildtype log b_ndebug b_sanitize log_handler; do
     old_value=$(python3 -c "import sys, json; v = next(x['value'] for x in json.load(sys.stdin) if x['name'] == '$var'); print(str(v).lower() if isinstance(v, bool) else v)" <<< $config)
     new_value=${!var}
     if [[ $old_value != $new_value ]]; then
-        meson configure "-D$var=$new_value"
+       /opt/homebrew/bin/meson configure "-D$var=$new_value"
     fi
 done
