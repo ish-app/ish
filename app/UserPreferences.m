@@ -37,7 +37,7 @@ NSString *const kPreferenceBootCommandKey = @"Boot Command";
     self = [super init];
     if (self) {
         _defaults = [NSUserDefaults standardUserDefaults];
-        Theme *defaultTheme = [Theme presetThemeNamed:@"Light"];
+        Theme *defaultTheme = [Theme presetThemeNamed:@"Amber"];
         [_defaults registerDefaults:@{
             kPreferenceFontFamilyKey: @"Menlo",
             kPreferenceFontSizeKey: @(12),

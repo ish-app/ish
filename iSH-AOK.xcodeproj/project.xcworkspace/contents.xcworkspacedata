@@ -2,6 +2,6 @@
 <Workspace
    version = "1.0">
    <FileRef
-      location = "self:ish.xcodeproj">
+      location = "self:/Users/mke/Documents/git/ish-AOK/iSH-AOK.xcodeproj">
    </FileRef>
 </Workspace>

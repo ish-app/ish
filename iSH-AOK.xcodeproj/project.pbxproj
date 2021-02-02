@@ -7,15 +7,15 @@
 	objects = {
 
 /* Begin PBXAggregateTarget section */
-		BB4A922324ED9402002F5A96 /* iSH pre */ = {
+		BB4A922324ED9402002F5A96 /* iSH-AOK pre */ = {
 			isa = PBXAggregateTarget;
-			buildConfigurationList = BB4A922424ED9402002F5A96 /* Build configuration list for PBXAggregateTarget "iSH pre" */;
+			buildConfigurationList = BB4A922424ED9402002F5A96 /* Build configuration list for PBXAggregateTarget "iSH-AOK pre" */;
 			buildPhases = (
 				BB4A922A24ED9421002F5A96 /* Add icons to Info.plist */,
 			);
 			dependencies = (
 			);
-			name = "iSH pre";
+			name = "iSH-AOK pre";
 			productName = "iSH pre";
 		};
 /* End PBXAggregateTarget section */
@@ -459,7 +459,7 @@
 		BB267FA423A48F1500ED7CAF /* AltIconViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AltIconViewController.h; sourceTree = "<group>"; };
 		BB267FA523A48F1500ED7CAF /* AltIconViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AltIconViewController.m; sourceTree = "<group>"; };
 		BB2B4DAB231D94C300CB578B /* hterm_all.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = hterm_all.js; path = ../../deps/libapps/hterm/dist/js/hterm_all.js; sourceTree = "<group>"; };
-		BB41591C255EF9E300E0950C /* iSHUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = iSHUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		BB41591C255EF9E300E0950C /* iSH-AOKUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "iSH-AOKUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		BB41591E255EF9E300E0950C /* UITests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = UITests.m; sourceTree = "<group>"; };
 		BB415920255EF9E300E0950C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		BB455E0F1FB37F6600AFB48B /* DelayedUITask.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DelayedUITask.h; sourceTree = "<group>"; };
@@ -475,7 +475,7 @@
 		BB6DB260216435330047A611 /* libiconv.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libiconv.tbd; path = usr/lib/libiconv.tbd; sourceTree = SDKROOT; };
 		BB78AB291FAD22440013E782 /* TerminalView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TerminalView.h; sourceTree = "<group>"; };
 		BB78AB2A1FAD22440013E782 /* TerminalView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TerminalView.m; sourceTree = "<group>"; };
-		BB792B501F96D90D00FFB7A4 /* iSH.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iSH.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		BB792B501F96D90D00FFB7A4 /* iSH-AOK.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "iSH-AOK.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		BB792B531F96D90D00FFB7A4 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		BB792B541F96D90D00FFB7A4 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
 		BB792B561F96D90D00FFB7A4 /* TerminalViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TerminalViewController.h; sourceTree = "<group>"; };
@@ -783,11 +783,11 @@
 		BB792B511F96D90D00FFB7A4 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				BB792B501F96D90D00FFB7A4 /* iSH.app */,
+				BB792B501F96D90D00FFB7A4 /* iSH-AOK.app */,
 				BB13F7DC200AD81D003D1C4D /* libish.a */,
 				BBFB2C5B2590257E00545EAB /* libish_emu.a */,
 				BBF124901FA7C3100088FB50 /* root.tar.gz */,
-				BB41591C255EF9E300E0950C /* iSHUITests.xctest */,
+				BB41591C255EF9E300E0950C /* iSH-AOKUITests.xctest */,
 				497F6D47254E605F00C82F46 /* ish */,
 				497F6CE4254E5E4C00C82F46 /* MakeXcodeAutoCompleteWork */,
 			);
@@ -1154,9 +1154,9 @@
 			productReference = BB13F7DC200AD81D003D1C4D /* libish.a */;
 			productType = "com.apple.product-type.library.static";
 		};
-		BB41591B255EF9E300E0950C /* iSHUITests */ = {
+		BB41591B255EF9E300E0950C /* iSH-AOKUITests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = BB415925255EF9E300E0950C /* Build configuration list for PBXNativeTarget "iSHUITests" */;
+			buildConfigurationList = BB415925255EF9E300E0950C /* Build configuration list for PBXNativeTarget "iSH-AOKUITests" */;
 			buildPhases = (
 				BB415918255EF9E300E0950C /* Sources */,
 				BB415919255EF9E300E0950C /* Frameworks */,
@@ -1167,14 +1167,14 @@
 			dependencies = (
 				BB415922255EF9E300E0950C /* PBXTargetDependency */,
 			);
-			name = iSHUITests;
+			name = "iSH-AOKUITests";
 			productName = iSHUITests;
-			productReference = BB41591C255EF9E300E0950C /* iSHUITests.xctest */;
+			productReference = BB41591C255EF9E300E0950C /* iSH-AOKUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
-		BB792B4F1F96D90D00FFB7A4 /* iSH */ = {
+		BB792B4F1F96D90D00FFB7A4 /* iSH-AOK */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = BB792B661F96D90D00FFB7A4 /* Build configuration list for PBXNativeTarget "iSH" */;
+			buildConfigurationList = BB792B661F96D90D00FFB7A4 /* Build configuration list for PBXNativeTarget "iSH-AOK" */;
 			buildPhases = (
 				BB792B4C1F96D90D00FFB7A4 /* Sources */,
 				BB792B4D1F96D90D00FFB7A4 /* Frameworks */,
@@ -1191,9 +1191,9 @@
 				BB10E5CB248DBAB7009C7A74 /* PBXTargetDependency */,
 				BB13F7E7200AD874003D1C4D /* PBXTargetDependency */,
 			);
-			name = iSH;
+			name = "iSH-AOK";
 			productName = iSH;
-			productReference = BB792B501F96D90D00FFB7A4 /* iSH.app */;
+			productReference = BB792B501F96D90D00FFB7A4 /* iSH-AOK.app */;
 			productType = "com.apple.product-type.application";
 		};
 		BBFB2C542590257E00545EAB /* libish_emu */ = {
@@ -1268,7 +1268,7 @@
 					};
 				};
 			};
-			buildConfigurationList = BB792B491F96D8E000FFB7A4 /* Build configuration list for PBXProject "iSH" */;
+			buildConfigurationList = BB792B491F96D8E000FFB7A4 /* Build configuration list for PBXProject "iSH-AOK" */;
 			compatibilityVersion = "Xcode 6.3";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -1287,13 +1287,13 @@
 			);
 			projectRoot = "";
 			targets = (
-				BB792B4F1F96D90D00FFB7A4 /* iSH */,
-				BB41591B255EF9E300E0950C /* iSHUITests */,
+				BB792B4F1F96D90D00FFB7A4 /* iSH-AOK */,
+				BB41591B255EF9E300E0950C /* iSH-AOKUITests */,
 				BB13F7CA200ACC31003D1C4D /* Meson */,
 				BB13F7D0200ACCA2003D1C4D /* Ninja */,
 				BB13F7DB200AD81D003D1C4D /* libish */,
 				BBFB2C542590257E00545EAB /* libish_emu */,
-				BB4A922324ED9402002F5A96 /* iSH pre */,
+				BB4A922324ED9402002F5A96 /* iSH-AOK pre */,
 				497F6CE3254E5E4C00C82F46 /* MakeXcodeAutoCompleteWork */,
 				497F6D46254E605F00C82F46 /* ish */,
 			);
@@ -1438,7 +1438,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "curl -L \"https://$ROOTFS_URL\" -o \"$SRCROOT/root.tar.gz\"\n";
 			showEnvVarsInLog = 0;
 		};
 		BBFB2C572590257E00545EAB /* ShellScript */ = {
@@ -1624,12 +1623,12 @@
 		};
 		BB415922255EF9E300E0950C /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = BB792B4F1F96D90D00FFB7A4 /* iSH */;
+			target = BB792B4F1F96D90D00FFB7A4 /* iSH-AOK */;
 			targetProxy = BB415921255EF9E300E0950C /* PBXContainerItemProxy */;
 		};
 		BB4A922824ED940C002F5A96 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = BB4A922324ED9402002F5A96 /* iSH pre */;
+			target = BB4A922324ED9402002F5A96 /* iSH-AOK pre */;
 			targetProxy = BB4A922724ED940C002F5A96 /* PBXContainerItemProxy */;
 		};
 		BBFB2C552590257E00545EAB /* PBXTargetDependency */ = {
@@ -1874,6 +1873,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				MESON_BUILD_DIR = "$(CONFIGURATION_BUILD_DIR)/meson";
+				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = "$(ROOT_BUNDLE_IDENTIFIER)";
 				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos macosx";
 				VERSIONING_SYSTEM = "apple-generic";
@@ -1885,6 +1885,7 @@
 			baseConfigurationReference = BB0B86CD2586FD8800208600 /* App.xcconfig */;
 			buildSettings = {
 				DEVELOPMENT_TEAM = UYU5FM4LQ4;
+				PRODUCT_NAME = "iSH-AOK";
 				VALIDATE_PRODUCT = YES;
 			};
 			name = Debug;
@@ -1894,6 +1895,7 @@
 			baseConfigurationReference = BB0B86CD2586FD8800208600 /* App.xcconfig */;
 			buildSettings = {
 				DEVELOPMENT_TEAM = UYU5FM4LQ4;
+				PRODUCT_NAME = "iSH-AOK";
 			};
 			name = Release;
 		};
@@ -1959,7 +1961,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		BB415925255EF9E300E0950C /* Build configuration list for PBXNativeTarget "iSHUITests" */ = {
+		BB415925255EF9E300E0950C /* Build configuration list for PBXNativeTarget "iSH-AOKUITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				BB415923255EF9E300E0950C /* Debug */,
@@ -1968,7 +1970,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		BB4A922424ED9402002F5A96 /* Build configuration list for PBXAggregateTarget "iSH pre" */ = {
+		BB4A922424ED9402002F5A96 /* Build configuration list for PBXAggregateTarget "iSH-AOK pre" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				BB4A922524ED9402002F5A96 /* Debug */,
@@ -1977,7 +1979,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		BB792B491F96D8E000FFB7A4 /* Build configuration list for PBXProject "iSH" */ = {
+		BB792B491F96D8E000FFB7A4 /* Build configuration list for PBXProject "iSH-AOK" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				BB792B4A1F96D8E000FFB7A4 /* Debug */,
@@ -1986,7 +1988,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		BB792B661F96D90D00FFB7A4 /* Build configuration list for PBXNativeTarget "iSH" */ = {
+		BB792B661F96D90D00FFB7A4 /* Build configuration list for PBXNativeTarget "iSH-AOK" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				BB792B641F96D90D00FFB7A4 /* Debug */,
