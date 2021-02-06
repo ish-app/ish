@@ -1,3 +1,8 @@
+If you see an "IO ERROR" while using APK, let me know! I'm trying to collect diagnostics for an Apple bug report. Please send me the following:
+- Output of `dmesg` immediately after the error appears.
+- The date and approximate time/timezone when the error appeared (for Apple to find the right logs).
+- A sysdiagnose collected immediately after the error appears. Instructions at https://go.ish.app/sysdiagnose. TL;DR: press both volume buttons and the power button at the same time for a few seconds, wait 10 minutes (no way to see any progress indicator), then export the sysdiagnose in Settings > Privacy > Analytics > Analytics Data.
+
 Send bug reports or feedback here: https://github.com/ish-app/ish/issues (or by email, if you prefer)
 Follow iSH on Twitter: https://twitter.com/iSH_app
 Join the Discord: https://discord.gg/HFAXj44
