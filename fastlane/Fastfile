@@ -40,7 +40,8 @@ lane :upload_build do
         UI.error "No commits since last build"
         next
     end
-    testflight_changelog = shortlog + "\n" + File.read("footer.txt")
+    changelog = "Automated daily build"
+    testflight_changelog = changelog + "\n" + File.read("footer.txt") + shortlog
 
     app_store_connect_api_key
     latest = latest_testflight_build_number.to_s.scan(/^\d+(?=\.|$)/).first.to_i
