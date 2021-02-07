@@ -1,4 +1,4 @@
 source "https://rubygems.org"
-gem "fastlane", git: "https://github.com/tbodt/fastlane", branch: "huge-ipa"
+gem "fastlane", "~> 2.172.0"
 gem "dotenv"
 gem "pry"

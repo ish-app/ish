@@ -53,7 +53,7 @@ def download_one(url, path):
         except Exception as e:
             print('retrying', url, e)
             n += 1
-            if n >= 5: raise
+            if n >= 20: raise
 
 def download_many(downloads):
     done = 0
