@@ -1,6 +1,6 @@
 iSH is licensed under the [GPLv3][]. The additional terms in LICENSE.IOS also apply.
 
-Contributions made after commit c4f8d4be2df78cea70d7699262411ab274ef9b01 are
+Contributions made after commit 0e3a4144f93135c4fd618c8397d2cfd87194f69f are
 additionally licensed under the [GPLv2][]. This is intended to allow linking
 with GPLv2 licensed projects such as Linux and QEMU.
 
