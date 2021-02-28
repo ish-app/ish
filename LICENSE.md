@@ -12,7 +12,7 @@ The following authors have agreed to relicense their past contributions under GP
 - Ed Luff <beartechtalks@gmail.com>
 - David Southgate <d@davidsouthgate.co.uk>
 - [as@irc](https://gist.github.com/tbodt/45ccbea8d3c095258d63f611654f05b4)
-- asdfugil (name was "Assfugil" when last contributed) <towinchenmi@gmail.com>
+- asdfugil (name was "Assfugil" when last contributed) <towinchenmi@gmail.com> <42699250+Assfugil@users.noreply.github.com>
 
 [GPLv3]: https://www.gnu.org/licenses/gpl-3.0.html
 [GPLv2]: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html
