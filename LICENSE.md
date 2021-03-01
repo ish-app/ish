@@ -19,6 +19,7 @@ The following authors have agreed to relicense their past contributions under GP
 - Siddharth Dushantha <siddharth.dushantha@gmail.com>
 - Lorenzo De Linares <lorenzo.linares@icloud.com>
 - Christopher Albert <albert@alumni.tugraz.at>
+- Stephen Leaf <stephenaleaf@gmail.com>
 
 [GPLv3]: https://www.gnu.org/licenses/gpl-3.0.html
 [GPLv2]: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html
