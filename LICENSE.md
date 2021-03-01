@@ -23,6 +23,7 @@ The following authors have agreed to relicense their past contributions under GP
 - Noah Peeters <noah@noahpeeters.de>
 - Alexis Marquis <alexis@marquis.me>
 - Brian Almeida <bma@thunderkeys.net>
+- Viktor Oreshkin <imselfish@stek29.rocks>
 
 [GPLv3]: https://www.gnu.org/licenses/gpl-3.0.html
 [GPLv2]: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html
