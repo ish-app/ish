@@ -20,6 +20,7 @@ The following authors have agreed to relicense their past contributions under GP
 - Lorenzo De Linares <lorenzo.linares@icloud.com>
 - Christopher Albert <albert@alumni.tugraz.at>
 - Stephen Leaf <stephenaleaf@gmail.com>
+- Noah Peeters <noah@noahpeeters.de>
 - Alexis Marquis <alexis@marquis.me>
 
 [GPLv3]: https://www.gnu.org/licenses/gpl-3.0.html
