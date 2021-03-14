@@ -11,6 +11,7 @@ The following authors have agreed to relicense their past contributions under GP
 - Philipp Wallisch <philipp.wallisch@inode.at>
 - Ed Luff <beartechtalks@gmail.com>
 - David Southgate <d@davidsouthgate.co.uk>
+- Charlie Melbye <charles.melbye@gmail.com>
 - David <0b101@users.noreply.github.com>
 - [as@irc](https://gist.github.com/tbodt/45ccbea8d3c095258d63f611654f05b4)
 - asdfugil (name was "Assfugil" when last contributed) <towinchenmi@gmail.com> <42699250+Assfugil@users.noreply.github.com>
