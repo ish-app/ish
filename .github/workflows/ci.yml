@@ -2,16 +2,16 @@ name: CI
 
 on:
   push:
-      branches: [master]
   pull_request:
       branches: [master]
 
 jobs:
   build-linux:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     strategy:
       matrix:
         cc: [clang, gcc]
+        kernel: [ish, linux]
     steps:
       - uses: actions/checkout@v2
         with:
@@ -22,15 +22,19 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install ninja-build libarchive-dev
-          pip3 install meson
+          sudo apt-get install libarchive-dev
+          pip3 install meson ninja
+      - name: Clone Linux
+        if: matrix.kernel == 'linux'
+        run: deps/clone-linux.sh
       - name: Build
         run: |
-          meson build -Dengine=jit
+          meson build -Dengine=jit -Dkernel=${{matrix.kernel}}
           ninja -C build
         env:
           CC: ${{matrix.cc}}
       - name: Test
+        if: matrix.kernel == 'ish'
         run: ninja -C build test
 
   build-mac:

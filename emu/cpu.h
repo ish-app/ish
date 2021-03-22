@@ -174,7 +174,7 @@ static_assert(CPU_OFFSET(esp) == CPU_OFFSET(regs[4]), "register order");
 static_assert(CPU_OFFSET(ebp) == CPU_OFFSET(regs[5]), "register order");
 static_assert(CPU_OFFSET(esi) == CPU_OFFSET(regs[6]), "register order");
 static_assert(CPU_OFFSET(edi) == CPU_OFFSET(regs[7]), "register order");
-static_assert(sizeof(struct cpu_state) < UINT16_MAX, "cpu struct is too big for vector gadgets");
+static_assert(sizeof(struct cpu_state) < 0xffff, "cpu struct is too big for vector gadgets");
 
 // flags
 #define ZF (cpu->zf_res ? cpu->res == 0 : cpu->zf)

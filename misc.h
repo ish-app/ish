@@ -6,9 +6,8 @@
 #include <sys/types.h>
 #include <stdnoreturn.h>
 #include <stdbool.h>
-#endif
-
 #include <stdint.h>
+#endif
 
 // utility macros
 #define glue(a, b) _glue(a, b)

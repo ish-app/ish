@@ -34,7 +34,6 @@ threads = dependency('threads')
 librt = cc.find_library('rt', required: false)
 libm = cc.find_library('m', required: false)
 sqlite3 = cc.find_library('sqlite3')
-
 dependencies = [librt, libm, threads, sqlite3]
 
 subdir('vdso') # ish depends on the vdso
@@ -73,102 +72,116 @@ endif
 
 libish_emu = library('ish_emu', emu_src, include_directories: includes)
 
-src = [
-    'kernel/init.c',
-    'kernel/errno.c',
+subdir('deps')
 
-    'kernel/calls.c',
-    'kernel/user.c',
-    'kernel/vdso.c', vdso,
-    'kernel/task.c',
-    'kernel/group.c',
-    'kernel/log.c',
+if get_option('kernel') == 'ish'
+    src = [
+        'kernel/init.c',
+        'kernel/errno.c',
 
-    'kernel/fork.c',
-    'kernel/exec.c',
-    'kernel/exit.c',
-    'kernel/time.c',
-    'kernel/mmap.c',
-    'kernel/uname.c',
-    'kernel/tls.c',
-    'kernel/futex.c',
-    'kernel/getset.c',
-    'kernel/signal.c',
-    'kernel/resource.c',
-    'kernel/random.c',
-    'kernel/misc.c',
-    'kernel/eventfd.c',
-    'kernel/ipc.c',
-    'kernel/ptrace.c',
+        'kernel/calls.c',
+        'kernel/user.c',
+        'kernel/vdso.c', vdso,
+        'kernel/task.c',
+        'kernel/group.c',
+        'kernel/log.c',
 
-    'kernel/fs.c',
-    'kernel/fs_info.c',
-    'fs/mount.c',
-    'fs/fd.c',
-    'fs/inode.c',
-    'fs/stat.c',
-    'fs/dir.c',
-    'fs/generic.c',
-    'fs/path.c',
-    'fs/real.c',
-    'fs/fake.c',
-    'fs/fake-migrate.c',
-    'fs/fake-rebuild.c',
+        'kernel/fork.c',
+        'kernel/exec.c',
+        'kernel/exit.c',
+        'kernel/time.c',
+        'kernel/mmap.c',
+        'kernel/uname.c',
+        'kernel/tls.c',
+        'kernel/futex.c',
+        'kernel/getset.c',
+        'kernel/signal.c',
+        'kernel/resource.c',
+        'kernel/random.c',
+        'kernel/misc.c',
+        'kernel/eventfd.c',
+        'kernel/ipc.c',
+        'kernel/ptrace.c',
 
-    'fs/proc.c',
-    'fs/proc/entry.c',
-    'fs/proc/root.c',
-    'fs/proc/pid.c',
+        'kernel/fs.c',
+        'kernel/fs_info.c',
+        'fs/mount.c',
+        'fs/fd.c',
+        'fs/inode.c',
+        'fs/stat.c',
+        'fs/dir.c',
+        'fs/generic.c',
+        'fs/path.c',
+        'fs/real.c',
+        'fs/fake.c',
+        'fs/fake-migrate.c',
+        'fs/fake-rebuild.c',
 
-    'fs/dyndev.c',
+        'fs/proc.c',
+        'fs/proc/entry.c',
+        'fs/proc/root.c',
+        'fs/proc/pid.c',
 
-    'fs/adhoc.c',
-    'fs/sock.c',
-    'fs/pipe.c',
-    'fs/sockrestart.c',
-    'fs/lock.c',
+        'fs/dyndev.c',
 
-    'fs/dev.c',
-    'fs/mem.c',
-    'fs/tty.c',
-    'fs/tty-real.c',
-    'fs/pty.c',
-    'fs/tmp.c',
+        'fs/adhoc.c',
+        'fs/sock.c',
+        'fs/pipe.c',
+        'fs/sockrestart.c',
+        'fs/lock.c',
 
-    'fs/poll.c',
-    'kernel/poll.c',
-    'kernel/epoll.c',
+        'fs/dev.c',
+        'fs/mem.c',
+        'fs/tty.c',
+        'fs/tty-real.c',
+        'fs/pty.c',
+        'fs/tmp.c',
 
-    'util/timer.c',
-    'util/sync.c',
-    'util/fifo.c',
+        'fs/poll.c',
+        'kernel/poll.c',
+        'kernel/epoll.c',
 
-    'emu/memory.c',
+        'util/timer.c',
+        'util/sync.c',
+        'util/fifo.c',
 
-    'platform/' + host_machine.system() + '.c',
-]
+        'emu/memory.c',
 
-libish = library('ish', src,
-    include_directories: includes)
-ish = declare_dependency(
-    link_with: [libish, libish_emu],
-    dependencies: dependencies,
-    include_directories: includes)
+        'platform/' + host_machine.system() + '.c',
+    ]
 
-# ptraceomatic et al
-subdir('tools')
+    libish = library('ish', src,
+        include_directories: includes)
+    ish = declare_dependency(
+        link_with: [libish, libish_emu],
+        dependencies: dependencies,
+        include_directories: includes)
 
-if not meson.is_cross_build()
-    executable('ish', ['main.c'], dependencies: ish)
+    # ptraceomatic et al
+    subdir('tools')
+
+    if not meson.is_cross_build()
+        executable('ish', ['main.c'], dependencies: ish)
+    endif
+
+    gdb_scripts = ['ish-gdb.gdb']
+    foreach script : gdb_scripts
+        custom_target(script,
+            output: script, input: script,
+            command: ['ln', '-sf', '@INPUT@', '@OUTPUT@'],
+            build_by_default: true)
+    endforeach
+elif get_option('kernel') == 'linux'
+    modules = static_library('linux_modules', [
+        'linux/main.c',
+    ], dependencies: [linux_headers])
+    executable('ish', [
+        build_linux,
+    ], dependencies: [
+        liblinux,
+        declare_dependency(link_whole: modules),
+    ])
 endif
-
-gdb_scripts = ['ish-gdb.gdb']
-foreach script : gdb_scripts
-    custom_target(script,
-        output: script, input: script,
-        command: ['ln', '-sf', '@INPUT@', '@OUTPUT@'],
-        build_by_default: true)
-endforeach
 
 if not meson.is_cross_build()
     # test for floating point library
