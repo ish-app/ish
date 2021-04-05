@@ -5,6 +5,7 @@
 #include "util/list.h"
 #include "fs/stat.h"
 #include "fs/dev.h"
+#include "fs/fake-db.h"
 #include "emu/memory.h"
 #include <dirent.h>
 #include <sqlite3.h>
@@ -79,26 +80,7 @@ struct mount {
     int root_fd;
     union {
         void *data;
-        struct {
-            sqlite3 *db;
-            struct {
-                sqlite3_stmt *begin;
-                sqlite3_stmt *commit;
-                sqlite3_stmt *rollback;
-                sqlite3_stmt *path_get_inode;
-                sqlite3_stmt *path_read_stat;
-                sqlite3_stmt *path_create_stat;
-                sqlite3_stmt *path_create_path;
-                sqlite3_stmt *inode_read_stat;
-                sqlite3_stmt *inode_write_stat;
-                sqlite3_stmt *path_link;
-                sqlite3_stmt *path_unlink;
-                sqlite3_stmt *path_rename;
-                sqlite3_stmt *path_from_inode;
-                sqlite3_stmt *try_cleanup_inode;
-            } stmt;
-            lock_t lock;
-        };
+        struct fakefs_db fakefs;
     };
 };
 extern lock_t mounts_lock;

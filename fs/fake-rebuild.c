@@ -28,8 +28,8 @@ struct entry {
     struct list chain;
 };
 
-int fakefs_rebuild(struct mount *mount) {
-    sqlite3 *db = mount->db;
+int fakefs_rebuild(struct fakefs_db *fs, int root_fd) {
+    sqlite3 *db = fs->db;
     int err;
 
     EXEC("begin");
@@ -55,7 +55,7 @@ int fakefs_rebuild(struct mount *mount) {
 
         // grab real inode
         struct stat stat;
-        int err = fstatat(mount->root_fd, fix_path(path), &stat, 0);
+        int err = fstatat(root_fd, fix_path(path), &stat, 0);
         if (err < 0)
             continue;
         ino_t real_inode = stat.st_ino;
@@ -66,8 +66,8 @@ int fakefs_rebuild(struct mount *mount) {
         bool found = false;
         list_for_each_entry(bucket, entry, chain) {
             if (entry->inode == inode) {
-                unlinkat(mount->root_fd, fix_path(path), 0);
-                linkat(mount->root_fd, fix_path(entry->path), mount->root_fd, fix_path(path), 0);
+                unlinkat(root_fd, fix_path(path), 0);
+                linkat(root_fd, fix_path(entry->path), root_fd, fix_path(path), 0);
                 found = true;
                 break;
             }

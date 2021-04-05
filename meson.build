@@ -114,6 +114,7 @@ if get_option('kernel') == 'ish'
         'fs/path.c',
         'fs/real.c',
         'fs/fake.c',
+        'fs/fake-db.c',
         'fs/fake-migrate.c',
         'fs/fake-rebuild.c',
 
