@@ -3,7 +3,7 @@ import sys
 import re
 import os
 line_re = re.compile(r'^  [A-Z]+\s+')
-dep_re = re.compile(r'\s+Prerequisite `([^\']*)\' is older than target')
+dep_re = re.compile(r'\s+Prerequisite `([^\']*)\' is (older|newer) than target')
 deps = set()
 for line in sys.stdin:
 	if line.endswith('\n'):
