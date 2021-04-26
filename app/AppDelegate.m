@@ -12,7 +12,6 @@
 #import "AboutViewController.h"
 #import "AppDelegate.h"
 #import "AppGroup.h"
-#import "APKFilesystem.h"
 #import "iOSFS.h"
 #import "SceneDelegate.h"
 #import "PasteboardDevice.h"
@@ -74,7 +73,6 @@ static NSString *const kSkipStartupMessage = @"Skip Startup Message";
 
     fs_register(&iosfs);
     fs_register(&iosfs_unsafe);
-    fs_register(&apkfs);
 
     // need to do this first so that we can have a valid current for the generic_mknod calls
     err = become_first_process();
@@ -93,20 +91,16 @@ static NSString *const kSkipStartupMessage = @"Skip Startup Message";
         fs_ish_version = version.intValue;
         fd_close(ish_version_fd);
 
-        // I forgot to add the community repo
-        if (fs_ish_version < 88) {
-            NSData *repositoriesData = [NSData dataWithContentsOfURL:[root URLByAppendingPathComponent:@"etc/apk/repositories"]];
-            NSString *repositories = [[NSString alloc] initWithData:repositoriesData encoding:NSUTF8StringEncoding];
-            NSString *communityRepo = @"file:///ish/apk/community";
-            if (![[repositories componentsSeparatedByString:@"\n"] containsObject:communityRepo]) {
-                NSString *addend = [communityRepo stringByAppendingString:@"\n"];
-                struct fd *repositories_fd = generic_open("/etc/apk/repositories", O_WRONLY_|O_APPEND_, 0);
-                if (!IS_ERR(repositories_fd)) {
-                    repositories_fd->ops->write(repositories_fd, addend.UTF8String, [addend lengthOfBytesUsingEncoding:NSUTF8StringEncoding]);
-                    fd_close(repositories_fd);
-                }
+        NSURL *repositories = [NSBundle.mainBundle URLForResource:@"repositories" withExtension:@"txt"];
+        if (repositories != nil) {
+            NSData *repositoriesData = [NSData dataWithContentsOfURL:repositories];
+            struct fd *repositories_fd = generic_open("/etc/apk/repositories", O_WRONLY_|O_TRUNC_, 0);
+            if (!IS_ERR(repositories_fd)) {
+                repositories_fd->ops->write(repositories_fd, repositoriesData.bytes, repositoriesData.length);
+                fd_close(repositories_fd);
             }
         }
+        generic_rmdirat(AT_PWD, "/ish/apk");
 
         NSString *currentVersion = NSBundle.mainBundle.infoDictionary[(__bridge NSString *) kCFBundleVersionKey];
         if (currentVersion.intValue > fs_ish_version) {
@@ -119,10 +113,6 @@ static NSString *const kSkipStartupMessage = @"Skip Startup Message";
             }
         }
 
-        if ([NSBundle.mainBundle URLForResource:@"OnDemandResources" withExtension:@"plist"] != nil) {
-            generic_mkdirat(AT_PWD, "/ish/apk", 0755);
-            do_mount(&apkfs, "apk", "/ish/apk", "", 0);
-        }
     }
 
     // create some device nodes
