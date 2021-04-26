@@ -2,7 +2,7 @@ name: Upload Build
 
 on:
   workflow_dispatch:
-  schedule:
+      #schedule:
       #- cron: "0 6 * * *"
 
 jobs:
