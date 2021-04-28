@@ -35,7 +35,7 @@ You'll need these things to build the project:
 
 ## Build for iOS
 
-Open the project in Xcode, open iSH.xcconfig, and change `ROOT_BUNDLE_IDENTIFIER` to something unique. Then click Run. There are scripts that should do everything else automatically. If you run into any problems, open an issue and I'll try to help.
+Open the project in Xcode, open iSH.xcconfig, change `ROOT_BUNDLE_IDENTIFIER` to something unique, and change `ISH_DEVELOPMENT_TEAM` to your Development Team ID. Then click Run. There are scripts that should do everything else automatically. If you run into any problems, open an issue and I'll try to help.
 
 ## Build command line tool for testing
 
