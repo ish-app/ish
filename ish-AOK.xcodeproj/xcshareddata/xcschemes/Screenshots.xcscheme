@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Scheme
-   LastUpgradeVersion = "1220"
+   LastUpgradeVersion = "1240"
    version = "2.1">
    <BuildAction
       parallelizeBuildables = "YES"
@@ -17,7 +17,7 @@
                BlueprintIdentifier = "BB41591B255EF9E300E0950C"
                BuildableName = "iSH-AOKUITests.xctest"
                BlueprintName = "iSH-AOKUITests"
-               ReferencedContainer = "container:iSH-AOK.xcodeproj">
+               ReferencedContainer = "container:SEARCH_PATH.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
          <BuildActionEntry
@@ -51,7 +51,7 @@
                BlueprintIdentifier = "BB41591B255EF9E300E0950C"
                BuildableName = "iSH-AOKUITests.xctest"
                BlueprintName = "iSH-AOKUITests"
-               ReferencedContainer = "container:iSH-AOK.xcodeproj">
+               ReferencedContainer = "container:SEARCH_PATH.xcodeproj">
             </BuildableReference>
             <SelectedTests>
                <Test
@@ -93,7 +93,7 @@
             BlueprintIdentifier = "BB41591B255EF9E300E0950C"
             BuildableName = "iSH-AOKUITests.xctest"
             BlueprintName = "iSH-AOKUITests"
-            ReferencedContainer = "container:iSH-AOK.xcodeproj">
+            ReferencedContainer = "container:SEARCH_PATH.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
    </ProfileAction>
