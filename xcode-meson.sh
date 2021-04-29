@@ -1,7 +1,7 @@
 #!/bin/bash -x
 mkdir -p $MESON_BUILD_DIR
 cd $MESON_BUILD_DIR
-PATH="$PATH:/opt/homebrew/bin" 
+PATH="$PATH:/usr/local/bin:/opt/homebrew/bin" 
 
 config=$(/opt/homebrew/bin/meson introspect --buildoptions)
 if [[ $? -ne 0 ]]; then
@@ -32,8 +32,8 @@ endian = 'little'
 c_args = ['-arch', '$arch']
 needs_exe_wrapper = true
 EOF
-    /opt/homebrew/bin/meson $SRCROOT --cross-file $crossfile || exit $?
-    config=$(/opt/homebrew/bin/meson introspect --buildoptions)
+    meson $SRCROOT --cross-file $crossfile || exit $?
+    config=$(meson introspect --buildoptions)
 fi
 
 buildtype=debug
@@ -51,6 +51,6 @@ for var in buildtype log b_ndebug b_sanitize log_handler; do
     old_value=$(python3 -c "import sys, json; v = next(x['value'] for x in json.load(sys.stdin) if x['name'] == '$var'); print(str(v).lower() if isinstance(v, bool) else v)" <<< $config)
     new_value=${!var}
     if [[ $old_value != $new_value ]]; then
-       /opt/homebrew/bin/meson configure "-D$var=$new_value"
+       meson configure "-D$var=$new_value"
     fi
 done

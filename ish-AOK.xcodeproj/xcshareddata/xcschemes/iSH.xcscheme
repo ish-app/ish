@@ -17,7 +17,7 @@
                BlueprintIdentifier = "BB792B4F1F96D90D00FFB7A4"
                BuildableName = "iSH-AOK.app"
                BlueprintName = "iSH-AOK"
-               ReferencedContainer = "container:SEARCH_PATH.xcodeproj">
+               ReferencedContainer = "container:iSH-AOK.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -33,7 +33,7 @@
             BlueprintIdentifier = "BB792B4F1F96D90D00FFB7A4"
             BuildableName = "iSH-AOK.app"
             BlueprintName = "iSH-AOK"
-            ReferencedContainer = "container:SEARCH_PATH.xcodeproj">
+            ReferencedContainer = "container:iSH-AOK.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
       <Testables>
@@ -44,7 +44,7 @@
                BlueprintIdentifier = "BB41591B255EF9E300E0950C"
                BuildableName = "iSH-AOKUITests.xctest"
                BlueprintName = "iSH-AOKUITests"
-               ReferencedContainer = "container:SEARCH_PATH.xcodeproj">
+               ReferencedContainer = "container:iSH-AOK.xcodeproj">
             </BuildableReference>
             <SkippedTests>
                <Test
@@ -73,7 +73,7 @@
             BlueprintIdentifier = "BB792B4F1F96D90D00FFB7A4"
             BuildableName = "iSH-AOK.app"
             BlueprintName = "iSH-AOK"
-            ReferencedContainer = "container:SEARCH_PATH.xcodeproj">
+            ReferencedContainer = "container:iSH-AOK.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -90,7 +90,7 @@
             BlueprintIdentifier = "BB792B4F1F96D90D00FFB7A4"
             BuildableName = "iSH-AOK.app"
             BlueprintName = "iSH-AOK"
-            ReferencedContainer = "container:SEARCH_PATH.xcodeproj">
+            ReferencedContainer = "container:iSH-AOK.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>
@@ -99,6 +99,7 @@
    </AnalyzeAction>
    <ArchiveAction
       buildConfiguration = "Debug"
+      customArchiveName = "iSH-AOK"
       revealArchiveInOrganizer = "YES">
    </ArchiveAction>
 </Scheme>
