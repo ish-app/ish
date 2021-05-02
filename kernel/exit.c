@@ -192,6 +192,7 @@ dword_t sys_exit_group(dword_t status) {
 static bool reap_if_zombie(struct task *task, struct siginfo_ *info_out, struct rusage_ *rusage_out, int options) {
     if (!task->zombie)
         return false;
+    
     lock(&task->group->lock);
 
     dword_t exit_code = task->exit_code;
@@ -220,7 +221,7 @@ static bool reap_if_zombie(struct task *task, struct siginfo_ *info_out, struct 
     list_remove(&task->group->pgroup);
     free(task->group);
 
-    task_destroy(task);
+    task_destroy(task);  // No call to lock(&pids_lock)/unlock for some reason?  -mke
     return true;
 }
 

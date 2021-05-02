@@ -237,7 +237,7 @@ static NSString *const kSkipStartupMessage = @"Skip Startup Message";
 + (void)maybePresentStartupMessageOnViewController:(UIViewController *)vc {
     if ([NSUserDefaults.standardUserDefaults integerForKey:kSkipStartupMessage] >= 1)
         return;
-    if (fs_ish_version == 0) {
+ /*   if (fs_ish_version == 0) {
         UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Install iSH’s built-in APK?"
                                                                        message:@"iSH now includes the APK package manager, but it must be manually activated."
                                                                 preferredStyle:UIAlertControllerStyleAlert];
@@ -250,7 +250,7 @@ static NSString *const kSkipStartupMessage = @"Skip Startup Message";
                                                   style:UIAlertActionStyleDefault
                                                 handler:nil]];
         [vc presentViewController:alert animated:YES completion:nil];
-    }
+    } */
     [NSUserDefaults.standardUserDefaults setInteger:1 forKey:kSkipStartupMessage];
 }
 
