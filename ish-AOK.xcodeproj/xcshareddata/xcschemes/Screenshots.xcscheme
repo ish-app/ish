@@ -15,8 +15,8 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "BB41591B255EF9E300E0950C"
-               BuildableName = "iSH-AOKUITests.xctest"
-               BlueprintName = "iSH-AOKUITests"
+               BuildableName = "iSHUITests.xctest"
+               BlueprintName = "iSHUITests"
                ReferencedContainer = "container:ish-AOK.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -49,8 +49,8 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "BB41591B255EF9E300E0950C"
-               BuildableName = "iSH-AOKUITests.xctest"
-               BlueprintName = "iSH-AOKUITests"
+               BuildableName = "iSHUITests.xctest"
+               BlueprintName = "iSHUITests"
                ReferencedContainer = "container:ish-AOK.xcodeproj">
             </BuildableReference>
             <SelectedTests>
@@ -91,8 +91,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "BB41591B255EF9E300E0950C"
-            BuildableName = "iSH-AOKUITests.xctest"
-            BlueprintName = "iSH-AOKUITests"
+            BuildableName = "iSHUITests.xctest"
+            BlueprintName = "iSHUITests"
             ReferencedContainer = "container:ish-AOK.xcodeproj">
          </BuildableReference>
       </MacroExpansion>

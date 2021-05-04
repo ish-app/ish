@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "BB792B4F1F96D90D00FFB7A4"
-               BuildableName = "iSH-AOK.app"
-               BlueprintName = "iSH-AOK"
-               ReferencedContainer = "container:iSH-AOK.xcodeproj">
+               BuildableName = "iSH.app"
+               BlueprintName = "iSH"
+               ReferencedContainer = "container:ish-AOK.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -31,9 +31,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "BB792B4F1F96D90D00FFB7A4"
-            BuildableName = "iSH-AOK.app"
-            BlueprintName = "iSH-AOK"
-            ReferencedContainer = "container:iSH-AOK.xcodeproj">
+            BuildableName = "iSH.app"
+            BlueprintName = "iSH"
+            ReferencedContainer = "container:ish-AOK.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
       <Testables>
@@ -42,9 +42,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "BB41591B255EF9E300E0950C"
-               BuildableName = "iSH-AOKUITests.xctest"
-               BlueprintName = "iSH-AOKUITests"
-               ReferencedContainer = "container:iSH-AOK.xcodeproj">
+               BuildableName = "iSHUITests.xctest"
+               BlueprintName = "iSHUITests"
+               ReferencedContainer = "container:ish-AOK.xcodeproj">
             </BuildableReference>
             <SkippedTests>
                <Test
@@ -71,9 +71,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "BB792B4F1F96D90D00FFB7A4"
-            BuildableName = "iSH-AOK.app"
-            BlueprintName = "iSH-AOK"
-            ReferencedContainer = "container:iSH-AOK.xcodeproj">
+            BuildableName = "iSH.app"
+            BlueprintName = "iSH"
+            ReferencedContainer = "container:ish-AOK.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -88,9 +88,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "BB792B4F1F96D90D00FFB7A4"
-            BuildableName = "iSH-AOK.app"
-            BlueprintName = "iSH-AOK"
-            ReferencedContainer = "container:iSH-AOK.xcodeproj">
+            BuildableName = "iSH.app"
+            BlueprintName = "iSH"
+            ReferencedContainer = "container:ish-AOK.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>
