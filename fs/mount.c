@@ -207,4 +207,3 @@ dword_t sys_umount2(addr_t target_addr, dword_t flags) {
 
 struct list mounts = {&mounts, &mounts};
 lock_t mounts_lock = LOCK_INITIALIZER;
-
