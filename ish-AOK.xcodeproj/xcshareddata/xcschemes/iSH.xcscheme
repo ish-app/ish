@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Scheme
-   LastUpgradeVersion = "1240"
+   LastUpgradeVersion = "1250"
    version = "1.3">
    <BuildAction
       parallelizeBuildables = "YES"
@@ -17,7 +17,7 @@
                BlueprintIdentifier = "BB792B4F1F96D90D00FFB7A4"
                BuildableName = "iSH.app"
                BlueprintName = "iSH"
-               ReferencedContainer = "container:ish-AOK.xcodeproj">
+               ReferencedContainer = "container:iSH-AOK.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -33,7 +33,7 @@
             BlueprintIdentifier = "BB792B4F1F96D90D00FFB7A4"
             BuildableName = "iSH.app"
             BlueprintName = "iSH"
-            ReferencedContainer = "container:ish-AOK.xcodeproj">
+            ReferencedContainer = "container:iSH-AOK.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
       <Testables>
@@ -44,7 +44,7 @@
                BlueprintIdentifier = "BB41591B255EF9E300E0950C"
                BuildableName = "iSHUITests.xctest"
                BlueprintName = "iSHUITests"
-               ReferencedContainer = "container:ish-AOK.xcodeproj">
+               ReferencedContainer = "container:iSH-AOK.xcodeproj">
             </BuildableReference>
             <SkippedTests>
                <Test
@@ -73,7 +73,7 @@
             BlueprintIdentifier = "BB792B4F1F96D90D00FFB7A4"
             BuildableName = "iSH.app"
             BlueprintName = "iSH"
-            ReferencedContainer = "container:ish-AOK.xcodeproj">
+            ReferencedContainer = "container:iSH-AOK.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -90,7 +90,7 @@
             BlueprintIdentifier = "BB792B4F1F96D90D00FFB7A4"
             BuildableName = "iSH.app"
             BlueprintName = "iSH"
-            ReferencedContainer = "container:ish-AOK.xcodeproj">
+            ReferencedContainer = "container:iSH-AOK.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

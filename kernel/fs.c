@@ -22,9 +22,9 @@ static void apply_umask(mode_t_ *mode) {
     unlock(&fs->lock);
 }
 
-dword_t syscall_seccomp(unsigned int op, unsigned int flags, void *uargs) { // Starting to work on this now.  -mke
+/* dword_t syscall_seccomp(unsigned int op, unsigned int flags, void *uargs) { // Starting to work on this now.  -mke
     return _ENOSYS;
-}
+} */
 
 int access_check(struct statbuf *stat, int check) {
     if (superuser()) return 0;

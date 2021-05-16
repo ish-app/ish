@@ -1264,7 +1264,7 @@
 			isa = PBXProject;
 			attributes = {
 				CLASSPREFIX = "";
-				LastUpgradeCheck = 1220;
+				LastUpgradeCheck = 1250;
 				TargetAttributes = {
 					497F6CE3254E5E4C00C82F46 = {
 						CreatedOnToolsVersion = 12.2;
@@ -1323,7 +1323,7 @@
 					};
 				};
 			};
-			buildConfigurationList = BB792B491F96D8E000FFB7A4 /* Build configuration list for PBXProject "ish-AOK" */;
+			buildConfigurationList = BB792B491F96D8E000FFB7A4 /* Build configuration list for PBXProject "iSH-AOK" */;
 			compatibilityVersion = "Xcode 6.3";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -1750,18 +1750,21 @@
 		497F6CE8254E5E4C00C82F46 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_IDENTITY = "-";
 			};
 			name = Debug;
 		};
 		497F6CE9254E5E4C00C82F46 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_IDENTITY = "-";
 			};
 			name = Release;
 		};
 		497F6D4C254E605F00C82F46 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_IDENTITY = "-";
 				ENABLE_HARDENED_RUNTIME = YES;
 				HEADER_SEARCH_PATHS = "$(SRCROOT)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1773,6 +1776,7 @@
 		497F6D4D254E605F00C82F46 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_IDENTITY = "-";
 				ENABLE_HARDENED_RUNTIME = YES;
 				HEADER_SEARCH_PATHS = "$(SRCROOT)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1796,14 +1800,14 @@
 		BB13F7D2200ACCA2003D1C4D /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NINJA = /usr/local/bin/ninja;
+				NINJA = /opt/homebrew/bin/ninja;
 			};
 			name = Debug;
 		};
 		BB13F7D3200ACCA2003D1C4D /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NINJA = /usr/local/bin/ninja;
+				NINJA = /opt/homebrew/bin/ninja;
 			};
 			name = Release;
 		};
@@ -1889,6 +1893,7 @@
 				DEVELOPMENT_TEAM = UYU5FM4LQ4;
 				IPHONEOS_DEPLOYMENT_TARGET = 12.1;
 				MACOSX_DEPLOYMENT_TARGET = 11.3;
+				SWIFT_COMPILATION_MODE = wholemodule;
 			};
 			name = Release;
 		};
@@ -2014,7 +2019,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		BB792B491F96D8E000FFB7A4 /* Build configuration list for PBXProject "ish-AOK" */ = {
+		BB792B491F96D8E000FFB7A4 /* Build configuration list for PBXProject "iSH-AOK" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				BB792B4A1F96D8E000FFB7A4 /* Debug */,

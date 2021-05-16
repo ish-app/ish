@@ -2,7 +2,7 @@ project('ish', 'c',
     default_options: ['default_library=static', 'c_std=gnu11', 'warning_level=2'])
 cc = meson.get_compiler('c')
 
-if cc.get_id() == 'clang'
+if cc.get_id() == '/opt/homebrew/opt/llvm/bin/clang'
     add_project_arguments('-Wimplicit-fallthrough', '-Wtautological-constant-in-range-compare', language: 'c')
 endif
 

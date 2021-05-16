@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Scheme
-   LastUpgradeVersion = "1240"
+   LastUpgradeVersion = "1250"
    version = "1.3">
    <BuildAction
       parallelizeBuildables = "YES"
@@ -17,7 +17,7 @@
                BlueprintIdentifier = "497F6D46254E605F00C82F46"
                BuildableName = "ish"
                BlueprintName = "ish"
-               ReferencedContainer = "container:ish-AOK.xcodeproj">
+               ReferencedContainer = "container:iSH-AOK.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -47,7 +47,7 @@
             BlueprintIdentifier = "497F6D46254E605F00C82F46"
             BuildableName = "ish"
             BlueprintName = "ish"
-            ReferencedContainer = "container:ish-AOK.xcodeproj">
+            ReferencedContainer = "container:iSH-AOK.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -64,7 +64,7 @@
             BlueprintIdentifier = "497F6D46254E605F00C82F46"
             BuildableName = "ish"
             BlueprintName = "ish"
-            ReferencedContainer = "container:ish-AOK.xcodeproj">
+            ReferencedContainer = "container:iSH-AOK.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>
