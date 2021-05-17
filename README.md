@@ -1,6 +1,8 @@
 # [iSH-AOK](https://github.com/emkey1/ish-AOK)
 
-A fork of the project to get a Linux shell running on iOS, using usermode x86 emulation and syscall translation.
+A fork of the iSH project.  The goal of iSH is to get a Linux shell running on iOS, using usermode x86 emulation and syscall translation.
+
+Most of the text below is specific to the original iSH currently.  -emkey1
 
 For the current status of the project, check the issues tab, and the commit logs.
 
