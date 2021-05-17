@@ -1,7 +1,5 @@
 # [iSH-AOK](https://github.com/emkey1/ish-AOK)
 
-[![Build Status](https://www.travis-ci.com/github/emkey1/ish-AOK?branch=master)](https://travis-ci.org/ish-app/ish-AOK)
-
 A fork of the project to get a Linux shell running on iOS, using usermode x86 emulation and syscall translation.
 
 For the current status of the project, check the issues tab, and the commit logs.
