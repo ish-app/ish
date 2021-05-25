@@ -89,7 +89,7 @@
 
 .gadget atomic_cmpxchg8b
     #Test for alignment.
-    tst _addr, 0xF
+    tst _addr, 7
     b.ne 2b
     
     #Aligned cmpxchg8b
@@ -174,6 +174,8 @@
     bfi w9, w11, 6, 1
     str w8, [_cpu, CPU_flags_res]
     str w9, [_cpu, CPU_eflags]
+
+    orr _xaddr, _xaddr, x17
     
     gret 1
     write_bullshit 128, atomic_cmpxchg8b_unaligned
