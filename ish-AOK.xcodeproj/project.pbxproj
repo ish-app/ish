@@ -1501,7 +1501,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "curl -L \"https://$ROOTFS_URL\" -o \"$SRCROOT/root.tar.gz\"\n";
+			shellScript = "curl -L \"https://$ROOTFS_URL\" -o \"$SRCROOT/root_mini.tar.gz\"\n";
 			showEnvVarsInLog = 0;
 		};
 		BBFB2C572590257E00545EAB /* ShellScript */ = {
@@ -1840,7 +1840,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
-				TEST_TARGET_NAME = iSH-AOK;
+				TEST_TARGET_NAME = "iSH-AOK";
 			};
 			name = Debug;
 		};
@@ -1858,7 +1858,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "$(PRODUCT_BUNDLE_IDENTIFIER).UITests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
-				TEST_TARGET_NAME = iSH-AOK;
+				TEST_TARGET_NAME = "iSH-AOK";
 			};
 			name = Release;
 		};
@@ -1901,6 +1901,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = BB0B86CD2586FD8800208600 /* App.xcconfig */;
 			buildSettings = {
+				CURRENT_PROJECT_VERSION = 8;
 				DEVELOPMENT_TEAM = UYU5FM4LQ4;
 				PRODUCT_BUNDLE_IDENTIFIER = "app.ish.iSH-AOK";
 			};
@@ -1910,6 +1911,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = BB0B86CD2586FD8800208600 /* App.xcconfig */;
 			buildSettings = {
+				CURRENT_PROJECT_VERSION = 8;
 				DEVELOPMENT_TEAM = UYU5FM4LQ4;
 				PRODUCT_BUNDLE_IDENTIFIER = "app.ish.iSH-AOK";
 			};
@@ -1920,6 +1922,7 @@
 			baseConfigurationReference = BB0B86D52587009D00208600 /* iOS.xcconfig */;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = app/FileProvider/iSHFileProvider.entitlements;
+				CURRENT_PROJECT_VERSION = 8;
 				INFOPLIST_FILE = app/FileProvider/Info.plist;
 				PRODUCT_BUNDLE_IDENTIFIER = "$(PRODUCT_BUNDLE_IDENTIFIER).FileProvider";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1932,6 +1935,7 @@
 			baseConfigurationReference = BB0B86D52587009D00208600 /* iOS.xcconfig */;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = app/FileProvider/iSHFileProvider.entitlements;
+				CURRENT_PROJECT_VERSION = 8;
 				INFOPLIST_FILE = app/FileProvider/Info.plist;
 				PRODUCT_BUNDLE_IDENTIFIER = "$(PRODUCT_BUNDLE_IDENTIFIER).FileProvider";
 				PRODUCT_NAME = "$(TARGET_NAME)";

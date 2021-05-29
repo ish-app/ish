@@ -629,4 +629,5 @@ flatten __no_instrument void cpu_run(struct cpu_state *cpu) {
             }
         }
     }
+    read_wrunlock(&cpu->mem->lock);
 }

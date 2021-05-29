@@ -136,6 +136,10 @@ void task_run_current() {
     struct tlb tlb;
     tlb_refresh(&tlb, &current->mem->mmu);
     while (true) {
+        struct timespec time, time2;
+        time.tv_sec = 0;
+        time.tv_nsec = 1;
+
         read_wrlock(&current->mem->lock);
         int interrupt = cpu_run_to_interrupt(cpu, &tlb);
         read_wrunlock(&current->mem->lock);

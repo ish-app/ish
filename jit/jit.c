@@ -268,9 +268,10 @@ int cpu_run_to_interrupt(struct cpu_state *cpu, struct tlb *tlb) {
         // write-lock the jetsam_lock to wait until other jit threads get to
         // this point, so they will all clear out their block pointers
         // TODO: use RCU for better performance
-        unlock(&jit->lock);
+        // unlock(&jit->lock); // Causes deadlock in some circumstances when enabled.  -mke
+        
         write_wrlock(&jit->jetsam_lock);
-        lock(&jit->lock);
+        // lock(&jit->lock); // Causes deadlock in some circumstances when enabled.  -mke
         jit_free_jetsam(jit);
         write_wrunlock(&jit->jetsam_lock);
     }

@@ -4,6 +4,7 @@ xcuserdata/
 
 cross-*.txt
 root.tar.gz
+root_mini.tar.gz
 
 node_modules
 app/xtermjs/xterm-dist

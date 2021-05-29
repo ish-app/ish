@@ -139,6 +139,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		5D2CE3C6265883BA00FD0314 /* global.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = global.h; sourceTree = "<group>"; };
 		BB10E0D6248DA67B009C7A74 /* libarchive.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libarchive.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		BB10E0E4248DA6EA009C7A74 /* archive_read_support_format_rar.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = archive_read_support_format_rar.c; sourceTree = "<group>"; };
 		BB10E0E6248DA6EA009C7A74 /* archive_read_support_format_empty.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = archive_read_support_format_empty.c; sourceTree = "<group>"; };
@@ -327,6 +328,7 @@
 		BB10E0BA248DA573009C7A74 = {
 			isa = PBXGroup;
 			children = (
+				5D2CE3C6265883BA00FD0314 /* global.h */,
 				BBCE66E3249A836200F45269 /* config.h */,
 				BB10E0E3248DA6EA009C7A74 /* libarchive */,
 				BB10E0C9248DA627009C7A74 /* Products */,
