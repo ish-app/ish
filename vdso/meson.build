@@ -5,7 +5,11 @@
 # so that's currently the only supported option (though if you have some other
 # compatible toolchain you can edit this file to point to it instead.)
 
+<<<<<<< HEAD
 clang = find_program('/opt/homebrew/opt/llvm/bin/clang', '/usr/local/opt/llvm/bin/clang', '/opt/homebrew/bin/clang', 'clang')
+=======
+clang = find_program('/usr/local/opt/llvm/bin/clang', '/opt/homebrew/bin/clang', 'clang')
+>>>>>>> 5082fd4aa2d027e2106fef406efcc73bc1c222dd
 check_cc = find_program('check-cc.sh')
 result = run_command(check_cc, clang)
 if result.returncode() != 0
