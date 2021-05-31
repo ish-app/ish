@@ -121,9 +121,9 @@
     write_bullshit 64, atomic_cmpxchg8b
 
 2: #UNaligned cmpxchg8b (emulated with aligned 16b loads)
-    and x17, _xaddr, 7
+    and x17, _xaddr, 0xF
     lsl x17, x17, 3
-    and _xaddr, _xaddr, -7
+    and _xaddr, _xaddr, -15
     
     write_prep 128, atomic_cmpxchg8b_unaligned
     mov w10, eax
