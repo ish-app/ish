@@ -2,25 +2,27 @@ name: Upload Build
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: "0 6 * * *"
 
 jobs:
   upload-build:
+    if: github.repository == 'ish-app/ish'
     runs-on: macos-10.15
     timeout-minutes: 720
     steps:
       - uses: actions/checkout@v2
         with:
           submodules: true
+          fetch-depth: 0
 
       - name: Install deps
         run: |
-            pip3 install meson
-            brew install ninja
-            bundle install
-            git config user.name github-actions
-            git config user.email github-actions@github.cog
-            cd deps/aports
-            ./download-repos.py
+          pip3 install meson
+          brew install ninja
+          bundle install
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
 
       - name: Fastlane
         timeout-minutes: 720
@@ -44,14 +46,8 @@ jobs:
             iSH-appstore.app.dSYM.zip
 
       - uses: actions/upload-artifact@v2
-        if: ${{ always() }}
+        if: always()
         with:
           name: Fastlane Logs
           path: fastlane.log
-
-      - name: Delete changelog
-        run: |
-          git rm fastlane/changelog.txt
-          git commit -m "Make sure a new changelog is written for the next build"
-          git push
 
