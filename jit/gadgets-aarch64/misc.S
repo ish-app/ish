@@ -90,7 +90,7 @@
 .gadget atomic_cmpxchg8b
     #Test for alignment.
     tst _addr, 7
-    b.ne 2b
+    b.ne 2f
     
     #Aligned cmpxchg8b
     write_prep 64, atomic_cmpxchg8b
