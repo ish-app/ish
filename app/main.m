@@ -7,7 +7,6 @@
 
 #import <UIKit/UIKit.h>
 #import "AppDelegate.h"
-#import "deps/global.h"
 
 int main(int argc, char * argv[]) {
  
