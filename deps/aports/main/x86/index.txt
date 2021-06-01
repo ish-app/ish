@@ -1,1 +1,5 @@
+<<<<<<< HEAD
 APKINDEX-v3.12-2021-05-29.tar.gz
+=======
+APKINDEX-v3.12-2021-05-20.tar.gz
+>>>>>>> a56db1af84ac6df5df3aa75199d11546130ca444

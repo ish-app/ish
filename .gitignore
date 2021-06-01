@@ -21,3 +21,7 @@ fastlane/test_output
 e2e_out/
 
 deps/libdot/
+
+app/Project.xcconfig
+iSH.xcodeproj/project.pbxproj
+vdso/meson.build
