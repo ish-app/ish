@@ -60,7 +60,7 @@ enum {
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     switch (section) {
-        case ThemeNameSection: return Theme.presetNames.count;
+        case ThemeNameSection: return Theme.themeNames.count;
         case FontSection: return 2;
         case PreviewSection: return 1;
         default: NSAssert(NO, @"unhandled section"); return 0;
@@ -75,10 +75,6 @@ enum {
     }
 }
 
-- (Theme *)_themeForRow:(NSUInteger)row {
-    //TODO: Load this dynamically from theme dictionary for custom themes
-    return [Theme presetThemeNamed:Theme.presetNames[row]];
-}
 
 - (NSString *)reuseIdentifierForIndexPath:(NSIndexPath *)indexPath {
     switch (indexPath.section) {
@@ -95,8 +91,8 @@ enum {
     
     switch (indexPath.section) {
         case ThemeNameSection:
-            cell.textLabel.text = Theme.presetNames[indexPath.row];
-            if ([prefs.theme isEqual:[self _themeForRow:indexPath.row]]) {
+            cell.textLabel.text = Theme.themeNames[indexPath.row];
+            if ([prefs.theme.name isEqual:cell.textLabel.text]) {
                 cell.accessoryType = UITableViewCellAccessoryCheckmark;
             } else {
                 cell.accessoryType = UITableViewCellAccessoryNone;
@@ -129,10 +125,13 @@ enum {
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
-    
+    UserPreferences *prefs = [UserPreferences shared];
+    NSString *tappedThemeName = Theme.themeNames[indexPath.row]; // Yes I know this isn't neccessary but I keep code DRY
     switch (indexPath.section) {
         case ThemeNameSection:
-            UserPreferences.shared.theme = [self _themeForRow:indexPath.row];
+            if (prefs.theme.name != tappedThemeName) {
+                [[UserPreferences shared] setThemeTo:tappedThemeName];
+            }
             break;
         case FontSection:
             if (indexPath.row == 0) // font family

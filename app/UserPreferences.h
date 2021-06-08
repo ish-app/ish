@@ -25,20 +25,20 @@ NS_ASSUME_NONNULL_BEGIN
 - (instancetype)initWithProperties:(NSDictionary<NSString *, id> *)props;
 - (NSDictionary<NSString *, id> *)properties;
 
-+ (instancetype)presetThemeNamed:(NSString *)name;
 + (NSDictionary<NSString *, Theme *> *)presets;
-+ (NSArray<NSString *> *)presetNames;
++ (NSArray<NSString *> *)themeNames;
 - (NSString *)presetName;
 
 @property (nonatomic, readonly) UIColor *foregroundColor;
 @property (nonatomic, readonly) UIColor *backgroundColor;
+@property (nonatomic) NSString *name;
 @property (readonly) UIKeyboardAppearance keyboardAppearance;
 @property (readonly) UIStatusBarStyle statusBarStyle;
 
 @end
 extern NSString *const kThemeForegroundColor;
 extern NSString *const kThemeBackgroundColor;
-
+extern NSString *const kThemeName;
 @interface UserPreferences : NSObject
 
 @property CapsLockMapping capsLockMapping;
@@ -56,7 +56,8 @@ extern NSString *const kThemeBackgroundColor;
 + (instancetype)shared;
 
 - (BOOL)hasChangedLaunchCommand;
-
+- (void)setThemeTo:(NSString *)name;
+- (Theme *)themeFromName:(NSString *)name;
 @end
 
 extern NSString *const kPreferenceLaunchCommandKey;

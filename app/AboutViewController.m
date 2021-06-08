@@ -64,7 +64,7 @@
 
 - (void)_updatePreferenceUI {
     UserPreferences *prefs = UserPreferences.shared;
-    self.themeCell.detailTextLabel.text = prefs.theme.presetName;
+    self.themeCell.detailTextLabel.text = prefs.theme.name;
     self.disableDimmingSwitch.on = UserPreferences.shared.shouldDisableDimming;
     self.launchCommandField.text = [UserPreferences.shared.launchCommand componentsJoinedByString:@" "];
     self.bootCommandField.text = [UserPreferences.shared.bootCommand componentsJoinedByString:@" "];

@@ -59,9 +59,14 @@ NSString *const kPreferenceBootCommandKey = @"Boot Command";
             kPreferenceBootCommandKey: @[@"/sbin/init"],
         }];
         NSString *currentThemeName = [_defaults stringForKey:kPreferenceThemeKey];
-        _theme = [[Theme alloc] initWithProperties:[_defaults objectForKey:kPreferenceThemeDictKey][currentThemeName]];
+        _theme = [self themeFromName:currentThemeName];
+        NSLog(@"Current Theme Name: %@", _theme.name) ;
     }
     return self;
+}
+
+- (NSArray<id> *)allThemeNames {
+    return [(NSDictionary<NSString *, id> *) [_defaults objectForKey:kPreferenceThemeDictKey] allKeys];
 }
 
 - (CapsLockMapping)capsLockMapping {
@@ -119,8 +124,17 @@ NSString *const kPreferenceBootCommandKey = @"Boot Command";
 }
 
 - (void)setTheme:(Theme *)theme {
+    NSLog(@"Switching from theme %@ to %@", _theme.name, theme.name);
     _theme = theme;
-    [_defaults setObject:theme.properties forKey:kPreferenceThemeKey];
+    [_defaults setObject:theme.name forKey:kPreferenceThemeKey];
+}
+
+- (void)setThemeTo:(NSString *)name {
+    [self setTheme:[[Theme alloc] initWithProperties:[_defaults objectForKey:kPreferenceThemeDictKey][name]]];
+}
+
+- (Theme *)themeFromName:(NSString *)name {
+    return [[Theme alloc] initWithProperties:[_defaults objectForKey:kPreferenceThemeDictKey][name]];
 }
 
 - (BOOL)shouldDisableDimming {
@@ -170,13 +184,17 @@ static UIColor *UnarchiveColor(id data) {
     if (self = [super init]) {
         _foregroundColor = UnarchiveColor(props[kThemeForegroundColor]);
         _backgroundColor = UnarchiveColor(props[kThemeBackgroundColor]);
+        _name = props[kThemeName];
     }
     return self;
 }
 
-+ (instancetype)_themeWithForegroundColor:(UIColor *)foreground backgroundColor:(UIColor *)background {
++ (instancetype)_themeWithForegroundColor:(UIColor *)foreground backgroundColor:(UIColor *)background name:(NSString *)name {
     return [[self alloc] initWithProperties:@{kThemeForegroundColor: ArchiveColor(foreground),
-                                              kThemeBackgroundColor: ArchiveColor(background)}];
+                                              kThemeBackgroundColor: ArchiveColor(background),
+                                              kThemeName: name
+                                              
+    }];
 }
 
 - (UIStatusBarStyle)statusBarStyle {
@@ -203,7 +221,9 @@ static UIColor *UnarchiveColor(id data) {
 
 - (NSDictionary<NSString *,id> *)properties {
     return @{kThemeForegroundColor: ArchiveColor(self.foregroundColor),
-             kThemeBackgroundColor: ArchiveColor(self.backgroundColor)};
+             kThemeBackgroundColor: ArchiveColor(self.backgroundColor),
+             kThemeName: self.name
+    };
 }
 
 - (BOOL)isEqual:(id)object {
@@ -212,23 +232,28 @@ static UIColor *UnarchiveColor(id data) {
     return [self.properties isEqualToDictionary:[object properties]];
 }
 
-+ (NSArray<NSString *> *)presetNames {
-    return Theme.presets.allKeys;
++ (NSArray<NSString *> *)themeNames {
+    return [[UserPreferences shared] allThemeNames];
 }
 
 + (NSDictionary<NSString *, Theme *> *)presets {
     return @{
          @"Light": [self _themeWithForegroundColor:UIColor.blackColor
-                                   backgroundColor:UIColor.whiteColor],
+                                   backgroundColor:UIColor.whiteColor
+                                              name:@"Light"],
          @"Dark":  [self _themeWithForegroundColor:UIColor.whiteColor
-                                   backgroundColor:UIColor.blackColor],
+                                   backgroundColor:UIColor.blackColor
+                                              name: @"Dark"],
          @"1337":  [self _themeWithForegroundColor:UIColor.greenColor
-                                   backgroundColor:UIColor.blackColor]
+                                   backgroundColor:UIColor.blackColor
+                                              name:@"1337"]
     };
 }
-+ (instancetype)presetThemeNamed:(NSString *)name {
-    return Theme.presets[name];
+
++ (instancetype)themeNamed:(NSString *)name {
+    return [[UserPreferences shared] themeFromName:name];
 }
+
 - (NSString *)presetName {
     for (NSString *name in Theme.presets) {
         if ([self isEqual:Theme.presets[name]])
@@ -241,3 +266,4 @@ static UIColor *UnarchiveColor(id data) {
 
 NSString *const kThemeForegroundColor = @"ForegroundColor";
 NSString *const kThemeBackgroundColor = @"BackgroundColor";
+NSString *const kThemeName = @"Name";
