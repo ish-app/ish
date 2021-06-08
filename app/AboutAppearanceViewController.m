@@ -76,6 +76,7 @@ enum {
 }
 
 - (Theme *)_themeForRow:(NSUInteger)row {
+    //TODO: Load this dynamically from theme dictionary for custom themes
     return [Theme presetThemeNamed:Theme.presetNames[row]];
 }
 

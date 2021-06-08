@@ -26,6 +26,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSDictionary<NSString *, id> *)properties;
 
 + (instancetype)presetThemeNamed:(NSString *)name;
++ (NSDictionary<NSString *, Theme *> *)presets;
 + (NSArray<NSString *> *)presetNames;
 - (NSString *)presetName;
 

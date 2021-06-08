@@ -16,6 +16,8 @@ static NSString *const kPreferenceOverrideControlSpace = @"Override Control Spac
 static NSString *const kPreferenceFontFamilyKey = @"Font Family";
 static NSString *const kPreferenceFontSizeKey = @"Font Size";
 static NSString *const kPreferenceThemeKey = @"Theme";
+static NSString *const kPreferenceThemeDictKey = @"ThemeArray";
+static NSString *const kPreferenceDefaultThemeName = @"Light";
 static NSString *const kPreferenceDisableDimmingKey = @"Disable Dimming";
 NSString *const kPreferenceLaunchCommandKey = @"Init Command";
 NSString *const kPreferenceBootCommandKey = @"Boot Command";
@@ -37,11 +39,18 @@ NSString *const kPreferenceBootCommandKey = @"Boot Command";
     self = [super init];
     if (self) {
         _defaults = [NSUserDefaults standardUserDefaults];
-        Theme *defaultTheme = [Theme presetThemeNamed:@"Light"];
+        NSMutableDictionary<NSString *, id> *modifiedPresets = (NSMutableDictionary<NSString *, id> *) [[NSMutableDictionary alloc] init];
+        NSEnumerator *enumerator = [Theme.presets keyEnumerator];
+        id key; // This should be a string right?
+        while((key = [enumerator nextObject])) {
+            [modifiedPresets setObject:Theme.presets[key].properties forKey:key];
+        }
+        
         [_defaults registerDefaults:@{
             kPreferenceFontFamilyKey: @"Menlo",
             kPreferenceFontSizeKey: @(12),
-            kPreferenceThemeKey: defaultTheme.properties,
+            kPreferenceThemeKey: kPreferenceDefaultThemeName,
+            kPreferenceThemeDictKey: [NSDictionary dictionaryWithDictionary:modifiedPresets],
             kPreferenceCapsLockMappingKey: @(CapsLockMapControl),
             kPreferenceOptionMappingKey: @(OptionMapNone),
             kPreferenceBacktickEscapeKey: @(NO),
@@ -49,7 +58,8 @@ NSString *const kPreferenceBootCommandKey = @"Boot Command";
             kPreferenceLaunchCommandKey: @[@"/bin/login", @"-f", @"root"],
             kPreferenceBootCommandKey: @[@"/sbin/init"],
         }];
-        _theme = [[Theme alloc] initWithProperties:[_defaults objectForKey:kPreferenceThemeKey]];
+        NSString *currentThemeName = [_defaults stringForKey:kPreferenceThemeKey];
+        _theme = [[Theme alloc] initWithProperties:[_defaults objectForKey:kPreferenceThemeDictKey][currentThemeName]];
     }
     return self;
 }
@@ -153,6 +163,7 @@ static UIColor *UnarchiveColor(id data) {
     return [UIColor colorWithRed:r green:g blue:b alpha:1];
 }
 
+//MARK: Theme Implementation
 @implementation Theme
 
 - (instancetype)initWithProperties:(NSDictionary<NSString *,id> *)props {
@@ -201,25 +212,26 @@ static UIColor *UnarchiveColor(id data) {
     return [self.properties isEqualToDictionary:[object properties]];
 }
 
-NSDictionary<NSString *, Theme *> *presetThemes;
-+ (void)initialize {
-    presetThemes = @{@"Light": [self _themeWithForegroundColor:UIColor.blackColor
-                                               backgroundColor:UIColor.whiteColor],
-                     @"Dark":  [self _themeWithForegroundColor:UIColor.whiteColor
-                                               backgroundColor:UIColor.blackColor],
-                     @"1337":  [self _themeWithForegroundColor:UIColor.greenColor
-                                               backgroundColor:UIColor.blackColor]};
++ (NSArray<NSString *> *)presetNames {
+    return Theme.presets.allKeys;
 }
 
-+ (NSArray<NSString *> *)presetNames {
-    return @[@"Light", @"Dark", @"1337"];
++ (NSDictionary<NSString *, Theme *> *)presets {
+    return @{
+         @"Light": [self _themeWithForegroundColor:UIColor.blackColor
+                                   backgroundColor:UIColor.whiteColor],
+         @"Dark":  [self _themeWithForegroundColor:UIColor.whiteColor
+                                   backgroundColor:UIColor.blackColor],
+         @"1337":  [self _themeWithForegroundColor:UIColor.greenColor
+                                   backgroundColor:UIColor.blackColor]
+    };
 }
 + (instancetype)presetThemeNamed:(NSString *)name {
-    return presetThemes[name];
+    return Theme.presets[name];
 }
 - (NSString *)presetName {
-    for (NSString *name in presetThemes) {
-        if ([self isEqual:presetThemes[name]])
+    for (NSString *name in Theme.presets) {
+        if ([self isEqual:Theme.presets[name]])
             return name;
     }
     return nil;
