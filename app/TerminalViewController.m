@@ -104,7 +104,11 @@
         [self.escapeKey setTitle:nil forState:UIControlStateNormal];
         [self.escapeKey setImage:[UIImage systemImageNamed:@"escape"] forState:UIControlStateNormal];
     }
-
+    __block TerminalViewController *_self = self;
+    [NSNotificationCenter.defaultCenter addObserverForName:@"updateStatusBar" object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification * _Nonnull note) {
+        [_self prefersStatusBarHidden];
+        [_self setNeedsStatusBarAppearanceUpdate];
+    }];
     [UserPreferences.shared observe:@[@"theme", @"hideExtraKeysWithExternalKeyboard"]
                             options:0 owner:self usingBlock:^(typeof(self) self) {
         [self _updateStyleFromPreferences:YES];
@@ -123,6 +127,7 @@
     [AppDelegate maybePresentStartupMessageOnViewController:self];
     [super viewDidAppear:animated];
 }
+
 
 - (void)startNewSession {
     int err = [self startSession];
@@ -239,7 +244,6 @@
         [self.termView reloadInputViews];
         self.ignoreKeyboardMotion = NO;
     }
-    [self setNeedsStatusBarAppearanceUpdate];
 }
 - (void)_updateStyleAnimated {
     [self _updateStyleFromPreferences:YES];
@@ -250,8 +254,11 @@
 }
 
 - (BOOL)prefersStatusBarHidden {
-    BOOL isIPhoneX = self.view.window.safeAreaInsets.top > 20;
-    return !isIPhoneX;
+    BOOL prefsSetting = [UserPreferences.shared showStatusBar];
+    return !prefsSetting;
+    
+//    BOOL isIPhoneX = self.view.window.safeAreaInsets.top > 20;
+//    return !isIPhoneX;
 }
 
 - (void)keyboardDidSomething:(NSNotification *)notification {
@@ -325,6 +332,7 @@
         UIGestureRecognizer *recognizer = sender;
         if (recognizer.state == UIGestureRecognizerStateBegan) {
             AboutViewController *aboutViewController = (AboutViewController *) navigationController.topViewController;
+            
             aboutViewController.includeDebugPanel = YES;
         } else {
             return;

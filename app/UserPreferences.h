@@ -45,6 +45,7 @@ extern NSString *const kThemeBackgroundColor;
 @property BOOL backtickMapEscape;
 @property BOOL hideExtraKeysWithExternalKeyboard;
 @property BOOL overrideControlSpace;
+@property BOOL showStatusBar;
 @property (nonatomic) Theme *theme;
 @property BOOL shouldDisableDimming;
 @property NSString *fontFamily;

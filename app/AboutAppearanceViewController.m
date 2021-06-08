@@ -13,6 +13,7 @@
 static NSString *const ThemeNameCellIdentifier = @"Theme Name";
 static NSString *const FontSizeCellIdentifier = @"Font Size";
 static NSString *const PreviewCellIdentifier = @"Preview";
+static NSString *const StatusBarToggleCellIdentifier = @"Status Bar";
 
 @interface AboutAppearanceViewController ()
 
@@ -24,6 +25,12 @@ static NSString *const PreviewCellIdentifier = @"Preview";
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+//    __block AboutAppearanceViewController *_self = self;
+//    [NSNotificationCenter.defaultCenter addObserverForName:@"updateStatusBar" object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification * _Nonnull note) {
+//        [_self prefersStatusBarHidden];
+//        NSLog(@"updateStatusBar: %d", _self.prefersStatusBarHidden);
+//        [_self setNeedsStatusBarAppearanceUpdate];
+//    }];
     [UserPreferences.shared observe:@[@"theme", @"fontSize", @"fontFamily"]
                             options:0 owner:self usingBlock:^(typeof(self) self) {
         [self.tableView reloadData];
@@ -49,6 +56,7 @@ static NSString *const PreviewCellIdentifier = @"Preview";
 
 enum {
     ThemeNameSection,
+    StatusBarSection,
     FontSection,
     PreviewSection,
     NumberOfSections,
@@ -63,6 +71,7 @@ enum {
         case ThemeNameSection: return Theme.presetNames.count;
         case FontSection: return 2;
         case PreviewSection: return 1;
+        case StatusBarSection: return 1;
         default: NSAssert(NO, @"unhandled section"); return 0;
     }
 }
@@ -71,6 +80,7 @@ enum {
     switch (section) {
         case ThemeNameSection: return @"Theme";
         case PreviewSection: return @"Preview";
+        case StatusBarSection: return @"Status Bar";
         default: return nil;
     }
 }
@@ -84,6 +94,7 @@ enum {
         case ThemeNameSection: return @"Theme Name";
         case FontSection: return @[@"Font", @"Font Size"][indexPath.row];
         case PreviewSection: return @"Preview";
+        case StatusBarSection: return @"Status Bar";
         default: return nil;
     }
 }
@@ -121,6 +132,14 @@ enum {
             cell.textLabel.text = [NSString stringWithFormat:@"%@:~# ps aux", [UIDevice currentDevice].name];
             cell.selectionStyle = UITableViewCellSelectionStyleNone;
             break;
+        
+        case StatusBarSection:
+            cell.selectionStyle = UITableViewCellSelectionStyleNone;
+            UISwitch *statusBarToggle = [[UISwitch alloc] initWithFrame:CGRectZero];
+            cell.accessoryView = statusBarToggle;
+            [statusBarToggle setOn:prefs.showStatusBar animated:YES];
+            [statusBarToggle addTarget:self action:@selector(setStatusBar:) forControlEvents:UIControlEventValueChanged];
+            break;
     }
     
     return cell;
@@ -156,6 +175,17 @@ enum {
 
 - (IBAction)fontSizeChanged:(UIStepper *)sender {
     UserPreferences.shared.fontSize = @((int) sender.value);
+}
+
+- (void) setStatusBar:(id)sender {
+    UISwitch *switchy = sender;
+    NSLog(@"Setting showStatusBar from %d to %d", UserPreferences.shared.showStatusBar, switchy.on);
+    [[UserPreferences shared] setShowStatusBar:switchy.on];
+    [self setNeedsStatusBarAppearanceUpdate];
+}
+
+- (BOOL) prefersStatusBarHidden {
+    return !UserPreferences.shared.showStatusBar;
 }
 
 @end
