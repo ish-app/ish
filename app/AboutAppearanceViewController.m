@@ -10,11 +10,6 @@
 #import "UserPreferences.h"
 #import "NSObject+SaneKVO.h"
 
-static NSString *const ThemeNameCellIdentifier = @"Theme Name";
-static NSString *const FontSizeCellIdentifier = @"Font Size";
-static NSString *const PreviewCellIdentifier = @"Preview";
-static NSString *const StatusBarToggleCellIdentifier = @"Status Bar";
-
 @interface AboutAppearanceViewController ()
 
 @property UIFontPickerViewController *fontPicker API_AVAILABLE(ios(13));
@@ -25,13 +20,7 @@ static NSString *const StatusBarToggleCellIdentifier = @"Status Bar";
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-//    __block AboutAppearanceViewController *_self = self;
-//    [NSNotificationCenter.defaultCenter addObserverForName:@"updateStatusBar" object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification * _Nonnull note) {
-//        [_self prefersStatusBarHidden];
-//        NSLog(@"updateStatusBar: %d", _self.prefersStatusBarHidden);
-//        [_self setNeedsStatusBarAppearanceUpdate];
-//    }];
-    [UserPreferences.shared observe:@[@"theme", @"fontSize", @"fontFamily"]
+    [UserPreferences.shared observe:@[@"theme", @"fontSize", @"fontFamily", @"showStatusBar"]
                             options:0 owner:self usingBlock:^(typeof(self) self) {
         [self.tableView reloadData];
         [self setNeedsStatusBarAppearanceUpdate];
@@ -85,6 +74,16 @@ enum {
     }
 }
 
+- (NSString *)tableView:(UITableView *)tableView titleForFooterInSection:(NSInteger)section {
+    BOOL isIphoneX = tableView.window.safeAreaInsets.top > 20;
+    switch (section) {
+        case StatusBarSection:
+            if (isIphoneX) return @"This is a legacy feature which supports only devices before IphoneX.";
+            return nil;
+        default: return nil;
+    }
+}
+
 - (Theme *)_themeForRow:(NSUInteger)row {
     return [Theme presetThemeNamed:Theme.presetNames[row]];
 }
@@ -102,6 +101,7 @@ enum {
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     UserPreferences *prefs = [UserPreferences shared];
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:[self reuseIdentifierForIndexPath:indexPath] forIndexPath:indexPath];
+    BOOL isIphoneX = tableView.window.safeAreaInsets.top > 20;
     
     switch (indexPath.section) {
         case ThemeNameSection:
@@ -138,6 +138,7 @@ enum {
             UISwitch *statusBarToggle = [[UISwitch alloc] initWithFrame:CGRectZero];
             cell.accessoryView = statusBarToggle;
             [statusBarToggle setOn:prefs.showStatusBar animated:YES];
+            if (isIphoneX) statusBarToggle.enabled = NO;
             [statusBarToggle addTarget:self action:@selector(setStatusBar:) forControlEvents:UIControlEventValueChanged];
             break;
     }
@@ -179,13 +180,9 @@ enum {
 
 - (void) setStatusBar:(id)sender {
     UISwitch *switchy = sender;
-    NSLog(@"Setting showStatusBar from %d to %d", UserPreferences.shared.showStatusBar, switchy.on);
+    [switchy setOn:switchy.on animated:YES];
     [[UserPreferences shared] setShowStatusBar:switchy.on];
     [self setNeedsStatusBarAppearanceUpdate];
-}
-
-- (BOOL) prefersStatusBarHidden {
-    return !UserPreferences.shared.showStatusBar;
 }
 
 @end

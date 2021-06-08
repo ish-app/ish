@@ -62,7 +62,6 @@ NSString *const kPreferenceShowStatusBar = @"Status Bar";
 
 - (void)setShowStatusBar:(BOOL)showStatusBar {
     [_defaults setBool:showStatusBar forKey:kPreferenceShowStatusBar];
-    [[NSNotificationCenter defaultCenter] postNotificationName:@"updateStatusBar" object:nil];
 }
 
 - (CapsLockMapping)capsLockMapping {

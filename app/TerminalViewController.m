@@ -104,10 +104,8 @@
         [self.escapeKey setTitle:nil forState:UIControlStateNormal];
         [self.escapeKey setImage:[UIImage systemImageNamed:@"escape"] forState:UIControlStateNormal];
     }
-    __block TerminalViewController *_self = self;
-    [NSNotificationCenter.defaultCenter addObserverForName:@"updateStatusBar" object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification * _Nonnull note) {
-        [_self prefersStatusBarHidden];
-        [_self setNeedsStatusBarAppearanceUpdate];
+    [UserPreferences.shared observe:@[@"showStatusBar"] options:0 owner:self usingBlock:^(typeof(self) self) {
+        [self setNeedsStatusBarAppearanceUpdate];
     }];
     [UserPreferences.shared observe:@[@"theme", @"hideExtraKeysWithExternalKeyboard"]
                             options:0 owner:self usingBlock:^(typeof(self) self) {
@@ -254,11 +252,7 @@
 }
 
 - (BOOL)prefersStatusBarHidden {
-    BOOL prefsSetting = [UserPreferences.shared showStatusBar];
-    return !prefsSetting;
-    
-//    BOOL isIPhoneX = self.view.window.safeAreaInsets.top > 20;
-//    return !isIPhoneX;
+    return ![UserPreferences.shared showStatusBar];
 }
 
 - (void)keyboardDidSomething:(NSNotification *)notification {
