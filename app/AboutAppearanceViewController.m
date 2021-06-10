@@ -6,6 +6,7 @@
 //
 
 #import "AboutAppearanceViewController.h"
+#import "AboutThemeSelector.h"
 #import "FontPickerViewController.h"
 #import "UserPreferences.h"
 #import "NSObject+SaneKVO.h"
@@ -17,6 +18,8 @@ static NSString *const PreviewCellIdentifier = @"Preview";
 @interface AboutAppearanceViewController ()
 
 @property UIFontPickerViewController *fontPicker API_AVAILABLE(ios(13));
+@property (nonatomic) NSMutableArray<NSIndexPath *> *themePaths;
+@property AboutThemeSelector *themeSelector;
 
 @end
 
@@ -29,6 +32,7 @@ static NSString *const PreviewCellIdentifier = @"Preview";
         [self.tableView reloadData];
         [self setNeedsStatusBarAppearanceUpdate];
     }];
+    _themeSelector = [[AboutThemeSelector alloc] initWithFrame:CGRectMake(0, 0, self.view.frame.size.width, 400)];
 }
 
 - (void)viewDidAppear:(BOOL)animated {
@@ -60,7 +64,7 @@ enum {
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     switch (section) {
-        case ThemeNameSection: return Theme.themeNames.count;
+        case ThemeNameSection: return 1;
         case FontSection: return 2;
         case PreviewSection: return 1;
         default: NSAssert(NO, @"unhandled section"); return 0;
@@ -78,28 +82,27 @@ enum {
 
 - (NSString *)reuseIdentifierForIndexPath:(NSIndexPath *)indexPath {
     switch (indexPath.section) {
-        case ThemeNameSection: return @"Theme Name";
+        case ThemeNameSection: return @"Theme Card";
         case FontSection: return @[@"Font", @"Font Size"][indexPath.row];
         case PreviewSection: return @"Preview";
         default: return nil;
     }
 }
-
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     UserPreferences *prefs = [UserPreferences shared];
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:[self reuseIdentifierForIndexPath:indexPath] forIndexPath:indexPath];
-    
     switch (indexPath.section) {
-        case ThemeNameSection:
-            cell.textLabel.text = Theme.themeNames[indexPath.row];
-            if ([prefs.theme.name isEqual:cell.textLabel.text]) {
-                cell.accessoryType = UITableViewCellAccessoryCheckmark;
-            } else {
-                cell.accessoryType = UITableViewCellAccessoryNone;
+        case ThemeNameSection: {
+            if (![_themeSelector isDescendantOfView:cell.contentView]) {
+                [cell.contentView addSubview:_themeSelector];
+                cell.textLabel.text = @"";
             }
+            cell.selectionStyle = UITableViewCellSelectionStyleNone;
+//            cell.backgroundColor = [UIColor clearColor];
+//            cell.contentView.backgroundColor = [UIColor clearColor];
             break;
-            
-        case FontSection:
+        }
+        case FontSection: {
             if (indexPath.row == 0) {
                 cell.detailTextLabel.text = UserPreferences.shared.fontFamily;
             } else if (indexPath.row == 1) {
@@ -110,17 +113,29 @@ enum {
                 stepper.value = prefs.fontSize.doubleValue;
             }
             break;
-            
-        case PreviewSection:
+        }
+        case PreviewSection: {
             cell.backgroundColor = prefs.theme.backgroundColor;
             cell.textLabel.textColor = prefs.theme.foregroundColor;
             cell.textLabel.font = [UIFont fontWithName:UserPreferences.shared.fontFamily size:prefs.fontSize.doubleValue];
             cell.textLabel.text = [NSString stringWithFormat:@"%@:~# ps aux", [UIDevice currentDevice].name];
             cell.selectionStyle = UITableViewCellSelectionStyleNone;
             break;
+        }
     }
     
     return cell;
+}
+
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
+    switch (indexPath.section) {
+        case ThemeNameSection: {
+            return _themeSelector.frame.size.height;
+        }
+        default: {
+            return [super tableView:tableView heightForRowAtIndexPath:indexPath];
+        }
+    }
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {

@@ -65,7 +65,7 @@ NSString *const kPreferenceBootCommandKey = @"Boot Command";
     return self;
 }
 
-- (NSArray<id> *)allThemeNames {
+- (NSArray<NSString *> *)allThemeNames {
     return [(NSDictionary<NSString *, id> *) [_defaults objectForKey:kPreferenceThemeDictKey] allKeys];
 }
 

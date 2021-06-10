@@ -8,7 +8,7 @@
 	</array>
 	<key>com.apple.security.application-groups</key>
 	<array>
-		<string>$(PRODUCT_APP_GROUP_IDENTIFIER)</string>
+		<string>group.corban.ISH</string>
 	</array>
 </dict>
 </plist>

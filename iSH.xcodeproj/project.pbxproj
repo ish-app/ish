@@ -21,6 +21,10 @@
 /* End PBXAggregateTarget section */
 
 /* Begin PBXBuildFile section */
+		1DBE74582670827A00FB1C98 /* AboutThemeSelector.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DBE74572670827A00FB1C98 /* AboutThemeSelector.m */; };
+		1DBE745B2671727900FB1C98 /* CALayer+ShadowEnhancement.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DBE745A2671727900FB1C98 /* CALayer+ShadowEnhancement.m */; };
+		1DFFE94D266EFB9400771BC0 /* UserPreferences.m in Sources */ = {isa = PBXBuildFile; fileRef = 8632A7BE219A59FB00F02325 /* UserPreferences.m */; };
+		1DFFE94E266EFB9700771BC0 /* AboutAppearanceViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 9A28E4E9219A8B670073D200 /* AboutAppearanceViewController.m */; };
 		408A263A236440F8008A4E81 /* iOSFS.m in Sources */ = {isa = PBXBuildFile; fileRef = 408A2639236440F8008A4E81 /* iOSFS.m */; };
 		497F6CF5254E5EA500C82F46 /* float80-test.c in Sources */ = {isa = PBXBuildFile; fileRef = 497F6C5A254E5C7E00C82F46 /* float80-test.c */; };
 		497F6CF6254E5EA500C82F46 /* float80.c in Sources */ = {isa = PBXBuildFile; fileRef = 497F6C66254E5C7F00C82F46 /* float80.c */; };
@@ -98,8 +102,6 @@
 		497F6D5C254E609700C82F46 /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = BB7D93822087C2890008DA78 /* main.c */; };
 		497F6D87254E62E100C82F46 /* libish.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BB13F7DC200AD81D003D1C4D /* libish.a */; };
 		650B337422EA235C00B4C03E /* PasteboardDevice.m in Sources */ = {isa = PBXBuildFile; fileRef = 650B337322EA235C00B4C03E /* PasteboardDevice.m */; };
-		8632A7BF219A59FB00F02325 /* UserPreferences.m in Sources */ = {isa = PBXBuildFile; fileRef = 8632A7BE219A59FB00F02325 /* UserPreferences.m */; };
-		9A28E4EA219A8B670073D200 /* AboutAppearanceViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 9A28E4E9219A8B670073D200 /* AboutAppearanceViewController.m */; };
 		BB0B88062589661A00208600 /* rgb.png in Resources */ = {isa = PBXBuildFile; fileRef = BB0B88052589661A00208600 /* rgb.png */; };
 		BB0B880F2589662200208600 /* sprite64.png in Resources */ = {isa = PBXBuildFile; fileRef = BB0B880E2589662200208600 /* sprite64.png */; };
 		BB0B88182589662A00208600 /* reworked.png in Resources */ = {isa = PBXBuildFile; fileRef = BB0B88172589662A00208600 /* reworked.png */; };
@@ -270,6 +272,10 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		1DBE74562670826200FB1C98 /* AboutThemeSelector.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AboutThemeSelector.h; sourceTree = "<group>"; };
+		1DBE74572670827A00FB1C98 /* AboutThemeSelector.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AboutThemeSelector.m; sourceTree = "<group>"; };
+		1DBE74592671717300FB1C98 /* CALayer+ShadowEnhancement.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "CALayer+ShadowEnhancement.h"; sourceTree = "<group>"; };
+		1DBE745A2671727900FB1C98 /* CALayer+ShadowEnhancement.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "CALayer+ShadowEnhancement.m"; sourceTree = "<group>"; };
 		408A2639236440F8008A4E81 /* iOSFS.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iOSFS.m; sourceTree = "<group>"; };
 		408A263B23644102008A4E81 /* iOSFS.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iOSFS.h; sourceTree = "<group>"; };
 		497F6BDA254E5C0D00C82F46 /* mem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mem.h; sourceTree = "<group>"; };
@@ -1036,6 +1042,8 @@
 				BBCED896255BB65A00CA0701 /* NSObject+SaneKVO.m */,
 				BB149E7E256DC97C00F57815 /* PassthroughView.h */,
 				BB149E7F256DC97C00F57815 /* PassthroughView.m */,
+				1DBE74592671717300FB1C98 /* CALayer+ShadowEnhancement.h */,
+				1DBE745A2671727900FB1C98 /* CALayer+ShadowEnhancement.m */,
 			);
 			name = Utilities;
 			sourceTree = "<group>";
@@ -1058,6 +1066,8 @@
 				BB82A7FC21B4C2E8006AA5FD /* AboutExternalKeyboardViewController.m */,
 				BB267FA423A48F1500ED7CAF /* AltIconViewController.h */,
 				BB267FA523A48F1500ED7CAF /* AltIconViewController.m */,
+				1DBE74562670826200FB1C98 /* AboutThemeSelector.h */,
+				1DBE74572670827A00FB1C98 /* AboutThemeSelector.m */,
 			);
 			name = About;
 			sourceTree = "<group>";
@@ -1280,8 +1290,6 @@
 					};
 					BB792B4F1F96D90D00FFB7A4 = {
 						CreatedOnToolsVersion = 9.0;
-						DevelopmentTeam = CK5SXRTBR7;
-						ProvisioningStyle = Automatic;
 						SystemCapabilities = {
 							com.apple.ApplicationGroups.iOS = {
 								enabled = 1;
@@ -1290,7 +1298,6 @@
 					};
 					BB88F48F2154760800A341FD = {
 						CreatedOnToolsVersion = 10.0;
-						DevelopmentTeam = CK5SXRTBR7;
 						ProvisioningStyle = Automatic;
 						SystemCapabilities = {
 							com.apple.ApplicationGroups.iOS = {
@@ -1601,23 +1608,25 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				9A28E4EA219A8B670073D200 /* AboutAppearanceViewController.m in Sources */,
 				BB267FA623A48F1500ED7CAF /* AltIconViewController.m in Sources */,
 				BB1D9D93234A8FE100F364E8 /* AboutNavigationController.m in Sources */,
 				BB235534235D488500139E00 /* LocationDevice.m in Sources */,
 				BB792B581F96D90D00FFB7A4 /* TerminalViewController.m in Sources */,
 				BBAEE33C249BDADC0069EBB5 /* ProgressReportViewController.m in Sources */,
+				1DFFE94E266EFB9700771BC0 /* AboutAppearanceViewController.m in Sources */,
 				BB78AB2B1FAD22440013E782 /* TerminalView.m in Sources */,
 				BB23F58D231E1D1400585522 /* ScrollbarView.m in Sources */,
+				1DBE74582670827A00FB1C98 /* AboutThemeSelector.m in Sources */,
 				BB455E111FB37F6600AFB48B /* DelayedUITask.m in Sources */,
 				BB0FC5921F980A6C00803272 /* Terminal.m in Sources */,
 				BB101B382364CF57000A93BC /* FontPickerViewController.m in Sources */,
 				BB10E5CE248DBE66009C7A74 /* Roots.m in Sources */,
 				BBCC9D962365430800424C83 /* SceneDelegate.m in Sources */,
 				BB82A7FD21B4C2E8006AA5FD /* AboutExternalKeyboardViewController.m in Sources */,
+				1DFFE94D266EFB9400771BC0 /* UserPreferences.m in Sources */,
+				1DBE745B2671727900FB1C98 /* CALayer+ShadowEnhancement.m in Sources */,
 				BB149E80256DC97C00F57815 /* PassthroughView.m in Sources */,
 				BB10E5C3248DBA7B009C7A74 /* fakefs.c in Sources */,
-				8632A7BF219A59FB00F02325 /* UserPreferences.m in Sources */,
 				BB10E5D3248DCFEA009C7A74 /* RootsTableViewController.m in Sources */,
 				BB792B631F96D90D00FFB7A4 /* main.m in Sources */,
 				BB60F55221573FCA003A4E52 /* BarButton.m in Sources */,
@@ -1868,6 +1877,11 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = BB0B86CD2586FD8800208600 /* App.xcconfig */;
 			buildSettings = {
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 7924VL9N7J;
+				PRODUCT_BUNDLE_IDENTIFIER = corban.iSH;
+				PROVISIONING_PROFILE_SPECIFIER = "";
 			};
 			name = Debug;
 		};
@@ -1875,6 +1889,11 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = BB0B86CD2586FD8800208600 /* App.xcconfig */;
 			buildSettings = {
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 7924VL9N7J;
+				PRODUCT_BUNDLE_IDENTIFIER = corban.iSH;
+				PROVISIONING_PROFILE_SPECIFIER = "";
 			};
 			name = Release;
 		};
@@ -1883,8 +1902,9 @@
 			baseConfigurationReference = BB0B86D52587009D00208600 /* iOS.xcconfig */;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = app/FileProvider/iSHFileProvider.entitlements;
+				DEVELOPMENT_TEAM = 7924VL9N7J;
 				INFOPLIST_FILE = app/FileProvider/Info.plist;
-				PRODUCT_BUNDLE_IDENTIFIER = "$(PRODUCT_BUNDLE_IDENTIFIER).FileProvider";
+				PRODUCT_BUNDLE_IDENTIFIER = corban.iSH.FileProvider;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 			};
@@ -1895,8 +1915,9 @@
 			baseConfigurationReference = BB0B86D52587009D00208600 /* iOS.xcconfig */;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = app/FileProvider/iSHFileProvider.entitlements;
+				DEVELOPMENT_TEAM = 7924VL9N7J;
 				INFOPLIST_FILE = app/FileProvider/Info.plist;
-				PRODUCT_BUNDLE_IDENTIFIER = "$(PRODUCT_BUNDLE_IDENTIFIER).FileProvider";
+				PRODUCT_BUNDLE_IDENTIFIER = corban.iSH.FileProvider;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 			};
