@@ -23,6 +23,7 @@
 /* Begin PBXBuildFile section */
 		1DBE74582670827A00FB1C98 /* AboutThemeSelector.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DBE74572670827A00FB1C98 /* AboutThemeSelector.m */; };
 		1DBE745B2671727900FB1C98 /* CALayer+ShadowEnhancement.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DBE745A2671727900FB1C98 /* CALayer+ShadowEnhancement.m */; };
+		1DBE745E2671C0DD00FB1C98 /* UIColor+isLight.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DBE745D2671C0DD00FB1C98 /* UIColor+isLight.m */; };
 		1DFFE94D266EFB9400771BC0 /* UserPreferences.m in Sources */ = {isa = PBXBuildFile; fileRef = 8632A7BE219A59FB00F02325 /* UserPreferences.m */; };
 		1DFFE94E266EFB9700771BC0 /* AboutAppearanceViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 9A28E4E9219A8B670073D200 /* AboutAppearanceViewController.m */; };
 		408A263A236440F8008A4E81 /* iOSFS.m in Sources */ = {isa = PBXBuildFile; fileRef = 408A2639236440F8008A4E81 /* iOSFS.m */; };
@@ -276,6 +277,8 @@
 		1DBE74572670827A00FB1C98 /* AboutThemeSelector.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AboutThemeSelector.m; sourceTree = "<group>"; };
 		1DBE74592671717300FB1C98 /* CALayer+ShadowEnhancement.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "CALayer+ShadowEnhancement.h"; sourceTree = "<group>"; };
 		1DBE745A2671727900FB1C98 /* CALayer+ShadowEnhancement.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "CALayer+ShadowEnhancement.m"; sourceTree = "<group>"; };
+		1DBE745C2671BEB800FB1C98 /* UIColor+isLight.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "UIColor+isLight.h"; sourceTree = "<group>"; };
+		1DBE745D2671C0DD00FB1C98 /* UIColor+isLight.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "UIColor+isLight.m"; sourceTree = "<group>"; };
 		408A2639236440F8008A4E81 /* iOSFS.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iOSFS.m; sourceTree = "<group>"; };
 		408A263B23644102008A4E81 /* iOSFS.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iOSFS.h; sourceTree = "<group>"; };
 		497F6BDA254E5C0D00C82F46 /* mem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mem.h; sourceTree = "<group>"; };
@@ -1044,6 +1047,8 @@
 				BB149E7F256DC97C00F57815 /* PassthroughView.m */,
 				1DBE74592671717300FB1C98 /* CALayer+ShadowEnhancement.h */,
 				1DBE745A2671727900FB1C98 /* CALayer+ShadowEnhancement.m */,
+				1DBE745C2671BEB800FB1C98 /* UIColor+isLight.h */,
+				1DBE745D2671C0DD00FB1C98 /* UIColor+isLight.m */,
 			);
 			name = Utilities;
 			sourceTree = "<group>";
@@ -1616,6 +1621,7 @@
 				1DFFE94E266EFB9700771BC0 /* AboutAppearanceViewController.m in Sources */,
 				BB78AB2B1FAD22440013E782 /* TerminalView.m in Sources */,
 				BB23F58D231E1D1400585522 /* ScrollbarView.m in Sources */,
+				1DBE745E2671C0DD00FB1C98 /* UIColor+isLight.m in Sources */,
 				1DBE74582670827A00FB1C98 /* AboutThemeSelector.m in Sources */,
 				BB455E111FB37F6600AFB48B /* DelayedUITask.m in Sources */,
 				BB0FC5921F980A6C00803272 /* Terminal.m in Sources */,

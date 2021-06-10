@@ -10,34 +10,24 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-struct CardPositions {
-    CGPoint leftCenter;
-    CGPoint middleCenter;
-    CGPoint rightCenter;
-};
+static CGFloat cardSize = 45;
+static CGFloat cardHorizontalPadding = 15;
+static CGFloat cardVerticalPadding = 15;
 
 @interface AboutThemeCard: UIView {
     UILabel *themeLabel;
-    NSString *themeName;
+    UIImageView *checkMark;
 }
+@property (nonatomic) NSString *themeName;
 - (void) setupAppearance;
 - (void) updateAppearance;
 - (id) initWithFrame:(CGRect)frame themeName:(NSString *)name;
 @end
 
 @interface AboutThemeSelector: UIView {
-    UIView *leftCard;
-    UIView *middleCard;
-    UIView *rightCard;
-    NSUInteger leftIdx;
-    NSUInteger middleIdx;
-    NSUInteger rightIdx;
-    struct CardPositions cardPos;
+    NSMutableArray<AboutThemeCard *> *cards;
     UserPreferences *prefs;
 }
-
-- (void) calculateCardPositions;
-- (void) addStartingCards;
 
 @end
 

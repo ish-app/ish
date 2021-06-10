@@ -8,10 +8,9 @@
 #import "AboutThemeSelector.h"
 #import "UserPreferences.h"
 #import "NSObject+SaneKVO.h"
+#import "UIColor+isLight.h"
 #import "CALayer+ShadowEnhancement.h"
 
-static CGFloat cardSize = 160;
-static CGFloat cardUncenterSize = 100;
 
 @implementation AboutThemeSelector
 
@@ -21,46 +20,24 @@ static CGFloat cardUncenterSize = 100;
     prefs = UserPreferences.shared;
     
     NSArray<NSString *> *themeNames = Theme.themeNames;
-    [self calculateCardPositions];
-    NSUInteger maxIdx = themeNames.count - 1;
+
+    NSUInteger maxIdx = themeNames.count;
+    CGFloat verticalPos = cardVerticalPadding;
     for (int i = 0; i < maxIdx; i++) {
-        // This should only run once
-        if (prefs.theme.name == themeNames[i]) {
-            middleIdx = i;
-            
-            if ((i - 1) < 0) leftIdx = maxIdx;
-            else leftIdx = i - 1;
-            
-            if ((i + 1) > maxIdx) rightIdx = 0;
-            else rightIdx = i + 1;
-        }
+        UITapGestureRecognizer *handleTap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(updateTheme:)];
+        AboutThemeCard * currentCard = [[AboutThemeCard alloc] initWithFrame:CGRectMake(0, verticalPos, self.frame.size.width, cardSize)
+                                                                   themeName:themeNames[i]];
+        [currentCard addGestureRecognizer:handleTap];
+        verticalPos = verticalPos + cardSize + cardVerticalPadding;
+        [cards addObject: currentCard];
+        [self addSubview:currentCard];
     }
-    [self addStartingCards];
     return self;
 }
 
-- (void) calculateCardPositions {
-    CGFloat parentWidth = self.frame.size.width;
-    CGFloat parentHeight = self.frame.size.height;
-    cardPos.leftCenter = CGPointMake(0 - (cardUncenterSize / 2), parentHeight/2 - (cardUncenterSize / 2));
-    cardPos.middleCenter = CGPointMake(parentWidth/2 - (cardSize / 2), parentHeight/2 - (cardSize / 2));
-    cardPos.rightCenter = CGPointMake(parentWidth - (cardUncenterSize / 2), parentHeight/2 - (cardUncenterSize / 2));
-}
-
-- (void) addStartingCards {
-    // Left Card
-    leftCard = [[AboutThemeCard alloc] initWithFrame:CGRectMake(cardPos.leftCenter.x, cardPos.leftCenter.y, cardUncenterSize, cardUncenterSize)
-                                           themeName:Theme.themeNames[leftIdx]];
-    // Middle Card
-    middleCard = [[AboutThemeCard alloc] initWithFrame:CGRectMake(cardPos.middleCenter.x, cardPos.middleCenter.y, cardSize, cardSize)
-                                           themeName:Theme.themeNames[middleIdx]];
-    // Right Card
-    rightCard = [[AboutThemeCard alloc] initWithFrame:CGRectMake(cardPos.rightCenter.x, cardPos.rightCenter.y, cardUncenterSize, cardUncenterSize)
-                                           themeName:Theme.themeNames[rightIdx]];
-    // Add to View
-    [self addSubview:leftCard];
-    [self addSubview:middleCard];
-    [self addSubview:rightCard];
+- (void) updateTheme:(UITapGestureRecognizer *)recognizer {
+    AboutThemeCard *card =  (AboutThemeCard *) recognizer.view;
+    [UserPreferences.shared setThemeTo:card.themeName];
 }
 @end
 
@@ -68,7 +45,7 @@ static CGFloat cardUncenterSize = 100;
 - (id) initWithFrame:(CGRect)frame themeName:(NSString *)name {
     self = [super initWithFrame:frame];
     if (!self) return nil;
-    themeName = name;
+    _themeName = name;
     [UserPreferences.shared observe:@[@"theme", @"fontSize", @"fontFamily"]
                             options:0 owner:self usingBlock:^(typeof(self) self) {
         [self updateAppearance];
@@ -78,26 +55,44 @@ static CGFloat cardUncenterSize = 100;
 }
 - (void) setupAppearance {
     UserPreferences *prefs = [UserPreferences shared];
-    Theme *currentTheme = [prefs themeFromName:themeName];
+    Theme *currentTheme = [prefs themeFromName:_themeName];
     
-    // Label
-    themeLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 30, 30)]; // Size doesn't matter all that much ;)
+    UIImage *checkmarkImage = [UIImage imageNamed:@"checkmark"];
+    checkmarkImage = [checkmarkImage imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+    checkMark = [[UIImageView alloc] initWithImage:checkmarkImage];
+    checkMark.frame = CGRectMake(self.frame.size.width - 50 ,(self.frame.size.height / 2) - (25 / 2), 25, 25);
+    if (!currentTheme.backgroundColor.isLight) {
+        [checkMark setTintColor:UIColor.whiteColor];
+    } else {
+        [checkMark setTintColor:UIColor.blackColor];
+    }
+    themeLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 30, 30)];
     [self addSubview:themeLabel];
-    themeLabel.text = [@"~# " stringByAppendingString:currentTheme.name];
-    themeLabel.font = [UIFont fontWithName:prefs.fontFamily size:prefs.fontSize.doubleValue];
-    themeLabel.textColor = currentTheme.foregroundColor;
-    [themeLabel sizeToFit]; // Cuz this
-    [themeLabel setCenter:CGPointMake(self.frame.size.width / 2, self.frame.size.height / 2)];
-    // Self
+    themeLabel.text = [NSString stringWithFormat:@"%@:~# %@", UIDevice.currentDevice.name, currentTheme.name];
     self.backgroundColor = currentTheme.backgroundColor;
-    [self.layer setAdvancedShadowWithColor:[UIColor blackColor] alpha:0.3f x:0 y:4 blur:13 spread:0];
-    self.layer.cornerRadius = 20;
+    [self updateAppearance];
 }
 
 - (void) updateAppearance {
+    __block Theme *currentTheme = [UserPreferences.shared themeFromName:_themeName];
     themeLabel.font = [UIFont fontWithName:UserPreferences.shared.fontFamily size:UserPreferences.shared.fontSize.doubleValue];
+    
     [themeLabel sizeToFit];
-    [themeLabel setCenter:CGPointMake(self.frame.size.width / 2, self.frame.size.height / 2)];
+    [themeLabel setCenter:CGPointMake(themeLabel.frame.size.width/2 + 20, self.frame.size.height / 2)];
+    themeLabel.textColor = currentTheme.backgroundColor;
+    [UIView animateWithDuration:0.4  animations:^{
+        self->themeLabel.textColor = currentTheme.foregroundColor;
+        [self.layer setAdvancedShadowWithColor:UIColor.blackColor alpha:0.4 x:0 y:3 blur:5 spread:0];
+        if (self.themeName == UserPreferences.shared.theme.name && !([self.subviews containsObject:self->checkMark])) {
+            self->checkMark.alpha = 0.0;
+            [self addSubview:self->checkMark];
+            self->checkMark.alpha = 1.0;
+        } else {
+            [self willRemoveSubview:self->checkMark];
+            self->checkMark.alpha = 0.0;
+            [self->checkMark removeFromSuperview];
+        }
+    }];
 }
 
 @end

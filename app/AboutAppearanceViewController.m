@@ -15,7 +15,9 @@ static NSString *const ThemeNameCellIdentifier = @"Theme Name";
 static NSString *const FontSizeCellIdentifier = @"Font Size";
 static NSString *const PreviewCellIdentifier = @"Preview";
 
-@interface AboutAppearanceViewController ()
+@interface AboutAppearanceViewController () {
+    CGFloat selectorHeight;
+}
 
 @property UIFontPickerViewController *fontPicker API_AVAILABLE(ios(13));
 @property (nonatomic) NSMutableArray<NSIndexPath *> *themePaths;
@@ -32,7 +34,9 @@ static NSString *const PreviewCellIdentifier = @"Preview";
         [self.tableView reloadData];
         [self setNeedsStatusBarAppearanceUpdate];
     }];
-    _themeSelector = [[AboutThemeSelector alloc] initWithFrame:CGRectMake(0, 0, self.view.frame.size.width, 400)];
+    self.tableView.separatorStyle = UITableViewCellSeparatorStyleNone;
+    selectorHeight = (cardVerticalPadding + cardSize) * Theme.themeNames.count;
+    _themeSelector = [[AboutThemeSelector alloc] initWithFrame:CGRectMake(0, 0, self.view.frame.size.width, selectorHeight)];
 }
 
 - (void)viewDidAppear:(BOOL)animated {
@@ -53,8 +57,6 @@ static NSString *const PreviewCellIdentifier = @"Preview";
 
 enum {
     ThemeNameSection,
-    FontSection,
-    PreviewSection,
     NumberOfSections,
 };
 
@@ -64,45 +66,26 @@ enum {
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     switch (section) {
-        case ThemeNameSection: return 1;
-        case FontSection: return 2;
-        case PreviewSection: return 1;
+        case ThemeNameSection: return 3;
         default: NSAssert(NO, @"unhandled section"); return 0;
     }
 }
 
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
     switch (section) {
-        case ThemeNameSection: return @"Theme";
-        case PreviewSection: return @"Preview";
+        case ThemeNameSection: return @"Customization";
         default: return nil;
     }
 }
 
 
 - (NSString *)reuseIdentifierForIndexPath:(NSIndexPath *)indexPath {
-    switch (indexPath.section) {
-        case ThemeNameSection: return @"Theme Card";
-        case FontSection: return @[@"Font", @"Font Size"][indexPath.row];
-        case PreviewSection: return @"Preview";
-        default: return nil;
-    }
+    return @[@"Font", @"Font Size", @"Theme Card"][indexPath.row];
 }
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-    UserPreferences *prefs = [UserPreferences shared];
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:[self reuseIdentifierForIndexPath:indexPath] forIndexPath:indexPath];
     switch (indexPath.section) {
         case ThemeNameSection: {
-            if (![_themeSelector isDescendantOfView:cell.contentView]) {
-                [cell.contentView addSubview:_themeSelector];
-                cell.textLabel.text = @"";
-            }
-            cell.selectionStyle = UITableViewCellSelectionStyleNone;
-//            cell.backgroundColor = [UIColor clearColor];
-//            cell.contentView.backgroundColor = [UIColor clearColor];
-            break;
-        }
-        case FontSection: {
             if (indexPath.row == 0) {
                 cell.detailTextLabel.text = UserPreferences.shared.fontFamily;
             } else if (indexPath.row == 1) {
@@ -111,15 +94,13 @@ enum {
                 UIStepper *stepper = [cell viewWithTag:2];
                 label.text = prefs.fontSize.stringValue;
                 stepper.value = prefs.fontSize.doubleValue;
+            } else {
+                if (![_themeSelector isDescendantOfView:cell.contentView]) {
+                    [cell.contentView addSubview:_themeSelector];
+                    cell.textLabel.text = @"";
+                }
+                cell.selectionStyle = UITableViewCellSelectionStyleNone;
             }
-            break;
-        }
-        case PreviewSection: {
-            cell.backgroundColor = prefs.theme.backgroundColor;
-            cell.textLabel.textColor = prefs.theme.foregroundColor;
-            cell.textLabel.font = [UIFont fontWithName:UserPreferences.shared.fontFamily size:prefs.fontSize.doubleValue];
-            cell.textLabel.text = [NSString stringWithFormat:@"%@:~# ps aux", [UIDevice currentDevice].name];
-            cell.selectionStyle = UITableViewCellSelectionStyleNone;
             break;
         }
     }
@@ -128,30 +109,18 @@ enum {
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
-    switch (indexPath.section) {
-        case ThemeNameSection: {
-            return _themeSelector.frame.size.height;
-        }
-        default: {
-            return [super tableView:tableView heightForRowAtIndexPath:indexPath];
-        }
-    }
+    // Only one section right now
+    if (indexPath.row == 2)
+        return _themeSelector.frame.size.height + cardVerticalPadding;
+    
+    return [super tableView:tableView heightForRowAtIndexPath:indexPath];
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
-    UserPreferences *prefs = [UserPreferences shared];
-    NSString *tappedThemeName = Theme.themeNames[indexPath.row]; // Yes I know this isn't neccessary but I keep code DRY
-    switch (indexPath.section) {
-        case ThemeNameSection:
-            if (prefs.theme.name != tappedThemeName) {
-                [[UserPreferences shared] setThemeTo:tappedThemeName];
-            }
-            break;
-        case FontSection:
-            if (indexPath.row == 0) // font family
-                [self selectFont:nil];
-    }
+    
+    if (indexPath.row == 0) // font family
+        [self selectFont:nil];
 }
 
 - (void)selectFont:(id)sender {

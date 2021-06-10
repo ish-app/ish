@@ -124,7 +124,6 @@ NSString *const kPreferenceBootCommandKey = @"Boot Command";
 }
 
 - (void)setTheme:(Theme *)theme {
-    NSLog(@"Switching from theme %@ to %@", _theme.name, theme.name);
     _theme = theme;
     [_defaults setObject:theme.name forKey:kPreferenceThemeKey];
 }
