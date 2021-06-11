@@ -78,7 +78,7 @@ enum {
     BOOL isIphoneX = tableView.window.safeAreaInsets.top > 20;
     switch (section) {
         case StatusBarSection:
-            if (isIphoneX) return @"This is a legacy feature which supports only devices before IphoneX.";
+            if (isIphoneX) return @"This is a legacy feature which only supports devices before iPhoneX.";
             return nil;
         default: return nil;
     }
