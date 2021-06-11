@@ -47,7 +47,7 @@ extern NSString *const kThemeName;
 @property BOOL hideExtraKeysWithExternalKeyboard;
 @property BOOL overrideControlSpace;
 @property (nonatomic) Theme *theme;
-@property BOOL shouldDisableDimming;
+@property (nonatomic) BOOL shouldDisableDimming;
 @property NSString *fontFamily;
 @property NSNumber *fontSize;
 @property NSArray<NSString *> *launchCommand;
@@ -58,6 +58,7 @@ extern NSString *const kThemeName;
 - (BOOL)hasChangedLaunchCommand;
 - (void)setThemeTo:(NSString *)name;
 - (Theme *)themeFromName:(NSString *)name;
+- (void)deleteTheme:(NSString *)themeName;
 @end
 
 extern NSString *const kPreferenceLaunchCommandKey;

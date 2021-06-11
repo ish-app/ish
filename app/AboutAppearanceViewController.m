@@ -6,7 +6,6 @@
 //
 
 #import "AboutAppearanceViewController.h"
-#import "AboutThemeSelector.h"
 #import "FontPickerViewController.h"
 #import "UserPreferences.h"
 #import "NSObject+SaneKVO.h"
@@ -20,11 +19,12 @@ static NSString *const PreviewCellIdentifier = @"Preview";
 }
 
 @property UIFontPickerViewController *fontPicker API_AVAILABLE(ios(13));
-@property (nonatomic) NSMutableArray<NSIndexPath *> *themePaths;
-@property AboutThemeSelector *themeSelector;
-
+@property NSString *editingThemeName;
 @end
 
+@interface AbouteditingCell: UITableViewCell
+@property (nonatomic) UITextField *accessoryView;
+@end
 @implementation AboutAppearanceViewController
 
 - (void)viewDidLoad {
@@ -34,9 +34,6 @@ static NSString *const PreviewCellIdentifier = @"Preview";
         [self.tableView reloadData];
         [self setNeedsStatusBarAppearanceUpdate];
     }];
-    self.tableView.separatorStyle = UITableViewCellSeparatorStyleNone;
-    selectorHeight = (cardVerticalPadding + cardSize) * Theme.themeNames.count;
-    _themeSelector = [[AboutThemeSelector alloc] initWithFrame:CGRectMake(0, 0, self.view.frame.size.width, selectorHeight)];
 }
 
 - (void)viewDidAppear:(BOOL)animated {
@@ -56,71 +53,110 @@ static NSString *const PreviewCellIdentifier = @"Preview";
 #pragma mark - Table view data source
 
 enum {
-    ThemeNameSection,
-    NumberOfSections,
+    CustomizationSection,
+    NumberOfSections
 };
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-    return NumberOfSections;
+    return Theme.themeNames.count + 1;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     switch (section) {
-        case ThemeNameSection: return 3;
-        default: NSAssert(NO, @"unhandled section"); return 0;
+        case CustomizationSection: return 2;
+        default: return 1;
     }
 }
 
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
     switch (section) {
-        case ThemeNameSection: return @"Customization";
-        default: return nil;
+        case CustomizationSection: return @"Customization";
+        default: return Theme.themeNames[section - 1];
     }
 }
 
 
 - (NSString *)reuseIdentifierForIndexPath:(NSIndexPath *)indexPath {
-    return @[@"Font", @"Font Size", @"Theme Card"][indexPath.row];
+    switch (indexPath.section) {
+        case CustomizationSection: {
+            return @[@"Font", @"Font Size"][indexPath.row];
+        }
+        default: {
+            return @"Theme Card";
+        }
+    }
 }
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:[self reuseIdentifierForIndexPath:indexPath] forIndexPath:indexPath];
+    UserPreferences *prefs = [UserPreferences shared];
     switch (indexPath.section) {
-        case ThemeNameSection: {
+        case CustomizationSection: {
             if (indexPath.row == 0) {
                 cell.detailTextLabel.text = UserPreferences.shared.fontFamily;
             } else if (indexPath.row == 1) {
-                UserPreferences *prefs = [UserPreferences shared];
                 UILabel *label = [cell viewWithTag:1];
                 UIStepper *stepper = [cell viewWithTag:2];
                 label.text = prefs.fontSize.stringValue;
                 stepper.value = prefs.fontSize.doubleValue;
-            } else {
-                if (![_themeSelector isDescendantOfView:cell.contentView]) {
-                    [cell.contentView addSubview:_themeSelector];
-                    cell.textLabel.text = @"";
-                }
-                cell.selectionStyle = UITableViewCellSelectionStyleNone;
             }
             break;
         }
+        default: {
+            Theme *currentTheme = [prefs themeFromName:Theme.themeNames[indexPath.section - 1]];
+            switch (indexPath.row) {
+                case 0: {
+                    if (prefs.theme.name == currentTheme.name) {
+                        cell.accessoryType = UITableViewCellAccessoryCheckmark;
+                    } else {
+                        cell.accessoryType = UITableViewCellAccessoryNone;
+                    }
+                    cell.backgroundColor = currentTheme.backgroundColor;
+                    cell.textLabel.textColor = currentTheme.foregroundColor;
+                    cell.textLabel.font = [UIFont fontWithName:UserPreferences.shared.fontFamily size:prefs.fontSize.doubleValue];
+                    cell.textLabel.text = [NSString stringWithFormat:@"%@:~# ps aux", [UIDevice currentDevice].name];
+                    cell.selectionStyle = UITableViewCellSelectionStyleNone;
+                }
+            }
+            break;
+        }
+            
     }
     
     return cell;
 }
 
-- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
-    // Only one section right now
-    if (indexPath.row == 2)
-        return _themeSelector.frame.size.height + cardVerticalPadding;
-    
-    return [super tableView:tableView heightForRowAtIndexPath:indexPath];
+- (NSArray<UITableViewRowAction *> *)tableView:(UITableView *)tableView editActionsForRowAtIndexPath:(NSIndexPath *)indexPath {
+    switch (indexPath.section) {
+        case CustomizationSection:
+            return nil;
+        default: {
+            UITableViewRowAction *editAction = [UITableViewRowAction rowActionWithStyle:UITableViewRowActionStyleNormal title:@"Edit" handler:^(UITableViewRowAction *action, NSIndexPath *indexPath) {
+                self.editingThemeName = Theme.themeNames[indexPath.section - 1];
+                [tableView reloadSections:[NSIndexSet indexSetWithIndex:indexPath.section] withRowAnimation:UITableViewRowAnimationAutomatic];
+            }];
+            editAction.backgroundColor = [UIColor blueColor];
+
+            UITableViewRowAction *deleteAction = [UITableViewRowAction rowActionWithStyle:UITableViewRowActionStyleNormal title:@"Delete"  handler:^(UITableViewRowAction *action, NSIndexPath *indexPath) {
+                [tableView beginUpdates];
+                [tableView deleteSections:[NSIndexSet indexSetWithIndex:indexPath.section] withRowAnimation:UITableViewRowAnimationAutomatic];
+                [UserPreferences.shared deleteTheme:Theme.themeNames[indexPath.section - 1]];
+                [tableView endUpdates];
+            }];
+            deleteAction.backgroundColor = [UIColor redColor];
+            return @[deleteAction,editAction];
+        }
+    }
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
     
-    if (indexPath.row == 0) // font family
-        [self selectFont:nil];
+    if (indexPath.section == CustomizationSection) {
+        if (indexPath.row == 0) [self selectFont:nil];
+    } else if (indexPath.section > CustomizationSection) {
+        NSString *currentName = Theme.themeNames[indexPath.section - 1];
+        [UserPreferences.shared setThemeTo:currentName];
+    }
 }
 
 - (void)selectFont:(id)sender {
