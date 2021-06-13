@@ -207,8 +207,9 @@
     bfi x11, xcx, 32, 32
 
 5:
-    ldaxr x8, [_xaddr]
-    ldar x9, [_xaddr, #8]
+    ldar x8, [_xaddr]
+    add _xaddr, _xaddr, 8
+    ldar x9, [_xaddr]
     
     lsl x12, x8, x17
     neg x13, x17
@@ -237,9 +238,9 @@
     lsl x12, x12, x17
     orr x9, x9, x12
     
-    stlr x9, [_xaddr, #8]
-    stlxr w14, x8, [_xaddr]
-    cbnz x14, 5b
+    stlr x9, [_xaddr]
+    sub _xaddr, _xaddr, 8
+    stlr x8, [_xaddr]
     
     write_done 128, atomic_cmpxchg8b_unpaired
     ubfx xax, x10, 0, 32
@@ -253,7 +254,7 @@
     str w9, [_cpu, CPU_eflags]
     
     gret 1
-    write_bullshit 128, atomic_cmpxchg8b_brokenpair
+    write_bullshit 128, atomic_cmpxchg8b_unpaired
     
 .gadget cmpxchg8b
     write_prep 64, cmpxchg8b
