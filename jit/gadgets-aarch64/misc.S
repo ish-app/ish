@@ -92,7 +92,8 @@
     tst _addr, 7
     b.ne 2f
     
-    #Aligned cmpxchg8b
+    #cmpxchg8b via aligned exclusive 8b load
+
     write_prep 64, atomic_cmpxchg8b
     mov w9, eax
     bfi x9, xdx, 32, 32
@@ -120,12 +121,21 @@
     gret 1
     write_bullshit 64, atomic_cmpxchg8b
 
-2: #UNaligned cmpxchg8b (emulated with aligned 16b loads)
-    and x17, _xaddr, 0xF
+2:  #UNaligned cmpxchg8b
+    tst _addr, 8
+    b.ne 4f
+    
+    #cmpxchg8b via shifted exclusive 16b load
+
+    #This preserves (some) atomicity but requires the address to be no more
+    #than 8 bytes misaligned.
+
+    and x17, _xaddr, 7
     lsl x17, x17, 3
     and _xaddr, _xaddr, -15
-    
-    write_prep 128, atomic_cmpxchg8b_unaligned
+
+    write_prep 128, atomic_cmpxchg8b_shifted
+
     mov w10, eax
     bfi x10, xdx, 32, 32
     mov w11, ebx
@@ -164,7 +174,7 @@
     stlxp w14, x8, x9, [_xaddr]
     cbnz x14, 3b
     
-    write_done 128, atomic_cmpxchg8b_unaligned
+    write_done 128, atomic_cmpxchg8b_shifted
     ubfx xax, x10, 0, 32
     ubfx xdx, x10, 32, 32
 
@@ -174,11 +184,76 @@
     bfi w9, w11, 6, 1
     str w8, [_cpu, CPU_flags_res]
     str w9, [_cpu, CPU_eflags]
-
-    orr _xaddr, _xaddr, x17
     
     gret 1
-    write_bullshit 128, atomic_cmpxchg8b_unaligned
+    write_bullshit 128, atomic_cmpxchg8b_shifted
+
+4:  #cmpxchg8b via multiple shifted non-exclusive 8b loads
+
+    #This can handle any amount of misalignment but at the cost of atomicity.
+    #This matches with Intel's documentation, at least: unaligned memory
+    #accesses that fit within one cache line are be atomic, but those that
+    #aren't lose atomicity guarantees.
+
+    and x17, _xaddr, 7
+    lsl x17, x17, 3
+    and _xaddr, _xaddr, -7
+
+    write_prep 128, atomic_cmpxchg8b_unpaired
+
+    mov w10, eax
+    bfi x10, xdx, 32, 32
+    mov w11, ebx
+    bfi x11, xcx, 32, 32
+
+5:
+    ldaxr x8, [_xaddr]
+    ldar x9, [_xaddr, #8]
+    
+    lsl x12, x8, x17
+    neg x13, x17
+    add x13, x13, 64
+    lsr x13, x9, x13
+    orr x12, x12, x13
+
+    cmp x10, x12
+    csel x10, x12, x10, ne
+    csel x12, x11, x12, eq
+    cset w13, eq
+    
+    mov x14, -1
+    neg x15, x17
+    add x15, x15, 64
+    lsr x14, x14, x15
+    mvn x14, x14
+    and x8, x8, x14
+    lsr x14, x12, x15
+    orr x8, x8, x14
+
+    mov x14, -1
+    lsl x14, x14, x17
+    mvn x14, x14
+    and x9, x9, x14
+    lsl x12, x12, x17
+    orr x9, x9, x12
+    
+    stlr x9, [_xaddr, #8]
+    stlxr w14, x8, [_xaddr]
+    cbnz x14, 5b
+    
+    write_done 128, atomic_cmpxchg8b_unpaired
+    ubfx xax, x10, 0, 32
+    ubfx xdx, x10, 32, 32
+
+    ldr w8, [_cpu, CPU_flags_res]
+    ldr w9, [_cpu, CPU_eflags]
+    and w8, w8, ~ZF_RES
+    bfi w9, w11, 6, 1
+    str w8, [_cpu, CPU_flags_res]
+    str w9, [_cpu, CPU_eflags]
+    
+    gret 1
+    write_bullshit 128, atomic_cmpxchg8b_brokenpair
     
 .gadget cmpxchg8b
     write_prep 64, cmpxchg8b
