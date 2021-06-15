@@ -238,7 +238,9 @@ static UIColor *UnarchiveColor(id data) {
 }
 
 + (NSArray<NSString *> *)themeNames {
-    return [[UserPreferences shared] allThemeNames];
+    return [[[UserPreferences shared] allThemeNames] sortedArrayUsingComparator:^NSComparisonResult(NSString *obj1, NSString *obj2) {
+        return obj1 < obj2;
+    }];
 }
 
 + (NSDictionary<NSString *, Theme *> *)presets {

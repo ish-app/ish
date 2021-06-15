@@ -9,21 +9,15 @@
 #import "FontPickerViewController.h"
 #import "UserPreferences.h"
 #import "NSObject+SaneKVO.h"
+#import "UIColor+isLight.h"
+#import "EditThemeViewController.h"
 
 static NSString *const ThemeNameCellIdentifier = @"Theme Name";
 static NSString *const FontSizeCellIdentifier = @"Font Size";
 static NSString *const PreviewCellIdentifier = @"Preview";
 
-@interface AboutAppearanceViewController () {
-    CGFloat selectorHeight;
-}
-
+@interface AboutAppearanceViewController ()
 @property UIFontPickerViewController *fontPicker API_AVAILABLE(ios(13));
-@property NSString *editingThemeName;
-@end
-
-@interface AbouteditingCell: UITableViewCell
-@property (nonatomic) UITextField *accessoryView;
 @end
 @implementation AboutAppearanceViewController
 
@@ -54,7 +48,6 @@ static NSString *const PreviewCellIdentifier = @"Preview";
 
 enum {
     CustomizationSection,
-    NumberOfSections
 };
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
@@ -130,20 +123,30 @@ enum {
         case CustomizationSection:
             return nil;
         default: {
+            NSString *themeName = Theme.themeNames[indexPath.section - 1];
+            Theme *currentTheme = [UserPreferences.shared themeFromName:themeName];
             UITableViewRowAction *editAction = [UITableViewRowAction rowActionWithStyle:UITableViewRowActionStyleNormal title:@"Edit" handler:^(UITableViewRowAction *action, NSIndexPath *indexPath) {
-                self.editingThemeName = Theme.themeNames[indexPath.section - 1];
-                [tableView reloadSections:[NSIndexSet indexSetWithIndex:indexPath.section] withRowAnimation:UITableViewRowAnimationAutomatic];
+                [self editTheme:currentTheme.name];
             }];
-            editAction.backgroundColor = [UIColor blueColor];
-
             UITableViewRowAction *deleteAction = [UITableViewRowAction rowActionWithStyle:UITableViewRowActionStyleNormal title:@"Delete"  handler:^(UITableViewRowAction *action, NSIndexPath *indexPath) {
                 [tableView beginUpdates];
                 [tableView deleteSections:[NSIndexSet indexSetWithIndex:indexPath.section] withRowAnimation:UITableViewRowAnimationAutomatic];
-                [UserPreferences.shared deleteTheme:Theme.themeNames[indexPath.section - 1]];
+                [UserPreferences.shared deleteTheme:themeName];
                 [tableView endUpdates];
+
             }];
-            deleteAction.backgroundColor = [UIColor redColor];
-            return @[deleteAction,editAction];
+            deleteAction.backgroundColor = [self adjustColor:currentTheme.foregroundColor];
+            editAction.backgroundColor = [self adjustColor:currentTheme.backgroundColor];
+            if ([[Theme.presets allKeys] containsObject:themeName]) {
+                return @[editAction];
+            } else {
+                if (UserPreferences.shared.theme.name == themeName) {
+                    return @[editAction];
+                } else {
+                    return @[deleteAction, editAction];
+                }
+            }
+            return nil;
         }
     }
 }
@@ -172,6 +175,20 @@ enum {
 - (void)fontPickerViewControllerDidPickFont:(UIFontPickerViewController *)viewController API_AVAILABLE(ios(13.0)) {
     UserPreferences.shared.fontFamily = viewController.selectedFontDescriptor.fontAttributes[UIFontDescriptorFamilyAttribute];
     [self.navigationController popToViewController:self animated:YES];
+}
+
+- (void) editTheme:(NSString *)themeName {
+    EditThemeViewController *themeEditor = [self.storyboard instantiateViewControllerWithIdentifier:@"ThemeEditor"];
+    themeEditor.navigationItem.title = [NSString stringWithFormat:@"Edit %@", themeName];
+    [themeEditor setThemeName:themeName];
+    [self.navigationController pushViewController:themeEditor animated:YES];
+}
+
+- (UIColor *) adjustColor:(UIColor *)color {
+    CGFloat hue, saturation, oldBrightness, alpha;
+    CGFloat newBrightness = color.isLight ? 0.95 : 0.10;
+    [color getHue:&hue saturation:&saturation brightness:&oldBrightness alpha:&alpha];
+    return [UIColor colorWithHue:hue saturation:saturation brightness:newBrightness alpha:alpha];
 }
 
 - (IBAction)fontSizeChanged:(UIStepper *)sender {
