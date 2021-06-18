@@ -9,13 +9,18 @@
 #import <UIKit/UIKit.h>
 #import "UserPreferences.h"
 NS_ASSUME_NONNULL_BEGIN
+@protocol EditThemeViewControllerDelegate
+@required
+- (void) themeChanged;
+@end
 
-@interface EditThemeViewController : UITableViewController {
+@interface EditThemeViewController : UITableViewController <UIColorPickerViewControllerDelegate> {
     UIColor *oldBackgroundColor;
     UIColor *oldForegroundColor;
+    NSString *editingPropertyName;
 }
 @property NSString *themeName;
 @property Theme *currentTheme;
+@property id <EditThemeViewControllerDelegate> delegate;
 @end
-
 NS_ASSUME_NONNULL_END

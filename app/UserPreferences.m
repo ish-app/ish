@@ -128,7 +128,7 @@ NSString *const kPreferenceBootCommandKey = @"Boot Command";
     [_defaults setObject:theme.name forKey:kPreferenceThemeKey];
 }
 
-- (void)setThemeTo:(NSString *)name {
+- (void)setThemeToName:(NSString *)name {
     [self setTheme:[[Theme alloc] initWithProperties:[_defaults objectForKey:kPreferenceThemeDictKey][name]]];
 }
 
@@ -136,10 +136,18 @@ NSString *const kPreferenceBootCommandKey = @"Boot Command";
     return [[Theme alloc] initWithProperties:[_defaults objectForKey:kPreferenceThemeDictKey][name]];
 }
 
-- (void) deleteTheme:(NSString *)themeName {
+- (void) deleteTheme:(NSString *)name {
     NSMutableDictionary<NSString *, id> *dict = [[_defaults dictionaryForKey:kPreferenceThemeDictKey] mutableCopy];
-    [dict removeObjectForKey:themeName];
+    [dict removeObjectForKey:name];
     [_defaults setObject:dict forKey:kPreferenceThemeDictKey];
+}
+
+- (void) modifyTheme:(NSString *)name properties:(id)props {
+    NSMutableDictionary<NSString *, id> *dict = [[_defaults dictionaryForKey:kPreferenceThemeDictKey] mutableCopy];
+    [dict setValue:props forKey:name];
+    [_defaults setObject:dict forKey:kPreferenceThemeDictKey];
+    if (name == _theme.name)
+        [self setThemeToName:name];
 }
 
 - (BOOL)shouldDisableDimming {

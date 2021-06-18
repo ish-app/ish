@@ -56,9 +56,10 @@ extern NSString *const kThemeName;
 + (instancetype)shared;
 
 - (BOOL)hasChangedLaunchCommand;
-- (void)setThemeTo:(NSString *)name;
+- (void)setThemeToName:(NSString *)name;
 - (Theme *)themeFromName:(NSString *)name;
-- (void)deleteTheme:(NSString *)themeName;
+- (void)deleteTheme:(NSString *)name;
+- (void)modifyTheme:(NSString *)name properties:(id)props;
 @end
 
 extern NSString *const kPreferenceLaunchCommandKey;

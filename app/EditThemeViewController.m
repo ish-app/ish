@@ -6,7 +6,7 @@
 //
 
 #import "EditThemeViewController.h"
-
+#import "NSObject+SaneKVO.h"
 static NSString *kEditThemeStatusBarToggleId = @"ToggleCell";
 static NSString *kEditPreviewId = @"Preview";
 static NSString *kEditColorPickerCellId = @"ColorPicker";
@@ -25,17 +25,21 @@ enum {
     self.tableView.separatorStyle = UITableViewCellSeparatorStyleNone;
     oldBackgroundColor = self.navigationController.navigationBar.barTintColor;
     oldForegroundColor = self.navigationController.navigationBar.tintColor;
+    [self observe:@[@"currentTheme"] options:0 owner:self usingBlock:^(typeof(self) self) {
+        [self setAppearance];
+        [[self tableView] reloadData];
+    }];
+    [self setAppearance];
+}
+- (void)setAppearance {
     self.navigationController.navigationBar.tintColor = _currentTheme.foregroundColor;
     self.navigationController.navigationBar.barTintColor = _currentTheme.backgroundColor;
     self.navigationController.navigationBar.titleTextAttributes = @{NSForegroundColorAttributeName:_currentTheme.foregroundColor};
     self.navigationController.navigationBar.translucent = NO;
     if (@available(iOS 13, *)) {
-        if (UserPreferences.shared.theme.keyboardAppearance == UIKeyboardAppearanceLight) {
-            self.tableView.backgroundColor = [UIColor colorWithRed: 0.95 green: 0.95 blue: 0.97 alpha: 1.00];
-        }
+        self.tableView.backgroundColor = UIColor.systemGray6Color;
     }
 }
-
 - (void)viewWillDisappear:(BOOL)animated {
     [super viewWillDisappear:animated];
     
@@ -98,6 +102,45 @@ enum {
     
     return cell;
 }
+
+- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
+    [tableView deselectRowAtIndexPath:indexPath animated:YES];
+    switch (indexPath.section) {
+        case PreviewSection: {
+            if (indexPath.row > 0) {
+                if (@available(iOS 14, *)) {
+                    NSString *property = indexPath.row == 1 ? @"foregroundColor" : @"backgroundColor";
+                    [self sendColorPicker:[_currentTheme valueForKey:property] supportsAlpha:NO propertyName:property];
+                } else {
+                    
+                }
+            }
+        }
+    }
+}
+
+- (void)sendColorPicker:(UIColor *)startingColor supportsAlpha:(BOOL)alpha propertyName:(NSString *)name API_AVAILABLE(ios(14.0)) {
+    UIColorPickerViewController *viewController = [[UIColorPickerViewController alloc] init];
+    viewController.selectedColor = startingColor;
+    viewController.supportsAlpha = alpha;
+    viewController.delegate = self;
+    editingPropertyName = name;
+    [self presentViewController:viewController animated:true completion:^{
+        // memes (42069)
+    }];
+}
+
+- (void) colorPickerViewControllerDidFinish:(UIColorPickerViewController *)viewController API_AVAILABLE(ios(14.0)) {
+    [_currentTheme setValue:viewController.selectedColor forKey:editingPropertyName];
+    [self setAppearance];
+    [[self tableView] reloadData];
+    [UserPreferences.shared modifyTheme:_currentTheme.name properties:_currentTheme.properties];
+}
+- (void) colorPickerViewControllerDidSelectColor:(UIColorPickerViewController *)viewController API_AVAILABLE(ios(14.0)) {
+    // Nothing to do here yet
+}
+
+
 
 //MARK: Custom Cells
 

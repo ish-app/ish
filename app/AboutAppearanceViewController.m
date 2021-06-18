@@ -158,7 +158,7 @@ enum {
         if (indexPath.row == 0) [self selectFont:nil];
     } else if (indexPath.section > CustomizationSection) {
         NSString *currentName = Theme.themeNames[indexPath.section - 1];
-        [UserPreferences.shared setThemeTo:currentName];
+        [UserPreferences.shared setThemeToName:currentName];
     }
 }
 
@@ -181,13 +181,18 @@ enum {
     EditThemeViewController *themeEditor = [self.storyboard instantiateViewControllerWithIdentifier:@"ThemeEditor"];
     themeEditor.navigationItem.title = [NSString stringWithFormat:@"Edit %@", themeName];
     [themeEditor setThemeName:themeName];
+    themeEditor.delegate = self;
     [self.navigationController pushViewController:themeEditor animated:YES];
+}
+
+- (void) themeChanged {
+    [[self tableView] reloadData];
 }
 
 - (UIColor *) adjustColor:(UIColor *)color {
     CGFloat hue, saturation, oldBrightness, alpha;
-    CGFloat newBrightness = color.isLight ? 0.95 : 0.10;
     [color getHue:&hue saturation:&saturation brightness:&oldBrightness alpha:&alpha];
+    CGFloat newBrightness = color.isLight ? oldBrightness * 0.8 : oldBrightness * 2;
     return [UIColor colorWithHue:hue saturation:saturation brightness:newBrightness alpha:alpha];
 }
 
