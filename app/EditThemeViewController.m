@@ -7,6 +7,7 @@
 
 #import "EditThemeViewController.h"
 #import "NSObject+SaneKVO.h"
+#import "UIColor+additions.h"
 static NSString *kEditThemeStatusBarToggleId = @"ToggleCell";
 static NSString *kEditPreviewId = @"Preview";
 static NSString *kEditColorPickerCellId = @"ColorPicker";
@@ -108,11 +109,32 @@ enum {
     switch (indexPath.section) {
         case PreviewSection: {
             if (indexPath.row > 0) {
-                if (@available(iOS 14, *)) {
-                    NSString *property = indexPath.row == 1 ? @"foregroundColor" : @"backgroundColor";
+                NSString *property = indexPath.row == 1 ? @"foregroundColor" : @"backgroundColor";
+                if (@available(iOS 14.0, *)) {
                     [self sendColorPicker:[_currentTheme valueForKey:property] supportsAlpha:NO propertyName:property];
                 } else {
+                    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:@"Set New Color" message:@"Set a new color for your theme." preferredStyle:UIAlertControllerStyleAlert];
+                    [alertController addTextFieldWithConfigurationHandler:^(UITextField * _Nonnull textField) {
+                        textField.placeholder = @"#RRGGBB";
+                    }];
                     
+                    UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction * _Nonnull action) {
+                        // Memes 42069
+                    }];
+                    
+                    UIAlertAction *saveAction = [UIAlertAction actionWithTitle:@"Save" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                        // Need to handle the new hex code
+                        UITextField *alertField = alertController.textFields[0];
+                        if (alertField.text.length == 6 || alertField.text.length == 7) {
+                            [self setNewColor:[UIColor colorWithHexString:alertField.text] forProperty:property];
+                        } else {
+                            alertController.message = @"Hex value cannot be nill or not formatted properly";
+                            [self presentViewController:alertController animated:true completion:nil];
+                        }
+                    }];
+                    [alertController addAction:cancelAction];
+                    [alertController addAction:saveAction];
+                    [self presentViewController:alertController animated:true completion:nil];
                 }
             }
         }
@@ -131,13 +153,14 @@ enum {
 }
 
 - (void) colorPickerViewControllerDidFinish:(UIColorPickerViewController *)viewController API_AVAILABLE(ios(14.0)) {
-    [_currentTheme setValue:viewController.selectedColor forKey:editingPropertyName];
+    [self setNewColor:viewController.selectedColor forProperty:editingPropertyName];
+}
+
+- (void) setNewColor:(UIColor *)color forProperty:(NSString *)property {
+    [_currentTheme setValue:color forKey:property];
     [self setAppearance];
     [[self tableView] reloadData];
     [UserPreferences.shared modifyTheme:_currentTheme.name properties:_currentTheme.properties];
-}
-- (void) colorPickerViewControllerDidSelectColor:(UIColorPickerViewController *)viewController API_AVAILABLE(ios(14.0)) {
-    // Nothing to do here yet
 }
 
 

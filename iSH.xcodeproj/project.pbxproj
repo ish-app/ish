@@ -21,7 +21,7 @@
 /* End PBXAggregateTarget section */
 
 /* Begin PBXBuildFile section */
-		1DBE745E2671C0DD00FB1C98 /* UIColor+isLight.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DBE745D2671C0DD00FB1C98 /* UIColor+isLight.m */; };
+		1DBE745E2671C0DD00FB1C98 /* UIColor+additions.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DBE745D2671C0DD00FB1C98 /* UIColor+additions.m */; };
 		1DBE74642673DB2C00FB1C98 /* EditThemeViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DBE74632673DB2C00FB1C98 /* EditThemeViewController.m */; };
 		1DFFE94D266EFB9400771BC0 /* UserPreferences.m in Sources */ = {isa = PBXBuildFile; fileRef = 8632A7BE219A59FB00F02325 /* UserPreferences.m */; };
 		1DFFE94E266EFB9700771BC0 /* AboutAppearanceViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 9A28E4E9219A8B670073D200 /* AboutAppearanceViewController.m */; };
@@ -272,8 +272,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		1DBE745C2671BEB800FB1C98 /* UIColor+isLight.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "UIColor+isLight.h"; sourceTree = "<group>"; };
-		1DBE745D2671C0DD00FB1C98 /* UIColor+isLight.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "UIColor+isLight.m"; sourceTree = "<group>"; };
+		1DBE745C2671BEB800FB1C98 /* UIColor+additions.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "UIColor+additions.h"; sourceTree = "<group>"; };
+		1DBE745D2671C0DD00FB1C98 /* UIColor+additions.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "UIColor+additions.m"; sourceTree = "<group>"; };
 		1DBE74622673DB1400FB1C98 /* EditThemeViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = EditThemeViewController.h; sourceTree = "<group>"; };
 		1DBE74632673DB2C00FB1C98 /* EditThemeViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = EditThemeViewController.m; sourceTree = "<group>"; };
 		408A2639236440F8008A4E81 /* iOSFS.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iOSFS.m; sourceTree = "<group>"; };
@@ -1042,8 +1042,8 @@
 				BBCED896255BB65A00CA0701 /* NSObject+SaneKVO.m */,
 				BB149E7E256DC97C00F57815 /* PassthroughView.h */,
 				BB149E7F256DC97C00F57815 /* PassthroughView.m */,
-				1DBE745C2671BEB800FB1C98 /* UIColor+isLight.h */,
-				1DBE745D2671C0DD00FB1C98 /* UIColor+isLight.m */,
+				1DBE745C2671BEB800FB1C98 /* UIColor+additions.h */,
+				1DBE745D2671C0DD00FB1C98 /* UIColor+additions.m */,
 			);
 			name = Utilities;
 			sourceTree = "<group>";
@@ -1617,7 +1617,7 @@
 				BB78AB2B1FAD22440013E782 /* TerminalView.m in Sources */,
 				1DBE74642673DB2C00FB1C98 /* EditThemeViewController.m in Sources */,
 				BB23F58D231E1D1400585522 /* ScrollbarView.m in Sources */,
-				1DBE745E2671C0DD00FB1C98 /* UIColor+isLight.m in Sources */,
+				1DBE745E2671C0DD00FB1C98 /* UIColor+additions.m in Sources */,
 				BB455E111FB37F6600AFB48B /* DelayedUITask.m in Sources */,
 				BB0FC5921F980A6C00803272 /* Terminal.m in Sources */,
 				BB101B382364CF57000A93BC /* FontPickerViewController.m in Sources */,

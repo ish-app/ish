@@ -9,7 +9,7 @@
 #import "FontPickerViewController.h"
 #import "UserPreferences.h"
 #import "NSObject+SaneKVO.h"
-#import "UIColor+isLight.h"
+#import "UIColor+additions.h"
 #import "EditThemeViewController.h"
 
 static NSString *const ThemeNameCellIdentifier = @"Theme Name";

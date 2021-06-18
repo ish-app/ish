@@ -10,7 +10,9 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface UIColor (isLight)
+@interface UIColor (additions)
++ (UIColor *)colorWithHexString:(NSString *)hex;
++ (UIColor *)colorWithHex:(UInt32)color;
 - (BOOL) isLight;
 @end
 
