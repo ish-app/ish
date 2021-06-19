@@ -147,7 +147,7 @@ NSString *const kPreferenceBootCommandKey = @"Boot Command";
     [dict setValue:props forKey:name];
     [_defaults setObject:dict forKey:kPreferenceThemeDictKey];
     if (name == _theme.name)
-        [self setThemeToName:name];
+        [self setThemeToName:name]; // Just to call sane KVO
 }
 
 - (BOOL)shouldDisableDimming {

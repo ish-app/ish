@@ -41,6 +41,14 @@ enum {
         self.tableView.backgroundColor = UIColor.systemGray6Color;
     }
 }
+- (void)hookBackButton {
+    self.navigationItem.backBarButtonItem.target = self;
+    self.navigationItem.backBarButtonItem.action = @selector(navigateBack);
+}
+- (void) navigateBack {
+    [_delegate themeChanged];
+    [self.navigationController popToViewController:_delegate animated:true];
+}
 - (void)viewWillDisappear:(BOOL)animated {
     [super viewWillDisappear:animated];
     
@@ -128,7 +136,7 @@ enum {
                         if (alertField.text.length == 6 || alertField.text.length == 7) {
                             [self setNewColor:[UIColor colorWithHexString:alertField.text] forProperty:property];
                         } else {
-                            alertController.message = @"Hex value cannot be nill or not formatted properly";
+                            alertController.message = @"Hex value cannot be blank or not formatted properly";
                             [self presentViewController:alertController animated:true completion:nil];
                         }
                     }];

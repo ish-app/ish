@@ -21,6 +21,6 @@ NS_ASSUME_NONNULL_BEGIN
 }
 @property NSString *themeName;
 @property Theme *currentTheme;
-@property id <EditThemeViewControllerDelegate> delegate;
+@property UIViewController <EditThemeViewControllerDelegate>* delegate;
 @end
 NS_ASSUME_NONNULL_END

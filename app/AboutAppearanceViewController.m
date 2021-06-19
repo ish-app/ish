@@ -28,6 +28,7 @@ static NSString *const PreviewCellIdentifier = @"Preview";
         [self.tableView reloadData];
         [self setNeedsStatusBarAppearanceUpdate];
     }];
+    [self setupThemeOptionButton];
 }
 
 - (void)viewDidAppear:(BOOL)animated {
@@ -51,7 +52,7 @@ enum {
 };
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-    return Theme.themeNames.count + 1;
+    return Theme.themeNames.count;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
@@ -161,7 +162,7 @@ enum {
         [UserPreferences.shared setThemeToName:currentName];
     }
 }
-
+#pragma mark Font Specifics
 - (void)selectFont:(id)sender {
     if (@available(iOS 13, *)) {
         [self.navigationController pushViewController:self.fontPicker animated:YES];
@@ -177,6 +178,11 @@ enum {
     [self.navigationController popToViewController:self animated:YES];
 }
 
+- (IBAction)fontSizeChanged:(UIStepper *)sender {
+    UserPreferences.shared.fontSize = @((int) sender.value);
+}
+
+#pragma mark Theme Specifics
 - (void) editTheme:(NSString *)themeName {
     EditThemeViewController *themeEditor = [self.storyboard instantiateViewControllerWithIdentifier:@"ThemeEditor"];
     themeEditor.navigationItem.title = [NSString stringWithFormat:@"Edit %@", themeName];
@@ -192,12 +198,77 @@ enum {
 - (UIColor *) adjustColor:(UIColor *)color {
     CGFloat hue, saturation, oldBrightness, alpha;
     [color getHue:&hue saturation:&saturation brightness:&oldBrightness alpha:&alpha];
-    CGFloat newBrightness = color.isLight ? oldBrightness * 0.8 : oldBrightness * 2;
+    CGFloat newBrightness = color.isLight ? oldBrightness * 0.8 : (oldBrightness == 0 ? 0.1 : oldBrightness) * 2;
     return [UIColor colorWithHue:hue saturation:saturation brightness:newBrightness alpha:alpha];
 }
 
-- (IBAction)fontSizeChanged:(UIStepper *)sender {
-    UserPreferences.shared.fontSize = @((int) sender.value);
+- (void) setupThemeOptionButton {
+    UIBarButtonItem *barButton = [[UIBarButtonItem alloc] initWithTitle:@"•••" style:UIBarButtonItemStylePlain target:self action:@selector(themeOptionButtonPressed)];
+    NSDictionary<NSString *, id> *attr = @{
+        NSFontAttributeName: [UIFont systemFontOfSize:27],
+    };
+    [barButton setTitleTextAttributes:attr forState:UIControlStateNormal];
+    [barButton setTitleTextAttributes:attr forState:UIControlStateSelected];
+    self.navigationItem.rightBarButtonItem = barButton;
+}
+
+- (void)themeOptionButtonPressed {
+    UIAlertController *popupSelector = [UIAlertController alertControllerWithTitle:@"Theme Options" message:nil preferredStyle:UIAlertControllerStyleActionSheet];
+    UIAlertAction *importAction = [UIAlertAction actionWithTitle:@"Import Theme" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+        // Import Theme Here
+    }];
+    UIAlertAction *exportAction = [UIAlertAction actionWithTitle:@"Export Theme" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+        // Export a theme here
+    }];
+    UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction * _Nonnull action) {
+        // Bruh
+    }];
+    
+    UIAlertAction *createAction = [UIAlertAction actionWithTitle:@"Add Theme" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+        // Add Theme Here
+        Theme *defaultProperties = [Theme presets][@"Light"];
+        UIAlertController *nameController = [UIAlertController alertControllerWithTitle:@"Set Name" message:nil preferredStyle:UIAlertControllerStyleAlert];
+        [nameController addTextFieldWithConfigurationHandler:^(UITextField * _Nonnull textField) {
+            textField.placeholder = @"Name";
+        }];
+        UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction * _Nonnull action) {
+            // Do nothing
+        }];
+        
+        UIAlertAction *continueAction = [UIAlertAction actionWithTitle:@"Continue" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+            UITextField *nameField = nameController.textFields[0];
+            void (^failWithMessage)(NSString *) = ^void(NSString *message) {
+                nameController.message = message;
+                [self presentViewController:nameController animated:true completion:nil];
+                return;
+            };
+            
+            if (nameField.text.length == 0) {
+                failWithMessage(@"The name cannot be blank");
+            }
+            if ([Theme.themeNames containsObject:nameField.text]) {
+                failWithMessage (@"This name already exists");
+            }
+            
+            defaultProperties.name = nameField.text;
+            [UserPreferences.shared modifyTheme:defaultProperties.name properties:defaultProperties.properties];
+            [self.tableView reloadData];
+            [self editTheme:defaultProperties.name];
+        }];
+        
+        [nameController addAction:cancelAction];
+        [nameController addAction:continueAction];
+        [self presentViewController:nameController animated:true completion:nil];
+        
+    }];
+    [popupSelector addAction:createAction];
+    [popupSelector addAction:importAction];
+    [popupSelector addAction:exportAction];
+    [popupSelector addAction:cancelAction];
+    
+    [self presentViewController:popupSelector animated:true completion:nil];
+    //TODO: Make batch import/export a thing...
+    
 }
 
 @end
