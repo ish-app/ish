@@ -74,16 +74,6 @@ enum {
     }
 }
 
-- (NSString *)tableView:(UITableView *)tableView titleForFooterInSection:(NSInteger)section {
-    BOOL isIphoneX = tableView.window.safeAreaInsets.top > 20;
-    switch (section) {
-        case StatusBarSection:
-            if (isIphoneX) return @"This is a legacy feature which only supports devices before iPhoneX.";
-            return nil;
-        default: return nil;
-    }
-}
-
 - (Theme *)_themeForRow:(NSUInteger)row {
     return [Theme presetThemeNamed:Theme.presetNames[row]];
 }
@@ -101,7 +91,6 @@ enum {
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     UserPreferences *prefs = [UserPreferences shared];
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:[self reuseIdentifierForIndexPath:indexPath] forIndexPath:indexPath];
-    BOOL isIphoneX = tableView.window.safeAreaInsets.top > 20;
     
     switch (indexPath.section) {
         case ThemeNameSection:
@@ -137,8 +126,7 @@ enum {
             cell.selectionStyle = UITableViewCellSelectionStyleNone;
             UISwitch *statusBarToggle = [[UISwitch alloc] initWithFrame:CGRectZero];
             cell.accessoryView = statusBarToggle;
-            [statusBarToggle setOn:prefs.showStatusBar animated:YES];
-            if (isIphoneX) statusBarToggle.enabled = NO;
+            statusBarToggle.on = prefs.showStatusBar;
             [statusBarToggle addTarget:self action:@selector(setStatusBar:) forControlEvents:UIControlEventValueChanged];
             break;
     }
@@ -179,9 +167,7 @@ enum {
 }
 
 - (void) setStatusBar:(id)sender {
-    UISwitch *switchy = sender;
-    [switchy setOn:switchy.on animated:YES];
-    [[UserPreferences shared] setShowStatusBar:switchy.on];
+    [[UserPreferences shared] setShowStatusBar:((UISwitch *)sender).on];
     [self setNeedsStatusBarAppearanceUpdate];
 }
 
