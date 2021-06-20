@@ -303,12 +303,12 @@ enum {
     for (NSString *name in propertyNames) { // sanity check
         if (themeData[name] == nil) {
             // We have an issue with the data within the json because it doesn't meet all of the property requirements
-            failWithMessage([@"Theme Export is missing the property %@" stringByAppendingString:name]);
+            failWithMessage([NSString stringWithFormat:@"Theme Export is missing the property %@", name]);
         }
     }
     Theme *themeToImport = [[Theme alloc] initWithProperties:themeData];
     if ([Theme.themeNames containsObject:themeToImport.name])
-        failWithMessage([@"The theme %@ already exists" stringByAppendingString:themeToImport.name]);
+        failWithMessage([NSString stringWithFormat:@"The theme %@ already exists", themeToImport.name]);
 
     
     // OK we can now import the theme
