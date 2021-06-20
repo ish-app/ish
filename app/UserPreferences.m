@@ -246,9 +246,7 @@ static UIColor *UnarchiveColor(id data) {
 }
 
 + (NSArray<NSString *> *)themeNames {
-    return [[[UserPreferences shared] allThemeNames] sortedArrayUsingComparator:^NSComparisonResult(NSString *obj1, NSString *obj2) {
-        return obj1 < obj2;
-    }];
+    return [[[UserPreferences shared] allThemeNames] sortedArrayUsingSelector:@selector(localizedCaseInsensitiveCompare:)];
 }
 
 + (NSDictionary<NSString *, Theme *> *)presets {

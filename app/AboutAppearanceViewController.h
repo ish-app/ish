@@ -9,7 +9,7 @@
 #import "EditThemeViewController.h"
 NS_ASSUME_NONNULL_BEGIN
 
-@interface AboutAppearanceViewController : UITableViewController <UIFontPickerViewControllerDelegate, EditThemeViewControllerDelegate>
+@interface AboutAppearanceViewController : UITableViewController <UIFontPickerViewControllerDelegate, EditThemeViewControllerDelegate, UIDocumentPickerDelegate>
 
 @end
 

@@ -4,7 +4,7 @@
 //
 //  Created by Charlie Melbye on 11/12/18.
 //
-
+#import <dispatch/dispatch.h>
 #import "AboutAppearanceViewController.h"
 #import "FontPickerViewController.h"
 #import "UserPreferences.h"
@@ -52,7 +52,7 @@ enum {
 };
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-    return Theme.themeNames.count;
+    return Theme.themeNames.count + 1;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
@@ -136,15 +136,27 @@ enum {
                 [tableView endUpdates];
 
             }];
-            deleteAction.backgroundColor = [self adjustColor:currentTheme.foregroundColor];
+            UITableViewRowAction *exportAction = [UITableViewRowAction rowActionWithStyle:UITableViewRowActionStyleNormal title:@"Export" handler:^(UITableViewRowAction * _Nonnull action, NSIndexPath * _Nonnull indexPath) {
+                NSDictionary<NSString *, id> *props = currentTheme.properties;
+                NSError *error = nil;
+                NSData *jsonData = [NSJSONSerialization dataWithJSONObject:props options:NSJSONWritingPrettyPrinted error:&error];
+                NSURL *tmpUrl = [[NSFileManager defaultManager].temporaryDirectory URLByAppendingPathComponent:[NSString stringWithFormat:@"%@.theme", currentTheme.name]];
+                [[[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding] writeToFile:tmpUrl.absoluteString atomically:NO encoding:NSUTF8StringEncoding error:&error];
+                UIActivityViewController *controller = [[UIActivityViewController alloc] initWithActivityItems:@[tmpUrl] applicationActivities:nil];
+                controller.popoverPresentationController.sourceView = self.tableView;
+                [self presentViewController:controller animated:YES completion:nil];
+            }];
+            deleteAction.backgroundColor = [UIColor redColor];
             editAction.backgroundColor = [self adjustColor:currentTheme.backgroundColor];
+            exportAction.backgroundColor = [self adjustColor:currentTheme.foregroundColor];
+            
             if ([[Theme.presets allKeys] containsObject:themeName]) {
-                return @[editAction];
+                return @[exportAction, editAction];
             } else {
                 if (UserPreferences.shared.theme.name == themeName) {
-                    return @[editAction];
+                    return @[exportAction, editAction];
                 } else {
-                    return @[deleteAction, editAction];
+                    return @[deleteAction, exportAction, editAction];
                 }
             }
             return nil;
@@ -192,7 +204,7 @@ enum {
 }
 
 - (void) themeChanged {
-    [[self tableView] reloadData];
+    [[self tableView] reloadSections:[NSIndexSet indexSetWithIndexesInRange:NSMakeRange(0, [self numberOfSectionsInTableView:[self tableView]])] withRowAnimation:UITableViewRowAnimationAutomatic];
 }
 
 - (UIColor *) adjustColor:(UIColor *)color {
@@ -215,17 +227,17 @@ enum {
 - (void)themeOptionButtonPressed {
     UIAlertController *popupSelector = [UIAlertController alertControllerWithTitle:@"Theme Options" message:nil preferredStyle:UIAlertControllerStyleActionSheet];
     UIAlertAction *importAction = [UIAlertAction actionWithTitle:@"Import Theme" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
-        // Import Theme Here
-    }];
-    UIAlertAction *exportAction = [UIAlertAction actionWithTitle:@"Export Theme" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
-        // Export a theme here
+        UIDocumentPickerViewController *controller = [[UIDocumentPickerViewController alloc] initWithDocumentTypes:@[@"public.data"] inMode:UIDocumentPickerModeImport];
+        controller.allowsMultipleSelection = false;
+        controller.delegate = self;
+        if (@available(iOS 13.0, *)) controller.shouldShowFileExtensions = true;
+        [self presentViewController:controller animated:true completion:nil];
     }];
     UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction * _Nonnull action) {
         // Bruh
     }];
     
     UIAlertAction *createAction = [UIAlertAction actionWithTitle:@"Add Theme" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
-        // Add Theme Here
         Theme *defaultProperties = [Theme presets][@"Light"];
         UIAlertController *nameController = [UIAlertController alertControllerWithTitle:@"Set Name" message:nil preferredStyle:UIAlertControllerStyleAlert];
         [nameController addTextFieldWithConfigurationHandler:^(UITextField * _Nonnull textField) {
@@ -263,12 +275,45 @@ enum {
     }];
     [popupSelector addAction:createAction];
     [popupSelector addAction:importAction];
-    [popupSelector addAction:exportAction];
     [popupSelector addAction:cancelAction];
     
     [self presentViewController:popupSelector animated:true completion:nil];
     //TODO: Make batch import/export a thing...
     
 }
+
+- (void)documentPicker:(UIDocumentPickerViewController *)controller didPickDocumentsAtURLs:(NSArray<NSURL *> *)urls {
+    
+    void (^failWithMessage)(NSString *) = ^void(NSString *message) {
+        UIAlertController *errorController = [UIAlertController alertControllerWithTitle:@"Error Importing Theme" message:message preferredStyle:UIAlertControllerStyleAlert];
+        UIAlertAction *okAction = [UIAlertAction actionWithTitle:@"Oops" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+            // 69 haha funny number
+        }];
+        [errorController addAction:okAction];
+        [self presentViewController:errorController animated:YES completion:nil];
+        return;
+    };
+    
+    // There should only be one document selected explicitly
+    NSURL *ourUrl = urls.firstObject;
+    NSData *jsonData = [NSData dataWithContentsOfURL:ourUrl];
+    NSError *error = nil;
+    NSDictionary<NSString *, id> *themeData = [NSJSONSerialization JSONObjectWithData:jsonData options:0 error:&error];
+    NSArray<NSString *> *propertyNames = [UserPreferences.shared.theme.properties allKeys];
+    for (NSString *name in propertyNames) { // sanity check
+        if (themeData[name] == nil) {
+            // We have an issue with the data within the json because it doesn't meet all of the property requirements
+            failWithMessage([@"Theme Export is missing the property %@" stringByAppendingString:name]);
+        }
+    }
+    Theme *themeToImport = [[Theme alloc] initWithProperties:themeData];
+    if ([Theme.themeNames containsObject:themeToImport.name])
+        failWithMessage([@"The theme %@ already exists" stringByAppendingString:themeToImport.name]);
+
+    
+    // OK we can now import the theme
+    [UserPreferences.shared modifyTheme:themeToImport.name properties:themeToImport.properties];
+    
+ }
 
 @end
