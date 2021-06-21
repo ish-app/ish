@@ -20,7 +20,7 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    [UserPreferences.shared observe:@[@"theme", @"fontSize", @"fontFamily", @"showStatusBar"]
+    [UserPreferences.shared observe:@[@"theme", @"fontSize", @"fontFamily", @"hideStatusBar"]
                             options:0 owner:self usingBlock:^(typeof(self) self) {
         [self.tableView reloadData];
         [self setNeedsStatusBarAppearanceUpdate];
@@ -126,7 +126,7 @@ enum {
             cell.selectionStyle = UITableViewCellSelectionStyleNone;
             UISwitch *statusBarToggle = [[UISwitch alloc] initWithFrame:CGRectZero];
             cell.accessoryView = statusBarToggle;
-            statusBarToggle.on = prefs.showStatusBar;
+            statusBarToggle.on = prefs.hideStatusBar;
             [statusBarToggle addTarget:self action:@selector(setStatusBar:) forControlEvents:UIControlEventValueChanged];
             break;
     }
@@ -167,7 +167,7 @@ enum {
 }
 
 - (void) setStatusBar:(id)sender {
-    [[UserPreferences shared] setShowStatusBar:((UISwitch *)sender).on];
+    [[UserPreferences shared] setHideStatusBar:((UISwitch *)sender).on];
     [self setNeedsStatusBarAppearanceUpdate];
 }
 

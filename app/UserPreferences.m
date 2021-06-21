@@ -19,7 +19,7 @@ static NSString *const kPreferenceThemeKey = @"Theme";
 static NSString *const kPreferenceDisableDimmingKey = @"Disable Dimming";
 NSString *const kPreferenceLaunchCommandKey = @"Init Command";
 NSString *const kPreferenceBootCommandKey = @"Boot Command";
-NSString *const kPreferenceShowStatusBar = @"Status Bar";
+NSString *const kPreferenceHideStatusBar = @"Status Bar";
 @implementation UserPreferences {
     NSUserDefaults *_defaults;
 }
@@ -48,20 +48,19 @@ NSString *const kPreferenceShowStatusBar = @"Status Bar";
             kPreferenceDisableDimmingKey: @(NO),
             kPreferenceLaunchCommandKey: @[@"/bin/login", @"-f", @"root"],
             kPreferenceBootCommandKey: @[@"/sbin/init"],
-            kPreferenceShowStatusBar: @(YES),
+            kPreferenceHideStatusBar: @(NO),
         }];
         _theme = [[Theme alloc] initWithProperties:[_defaults objectForKey:kPreferenceThemeKey]];
-        // [[NSNotificationCenter defaultCenter] postNotificationName:@"updateStatusBar" object:nil];
     }
     return self;
 }
 
-- (BOOL)showStatusBar {
-    return [_defaults boolForKey:kPreferenceShowStatusBar];
+- (BOOL)hideStatusBar {
+    return [_defaults boolForKey:kPreferenceHideStatusBar];
 }
 
-- (void)setShowStatusBar:(BOOL)showStatusBar {
-    [_defaults setBool:showStatusBar forKey:kPreferenceShowStatusBar];
+- (void)setHideStatusBar:(BOOL)showStatusBar {
+    [_defaults setBool:showStatusBar forKey:kPreferenceHideStatusBar];
 }
 
 - (CapsLockMapping)capsLockMapping {
