@@ -1,6 +1,6 @@
 #include <linux/compiler_attributes.h>
 #include <linux/start_kernel.h>
-#include <string.h>
+#include <linux/string.h>
 
 extern void run_kernel(void);
 

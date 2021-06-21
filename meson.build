@@ -175,9 +175,13 @@ if get_option('kernel') == 'ish'
 elif get_option('kernel') == 'linux'
     modules = static_library('linux_modules', [
         'linux/main.c',
-    ], dependencies: [linux_headers])
+        'linux/fakefs.c',
+    ], dependencies: [linux_headers, sqlite3])
     executable('ish', [
         build_linux,
+        'fs/fake-db.c',
+        'fs/fake-migrate.c',
+        'fs/fake-rebuild.c',
     ], dependencies: [
         liblinux,
         declare_dependency(link_whole: modules),

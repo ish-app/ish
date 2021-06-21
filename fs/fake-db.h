@@ -2,6 +2,7 @@
 #define FS_FAKEFS_API_H
 
 #include <sqlite3.h>
+#include "misc.h"
 
 struct fakefs_db {
     sqlite3 *db;
@@ -24,8 +25,8 @@ struct fakefs_db {
     sqlite3_mutex *lock;
 };
 
-int fakefs_init(struct fakefs_db *fs, const char *db_path, int root_fd);
-int fakefs_deinit(struct fakefs_db *fs);
+int fake_db_init(struct fakefs_db *fs, const char *db_path, int root_fd);
+int fake_db_deinit(struct fakefs_db *fs);
 
 void db_begin(struct fakefs_db *fs);
 void db_commit(struct fakefs_db *fs);
@@ -46,7 +47,7 @@ typedef uint64_t inode_t;
 
 inode_t path_get_inode(struct fakefs_db *fs, const char *path);
 bool path_read_stat(struct fakefs_db *fs, const char *path, struct ish_stat *stat, uint64_t *inode);
-void path_create(struct fakefs_db *fs, const char *path, struct ish_stat *stat);
+inode_t path_create(struct fakefs_db *fs, const char *path, struct ish_stat *stat);
 
 void inode_read_stat(struct fakefs_db *fs, inode_t inode, struct ish_stat *stat);
 void inode_write_stat(struct fakefs_db *fs, inode_t inode, struct ish_stat *stat);

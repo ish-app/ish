@@ -1,7 +1,9 @@
 #ifndef MISC_H
 #define MISC_H
 
-#ifndef __KERNEL__
+#ifdef __KERNEL__
+#include <linux/types.h>
+#else
 #include <assert.h>
 #include <sys/types.h>
 #include <stdnoreturn.h>

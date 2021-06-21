@@ -78,13 +78,15 @@ bool path_read_stat(struct fakefs_db *fs, const char *path, struct ish_stat *sta
     db_reset(fs, fs->stmt.path_read_stat);
     return exists;
 }
-void path_create(struct fakefs_db *fs, const char *path, struct ish_stat *stat) {
+inode_t path_create(struct fakefs_db *fs, const char *path, struct ish_stat *stat) {
     // insert into stats (stat) values (?)
     sqlite3_bind_blob(fs->stmt.path_create_stat, 1, stat, sizeof(*stat), SQLITE_TRANSIENT);
     db_exec_reset(fs, fs->stmt.path_create_stat);
+    inode_t inode = sqlite3_last_insert_rowid(fs->db);
     // insert or replace into paths values (?, last_insert_rowid())
     bind_path(fs->stmt.path_create_path, 1, path);
     db_exec_reset(fs, fs->stmt.path_create_path);
+    return inode;
 }
 
 void inode_read_stat(struct fakefs_db *fs, inode_t inode, struct ish_stat *stat) {
@@ -167,7 +169,7 @@ static void sqlite_func_change_prefix(sqlite3_context *context, int argc, sqlite
 extern int fakefs_rebuild(struct fakefs_db *fs, int root_fd);
 extern int fakefs_migrate(struct fakefs_db *fs, int root_fd);
 
-int fakefs_init(struct fakefs_db *fs, const char *db_path, int root_fd) {
+int fake_db_init(struct fakefs_db *fs, const char *db_path, int root_fd) {
     int err = sqlite3_open_v2(db_path, &fs->db, SQLITE_OPEN_READWRITE, NULL);
     if (err != SQLITE_OK) {
         printk("error opening database: %s\n", sqlite3_errmsg(fs->db));
@@ -254,7 +256,7 @@ int fakefs_init(struct fakefs_db *fs, const char *db_path, int root_fd) {
     return 0;
 }
 
-int fakefs_deinit(struct fakefs_db *fs) {
+int fake_db_deinit(struct fakefs_db *fs) {
     if (fs->db) {
         sqlite3_finalize(fs->stmt.begin);
         sqlite3_finalize(fs->stmt.commit);

@@ -1,8 +1,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <unistd.h>
 #include "fs/sqlutil.h"
-#include "kernel/fs.h"
+#include "fs/fake-db.h"
 #include "kernel/errno.h"
 #include "util/list.h"
 #include "debug.h"
@@ -27,6 +28,14 @@ struct entry {
     char *path;
     struct list chain;
 };
+
+static const char *fix_path(const char *path) {
+    if (strcmp(path, "") == 0)
+        return ".";
+    if (path[0] == '/')
+        path++;
+    return path;
+}
 
 int fakefs_rebuild(struct fakefs_db *fs, int root_fd) {
     sqlite3 *db = fs->db;

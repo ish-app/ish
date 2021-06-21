@@ -23,6 +23,34 @@ if get_option('kernel') == 'linux'
         meson.current_build_dir()+'/linux/include/generated/uapi',
         meson.current_build_dir()+'/linux/arch/ish/include/generated/uapi'])
 
+    linux_headers = declare_dependency(
+        include_directories: [include_directories(
+            'linux/arch/ish/include',
+            'linux/arch/ish/include/generated',
+            'linux/arch/ish/include/ishemu',
+            'linux/include',
+            'linux/arch/ish/include/uapi',
+            'linux/arch/ish/include/generated/uapi',
+            'linux/include/uapi',
+            'linux/include/generated/uapi',
+        )] + includes,
+        compile_args: [
+            # '-nostdlibinc',
+            '-include', 'linux/compiler_attributes.h',
+            '-include', 'linux/kconfig.h',
+            '-D__KERNEL__', '-U__weak',
+            # Warnings triggered by kernel headers. Some of these
+            # warn of UB, but I feel all right with silencing them
+            # because if clang does something to break Linux
+            # there'll be hell to pay.
+            '-Wno-unused-parameter',
+            '-Wno-sign-compare',
+            '-Wno-implicit-fallthrough',
+            '-Wno-pointer-sign',
+            '-Wno-null-pointer-arithmetic',
+        ],
+    )
+
     liblinux = declare_dependency(
         link_with: [libish_emu],
         link_whole: [build_linux[0]],
@@ -30,14 +58,5 @@ if get_option('kernel') == 'linux'
             '-sectalign', '__DATA', '__percpu_first', '1000',
             '-sectalign', '__DATA', '__tracepoints', '20',
         ],
-        compile_args: ['-include', 'linux/compiler_attributes.h', '-U__weak'],
-        include_directories: include_directories(
-            'linux/arch/ish/include',
-            'linux/arch/ish/include/generated',
-            'linux/include',
-            'linux/arch/ish/include/uapi',
-            'linux/arch/ish/include/generated/uapi',
-            'linux/include/uapi',
-            'linux/include/generated/uapi',
-        ))
+    )
 endif
