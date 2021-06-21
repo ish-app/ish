@@ -172,50 +172,50 @@ struct task *fake_task;
 // It's ok to use _mount in these because in each case the caller has already invoked itemForIdentifier:error: at least once
 - (BOOL)doCreateDirectoryAt:(NSString *)path inode:(ino_t *)inode error:(NSError **)error {
     NSURL *url = [[NSURL fileURLWithPath:[NSString stringWithUTF8String:_mount->source]] URLByAppendingPathComponent:path];
-    db_begin(_mount);
+    db_begin(&_mount->fakefs);
     if (![NSFileManager.defaultManager createDirectoryAtURL:url
                                 withIntermediateDirectories:NO
                                                  attributes:@{NSFilePosixPermissions: @0777}
                                                       error:error]) {
-        db_rollback(_mount);
+        db_rollback(&_mount->fakefs);
         return nil;
     }
     struct ish_stat stat;
     NSString *parentPath = [path substringToIndex:[path rangeOfString:@"/" options:NSBackwardsSearch].location];
-    if (!path_read_stat(_mount, parentPath.fileSystemRepresentation, &stat, NULL)) {
-        db_rollback(_mount);
+    if (!path_read_stat(&_mount->fakefs, parentPath.fileSystemRepresentation, &stat, NULL)) {
+        db_rollback(&_mount->fakefs);
         *error = [NSError errorWithDomain:NSFileProviderErrorDomain code:NSFileProviderErrorNoSuchItem userInfo:nil];
         return nil;
     }
     stat.mode = (stat.mode & ~S_IFMT) | S_IFDIR;
-    path_create(_mount, path.fileSystemRepresentation, &stat);
+    path_create(&_mount->fakefs, path.fileSystemRepresentation, &stat);
     if (inode != NULL)
-        *inode = path_get_inode(_mount, path.fileSystemRepresentation);
-    db_commit(_mount);
+        *inode = path_get_inode(&_mount->fakefs, path.fileSystemRepresentation);
+    db_commit(&_mount->fakefs);
     return YES;
 }
 
 - (BOOL)doCreateFileAt:(NSString *)path importFrom:(NSURL *)importURL inode:(ino_t *)inode error:(NSError **)error {
     NSURL *url = [[NSURL fileURLWithPath:[NSString stringWithUTF8String:_mount->source]] URLByAppendingPathComponent:path];
-    db_begin(_mount);
+    db_begin(&_mount->fakefs);
     if (![NSFileManager.defaultManager copyItemAtURL:importURL
                                                toURL:url
                                                error:error]) {
-        db_rollback(_mount);
+        db_rollback(&_mount->fakefs);
         return nil;
     }
     struct ish_stat stat;
     NSString *parentPath = [path substringToIndex:[path rangeOfString:@"/" options:NSBackwardsSearch].location];
-    if (!path_read_stat(_mount, parentPath.fileSystemRepresentation, &stat, NULL)) {
-        db_rollback(_mount);
+    if (!path_read_stat(&_mount->fakefs, parentPath.fileSystemRepresentation, &stat, NULL)) {
+        db_rollback(&_mount->fakefs);
         *error = [NSError errorWithDomain:NSFileProviderErrorDomain code:NSFileProviderErrorNoSuchItem userInfo:nil];
         return nil;
     }
     stat.mode = (stat.mode & ~S_IFMT & ~0111) | S_IFREG;
-    path_create(_mount, path.fileSystemRepresentation, &stat);
+    path_create(&_mount->fakefs, path.fileSystemRepresentation, &stat);
     if (inode != NULL)
-        *inode = path_get_inode(_mount, path.fileSystemRepresentation);
-    db_commit(_mount);
+        *inode = path_get_inode(&_mount->fakefs, path.fileSystemRepresentation);
+    db_commit(&_mount->fakefs);
     return YES;
 }
 

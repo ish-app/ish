@@ -49,6 +49,7 @@ if get_option('kernel') == 'linux'
             '-Wno-pointer-sign',
             '-Wno-null-pointer-arithmetic',
         ],
+        link_with: [build_linux[0]],
     )
 
     liblinux = declare_dependency(
