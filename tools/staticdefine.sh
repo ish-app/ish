@@ -3,7 +3,7 @@ compile_commands=$1
 input=$2
 output=$3
 dep=$4
-flags=$(python - <<END
+flags=$(python3 - <<END
 import json
 with open('$compile_commands') as f:
     commands = json.load(f)
