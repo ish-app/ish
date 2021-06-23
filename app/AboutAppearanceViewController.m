@@ -127,7 +127,7 @@ enum {
             UISwitch *statusBarToggle = [[UISwitch alloc] initWithFrame:CGRectZero];
             cell.accessoryView = statusBarToggle;
             statusBarToggle.on = prefs.hideStatusBar;
-            [statusBarToggle addTarget:self action:@selector(setStatusBar:) forControlEvents:UIControlEventValueChanged];
+            [statusBarToggle addTarget:self action:@selector(hideStatusBarChanged:) forControlEvents:UIControlEventValueChanged];
             break;
     }
     
@@ -166,8 +166,8 @@ enum {
     UserPreferences.shared.fontSize = @((int) sender.value);
 }
 
-- (void) setStatusBar:(id)sender {
-    [[UserPreferences shared] setHideStatusBar:((UISwitch *)sender).on];
+- (void) hideStatusBarChanged:(UISwitch *)sender {
+    UserPreferences.shared.hideStatusBar = sender.on;
     [self setNeedsStatusBarAppearanceUpdate];
 }
 
