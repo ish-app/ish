@@ -20,6 +20,7 @@ static NSString *const kPreferenceDisableDimmingKey = @"Disable Dimming";
 NSString *const kPreferenceLaunchCommandKey = @"Init Command";
 NSString *const kPreferenceBootCommandKey = @"Boot Command";
 NSString *const kPreferenceHideStatusBar = @"Status Bar";
+
 @implementation UserPreferences {
     NSUserDefaults *_defaults;
 }
