@@ -19,8 +19,8 @@ jobs:
           RCLONE_CONFIG: ${{ secrets.RCLONE_CONFIG }}
       - name: Update
         run: |
-          deps/aports/sync-archive.sh v3.12 main/x86
-          deps/aports/sync-archive.sh v3.12 community/x86
+          deps/aports/sync-archive.sh v3.14 main/x86
+          deps/aports/sync-archive.sh v3.14 community/x86
       - name: Commit
         id: commit
         run: |
