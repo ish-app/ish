@@ -130,6 +130,7 @@ struct rowcol {
         @"fontSize": @(self.effectiveFontSize),
         @"foregroundColor": [self cssColor:prefs.theme.foregroundColor],
         @"backgroundColor": [self cssColor:prefs.theme.backgroundColor],
+        @"palette": prefs.theme.palette,
     };
     NSString *json = [[NSString alloc] initWithData:[NSJSONSerialization dataWithJSONObject:themeInfo options:0 error:nil] encoding:NSUTF8StringEncoding];
     [self.terminal.webView evaluateJavaScript:[NSString stringWithFormat:@"exports.updateStyle(%@)", json] completionHandler:^(id result, NSError *error){

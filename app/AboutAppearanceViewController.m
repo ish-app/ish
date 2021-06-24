@@ -295,12 +295,23 @@ enum {
     
     // There should only be one document selected explicitly
     NSURL *ourUrl = urls.firstObject;
-    NSDictionary<NSString *, id> *themeData = [NSDictionary dictionaryWithContentsOfURL:ourUrl];
+    NSMutableDictionary<NSString *, id> *themeData = [NSMutableDictionary dictionaryWithContentsOfURL:ourUrl];
     NSArray<NSString *> *propertyNames = [UserPreferences.shared.theme.properties allKeys];
     for (NSString *name in propertyNames) { // sanity check
         if (themeData[name] == nil) {
             // We have an issue with the data within the json because it doesn't meet all of the property requirements
             failWithMessage([NSString stringWithFormat:@"Theme Export is missing the property %@", name]);
+        }
+        if ([@[@"forgroundColor", @"backgroundColor"] containsObject:name]) {
+            themeData[name] = [UIColor colorWithHexString:themeData[name]];
+        }
+        if ([name isEqual: @"palette"]) {
+            NSMutableArray *array = themeData[name];
+            for (int i = 0; i < array.count; i++) {
+                NSString *color = array[i];
+                array[i] = [UIColor colorWithHexString:color];
+            }
+            themeData[name] = array;
         }
     }
     Theme *themeToImport = [[Theme alloc] initWithProperties:themeData];

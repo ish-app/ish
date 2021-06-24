@@ -18,6 +18,27 @@ typedef enum : NSUInteger {
     OptionMapEsc,
 } OptionMapping;
 
+enum {
+    PaletteBlackColor,
+    PaletteRedColor,
+    PaletteGreenColor,
+    PaletteYellowColor,
+    PaletteBlueColor,
+    PaletteMagentaColor,
+    PaletteCyanColor,
+    PaletteWhiteColor,
+    
+    // Background
+    PaletteBlackBackgroundColor,
+    PaletteRedBackgroundColor,
+    PaletteGreenBackgroundColor,
+    PaletteYellowBackgroundColor,
+    PaletteBlueBackgroundColor,
+    PaletteMagentaBackgroundColor,
+    PaletteCyanBackgroundColor,
+    PaletteWhiteBackgroundColor,
+};
+
 NS_ASSUME_NONNULL_BEGIN
 
 @interface Theme : NSObject
@@ -31,6 +52,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, readonly) UIColor *foregroundColor;
 @property (nonatomic, readonly) UIColor *backgroundColor;
+@property (nonatomic, readonly) NSArray<NSString *> *palette;
 @property (nonatomic) NSString *name;
 @property (readonly) UIKeyboardAppearance keyboardAppearance;
 @property (readonly) UIStatusBarStyle statusBarStyle;
@@ -39,6 +61,7 @@ NS_ASSUME_NONNULL_BEGIN
 extern NSString *const kThemeForegroundColor;
 extern NSString *const kThemeBackgroundColor;
 extern NSString *const kThemeName;
+extern NSString *const kThemePalette;
 @interface UserPreferences : NSObject
 
 @property CapsLockMapping capsLockMapping;

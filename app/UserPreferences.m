@@ -7,7 +7,7 @@
 
 #import <UIKit/UIKit.h>
 #import "UserPreferences.h"
-
+#import "UIColor+additions.h"
 static NSString *const kPreferenceCapsLockMappingKey = @"Caps Lock Mapping";
 static NSString *const kPreferenceOptionMappingKey = @"Option Mapping";
 static NSString *const kPreferenceBacktickEscapeKey = @"Backtick Mapping Escape";
@@ -178,16 +178,10 @@ NSString *const kPreferenceBootCommandKey = @"Boot Command";
 @end
 
 static id ArchiveColor(UIColor *color) {
-    CGFloat r, g, b;
-    [color getRed:&r green:&g blue:&b alpha:nil];
-    return [NSString stringWithFormat:@"%f %f %f", r, g, b];
+    return [UIColor hexWithColor:color];
 }
 static UIColor *UnarchiveColor(id data) {
-    NSArray<NSString *> *components = [data componentsSeparatedByString:@" "];
-    CGFloat r = components[0].doubleValue;
-    CGFloat g = components[1].doubleValue;
-    CGFloat b = components[2].doubleValue;
-    return [UIColor colorWithRed:r green:g blue:b alpha:1];
+    return [UIColor colorWithHexString:data];
 }
 
 //MARK: Theme Implementation
@@ -198,15 +192,16 @@ static UIColor *UnarchiveColor(id data) {
         _foregroundColor = UnarchiveColor(props[kThemeForegroundColor]);
         _backgroundColor = UnarchiveColor(props[kThemeBackgroundColor]);
         _name = props[kThemeName];
+        _palette = props[kThemePalette];
     }
     return self;
 }
 
-+ (instancetype)_themeWithForegroundColor:(UIColor *)foreground backgroundColor:(UIColor *)background name:(NSString *)name {
++ (instancetype)_themeWithForegroundColor:(UIColor *)foreground backgroundColor:(UIColor *)background name:(NSString *)name palette:(NSArray<NSString *> *)palette {
     return [[self alloc] initWithProperties:@{kThemeForegroundColor: ArchiveColor(foreground),
                                               kThemeBackgroundColor: ArchiveColor(background),
-                                              kThemeName: name
-                                              
+                                              kThemeName: name,
+                                              kThemePalette: palette
     }];
 }
 
@@ -235,7 +230,8 @@ static UIColor *UnarchiveColor(id data) {
 - (NSDictionary<NSString *,id> *)properties {
     return @{kThemeForegroundColor: ArchiveColor(self.foregroundColor),
              kThemeBackgroundColor: ArchiveColor(self.backgroundColor),
-             kThemeName: self.name
+             kThemeName: self.name,
+             kThemePalette: self.palette
     };
 }
 
@@ -253,13 +249,16 @@ static UIColor *UnarchiveColor(id data) {
     return @{
          @"Light": [self _themeWithForegroundColor:UIColor.blackColor
                                    backgroundColor:UIColor.whiteColor
-                                              name:@"Light"],
+                                              name:@"Light"
+                                           palette:@[]],
          @"Dark":  [self _themeWithForegroundColor:UIColor.whiteColor
                                    backgroundColor:UIColor.blackColor
-                                              name: @"Dark"],
+                                              name: @"Dark"
+                                           palette:@[]],
          @"1337":  [self _themeWithForegroundColor:UIColor.greenColor
                                    backgroundColor:UIColor.blackColor
-                                              name:@"1337"]
+                                              name:@"1337"
+                                           palette:@[]]
     };
 }
 
@@ -280,3 +279,4 @@ static UIColor *UnarchiveColor(id data) {
 NSString *const kThemeForegroundColor = @"ForegroundColor";
 NSString *const kThemeBackgroundColor = @"BackgroundColor";
 NSString *const kThemeName = @"Name";
+NSString *const kThemePalette = @"Palette";
