@@ -104,7 +104,10 @@
         [self.escapeKey setTitle:nil forState:UIControlStateNormal];
         [self.escapeKey setImage:[UIImage systemImageNamed:@"escape"] forState:UIControlStateNormal];
     }
-
+    
+    [UserPreferences.shared observe:@[@"hideStatusBar"] options:0 owner:self usingBlock:^(typeof(self) self) {
+        [self setNeedsStatusBarAppearanceUpdate];
+    }];
     [UserPreferences.shared observe:@[@"theme", @"hideExtraKeysWithExternalKeyboard"]
                             options:0 owner:self usingBlock:^(typeof(self) self) {
         [self _updateStyleFromPreferences:YES];
@@ -239,7 +242,6 @@
         [self.termView reloadInputViews];
         self.ignoreKeyboardMotion = NO;
     }
-    [self setNeedsStatusBarAppearanceUpdate];
 }
 - (void)_updateStyleAnimated {
     [self _updateStyleFromPreferences:YES];
@@ -250,8 +252,7 @@
 }
 
 - (BOOL)prefersStatusBarHidden {
-    BOOL isIPhoneX = self.view.window.safeAreaInsets.top > 20;
-    return !isIPhoneX;
+    return UserPreferences.shared.hideStatusBar;
 }
 
 - (void)keyboardDidSomething:(NSNotification *)notification {
