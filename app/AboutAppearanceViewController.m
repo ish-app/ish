@@ -139,9 +139,8 @@ enum {
             UITableViewRowAction *exportAction = [UITableViewRowAction rowActionWithStyle:UITableViewRowActionStyleNormal title:@"Export" handler:^(UITableViewRowAction * _Nonnull action, NSIndexPath * _Nonnull indexPath) {
                 NSDictionary<NSString *, id> *props = currentTheme.properties;
                 NSError *error = nil;
-                NSData *jsonData = [NSJSONSerialization dataWithJSONObject:props options:NSJSONWritingPrettyPrinted error:&error];
-                NSURL *tmpUrl = [[NSFileManager defaultManager].temporaryDirectory URLByAppendingPathComponent:[NSString stringWithFormat:@"%@.theme", currentTheme.name]];
-                [[[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding] writeToFile:tmpUrl.absoluteString atomically:NO encoding:NSUTF8StringEncoding error:&error];
+                NSURL *tmpUrl = [[NSFileManager defaultManager].temporaryDirectory URLByAppendingPathComponent:[NSString stringWithFormat:@"%@-theme.plist", currentTheme.name]];
+                [props writeToURL:tmpUrl error:&error];
                 UIActivityViewController *controller = [[UIActivityViewController alloc] initWithActivityItems:@[tmpUrl] applicationActivities:nil];
                 controller.popoverPresentationController.sourceView = self.tableView;
                 [self presentViewController:controller animated:YES completion:nil];
@@ -296,9 +295,7 @@ enum {
     
     // There should only be one document selected explicitly
     NSURL *ourUrl = urls.firstObject;
-    NSData *jsonData = [NSData dataWithContentsOfURL:ourUrl];
-    NSError *error = nil;
-    NSDictionary<NSString *, id> *themeData = [NSJSONSerialization JSONObjectWithData:jsonData options:0 error:&error];
+    NSDictionary<NSString *, id> *themeData = [NSDictionary dictionaryWithContentsOfURL:ourUrl];
     NSArray<NSString *> *propertyNames = [UserPreferences.shared.theme.properties allKeys];
     for (NSString *name in propertyNames) { // sanity check
         if (themeData[name] == nil) {
