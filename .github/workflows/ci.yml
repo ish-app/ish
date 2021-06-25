@@ -21,6 +21,7 @@ jobs:
             python-version: '3.x'
       - name: Install dependencies
         run: |
+          sudo apt-get update
           sudo apt-get install ninja-build libarchive-dev
           pip3 install meson
       - name: Build

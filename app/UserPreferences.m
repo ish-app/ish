@@ -1,3 +1,8 @@
+/*
+ *   Copyright (c) 2021 c0dine
+ *   All rights reserved.
+ *   Feel free to contribute!
+ */
 //
 //  UserPreferences.m
 //  iSH
@@ -21,6 +26,7 @@ static NSString *const kPreferenceDefaultSchemeName = @"Light";
 static NSString *const kPreferenceDisableDimmingKey = @"Disable Dimming";
 NSString *const kPreferenceLaunchCommandKey = @"Init Command";
 NSString *const kPreferenceBootCommandKey = @"Boot Command";
+NSString *const kPreferenceHideStatusBar = @"Status Bar";
 
 @implementation UserPreferences {
     NSUserDefaults *_defaults;
@@ -57,6 +63,7 @@ NSString *const kPreferenceBootCommandKey = @"Boot Command";
             kPreferenceDisableDimmingKey: @(NO),
             kPreferenceLaunchCommandKey: @[@"/bin/login", @"-f", @"root"],
             kPreferenceBootCommandKey: @[@"/sbin/init"],
+            kPreferenceHideStatusBar: @(NO),
         }];
         NSString *currentSchemeName = [_defaults stringForKey:kPreferenceSchemeKey];
         _scheme = [self schemeFromName:currentSchemeName];
@@ -68,9 +75,18 @@ NSString *const kPreferenceBootCommandKey = @"Boot Command";
     return [(NSDictionary<NSString *, id> *) [_defaults objectForKey:kPreferenceSchemeDictKey] allKeys];
 }
 
+- (BOOL)hideStatusBar {
+    return [_defaults boolForKey:kPreferenceHideStatusBar];
+}
+
+- (void)setHideStatusBar:(BOOL)showStatusBar {
+    [_defaults setBool:showStatusBar forKey:kPreferenceHideStatusBar];
+}
+
 - (CapsLockMapping)capsLockMapping {
     return [_defaults integerForKey:kPreferenceCapsLockMappingKey];
 }
+
 - (void)setCapsLockMapping:(CapsLockMapping)capsLockMapping {
     [_defaults setInteger:capsLockMapping forKey:kPreferenceCapsLockMappingKey];
 }
@@ -78,6 +94,7 @@ NSString *const kPreferenceBootCommandKey = @"Boot Command";
 - (OptionMapping)optionMapping {
     return [_defaults integerForKey:kPreferenceOptionMappingKey];
 }
+
 - (void)setOptionMapping:(OptionMapping)optionMapping {
     [_defaults setInteger:optionMapping forKey:kPreferenceOptionMappingKey];
 }
@@ -85,6 +102,7 @@ NSString *const kPreferenceBootCommandKey = @"Boot Command";
 - (BOOL)backtickMapEscape {
     return [_defaults boolForKey:kPreferenceBacktickEscapeKey];
 }
+
 - (void)setBacktickMapEscape:(BOOL)backtickMapEscape {
     [_defaults setBool:backtickMapEscape forKey:kPreferenceBacktickEscapeKey];
 }
@@ -92,18 +110,23 @@ NSString *const kPreferenceBootCommandKey = @"Boot Command";
 - (BOOL)hideExtraKeysWithExternalKeyboard {
     return [_defaults boolForKey:kPreferenceHideExtraKeysWithExternalKeyboard];
 }
+
 - (void)setHideExtraKeysWithExternalKeyboard:(BOOL)hideExtraKeysWithExternalKeyboard {
     [_defaults setBool:hideExtraKeysWithExternalKeyboard forKey:kPreferenceHideExtraKeysWithExternalKeyboard];
 }
+
 - (BOOL)overrideControlSpace {
     return [_defaults boolForKey:kPreferenceOverrideControlSpace];
 }
+
 - (void)setOverrideControlSpace:(BOOL)overrideControlSpace {
     [_defaults setBool:overrideControlSpace forKey:kPreferenceOverrideControlSpace];
 }
+
 - (NSNumber *)fontSize {
     return [_defaults objectForKey:kPreferenceFontSizeKey];
 }
+
 - (void)setFontSize:(NSNumber *)fontSize {
     [_defaults setObject:fontSize forKey:kPreferenceFontSizeKey];
 }
@@ -111,6 +134,7 @@ NSString *const kPreferenceBootCommandKey = @"Boot Command";
 - (NSString *)fontFamily {
     return [_defaults objectForKey:kPreferenceFontFamilyKey];
 }
+
 - (void)setFontFamily:(NSString *)fontFamily {
     [_defaults setObject:fontFamily forKey:kPreferenceFontFamilyKey];
 }
@@ -118,6 +142,7 @@ NSString *const kPreferenceBootCommandKey = @"Boot Command";
 - (UIColor *)foregroundColor {
     return self.scheme.foregroundColor;
 }
+
 - (UIColor *)backgroundColor {
     return self.scheme.backgroundColor;
 }
@@ -152,6 +177,7 @@ NSString *const kPreferenceBootCommandKey = @"Boot Command";
 - (BOOL)shouldDisableDimming {
     return [_defaults boolForKey:kPreferenceDisableDimmingKey];
 }
+
 - (void)setShouldDisableDimming:(BOOL)dim {
     [_defaults setBool:dim forKey:kPreferenceDisableDimmingKey];
 }
@@ -159,9 +185,11 @@ NSString *const kPreferenceBootCommandKey = @"Boot Command";
 - (NSArray<NSString *> *)launchCommand {
     return [_defaults stringArrayForKey:kPreferenceLaunchCommandKey];
 }
+
 - (void)setLaunchCommand:(NSArray<NSString *> *)launchCommand {
     [_defaults setObject:launchCommand forKey:kPreferenceLaunchCommandKey];
 }
+
 - (BOOL)hasChangedLaunchCommand {
     NSArray *defaultLaunchCommand = [[[NSUserDefaults alloc] initWithSuiteName:NSRegistrationDomain] stringArrayForKey:kPreferenceLaunchCommandKey];
     return ![self.launchCommand isEqual:defaultLaunchCommand];
@@ -170,6 +198,7 @@ NSString *const kPreferenceBootCommandKey = @"Boot Command";
 - (NSArray<NSString *> *)bootCommand {
     return [_defaults stringArrayForKey:kPreferenceBootCommandKey];
 }
+
 - (void)setBootCommand:(NSArray<NSString *> *)bootCommand {
     [_defaults setObject:bootCommand forKey:kPreferenceBootCommandKey];
 }

@@ -1,3 +1,8 @@
+/*
+ *   Copyright (c) 2021 c0dine
+ *   All rights reserved.
+ *   Feel free to contribute!
+ */
 //
 //  UserPreferences.h
 //  iSH
@@ -70,7 +75,8 @@ extern NSString *const kSchemePalette;
 @property BOOL hideExtraKeysWithExternalKeyboard;
 @property BOOL overrideControlSpace;
 @property (nonatomic) Scheme *scheme;
-@property (nonatomic) BOOL shouldDisableDimming;
+@property BOOL hideStatusBar;
+@property BOOL shouldDisableDimming;
 @property NSString *fontFamily;
 @property NSNumber *fontSize;
 @property NSArray<NSString *> *launchCommand;

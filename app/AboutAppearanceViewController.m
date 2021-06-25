@@ -1,3 +1,8 @@
+/*
+ *   Copyright (c) 2021 c0dine
+ *   All rights reserved.
+ *   Feel free to contribute!
+ */
 //
 //  AboutViewController.m
 //  iSH
@@ -19,7 +24,7 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    [UserPreferences.shared observe:@[@"scheme", @"fontSize", @"fontFamily"]
+    [UserPreferences.shared observe:@[@"scheme", @"fontSize", @"fontFamily", @"hideStatusBar"]
                             options:0 owner:self usingBlock:^(typeof(self) self) {
         [self.tableView reloadData];
         [self setNeedsStatusBarAppearanceUpdate];
@@ -45,15 +50,18 @@
 
 enum {
     CustomizationSection,
+    StatusBarSection,
+    NumberOfSections,
 };
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-    return Scheme.schemeNames.count + 1;
+    return Scheme.schemeNames.count + 2;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     switch (section) {
         case CustomizationSection: return 2;
+        case StatusBarSection: return 1;
         default: return 1;
     }
 }
@@ -61,7 +69,8 @@ enum {
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
     switch (section) {
         case CustomizationSection: return @"Customization";
-        default: return Scheme.schemeNames[section - 1];
+        case StatusBarSection: return @"Status Bar";
+        default: return Scheme.schemeNames[section - 2];
     }
 }
 
@@ -71,6 +80,9 @@ enum {
         case CustomizationSection: {
             return @[@"Font", @"Font Size"][indexPath.row];
         }
+        case StatusBarSection: {
+            return @"Status Bar";
+        };
         default: {
             return @"Scheme Card";
         }
@@ -92,7 +104,7 @@ enum {
             break;
         }
         default: {
-            Scheme *currentScheme = [prefs schemeFromName:Scheme.schemeNames[indexPath.section - 1]];
+            Scheme *currentScheme = [prefs schemeFromName:Scheme.schemeNames[indexPath.section - 2]];
             switch (indexPath.row) {
                 case 0: {
                     if (prefs.scheme.name == currentScheme.name) {
@@ -109,7 +121,14 @@ enum {
             }
             break;
         }
-            
+        case StatusBarSection: {
+            cell.selectionStyle = UITableViewCellSelectionStyleNone;
+            UISwitch *statusBarToggle = [[UISwitch alloc] initWithFrame:CGRectZero];
+            cell.accessoryView = statusBarToggle;
+            statusBarToggle.on = prefs.hideStatusBar;
+            [statusBarToggle addTarget:self action:@selector(hideStatusBarChanged:) forControlEvents:UIControlEventValueChanged];
+            break;
+        }
     }
     
     return cell;
@@ -119,8 +138,10 @@ enum {
     switch (indexPath.section) {
         case CustomizationSection:
             return nil;
+        case StatusBarSection:
+            return nil;
         default: {
-            NSString *schemeName = Scheme.schemeNames[indexPath.section - 1];
+            NSString *schemeName = Scheme.schemeNames[indexPath.section - 2];
             Scheme *currentScheme = [UserPreferences.shared schemeFromName:schemeName];
             UITableViewRowAction *editAction = [UITableViewRowAction rowActionWithStyle:UITableViewRowActionStyleNormal title:@"Edit" handler:^(UITableViewRowAction *action, NSIndexPath *indexPath) {
                 [self editScheme:currentScheme.name];
@@ -164,8 +185,8 @@ enum {
     
     if (indexPath.section == CustomizationSection) {
         if (indexPath.row == 0) [self selectFont:nil];
-    } else if (indexPath.section > CustomizationSection) {
-        NSString *currentName = Scheme.schemeNames[indexPath.section - 1];
+    } else if (indexPath.section > CustomizationSection && indexPath.section != StatusBarSection) {
+        NSString *currentName = Scheme.schemeNames[indexPath.section - 2];
         [UserPreferences.shared setSchemeToName:currentName];
     }
 }
@@ -319,5 +340,10 @@ enum {
     [UserPreferences.shared modifyScheme:schemeToImport.name properties:schemeToImport.properties];
     
  }
+
+- (void) hideStatusBarChanged:(UISwitch *)sender {
+    UserPreferences.shared.hideStatusBar = sender.on;
+    [self setNeedsStatusBarAppearanceUpdate];
+}
 
 @end
