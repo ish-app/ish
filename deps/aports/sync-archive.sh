@@ -16,7 +16,7 @@ function sync_repo() {
 function update_repo() {
     version="$1"
     path="$2"
-    index_name_file="$path/$3"
+    index_name_file="$3"
     old_index_name="$(cat "$index_name_file")"
     sync_repo "$version" "$path" "$index_name_file"
     new_index_name="$(cat "$index_name_file")"
