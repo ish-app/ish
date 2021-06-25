@@ -1,17 +1,17 @@
 //
-//  EditThemeViewController.m
+//  EditSchemeViewController.m
 //  iSH
 //
 //  Created by Corban Amouzou on 2021-06-11.
 //
 
-#import "EditThemeViewController.h"
+#import "EditSchemeViewController.h"
 #import "NSObject+SaneKVO.h"
 #import "UIColor+additions.h"
-static NSString *kEditThemeStatusBarToggleId = @"ToggleCell";
+static NSString *kEditSchemeStatusBarToggleId = @"ToggleCell";
 static NSString *kEditPreviewId = @"Preview";
 static NSString *kEditColorPickerCellId = @"ColorPicker";
-@implementation EditThemeViewController
+@implementation EditSchemeViewController
 
 enum {
     PreviewSection,
@@ -22,20 +22,20 @@ enum {
 - (void)viewDidLoad {
     [super viewDidLoad];
     self.tableView.sectionHeaderHeight = UITableViewAutomaticDimension;
-    self.currentTheme = [UserPreferences.shared themeFromName:self.themeName];
+    self.currentScheme = [UserPreferences.shared schemeFromName:self.schemeName];
     self.tableView.separatorStyle = UITableViewCellSeparatorStyleNone;
     oldBackgroundColor = self.navigationController.navigationBar.barTintColor;
     oldForegroundColor = self.navigationController.navigationBar.tintColor;
-    [self observe:@[@"currentTheme"] options:0 owner:self usingBlock:^(typeof(self) self) {
+    [self observe:@[@"currentScheme"] options:0 owner:self usingBlock:^(typeof(self) self) {
         [self setAppearance];
         [[self tableView] reloadData];
     }];
     [self setAppearance];
 }
 - (void)setAppearance {
-    self.navigationController.navigationBar.tintColor = _currentTheme.foregroundColor;
-    self.navigationController.navigationBar.barTintColor = _currentTheme.backgroundColor;
-    self.navigationController.navigationBar.titleTextAttributes = @{NSForegroundColorAttributeName:_currentTheme.foregroundColor};
+    self.navigationController.navigationBar.tintColor = _currentScheme.foregroundColor;
+    self.navigationController.navigationBar.barTintColor = _currentScheme.backgroundColor;
+    self.navigationController.navigationBar.titleTextAttributes = @{NSForegroundColorAttributeName:_currentScheme.foregroundColor};
     self.navigationController.navigationBar.translucent = NO;
     if (@available(iOS 13, *)) {
         self.tableView.backgroundColor = UIColor.systemGray6Color;
@@ -46,7 +46,7 @@ enum {
     self.navigationItem.backBarButtonItem.action = @selector(navigateBack);
 }
 - (void) navigateBack {
-    [_delegate themeChanged];
+    [_delegate schemeChanged];
     [self.navigationController popToViewController:_delegate animated:true];
 }
 - (void)viewWillDisappear:(BOOL)animated {
@@ -70,7 +70,7 @@ enum {
 
 - (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section {
     UIView *headerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, INFINITY, INFINITY)];
-    headerView.backgroundColor = _currentTheme.backgroundColor;
+    headerView.backgroundColor = _currentScheme.backgroundColor;
     return headerView;
 }
 
@@ -85,7 +85,7 @@ enum {
             return @[kEditPreviewId, kEditColorPickerCellId, kEditColorPickerCellId][indexPath.row];
         }
         case StatusBarSection: {
-            return kEditThemeStatusBarToggleId;
+            return kEditSchemeStatusBarToggleId;
         }
         default: return nil;
     }
@@ -97,14 +97,14 @@ enum {
         case PreviewSection: {
             NSInteger row = indexPath.row;
             if (row == 0) {
-                cell.textLabel.text = [NSString stringWithFormat:@"%@:~# %@", [UIDevice currentDevice].name, _currentTheme.name];
-                cell.backgroundColor = _currentTheme.backgroundColor;
-                cell.textLabel.textColor = _currentTheme.foregroundColor;
+                cell.textLabel.text = [NSString stringWithFormat:@"%@:~# %@", [UIDevice currentDevice].name, _currentScheme.name];
+                cell.backgroundColor = _currentScheme.backgroundColor;
+                cell.textLabel.textColor = _currentScheme.foregroundColor;
                 cell.textLabel.font = [UIFont fontWithName:UserPreferences.shared.fontFamily size:UserPreferences.shared.fontSize.doubleValue];
             } else if (row == 1) {
-                cell = [self colorPickerCell:cell name:@"Foreground Color" color:_currentTheme.foregroundColor];
+                cell = [self colorPickerCell:cell name:@"Foreground Color" color:_currentScheme.foregroundColor];
             } else if (row == 2) {
-                cell = [self colorPickerCell:cell name:@"Background Color" color:_currentTheme.backgroundColor];
+                cell = [self colorPickerCell:cell name:@"Background Color" color:_currentScheme.backgroundColor];
             }
         }
     }
@@ -119,9 +119,9 @@ enum {
             if (indexPath.row > 0) {
                 NSString *property = indexPath.row == 1 ? @"foregroundColor" : @"backgroundColor";
                 if (@available(iOS 14.0, *)) {
-                    [self sendColorPicker:[_currentTheme valueForKey:property] supportsAlpha:NO propertyName:property];
+                    [self sendColorPicker:[_currentScheme valueForKey:property] supportsAlpha:NO propertyName:property];
                 } else {
-                    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:@"Set New Color" message:@"Set a new color for your theme." preferredStyle:UIAlertControllerStyleAlert];
+                    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:@"Set New Color" message:@"Set a new color for your scheme." preferredStyle:UIAlertControllerStyleAlert];
                     [alertController addTextFieldWithConfigurationHandler:^(UITextField * _Nonnull textField) {
                         textField.placeholder = @"#RRGGBB";
                     }];
@@ -165,10 +165,10 @@ enum {
 }
 
 - (void) setNewColor:(UIColor *)color forProperty:(NSString *)property {
-    [_currentTheme setValue:color forKey:property];
+    [_currentScheme setValue:color forKey:property];
     [self setAppearance];
     [[self tableView] reloadData];
-    [UserPreferences.shared modifyTheme:_currentTheme.name properties:_currentTheme.properties];
+    [UserPreferences.shared modifyScheme:_currentScheme.name properties:_currentScheme.properties];
 }
 
 

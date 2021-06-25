@@ -1,5 +1,5 @@
 //
-//  ThemeViewController.m
+//  AboutViewController.m
 //  iSH
 //
 //  Created by Charlie Melbye on 11/12/18.
@@ -10,11 +10,7 @@
 #import "UserPreferences.h"
 #import "NSObject+SaneKVO.h"
 #import "UIColor+additions.h"
-#import "EditThemeViewController.h"
-
-static NSString *const ThemeNameCellIdentifier = @"Theme Name";
-static NSString *const FontSizeCellIdentifier = @"Font Size";
-static NSString *const PreviewCellIdentifier = @"Preview";
+#import "EditSchemeViewController.h"
 
 @interface AboutAppearanceViewController ()
 @property UIFontPickerViewController *fontPicker API_AVAILABLE(ios(13));
@@ -23,12 +19,12 @@ static NSString *const PreviewCellIdentifier = @"Preview";
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    [UserPreferences.shared observe:@[@"theme", @"fontSize", @"fontFamily"]
+    [UserPreferences.shared observe:@[@"scheme", @"fontSize", @"fontFamily"]
                             options:0 owner:self usingBlock:^(typeof(self) self) {
         [self.tableView reloadData];
         [self setNeedsStatusBarAppearanceUpdate];
     }];
-    [self setupThemeOptionButton];
+    [self setupSchemeOptionButton];
 }
 
 - (void)viewDidAppear:(BOOL)animated {
@@ -52,7 +48,7 @@ enum {
 };
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-    return Theme.themeNames.count + 1;
+    return Scheme.schemeNames.count + 1;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
@@ -65,7 +61,7 @@ enum {
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
     switch (section) {
         case CustomizationSection: return @"Customization";
-        default: return Theme.themeNames[section - 1];
+        default: return Scheme.schemeNames[section - 1];
     }
 }
 
@@ -76,7 +72,7 @@ enum {
             return @[@"Font", @"Font Size"][indexPath.row];
         }
         default: {
-            return @"Theme Card";
+            return @"Scheme Card";
         }
     }
 }
@@ -96,16 +92,16 @@ enum {
             break;
         }
         default: {
-            Theme *currentTheme = [prefs themeFromName:Theme.themeNames[indexPath.section - 1]];
+            Scheme *currentScheme = [prefs schemeFromName:Scheme.schemeNames[indexPath.section - 1]];
             switch (indexPath.row) {
                 case 0: {
-                    if (prefs.theme.name == currentTheme.name) {
+                    if (prefs.scheme.name == currentScheme.name) {
                         cell.accessoryType = UITableViewCellAccessoryCheckmark;
                     } else {
                         cell.accessoryType = UITableViewCellAccessoryNone;
                     }
-                    cell.backgroundColor = currentTheme.backgroundColor;
-                    cell.textLabel.textColor = currentTheme.foregroundColor;
+                    cell.backgroundColor = currentScheme.backgroundColor;
+                    cell.textLabel.textColor = currentScheme.foregroundColor;
                     cell.textLabel.font = [UIFont fontWithName:UserPreferences.shared.fontFamily size:prefs.fontSize.doubleValue];
                     cell.textLabel.text = [NSString stringWithFormat:@"%@:~# ps aux", [UIDevice currentDevice].name];
                     cell.selectionStyle = UITableViewCellSelectionStyleNone;
@@ -124,35 +120,35 @@ enum {
         case CustomizationSection:
             return nil;
         default: {
-            NSString *themeName = Theme.themeNames[indexPath.section - 1];
-            Theme *currentTheme = [UserPreferences.shared themeFromName:themeName];
+            NSString *schemeName = Scheme.schemeNames[indexPath.section - 1];
+            Scheme *currentScheme = [UserPreferences.shared schemeFromName:schemeName];
             UITableViewRowAction *editAction = [UITableViewRowAction rowActionWithStyle:UITableViewRowActionStyleNormal title:@"Edit" handler:^(UITableViewRowAction *action, NSIndexPath *indexPath) {
-                [self editTheme:currentTheme.name];
+                [self editScheme:currentScheme.name];
             }];
             UITableViewRowAction *deleteAction = [UITableViewRowAction rowActionWithStyle:UITableViewRowActionStyleNormal title:@"Delete"  handler:^(UITableViewRowAction *action, NSIndexPath *indexPath) {
                 [tableView beginUpdates];
                 [tableView deleteSections:[NSIndexSet indexSetWithIndex:indexPath.section] withRowAnimation:UITableViewRowAnimationAutomatic];
-                [UserPreferences.shared deleteTheme:themeName];
+                [UserPreferences.shared deleteScheme:schemeName];
                 [tableView endUpdates];
 
             }];
             UITableViewRowAction *exportAction = [UITableViewRowAction rowActionWithStyle:UITableViewRowActionStyleNormal title:@"Export" handler:^(UITableViewRowAction * _Nonnull action, NSIndexPath * _Nonnull indexPath) {
-                NSDictionary<NSString *, id> *props = currentTheme.properties;
+                NSDictionary<NSString *, id> *props = currentScheme.properties;
                 NSError *error = nil;
-                NSURL *tmpUrl = [[NSFileManager defaultManager].temporaryDirectory URLByAppendingPathComponent:[NSString stringWithFormat:@"%@-theme.plist", currentTheme.name]];
+                NSURL *tmpUrl = [[NSFileManager defaultManager].temporaryDirectory URLByAppendingPathComponent:[NSString stringWithFormat:@"%@-scheme.plist", currentScheme.name]];
                 [props writeToURL:tmpUrl error:&error];
                 UIActivityViewController *controller = [[UIActivityViewController alloc] initWithActivityItems:@[tmpUrl] applicationActivities:nil];
                 controller.popoverPresentationController.sourceView = self.tableView;
                 [self presentViewController:controller animated:YES completion:nil];
             }];
             deleteAction.backgroundColor = [UIColor redColor];
-            editAction.backgroundColor = [self adjustColor:currentTheme.backgroundColor];
-            exportAction.backgroundColor = [self adjustColor:currentTheme.foregroundColor];
+            editAction.backgroundColor = [self adjustColor:currentScheme.backgroundColor];
+            exportAction.backgroundColor = [self adjustColor:currentScheme.foregroundColor];
             
-            if ([[Theme.presets allKeys] containsObject:themeName]) {
+            if ([[Scheme.presets allKeys] containsObject:schemeName]) {
                 return @[exportAction, editAction];
             } else {
-                if (UserPreferences.shared.theme.name == themeName) {
+                if (UserPreferences.shared.scheme.name == schemeName) {
                     return @[exportAction, editAction];
                 } else {
                     return @[deleteAction, exportAction, editAction];
@@ -169,8 +165,8 @@ enum {
     if (indexPath.section == CustomizationSection) {
         if (indexPath.row == 0) [self selectFont:nil];
     } else if (indexPath.section > CustomizationSection) {
-        NSString *currentName = Theme.themeNames[indexPath.section - 1];
-        [UserPreferences.shared setThemeToName:currentName];
+        NSString *currentName = Scheme.schemeNames[indexPath.section - 1];
+        [UserPreferences.shared setSchemeToName:currentName];
     }
 }
 #pragma mark Font Specifics
@@ -193,16 +189,16 @@ enum {
     UserPreferences.shared.fontSize = @((int) sender.value);
 }
 
-#pragma mark Theme Specifics
-- (void) editTheme:(NSString *)themeName {
-    EditThemeViewController *themeEditor = [self.storyboard instantiateViewControllerWithIdentifier:@"ThemeEditor"];
-    themeEditor.navigationItem.title = [NSString stringWithFormat:@"Edit %@", themeName];
-    [themeEditor setThemeName:themeName];
-    themeEditor.delegate = self;
-    [self.navigationController pushViewController:themeEditor animated:YES];
+#pragma mark Scheme Specifics
+- (void) editScheme:(NSString *)schemeName {
+    EditSchemeViewController *schemeEditor = [self.storyboard instantiateViewControllerWithIdentifier:@"SchemeEditor"];
+    schemeEditor.navigationItem.title = [NSString stringWithFormat:@"Edit %@", schemeName];
+    [schemeEditor setSchemeName:schemeName];
+    schemeEditor.delegate = self;
+    [self.navigationController pushViewController:schemeEditor animated:YES];
 }
 
-- (void) themeChanged {
+- (void) schemeChanged {
     [[self tableView] reloadSections:[NSIndexSet indexSetWithIndexesInRange:NSMakeRange(0, [self numberOfSectionsInTableView:[self tableView]])] withRowAnimation:UITableViewRowAnimationAutomatic];
 }
 
@@ -213,8 +209,8 @@ enum {
     return [UIColor colorWithHue:hue saturation:saturation brightness:newBrightness alpha:alpha];
 }
 
-- (void) setupThemeOptionButton {
-    UIBarButtonItem *barButton = [[UIBarButtonItem alloc] initWithTitle:@"•••" style:UIBarButtonItemStylePlain target:self action:@selector(themeOptionButtonPressed)];
+- (void) setupSchemeOptionButton {
+    UIBarButtonItem *barButton = [[UIBarButtonItem alloc] initWithTitle:@"•••" style:UIBarButtonItemStylePlain target:self action:@selector(schemeOptionButtonPressed)];
     NSDictionary<NSString *, id> *attr = @{
         NSFontAttributeName: [UIFont systemFontOfSize:27],
     };
@@ -223,10 +219,10 @@ enum {
     self.navigationItem.rightBarButtonItem = barButton;
 }
 
-- (void)themeOptionButtonPressed {
-    UIAlertController *popupSelector = [UIAlertController alertControllerWithTitle:@"Theme Options" message:nil preferredStyle:UIAlertControllerStyleActionSheet];
-    UIAlertAction *importAction = [UIAlertAction actionWithTitle:@"Import Theme" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
-        UIDocumentPickerViewController *controller = [[UIDocumentPickerViewController alloc] initWithDocumentTypes:@[@"public.data"] inMode:UIDocumentPickerModeImport];
+- (void)schemeOptionButtonPressed {
+    UIAlertController *popupSelector = [UIAlertController alertControllerWithTitle:@"Scheme Options" message:nil preferredStyle:UIAlertControllerStyleActionSheet];
+    UIAlertAction *importAction = [UIAlertAction actionWithTitle:@"Import Scheme" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+        UIDocumentPickerViewController *controller = [[UIDocumentPickerViewController alloc] initWithDocumentTypes:@[@"com.apple.property-list"] inMode:UIDocumentPickerModeImport];
         controller.allowsMultipleSelection = false;
         controller.delegate = self;
         if (@available(iOS 13.0, *)) controller.shouldShowFileExtensions = true;
@@ -236,8 +232,8 @@ enum {
         // Bruh
     }];
     
-    UIAlertAction *createAction = [UIAlertAction actionWithTitle:@"Add Theme" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
-        Theme *defaultProperties = [Theme presets][@"Light"];
+    UIAlertAction *createAction = [UIAlertAction actionWithTitle:@"Add Scheme" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+        Scheme *defaultProperties = [Scheme presets][@"Light"];
         UIAlertController *nameController = [UIAlertController alertControllerWithTitle:@"Set Name" message:nil preferredStyle:UIAlertControllerStyleAlert];
         [nameController addTextFieldWithConfigurationHandler:^(UITextField * _Nonnull textField) {
             textField.placeholder = @"Name";
@@ -257,14 +253,14 @@ enum {
             if (nameField.text.length == 0) {
                 failWithMessage(@"The name cannot be blank");
             }
-            if ([Theme.themeNames containsObject:nameField.text]) {
+            if ([Scheme.schemeNames containsObject:nameField.text]) {
                 failWithMessage (@"This name already exists");
             }
             
             defaultProperties.name = nameField.text;
-            [UserPreferences.shared modifyTheme:defaultProperties.name properties:defaultProperties.properties];
+            [UserPreferences.shared modifyScheme:defaultProperties.name properties:defaultProperties.properties];
             [self.tableView reloadData];
-            [self editTheme:defaultProperties.name];
+            [self editScheme:defaultProperties.name];
         }];
         
         [nameController addAction:cancelAction];
@@ -284,7 +280,7 @@ enum {
 - (void)documentPicker:(UIDocumentPickerViewController *)controller didPickDocumentsAtURLs:(NSArray<NSURL *> *)urls {
     
     void (^failWithMessage)(NSString *) = ^void(NSString *message) {
-        UIAlertController *errorController = [UIAlertController alertControllerWithTitle:@"Error Importing Theme" message:message preferredStyle:UIAlertControllerStyleAlert];
+        UIAlertController *errorController = [UIAlertController alertControllerWithTitle:@"Error Importing Scheme" message:message preferredStyle:UIAlertControllerStyleAlert];
         UIAlertAction *okAction = [UIAlertAction actionWithTitle:@"Oops" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
             // 69 haha funny number
         }];
@@ -295,32 +291,32 @@ enum {
     
     // There should only be one document selected explicitly
     NSURL *ourUrl = urls.firstObject;
-    NSMutableDictionary<NSString *, id> *themeData = [NSMutableDictionary dictionaryWithContentsOfURL:ourUrl];
-    NSArray<NSString *> *propertyNames = [UserPreferences.shared.theme.properties allKeys];
+    NSMutableDictionary<NSString *, id> *schemeData = [NSMutableDictionary dictionaryWithContentsOfURL:ourUrl];
+    NSArray<NSString *> *propertyNames = [UserPreferences.shared.scheme.properties allKeys];
     for (NSString *name in propertyNames) { // sanity check
-        if (themeData[name] == nil) {
+        if (schemeData[name] == nil) {
             // We have an issue with the data within the json because it doesn't meet all of the property requirements
-            failWithMessage([NSString stringWithFormat:@"Theme Export is missing the property %@", name]);
+            failWithMessage([NSString stringWithFormat:@"Scheme Export is missing the property %@", name]);
         }
         if ([@[@"forgroundColor", @"backgroundColor"] containsObject:name]) {
-            themeData[name] = [UIColor colorWithHexString:themeData[name]];
+            schemeData[name] = [UIColor colorWithHexString:schemeData[name]];
         }
         if ([name isEqual: @"palette"]) {
-            NSMutableArray *array = themeData[name];
+            NSMutableArray *array = schemeData[name];
             for (int i = 0; i < array.count; i++) {
                 NSString *color = array[i];
                 array[i] = [UIColor colorWithHexString:color];
             }
-            themeData[name] = array;
+            schemeData[name] = array;
         }
     }
-    Theme *themeToImport = [[Theme alloc] initWithProperties:themeData];
-    if ([Theme.themeNames containsObject:themeToImport.name])
-        failWithMessage([NSString stringWithFormat:@"The theme %@ already exists", themeToImport.name]);
+    Scheme *schemeToImport = [[Scheme alloc] initWithProperties:schemeData];
+    if ([Scheme.schemeNames containsObject:schemeToImport.name])
+        failWithMessage([NSString stringWithFormat:@"The scheme %@ already exists", schemeToImport.name]);
 
     
-    // OK we can now import the theme
-    [UserPreferences.shared modifyTheme:themeToImport.name properties:themeToImport.properties];
+    // OK we can now import the scheme
+    [UserPreferences.shared modifyScheme:schemeToImport.name properties:schemeToImport.properties];
     
  }
 

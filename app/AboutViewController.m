@@ -13,7 +13,7 @@
 
 @interface AboutViewController ()
 @property (weak, nonatomic) IBOutlet UITableViewCell *capsLockMappingCell;
-@property (weak, nonatomic) IBOutlet UITableViewCell *themeCell;
+@property (weak, nonatomic) IBOutlet UITableViewCell *schemeCell;
 @property (weak, nonatomic) IBOutlet UISwitch *disableDimmingSwitch;
 @property (weak, nonatomic) IBOutlet UITextField *launchCommandField;
 @property (weak, nonatomic) IBOutlet UITextField *bootCommandField;
@@ -64,7 +64,7 @@
 
 - (void)_updatePreferenceUI {
     UserPreferences *prefs = UserPreferences.shared;
-    self.themeCell.detailTextLabel.text = prefs.theme.name;
+    self.schemeCell.detailTextLabel.text = prefs.scheme.name;
     self.disableDimmingSwitch.on = UserPreferences.shared.shouldDisableDimming;
     self.launchCommandField.text = [UserPreferences.shared.launchCommand componentsJoinedByString:@" "];
     self.bootCommandField.text = [UserPreferences.shared.bootCommand componentsJoinedByString:@" "];

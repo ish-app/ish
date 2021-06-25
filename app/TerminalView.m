@@ -54,7 +54,7 @@ struct rowcol {
            options:0 owner:self usingBlock:^(typeof(self) self) {
         self->_keyCommands = nil;
     }];
-    [prefs observe:@[@"fontFamily", @"fontSize", @"theme"]
+    [prefs observe:@[@"fontFamily", @"fontSize", @"scheme"]
            options:0 owner:self usingBlock:^(typeof(self) self) {
         [self _updateStyle];
     }];
@@ -125,14 +125,14 @@ struct rowcol {
     UserPreferences *prefs = [UserPreferences shared];
     if (_overrideFontSize == prefs.fontSize.doubleValue)
         _overrideFontSize = 0;
-    id themeInfo = @{
+    id schemeInfo = @{
         @"fontFamily": prefs.fontFamily,
         @"fontSize": @(self.effectiveFontSize),
-        @"foregroundColor": [self cssColor:prefs.theme.foregroundColor],
-        @"backgroundColor": [self cssColor:prefs.theme.backgroundColor],
-        @"palette": prefs.theme.palette,
+        @"foregroundColor": [self cssColor:prefs.scheme.foregroundColor],
+        @"backgroundColor": [self cssColor:prefs.scheme.backgroundColor],
+        @"palette": prefs.scheme.palette,
     };
-    NSString *json = [[NSString alloc] initWithData:[NSJSONSerialization dataWithJSONObject:themeInfo options:0 error:nil] encoding:NSUTF8StringEncoding];
+    NSString *json = [[NSString alloc] initWithData:[NSJSONSerialization dataWithJSONObject:schemeInfo options:0 error:nil] encoding:NSUTF8StringEncoding];
     [self.terminal.webView evaluateJavaScript:[NSString stringWithFormat:@"exports.updateStyle(%@)", json] completionHandler:^(id result, NSError *error){
         [self updateFloatingCursorSensitivity];
     }];

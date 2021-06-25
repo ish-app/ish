@@ -41,13 +41,13 @@ enum {
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface Theme : NSObject
+@interface Scheme : NSObject
 
 - (instancetype)initWithProperties:(NSDictionary<NSString *, id> *)props;
 - (NSDictionary<NSString *, id> *)properties;
 
-+ (NSDictionary<NSString *, Theme *> *)presets;
-+ (NSArray<NSString *> *)themeNames;
++ (NSDictionary<NSString *, Scheme *> *)presets;
++ (NSArray<NSString *> *)schemeNames;
 - (NSString *)presetName;
 
 @property (nonatomic, readonly) UIColor *foregroundColor;
@@ -58,10 +58,10 @@ NS_ASSUME_NONNULL_BEGIN
 @property (readonly) UIStatusBarStyle statusBarStyle;
 
 @end
-extern NSString *const kThemeForegroundColor;
-extern NSString *const kThemeBackgroundColor;
-extern NSString *const kThemeName;
-extern NSString *const kThemePalette;
+extern NSString *const kSchemeForegroundColor;
+extern NSString *const kSchemeBackgroundColor;
+extern NSString *const kSchemeName;
+extern NSString *const kSchemePalette;
 @interface UserPreferences : NSObject
 
 @property CapsLockMapping capsLockMapping;
@@ -69,7 +69,7 @@ extern NSString *const kThemePalette;
 @property BOOL backtickMapEscape;
 @property BOOL hideExtraKeysWithExternalKeyboard;
 @property BOOL overrideControlSpace;
-@property (nonatomic) Theme *theme;
+@property (nonatomic) Scheme *scheme;
 @property (nonatomic) BOOL shouldDisableDimming;
 @property NSString *fontFamily;
 @property NSNumber *fontSize;
@@ -79,10 +79,10 @@ extern NSString *const kThemePalette;
 + (instancetype)shared;
 
 - (BOOL)hasChangedLaunchCommand;
-- (void)setThemeToName:(NSString *)name;
-- (Theme *)themeFromName:(NSString *)name;
-- (void)deleteTheme:(NSString *)name;
-- (void)modifyTheme:(NSString *)name properties:(id)props;
+- (void)setSchemeToName:(NSString *)name;
+- (Scheme *)schemeFromName:(NSString *)name;
+- (void)deleteScheme:(NSString *)name;
+- (void)modifyScheme:(NSString *)name properties:(id)props;
 @end
 
 extern NSString *const kPreferenceLaunchCommandKey;

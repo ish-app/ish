@@ -28,7 +28,7 @@
                         <sections>
                             <tableViewSection headerTitle="Settings" id="tuR-Og-SE8">
                                 <cells>
-                                    <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="default" accessoryType="disclosureIndicator" indentationWidth="10" textLabel="1Co-nG-Sij" style="IBUITableViewCellStyleDefault" id="dqn-Cd-cNm" userLabel="Theme">
+                                    <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="default" accessoryType="disclosureIndicator" indentationWidth="10" textLabel="1Co-nG-Sij" style="IBUITableViewCellStyleDefault" id="dqn-Cd-cNm" userLabel="Scheme">
                                         <rect key="frame" x="0.0" y="49.5" width="320" height="44"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" preservesSuperviewLayoutMargins="YES" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="dqn-Cd-cNm" id="i9s-qj-CxN">
@@ -322,8 +322,8 @@
                         <outlet property="openDiscord" destination="K5r-jy-Dzl" id="b4l-Vr-6l8"/>
                         <outlet property="openGithub" destination="F4i-eC-hQ6" id="66M-sQ-RJR"/>
                         <outlet property="openTwitter" destination="bge-GA-6p8" id="r0A-lN-0e0"/>
+                        <outlet property="schemeCell" destination="dqn-Cd-cNm" id="dfh-et-0o7"/>
                         <outlet property="sendFeedback" destination="gMm-4C-5X3" id="nhX-ZH-zyP"/>
-                        <outlet property="themeCell" destination="dqn-Cd-cNm" id="dfh-et-0o7"/>
                         <outlet property="versionLabel" destination="Xil-tm-WGD" id="ZzC-E6-VER"/>
                     </connections>
                 </tableViewController>
@@ -541,10 +541,10 @@
             </objects>
             <point key="canvasLocation" x="1058" y="430"/>
         </scene>
-        <!--Edit Theme-->
+        <!--Edit Scheme-->
         <scene sceneID="YcL-9v-eCo">
             <objects>
-                <tableViewController storyboardIdentifier="ThemeEditor" title="Edit Theme" id="hmm-TX-Pdy" customClass="EditThemeViewController" sceneMemberID="viewController">
+                <tableViewController storyboardIdentifier="SchemeEditor" title="Edit Scheme" id="hmm-TX-Pdy" customClass="EditSchemeViewController" sceneMemberID="viewController">
                     <tableView key="view" clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="grouped" separatorStyle="default" rowHeight="-1" estimatedRowHeight="-1" sectionHeaderHeight="18" sectionFooterHeight="18" id="tHG-bq-raq">
                         <rect key="frame" x="0.0" y="0.0" width="320" height="568"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
@@ -585,7 +585,7 @@
                                     <rect key="frame" x="0.0" y="0.0" width="320" height="43.5"/>
                                     <autoresizingMask key="autoresizingMask"/>
                                     <subviews>
-                                        <label opaque="NO" multipleTouchEnabled="YES" contentMode="left" insetsLayoutMarginsFromSafeArea="NO" text="ColorPicker" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="QV9-Zh-byg">
+                                        <label opaque="NO" multipleTouchEnabled="YES" contentMode="left" insetsLayoutMarginsFromSafeArea="NO" text="Preview" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="QV9-Zh-byg">
                                             <rect key="frame" x="16" y="0.0" width="288" height="43.5"/>
                                             <autoresizingMask key="autoresizingMask"/>
                                             <fontDescription key="fontDescription" type="system" pointSize="17"/>
@@ -823,14 +823,14 @@
                                     </constraints>
                                 </tableViewCellContentView>
                             </tableViewCell>
-                            <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="default" indentationWidth="10" reuseIdentifier="Theme Card" textLabel="i5t-aB-lKm" style="IBUITableViewCellStyleDefault" id="wXz-Je-v8x">
+                            <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="default" indentationWidth="10" reuseIdentifier="Scheme Card" textLabel="i5t-aB-lKm" style="IBUITableViewCellStyleDefault" id="wXz-Je-v8x">
                                 <rect key="frame" x="0.0" y="136.5" width="320" height="43.5"/>
                                 <autoresizingMask key="autoresizingMask"/>
                                 <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" preservesSuperviewLayoutMargins="YES" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="wXz-Je-v8x" id="h5F-4M-5qT">
                                     <rect key="frame" x="0.0" y="0.0" width="320" height="43.5"/>
                                     <autoresizingMask key="autoresizingMask"/>
                                     <subviews>
-                                        <label opaque="NO" multipleTouchEnabled="YES" contentMode="left" insetsLayoutMarginsFromSafeArea="NO" text="Theme" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="i5t-aB-lKm">
+                                        <label opaque="NO" multipleTouchEnabled="YES" contentMode="left" insetsLayoutMarginsFromSafeArea="NO" text="Scheme" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="i5t-aB-lKm">
                                             <rect key="frame" x="16" y="0.0" width="288" height="43.5"/>
                                             <autoresizingMask key="autoresizingMask"/>
                                             <fontDescription key="fontDescription" type="system" pointSize="17"/>

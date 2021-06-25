@@ -17,10 +17,10 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    [UserPreferences.shared observe:@[@"theme"] options:NSKeyValueObservingOptionInitial
+    [UserPreferences.shared observe:@[@"scheme"] options:NSKeyValueObservingOptionInitial
                               owner:self usingBlock:^(typeof(self) self) {
         if (@available(iOS 13, *)) {
-            UIKeyboardAppearance appearance = UserPreferences.shared.theme.keyboardAppearance;
+            UIKeyboardAppearance appearance = UserPreferences.shared.scheme.keyboardAppearance;
             if (appearance == UIKeyboardAppearanceDark) {
                 self.overrideUserInterfaceStyle = UIUserInterfaceStyleDark;
             } else {
