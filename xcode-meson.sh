@@ -1,6 +1,6 @@
 #!/bin/bash
-mkdir -p $MESON_BUILD_DIR
-cd $MESON_BUILD_DIR
+mkdir -p "$MESON_BUILD_DIR"
+cd "$MESON_BUILD_DIR"
 
 config=$(meson introspect --buildoptions)
 if [[ $? -ne 0 ]]; then
@@ -45,7 +45,11 @@ if [[ -n "$ENABLE_ADDRESS_SANITIZER" ]]; then
 fi
 log=$ISH_LOG
 log_handler=$ISH_LOGGER
-for var in buildtype log b_ndebug b_sanitize log_handler; do
+kernel=ish
+if [[ -n "$ISH_KERNEL" ]]; then
+    kernel=$ISH_KERNEL
+fi
+for var in buildtype log b_ndebug b_sanitize log_handler kernel; do
     old_value=$(python3 -c "import sys, json; v = next(x['value'] for x in json.load(sys.stdin) if x['name'] == '$var'); print(str(v).lower() if isinstance(v, bool) else v)" <<< $config)
     new_value=${!var}
     if [[ $old_value != $new_value ]]; then

@@ -1,0 +1,2 @@
+ISH_KERNEL = linux
+NINJA_TARGETS = liblinux.a libish_emu.a

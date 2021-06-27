@@ -1,0 +1,2 @@
+#include "StaticLib.xcconfig"
+HEADER_SEARCH_PATHS = $(inherited) $(SRCROOT) $(SRCROOT)/deps/libarchive/libarchive
