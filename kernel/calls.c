@@ -238,6 +238,7 @@ syscall_t syscall_table[] = {
     [377] = (syscall_t) sys_copy_file_range,
     [383] = (syscall_t) syscall_stub,
     [384] = (syscall_t) sys_arch_prctl,
+    [439] = (syscall_t) syscall_stub, // faccessat2
 };
 
 #define NUM_SYSCALLS (sizeof(syscall_table) / sizeof(syscall_table[0]))
