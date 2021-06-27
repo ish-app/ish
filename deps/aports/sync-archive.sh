@@ -6,10 +6,12 @@ function sync_repo() {
     version="$1"
     path="$2"
     index_name_file="$3"
-    rclone copy -v --transfers=32 "alpine:$version/$path" "$archive_remote/$path"
+    remote_path="$archive_remote/$version/$path"
+
+    rclone copy -v --transfers=32 "alpine:$version/$path" "$remote_path"
     date=$(date +%F)
     new_index_name="APKINDEX-$version-$date.tar.gz"
-    rclone moveto "$archive_remote/$path/APKINDEX.tar.gz" "$archive_remote/$path/$new_index_name"
+    rclone moveto "$remote_path/APKINDEX.tar.gz" "$remote_path/$new_index_name"
     echo "$new_index_name" > "$index_name_file"
 }
 
@@ -17,11 +19,13 @@ function update_repo() {
     version="$1"
     path="$2"
     index_name_file="$3"
+    remote_path="$archive_remote/$version/$path"
+
     old_index_name="$(cat "$index_name_file")"
     sync_repo "$version" "$path" "$index_name_file"
     new_index_name="$(cat "$index_name_file")"
-    rclone cat "$archive_remote/$path/$new_index_name" | tar -xzOf - -O APKINDEX | format_index > /tmp/APKINDEX.new
-    rclone cat "$archive_remote/$path/$old_index_name" | tar -xzOf - -O APKINDEX | format_index > /tmp/APKINDEX.old
+    rclone cat "$remote_path/$new_index_name" | tar -xzOf - -O APKINDEX | format_index > /tmp/APKINDEX.new
+    rclone cat "$remote_path/$old_index_name" | tar -xzOf - -O APKINDEX | format_index > /tmp/APKINDEX.old
     if diff -u /tmp/APKINDEX.new /tmp/APKINDEX.old; then
         echo "nothing new"
         echo "$old_index_name" > "$index_name_file"
