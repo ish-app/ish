@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash
 mkdir -p $MESON_BUILD_DIR
 cd $MESON_BUILD_DIR
 
@@ -30,7 +30,7 @@ endian = 'little'
 c_args = ['-arch', '$arch']
 needs_exe_wrapper = true
 EOF
-    meson $SRCROOT --cross-file $crossfile || exit $?
+    (set -x; meson $SRCROOT --cross-file $crossfile) || exit $?
     config=$(meson introspect --buildoptions)
 fi
 
@@ -49,6 +49,6 @@ for var in buildtype log b_ndebug b_sanitize log_handler; do
     old_value=$(python3 -c "import sys, json; v = next(x['value'] for x in json.load(sys.stdin) if x['name'] == '$var'); print(str(v).lower() if isinstance(v, bool) else v)" <<< $config)
     new_value=${!var}
     if [[ $old_value != $new_value ]]; then
-        meson configure "-D$var=$new_value"
+        set -x; meson configure "-D$var=$new_value"
     fi
 done
