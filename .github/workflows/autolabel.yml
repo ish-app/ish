@@ -15,4 +15,4 @@ jobs:
             const github = require('@actions/github');
             const octokit = github.getOctokit(process.env.GITHUB_TOKEN);
             const {repo, owner, number} = github.context.issue;
-            await octokit.issues.addLabels({repo, owner, issue_number: number, labels: ['unconfirmed']});
+            await octokit.rest.issues.addLabels({repo, owner, issue_number: number, labels: ['unconfirmed']});
