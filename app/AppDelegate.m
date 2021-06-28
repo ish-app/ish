@@ -66,6 +66,7 @@ static NSString *const kSkipStartupMessage = @"Skip Startup Message";
 @implementation AppDelegate
 
 - (int)boot {
+#if !ISH_LINUX
     NSURL *root = [[Roots.instance rootUrl:Roots.instance.defaultRoot] URLByAppendingPathComponent:@"data"];
     int err = mount_root(&fakefs, root.fileSystemRepresentation);
     if (err < 0)
@@ -182,11 +183,13 @@ static NSString *const kSkipStartupMessage = @"Skip Startup Message";
     if (err < 0)
         return err;
     task_start(current);
+#endif
     
     return 0;
 }
 
 - (void)configureDns {
+#if !ISH_LINUX
     struct __res_state res;
     if (EXIT_SUCCESS != res_ninit(&res)) {
         exit(2);
@@ -218,6 +221,7 @@ static NSString *const kSkipStartupMessage = @"Skip Startup Message";
         fd->ops->write(fd, resolvConf.UTF8String, [resolvConf lengthOfBytesUsingEncoding:NSUTF8StringEncoding]);
         fd_close(fd);
     }
+#endif
 }
 
 + (int)bootError {
@@ -269,7 +273,8 @@ void NetworkReachabilityCallback(SCNetworkReachabilityRef target, SCNetworkReach
 
     if ([NSUserDefaults.standardUserDefaults boolForKey:@"FASTLANE_SNAPSHOT"])
         [UIView setAnimationsEnabled:NO];
-    
+
+#if !ISH_LINUX
     self.unameVersion = [NSString stringWithFormat:@"iSH %@ (%@)",
                          [NSBundle.mainBundle objectForInfoDictionaryKey:@"CFBundleShortVersionString"],
                          [NSBundle.mainBundle objectForInfoDictionaryKey:(NSString *) kCFBundleVersionKey]];
@@ -279,6 +284,7 @@ void NetworkReachabilityCallback(SCNetworkReachabilityRef target, SCNetworkReach
     self.unameHostname = [NSUserDefaults.standardUserDefaults stringForKey:@"hostnameOverride"];
     extern const char *uname_hostname_override;
     uname_hostname_override = self.unameHostname.UTF8String;
+#endif
     
     [UserPreferences.shared observe:@[@"shouldDisableDimming"] options:NSKeyValueObservingOptionInitial
                               owner:self usingBlock:^(typeof(self) self) {

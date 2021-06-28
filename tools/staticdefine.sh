@@ -8,7 +8,7 @@ import json
 with open('$compile_commands') as f:
     commands = json.load(f)
 for command in commands:
-    if command['file'].endswith('emu/jit.c'):
+    if command['file'].endswith('jit/jit.c'):
         break
 command = command['command']
 command = command.split()[:-9] + ['-MD', '-MQ', '$output', '-MF', '$dep']

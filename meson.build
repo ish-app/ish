@@ -72,6 +72,11 @@ endif
 
 libish_emu = library('ish_emu', emu_src, include_directories: includes)
 
+libfakefs = library('fakefs',
+    ['fs/fake-db.c', 'fs/fake-migrate.c', 'fs/fake-rebuild.c'],
+    include_directories: includes,
+    dependencies: sqlite3)
+
 subdir('deps')
 
 if get_option('kernel') == 'ish'
@@ -114,9 +119,6 @@ if get_option('kernel') == 'ish'
         'fs/path.c',
         'fs/real.c',
         'fs/fake.c',
-        'fs/fake-db.c',
-        'fs/fake-migrate.c',
-        'fs/fake-rebuild.c',
 
         'fs/proc.c',
         'fs/proc/entry.c',
@@ -154,7 +156,7 @@ if get_option('kernel') == 'ish'
     libish = library('ish', src,
         include_directories: includes)
     ish = declare_dependency(
-        link_with: [libish, libish_emu],
+        link_with: [libish, libish_emu, libfakefs],
         dependencies: dependencies,
         include_directories: includes)
 
@@ -177,15 +179,12 @@ elif get_option('kernel') == 'linux'
         'linux/main.c',
         'linux/fakefs.c',
     ], dependencies: [linux_headers, sqlite3])
-    executable('ish', [
-        build_linux,
-        'fs/fake-db.c',
-        'fs/fake-migrate.c',
-        'fs/fake-rebuild.c',
-    ], dependencies: [
-        liblinux,
-        declare_dependency(link_whole: modules),
-    ])
+    executable('ish', [build_linux],
+        link_with: [libfakefs],
+        dependencies: [
+            liblinux,
+            declare_dependency(link_whole: modules),
+        ])
 endif
 
 if not meson.is_cross_build()

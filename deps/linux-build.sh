@@ -7,6 +7,11 @@ export ISH_CFLAGS="$5"
 export LIB_ISH_EMU="$6"
 export ARCH=ish
 
+makeargs=()
+if [[ -n "$LINUX_HOSTCC" ]]; then
+    makeargs+="HOSTCC=$LINUX_HOSTCC"
+fi
+
 mkdir -p "$objtree"
 export ISH_MESON_VARS="$(realpath "$objtree/meson_vars.mk")"
 cat >"$ISH_MESON_VARS" <<END
@@ -16,8 +21,8 @@ END
 
 defconfig=app_defconfig
 if [[ "$srctree/arch/ish/configs/$defconfig" -nt "$objtree/.config" ]]; then
-    make -C "$srctree" O="$(realpath "$objtree")" "$defconfig"
+    make -C "$srctree" O="$(realpath "$objtree")" "${makeargs[@]}" "$defconfig"
 fi
 
-make -C "$objtree" -j "$(nproc)" --debug=v | "$srctree/../makefilter.py" "$depfile" "$output"
+make -C "$objtree" -j "$(nproc)" "${makeargs[@]}" --debug=v | tee "/tmp/log" | "$srctree/../makefilter.py" "$depfile" "$output"
 cp "$objtree/vmlinux" "$output"

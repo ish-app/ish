@@ -146,6 +146,7 @@
 }
 
 - (int)startSession {
+#if !ISH_LINUX
     int err = become_new_init_child();
     if (err < 0)
         return err;
@@ -173,6 +174,7 @@
         return err;
     self.sessionPid = current->pid;
     task_start(current);
+#endif
     return 0;
 }
 
@@ -195,7 +197,9 @@
             return;
         }
     }
+#if !ISH_LINUX
     current = NULL; // it's been freed
+#endif
     [self startNewSession];
 }
 

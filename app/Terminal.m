@@ -15,13 +15,17 @@
 extern struct tty_driver ios_pty_driver;
 
 @interface Terminal () <WKScriptMessageHandler> {
+#if !ISH_LINUX
     lock_t _dataLock;
     cond_t _dataConsumed;
+#endif
 }
 
 @property WKWebView *webView;
 @property BOOL loaded;
+#if !ISH_LINUX
 @property (nonatomic) struct tty *tty;
+#endif
 @property (nonatomic) NSMutableData *pendingData;
 @property (nonatomic) BOOL processingPendingData;
 
@@ -68,8 +72,10 @@ static NSMapTable<NSUUID *, Terminal *> *terminalsByUUID;
         self.pendingData = [NSMutableData new];
         self.refreshTask = [[DelayedUITask alloc] initWithTarget:self action:@selector(refresh)];
         self.scrollToBottomTask = [[DelayedUITask alloc] initWithTarget:self action:@selector(scrollToBottom)];
+#if !ISH_LINUX
         lock_init(&_dataLock);
         cond_init(&_dataConsumed);
+#endif
         
         WKWebViewConfiguration *config = [WKWebViewConfiguration new];
         [config.userContentController addScriptMessageHandler:self name:@"load"];
@@ -91,19 +97,23 @@ static NSMapTable<NSUUID *, Terminal *> *terminalsByUUID;
     return self;
 }
 
+#if !ISH_LINUX
 + (Terminal *)createPseudoTerminal:(struct tty **)tty {
     *tty = pty_open_fake(&ios_pty_driver);
     if (IS_ERR(*tty))
         return nil;
     return (__bridge Terminal *) (*tty)->data;
 }
+#endif
 
+#if !ISH_LINUX
 - (void)setTty:(struct tty *)tty {
     _tty = tty;
     dispatch_async(dispatch_get_main_queue(), ^{
         [self syncWindowSize];
     });
 }
+#endif
 
 - (void)userContentController:(WKUserContentController *)userContentController didReceiveScriptMessage:(WKScriptMessage *)message {
     if ([message.name isEqualToString:@"load"]) {
@@ -124,6 +134,7 @@ static NSMapTable<NSUUID *, Terminal *> *terminalsByUUID;
 }
 
 - (void)syncWindowSize {
+#if !ISH_LINUX
     [self.webView evaluateJavaScript:@"exports.getSize()" completionHandler:^(NSArray<NSNumber *> *dimensions, NSError *error) {
         if (self.tty == NULL) {
             return;
@@ -134,6 +145,7 @@ static NSMapTable<NSUUID *, Terminal *> *terminalsByUUID;
         tty_set_winsize(self.tty, (struct winsize_) {.col = cols, .row = rows});
         unlock(&self.tty->lock);
     }];
+#endif
 }
 
 - (void)setEnableVoiceOverAnnounce:(BOOL)enableVoiceOverAnnounce {
@@ -144,6 +156,7 @@ static NSMapTable<NSUUID *, Terminal *> *terminalsByUUID;
 }
 
 - (int)write:(const void *)buf length:(size_t)len {
+#if !ISH_LINUX
     lock(&_dataLock);
     if (!NSThread.isMainThread) {
         // The main thread is the only one that can unblock this, so sleeping here would be a deadlock.
@@ -154,15 +167,18 @@ static NSMapTable<NSUUID *, Terminal *> *terminalsByUUID;
     [self.pendingData appendData:[NSData dataWithBytes:buf length:len]];
     [self.refreshTask schedule];
     unlock(&_dataLock);
+#endif
     return 0;
 }
 
 - (void)sendInput:(const char *)buf length:(size_t)len {
+#if !ISH_LINUX
     if (self.tty == NULL)
         return;
     tty_input(self.tty, buf, len, 0);
     [self.webView evaluateJavaScript:@"exports.setUserGesture()" completionHandler:nil];
     [self.scrollToBottomTask schedule];
+#endif
 }
 
 - (void)scrollToBottom {
@@ -177,6 +193,7 @@ static NSMapTable<NSUUID *, Terminal *> *terminalsByUUID;
     if (!self.loaded)
         return;
 
+#if !ISH_LINUX
     lock(&_dataLock);
     if (_processingPendingData) {
         unlock(&_dataLock);
@@ -205,6 +222,7 @@ static NSMapTable<NSUUID *, Terminal *> *terminalsByUUID;
             return;
         }
     }];
+#endif
 }
 
 + (void)convertCommand:(NSArray<NSString *> *)command toArgs:(char *)argv limitSize:(size_t)maxSize {
@@ -230,12 +248,14 @@ static NSMapTable<NSUUID *, Terminal *> *terminalsByUUID;
 }
 
 - (void)destroy {
+#if !ISH_LINUX
     struct tty *tty = self.tty;
     if (tty != NULL) {
         lock(&tty->lock);
         tty_hangup(tty);
         unlock(&tty->lock);
     }
+#endif
     [terminals removeObjectForKey:self.terminalsKey];
 }
 
@@ -246,6 +266,7 @@ static NSMapTable<NSUUID *, Terminal *> *terminalsByUUID;
 
 @end
 
+#if !ISH_LINUX
 static int ios_tty_init(struct tty *tty) {
     // This is called with ttys_lock but that results in deadlock since the main thread can also acquire ttys_lock. So release it.
     unlock(&ttys_lock);
@@ -281,3 +302,4 @@ struct tty_driver_ops ios_tty_ops = {
 };
 DEFINE_TTY_DRIVER(ios_console_driver, &ios_tty_ops, TTY_CONSOLE_MAJOR, 64);
 struct tty_driver ios_pty_driver = {.ops = &ios_tty_ops};
+#endif

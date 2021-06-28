@@ -10,6 +10,6 @@ VERSIONING_SYSTEM = apple-generic
 
 MESON_BUILD_DIR = $(CONFIGURATION_BUILD_DIR)/meson
 NINJA = /usr/local/bin/ninja
-NINJA_TARGETS = libish.a libish_emu.a
+NINJA_TARGETS = libish.a libish_emu.a libfakefs.a
 
 SUPPORTED_PLATFORMS = iphonesimulator iphoneos macosx

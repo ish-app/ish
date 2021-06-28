@@ -11,3 +11,4 @@ CODE_SIGN_ENTITLEMENTS = app/iSH.entitlements
 ENABLE_ON_DEMAND_RESOURCES = NO
 
 HEADER_SEARCH_PATHS = $(inherited) $(SRCROOT) $(SRCROOT)/deps/libarchive/libarchive
+OTHER_LDFLAGS = -ObjC
