@@ -225,6 +225,7 @@ syscall_t syscall_table[] = {
     [361] = (syscall_t) sys_bind,
     [362] = (syscall_t) sys_connect,
     [363] = (syscall_t) sys_listen,
+    [364] = (syscall_t) syscall_stub, // accept4
     [365] = (syscall_t) sys_getsockopt,
     [366] = (syscall_t) sys_setsockopt,
     [367] = (syscall_t) sys_getsockname,
@@ -236,7 +237,7 @@ syscall_t syscall_table[] = {
     [373] = (syscall_t) sys_shutdown,
     [375] = (syscall_t) syscall_stub, // membarrier
     [377] = (syscall_t) sys_copy_file_range,
-    [383] = (syscall_t) syscall_stub,
+    [383] = (syscall_t) syscall_stub, // statx
     [384] = (syscall_t) sys_arch_prctl,
     [439] = (syscall_t) syscall_stub, // faccessat2
 };
