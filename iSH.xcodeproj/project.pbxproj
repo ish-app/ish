@@ -114,7 +114,6 @@
 		BB21A18526894F9400BD19B4 /* libish.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BB13F7DC200AD81D003D1C4D /* libish.a */; };
 		BB21A1862689500000BD19B4 /* libish_emu.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BBFB2C5B2590257E00545EAB /* libish_emu.a */; };
 		BB235537235D49B300139E00 /* CoreLocation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BB235536235D49B300139E00 /* CoreLocation.framework */; };
-		BB28C79126896B1F00BDC834 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = BB792B541F96D90D00FFB7A4 /* AppDelegate.m */; };
 		BB28C79226896B1F00BDC834 /* AboutAppearanceViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 9A28E4E9219A8B670073D200 /* AboutAppearanceViewController.m */; };
 		BB28C79326896B1F00BDC834 /* AltIconViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = BB267FA523A48F1500ED7CAF /* AltIconViewController.m */; };
 		BB28C79426896B1F00BDC834 /* AboutNavigationController.m in Sources */ = {isa = PBXBuildFile; fileRef = BB1D9D92234A8FE100F364E8 /* AboutNavigationController.m */; };
@@ -171,6 +170,10 @@
 		BBC8298724EE5853009D042C /* metal.png in Resources */ = {isa = PBXBuildFile; fileRef = BBC8298624EE5853009D042C /* metal.png */; };
 		BBD23D5F258DA450003DCB40 /* Screenshots.m in Sources */ = {isa = PBXBuildFile; fileRef = BBD23D5E258DA450003DCB40 /* Screenshots.m */; };
 		BBD23D77258DA4BC003DCB40 /* SnapshotHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBD23D76258DA4BC003DCB40 /* SnapshotHelper.swift */; };
+		BBECF3AD269132F400DEC937 /* LinuxInterop.c in Sources */ = {isa = PBXBuildFile; fileRef = BBECF39D2691313B00DEC937 /* LinuxInterop.c */; };
+		BBECF3AE2691330F00DEC937 /* libiSHLinux.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BBECF3A22691314C00DEC937 /* libiSHLinux.a */; };
+		BBECF3B9269136FB00DEC937 /* liblinux.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BBECF3B8269136E100DEC937 /* liblinux.a */; };
+		BBECF3BC26913F1600DEC937 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = BB792B541F96D90D00FFB7A4 /* AppDelegate.m */; };
 		BBEF1970268066D1001225BD /* libiSHApp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BBEF191E26806364001225BD /* libiSHApp.a */; };
 		BBEF1972268066D1001225BD /* libish_emu.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BBFB2C5B2590257E00545EAB /* libish_emu.a */; };
 		BBEF1973268066D1001225BD /* libarchive.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BB10E5C8248DBAA1009C7A74 /* libarchive.a */; };
@@ -281,6 +284,20 @@
 			remoteGlobalIDString = BB88F48F2154760800A341FD;
 			remoteInfo = iSHFiles;
 		};
+		BBECF3B1269136E100DEC937 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = BB792B461F96D8E000FFB7A4 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = BB13F7D0200ACCA2003D1C4D;
+			remoteInfo = Ninja;
+		};
+		BBECF3BD2691417C00DEC937 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = BB792B461F96D8E000FFB7A4 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = BBECF3AF269136E100DEC937;
+			remoteInfo = liblinux;
+		};
 		BBEF1928268063FD001225BD /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = BB792B461F96D8E000FFB7A4 /* Project object */;
@@ -337,6 +354,15 @@
 				BB88F49F2154760800A341FD /* iSHFileProvider.appex in Embed App Extensions */,
 			);
 			name = "Embed App Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BBECF3A02691314C00DEC937 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "include/$(PRODUCT_NAME)";
+			dstSubfolderSpec = 16;
+			files = (
+			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		BBEF1997268066D1001225BD /* Embed App Extensions */ = {
@@ -616,6 +642,11 @@
 		BBD23D5E258DA450003DCB40 /* Screenshots.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Screenshots.m; sourceTree = "<group>"; };
 		BBD23D76258DA4BC003DCB40 /* SnapshotHelper.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SnapshotHelper.swift; path = fastlane/SnapshotHelper.swift; sourceTree = SOURCE_ROOT; };
 		BBD23D95258DEF6B003DCB40 /* Screenshots.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = Screenshots.xctestplan; sourceTree = "<group>"; };
+		BBECF39B2691311D00DEC937 /* LinuxInterop.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LinuxInterop.h; sourceTree = "<group>"; };
+		BBECF39D2691313B00DEC937 /* LinuxInterop.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = LinuxInterop.c; sourceTree = "<group>"; };
+		BBECF3A22691314C00DEC937 /* libiSHLinux.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libiSHLinux.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		BBECF3B8269136E100DEC937 /* liblinux.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = liblinux.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		BBECF3BA2691379100DEC937 /* StaticLibLinux.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = StaticLibLinux.xcconfig; sourceTree = "<group>"; };
 		BBEF191E26806364001225BD /* libiSHApp.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libiSHApp.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		BBEF192C26806546001225BD /* AppLib.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppLib.xcconfig; sourceTree = "<group>"; };
 		BBEF199C268066D1001225BD /* iSH.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iSH.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -677,6 +708,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		BBECF39F2691314C00DEC937 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		BBEF191B26806364001225BD /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -688,6 +726,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BBECF3B9269136FB00DEC937 /* liblinux.a in Frameworks */,
+				BBECF3AE2691330F00DEC937 /* libiSHLinux.a in Frameworks */,
 				BBEF1970268066D1001225BD /* libiSHApp.a in Frameworks */,
 				BBEF1972268066D1001225BD /* libish_emu.a in Frameworks */,
 				BBEF1973268066D1001225BD /* libarchive.a in Frameworks */,
@@ -759,6 +799,7 @@
 				BBEF192C26806546001225BD /* AppLib.xcconfig */,
 				BB0B86D52587009D00208600 /* iOS.xcconfig */,
 				BBFB2CDA259028DC00545EAB /* StaticLib.xcconfig */,
+				BBECF3BA2691379100DEC937 /* StaticLibLinux.xcconfig */,
 				BBEF19BA26806D7E001225BD /* Linux.xcconfig */,
 				BB21A18C268951CA00BD19B4 /* NotLinux.xcconfig */,
 				BB0B848E2586A4CF00208600 /* XcodeDefault.xcconfig */,
@@ -916,6 +957,8 @@
 				BBEF191E26806364001225BD /* libiSHApp.a */,
 				BBEF199C268066D1001225BD /* iSH.app */,
 				BB21A16F2689041500BD19B4 /* libfakefs.a */,
+				BBECF3A22691314C00DEC937 /* libiSHLinux.a */,
+				BBECF3B8269136E100DEC937 /* liblinux.a */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -937,6 +980,7 @@
 				BB0FC5911F980A6B00803272 /* Terminal.m */,
 				BB23F58B231E1D1400585522 /* ScrollbarView.h */,
 				BB23F58C231E1D1400585522 /* ScrollbarView.m */,
+				BBECF39C2691312500DEC937 /* LinuxInterop */,
 				BB4A53991FAA40FD00A72ACE /* terminal */,
 				BB235532235D472F00139E00 /* Devices */,
 				BBFB557321586C7600DFE6DE /* About */,
@@ -1142,6 +1186,15 @@
 				BB88F49C2154760800A341FD /* iSHFileProvider.entitlements */,
 			);
 			path = FileProvider;
+			sourceTree = "<group>";
+		};
+		BBECF39C2691312500DEC937 /* LinuxInterop */ = {
+			isa = PBXGroup;
+			children = (
+				BBECF39B2691311D00DEC937 /* LinuxInterop.h */,
+				BBECF39D2691313B00DEC937 /* LinuxInterop.c */,
+			);
+			name = LinuxInterop;
 			sourceTree = "<group>";
 		};
 		BBFB557221586C6600DFE6DE /* Utilities */ = {
@@ -1357,6 +1410,40 @@
 			productReference = BB88F4902154760800A341FD /* iSHFileProvider.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
+		BBECF3A12691314C00DEC937 /* libiSHLinux */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = BBECF3A82691314C00DEC937 /* Build configuration list for PBXNativeTarget "libiSHLinux" */;
+			buildPhases = (
+				BBECF39E2691314C00DEC937 /* Sources */,
+				BBECF39F2691314C00DEC937 /* Frameworks */,
+				BBECF3A02691314C00DEC937 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				BBECF3BE2691417C00DEC937 /* PBXTargetDependency */,
+			);
+			name = libiSHLinux;
+			productName = iSHLinux;
+			productReference = BBECF3A22691314C00DEC937 /* libiSHLinux.a */;
+			productType = "com.apple.product-type.library.static";
+		};
+		BBECF3AF269136E100DEC937 /* liblinux */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = BBECF3B3269136E100DEC937 /* Build configuration list for PBXNativeTarget "liblinux" */;
+			buildPhases = (
+				BBECF3B2269136E100DEC937 /* ShellScript */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				BBECF3B0269136E100DEC937 /* PBXTargetDependency */,
+			);
+			name = liblinux;
+			productName = libish;
+			productReference = BBECF3B8269136E100DEC937 /* liblinux.a */;
+			productType = "com.apple.product-type.library.static";
+		};
 		BBEF191D26806364001225BD /* libiSHApp */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = BBEF192626806364001225BD /* Build configuration list for PBXNativeTarget "libiSHApp" */;
@@ -1478,6 +1565,9 @@
 							};
 						};
 					};
+					BBECF3A12691314C00DEC937 = {
+						CreatedOnToolsVersion = 13.0;
+					};
 					BBEF191D26806364001225BD = {
 						CreatedOnToolsVersion = 13.0;
 					};
@@ -1503,8 +1593,9 @@
 			projectRoot = "";
 			targets = (
 				BB792B4F1F96D90D00FFB7A4 /* iSH */,
-				BBEF1964268066D1001225BD /* iSH+Linux */,
 				BBEF191D26806364001225BD /* libiSHApp */,
+				BBEF1964268066D1001225BD /* iSH+Linux */,
+				BBECF3A12691314C00DEC937 /* libiSHLinux */,
 				BB88F48F2154760800A341FD /* iSHFileProvider */,
 				BB41591B255EF9E300E0950C /* iSHUITests */,
 				BB13F7CA200ACC31003D1C4D /* Meson */,
@@ -1512,6 +1603,7 @@
 				BB13F7DB200AD81D003D1C4D /* libish */,
 				BB21A1662689041500BD19B4 /* libfakefs */,
 				BBFB2C542590257E00545EAB /* libish_emu */,
+				BBECF3AF269136E100DEC937 /* liblinux */,
 				BB4A922324ED9402002F5A96 /* iSH pre */,
 				497F6CE3254E5E4C00C82F46 /* MakeXcodeAutoCompleteWork */,
 				497F6D46254E605F00C82F46 /* ish */,
@@ -1698,6 +1790,20 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "python3 - \"${SRCROOT}/app/Icons/Icons.plist\" \"${BUILT_PRODUCTS_DIR}/infoplisticons.h\" <<END\nimport plistlib\nimport sys\nprint(sys.argv)\nwith open(sys.argv[1], 'rb') as plist:\n    icons = plistlib.load(plist)\nalt_icons = '<key>CFBundleAlternateIcons</key><dict>'\nfor icon in icons.keys():\n    if icon == '': continue\n    alt_icons += '''<key>{0}</key>\n<dict>\n<key>CFBundleIconFiles</key>\n<array><string>{0}</string></array>\n</dict>'''.format(icon)\nalt_icons += '</dict>'\nicon_stuff = '''</string>\n<key>CFBundleIcons</key><dict>{0}</dict>\n<key>CFBundleIcons~ipad</key><dict>{0}</dict>\n<key>kxcode</key><string>'''.format(alt_icons)\nicon_define = '#define ICON_STUFF ' + icon_stuff.replace('\\n', '')\nwith open(sys.argv[2], 'w') as output:\n    output.write(icon_define)\nEND\ntouch \"${SRCROOT}/app/Info.plist\"\n";
+		};
+		BBECF3B2269136E100DEC937 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"$(MESON_BUILD_DIR)/$(PRODUCT_NAME).a",
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "mkdir -p \"$CONFIGURATION_BUILD_DIR\"\nln -sf \"$MESON_BUILD_DIR/deps/$PRODUCT_NAME.a\" \"$CONFIGURATION_BUILD_DIR\"\n";
 		};
 		BBEF1979268066D1001225BD /* Download Root */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -1914,11 +2020,18 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		BBECF39E2691314C00DEC937 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BBECF3AD269132F400DEC937 /* LinuxInterop.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		BBEF191A26806364001225BD /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				BB28C79126896B1F00BDC834 /* AppDelegate.m in Sources */,
 				BB28C79226896B1F00BDC834 /* AboutAppearanceViewController.m in Sources */,
 				BB28C79326896B1F00BDC834 /* AltIconViewController.m in Sources */,
 				BB28C7B226896C4600BDC834 /* main.m in Sources */,
@@ -1938,6 +2051,7 @@
 				BB28C7A126896B1F00BDC834 /* RootsTableViewController.m in Sources */,
 				BB28C7A326896B1F00BDC834 /* BarButton.m in Sources */,
 				BB28C7A426896B1F00BDC834 /* AppGroup.m in Sources */,
+				BBECF3BC26913F1600DEC937 /* AppDelegate.m in Sources */,
 				BB28C7A526896B1F00BDC834 /* UIApplication+OpenURL.m in Sources */,
 				BB28C7A626896B1F00BDC834 /* AboutViewController.m in Sources */,
 				BB28C7A726896B1F00BDC834 /* UIViewController+Extras.m in Sources */,
@@ -1993,6 +2107,16 @@
 			isa = PBXTargetDependency;
 			target = BB88F48F2154760800A341FD /* iSHFileProvider */;
 			targetProxy = BB88F49D2154760800A341FD /* PBXContainerItemProxy */;
+		};
+		BBECF3B0269136E100DEC937 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = BB13F7D0200ACCA2003D1C4D /* Ninja */;
+			targetProxy = BBECF3B1269136E100DEC937 /* PBXContainerItemProxy */;
+		};
+		BBECF3BE2691417C00DEC937 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = BBECF3AF269136E100DEC937 /* liblinux */;
+			targetProxy = BBECF3BD2691417C00DEC937 /* PBXContainerItemProxy */;
 		};
 		BBEF1929268063FD001225BD /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -2364,6 +2488,66 @@
 			};
 			name = Release;
 		};
+		BBECF3A92691314C00DEC937 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = BBECF3BA2691379100DEC937 /* StaticLibLinux.xcconfig */;
+			buildSettings = {
+				LINK_WITH_STANDARD_LIBRARIES = NO;
+			};
+			name = Debug;
+		};
+		BBECF3AA2691314C00DEC937 /* DebugLinux */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = BBECF3BA2691379100DEC937 /* StaticLibLinux.xcconfig */;
+			buildSettings = {
+				LINK_WITH_STANDARD_LIBRARIES = NO;
+			};
+			name = DebugLinux;
+		};
+		BBECF3AB2691314C00DEC937 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = BBECF3BA2691379100DEC937 /* StaticLibLinux.xcconfig */;
+			buildSettings = {
+				LINK_WITH_STANDARD_LIBRARIES = NO;
+			};
+			name = Release;
+		};
+		BBECF3AC2691314C00DEC937 /* ReleaseLinux */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = BBECF3BA2691379100DEC937 /* StaticLibLinux.xcconfig */;
+			buildSettings = {
+				LINK_WITH_STANDARD_LIBRARIES = NO;
+			};
+			name = ReleaseLinux;
+		};
+		BBECF3B4269136E100DEC937 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = BBFB2CDA259028DC00545EAB /* StaticLib.xcconfig */;
+			buildSettings = {
+			};
+			name = Debug;
+		};
+		BBECF3B5269136E100DEC937 /* DebugLinux */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = BBFB2CDA259028DC00545EAB /* StaticLib.xcconfig */;
+			buildSettings = {
+			};
+			name = DebugLinux;
+		};
+		BBECF3B6269136E100DEC937 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = BBFB2CDA259028DC00545EAB /* StaticLib.xcconfig */;
+			buildSettings = {
+			};
+			name = Release;
+		};
+		BBECF3B7269136E100DEC937 /* ReleaseLinux */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = BBFB2CDA259028DC00545EAB /* StaticLib.xcconfig */;
+			buildSettings = {
+			};
+			name = ReleaseLinux;
+		};
 		BBEF192426806364001225BD /* Debug */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = BBEF192C26806546001225BD /* AppLib.xcconfig */;
@@ -2635,6 +2819,28 @@
 				BB7F62092688EAB5003C0220 /* DebugLinux */,
 				BB88F4A12154760800A341FD /* Release */,
 				BBEF19AF26806D1F001225BD /* ReleaseLinux */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		BBECF3A82691314C00DEC937 /* Build configuration list for PBXNativeTarget "libiSHLinux" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BBECF3A92691314C00DEC937 /* Debug */,
+				BBECF3AA2691314C00DEC937 /* DebugLinux */,
+				BBECF3AB2691314C00DEC937 /* Release */,
+				BBECF3AC2691314C00DEC937 /* ReleaseLinux */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		BBECF3B3269136E100DEC937 /* Build configuration list for PBXNativeTarget "liblinux" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BBECF3B4269136E100DEC937 /* Debug */,
+				BBECF3B5269136E100DEC937 /* DebugLinux */,
+				BBECF3B6269136E100DEC937 /* Release */,
+				BBECF3B7269136E100DEC937 /* ReleaseLinux */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

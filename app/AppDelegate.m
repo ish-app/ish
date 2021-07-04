@@ -27,6 +27,10 @@
 #include "fs/devices.h"
 #include "fs/path.h"
 
+#if ISH_LINUX
+#import "LinuxInterop.h"
+#endif
+
 @interface AppDelegate ()
 
 @property BOOL exiting;
@@ -183,6 +187,9 @@ static NSString *const kSkipStartupMessage = @"Skip Startup Message";
     if (err < 0)
         return err;
     task_start(current);
+#else
+    // TODO: fix issues with having multiple cpus
+    actuate_kernel("earlyprintk maxcpus=1");
 #endif
     
     return 0;
