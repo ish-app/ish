@@ -116,10 +116,17 @@
 
 - (void)awakeFromNib {
     [super awakeFromNib];
+#if !ISH_LINUX
     [NSNotificationCenter.defaultCenter addObserver:self
                                            selector:@selector(processExited:)
                                                name:ProcessExitedNotification
                                              object:nil];
+#else
+    [NSNotificationCenter.defaultCenter addObserver:self
+                                           selector:@selector(kernelPanicked:)
+                                               name:KernelPanicNotification
+                                             object:nil];
+#endif
 }
 
 - (void)viewDidAppear:(BOOL)animated {
@@ -178,6 +185,7 @@
     return 0;
 }
 
+#if !ISH_LINUX
 - (void)processExited:(NSNotification *)notif {
     int pid = [notif.userInfo[@"pid"] intValue];
     if (pid != self.sessionPid)
@@ -197,11 +205,16 @@
             return;
         }
     }
-#if !ISH_LINUX
     current = NULL; // it's been freed
-#endif
     [self startNewSession];
 }
+#endif
+
+#if ISH_LINUX
+- (void)kernelPanicked:(NSNotification *)notif {
+    [UIAlertController alert];
+}
+#endif
 
 - (void)showMessage:(NSString *)message subtitle:(NSString *)subtitle {
     dispatch_async(dispatch_get_main_queue(), ^{
@@ -297,21 +310,6 @@
 - (void)setHasExternalKeyboard:(BOOL)hasExternalKeyboard {
     _hasExternalKeyboard = hasExternalKeyboard;
     [self _updateStyleFromPreferences:YES];
-}
-
-- (void)ishExited:(NSNotification *)notification {
-    [self performSelectorOnMainThread:@selector(displayExitThing) withObject:nil waitUntilDone:YES];
-}
-
-- (void)displayExitThing {
-    UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"attempted to kill init" message:nil preferredStyle:UIAlertControllerStyleAlert];
-    [alert addAction:[UIAlertAction actionWithTitle:@"exit" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-        id delegate = [UIApplication sharedApplication].delegate;
-        [delegate exitApp];
-    }]];
-    if ([UserPreferences.shared hasChangedLaunchCommand])
-        [alert addAction:[UIAlertAction actionWithTitle:@"i typed the init command wrong, let me fix it" style:UIAlertActionStyleDefault handler:nil]];
-    [self presentViewController:alert animated:YES completion:nil];
 }
 
 - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
@@ -463,8 +461,10 @@
 
 @interface BarView : UIInputView
 @property (weak) IBOutlet TerminalViewController *terminalViewController;
+@property (nonatomic) IBInspectable BOOL allowsSelfSizing;
 @end
 @implementation BarView
+@dynamic allowsSelfSizing;
 
 - (void)layoutSubviews {
     [self.terminalViewController resizeBar];

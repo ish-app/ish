@@ -40,6 +40,7 @@
 
 @end
 
+#if !ISH_LINUX
 static void ios_handle_exit(struct task *task, int code) {
     // we are interested in init and in children of init
     // this is called with pids_lock as an implementation side effect, please do not cite as an example of good API design
@@ -54,6 +55,7 @@ static void ios_handle_exit(struct task *task, int code) {
                                                                      @"code": @(code)}];
     });
 }
+#endif
 
 // Put the abort message in the thread name so it gets included in the crash dump
 static void ios_handle_die(const char *msg) {
@@ -352,4 +354,18 @@ void NetworkReachabilityCallback(SCNetworkReachabilityRef target, SCNetworkReach
 
 @end
 
+#if ISH_LINUX
+
+void ShowPanicMessage(char *message, void (^completion)(void)) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        completion();
+    });
+}
+
+#endif
+
+#if !ISH_LINUX
 NSString *const ProcessExitedNotification = @"ProcessExitedNotification";
+#else
+NSString *const KernelPanicNotification = @"KernelPanicNotification";
+#endif

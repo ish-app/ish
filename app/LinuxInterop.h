@@ -8,6 +8,10 @@
 #ifndef LinuxInterop_h
 #define LinuxInterop_h
 
-void actuate_kernel(char *cmdline);
+void call_in_kernel_irq(void (^block)(void));
+
+void ReportPanic(const char *message, void (^completion)(void));
+
+void actuate_kernel(const char *cmdline);
 
 #endif /* LinuxInterop_h */

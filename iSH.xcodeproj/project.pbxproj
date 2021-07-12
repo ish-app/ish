@@ -356,15 +356,6 @@
 			name = "Embed App Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		BBECF3A02691314C00DEC937 /* CopyFiles */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "include/$(PRODUCT_NAME)";
-			dstSubfolderSpec = 16;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		BBEF1997268066D1001225BD /* Embed App Extensions */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -705,20 +696,6 @@
 				BB21A1862689500000BD19B4 /* libish_emu.a in Frameworks */,
 				BB21A18526894F9400BD19B4 /* libish.a in Frameworks */,
 				BB21A1702689048200BD19B4 /* libfakefs.a in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		BBECF39F2691314C00DEC937 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		BBEF191B26806364001225BD /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1415,8 +1392,6 @@
 			buildConfigurationList = BBECF3A82691314C00DEC937 /* Build configuration list for PBXNativeTarget "libiSHLinux" */;
 			buildPhases = (
 				BBECF39E2691314C00DEC937 /* Sources */,
-				BBECF39F2691314C00DEC937 /* Frameworks */,
-				BBECF3A02691314C00DEC937 /* CopyFiles */,
 			);
 			buildRules = (
 			);
@@ -1449,7 +1424,6 @@
 			buildConfigurationList = BBEF192626806364001225BD /* Build configuration list for PBXNativeTarget "libiSHApp" */;
 			buildPhases = (
 				BBEF191A26806364001225BD /* Sources */,
-				BBEF191B26806364001225BD /* Frameworks */,
 			);
 			buildRules = (
 			);
@@ -2173,11 +2147,11 @@
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
-		497F6CE8254E5E4C00C82F46 /* Debug */ = {
+		497F6CE8254E5E4C00C82F46 /* Debugfuck */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 			};
-			name = Debug;
+			name = Debugfuck;
 		};
 		497F6CE9254E5E4C00C82F46 /* Release */ = {
 			isa = XCBuildConfiguration;
@@ -2185,7 +2159,7 @@
 			};
 			name = Release;
 		};
-		497F6D4C254E605F00C82F46 /* Debug */ = {
+		497F6D4C254E605F00C82F46 /* Debugfuck */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -2194,7 +2168,7 @@
 				SDKROOT = macosx;
 				SUPPORTED_PLATFORMS = macosx;
 			};
-			name = Debug;
+			name = Debugfuck;
 		};
 		497F6D4D254E605F00C82F46 /* Release */ = {
 			isa = XCBuildConfiguration;
@@ -2207,11 +2181,11 @@
 			};
 			name = Release;
 		};
-		BB13F7CC200ACC31003D1C4D /* Debug */ = {
+		BB13F7CC200ACC31003D1C4D /* Debugfuck */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 			};
-			name = Debug;
+			name = Debugfuck;
 		};
 		BB13F7CD200ACC31003D1C4D /* Release */ = {
 			isa = XCBuildConfiguration;
@@ -2219,11 +2193,11 @@
 			};
 			name = Release;
 		};
-		BB13F7D2200ACCA2003D1C4D /* Debug */ = {
+		BB13F7D2200ACCA2003D1C4D /* Debugfuck */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 			};
-			name = Debug;
+			name = Debugfuck;
 		};
 		BB13F7D3200ACCA2003D1C4D /* Release */ = {
 			isa = XCBuildConfiguration;
@@ -2231,12 +2205,12 @@
 			};
 			name = Release;
 		};
-		BB13F7E3200AD81E003D1C4D /* Debug */ = {
+		BB13F7E3200AD81E003D1C4D /* Debugfuck */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = BBFB2CDA259028DC00545EAB /* StaticLib.xcconfig */;
 			buildSettings = {
 			};
-			name = Debug;
+			name = Debugfuck;
 		};
 		BB13F7E4200AD81E003D1C4D /* Release */ = {
 			isa = XCBuildConfiguration;
@@ -2245,12 +2219,12 @@
 			};
 			name = Release;
 		};
-		BB21A16B2689041500BD19B4 /* Debug */ = {
+		BB21A16B2689041500BD19B4 /* Debugfuck */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = BBFB2CDA259028DC00545EAB /* StaticLib.xcconfig */;
 			buildSettings = {
 			};
-			name = Debug;
+			name = Debugfuck;
 		};
 		BB21A16C2689041500BD19B4 /* DebugLinux */ = {
 			isa = XCBuildConfiguration;
@@ -2273,7 +2247,7 @@
 			};
 			name = ReleaseLinux;
 		};
-		BB415923255EF9E300E0950C /* Debug */ = {
+		BB415923255EF9E300E0950C /* Debugfuck */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = BB0B86D52587009D00208600 /* iOS.xcconfig */;
 			buildSettings = {
@@ -2290,7 +2264,7 @@
 				SWIFT_VERSION = 5.0;
 				TEST_TARGET_NAME = iSH;
 			};
-			name = Debug;
+			name = Debugfuck;
 		};
 		BB415924255EF9E300E0950C /* Release */ = {
 			isa = XCBuildConfiguration;
@@ -2310,11 +2284,11 @@
 			};
 			name = Release;
 		};
-		BB4A922524ED9402002F5A96 /* Debug */ = {
+		BB4A922524ED9402002F5A96 /* Debugfuck */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 			};
-			name = Debug;
+			name = Debugfuck;
 		};
 		BB4A922624ED9402002F5A96 /* Release */ = {
 			isa = XCBuildConfiguration;
@@ -2322,14 +2296,14 @@
 			};
 			name = Release;
 		};
-		BB792B4A1F96D8E000FFB7A4 /* Debug */ = {
+		BB792B4A1F96D8E000FFB7A4 /* Debugfuck */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = BB0B85A42586F1CB00208600 /* ProjectDebug.xcconfig */;
 			buildSettings = {
 				CURRENT_PROJECT_VERSION = 177;
 				DEVELOPMENT_TEAM = CK5SXRTBR7;
 			};
-			name = Debug;
+			name = Debugfuck;
 		};
 		BB792B4B1F96D8E000FFB7A4 /* Release */ = {
 			isa = XCBuildConfiguration;
@@ -2340,12 +2314,12 @@
 			};
 			name = Release;
 		};
-		BB792B641F96D90D00FFB7A4 /* Debug */ = {
+		BB792B641F96D90D00FFB7A4 /* Debugfuck */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = BB0B86CD2586FD8800208600 /* App.xcconfig */;
 			buildSettings = {
 			};
-			name = Debug;
+			name = Debugfuck;
 		};
 		BB792B651F96D90D00FFB7A4 /* Release */ = {
 			isa = XCBuildConfiguration;
@@ -2464,7 +2438,7 @@
 			};
 			name = DebugLinux;
 		};
-		BB88F4A02154760800A341FD /* Debug */ = {
+		BB88F4A02154760800A341FD /* Debugfuck */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = BB0B86D52587009D00208600 /* iOS.xcconfig */;
 			buildSettings = {
@@ -2474,7 +2448,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 			};
-			name = Debug;
+			name = Debugfuck;
 		};
 		BB88F4A12154760800A341FD /* Release */ = {
 			isa = XCBuildConfiguration;
@@ -2488,13 +2462,13 @@
 			};
 			name = Release;
 		};
-		BBECF3A92691314C00DEC937 /* Debug */ = {
+		BBECF3A92691314C00DEC937 /* Debugfuck */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = BBECF3BA2691379100DEC937 /* StaticLibLinux.xcconfig */;
 			buildSettings = {
 				LINK_WITH_STANDARD_LIBRARIES = NO;
 			};
-			name = Debug;
+			name = Debugfuck;
 		};
 		BBECF3AA2691314C00DEC937 /* DebugLinux */ = {
 			isa = XCBuildConfiguration;
@@ -2520,12 +2494,12 @@
 			};
 			name = ReleaseLinux;
 		};
-		BBECF3B4269136E100DEC937 /* Debug */ = {
+		BBECF3B4269136E100DEC937 /* Debugfuck */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = BBFB2CDA259028DC00545EAB /* StaticLib.xcconfig */;
 			buildSettings = {
 			};
-			name = Debug;
+			name = Debugfuck;
 		};
 		BBECF3B5269136E100DEC937 /* DebugLinux */ = {
 			isa = XCBuildConfiguration;
@@ -2548,12 +2522,12 @@
 			};
 			name = ReleaseLinux;
 		};
-		BBEF192426806364001225BD /* Debug */ = {
+		BBEF192426806364001225BD /* Debugfuck */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = BBEF192C26806546001225BD /* AppLib.xcconfig */;
 			buildSettings = {
 			};
-			name = Debug;
+			name = Debugfuck;
 		};
 		BBEF192526806364001225BD /* Release */ = {
 			isa = XCBuildConfiguration;
@@ -2562,12 +2536,12 @@
 			};
 			name = Release;
 		};
-		BBEF199A268066D1001225BD /* Debug */ = {
+		BBEF199A268066D1001225BD /* Debugfuck */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = BB0B86CD2586FD8800208600 /* App.xcconfig */;
 			buildSettings = {
 			};
-			name = Debug;
+			name = Debugfuck;
 		};
 		BBEF199B268066D1001225BD /* Release */ = {
 			isa = XCBuildConfiguration;
@@ -2685,12 +2659,12 @@
 			};
 			name = ReleaseLinux;
 		};
-		BBFB2C592590257E00545EAB /* Debug */ = {
+		BBFB2C592590257E00545EAB /* Debugfuck */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = BBFB2CDA259028DC00545EAB /* StaticLib.xcconfig */;
 			buildSettings = {
 			};
-			name = Debug;
+			name = Debugfuck;
 		};
 		BBFB2C5A2590257E00545EAB /* Release */ = {
 			isa = XCBuildConfiguration;
@@ -2705,7 +2679,7 @@
 		497F6CEA254E5E4C00C82F46 /* Build configuration list for PBXNativeTarget "MakeXcodeAutoCompleteWork" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				497F6CE8254E5E4C00C82F46 /* Debug */,
+				497F6CE8254E5E4C00C82F46 /* Debugfuck */,
 				BB7F62102688EAB5003C0220 /* DebugLinux */,
 				497F6CE9254E5E4C00C82F46 /* Release */,
 				BBEF19B626806D1F001225BD /* ReleaseLinux */,
@@ -2716,7 +2690,7 @@
 		497F6D4B254E605F00C82F46 /* Build configuration list for PBXNativeTarget "ish" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				497F6D4C254E605F00C82F46 /* Debug */,
+				497F6D4C254E605F00C82F46 /* Debugfuck */,
 				BB7F62112688EAB5003C0220 /* DebugLinux */,
 				497F6D4D254E605F00C82F46 /* Release */,
 				BBEF19B726806D1F001225BD /* ReleaseLinux */,
@@ -2727,7 +2701,7 @@
 		BB13F7CB200ACC31003D1C4D /* Build configuration list for PBXLegacyTarget "Meson" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				BB13F7CC200ACC31003D1C4D /* Debug */,
+				BB13F7CC200ACC31003D1C4D /* Debugfuck */,
 				BB7F620B2688EAB5003C0220 /* DebugLinux */,
 				BB13F7CD200ACC31003D1C4D /* Release */,
 				BBEF19B126806D1F001225BD /* ReleaseLinux */,
@@ -2738,7 +2712,7 @@
 		BB13F7D1200ACCA2003D1C4D /* Build configuration list for PBXLegacyTarget "Ninja" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				BB13F7D2200ACCA2003D1C4D /* Debug */,
+				BB13F7D2200ACCA2003D1C4D /* Debugfuck */,
 				BB7F620C2688EAB5003C0220 /* DebugLinux */,
 				BB13F7D3200ACCA2003D1C4D /* Release */,
 				BBEF19B226806D1F001225BD /* ReleaseLinux */,
@@ -2749,7 +2723,7 @@
 		BB13F7E2200AD81E003D1C4D /* Build configuration list for PBXNativeTarget "libish" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				BB13F7E3200AD81E003D1C4D /* Debug */,
+				BB13F7E3200AD81E003D1C4D /* Debugfuck */,
 				BB7F620D2688EAB5003C0220 /* DebugLinux */,
 				BB13F7E4200AD81E003D1C4D /* Release */,
 				BBEF19B326806D1F001225BD /* ReleaseLinux */,
@@ -2760,7 +2734,7 @@
 		BB21A16A2689041500BD19B4 /* Build configuration list for PBXNativeTarget "libfakefs" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				BB21A16B2689041500BD19B4 /* Debug */,
+				BB21A16B2689041500BD19B4 /* Debugfuck */,
 				BB21A16C2689041500BD19B4 /* DebugLinux */,
 				BB21A16D2689041500BD19B4 /* Release */,
 				BB21A16E2689041500BD19B4 /* ReleaseLinux */,
@@ -2771,7 +2745,7 @@
 		BB415925255EF9E300E0950C /* Build configuration list for PBXNativeTarget "iSHUITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				BB415923255EF9E300E0950C /* Debug */,
+				BB415923255EF9E300E0950C /* Debugfuck */,
 				BB7F620A2688EAB5003C0220 /* DebugLinux */,
 				BB415924255EF9E300E0950C /* Release */,
 				BBEF19B026806D1F001225BD /* ReleaseLinux */,
@@ -2782,7 +2756,7 @@
 		BB4A922424ED9402002F5A96 /* Build configuration list for PBXAggregateTarget "iSH pre" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				BB4A922524ED9402002F5A96 /* Debug */,
+				BB4A922524ED9402002F5A96 /* Debugfuck */,
 				BB7F620F2688EAB5003C0220 /* DebugLinux */,
 				BB4A922624ED9402002F5A96 /* Release */,
 				BBEF19B526806D1F001225BD /* ReleaseLinux */,
@@ -2793,7 +2767,7 @@
 		BB792B491F96D8E000FFB7A4 /* Build configuration list for PBXProject "iSH" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				BB792B4A1F96D8E000FFB7A4 /* Debug */,
+				BB792B4A1F96D8E000FFB7A4 /* Debugfuck */,
 				BB7F62052688EAB5003C0220 /* DebugLinux */,
 				BB792B4B1F96D8E000FFB7A4 /* Release */,
 				BBEF19AB26806D1F001225BD /* ReleaseLinux */,
@@ -2804,7 +2778,7 @@
 		BB792B661F96D90D00FFB7A4 /* Build configuration list for PBXNativeTarget "iSH" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				BB792B641F96D90D00FFB7A4 /* Debug */,
+				BB792B641F96D90D00FFB7A4 /* Debugfuck */,
 				BB7F62062688EAB5003C0220 /* DebugLinux */,
 				BB792B651F96D90D00FFB7A4 /* Release */,
 				BBEF19AC26806D1F001225BD /* ReleaseLinux */,
@@ -2815,7 +2789,7 @@
 		BB88F4A22154760800A341FD /* Build configuration list for PBXNativeTarget "iSHFileProvider" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				BB88F4A02154760800A341FD /* Debug */,
+				BB88F4A02154760800A341FD /* Debugfuck */,
 				BB7F62092688EAB5003C0220 /* DebugLinux */,
 				BB88F4A12154760800A341FD /* Release */,
 				BBEF19AF26806D1F001225BD /* ReleaseLinux */,
@@ -2826,7 +2800,7 @@
 		BBECF3A82691314C00DEC937 /* Build configuration list for PBXNativeTarget "libiSHLinux" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				BBECF3A92691314C00DEC937 /* Debug */,
+				BBECF3A92691314C00DEC937 /* Debugfuck */,
 				BBECF3AA2691314C00DEC937 /* DebugLinux */,
 				BBECF3AB2691314C00DEC937 /* Release */,
 				BBECF3AC2691314C00DEC937 /* ReleaseLinux */,
@@ -2837,7 +2811,7 @@
 		BBECF3B3269136E100DEC937 /* Build configuration list for PBXNativeTarget "liblinux" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				BBECF3B4269136E100DEC937 /* Debug */,
+				BBECF3B4269136E100DEC937 /* Debugfuck */,
 				BBECF3B5269136E100DEC937 /* DebugLinux */,
 				BBECF3B6269136E100DEC937 /* Release */,
 				BBECF3B7269136E100DEC937 /* ReleaseLinux */,
@@ -2848,7 +2822,7 @@
 		BBEF192626806364001225BD /* Build configuration list for PBXNativeTarget "libiSHApp" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				BBEF192426806364001225BD /* Debug */,
+				BBEF192426806364001225BD /* Debugfuck */,
 				BB7F62082688EAB5003C0220 /* DebugLinux */,
 				BBEF192526806364001225BD /* Release */,
 				BBEF19AE26806D1F001225BD /* ReleaseLinux */,
@@ -2859,7 +2833,7 @@
 		BBEF1999268066D1001225BD /* Build configuration list for PBXNativeTarget "iSH+Linux" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				BBEF199A268066D1001225BD /* Debug */,
+				BBEF199A268066D1001225BD /* Debugfuck */,
 				BB7F62072688EAB5003C0220 /* DebugLinux */,
 				BBEF199B268066D1001225BD /* Release */,
 				BBEF19AD26806D1F001225BD /* ReleaseLinux */,
@@ -2870,7 +2844,7 @@
 		BBFB2C582590257E00545EAB /* Build configuration list for PBXNativeTarget "libish_emu" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				BBFB2C592590257E00545EAB /* Debug */,
+				BBFB2C592590257E00545EAB /* Debugfuck */,
 				BB7F620E2688EAB5003C0220 /* DebugLinux */,
 				BBFB2C5A2590257E00545EAB /* Release */,
 				BBEF19B426806D1F001225BD /* ReleaseLinux */,
