@@ -259,31 +259,19 @@
     if (self.ignoreKeyboardMotion)
         return;
 
-    // show: use the height
-    // hide: consult this chart
-    // external:
-    // 2021-07-03 16:02:08.341888-0700 iSH[824:95929] UIKeyboardWillHideNotification NSRect: {{0, 779}, {1112, 55}} 55.000000 touches=1
-    // floating:
-    // 2021-07-03 16:01:51.855653-0700 iSH[824:95929] UIKeyboardWillHideNotification NSRect: {{493.87681531086128, 166.33295712535619}, {334, 270}} 55.000000 touches=0
-    // undock:
-    // 2021-07-03 16:01:27.210636-0700 iSH[824:95929] UIKeyboardWillHideNotification NSRect: {{0, 764}, {1112, 408}} 0.000000 touches=0
-    // real hide:
-    // 2021-07-03 16:01:08.446187-0700 iSH[824:95929] UIKeyboardWillHideNotification NSRect: {{0, 834}, {1112, 408}} 0.000000 touches=0
-    // real hide with external keyboard:
-    // 2021-07-03 16:02:19.239653-0700 iSH[824:95929] UIKeyboardWillHideNotification NSRect: {{0, 834}, {1112, 55}} 55.000000 touches=0
-    // the "external" and "floating" cases should manually account for the input accessory view. other cases should use 0.
-
     CGRect keyboardFrame = [notification.userInfo[UIKeyboardFrameEndUserInfoKey] CGRectValue];
-    BOOL touches = keyboardFrame.origin.y + keyboardFrame.size.height == UIScreen.mainScreen.bounds.size.height;
-    self.hasExternalKeyboard = keyboardFrame.size.height < 200;
-    CGFloat pad = 0;
-    if ([notification.name isEqual:UIKeyboardWillShowNotification])
-        pad = keyboardFrame.size.height;
-    else if ([notification.name isEqual:UIKeyboardWillHideNotification] &&
-             (keyboardFrame.size.width != UIScreen.mainScreen.bounds.size.width || touches))
-        pad = self.termView.inputAccessoryView.frame.size.height;
-    pad = fmax(pad, self.view.safeAreaInsets.bottom);
-    NSLog(@"%@ %@ %f touches=%d", notification.name, [NSValue valueWithCGRect:keyboardFrame], pad, touches);
+    if (CGRectEqualToRect(keyboardFrame, CGRectZero))
+        return;
+    NSLog(@"%@ %@", notification.name, [NSValue valueWithCGRect:keyboardFrame]);
+    self.hasExternalKeyboard = keyboardFrame.size.height < 100;
+    CGFloat pad = UIScreen.mainScreen.bounds.size.height - keyboardFrame.origin.y;
+    if (pad != keyboardFrame.size.height) {
+        pad = 0; // keyboard is not right at the bottom of the screen, must be floating or something
+    }
+    if (pad == 0) {
+        pad = self.view.safeAreaInsets.bottom;
+    }
+    // NSLog(@"pad %f", pad);
     self.bottomConstraint.constant = pad;
 
     BOOL initialLayout = self.termView.needsUpdateConstraints;
