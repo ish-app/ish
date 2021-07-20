@@ -1,3 +1,8 @@
+/*
+ *   Copyright (c) 2021 c0dine
+ *   All rights reserved.
+ *   Feel free to contribute!
+ */
 //
 //  ViewController.m
 //  iSH
@@ -104,11 +109,10 @@
         [self.escapeKey setTitle:nil forState:UIControlStateNormal];
         [self.escapeKey setImage:[UIImage systemImageNamed:@"escape"] forState:UIControlStateNormal];
     }
-    
     [UserPreferences.shared observe:@[@"hideStatusBar"] options:0 owner:self usingBlock:^(typeof(self) self) {
         [self setNeedsStatusBarAppearanceUpdate];
     }];
-    [UserPreferences.shared observe:@[@"theme", @"hideExtraKeysWithExternalKeyboard"]
+    [UserPreferences.shared observe:@[@"scheme", @"hideExtraKeysWithExternalKeyboard"]
                             options:0 owner:self usingBlock:^(typeof(self) self) {
         [self _updateStyleFromPreferences:YES];
     }];
@@ -220,8 +224,8 @@
 - (void)_updateStyleFromPreferences:(BOOL)animated {
     NSTimeInterval duration = animated ? 0.1 : 0;
     [UIView animateWithDuration:duration animations:^{
-        self.view.backgroundColor = UserPreferences.shared.theme.backgroundColor;
-        UIKeyboardAppearance keyAppearance = UserPreferences.shared.theme.keyboardAppearance;
+        self.view.backgroundColor = UserPreferences.shared.scheme.backgroundColor;
+        UIKeyboardAppearance keyAppearance = UserPreferences.shared.scheme.keyboardAppearance;
         self.termView.keyboardAppearance = keyAppearance;
         for (BarButton *button in self.barButtons) {
             button.keyAppearance = keyAppearance;
@@ -248,7 +252,7 @@
 }
 
 - (UIStatusBarStyle)preferredStatusBarStyle {
-    return UserPreferences.shared.theme.statusBarStyle;
+    return UserPreferences.shared.scheme.statusBarStyle;
 }
 
 - (BOOL)prefersStatusBarHidden {

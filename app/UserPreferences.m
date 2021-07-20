@@ -1,3 +1,8 @@
+/*
+ *   Copyright (c) 2021 c0dine
+ *   All rights reserved.
+ *   Feel free to contribute!
+ */
 //
 //  UserPreferences.m
 //  iSH
@@ -7,7 +12,7 @@
 
 #import <UIKit/UIKit.h>
 #import "UserPreferences.h"
-
+#import "UIColor+additions.h"
 static NSString *const kPreferenceCapsLockMappingKey = @"Caps Lock Mapping";
 static NSString *const kPreferenceOptionMappingKey = @"Option Mapping";
 static NSString *const kPreferenceBacktickEscapeKey = @"Backtick Mapping Escape";
@@ -15,7 +20,9 @@ static NSString *const kPreferenceHideExtraKeysWithExternalKeyboard = @"Hide Ext
 static NSString *const kPreferenceOverrideControlSpace = @"Override Control Space";
 static NSString *const kPreferenceFontFamilyKey = @"Font Family";
 static NSString *const kPreferenceFontSizeKey = @"Font Size";
-static NSString *const kPreferenceThemeKey = @"Theme";
+static NSString *const kPreferenceSchemeKey = @"Scheme";
+static NSString *const kPreferenceSchemeDictKey = @"SchemeArray";
+static NSString *const kPreferenceDefaultSchemeName = @"Light";
 static NSString *const kPreferenceDisableDimmingKey = @"Disable Dimming";
 NSString *const kPreferenceLaunchCommandKey = @"Init Command";
 NSString *const kPreferenceBootCommandKey = @"Boot Command";
@@ -38,11 +45,18 @@ NSString *const kPreferenceHideStatusBar = @"Status Bar";
     self = [super init];
     if (self) {
         _defaults = [NSUserDefaults standardUserDefaults];
-        Theme *defaultTheme = [Theme presetThemeNamed:@"Light"];
+        NSMutableDictionary<NSString *, id> *modifiedPresets = (NSMutableDictionary<NSString *, id> *) [[NSMutableDictionary alloc] init];
+        NSEnumerator *enumerator = [Scheme.presets keyEnumerator];
+        id key; // This should be a string right?
+        while((key = [enumerator nextObject])) {
+            [modifiedPresets setObject:Scheme.presets[key].properties forKey:key];
+        }
+        
         [_defaults registerDefaults:@{
             kPreferenceFontFamilyKey: @"Menlo",
             kPreferenceFontSizeKey: @(12),
-            kPreferenceThemeKey: defaultTheme.properties,
+            kPreferenceSchemeKey: kPreferenceDefaultSchemeName,
+            kPreferenceSchemeDictKey: [NSDictionary dictionaryWithDictionary:modifiedPresets],
             kPreferenceCapsLockMappingKey: @(CapsLockMapControl),
             kPreferenceOptionMappingKey: @(OptionMapNone),
             kPreferenceBacktickEscapeKey: @(NO),
@@ -51,9 +65,14 @@ NSString *const kPreferenceHideStatusBar = @"Status Bar";
             kPreferenceBootCommandKey: @[@"/sbin/init"],
             kPreferenceHideStatusBar: @(NO),
         }];
-        _theme = [[Theme alloc] initWithProperties:[_defaults objectForKey:kPreferenceThemeKey]];
+        NSString *currentSchemeName = [_defaults stringForKey:kPreferenceSchemeKey];
+        _scheme = [self schemeFromName:currentSchemeName];
     }
     return self;
+}
+
+- (NSArray<NSString *> *)allSchemeNames {
+    return [(NSDictionary<NSString *, id> *) [_defaults objectForKey:kPreferenceSchemeDictKey] allKeys];
 }
 
 - (BOOL)hideStatusBar {
@@ -67,6 +86,7 @@ NSString *const kPreferenceHideStatusBar = @"Status Bar";
 - (CapsLockMapping)capsLockMapping {
     return [_defaults integerForKey:kPreferenceCapsLockMappingKey];
 }
+
 - (void)setCapsLockMapping:(CapsLockMapping)capsLockMapping {
     [_defaults setInteger:capsLockMapping forKey:kPreferenceCapsLockMappingKey];
 }
@@ -74,6 +94,7 @@ NSString *const kPreferenceHideStatusBar = @"Status Bar";
 - (OptionMapping)optionMapping {
     return [_defaults integerForKey:kPreferenceOptionMappingKey];
 }
+
 - (void)setOptionMapping:(OptionMapping)optionMapping {
     [_defaults setInteger:optionMapping forKey:kPreferenceOptionMappingKey];
 }
@@ -81,6 +102,7 @@ NSString *const kPreferenceHideStatusBar = @"Status Bar";
 - (BOOL)backtickMapEscape {
     return [_defaults boolForKey:kPreferenceBacktickEscapeKey];
 }
+
 - (void)setBacktickMapEscape:(BOOL)backtickMapEscape {
     [_defaults setBool:backtickMapEscape forKey:kPreferenceBacktickEscapeKey];
 }
@@ -88,18 +110,23 @@ NSString *const kPreferenceHideStatusBar = @"Status Bar";
 - (BOOL)hideExtraKeysWithExternalKeyboard {
     return [_defaults boolForKey:kPreferenceHideExtraKeysWithExternalKeyboard];
 }
+
 - (void)setHideExtraKeysWithExternalKeyboard:(BOOL)hideExtraKeysWithExternalKeyboard {
     [_defaults setBool:hideExtraKeysWithExternalKeyboard forKey:kPreferenceHideExtraKeysWithExternalKeyboard];
 }
+
 - (BOOL)overrideControlSpace {
     return [_defaults boolForKey:kPreferenceOverrideControlSpace];
 }
+
 - (void)setOverrideControlSpace:(BOOL)overrideControlSpace {
     [_defaults setBool:overrideControlSpace forKey:kPreferenceOverrideControlSpace];
 }
+
 - (NSNumber *)fontSize {
     return [_defaults objectForKey:kPreferenceFontSizeKey];
 }
+
 - (void)setFontSize:(NSNumber *)fontSize {
     [_defaults setObject:fontSize forKey:kPreferenceFontSizeKey];
 }
@@ -107,25 +134,50 @@ NSString *const kPreferenceHideStatusBar = @"Status Bar";
 - (NSString *)fontFamily {
     return [_defaults objectForKey:kPreferenceFontFamilyKey];
 }
+
 - (void)setFontFamily:(NSString *)fontFamily {
     [_defaults setObject:fontFamily forKey:kPreferenceFontFamilyKey];
 }
 
 - (UIColor *)foregroundColor {
-    return self.theme.foregroundColor;
-}
-- (UIColor *)backgroundColor {
-    return self.theme.backgroundColor;
+    return self.scheme.foregroundColor;
 }
 
-- (void)setTheme:(Theme *)theme {
-    _theme = theme;
-    [_defaults setObject:theme.properties forKey:kPreferenceThemeKey];
+- (UIColor *)backgroundColor {
+    return self.scheme.backgroundColor;
+}
+
+- (void)setScheme:(Scheme *)scheme {
+    _scheme = scheme;
+    [_defaults setObject:scheme.name forKey:kPreferenceSchemeKey];
+}
+
+- (void)setSchemeToName:(NSString *)name {
+    [self setScheme:[[Scheme alloc] initWithProperties:[_defaults objectForKey:kPreferenceSchemeDictKey][name]]];
+}
+
+- (Scheme *)schemeFromName:(NSString *)name {
+    return [[Scheme alloc] initWithProperties:[_defaults objectForKey:kPreferenceSchemeDictKey][name]];
+}
+
+- (void) deleteScheme:(NSString *)name {
+    NSMutableDictionary<NSString *, id> *dict = [[_defaults dictionaryForKey:kPreferenceSchemeDictKey] mutableCopy];
+    [dict removeObjectForKey:name];
+    [_defaults setObject:dict forKey:kPreferenceSchemeDictKey];
+}
+
+- (void) modifyScheme:(NSString *)name properties:(id)props {
+    NSMutableDictionary<NSString *, id> *dict = [[_defaults dictionaryForKey:kPreferenceSchemeDictKey] mutableCopy];
+    [dict setValue:props forKey:name];
+    [_defaults setObject:dict forKey:kPreferenceSchemeDictKey];
+    if (name == _scheme.name)
+        [self setSchemeToName:name]; // Just to call sane KVO
 }
 
 - (BOOL)shouldDisableDimming {
     return [_defaults boolForKey:kPreferenceDisableDimmingKey];
 }
+
 - (void)setShouldDisableDimming:(BOOL)dim {
     [_defaults setBool:dim forKey:kPreferenceDisableDimmingKey];
 }
@@ -133,9 +185,11 @@ NSString *const kPreferenceHideStatusBar = @"Status Bar";
 - (NSArray<NSString *> *)launchCommand {
     return [_defaults stringArrayForKey:kPreferenceLaunchCommandKey];
 }
+
 - (void)setLaunchCommand:(NSArray<NSString *> *)launchCommand {
     [_defaults setObject:launchCommand forKey:kPreferenceLaunchCommandKey];
 }
+
 - (BOOL)hasChangedLaunchCommand {
     NSArray *defaultLaunchCommand = [[[NSUserDefaults alloc] initWithSuiteName:NSRegistrationDomain] stringArrayForKey:kPreferenceLaunchCommandKey];
     return ![self.launchCommand isEqual:defaultLaunchCommand];
@@ -144,6 +198,7 @@ NSString *const kPreferenceHideStatusBar = @"Status Bar";
 - (NSArray<NSString *> *)bootCommand {
     return [_defaults stringArrayForKey:kPreferenceBootCommandKey];
 }
+
 - (void)setBootCommand:(NSArray<NSString *> *)bootCommand {
     [_defaults setObject:bootCommand forKey:kPreferenceBootCommandKey];
 }
@@ -151,31 +206,31 @@ NSString *const kPreferenceHideStatusBar = @"Status Bar";
 @end
 
 static id ArchiveColor(UIColor *color) {
-    CGFloat r, g, b;
-    [color getRed:&r green:&g blue:&b alpha:nil];
-    return [NSString stringWithFormat:@"%f %f %f", r, g, b];
+    return [UIColor hexWithColor:color];
 }
 static UIColor *UnarchiveColor(id data) {
-    NSArray<NSString *> *components = [data componentsSeparatedByString:@" "];
-    CGFloat r = components[0].doubleValue;
-    CGFloat g = components[1].doubleValue;
-    CGFloat b = components[2].doubleValue;
-    return [UIColor colorWithRed:r green:g blue:b alpha:1];
+    return [UIColor colorWithHexString:data];
 }
 
-@implementation Theme
+//MARK: Scheme Implementation
+@implementation Scheme
 
 - (instancetype)initWithProperties:(NSDictionary<NSString *,id> *)props {
     if (self = [super init]) {
-        _foregroundColor = UnarchiveColor(props[kThemeForegroundColor]);
-        _backgroundColor = UnarchiveColor(props[kThemeBackgroundColor]);
+        _foregroundColor = UnarchiveColor(props[kSchemeForegroundColor]);
+        _backgroundColor = UnarchiveColor(props[kSchemeBackgroundColor]);
+        _name = props[kSchemeName];
+        _palette = props[kSchemePalette];
     }
     return self;
 }
 
-+ (instancetype)_themeWithForegroundColor:(UIColor *)foreground backgroundColor:(UIColor *)background {
-    return [[self alloc] initWithProperties:@{kThemeForegroundColor: ArchiveColor(foreground),
-                                              kThemeBackgroundColor: ArchiveColor(background)}];
++ (instancetype)_schemeWithForegroundColor:(UIColor *)foreground backgroundColor:(UIColor *)background name:(NSString *)name palette:(NSArray<NSString *> *)palette {
+    return [[self alloc] initWithProperties:@{kSchemeForegroundColor: ArchiveColor(foreground),
+                                              kSchemeBackgroundColor: ArchiveColor(background),
+                                              kSchemeName: name,
+                                              kSchemePalette: palette
+    }];
 }
 
 - (UIStatusBarStyle)statusBarStyle {
@@ -201,8 +256,11 @@ static UIColor *UnarchiveColor(id data) {
 }
 
 - (NSDictionary<NSString *,id> *)properties {
-    return @{kThemeForegroundColor: ArchiveColor(self.foregroundColor),
-             kThemeBackgroundColor: ArchiveColor(self.backgroundColor)};
+    return @{kSchemeForegroundColor: ArchiveColor(self.foregroundColor),
+             kSchemeBackgroundColor: ArchiveColor(self.backgroundColor),
+             kSchemeName: self.name,
+             kSchemePalette: self.palette
+    };
 }
 
 - (BOOL)isEqual:(id)object {
@@ -211,25 +269,34 @@ static UIColor *UnarchiveColor(id data) {
     return [self.properties isEqualToDictionary:[object properties]];
 }
 
-NSDictionary<NSString *, Theme *> *presetThemes;
-+ (void)initialize {
-    presetThemes = @{@"Light": [self _themeWithForegroundColor:UIColor.blackColor
-                                               backgroundColor:UIColor.whiteColor],
-                     @"Dark":  [self _themeWithForegroundColor:UIColor.whiteColor
-                                               backgroundColor:UIColor.blackColor],
-                     @"1337":  [self _themeWithForegroundColor:UIColor.greenColor
-                                               backgroundColor:UIColor.blackColor]};
++ (NSArray<NSString *> *)schemeNames {
+    return [[[UserPreferences shared] allSchemeNames] sortedArrayUsingSelector:@selector(localizedCaseInsensitiveCompare:)];
 }
 
-+ (NSArray<NSString *> *)presetNames {
-    return @[@"Light", @"Dark", @"1337"];
++ (NSDictionary<NSString *, Scheme *> *)presets {
+    return @{
+         @"Light": [self _schemeWithForegroundColor:UIColor.blackColor
+                                   backgroundColor:UIColor.whiteColor
+                                              name:@"Light"
+                                           palette:@[]],
+         @"Dark":  [self _schemeWithForegroundColor:UIColor.whiteColor
+                                   backgroundColor:UIColor.blackColor
+                                              name: @"Dark"
+                                           palette:@[]],
+         @"1337":  [self _schemeWithForegroundColor:UIColor.greenColor
+                                   backgroundColor:UIColor.blackColor
+                                              name:@"1337"
+                                           palette:@[]]
+    };
 }
-+ (instancetype)presetThemeNamed:(NSString *)name {
-    return presetThemes[name];
+
++ (instancetype)schemeNamed:(NSString *)name {
+    return [[UserPreferences shared] schemeFromName:name];
 }
+
 - (NSString *)presetName {
-    for (NSString *name in presetThemes) {
-        if ([self isEqual:presetThemes[name]])
+    for (NSString *name in Scheme.presets) {
+        if ([self isEqual:Scheme.presets[name]])
             return name;
     }
     return nil;
@@ -237,5 +304,7 @@ NSDictionary<NSString *, Theme *> *presetThemes;
 
 @end
 
-NSString *const kThemeForegroundColor = @"ForegroundColor";
-NSString *const kThemeBackgroundColor = @"BackgroundColor";
+NSString *const kSchemeForegroundColor = @"ForegroundColor";
+NSString *const kSchemeBackgroundColor = @"BackgroundColor";
+NSString *const kSchemeName = @"Name";
+NSString *const kSchemePalette = @"Palette";
