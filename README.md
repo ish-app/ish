@@ -50,7 +50,7 @@ You can replace `ish` with `tools/ptraceomatic` to run the program in a real pro
 iSH has several logging channels which can be enabled at build time. By default, all of them are disabled. To enable them:
 
 - In Xcode: Set the `ISH_LOG` setting in iSH.xcconfig to a space-separated list of log channels.
-- With Meson (command line tool for testing): Run `meson configure -Dlog="<space-separated list of log channels>`.
+- With Meson (command line tool for testing): Run `meson configure -Dlog="<space-separated list of log channels>"`.
 
 Available channels:
 
