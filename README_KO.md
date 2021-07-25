@@ -52,7 +52,7 @@ Xcode로 프로젝트를 열고, iSH.xcconfig 연 후에 `ROOT_BUNDLE_IDENTIFIER
 iSH 는 빌드 시간에 허용될 수 있는 다수의 로깅 채널을 갖고 있습니다. 기본 값으로는 모두 꺼놨는데, 사용을 위해서는:
 
 - Xcode에서: iSH.xcconfig에 있는 `ISH_LOG` 값을 스페이스로 나뉜 로그 채널 리스트로 설정해주세요.
-- Meson에서 (테스트를 위한 커맨드 라인 도구): `meson configure -Dlog="<스페이스로 나뉜 로그 채널 리스트>`을 실행하세요.
+- Meson에서 (테스트를 위한 커맨드 라인 도구): `meson configure -Dlog="<스페이스로 나뉜 로그 채널 리스트>"`을 실행하세요.
 
 제공되는 로그 채널:
 
