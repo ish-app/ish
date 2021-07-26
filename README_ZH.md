@@ -49,7 +49,7 @@ iSH 是一个运行在 iOS 上的 Linux shell。本项目使用了 x86 用户模
 在编译过程中，iSH 提供数种日志类型，默认情况下它们都被禁用，想要启用它们需要:
 
 - 在 Xcode 中将 iSH.xcconfig 中 `ISH_LOG` 设置为以空格分隔的日志类型列表。
-- 在 Meson (测试使用的命令行工具) 中执行命令 `meson configure -Dlog="<space-separated list of log channels>`。
+- 在 Meson (测试使用的命令行工具) 中执行命令 `meson configure -Dlog="<space-separated list of log channels>"`。
 
 可用的日志类型:
 
