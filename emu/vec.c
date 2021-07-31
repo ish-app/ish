@@ -147,6 +147,12 @@ void vec_min_ub128(NO_CPU, union xmm_reg *src, union xmm_reg *dst) {
             dst->u8[i] = src->u8[i];
 }
 
+void vec_max_ub128(NO_CPU, union xmm_reg *src, union xmm_reg *dst) {
+    for (unsigned i = 0; i < array_size(src->u8); i++)
+        if (src->u8[i] > dst->u8[i])
+            dst->u8[i] = src->u8[i];
+}
+
 static bool cmpd(double a, double b, int type) {
     bool res;
     switch (type % 4) {

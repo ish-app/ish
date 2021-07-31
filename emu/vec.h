@@ -41,6 +41,7 @@ void vec_xor128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
 void vec_xor64(NO_CPU, union mm_reg *src, union mm_reg *dst);
 
 void vec_min_ub128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
+void vec_max_ub128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
 
 void vec_single_fadd64(NO_CPU, const double *src, double *dst);
 void vec_single_fadd32(NO_CPU, const float *src, float *dst);
