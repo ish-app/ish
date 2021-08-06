@@ -1,1 +1,1 @@
-APKINDEX-v3.14-2021-08-05.tar.gz
+APKINDEX-v3.14-2021-08-06.tar.gz
