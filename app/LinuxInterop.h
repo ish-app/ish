@@ -8,7 +8,7 @@
 #ifndef LinuxInterop_h
 #define LinuxInterop_h
 
-void call_in_kernel_irq(void (^block)(void));
+void call_in_irq(void (^block)(void));
 
 void ReportPanic(const char *message, void (^completion)(void));
 

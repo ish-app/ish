@@ -6,11 +6,16 @@
 //
 
 #include "LinuxInterop.h"
+#include <Block.h>
 #include <linux/start_kernel.h>
 #include <linux/kernel.h>
 #include <linux/notifier.h>
 #include <linux/string.h>
 #include <linux/completion.h>
+#include <linux/interrupt.h>
+#include <asm/irq.h>
+#include <user/fs.h>
+#include <user/irq.h>
 
 extern void run_kernel(void);
 
@@ -22,10 +27,13 @@ void actuate_kernel(const char *cmdline) {
 static int panic_report(struct notifier_block *nb, unsigned long action, void *data) {
     const char *message = data;
     DECLARE_COMPLETION(panic_report_done);
+    struct completion *done_ptr = &panic_report_done;
     ReportPanic(message, ^{
-        // TODO: complete(&panic_report_done); in irq
+        call_in_irq(^{
+            complete(done_ptr);
+        });
     });
-    wait_for_completion(&panic_report_done);
+    wait_for_completion(done_ptr);
     return 0;
 }
 
@@ -38,3 +46,39 @@ static int __init panic_report_init(void) {
     return 0;
 }
 __initcall(panic_report_init);
+
+static int block_request_read;
+static int block_request_write;
+static irqreturn_t call_block_irq(int irq, void *dev) {
+    void (^block)(void);
+    for (;;) {
+        int err = host_read(block_request_read, &block, sizeof(block));
+        if (err <= 0)
+            break;
+        block();
+        Block_release(block);
+    }
+    return IRQ_HANDLED;
+}
+
+void call_in_irq(void (^block)(void)) {
+    block = Block_copy(block);
+    int err = host_write(block_request_write, &block, sizeof(block));
+    if (err < 0)
+        __builtin_trap();
+    trigger_irq(CALL_BLOCK_IRQ);
+}
+
+static int __init call_block_init(void) {
+    int err = host_pipe(&block_request_read, &block_request_write);
+    if (err < 0)
+        return err;
+    err = fd_set_nonblock(block_request_read);
+    if (err < 0)
+        return err;
+    err = request_irq(CALL_BLOCK_IRQ, call_block_irq, 0, "block", NULL);
+    if (err < 0)
+        return err;
+    return 0;
+}
+__initcall(call_block_init);
