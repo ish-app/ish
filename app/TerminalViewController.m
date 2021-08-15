@@ -55,7 +55,8 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    
+
+#if !ISH_LINUX
     int bootError = [AppDelegate bootError];
     if (bootError < 0) {
         NSString *message = [NSString stringWithFormat:@"could not boot"];
@@ -65,6 +66,7 @@
         [self showMessage:message subtitle:subtitle];
         NSLog(@"boot failed with code %d", bootError);
     }
+#endif
 
     self.termView.terminal = self.terminal;
     [self.termView becomeFirstResponder];
@@ -212,7 +214,9 @@
 
 #if ISH_LINUX
 - (void)kernelPanicked:(NSNotification *)notif {
-    [UIAlertController alert];
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"panik" message:notif.userInfo[@"message"] preferredStyle:UIAlertControllerStyleAlert];
+    [alert addAction:[UIAlertAction actionWithTitle:@"k" style:UIAlertActionStyleDefault handler:nil]];
+    [self presentViewController:alert animated:YES completion:nil];
 }
 #endif
 

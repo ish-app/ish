@@ -55,6 +55,12 @@ static void ios_handle_exit(struct task *task, int code) {
                                                                      @"code": @(code)}];
     });
 }
+#elif ISH_LINUX
+void ReportPanic(const char *message, void (^completion)(void)) {
+    dispatch_sync(dispatch_get_main_queue(), ^{
+        [NSNotificationCenter.defaultCenter postNotificationName:KernelPanicNotification object:nil userInfo:@{@"message":@(message)}];
+    });
+}
 #endif
 
 // Put the abort message in the thread name so it gets included in the crash dump
@@ -72,9 +78,10 @@ static NSString *const kSkipStartupMessage = @"Skip Startup Message";
 @implementation AppDelegate
 
 - (int)boot {
+    NSURL *root = [Roots.instance rootUrl:Roots.instance.defaultRoot];
+
 #if !ISH_LINUX
-    NSURL *root = [[Roots.instance rootUrl:Roots.instance.defaultRoot] URLByAppendingPathComponent:@"data"];
-    int err = mount_root(&fakefs, root.fileSystemRepresentation);
+    int err = mount_root(&fakefs, [root URLByAppendingPathComponent:@"data"].fileSystemRepresentation);
     if (err < 0)
         return err;
 
@@ -189,9 +196,19 @@ static NSString *const kSkipStartupMessage = @"Skip Startup Message";
     if (err < 0)
         return err;
     task_start(current);
+
 #else
     // TODO: fix issues with having multiple cpus
-    actuate_kernel("earlyprintk maxcpus=1");
+    if (strchr(root.fileSystemRepresentation, '"') != NULL) {
+        NSLog(@"can't deal with double quote in rootfs path");
+        return _EINVAL;
+    }
+    NSArray<NSString *> *args = @[
+        @"maxcpus=1",
+        @"rootfstype=fakefs",
+        [NSString stringWithFormat:@"root=\"%s\"", root.fileSystemRepresentation],
+    ];
+    actuate_kernel([args componentsJoinedByString:@" "].UTF8String);
 #endif
     
     return 0;
@@ -353,16 +370,6 @@ void NetworkReachabilityCallback(SCNetworkReachabilityRef target, SCNetworkReach
 }
 
 @end
-
-#if ISH_LINUX
-
-void ShowPanicMessage(char *message, void (^completion)(void)) {
-    dispatch_async(dispatch_get_main_queue(), ^{
-        completion();
-    });
-}
-
-#endif
 
 #if !ISH_LINUX
 NSString *const ProcessExitedNotification = @"ProcessExitedNotification";

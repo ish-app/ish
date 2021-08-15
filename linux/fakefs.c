@@ -574,12 +574,13 @@ struct fakefs_context {
     const char *path;
 };
 
-static int fakefs_fc_parse_monolithic(struct fs_context *fc, void *data) {
-    const char *str = data;
+static int fakefs_fc_parse_param(struct fs_context *fc, struct fs_parameter *param) {
     struct fakefs_context *ctx = fc->fs_private;
-    ctx->path = kstrdup(str, GFP_KERNEL);
-    if (ctx->path == NULL)
-        return -ENOMEM;
+    if (strcmp(param->key, "source") == 0) {
+        ctx->path = kstrdup(param->string, GFP_KERNEL);
+        if (ctx->path == NULL)
+            return -ENOMEM;
+    }
     return 0;
 }
 
@@ -621,7 +622,7 @@ static int fakefs_get_tree(struct fs_context *fc) {
 }
 
 static struct fs_context_operations fakefs_context_ops = {
-    .parse_monolithic = fakefs_fc_parse_monolithic,
+    .parse_param = fakefs_fc_parse_param,
     .free = fakefs_fc_free,
     .get_tree = fakefs_get_tree,
 };
