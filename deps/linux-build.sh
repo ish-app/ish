@@ -7,6 +7,11 @@ export ISH_CFLAGS="$5"
 export LIB_ISH_EMU="$6"
 export ARCH=ish
 
+# https://stackoverflow.com/a/3572105/1455016
+realpath() {
+    [[ $1 = /* ]] && echo "$1" || echo "$PWD/${1#./}"
+}
+
 makeargs=()
 if [[ -n "$LINUX_HOSTCC" ]]; then
     makeargs+="HOSTCC=$LINUX_HOSTCC"
@@ -24,5 +29,11 @@ if [[ "$srctree/arch/ish/configs/$defconfig" -nt "$objtree/.config" ]]; then
     make -C "$srctree" O="$(realpath "$objtree")" "${makeargs[@]}" "$defconfig"
 fi
 
-make -C "$objtree" -j "$(nproc)" "${makeargs[@]}" --debug=v | tee "/tmp/log" | "$srctree/../makefilter.py" "$depfile" "$output"
+case "$(uname)" in
+    Darwin) cpus=$(sysctl -n hw.ncpu) ;;
+    Linux) cpus=$(nproc) ;;
+    *) cpus=1 ;;
+esac
+
+make -C "$objtree" -j "$cpus" "${makeargs[@]}" --debug=v | tee "/tmp/log" | "$srctree/../makefilter.py" "$depfile" "$output"
 cp "$objtree/vmlinux" "$output"

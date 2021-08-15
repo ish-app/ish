@@ -1,4 +1,4 @@
-#!/usr/bin/env python3 -u
+#!/usr/bin/env python3
 import sys
 import re
 import os
@@ -6,10 +6,10 @@ line_re = re.compile(r'^  [A-Z]+\s+')
 dep_re = re.compile(r'\s+Prerequisite `([^\']*)\' is (older|newer) than target')
 deps = set()
 for line in sys.stdin:
+	if line_re.match(line):
+		sys.stdout.write(line)
 	if line.endswith('\n'):
 		line = line[:-1]
-	if line_re.match(line):
-		print(line)
 	m = dep_re.match(line)
 	if m:
 		deps.add(m.group(1))

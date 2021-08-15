@@ -183,6 +183,8 @@ elif get_option('kernel') == 'linux'
         link_with: [libfakefs],
         dependencies: [
             liblinux,
+            libm,
+            threads,
             declare_dependency(link_whole: modules),
         ])
 endif

@@ -50,14 +50,23 @@ if get_option('kernel') == 'linux'
             '-Wno-null-pointer-arithmetic',
         ],
         link_with: [build_linux[0]],
+        sources: [build_linux[1]],
     )
 
+    if host_machine.system() == 'darwin'
+        liblinux_link_args = [
+            '-sectalign', '__DATA', '__percpu_first', '1000',
+            '-sectalign', '__DATA', '__tracepoints', '20',
+        ]
+    elif host_machine.system() == 'linux'
+        liblinux_link_args = [
+            '-Wl,-T', meson.current_build_dir()+'/linux/arch/ish/kernel/vmlinux.lds'
+        ]
+    endif
     liblinux = declare_dependency(
         link_with: [libish_emu],
         link_whole: [build_linux[0]],
-        link_args: [
-            '-sectalign', '__DATA', '__percpu_first', '1000',
-            '-sectalign', '__DATA', '__tracepoints', '20',
-        ],
+        sources: [build_linux[1]],
+        link_args: liblinux_link_args,
     )
 endif

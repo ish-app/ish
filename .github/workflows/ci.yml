@@ -41,7 +41,7 @@ jobs:
     runs-on: macos-10.15
     strategy:
       matrix:
-        scheme: [iSH, "iSH+Linux"]
+        kernel: [ish, linux]
     steps:
       - uses: actions/checkout@v2
         with:
@@ -50,5 +50,12 @@ jobs:
         run: |
           brew install llvm ninja libarchive
           pip3 install meson
+      - name: Clone Linux
+        if: matrix.kernel == 'linux'
+        run: deps/clone-linux.sh
       - name: Build
-        run: xcodebuild -project iSH.xcodeproj -scheme ${{matrix.scheme}} -sdk iphoneos CODE_SIGNING_ALLOWED=NO
+        if: matrix.kernel == 'ish'
+        run: xcodebuild -project iSH.xcodeproj -scheme iSH -arch arm64 -sdk iphoneos CODE_SIGNING_ALLOWED=NO
+      - name: Build
+        if: matrix.kernel == 'linux'
+        run: xcodebuild -project iSH.xcodeproj -scheme iSH+Linux -arch x86_64 -sdk iphonesimulator CODE_SIGNING_ALLOWED=NO

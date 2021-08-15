@@ -374,7 +374,7 @@ static int fakefs_iterate(struct file *file, struct dir_context *ctx) {
         ctx->pos = host_telldir(dir) + 1;
         // TODO fix inode numbers!!!!!
         ent.ino = 0;
-        if (!dir_emit(ctx, ent.name, ent.name_len, ent.ino, ent.type))
+        if (!dir_emit(ctx, ent.name, strlen(ent.name), ent.ino, ent.type))
             break;
     }
     return res;
