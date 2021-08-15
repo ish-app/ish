@@ -39,6 +39,9 @@ jobs:
 
   build-mac:
     runs-on: macos-10.15
+    strategy:
+      matrix:
+        scheme: [iSH, "iSH+Linux"]
     steps:
       - uses: actions/checkout@v2
         with:
@@ -48,4 +51,4 @@ jobs:
           brew install llvm ninja libarchive
           pip3 install meson
       - name: Build
-        run: xcodebuild -project iSH.xcodeproj -scheme iSH -sdk iphoneos CODE_SIGNING_ALLOWED=NO
+        run: xcodebuild -project iSH.xcodeproj -scheme ${{matrix.scheme}} -sdk iphoneos CODE_SIGNING_ALLOWED=NO
