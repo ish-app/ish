@@ -27,6 +27,10 @@
 #include "fs/devices.h"
 #include "fs/path.h"
 
+#if ISH_LINUX
+#import "LinuxInterop.h"
+#endif
+
 @interface AppDelegate ()
 
 @property BOOL exiting;
@@ -36,6 +40,7 @@
 
 @end
 
+#if !ISH_LINUX
 static void ios_handle_exit(struct task *task, int code) {
     // we are interested in init and in children of init
     // this is called with pids_lock as an implementation side effect, please do not cite as an example of good API design
@@ -50,6 +55,13 @@ static void ios_handle_exit(struct task *task, int code) {
                                                                      @"code": @(code)}];
     });
 }
+#elif ISH_LINUX
+void ReportPanic(const char *message, void (^completion)(void)) {
+    dispatch_sync(dispatch_get_main_queue(), ^{
+        [NSNotificationCenter.defaultCenter postNotificationName:KernelPanicNotification object:nil userInfo:@{@"message":@(message)}];
+    });
+}
+#endif
 
 // Put the abort message in the thread name so it gets included in the crash dump
 static void ios_handle_die(const char *msg) {
@@ -66,8 +78,10 @@ static NSString *const kSkipStartupMessage = @"Skip Startup Message";
 @implementation AppDelegate
 
 - (int)boot {
-    NSURL *root = [[Roots.instance rootUrl:Roots.instance.defaultRoot] URLByAppendingPathComponent:@"data"];
-    int err = mount_root(&fakefs, root.fileSystemRepresentation);
+    NSURL *root = [Roots.instance rootUrl:Roots.instance.defaultRoot];
+
+#if !ISH_LINUX
+    int err = mount_root(&fakefs, [root URLByAppendingPathComponent:@"data"].fileSystemRepresentation);
     if (err < 0)
         return err;
 
@@ -182,11 +196,26 @@ static NSString *const kSkipStartupMessage = @"Skip Startup Message";
     if (err < 0)
         return err;
     task_start(current);
+
+#else
+    // TODO: fix issues with having multiple cpus
+    if (strchr(root.fileSystemRepresentation, '"') != NULL) {
+        NSLog(@"can't deal with double quote in rootfs path");
+        return _EINVAL;
+    }
+    NSArray<NSString *> *args = @[
+        @"maxcpus=1",
+        @"rootfstype=fakefs",
+        [NSString stringWithFormat:@"root=\"%s\"", root.fileSystemRepresentation],
+    ];
+    actuate_kernel([args componentsJoinedByString:@" "].UTF8String);
+#endif
     
     return 0;
 }
 
 - (void)configureDns {
+#if !ISH_LINUX
     struct __res_state res;
     if (EXIT_SUCCESS != res_ninit(&res)) {
         exit(2);
@@ -218,6 +247,7 @@ static NSString *const kSkipStartupMessage = @"Skip Startup Message";
         fd->ops->write(fd, resolvConf.UTF8String, [resolvConf lengthOfBytesUsingEncoding:NSUTF8StringEncoding]);
         fd_close(fd);
     }
+#endif
 }
 
 + (int)bootError {
@@ -269,7 +299,8 @@ void NetworkReachabilityCallback(SCNetworkReachabilityRef target, SCNetworkReach
 
     if ([NSUserDefaults.standardUserDefaults boolForKey:@"FASTLANE_SNAPSHOT"])
         [UIView setAnimationsEnabled:NO];
-    
+
+#if !ISH_LINUX
     self.unameVersion = [NSString stringWithFormat:@"iSH %@ (%@)",
                          [NSBundle.mainBundle objectForInfoDictionaryKey:@"CFBundleShortVersionString"],
                          [NSBundle.mainBundle objectForInfoDictionaryKey:(NSString *) kCFBundleVersionKey]];
@@ -279,6 +310,7 @@ void NetworkReachabilityCallback(SCNetworkReachabilityRef target, SCNetworkReach
     self.unameHostname = [NSUserDefaults.standardUserDefaults stringForKey:@"hostnameOverride"];
     extern const char *uname_hostname_override;
     uname_hostname_override = self.unameHostname.UTF8String;
+#endif
     
     [UserPreferences.shared observe:@[@"shouldDisableDimming"] options:NSKeyValueObservingOptionInitial
                               owner:self usingBlock:^(typeof(self) self) {
@@ -339,4 +371,8 @@ void NetworkReachabilityCallback(SCNetworkReachabilityRef target, SCNetworkReach
 
 @end
 
+#if !ISH_LINUX
 NSString *const ProcessExitedNotification = @"ProcessExitedNotification";
+#else
+NSString *const KernelPanicNotification = @"KernelPanicNotification";
+#endif

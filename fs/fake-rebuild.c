@@ -1,8 +1,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <unistd.h>
 #include "fs/sqlutil.h"
-#include "kernel/fs.h"
+#include "fs/fake-db.h"
 #include "kernel/errno.h"
 #include "util/list.h"
 #include "debug.h"
@@ -28,8 +29,16 @@ struct entry {
     struct list chain;
 };
 
-int fakefs_rebuild(struct mount *mount) {
-    sqlite3 *db = mount->db;
+static const char *fix_path(const char *path) {
+    if (strcmp(path, "") == 0)
+        return ".";
+    if (path[0] == '/')
+        path++;
+    return path;
+}
+
+int fakefs_rebuild(struct fakefs_db *fs, int root_fd) {
+    sqlite3 *db = fs->db;
     int err;
 
     EXEC("begin");
@@ -55,7 +64,7 @@ int fakefs_rebuild(struct mount *mount) {
 
         // grab real inode
         struct stat stat;
-        int err = fstatat(mount->root_fd, fix_path(path), &stat, 0);
+        int err = fstatat(root_fd, fix_path(path), &stat, 0);
         if (err < 0)
             continue;
         ino_t real_inode = stat.st_ino;
@@ -66,8 +75,8 @@ int fakefs_rebuild(struct mount *mount) {
         bool found = false;
         list_for_each_entry(bucket, entry, chain) {
             if (entry->inode == inode) {
-                unlinkat(mount->root_fd, fix_path(path), 0);
-                linkat(mount->root_fd, fix_path(entry->path), mount->root_fd, fix_path(path), 0);
+                unlinkat(root_fd, fix_path(path), 0);
+                linkat(root_fd, fix_path(entry->path), root_fd, fix_path(path), 0);
                 found = true;
                 break;
             }
