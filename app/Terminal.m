@@ -15,6 +15,12 @@
 
 extern struct tty_driver ios_pty_driver;
 
+#if !ISH_LINUX
+typedef struct tty *tty_t;
+#else
+typedef struct linux_tty *tty_t;
+#endif
+
 @interface Terminal () <WKScriptMessageHandler> {
 #if !ISH_LINUX
     lock_t _dataLock;
@@ -24,9 +30,7 @@ extern struct tty_driver ios_pty_driver;
 
 @property WKWebView *webView;
 @property BOOL loaded;
-#if !ISH_LINUX
-@property (nonatomic) struct tty *tty;
-#endif
+@property (nonatomic) tty_t tty;
 @property (nonatomic) NSMutableData *pendingData;
 
 @property DelayedUITask *refreshTask;
@@ -108,14 +112,12 @@ static NSMapTable<NSUUID *, Terminal *> *terminalsByUUID;
 }
 #endif
 
-#if !ISH_LINUX
-- (void)setTty:(struct tty *)tty {
+- (void)setTty:(tty_t)tty {
     _tty = tty;
     dispatch_async(dispatch_get_main_queue(), ^{
         [self syncWindowSize];
     });
 }
-#endif
 
 - (void)userContentController:(WKUserContentController *)userContentController didReceiveScriptMessage:(WKScriptMessage *)message {
     if ([message.name isEqualToString:@"load"]) {
@@ -192,13 +194,17 @@ static NSMapTable<NSUUID *, Terminal *> *terminalsByUUID;
 #endif
 
 - (void)sendInput:(const char *)buf length:(size_t)len {
-#if !ISH_LINUX
     if (self.tty == NULL)
         return;
+#if !ISH_LINUX
     tty_input(self.tty, buf, len, 0);
+#else
+    async_do_in_irq(^{
+        self.tty->ops->send_input(self.tty, buf, len);
+    });
+#endif
     [self.webView evaluateJavaScript:@"exports.setUserGesture()" completionHandler:nil];
     [self.scrollToBottomTask schedule];
-#endif
 }
 
 - (void)scrollToBottom {
@@ -251,7 +257,9 @@ static NSMapTable<NSUUID *, Terminal *> *terminalsByUUID;
         @synchronized (self) {
             self->_pendingData = [[NSMutableData alloc] initWithCapacity:BUF_SIZE];
         }
-        // TODO: make vtable, wakeup tty
+        async_do_in_irq(^{
+            self->_tty->ops->wakeup(self->_tty);
+        });
 #endif
         if (error != nil) {
             NSLog(@"error sending bytes to the terminal: %@", error);
@@ -312,6 +320,9 @@ int Terminal_sendOutput_length(nsobj_t _self, const char *data, int size) {
 }
 int Terminal_roomForOutput(nsobj_t _self) {
     return [(__bridge Terminal *) _self roomForOutput];
+}
+void Terminal_setLinuxTTY(nsobj_t _self, struct linux_tty *tty) {
+    return [(__bridge Terminal *) _self setTty:tty];
 }
 #endif
 

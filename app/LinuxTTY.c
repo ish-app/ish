@@ -11,6 +11,7 @@
 #include <linux/errno.h>
 #include <linux/init.h>
 #include <linux/tty.h>
+#include <linux/tty_flip.h>
 #include <linux/slab.h>
 
 static void nslog_console_write(struct console *console, const char *data, unsigned len) {
@@ -28,15 +29,21 @@ static __init int nslog_init(void) {
     register_console(&nslog_console);
     return 0;
 }
-__initcall(nslog_init);
+device_initcall(nslog_init);
+
+struct ios_tty {
+    struct linux_tty linux_tty;
+    struct tty_port port;
+};
 
 static struct tty_driver *ios_tty_driver;
-static struct tty_port ios_tty_port;
+static struct ios_tty ios_tty;
 
 static int ios_tty_port_activate(struct tty_port *port, struct tty_struct *tty) {
-    BUG_ON(port != &ios_tty_port);
+    BUG_ON(port != &ios_tty.port);
     sync_do_in_ios(^(void (^done)(void)) {
         port->client_data = (void *) Terminal_terminalWithType_number(TTY_MAJOR, 1);
+        Terminal_setLinuxTTY(port->client_data, &container_of(port, struct ios_tty, port)->linux_tty);
         done();
     });
     return 0;
@@ -54,8 +61,24 @@ static struct tty_port_operations ios_tty_port_ops = {
     .destruct = ios_tty_port_destruct,
 };
 
+static void ios_tty_cb_wakeup(struct linux_tty *linux_tty) {
+    struct ios_tty *tty = container_of(linux_tty, struct ios_tty, linux_tty);
+    tty_port_tty_wakeup(&tty->port);
+}
+
+static void ios_tty_cb_send_input(struct linux_tty *linux_tty, const char *data, size_t length) {
+    struct ios_tty *tty = container_of(linux_tty, struct ios_tty, linux_tty);
+    tty_insert_flip_string(&tty->port, data, length);
+    tty_flip_buffer_push(&tty->port);
+}
+
+static struct linux_tty_callbacks ios_tty_callbacks = {
+    .wakeup = ios_tty_cb_wakeup,
+    .send_input = ios_tty_cb_send_input,
+};
+
 static int ios_tty_open(struct tty_struct *tty, struct file *filp) {
-    return tty_port_open(&ios_tty_port, tty, filp);
+    return tty_port_open(&ios_tty.port, tty, filp);
 }
 
 static int ios_tty_write(struct tty_struct *tty, const unsigned char *data, int len) {
@@ -112,8 +135,9 @@ static struct console ios_tty_console = {
 };
 
 static __init int ios_tty_init(void) {
-    tty_port_init(&ios_tty_port);
-    ios_tty_port.ops = &ios_tty_port_ops;
+    ios_tty.linux_tty.ops = &ios_tty_callbacks;
+    tty_port_init(&ios_tty.port);
+    ios_tty.port.ops = &ios_tty_port_ops;
 
     ios_tty_driver = alloc_tty_driver(1);
     ios_tty_driver->driver_name = "ios";
@@ -126,7 +150,7 @@ static __init int ios_tty_init(void) {
     ios_tty_driver->init_termios = tty_std_termios;
     ios_tty_driver->flags = TTY_DRIVER_REAL_RAW | TTY_DRIVER_RESET_TERMIOS;
     tty_set_operations(ios_tty_driver, &ios_tty_ops);
-    tty_port_link_device(&ios_tty_port, ios_tty_driver, 0);
+    tty_port_link_device(&ios_tty.port, ios_tty_driver, 0);
 
     if (tty_register_driver(ios_tty_driver))
         panic("ios tty: failed to tty_register_driver");
@@ -135,4 +159,4 @@ static __init int ios_tty_init(void) {
 
     return 0;
 }
-__initcall(ios_tty_init);
+device_initcall(ios_tty_init);

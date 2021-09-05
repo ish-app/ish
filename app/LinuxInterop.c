@@ -53,7 +53,7 @@ static int __init panic_report_init(void) {
     atomic_notifier_chain_register(&panic_notifier_list, &panic_report_block);
     return 0;
 }
-__initcall(panic_report_init);
+core_initcall(panic_report_init);
 
 static int block_request_read;
 static int block_request_write;
@@ -89,4 +89,4 @@ static int __init call_block_init(void) {
         return err;
     return 0;
 }
-__initcall(call_block_init);
+subsys_initcall(call_block_init);
