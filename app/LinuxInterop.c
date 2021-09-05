@@ -24,16 +24,24 @@ void actuate_kernel(const char *cmdline) {
     run_kernel();
 }
 
-static int panic_report(struct notifier_block *nb, unsigned long action, void *data) {
-    const char *message = data;
+void sync_do_in_ios(void (^block)(void (^done)(void))) {
     DECLARE_COMPLETION(panic_report_done);
     struct completion *done_ptr = &panic_report_done;
-    ReportPanic(message, ^{
-        call_in_irq(^{
-            complete(done_ptr);
+    async_do_in_ios(^{
+        block(^{
+            async_do_in_irq(^{
+                complete(done_ptr);
+            });
         });
     });
     wait_for_completion(done_ptr);
+}
+
+static int panic_report(struct notifier_block *nb, unsigned long action, void *data) {
+    const char *message = data;
+    sync_do_in_ios(^(void (^done)(void)) {
+        ReportPanic(message, done);
+    });
     return 0;
 }
 
@@ -61,7 +69,7 @@ static irqreturn_t call_block_irq(int irq, void *dev) {
     return IRQ_HANDLED;
 }
 
-void call_in_irq(void (^block)(void)) {
+void async_do_in_irq(void (^block)(void)) {
     block = Block_copy(block);
     int err = host_write(block_request_write, &block, sizeof(block));
     if (err < 0)

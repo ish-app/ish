@@ -9,10 +9,14 @@
 #include <archive_entry.h>
 
 #define ISH_INTERNAL
-#include "fs/fake.h"
+#include "fs/fake-db.h"
 #include "fs/sqlutil.h"
 #include "tools/fakefs.h"
 #include "misc.h"
+
+#ifndef MAX_PATH
+#define MAX_PATH 4096
+#endif
 
 // I have a weird way of error handling
 #define FILL_ERR(_type, _code, _message) do { \
@@ -61,8 +65,6 @@ static bool path_normalize(const char *path, char *out) {
     *out = '\0';
     return true;
 }
-
-extern const char *fix_path(const char *path);
 
 static const char *schema = Q(
     create table meta (id integer unique default 0, db_inode integer);
@@ -187,10 +189,10 @@ bool fakefs_import(const char *archive_path, const char *fs, struct fakefsify_er
             close(fd);
 
         struct ish_stat stat = {
-            .mode = (mode_t_) archive_entry_mode(entry),
-            .uid = (uid_t_) archive_entry_uid(entry),
-            .gid = (uid_t_) archive_entry_gid(entry),
-            .rdev = (dev_t_) archive_entry_rdev(entry),
+            .mode = (uint32_t) archive_entry_mode(entry),
+            .uid = (uint32_t) archive_entry_uid(entry),
+            .gid = (uint32_t) archive_entry_gid(entry),
+            .rdev = (uint32_t) archive_entry_rdev(entry),
         };
         sqlite3_bind_blob64(insert_stat, 1, &stat, sizeof(stat), SQLITE_TRANSIENT);
         STEP_RESET(insert_stat);

@@ -104,7 +104,16 @@ void notify_once(cond_t *cond);
 // writers waiting a read lock will block.
 // on darwin pthread_rwlock_t is already like this, on linux you can configure
 // it to prefer writers. not worrying about anything else right now.
-typedef pthread_rwlock_t wrlock_t;
+typedef struct {
+    pthread_rwlock_t l;
+    // 0: unlocked
+    // -1: write-locked
+    // >0: read-locked with this many readers
+    atomic_int val;
+    const char *file;
+    int line;
+    int pid;
+} wrlock_t;
 static inline void wrlock_init(wrlock_t *lock) {
     pthread_rwlockattr_t *pattr = NULL;
 #if defined(__GLIBC__)
@@ -113,23 +122,39 @@ static inline void wrlock_init(wrlock_t *lock) {
     pthread_rwlockattr_init(pattr);
     pthread_rwlockattr_setkind_np(pattr, PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
 #endif
-    if (pthread_rwlock_init(lock, pattr)) __builtin_trap();
+    if (pthread_rwlock_init(&lock->l, pattr)) __builtin_trap();
+    lock->val = lock->line = lock->pid = 0;
+    lock->file = NULL;
 }
 
+extern int current_pid(void);
 static inline void wrlock_destroy(wrlock_t *lock) {
-    if (pthread_rwlock_destroy(lock) != 0) __builtin_trap();
+    if (pthread_rwlock_destroy(&lock->l) != 0) __builtin_trap();
 }
 static inline void read_wrlock(wrlock_t *lock) {
-    if (pthread_rwlock_rdlock(lock) != 0) __builtin_trap();
+    if (pthread_rwlock_rdlock(&lock->l) != 0) __builtin_trap();
+    assert(lock->val >= 0);
+    lock->val++;
 }
 static inline void read_wrunlock(wrlock_t *lock) {
-    if (pthread_rwlock_unlock(lock) != 0) __builtin_trap();
+    assert(lock->val > 0);
+    lock->val--;
+    if (pthread_rwlock_unlock(&lock->l) != 0) __builtin_trap();
 }
-static inline void write_wrlock(wrlock_t *lock) {
-    if (pthread_rwlock_wrlock(lock) != 0) __builtin_trap();
+static inline void __write_wrlock(wrlock_t *lock, const char *file, int line) {
+    if (pthread_rwlock_wrlock(&lock->l) != 0) __builtin_trap();
+    assert(lock->val == 0);
+    lock->val = -1;
+    lock->file = file;
+    lock->line = line;
+    lock->pid = current_pid();
 }
+#define write_wrlock(lock) __write_wrlock(lock, __FILE__, __LINE__)
 static inline void write_wrunlock(wrlock_t *lock) {
-    if (pthread_rwlock_unlock(lock) != 0) __builtin_trap();
+    assert(lock->val == -1);
+    lock->val = lock->line = lock->pid = 0;
+    lock->file = NULL;
+    if (pthread_rwlock_unlock(&lock->l) != 0) __builtin_trap();
 }
 
 extern __thread sigjmp_buf unwind_buf;

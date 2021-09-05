@@ -25,17 +25,6 @@ static NSURL *RootsDir() {
     return rootsDir;
 }
 
-#if ISH_LINUX
-
-bool fakefs_export(const char *fs, const char *archive_path, struct fakefsify_error *err_out, struct progress progress) {
-    return false;
-}
-bool fakefs_import(const char *archive_path, const char *fs, struct fakefsify_error *err_out, struct progress progress) {
-    return false;
-}
-
-#endif
-
 static NSString *kDefaultRoot = @"Default Root";
 
 @interface Roots ()

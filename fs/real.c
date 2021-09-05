@@ -32,14 +32,6 @@ static int getpath(int fd, char *buf) {
 #endif
 }
 
-const char *fix_path(const char *path) {
-    if (strcmp(path, "") == 0)
-        return ".";
-    if (path[0] == '/')
-        path++;
-    return path;
-}
-
 // temporarily change directory and block other threads from doing so
 // useful for simulating mknodat on ios, dealing with long unix socket paths, etc
 lock_t fchdir_lock;

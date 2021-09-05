@@ -29,14 +29,6 @@ struct entry {
     struct list chain;
 };
 
-static const char *fix_path(const char *path) {
-    if (strcmp(path, "") == 0)
-        return ".";
-    if (path[0] == '/')
-        path++;
-    return path;
-}
-
 int fakefs_rebuild(struct fakefs_db *fs, int root_fd) {
     sqlite3 *db = fs->db;
     int err;

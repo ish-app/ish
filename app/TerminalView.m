@@ -68,46 +68,68 @@ struct rowcol {
 }
 
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context {
-    if (object == self.terminal) {
-        if (self.terminal.loaded) {
+    if (object == _terminal) {
+        if (_terminal.loaded) {
+            [self installTerminalView];
             [self _updateStyle];
         }
     }
 }
 
+static NSString *const HANDLERS[] = {@"syncFocus", @"focus", @"newScrollHeight", @"newScrollTop", @"openLink"};
+
 - (void)setTerminal:(Terminal *)terminal {
-    NSArray<NSString *>* handlers = @[@"syncFocus", @"focus", @"newScrollHeight", @"newScrollTop", @"openLink"];
-    
-    if (self.terminal) {
-        // remove old terminal
-        NSAssert(self.terminal.webView.superview == self.scrollbarView, @"old terminal view was not in our view");
-        [self.terminal.webView removeFromSuperview];
-        self.scrollbarView.contentView = nil;
-        for (NSString *handler in handlers) {
-            [self.terminal.webView.configuration.userContentController removeScriptMessageHandlerForName:handler];
-        }
-        terminal.enableVoiceOverAnnounce = NO;
-        [self.terminal removeObserver:self forKeyPath:@"loaded"];
+    if (_terminal) {
+        [_terminal removeObserver:self forKeyPath:@"loaded"];
+        [self uninstallTerminalView];
     }
-    
+
     _terminal = terminal;
-    WKWebView *webView = terminal.webView;
-    terminal.enableVoiceOverAnnounce = YES;
+    [_terminal addObserver:self forKeyPath:@"loaded" options:NSKeyValueObservingOptionInitial context:nil];
+    if (_terminal.loaded)
+        [self installTerminalView];
+}
+
+- (void)installTerminalView {
+    NSAssert(_terminal.loaded, @"should probably not be installing a non-loaded terminal");
+    UIView *superview = self.terminal.webView.superview;
+    if (superview != nil) {
+        NSAssert(superview == self.scrollbarView, @"installing terminal that is already installed elsewhere");
+        return;
+    }
+
+    WKWebView *webView = _terminal.webView;
+    _terminal.enableVoiceOverAnnounce = YES;
     webView.scrollView.scrollEnabled = NO;
     webView.scrollView.delaysContentTouches = NO;
     webView.scrollView.canCancelContentTouches = NO;
     webView.scrollView.panGestureRecognizer.enabled = NO;
-    for (NSString *handler in handlers) {
-        [webView.configuration.userContentController addScriptMessageHandler:self name:handler];
+    for (int i = 0; i < sizeof(HANDLERS)/sizeof(HANDLERS[0]); i++) {
+        [webView.configuration.userContentController addScriptMessageHandler:self name:HANDLERS[i]];
     }
     webView.frame = self.bounds;
     self.opaque = webView.opaque = NO;
     webView.backgroundColor = UIColor.clearColor;
     webView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-    [self.terminal addObserver:self forKeyPath:@"loaded" options:NSKeyValueObservingOptionInitial context:nil];
-    
+
     self.scrollbarView.contentView = webView;
     [self.scrollbarView addSubview:webView];
+}
+
+- (void)uninstallTerminalView {
+    // remove old terminal
+    UIView *superview = _terminal.webView.superview;
+    if (superview != self.scrollbarView) {
+        NSAssert(superview == nil, @"uninstalling terminal that is installed elsewhere");
+        return;
+    }
+
+    [_terminal.webView removeFromSuperview];
+    self.scrollbarView.contentView = nil;
+    for (int i = 0; i < sizeof(HANDLERS)/sizeof(HANDLERS[0]); i++) {
+        [_terminal.webView.configuration.userContentController removeScriptMessageHandlerForName:HANDLERS[i]];
+    }
+    _terminal.enableVoiceOverAnnounce = NO;
 }
 
 #pragma mark Styling

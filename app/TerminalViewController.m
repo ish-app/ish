@@ -44,7 +44,6 @@
 
 @property int sessionPid;
 @property (nonatomic) Terminal *sessionTerminal;
-@property int sessionTerminalNumber;
 
 @property BOOL ignoreKeyboardMotion;
 @property (nonatomic) BOOL hasExternalKeyboard;
@@ -68,7 +67,7 @@
     }
 #endif
 
-    self.termView.terminal = self.terminal;
+    self.terminal = self.terminal;
     [self.termView becomeFirstResponder];
 
     NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
@@ -167,7 +166,6 @@
         return (int) PTR_ERR(tty);
     }
     self.sessionTerminal = terminal;
-    self.sessionTerminalNumber = tty->num;
     NSString *stdioFile = [NSString stringWithFormat:@"/dev/pts/%d", tty->num];
     err = create_stdio(stdioFile.fileSystemRepresentation, TTY_PSEUDO_SLAVE_MAJOR, tty->num);
     if (err < 0)
@@ -183,6 +181,8 @@
         return err;
     self.sessionPid = current->pid;
     task_start(current);
+#else
+    self.sessionTerminal = [Terminal terminalWithType:4 number:1];
 #endif
     return 0;
 }
@@ -194,7 +194,6 @@
         return;
 
     [self.sessionTerminal destroy];
-    self.sessionTerminalNumber = 0;
     // On iOS 13, there are multiple windows, so just close this one.
     if (@available(iOS 13, *)) {
         // On iPhone, destroying scenes will fail, but the error doesn't actually go to the error handler, which is really stupid. Apple doesn't fix bugs, so I'm forced to just add a check here.
@@ -419,7 +418,7 @@
         for (unsigned i = 1; i <= 7; i++) {
             [commands addObject:
              [UIKeyCommand keyCommandWithInput:[NSString stringWithFormat:@"%d", i]
-                                 modifierFlags:UIKeyModifierCommand|UIKeyModifierAlternate|UIKeyModifierShift
+                                 modifierFlags:UIKeyModifierShift
                                         action:@selector(switchTerminal:)]];
         }
         [commands addObject:

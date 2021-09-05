@@ -55,13 +55,6 @@ static void ios_handle_exit(struct task *task, int code) {
                                                                      @"code": @(code)}];
     });
 }
-#elif ISH_LINUX
-void ReportPanic(const char *message, void (^completion)(void)) {
-    dispatch_sync(dispatch_get_main_queue(), ^{
-        [NSNotificationCenter.defaultCenter postNotificationName:KernelPanicNotification object:nil userInfo:@{@"message":@(message)}];
-    });
-}
-#endif
 
 // Put the abort message in the thread name so it gets included in the crash dump
 static void ios_handle_die(const char *msg) {
@@ -70,6 +63,11 @@ static void ios_handle_die(const char *msg) {
     NSString *newName = [NSString stringWithFormat:@"%s died: %s", name, msg];
     pthread_setname_np(newName.UTF8String);
 }
+#elif ISH_LINUX
+void ReportPanic(const char *message, void (^completion)(void)) {
+    [NSNotificationCenter.defaultCenter postNotificationName:KernelPanicNotification object:nil userInfo:@{@"message":@(message)}];
+}
+#endif
 
 static int bootError;
 static int fs_ish_version;
@@ -198,12 +196,12 @@ static NSString *const kSkipStartupMessage = @"Skip Startup Message";
     task_start(current);
 
 #else
-    // TODO: fix issues with having multiple cpus
     if (strchr(root.fileSystemRepresentation, '"') != NULL) {
         NSLog(@"can't deal with double quote in rootfs path");
         return _EINVAL;
     }
     NSArray<NSString *> *args = @[
+        // TODO: fix issues with having multiple cpus
         @"maxcpus=1",
         @"rootfstype=fakefs",
         [NSString stringWithFormat:@"root=\"%s\"", root.fileSystemRepresentation],

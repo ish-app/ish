@@ -2,6 +2,7 @@
 #define FS_FAKEFS_API_H
 
 #include <sqlite3.h>
+#include "fs/fix_path.h"
 #include "misc.h"
 
 struct fakefs_db {

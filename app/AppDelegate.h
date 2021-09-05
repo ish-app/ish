@@ -14,8 +14,6 @@
 
 #if !ISH_LINUX
 + (int)bootError;
-#else
-+ (NSString *)panicMessage;
 #endif
 
 + (void)maybePresentStartupMessageOnViewController:(UIViewController *)vc;

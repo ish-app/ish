@@ -6,6 +6,7 @@
 #include "fs/stat.h"
 #include "fs/dev.h"
 #include "fs/fake-db.h"
+#include "fs/fix_path.h"
 #include "emu/memory.h"
 #include <dirent.h>
 #include <sqlite3.h>
@@ -161,7 +162,6 @@ struct fs_ops {
 };
 
 struct mount *find_mount_and_trim_path(char *path);
-const char *fix_path(const char *path); // TODO reconsider
 
 // adhoc fs
 struct fd *adhoc_fd_create(const struct fd_ops *ops);
