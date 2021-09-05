@@ -36,13 +36,14 @@ struct ios_tty {
     struct tty_port port;
 };
 
+#define NUM_TTYS 6
 static struct tty_driver *ios_tty_driver;
-static struct ios_tty ios_tty;
+static struct ios_tty ios_ttys[NUM_TTYS];
 
 static int ios_tty_port_activate(struct tty_port *port, struct tty_struct *tty) {
-    BUG_ON(port != &ios_tty.port);
+    BUG_ON(port != &ios_ttys[tty->index].port);
     sync_do_in_ios(^(void (^done)(void)) {
-        port->client_data = (void *) Terminal_terminalWithType_number(TTY_MAJOR, 1);
+        port->client_data = (void *) Terminal_terminalWithType_number(TTY_MAJOR, tty->index);
         Terminal_setLinuxTTY(port->client_data, &container_of(port, struct ios_tty, port)->linux_tty);
         done();
     });
@@ -78,7 +79,7 @@ static struct linux_tty_callbacks ios_tty_callbacks = {
 };
 
 static int ios_tty_open(struct tty_struct *tty, struct file *filp) {
-    return tty_port_open(&ios_tty.port, tty, filp);
+    return tty_port_open(tty->port, tty, filp);
 }
 
 static int ios_tty_write(struct tty_struct *tty, const unsigned char *data, int len) {
@@ -135,11 +136,13 @@ static struct console ios_tty_console = {
 };
 
 static __init int ios_tty_init(void) {
-    ios_tty.linux_tty.ops = &ios_tty_callbacks;
-    tty_port_init(&ios_tty.port);
-    ios_tty.port.ops = &ios_tty_port_ops;
+    for (int i = 0; i < NUM_TTYS; i++) {
+        ios_ttys[i].linux_tty.ops = &ios_tty_callbacks;
+        tty_port_init(&ios_ttys[i].port);
+        ios_ttys[i].port.ops = &ios_tty_port_ops;
+    }
 
-    ios_tty_driver = alloc_tty_driver(1);
+    ios_tty_driver = alloc_tty_driver(NUM_TTYS);
     ios_tty_driver->driver_name = "ios";
     ios_tty_driver->name = "tty";
     ios_tty_driver->name_base = 1;
@@ -150,7 +153,10 @@ static __init int ios_tty_init(void) {
     ios_tty_driver->init_termios = tty_std_termios;
     ios_tty_driver->flags = TTY_DRIVER_REAL_RAW | TTY_DRIVER_RESET_TERMIOS;
     tty_set_operations(ios_tty_driver, &ios_tty_ops);
-    tty_port_link_device(&ios_tty.port, ios_tty_driver, 0);
+
+    for (int i = 0; i < NUM_TTYS; i++) {
+        tty_port_link_device(&ios_ttys[i].port, ios_tty_driver, i);
+    }
 
     if (tty_register_driver(ios_tty_driver))
         panic("ios tty: failed to tty_register_driver");
