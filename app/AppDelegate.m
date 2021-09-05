@@ -205,6 +205,7 @@ static NSString *const kSkipStartupMessage = @"Skip Startup Message";
         @"maxcpus=1",
         @"rootfstype=fakefs",
         [NSString stringWithFormat:@"root=\"%s\"", root.fileSystemRepresentation],
+        @"rw",
     ];
     actuate_kernel([args componentsJoinedByString:@" "].UTF8String);
 #endif
