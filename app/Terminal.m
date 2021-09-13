@@ -257,10 +257,11 @@ static NSMapTable<NSUUID *, Terminal *> *terminalsByUUID;
         @synchronized (self) {
             self->_pendingData = [[NSMutableData alloc] initWithCapacity:BUF_SIZE];
         }
-        async_do_in_irq(^{
-            if (self->_tty)
+        if (self->_tty) {
+            async_do_in_irq(^{
                 self->_tty->ops->wakeup(self->_tty);
-        });
+            });
+        }
 #endif
         if (error != nil) {
             NSLog(@"error sending bytes to the terminal: %@", error);
