@@ -201,8 +201,6 @@ static NSString *const kSkipStartupMessage = @"Skip Startup Message";
         return _EINVAL;
     }
     NSArray<NSString *> *args = @[
-        // TODO: fix issues with having multiple cpus
-        @"maxcpus=1",
         @"rootfstype=fakefs",
         [NSString stringWithFormat:@"root=\"%s\"", root.fileSystemRepresentation],
         @"rw",
