@@ -418,7 +418,7 @@
         for (unsigned i = 1; i <= 7; i++) {
             [commands addObject:
              [UIKeyCommand keyCommandWithInput:[NSString stringWithFormat:@"%d", i]
-                                 modifierFlags:UIKeyModifierShift
+                                 modifierFlags:UIKeyModifierCommand|UIKeyModifierAlternate|UIKeyModifierShift
                                         action:@selector(switchTerminal:)]];
         }
         [commands addObject:
