@@ -142,6 +142,7 @@ if get_option('kernel') == 'ish'
         'fs/tmp.c',
 
         'fs/poll.c',
+        'fs/aio.c',
         'kernel/poll.c',
         'kernel/epoll.c',
 
