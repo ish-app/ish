@@ -110,6 +110,7 @@ if get_option('kernel') == 'ish'
 
         'kernel/fs.c',
         'kernel/fs_info.c',
+        'kernel/aio.c',
         'fs/mount.c',
         'fs/fd.c',
         'fs/inode.c',
