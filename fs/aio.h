@@ -59,6 +59,15 @@ struct aioctx_table {
 struct aioctx_table *aioctx_table_new(unsigned int capacity);
 void aioctx_table_delete(struct aioctx_table *tbl);
 
+// Insert an AIO context into a given table.
+// 
+// The return value will be a positive index into the context table if the
+// context was successfully inserted, or an error code otherwise.
+// 
+// The context must be non-null. There is no provision for inserting a null
+// context into the table.
+signed int aioctx_table_insert(struct aioctx_table *tbl, struct aioctx *ctx);
+
 struct aioctx *aioctx_new(int events_capacity);
 void aioctx_retain(struct aioctx *ctx);
 void aioctx_release(struct aioctx *ctx);

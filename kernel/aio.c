@@ -1,8 +1,24 @@
 #include "kernel/calls.h"
+#include "kernel/task.h"
 #include "kernel/aio.h"
+#include "fs/aio.h"
 
 dword_t sys_io_setup(dword_t nr_events, addr_t ctx_idp) {
-    return _ENOSYS;
+    struct aioctx *ctx = aioctx_new(nr_events);
+    if (ctx == NULL) return _ENOMEM;
+    if (IS_ERR(ctx)) return PTR_ERR(ctx);
+
+    int ctx_id = aioctx_table_insert(current->aioctx, ctx);
+    if (ctx_id < 0) {
+        aioctx_release(ctx);
+        return ctx_id;
+    }
+
+    dword_t ctx_id_guest = (dword_t)ctx_id;
+    if (ctx_idp && user_write(ctx_idp, (char*)&ctx_id_guest, sizeof(dword_t)))
+        return _EFAULT;
+
+    return 0;
 }
 
 dword_t sys_io_destroy(addr_t ctx_id) {

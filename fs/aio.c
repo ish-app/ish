@@ -72,7 +72,7 @@ void aioctx_release(struct aioctx *ctx) {
 
 struct aioctx_table *aioctx_table_new(unsigned int capacity) {
     struct aioctx_table *tbl = malloc(sizeof(struct aioctx_table));
-    if (tbl == NULL) return ERR_PTR(_ENOMEM);
+    if (tbl == NULL) return NULL;
     
     tbl->capacity = 0;
     tbl->contexts = NULL;
@@ -95,4 +95,34 @@ void aioctx_table_delete(struct aioctx_table *tbl) {
     }
     free(tbl->contexts);
     free(tbl);
+}
+
+signed int aioctx_table_insert(struct aioctx_table *tbl, struct aioctx *ctx) {
+    if (tbl == NULL) return _EINVAL;
+    if (ctx == NULL) return _EINVAL;
+
+    lock(&tbl->lock);
+    
+    for (int i = 0; i < tbl->capacity; i += 1) {
+        if (tbl->contexts[i] == NULL) {
+            tbl->contexts[i] = ctx;
+            aioctx_retain(ctx);
+            unlock(&tbl->lock);
+            return i;
+        }
+    }
+
+    //At this point, we've scanned the entire table and every entry is full.
+    int old_capacity = tbl->capacity;
+    if (((INT_MAX - 1) / 2) < old_capacity) return _ENOMEM;
+
+    int err = _aioctx_table_ensure(tbl, (tbl->capacity * 2) + 1);
+    if (err < 0) return err;
+
+    tbl->contexts[old_capacity] = ctx;
+
+    aioctx_retain(ctx);
+    unlock(&tbl->lock);
+
+    return old_capacity;
 }
