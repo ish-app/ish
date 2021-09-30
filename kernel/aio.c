@@ -21,8 +21,16 @@ dword_t sys_io_setup(dword_t nr_events, addr_t ctx_idp) {
     return 0;
 }
 
-dword_t sys_io_destroy(addr_t ctx_id) {
-    return _ENOSYS;
+dword_t sys_io_destroy(addr_t p_ctx_id) {
+    unsigned int ctx_id = 0;
+    if (user_read(p_ctx_id, &ctx_id, sizeof(ctx_id))) return _EFAULT;
+    
+    int err = aioctx_table_remove(current->aioctx, ctx_id) < 0;
+    if (err < 0) {
+        return err;
+    }
+
+    return 0;
 }
 
 dword_t sys_io_getevents(addr_t ctx_id, dword_t min_nr, dword_t nr, addr_t events, addr_t timeout) {

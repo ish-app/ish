@@ -68,6 +68,11 @@ void aioctx_table_delete(struct aioctx_table *tbl);
 // context into the table.
 signed int aioctx_table_insert(struct aioctx_table *tbl, struct aioctx *ctx);
 
+// Remove an AIO context from the table by it's position (context ID).
+// 
+// This returns an error code if the context ID is not valid for this table.
+signed int aioctx_table_remove(struct aioctx_table *tbl, unsigned int ctx_id);
+
 struct aioctx *aioctx_new(int events_capacity);
 void aioctx_retain(struct aioctx *ctx);
 void aioctx_release(struct aioctx *ctx);

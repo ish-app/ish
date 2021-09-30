@@ -126,3 +126,26 @@ signed int aioctx_table_insert(struct aioctx_table *tbl, struct aioctx *ctx) {
 
     return old_capacity;
 }
+
+signed int aioctx_table_remove(struct aioctx_table *tbl, unsigned int ctx_id) {
+    if (tbl == NULL) return _EINVAL;
+    
+    lock(&tbl->lock);
+
+    if (tbl->capacity > ctx_id) {
+        unlock(&tbl->lock);
+        return _EINVAL;
+    }
+
+    struct aioctx *ctx = tbl->contexts[ctx_id];
+    if (ctx == NULL) {
+        unlock(&tbl->lock);
+        return _EINVAL;
+    }
+
+    aioctx_release(ctx);
+
+    unlock(&tbl->lock);
+
+    return 0;
+}
