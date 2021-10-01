@@ -36,6 +36,30 @@ enum aioctx_op {
     AIOCTX_PWRITEV = 8,
 };
 
+// A pending I/O event's information.
+struct aioctx_event_pending {
+    // The operation to perform.
+    enum aioctx_op op;
+
+    // The open file to perform it on.
+    fd_t fd;
+
+    // A guest memory buffer to read to or write from.
+    addr_t buf;
+
+    // The bounds of the guest memory buffer.
+    size_t size;
+
+    // The current guest memory buffer offset.
+    ssize_t offset;
+};
+
+// A completed I/O event's information.
+struct aioctx_event_complete {
+    // Result values for the event.
+    int64_t result[2];
+};
+
 // A single AIO completion event.
 // 
 // This structure is nullable, aioctx_event->tag == AIOCTX_NONE means that the
@@ -49,28 +73,10 @@ struct aioctx_event {
 
     union {
         // Tag: AIOCTX_PENDING
-        struct {
-            // The operation to perform.
-            enum aioctx_op op;
-
-            // The open file to perform it on.
-            fd_t fd;
-
-            // A guest memory buffer to read to or write from.
-            addr_t buf;
-
-            // The bounds of the guest memory buffer.
-            size_t size;
-
-            // The current guest memory buffer offset.
-            ssize_t offset;
-        } as_pending;
+        struct aioctx_event_pending as_pending;
 
         // Tag: AIOCTX_COMPLETE
-        struct {
-            // Result values for the event.
-            int64_t result[2];
-        } as_complete;
+        struct aioctx_event_complete as_complete;
     } data;
 };
 
@@ -153,5 +159,12 @@ void aioctx_release(struct aioctx *ctx);
 // the task, which is treated as an implicit cancellation of any pending
 // requests.
 void aioctx_release_from_task(struct aioctx *ctx);
+
+// Submit a pending I/O event to the AIO context.
+// 
+// This returns a positive integer corresponding to the event index within the
+// context. This index remains stable and can be used to access the pending
+// event data up until the event is resolved.
+signed int aioctx_submit_pending_event(struct aioctx *ctx, uint64_t user_data, struct aioctx_event_pending pending_data);
 
 #endif

@@ -84,6 +84,30 @@ void aioctx_release_from_task(struct aioctx *ctx) {
     _aioctx_decrement_ref(ctx);
 }
 
+signed int aioctx_submit_pending_event(struct aioctx *ctx, uint64_t user_data, struct aioctx_event_pending pending_data) {
+    if (ctx == NULL) return _EINVAL;
+
+    lock(&ctx->lock);
+
+    signed int index = _EAGAIN;
+
+    for (int i = 0; i < ctx->events_capacity; i += 1) {
+        if (ctx->events[i].tag == AIOCTX_NONE) {
+            index = i;
+            
+            ctx->events[i].tag = AIOCTX_PENDING;
+            ctx->events[i].user_data = user_data;
+            ctx->events[i].data.as_pending = pending_data;
+
+            break;
+        }
+    }
+
+    unlock(&ctx->lock);
+
+    return index;
+}
+
 struct aioctx_table *aioctx_table_new(unsigned int capacity) {
     struct aioctx_table *tbl = malloc(sizeof(struct aioctx_table));
     if (tbl == NULL) return NULL;
