@@ -4,7 +4,7 @@
 #include "fs/aio.h"
 
 dword_t sys_io_setup(dword_t nr_events, addr_t ctx_idp) {
-    struct aioctx *ctx = aioctx_new(nr_events);
+    struct aioctx *ctx = aioctx_new(nr_events, current->pid);
     if (ctx == NULL) return _ENOMEM;
     if (IS_ERR(ctx)) return PTR_ERR(ctx);
 
@@ -24,7 +24,7 @@ dword_t sys_io_setup(dword_t nr_events, addr_t ctx_idp) {
 dword_t sys_io_destroy(addr_t p_ctx_id) {
     unsigned int ctx_id = 0;
     if (user_read(p_ctx_id, &ctx_id, sizeof(ctx_id))) return _EFAULT;
-    
+
     int err = aioctx_table_remove(current->aioctx, ctx_id) < 0;
     if (err < 0) {
         return err;

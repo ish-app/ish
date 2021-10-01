@@ -30,7 +30,7 @@ static int _aioctx_table_ensure(struct aioctx_table *tbl, unsigned int newcap) {
     return 0;
 }
 
-struct aioctx *aioctx_new(int events_capacity) {
+struct aioctx *aioctx_new(int events_capacity, pid_t pid) {
     if ((INT_MAX / sizeof(struct aioctx_event)) < events_capacity) return NULL;
 
     struct aioctx *aioctx = malloc(sizeof(struct aioctx));
@@ -46,6 +46,8 @@ struct aioctx *aioctx_new(int events_capacity) {
 
     aioctx->events_capacity = events_capacity;
     aioctx->events = aioctx_events;
+    aioctx->is_owned_by_task = true;
+    aioctx->pid = pid;
 
     return aioctx;
 }
@@ -58,16 +60,28 @@ void aioctx_retain(struct aioctx *ctx) {
     unlock(&ctx->lock);
 }
 
-void aioctx_release(struct aioctx *ctx) {
-    if (ctx == NULL) return;
-
-    lock(&ctx->lock);
+static void _aioctx_decrement_ref(struct aioctx *ctx) {
     if (--ctx->refcount == 0) {
         free(ctx->events);
         free(ctx);
     } else {
         unlock(&ctx->lock);
     }
+}
+
+void aioctx_release(struct aioctx *ctx) {
+    if (ctx == NULL) return;
+
+    lock(&ctx->lock);
+    _aioctx_decrement_ref(ctx);
+}
+
+void aioctx_release_from_task(struct aioctx *ctx) {
+    if (ctx == NULL) return;
+
+    lock(&ctx->lock);
+    ctx->is_owned_by_task = false;
+    _aioctx_decrement_ref(ctx);
 }
 
 struct aioctx_table *aioctx_table_new(unsigned int capacity) {
@@ -90,7 +104,7 @@ void aioctx_table_delete(struct aioctx_table *tbl) {
     lock(&tbl->lock);
     for (int i = 0; i < tbl->capacity; i += 1) {
         if (tbl->contexts[i] != NULL) {
-            aioctx_release(tbl->contexts[i]);
+            aioctx_release_from_task(tbl->contexts[i]);
         }
     }
     free(tbl->contexts);
@@ -143,7 +157,7 @@ signed int aioctx_table_remove(struct aioctx_table *tbl, unsigned int ctx_id) {
         return _EINVAL;
     }
 
-    aioctx_release(ctx);
+    aioctx_release_from_task(ctx);
 
     unlock(&tbl->lock);
 

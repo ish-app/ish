@@ -28,6 +28,16 @@ struct aioctx_event {
 struct aioctx {
     atomic_uint refcount;
     lock_t lock;
+    
+    // Indicates if this context is owned by a task.
+    // 
+    // If true, then the `pid` field is guaranteed to be valid, and correspond
+    // to the task that made the request. If false, then the `pid` is invalid,
+    // and any pending or completed events should be treated as cancelled.
+    bool is_owned_by_task;
+
+    // The process that currently owns the context.
+    pid_t pid;
 
     // The capacity of the events structure.
     // 
@@ -35,7 +45,7 @@ struct aioctx {
     // overflow the events table should be rejected with `_EAGAIN`.
     dword_t events_capacity;
 
-    // The current table of pending events.
+    // The current table of pending and completed events.
     struct aioctx_event* events;
 };
 
@@ -71,10 +81,24 @@ signed int aioctx_table_insert(struct aioctx_table *tbl, struct aioctx *ctx);
 // Remove an AIO context from the table by it's position (context ID).
 // 
 // This returns an error code if the context ID is not valid for this table.
+// 
+// All pending I/O requests on the given context will retain the context until
+// they resolve. The context will also be flagged as having been released by
+// the task, which is treated as an implicit cancellation of any pending
+// requests.
 signed int aioctx_table_remove(struct aioctx_table *tbl, unsigned int ctx_id);
 
-struct aioctx *aioctx_new(int events_capacity);
+struct aioctx *aioctx_new(int events_capacity, pid_t pid);
 void aioctx_retain(struct aioctx *ctx);
 void aioctx_release(struct aioctx *ctx);
+
+// Release the AIO context and flag it as no longer being owned by a valid
+// task.
+// 
+// All pending I/O requests on the given context will retain the context until
+// they resolve. The context will also be flagged as having been released by
+// the task, which is treated as an implicit cancellation of any pending
+// requests.
+void aioctx_release_from_task(struct aioctx *ctx);
 
 #endif
