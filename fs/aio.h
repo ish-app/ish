@@ -2,23 +2,76 @@
 #define FS_AIO_H
 
 #include "util/sync.h"
+#include "fs/fd.h"
 #include "misc.h"
 
 typedef dword_t aio_context_t;
 
+enum aioctx_event_tag {
+    // The event slot is empty and should be initialized before being used.
+    // 
+    // Conveniently, this matches the zero value, so initializing the entire
+    // event will also make it None.
+    AIOCTX_NONE = 0,
+
+    // The event slot is occupied with a pending I/O request.
+    // 
+    // This corresponds to the as_pending variant of the data union.
+    AIOCTX_PENDING = 1,
+
+    // The event slot is occupied with a completed I/O request.
+    // 
+    // This corresponds to the as_complete variant of the data union.
+    AIOCTX_COMPLETE = 2,
+};
+
+enum aioctx_op {
+    AIOCTX_PREAD = 0,
+    AIOCTX_PWRITE = 1,
+    AIOCTX_FSYNC = 2,
+    AIOCTX_FDSYNC = 3,
+    AIOCTX_POLL = 5,
+    AIOCTX_NOOP = 6,
+    AIOCTX_PREADV = 7,
+    AIOCTX_PWRITEV = 8,
+};
+
 // A single AIO completion event.
 // 
-// This structure is nullable, aioctx_event->in_use == FALSE means that the
+// This structure is nullable, aioctx_event->tag == AIOCTX_NONE means that the
 // rest of the fields have yet to be initialized.
 struct aioctx_event {
-    bool in_use;
+    enum aioctx_event_tag tag;
 
     // A data value provided by the user to identify in-flight requests from
     // the kernel.
     uint64_t user_data;
 
-    // Result values for the event.
-    int64_t result[2];
+    union {
+        // Tag: AIOCTX_PENDING
+        struct {
+            // The operation to perform.
+            enum aioctx_op op;
+
+            // The open file to perform it on.
+            fd_t fd;
+
+            // A guest memory buffer to read to or write from.
+            addr_t buf;
+
+            // The bounds of the guest memory buffer.
+            size_t size;
+
+            // The current guest memory buffer offset.
+            ssize_t offset;
+        } as_pending;
+
+        // Tag: AIOCTX_COMPLETE
+        struct {
+            // Result values for the event.
+            int64_t result[2];
+        } as_complete;
+    } data;
 };
 
 // An AIO context.
