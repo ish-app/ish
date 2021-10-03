@@ -25,7 +25,7 @@ enum aioctx_event_tag {
     AIOCTX_COMPLETE = 2,
 };
 
-enum aioctx_op {
+enum aioctx_op : uint16_t {
     AIOCTX_PREAD = 0,
     AIOCTX_PWRITE = 1,
     AIOCTX_FSYNC = 2,
@@ -45,13 +45,13 @@ struct aioctx_event_pending {
     fd_t fd;
 
     // A guest memory buffer to read to or write from.
-    addr_t buf;
+    uint64_t buf;
 
     // The bounds of the guest memory buffer.
-    size_t size;
+    uint64_t nbytes;
 
     // The current guest memory buffer offset.
-    ssize_t offset;
+    int64_t offset;
 };
 
 // A completed I/O event's information.
