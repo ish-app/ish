@@ -167,4 +167,23 @@ void aioctx_release_from_task(struct aioctx *ctx);
 // event data up until the event is resolved.
 signed int aioctx_submit_pending_event(struct aioctx *ctx, uint64_t user_data, struct aioctx_event_pending pending_data);
 
+void aioctx_lock(struct aioctx* ctx);
+void aioctx_unlock(struct aioctx* ctx);
+
+// Get a pending event from the AIOCTX.
+// 
+// The event structure will be returned by writing it's pointer to the **event
+// parameter.
+// 
+// This function returns _EINVAL if the given index is not a valid event, not a
+// pending event, or if the context has been released by it's supporting task.
+// In the event that this function returns an error, the 
+// 
+// This function is not synchronized and returns pointers to the context's
+// internal structures. As such, you must retain and lock the table before
+// calling this function, and drop all internal pointers before unlocking or
+// releasing the context. Do not hold the lock for longer than necessary as you
+// may serialize or deadlock other I/O requests.
+signed int aioctx_pending_event(struct aioctx *ctx, int index, struct aioctx_event_pending **event);
+
 #endif

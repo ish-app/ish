@@ -108,6 +108,28 @@ signed int aioctx_submit_pending_event(struct aioctx *ctx, uint64_t user_data, s
     return index;
 }
 
+void aioctx_lock(struct aioctx* ctx) {
+    if (ctx == NULL) return;
+
+    lock(&ctx->lock);
+}
+
+void aioctx_unlock(struct aioctx* ctx) {
+    if (ctx == NULL) return;
+
+    unlock(&ctx->lock);
+}
+
+signed int aioctx_pending_event(struct aioctx *ctx, int index, struct aioctx_event_pending **event) {
+    if (ctx == NULL) return _EINVAL;
+    if (index >= ctx->events_capacity) return _EINVAL;
+    if (ctx->events[index].tag != AIOCTX_PENDING) return _EINVAL;
+
+    if (event != NULL) *event = &ctx->events[index].data.as_pending;
+
+    return 0;
+}
+
 struct aioctx_table *aioctx_table_new(unsigned int capacity) {
     struct aioctx_table *tbl = malloc(sizeof(struct aioctx_table));
     if (tbl == NULL) return NULL;
