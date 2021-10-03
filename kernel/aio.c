@@ -108,8 +108,21 @@ dword_t sys_io_submit(addr_t ctx_id, dword_t u_nr, addr_t iocbpp) {
             break;
         }
 
-        // TODO: Actually submit the event to the FD.
+        unsigned int event_id = (unsigned int)err;
+        if (fdp->ops->io_submit) {
+            err = fdp->ops->io_submit(fdp, ctx, event_id);
+        } else {
+            err = _EINVAL;
+        }
+        
         unlock(&current->files->lock);
+
+        if (err < 0) {
+            aioctx_cancel_event(ctx, event_id);
+
+            if (i == 0) goto err;
+            break;
+        }
     }
 
     aioctx_release(ctx);
