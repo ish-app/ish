@@ -209,3 +209,23 @@ signed int aioctx_table_remove(struct aioctx_table *tbl, unsigned int ctx_id) {
 
     return 0;
 }
+
+struct aioctx *aioctx_table_get_and_retain(struct aioctx_table *tbl, unsigned int ctx_id) {
+    if (tbl == NULL) return NULL;
+
+    lock(&tbl->lock);
+
+    if (tbl->capacity > ctx_id) {
+        unlock(&tbl->lock);
+        return NULL;
+    }
+
+    struct aioctx *ctx = tbl->contexts[ctx_id];
+    if (ctx != NULL) {
+        aioctx_retain(ctx);
+    }
+
+    unlock(&tbl->lock);
+
+    return ctx;
+}

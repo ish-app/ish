@@ -147,6 +147,12 @@ signed int aioctx_table_insert(struct aioctx_table *tbl, struct aioctx *ctx);
 // requests.
 signed int aioctx_table_remove(struct aioctx_table *tbl, unsigned int ctx_id);
 
+// Retrieve a pointer to a given AIO context by it's ID.
+// 
+// This returns NULL if no such context exists. Otherwise, it will
+// automatically retain the context before unlocking it's owning table.
+struct aioctx *aioctx_table_get_and_retain(struct aioctx_table *tbl, unsigned int ctx_id);
+
 struct aioctx *aioctx_new(int events_capacity, pid_t pid);
 void aioctx_retain(struct aioctx *ctx);
 void aioctx_release(struct aioctx *ctx);
