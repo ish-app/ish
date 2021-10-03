@@ -29,6 +29,7 @@ The following authors have agreed to relicense their past contributions under GP
 - Christoforos Charalambous <chrischaralambous14@gmail.com>
 - Kenta Kubo <kabuto669@icloud.com>
 - Zhuowei Zhang
+- never_released <24752637+woachk@users.noreply.github.com>
 
 [GPLv3]: https://www.gnu.org/licenses/gpl-3.0.html
 [GPLv2]: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html
