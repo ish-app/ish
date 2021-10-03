@@ -50,7 +50,7 @@ struct aioctx_event_pending {
     // The bounds of the guest memory buffer.
     uint64_t nbytes;
 
-    // The current guest memory buffer offset.
+    // The file offset to perform the I/O operation.
     int64_t offset;
 };
 
@@ -173,6 +173,13 @@ void aioctx_release_from_task(struct aioctx *ctx);
 // event data up until the event is resolved.
 signed int aioctx_submit_pending_event(struct aioctx *ctx, uint64_t user_data, struct aioctx_event_pending pending_data);
 
+// Cancel a pending I/O event, freeing the event index for reuse.
+// 
+// This should only be used if the submitted FD has signalled a synchronous
+// error (e.g. EINVAL) which indicates that it does not plan to complete the
+// event later.
+void aioctx_cancel_event(struct aioctx *ctx, unsigned int index);
+
 void aioctx_lock(struct aioctx* ctx);
 void aioctx_unlock(struct aioctx* ctx);
 
@@ -183,13 +190,15 @@ void aioctx_unlock(struct aioctx* ctx);
 // 
 // This function returns _EINVAL if the given index is not a valid event, not a
 // pending event, or if the context has been released by it's supporting task.
-// In the event that this function returns an error, the 
+// In the event that this function returns an error, the event should be
+// considered cancelled. Any resources related to the event should be disposed
+// of.
 // 
 // This function is not synchronized and returns pointers to the context's
 // internal structures. As such, you must retain and lock the table before
 // calling this function, and drop all internal pointers before unlocking or
 // releasing the context. Do not hold the lock for longer than necessary as you
 // may serialize or deadlock other I/O requests.
-signed int aioctx_pending_event(struct aioctx *ctx, int index, struct aioctx_event_pending **event);
+signed int aioctx_get_pending_event(struct aioctx *ctx, unsigned int index, struct aioctx_event_pending **event);
 
 #endif

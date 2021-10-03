@@ -108,6 +108,19 @@ signed int aioctx_submit_pending_event(struct aioctx *ctx, uint64_t user_data, s
     return index;
 }
 
+void aioctx_cancel_event(struct aioctx *ctx, unsigned int index) {
+    if (ctx == NULL) return;
+    
+    lock(&ctx->lock);
+
+    if (index > ctx->events_capacity) return;
+
+    if (ctx->events[index].tag == AIOCTX_PENDING)
+        ctx->events[index].tag = AIOCTX_NONE;
+
+    unlock(&ctx->lock);
+}
+
 void aioctx_lock(struct aioctx* ctx) {
     if (ctx == NULL) return;
 
@@ -120,8 +133,9 @@ void aioctx_unlock(struct aioctx* ctx) {
     unlock(&ctx->lock);
 }
 
-signed int aioctx_pending_event(struct aioctx *ctx, int index, struct aioctx_event_pending **event) {
+signed int aioctx_get_pending_event(struct aioctx *ctx, unsigned int index, struct aioctx_event_pending **event) {
     if (ctx == NULL) return _EINVAL;
+    if (!ctx->is_owned_by_task) return _EINVAL;
     if (index >= ctx->events_capacity) return _EINVAL;
     if (ctx->events[index].tag != AIOCTX_PENDING) return _EINVAL;
 
