@@ -121,6 +121,27 @@ void aioctx_cancel_event(struct aioctx *ctx, unsigned int index) {
     unlock(&ctx->lock);
 }
 
+void aioctx_complete_event(struct aioctx *ctx, unsigned int index, int64_t result0, int64_t result1) {
+    if (ctx == NULL) return;
+
+    lock(&ctx->lock);
+
+    if (index > ctx->events_capacity) return;
+
+    if (ctx->events[index].tag == AIOCTX_PENDING) {
+        ctx->events[index].tag = AIOCTX_COMPLETE;
+        
+        struct aioctx_event_complete data;
+
+        data.result[0] = result0;
+        data.result[1] = result1;
+
+        ctx->events[index].data.as_complete = data;
+    }
+
+    unlock(&ctx->lock);
+}
+
 void aioctx_lock(struct aioctx* ctx) {
     if (ctx == NULL) return;
 

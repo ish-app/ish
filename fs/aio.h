@@ -180,6 +180,12 @@ signed int aioctx_submit_pending_event(struct aioctx *ctx, uint64_t user_data, s
 // event later.
 void aioctx_cancel_event(struct aioctx *ctx, unsigned int index);
 
+// Complete a pending I/O event.
+// 
+// This accepts two result parameters, whose meaning is determined solely by
+// the event opcode.
+void aioctx_complete_event(struct aioctx *ctx, unsigned int index, int64_t result0, int64_t result1);
+
 void aioctx_lock(struct aioctx* ctx);
 void aioctx_unlock(struct aioctx* ctx);
 
