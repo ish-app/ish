@@ -99,7 +99,7 @@ dword_t sys_io_submit(addr_t ctx_id, dword_t u_nr, addr_t iocbpp) {
             break;
         }
 
-        err = aioctx_submit_pending_event(ctx, user_data, host_iocb);
+        err = aioctx_submit_pending_event(ctx, user_data, iocbp, host_iocb);
         if (err < 0) {
             // TODO: This assumes the usual pattern of "first IOCB errors, all
             // others stop processing without erroring"

@@ -84,7 +84,7 @@ void aioctx_release_from_task(struct aioctx *ctx) {
     _aioctx_decrement_ref(ctx);
 }
 
-signed int aioctx_submit_pending_event(struct aioctx *ctx, uint64_t user_data, struct aioctx_event_pending pending_data) {
+signed int aioctx_submit_pending_event(struct aioctx *ctx, uint64_t user_data, addr_t iocbp, struct aioctx_event_pending pending_data) {
     if (ctx == NULL) return _EINVAL;
 
     lock(&ctx->lock);
@@ -97,6 +97,7 @@ signed int aioctx_submit_pending_event(struct aioctx *ctx, uint64_t user_data, s
             
             ctx->events[i].tag = AIOCTX_PENDING;
             ctx->events[i].user_data = user_data;
+            ctx->events[i].iocb_obj = iocbp;
             ctx->events[i].data.as_pending = pending_data;
 
             break;
@@ -130,7 +131,7 @@ void aioctx_complete_event(struct aioctx *ctx, unsigned int index, int64_t resul
 
     if (ctx->events[index].tag == AIOCTX_PENDING) {
         ctx->events[index].tag = AIOCTX_COMPLETE;
-        
+
         struct aioctx_event_complete data;
 
         data.result[0] = result0;

@@ -71,6 +71,9 @@ struct aioctx_event {
     // the kernel.
     uint64_t user_data;
 
+    // Guest address of the IOCB structure that initiated this event
+    addr_t iocb_obj;
+
     union {
         // Tag: AIOCTX_PENDING
         struct aioctx_event_pending as_pending;
@@ -171,7 +174,7 @@ void aioctx_release_from_task(struct aioctx *ctx);
 // This returns a positive integer corresponding to the event index within the
 // context. This index remains stable and can be used to access the pending
 // event data up until the event is resolved.
-signed int aioctx_submit_pending_event(struct aioctx *ctx, uint64_t user_data, struct aioctx_event_pending pending_data);
+signed int aioctx_submit_pending_event(struct aioctx *ctx, uint64_t user_data, addr_t iocbp, struct aioctx_event_pending pending_data);
 
 // Cancel a pending I/O event, freeing the event index for reuse.
 // 
