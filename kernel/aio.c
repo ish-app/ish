@@ -3,6 +3,7 @@
 #include "kernel/task.h"
 #include "kernel/aio.h"
 #include "fs/aio.h"
+#include "fs/fd.h"
 
 // Guest memory offsets for the IOCB structure.
 // Calculated by a test program compiled and ran in iSH itself.
@@ -112,7 +113,7 @@ dword_t sys_io_submit(addr_t ctx_id, dword_t u_nr, addr_t iocbpp) {
         if (fdp->ops->io_submit) {
             err = fdp->ops->io_submit(fdp, ctx, event_id);
         } else {
-            err = _EINVAL;
+            err = aio_fallback_submit(fdp, ctx, event_id);
         }
         
         unlock(&current->files->lock);
@@ -145,4 +146,153 @@ dword_t sys_io_cancel(addr_t ctx_id, addr_t iocb, addr_t result) {
     STRACE("io_submit(0x%x, 0x%x, 0x%x)", ctx_id, iocb, result);
 
     return _ENOSYS;
+}
+
+int aio_fallback_submit(struct fd *fd, struct aioctx *ctx, unsigned int event_id) {
+    aioctx_lock(ctx);
+
+    struct aioctx_event_pending *evt = NULL;
+
+    // General structure of the fallback:
+    // 
+    // Some errors we're going to treat as fatal and return immediately. These
+    // should trigger event cancellation. We call these "sync errors".
+    // 
+    // Other errors will be returned as the result of event completion. We call
+    // these "async errors". These do NOT cancel the AIO event, but are treated
+    // as the event's completion.
+    // 
+    // Why do it this way? Because the manpages for io_submit say so - only a
+    // certain subset of errors are returned by it, and only for the first
+    // IOCB submitted.
+    signed int sync_err = aioctx_get_pending_event(ctx, event_id, &evt);
+    signed int async_result0 = 0;
+    if (sync_err < 0 || evt == NULL) {
+        aioctx_unlock(ctx);
+
+        if (sync_err == 0) return _EINVAL;
+        return sync_err;
+    }
+
+    char *buf = NULL;
+    switch (evt->op) {
+        case AIOCTX_PREAD:
+            if (evt->nbytes > 0xFFFFFFFE) {
+                sync_err = _ENOMEM;
+                break;
+            }
+
+            // Don't ask me why, but the sync I/O code null-terminates it's
+            // buffers, so I'm doing it here too.
+            buf = malloc(evt->nbytes + 1);
+            if (buf == NULL) {
+                sync_err = _ENOMEM;
+                break;
+            }
+            
+            if (fd->ops->pread) {
+                async_result0 = fd->ops->pread(fd, buf, evt->nbytes, evt->offset);
+            } else if (fd->ops->read && fd->ops->lseek) {
+                off_t_ saved_off = fd->ops->lseek(fd, 0, LSEEK_CUR);
+                if ((async_result0 = fd->ops->lseek(fd, evt->offset, LSEEK_SET))) {
+                    free(buf);
+                    break;
+                }
+
+                ssize_t read_bytes = fd->ops->read(fd, buf, evt->nbytes);
+
+                off_t_ seek_result = fd->ops->lseek(fd, saved_off, LSEEK_SET);
+                if (seek_result < 0) {
+                    async_result0 = seek_result;
+                    free(buf);
+                    break;
+                }
+                
+                async_result0 = read_bytes;
+            } else {
+                free(buf);
+                sync_err = _EINVAL;
+                break;
+            }
+
+            if (async_result0 < 0) {
+                free(buf);
+                break;
+            }
+
+            buf[async_result0] = '\0';
+            if (user_write((addr_t)evt->buf, buf, async_result0)) sync_err = _EFAULT;
+
+            free(buf);
+            break;
+        case AIOCTX_PWRITE:
+            if (evt->nbytes > 0xFFFFFFFE) {
+                sync_err = _ENOMEM;
+                break;
+            }
+
+            buf = malloc(evt->nbytes);
+            if (buf == NULL) {
+                sync_err = _ENOMEM;
+                break;
+            }
+
+            if (user_read((addr_t)evt->buf, buf, evt->nbytes)) {
+                free(buf);
+                sync_err = _EFAULT;
+                break;
+            }
+
+            ssize_t written_bytes;
+            if (fd->ops->pwrite) {
+                written_bytes = fd->ops->pwrite(fd, buf, evt->nbytes, evt->offset);
+            } else if (fd->ops->write && fd->ops->lseek) {
+                off_t_ saved_off = fd->ops->lseek(fd, 0, LSEEK_CUR);
+                if ((async_result0 = fd->ops->lseek(fd, evt->offset, LSEEK_SET))) {
+                    free(buf);
+                    break;
+                }
+
+                written_bytes = fd->ops->write(fd, buf, evt->nbytes);
+
+                off_t_ seek_result = fd->ops->lseek(fd, saved_off, LSEEK_SET);
+                if (seek_result < 0) {
+                    async_result0 = seek_result;
+                    free(buf);
+                    break;
+                }
+            } else {
+                free(buf);
+                sync_err = _EINVAL;
+                break;
+            }
+
+            async_result0 = (signed int)written_bytes;
+            free(buf);
+            break;
+        case AIOCTX_FSYNC:
+            if (fd->ops->fsync) {
+                async_result0 = fd->ops->fsync(fd);
+            } else {
+                sync_err = _EINVAL;
+            }
+
+            break;
+        case AIOCTX_NOOP:
+            async_result0 = 0;
+            sync_err = 0;
+            break;
+        //TODO: AIOCTX_FDSYNC, AIOCTX_POLL, AIOCTX_PREADV, AIOCTX_PWRITEV
+        default:
+            sync_err = _EINVAL;
+            break;
+    }
+
+    aioctx_unlock(ctx);
+
+    if (sync_err == 0) {
+        aioctx_complete_event(ctx, event_id, async_result0, 0);
+    }
+
+    return sync_err;
 }
