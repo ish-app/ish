@@ -189,6 +189,17 @@ void aioctx_cancel_event(struct aioctx *ctx, unsigned int index);
 // the event opcode.
 void aioctx_complete_event(struct aioctx *ctx, unsigned int index, int64_t result0, int64_t result1);
 
+// Consume a completed I/O event.
+// 
+// This returns true if and only if there was a completed event in the queue,
+// and we were able to remove it from the queue. The user_data, iocbp, and
+// completed_data parameters will be populated with the values from the removed
+// event, and it's event ID will be permitted to be reused.
+// 
+// If this function returns false, there were no completed events to remove
+// from the queue, and the passed-in parameters should not be used.
+bool aioctx_consume_completed_event(struct aioctx *ctx, uint64_t *user_data, addr_t *iocbp, struct aioctx_event_complete *completed_data);
+
 void aioctx_lock(struct aioctx* ctx);
 void aioctx_unlock(struct aioctx* ctx);
 

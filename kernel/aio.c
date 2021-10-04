@@ -20,6 +20,14 @@ const size_t AIO_IOCB_RESERVED2 = 48;
 const size_t AIO_IOCB_FLAGS = 56;
 const size_t AIO_IOCB_RESFD = 60;
 
+// Guest memory offsets for the IO_EVENT structure.
+// Also confirmed by test program.
+const size_t AIO_IO_EVENT_DATA = 0;
+const size_t AIO_IO_EVENT_OBJ = 8;
+const size_t AIO_IO_EVENT_RES = 16;
+const size_t AIO_IO_EVENT_RES2 = 24;
+const size_t AIO_IO_EVENT_SIZEOF = 32;
+
 dword_t sys_io_setup(dword_t nr_events, addr_t ctx_idp) {
     STRACE("io_setup(%d, 0x%x)", nr_events, ctx_idp);
 
@@ -57,7 +65,32 @@ dword_t sys_io_destroy(addr_t p_ctx_id) {
 dword_t sys_io_getevents(addr_t ctx_id, dword_t min_nr, dword_t nr, addr_t events, addr_t timeout) {
     STRACE("io_getevents(0x%x, %d, %d, 0x%x, 0x%x)", ctx_id, min_nr, nr, events, timeout);
 
-    return _ENOSYS;
+    struct aioctx *ctx = aioctx_table_get_and_retain(current->aioctx, ctx_id);
+    if (ctx == NULL) return _EINVAL;
+    if (events == 0) return _EFAULT;
+
+    dword_t i = 0;
+    for (i = 0; i < nr; i += 1) {
+        uint64_t user_data;
+        addr_t iocbp;
+        struct aioctx_event_complete cdata;
+
+        if (!aioctx_consume_completed_event(ctx, &user_data, &iocbp, &cdata)) {
+            //TODO: Block until min_nr events recieved or timeout exceeded
+            break;
+        }
+
+        uint64_t obj = (uint64_t)iocbp;
+
+        if (user_put(events + AIO_IO_EVENT_DATA, user_data)) return _EFAULT;
+        if (user_put(events + AIO_IO_EVENT_OBJ, obj)) return _EFAULT;
+        if (user_put(events + AIO_IO_EVENT_RES, cdata.result[0])) return _EFAULT;
+        if (user_put(events + AIO_IO_EVENT_RES2, cdata.result[1])) return _EFAULT;
+
+        events += AIO_IO_EVENT_SIZEOF;
+    }
+
+    return i;
 }
 
 dword_t sys_io_submit(addr_t ctx_id, dword_t u_nr, addr_t iocbpp) {

@@ -143,6 +143,31 @@ void aioctx_complete_event(struct aioctx *ctx, unsigned int index, int64_t resul
     unlock(&ctx->lock);
 }
 
+bool aioctx_consume_completed_event(struct aioctx *ctx, uint64_t *user_data, addr_t *iocbp, struct aioctx_event_complete *completed_data) {
+    if (ctx == NULL) return false;
+
+    bool result = false;
+
+    lock(&ctx->lock);
+
+    for (int i = 0; i < ctx->events_capacity; i += 1) {
+        if (ctx->events[i].tag == AIOCTX_COMPLETE) {
+            *user_data = ctx->events[i].user_data;
+            *iocbp = ctx->events[i].iocb_obj;
+            *completed_data = ctx->events[i].data.as_complete;
+
+            ctx->events[i].tag = AIOCTX_NONE;
+            result = true;
+
+            break;
+        }
+    }
+
+    unlock(&ctx->lock);
+
+    return result;
+}
+
 void aioctx_lock(struct aioctx* ctx) {
     if (ctx == NULL) return;
 
