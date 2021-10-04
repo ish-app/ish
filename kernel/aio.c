@@ -48,11 +48,8 @@ dword_t sys_io_setup(dword_t nr_events, addr_t ctx_idp) {
     return 0;
 }
 
-dword_t sys_io_destroy(addr_t p_ctx_id) {
-    STRACE("io_destroy(0x%x)", p_ctx_id);
-
-    unsigned int ctx_id = 0;
-    if (user_read(p_ctx_id, &ctx_id, sizeof(ctx_id))) return _EFAULT;
+dword_t sys_io_destroy(dword_t ctx_id) {
+    STRACE("io_destroy(%d)", ctx_id);
 
     int err = aioctx_table_remove(current->aioctx, ctx_id) < 0;
     if (err < 0) {
@@ -62,7 +59,7 @@ dword_t sys_io_destroy(addr_t p_ctx_id) {
     return 0;
 }
 
-dword_t sys_io_getevents(addr_t ctx_id, dword_t min_nr, dword_t nr, addr_t events, addr_t timeout) {
+dword_t sys_io_getevents(dword_t ctx_id, dword_t min_nr, dword_t nr, addr_t events, addr_t timeout) {
     STRACE("io_getevents(0x%x, %d, %d, 0x%x, 0x%x)", ctx_id, min_nr, nr, events, timeout);
 
     struct aioctx *ctx = aioctx_table_get_and_retain(current->aioctx, ctx_id);
@@ -93,7 +90,7 @@ dword_t sys_io_getevents(addr_t ctx_id, dword_t min_nr, dword_t nr, addr_t event
     return i;
 }
 
-dword_t sys_io_submit(addr_t ctx_id, dword_t u_nr, addr_t iocbpp) {
+dword_t sys_io_submit(dword_t ctx_id, dword_t u_nr, addr_t iocbpp) {
     sdword_t nr = (sdword_t)u_nr;
     STRACE("io_submit(0x%x, %d, 0x%x)", ctx_id, nr, iocbpp);
 
@@ -175,7 +172,7 @@ err:
     return err;
 }
 
-dword_t sys_io_cancel(addr_t ctx_id, addr_t iocb, addr_t result) {
+dword_t sys_io_cancel(dword_t ctx_id, addr_t iocb, addr_t result) {
     STRACE("io_submit(0x%x, 0x%x, 0x%x)", ctx_id, iocb, result);
 
     return _ENOSYS;
