@@ -156,6 +156,11 @@ signed int aioctx_table_remove(struct aioctx_table *tbl, unsigned int ctx_id);
 // automatically retain the context before unlocking it's owning table.
 struct aioctx *aioctx_table_get_and_retain(struct aioctx_table *tbl, unsigned int ctx_id);
 
+// Create a new AIO context.
+// 
+// The context is returned in a retained, unlocked state. You should only
+// release it after inserting it into some other structure that retains the
+// context.
 struct aioctx *aioctx_new(int events_capacity, pid_t pid);
 void aioctx_retain(struct aioctx *ctx);
 void aioctx_release(struct aioctx *ctx);

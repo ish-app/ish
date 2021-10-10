@@ -44,6 +44,9 @@ struct aioctx *aioctx_new(int events_capacity, pid_t pid) {
 
     memset(aioctx_events, 0, sizeof(struct aioctx_event) * events_capacity);
 
+    lock_init(&aioctx->lock);
+
+    aioctx->refcount = 1;
     aioctx->events_capacity = events_capacity;
     aioctx->events = aioctx_events;
     aioctx->is_owned_by_task = true;

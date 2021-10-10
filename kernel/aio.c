@@ -36,8 +36,8 @@ dword_t sys_io_setup(dword_t nr_events, addr_t ctx_idp) {
     if (IS_ERR(ctx)) return PTR_ERR(ctx);
 
     int ctx_id = aioctx_table_insert(current->aioctx, ctx);
+    aioctx_release(ctx);
     if (ctx_id < 0) {
-        aioctx_release(ctx);
         return ctx_id;
     }
 
