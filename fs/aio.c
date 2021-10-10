@@ -268,6 +268,7 @@ signed int aioctx_table_remove(struct aioctx_table *tbl, unsigned int ctx_id) {
     }
 
     aioctx_release_from_task(ctx);
+    tbl->contexts[ctx_id] = NULL;
 
     unlock(&tbl->lock);
 
