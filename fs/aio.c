@@ -117,7 +117,7 @@ void aioctx_cancel_event(struct aioctx *ctx, unsigned int index) {
     
     lock(&ctx->lock);
 
-    if (index > ctx->events_capacity) return;
+    if (index >= ctx->events_capacity) return;
 
     if (ctx->events[index].tag == AIOCTX_PENDING)
         ctx->events[index].tag = AIOCTX_NONE;
@@ -130,7 +130,7 @@ void aioctx_complete_event(struct aioctx *ctx, unsigned int index, int64_t resul
 
     lock(&ctx->lock);
 
-    if (index > ctx->events_capacity) return;
+    if (index >= ctx->events_capacity) return;
 
     if (ctx->events[index].tag == AIOCTX_PENDING) {
         ctx->events[index].tag = AIOCTX_COMPLETE;
@@ -238,7 +238,7 @@ signed int aioctx_table_insert(struct aioctx_table *tbl, struct aioctx *ctx) {
 
     //At this point, we've scanned the entire table and every entry is full.
     int old_capacity = tbl->capacity;
-    if (((INT_MAX - 1) / 2) < old_capacity) return _ENOMEM;
+    if (((INT_MAX - 1) / 2) <= old_capacity) return _ENOMEM;
 
     int err = _aioctx_table_ensure(tbl, (tbl->capacity * 2) + 1);
     if (err < 0) return err;
@@ -256,7 +256,7 @@ signed int aioctx_table_remove(struct aioctx_table *tbl, unsigned int ctx_id) {
     
     lock(&tbl->lock);
 
-    if (tbl->capacity > ctx_id) {
+    if (ctx_id >= tbl->capacity) {
         unlock(&tbl->lock);
         return _EINVAL;
     }
@@ -279,7 +279,7 @@ struct aioctx *aioctx_table_get_and_retain(struct aioctx_table *tbl, unsigned in
 
     lock(&tbl->lock);
 
-    if (tbl->capacity > ctx_id) {
+    if (ctx_id >= tbl->capacity) {
         unlock(&tbl->lock);
         return NULL;
     }
