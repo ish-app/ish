@@ -25,7 +25,7 @@ enum aioctx_event_tag {
     AIOCTX_COMPLETE = 2,
 };
 
-enum aioctx_op : uint16_t {
+enum aioctx_op {
     AIOCTX_PREAD = 0,
     AIOCTX_PWRITE = 1,
     AIOCTX_FSYNC = 2,

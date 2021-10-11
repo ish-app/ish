@@ -109,7 +109,11 @@ dword_t sys_io_submit(dword_t ctx_id, dword_t u_nr, addr_t iocbpp) {
         if (user_get(iocbp + AIO_IOCB_DATA, user_data)) goto fault;
 
         struct aioctx_event_pending host_iocb;
-        if (user_get(iocbp + AIO_IOCB_LIO_OPCODE, host_iocb.op)) goto fault;
+        uint16_t op = 0;
+        
+        if (user_get(iocbp + AIO_IOCB_LIO_OPCODE, op)) goto fault;
+        host_iocb.op = (enum aioctx_op)op;
+
         if (user_get(iocbp + AIO_IOCB_FILDES, host_iocb.fd)) goto fault;
         if (user_get(iocbp + AIO_IOCB_BUF, host_iocb.buf)) goto fault;
         if (user_get(iocbp + AIO_IOCB_NBYTES, host_iocb.nbytes)) goto fault;
