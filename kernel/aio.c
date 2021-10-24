@@ -305,6 +305,7 @@ int aio_fallback_submit(struct fd *fd, struct aioctx *ctx, unsigned int event_id
             free(buf);
             break;
         case AIOCTX_FSYNC:
+        case AIOCTX_FDSYNC:
             if (fd->ops->fsync) {
                 async_result0 = fd->ops->fsync(fd);
             } else {
@@ -316,7 +317,7 @@ int aio_fallback_submit(struct fd *fd, struct aioctx *ctx, unsigned int event_id
             async_result0 = 0;
             sync_err = 0;
             break;
-        //TODO: AIOCTX_FDSYNC, AIOCTX_POLL, AIOCTX_PREADV, AIOCTX_PWRITEV
+        //TODO: AIOCTX_POLL, AIOCTX_PREADV, AIOCTX_PWRITEV
         default:
             sync_err = _EINVAL;
             break;
