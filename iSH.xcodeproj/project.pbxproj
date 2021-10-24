@@ -2695,7 +2695,7 @@
 				BBEF19B626806D1F001225BD /* ReleaseLinux */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = ReleaseLinux;
+			defaultConfigurationName = Release;
 		};
 		497F6D4B254E605F00C82F46 /* Build configuration list for PBXNativeTarget "ish" */ = {
 			isa = XCConfigurationList;
@@ -2706,7 +2706,7 @@
 				BBEF19B726806D1F001225BD /* ReleaseLinux */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = ReleaseLinux;
+			defaultConfigurationName = Release;
 		};
 		BB13F7CB200ACC31003D1C4D /* Build configuration list for PBXLegacyTarget "Meson" */ = {
 			isa = XCConfigurationList;
@@ -2717,7 +2717,7 @@
 				BBEF19B126806D1F001225BD /* ReleaseLinux */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = ReleaseLinux;
+			defaultConfigurationName = Release;
 		};
 		BB13F7D1200ACCA2003D1C4D /* Build configuration list for PBXLegacyTarget "Ninja" */ = {
 			isa = XCConfigurationList;
@@ -2728,7 +2728,7 @@
 				BBEF19B226806D1F001225BD /* ReleaseLinux */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = ReleaseLinux;
+			defaultConfigurationName = Release;
 		};
 		BB13F7E2200AD81E003D1C4D /* Build configuration list for PBXNativeTarget "libish" */ = {
 			isa = XCConfigurationList;
@@ -2739,7 +2739,7 @@
 				BBEF19B326806D1F001225BD /* ReleaseLinux */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = ReleaseLinux;
+			defaultConfigurationName = Release;
 		};
 		BB21A16A2689041500BD19B4 /* Build configuration list for PBXNativeTarget "libfakefs" */ = {
 			isa = XCConfigurationList;
@@ -2750,7 +2750,7 @@
 				BB21A16E2689041500BD19B4 /* ReleaseLinux */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = ReleaseLinux;
+			defaultConfigurationName = Release;
 		};
 		BB415925255EF9E300E0950C /* Build configuration list for PBXNativeTarget "iSHUITests" */ = {
 			isa = XCConfigurationList;
@@ -2761,7 +2761,7 @@
 				BBEF19B026806D1F001225BD /* ReleaseLinux */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = ReleaseLinux;
+			defaultConfigurationName = Release;
 		};
 		BB4A922424ED9402002F5A96 /* Build configuration list for PBXAggregateTarget "iSH pre" */ = {
 			isa = XCConfigurationList;
@@ -2772,7 +2772,7 @@
 				BBEF19B526806D1F001225BD /* ReleaseLinux */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = ReleaseLinux;
+			defaultConfigurationName = Release;
 		};
 		BB792B491F96D8E000FFB7A4 /* Build configuration list for PBXProject "iSH" */ = {
 			isa = XCConfigurationList;
@@ -2783,7 +2783,7 @@
 				BBEF19AB26806D1F001225BD /* ReleaseLinux */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = ReleaseLinux;
+			defaultConfigurationName = Release;
 		};
 		BB792B661F96D90D00FFB7A4 /* Build configuration list for PBXNativeTarget "iSH" */ = {
 			isa = XCConfigurationList;
@@ -2794,7 +2794,7 @@
 				BBEF19AC26806D1F001225BD /* ReleaseLinux */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = ReleaseLinux;
+			defaultConfigurationName = Release;
 		};
 		BB88F4A22154760800A341FD /* Build configuration list for PBXNativeTarget "iSHFileProvider" */ = {
 			isa = XCConfigurationList;
@@ -2805,7 +2805,7 @@
 				BBEF19AF26806D1F001225BD /* ReleaseLinux */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = ReleaseLinux;
+			defaultConfigurationName = Release;
 		};
 		BBECF3A82691314C00DEC937 /* Build configuration list for PBXNativeTarget "libiSHLinux" */ = {
 			isa = XCConfigurationList;
@@ -2816,7 +2816,7 @@
 				BBECF3AC2691314C00DEC937 /* ReleaseLinux */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = ReleaseLinux;
+			defaultConfigurationName = Release;
 		};
 		BBECF3B3269136E100DEC937 /* Build configuration list for PBXNativeTarget "liblinux" */ = {
 			isa = XCConfigurationList;
@@ -2827,7 +2827,7 @@
 				BBECF3B7269136E100DEC937 /* ReleaseLinux */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = ReleaseLinux;
+			defaultConfigurationName = Release;
 		};
 		BBEF192626806364001225BD /* Build configuration list for PBXNativeTarget "libiSHApp" */ = {
 			isa = XCConfigurationList;
@@ -2838,7 +2838,7 @@
 				BBEF19AE26806D1F001225BD /* ReleaseLinux */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = ReleaseLinux;
+			defaultConfigurationName = Release;
 		};
 		BBEF1999268066D1001225BD /* Build configuration list for PBXNativeTarget "iSH+Linux" */ = {
 			isa = XCConfigurationList;
@@ -2849,7 +2849,7 @@
 				BBEF19AD26806D1F001225BD /* ReleaseLinux */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = ReleaseLinux;
+			defaultConfigurationName = Release;
 		};
 		BBFB2C582590257E00545EAB /* Build configuration list for PBXNativeTarget "libish_emu" */ = {
 			isa = XCConfigurationList;
@@ -2860,7 +2860,7 @@
 				BBEF19B426806D1F001225BD /* ReleaseLinux */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = ReleaseLinux;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
