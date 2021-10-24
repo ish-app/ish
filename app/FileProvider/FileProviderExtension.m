@@ -20,17 +20,9 @@ struct task *fake_task;
     struct mount *_mount;
 };
 @property NSURL *root;
-@property NSTimer *cleanupStorageTimer;
 @end
 
 @implementation FileProviderExtension
-
-- (instancetype)init {
-    if (self = [super init]) {
-        [self startCleanupTimer];
-    }
-    return self;
-}
 
 - (BOOL)getMount:(struct mount **)mount error:(NSError **)error {
     @synchronized (self) {
@@ -62,6 +54,19 @@ struct task *fake_task;
         }
         NSAssert(_mount != NULL, @"mount initialization should have succeeded");
         *mount = _mount;
+        
+        // Run a cleanup every once in a while. The idea here is that this
+        // function gets called while the file provider is being interacted
+        // with, so this should generally get time to run at that point, but we
+        // don't want to do this when the user is not interacting with the file
+        // provider.
+        NSDate *lastCleanup = [NSUserDefaults.standardUserDefaults objectForKey:@"LastCleanup"];
+        lastCleanup = lastCleanup ? lastCleanup : NSDate.distantPast;
+        if ([lastCleanup timeIntervalSinceDate:NSDate.date] > 60 * 60 /* 1 hour */) {
+            [self cleanupStorage];
+        }
+        [NSUserDefaults.standardUserDefaults setObject:NSDate.date forKey:@"LastCleanup"];
+        
         return YES;
     }
 }
@@ -394,23 +399,8 @@ struct task *fake_task;
 // TODO: Delete files in file provider storage when the original file is deleted
 // TODO: Create hardlinks into file provider storage instead of copies
 //
-
-- (void)startCleanupTimer {
-    [NSRunLoop.mainRunLoop performBlock:^{
-        [self cleanupStorage];
-        self.cleanupStorageTimer = [NSTimer scheduledTimerWithTimeInterval:60 target:self selector:@selector(cleanupStorage) userInfo:nil repeats:YES];
-    }];
-}
-
 - (void)cleanupStorage {
-    struct mount *mount;
-    @synchronized (self) {
-        mount = _mount;
-    }
-    if (_mount == NULL) {
-        NSLog(@"no mount, can't cleanup storage");
-        return;
-    }
+    NSAssert(_mount, @"Mount should exist by this point");
 
     NSFileManager *manager = NSFileManager.defaultManager;
     NSArray<NSURL *> *storageDirs = [manager contentsOfDirectoryAtURL:self.storageURL includingPropertiesForKeys:nil options:0 error:nil];
