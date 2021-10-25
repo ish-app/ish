@@ -182,6 +182,114 @@ dword_t sys_io_cancel(dword_t ctx_id, addr_t iocb, addr_t result) {
     return _ENOSYS;
 }
 
+/**
+ * Do a single PREAD operation, falling back to seek-and-read if necessary.
+ * 
+ * The return code corresponds to the 'sync error' concept of fallback_submit,
+ * while async errors should be flagged by writing to *err.
+ */
+static signed int __aio_fallback_pread(
+    struct fd *fd,
+    addr_t guest_buf,
+    uint64_t nbytes,
+    int64_t offset,
+    signed int *err) {
+    
+    if (nbytes > 0xFFFFFFFE) return _ENOMEM;
+
+    // Don't ask me why, but the sync I/O code null-terminates it's
+    // buffers, so I'm doing it here too.
+    char *buf = malloc(nbytes + 1);
+    if (buf == NULL) return _ENOMEM;
+    
+    if (fd->ops->pread) {
+        *err = fd->ops->pread(fd, buf, nbytes, offset);
+    } else if (fd->ops->read && fd->ops->lseek) {
+        off_t_ saved_off = fd->ops->lseek(fd, 0, LSEEK_CUR);
+        if ((*err = fd->ops->lseek(fd, offset, LSEEK_SET))) goto fail_async;
+
+        ssize_t read_bytes = fd->ops->read(fd, buf, nbytes);
+
+        off_t_ seek_result = fd->ops->lseek(fd, saved_off, LSEEK_SET);
+        if (seek_result < 0) {
+            *err = seek_result;
+            goto fail_async;
+        }
+        
+        *err = read_bytes;
+    } else {
+        goto fail_einval;
+    }
+
+    if (*err < 0) goto fail_async;
+
+    buf[*err] = '\0';
+    if (user_write(guest_buf, buf, *err)) goto fail_efault;
+
+fail_async:
+    free(buf);
+    return 0;
+
+fail_einval:
+    free(buf);
+    return _EINVAL;
+
+fail_efault:
+    free(buf);
+    return _EFAULT;
+}
+
+/**
+ * Do a single PWRITE operation, falling back to seek-and-write if necessary.
+ * 
+ * The return code corresponds to the 'sync error' concept of fallback_submit,
+ * while async errors should be flagged by writing to *err.
+ */
+static signed int __aio_fallback_pwrite(
+    struct fd *fd,
+    addr_t guest_buf,
+    uint64_t nbytes,
+    int64_t offset,
+    signed int *err) {
+    
+    if (nbytes > 0xFFFFFFFE) return _ENOMEM;
+
+    char *buf = malloc(nbytes);
+    if (buf == NULL) return _ENOMEM;
+
+    if (user_read(guest_buf, buf, nbytes)) {
+        free(buf);
+        return _EFAULT;
+    }
+
+    ssize_t written_bytes;
+    if (fd->ops->pwrite) {
+        written_bytes = fd->ops->pwrite(fd, buf, nbytes, offset);
+    } else if (fd->ops->write && fd->ops->lseek) {
+        off_t_ saved_off = fd->ops->lseek(fd, 0, LSEEK_CUR);
+        if ((*err = fd->ops->lseek(fd, offset, LSEEK_SET))) {
+            goto fail_async;
+        }
+
+        written_bytes = fd->ops->write(fd, buf, nbytes);
+
+        off_t_ seek_result = fd->ops->lseek(fd, saved_off, LSEEK_SET);
+        if (seek_result < 0) {
+            *err = seek_result;
+            goto fail_async;
+        }
+    } else {
+        free(buf);
+        return _EINVAL;
+    }
+
+    *err = (signed int)written_bytes;
+
+fail_async:
+    free(buf);
+    return 0;
+}
+
 int aio_fallback_submit(struct fd *fd, struct aioctx *ctx, unsigned int event_id) {
     aioctx_lock(ctx);
 
@@ -211,98 +319,10 @@ int aio_fallback_submit(struct fd *fd, struct aioctx *ctx, unsigned int event_id
     char *buf = NULL;
     switch (evt->op) {
         case AIOCTX_PREAD:
-            if (evt->nbytes > 0xFFFFFFFE) {
-                sync_err = _ENOMEM;
-                break;
-            }
-
-            // Don't ask me why, but the sync I/O code null-terminates it's
-            // buffers, so I'm doing it here too.
-            buf = malloc(evt->nbytes + 1);
-            if (buf == NULL) {
-                sync_err = _ENOMEM;
-                break;
-            }
-            
-            if (fd->ops->pread) {
-                async_result0 = fd->ops->pread(fd, buf, evt->nbytes, evt->offset);
-            } else if (fd->ops->read && fd->ops->lseek) {
-                off_t_ saved_off = fd->ops->lseek(fd, 0, LSEEK_CUR);
-                if ((async_result0 = fd->ops->lseek(fd, evt->offset, LSEEK_SET))) {
-                    free(buf);
-                    break;
-                }
-
-                ssize_t read_bytes = fd->ops->read(fd, buf, evt->nbytes);
-
-                off_t_ seek_result = fd->ops->lseek(fd, saved_off, LSEEK_SET);
-                if (seek_result < 0) {
-                    async_result0 = seek_result;
-                    free(buf);
-                    break;
-                }
-                
-                async_result0 = read_bytes;
-            } else {
-                free(buf);
-                sync_err = _EINVAL;
-                break;
-            }
-
-            if (async_result0 < 0) {
-                free(buf);
-                break;
-            }
-
-            buf[async_result0] = '\0';
-            if (user_write((addr_t)evt->buf, buf, async_result0)) sync_err = _EFAULT;
-
-            free(buf);
+            sync_err = __aio_fallback_pread(fd, (addr_t)evt->buf, evt->nbytes, evt->offset, &async_result0);
             break;
         case AIOCTX_PWRITE:
-            if (evt->nbytes > 0xFFFFFFFE) {
-                sync_err = _ENOMEM;
-                break;
-            }
-
-            buf = malloc(evt->nbytes);
-            if (buf == NULL) {
-                sync_err = _ENOMEM;
-                break;
-            }
-
-            if (user_read((addr_t)evt->buf, buf, evt->nbytes)) {
-                free(buf);
-                sync_err = _EFAULT;
-                break;
-            }
-
-            ssize_t written_bytes;
-            if (fd->ops->pwrite) {
-                written_bytes = fd->ops->pwrite(fd, buf, evt->nbytes, evt->offset);
-            } else if (fd->ops->write && fd->ops->lseek) {
-                off_t_ saved_off = fd->ops->lseek(fd, 0, LSEEK_CUR);
-                if ((async_result0 = fd->ops->lseek(fd, evt->offset, LSEEK_SET))) {
-                    free(buf);
-                    break;
-                }
-
-                written_bytes = fd->ops->write(fd, buf, evt->nbytes);
-
-                off_t_ seek_result = fd->ops->lseek(fd, saved_off, LSEEK_SET);
-                if (seek_result < 0) {
-                    async_result0 = seek_result;
-                    free(buf);
-                    break;
-                }
-            } else {
-                free(buf);
-                sync_err = _EINVAL;
-                break;
-            }
-
-            async_result0 = (signed int)written_bytes;
-            free(buf);
+            sync_err = __aio_fallback_pwrite(fd, (addr_t)evt->buf, evt->nbytes, evt->offset, &async_result0);
             break;
         case AIOCTX_FSYNC:
         case AIOCTX_FDSYNC:
