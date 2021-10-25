@@ -2,6 +2,7 @@
 #include "kernel/calls.h"
 #include "kernel/task.h"
 #include "kernel/aio.h"
+#include "kernel/fs.h"
 #include "fs/aio.h"
 #include "fs/fd.h"
 
@@ -186,7 +187,9 @@ dword_t sys_io_cancel(dword_t ctx_id, addr_t iocb, addr_t result) {
  * Do a single PREAD operation, falling back to seek-and-read if necessary.
  * 
  * The return code corresponds to the 'sync error' concept of fallback_submit,
- * while async errors should be flagged by writing to *err.
+ * while async errors should be flagged by writing to `*err`.
+ * 
+ * `*err` also is used to return the total number of bytes read.
  */
 static signed int __aio_fallback_pread(
     struct fd *fd,
@@ -243,7 +246,9 @@ fail_efault:
  * Do a single PWRITE operation, falling back to seek-and-write if necessary.
  * 
  * The return code corresponds to the 'sync error' concept of fallback_submit,
- * while async errors should be flagged by writing to *err.
+ * while async errors should be flagged by writing to `*err`.
+ * 
+ * `*err` also is used to return the total number of bytes written.
  */
 static signed int __aio_fallback_pwrite(
     struct fd *fd,
@@ -316,7 +321,7 @@ int aio_fallback_submit(struct fd *fd, struct aioctx *ctx, unsigned int event_id
         return sync_err;
     }
 
-    char *buf = NULL;
+    struct iovec_ *iov_list = NULL;
     switch (evt->op) {
         case AIOCTX_PREAD:
             sync_err = __aio_fallback_pread(fd, (addr_t)evt->buf, evt->nbytes, evt->offset, &async_result0);
@@ -337,7 +342,63 @@ int aio_fallback_submit(struct fd *fd, struct aioctx *ctx, unsigned int event_id
             async_result0 = 0;
             sync_err = 0;
             break;
-        //TODO: AIOCTX_POLL, AIOCTX_PREADV, AIOCTX_PWRITEV
+        case AIOCTX_PREADV:
+            iov_list = read_iovec((addr_t)evt->buf, evt->nbytes);
+            if (IS_ERR(iov_list)) {
+                sync_err = PTR_ERR(iov_list);
+                break;
+            }
+
+            ssize_t total_read = 0;
+
+            for (unsigned int i = 0; i < evt->nbytes; i += 1) {
+                signed int cur_read = 0;
+                sync_err = __aio_fallback_pread(fd, iov_list[i].base, iov_list[i].len, evt->offset + total_read, &cur_read);
+                if (sync_err < 0 || cur_read < 0) {
+                    async_result0 = cur_read;
+                    break;
+                }
+
+                total_read += cur_read;
+
+                if ((uint_t)cur_read < iov_list[i].len) break;
+            }
+
+            free(iov_list);
+
+            if (sync_err < 0 || async_result0 < 0) break;
+
+            async_result0 = total_read;
+            break;
+        case AIOCTX_PWRITEV:
+            iov_list = read_iovec((addr_t)evt->buf, evt->nbytes);
+            if (IS_ERR(iov_list)) {
+                sync_err = PTR_ERR(iov_list);
+                break;
+            }
+
+            ssize_t total_write = 0;
+
+            for (unsigned int i = 0; i < evt->nbytes; i += 1) {
+                signed int cur_write = 0;
+                sync_err = __aio_fallback_pwrite(fd, iov_list[i].base, iov_list[i].len, evt->offset + total_write, &cur_write);
+                if (sync_err < 0 || cur_write < 0) {
+                    async_result0 = cur_write;
+                    break;
+                }
+
+                total_write += cur_write;
+
+                if ((uint_t)cur_write < iov_list[i].len) break;
+            }
+
+            free(iov_list);
+
+            if (sync_err < 0 || async_result0 < 0) break;
+
+            async_result0 = total_write;
+            break;
+        //TODO: AIOCTX_POLL
         default:
             sync_err = _EINVAL;
             break;
