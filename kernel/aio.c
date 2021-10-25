@@ -209,11 +209,20 @@ static signed int __aio_fallback_pread(
         *err = fd->ops->pread(fd, buf, nbytes, offset);
     } else if (fd->ops->read && fd->ops->lseek) {
         off_t_ saved_off = fd->ops->lseek(fd, 0, LSEEK_CUR);
-        if ((*err = fd->ops->lseek(fd, offset, LSEEK_SET))) goto fail_async;
+        if (saved_off < 0) {
+            *err = saved_off;
+            goto fail_async;
+        }
+
+        off_t_ seek_result = fd->ops->lseek(fd, offset, LSEEK_SET);
+        if (seek_result < 0) {
+            *err = seek_result;
+            goto fail_async;
+        }
 
         ssize_t read_bytes = fd->ops->read(fd, buf, nbytes);
 
-        off_t_ seek_result = fd->ops->lseek(fd, saved_off, LSEEK_SET);
+        seek_result = fd->ops->lseek(fd, saved_off, LSEEK_SET);
         if (seek_result < 0) {
             *err = seek_result;
             goto fail_async;
@@ -272,13 +281,20 @@ static signed int __aio_fallback_pwrite(
         written_bytes = fd->ops->pwrite(fd, buf, nbytes, offset);
     } else if (fd->ops->write && fd->ops->lseek) {
         off_t_ saved_off = fd->ops->lseek(fd, 0, LSEEK_CUR);
-        if ((*err = fd->ops->lseek(fd, offset, LSEEK_SET))) {
+        if (saved_off < 0) {
+            *err = saved_off;
+            goto fail_async;
+        }
+
+        off_t_ seek_result = fd->ops->lseek(fd, offset, LSEEK_SET);
+        if (seek_result < 0) {
+            *err = seek_result;
             goto fail_async;
         }
 
         written_bytes = fd->ops->write(fd, buf, nbytes);
 
-        off_t_ seek_result = fd->ops->lseek(fd, saved_off, LSEEK_SET);
+        seek_result = fd->ops->lseek(fd, saved_off, LSEEK_SET);
         if (seek_result < 0) {
             *err = seek_result;
             goto fail_async;
