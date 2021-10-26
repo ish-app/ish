@@ -1496,43 +1496,35 @@
 				TargetAttributes = {
 					497F6CE3254E5E4C00C82F46 = {
 						CreatedOnToolsVersion = 12.2;
-						DevelopmentTeam = CK5SXRTBR7;
 					};
 					497F6D46254E605F00C82F46 = {
 						CreatedOnToolsVersion = 12.2;
-						DevelopmentTeam = CK5SXRTBR7;
 						ProvisioningStyle = Automatic;
 					};
 					BB13F7CA200ACC31003D1C4D = {
 						CreatedOnToolsVersion = 9.2;
-						DevelopmentTeam = CK5SXRTBR7;
 						ProvisioningStyle = Automatic;
 					};
 					BB13F7D0200ACCA2003D1C4D = {
 						CreatedOnToolsVersion = 9.2;
-						DevelopmentTeam = CK5SXRTBR7;
 						ProvisioningStyle = Automatic;
 					};
 					BB13F7DB200AD81D003D1C4D = {
 						CreatedOnToolsVersion = 9.2;
-						DevelopmentTeam = CK5SXRTBR7;
 						ProvisioningStyle = Automatic;
 					};
 					BB41591B255EF9E300E0950C = {
 						CreatedOnToolsVersion = 12.2;
-						DevelopmentTeam = CK5SXRTBR7;
 						LastSwiftMigration = 1220;
 						ProvisioningStyle = Automatic;
 						TestTargetID = BB792B4F1F96D90D00FFB7A4;
 					};
 					BB4A922324ED9402002F5A96 = {
 						CreatedOnToolsVersion = 11.5;
-						DevelopmentTeam = CK5SXRTBR7;
 						ProvisioningStyle = Automatic;
 					};
 					BB792B4F1F96D90D00FFB7A4 = {
 						CreatedOnToolsVersion = 9.0;
-						DevelopmentTeam = CK5SXRTBR7;
 						ProvisioningStyle = Automatic;
 						SystemCapabilities = {
 							com.apple.ApplicationGroups.iOS = {
@@ -1542,7 +1534,6 @@
 					};
 					BB88F48F2154760800A341FD = {
 						CreatedOnToolsVersion = 10.0;
-						DevelopmentTeam = CK5SXRTBR7;
 						ProvisioningStyle = Automatic;
 						SystemCapabilities = {
 							com.apple.ApplicationGroups.iOS = {
@@ -2315,7 +2306,6 @@
 			baseConfigurationReference = BB0B85A42586F1CB00208600 /* ProjectDebug.xcconfig */;
 			buildSettings = {
 				CURRENT_PROJECT_VERSION = 279;
-				DEVELOPMENT_TEAM = CK5SXRTBR7;
 			};
 			name = "Debug-ApplePleaseFixFB19282108";
 		};
@@ -2324,7 +2314,6 @@
 			baseConfigurationReference = BB0B85A52586F1E100208600 /* ProjectRelease.xcconfig */;
 			buildSettings = {
 				CURRENT_PROJECT_VERSION = 279;
-				DEVELOPMENT_TEAM = CK5SXRTBR7;
 			};
 			name = Release;
 		};
@@ -2347,7 +2336,6 @@
 			baseConfigurationReference = BB28C7532689522C00BDC834 /* ProjectDebugLinux.xcconfig */;
 			buildSettings = {
 				CURRENT_PROJECT_VERSION = 279;
-				DEVELOPMENT_TEAM = CK5SXRTBR7;
 			};
 			name = DebugLinux;
 		};
@@ -2565,7 +2553,6 @@
 			baseConfigurationReference = BB28C7522689522700BDC834 /* ProjectReleaseLinux.xcconfig */;
 			buildSettings = {
 				CURRENT_PROJECT_VERSION = 279;
-				DEVELOPMENT_TEAM = CK5SXRTBR7;
 			};
 			name = ReleaseLinux;
 		};

@@ -29,6 +29,7 @@ lane :build do |options|
       project: "iSH.xcodeproj",
       scheme: "iSH",
       xcconfig: config,
+      xcargs: "DEVELOPMENT_TEAM=#{CredentialsManager::AppfileConfig.try_fetch_value(:team_id)}",
       output_name: options[:output],
     )
 end
