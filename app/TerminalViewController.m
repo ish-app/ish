@@ -12,6 +12,7 @@
 #import "ArrowBarButton.h"
 #import "UserPreferences.h"
 #import "AboutViewController.h"
+#import "CurrentRoot.h"
 #import "NSObject+SaneKVO.h"
 #include "kernel/init.h"
 #include "kernel/task.h"
@@ -37,6 +38,7 @@
 @property (weak, nonatomic) IBOutlet NSLayoutConstraint *barLeading;
 @property (weak, nonatomic) IBOutlet NSLayoutConstraint *barTrailing;
 @property (weak, nonatomic) IBOutlet NSLayoutConstraint *barButtonWidth;
+@property (weak, nonatomic) IBOutlet UIView *settingsBadge;
 
 @property (weak, nonatomic) IBOutlet UIButton *infoButton;
 @property (weak, nonatomic) IBOutlet UIButton *pasteButton;
@@ -79,6 +81,11 @@
                selector:@selector(keyboardDidSomething:)
                    name:UIKeyboardDidChangeFrameNotification
                  object:nil];
+    [center addObserver:self
+               selector:@selector(_updateBadge)
+                   name:FsUpdatedNotification
+                 object:nil];
+
 
     [self _updateStyleFromPreferences:NO];
     
@@ -113,6 +120,7 @@
                             options:0 owner:self usingBlock:^(typeof(self) self) {
         [self _updateStyleFromPreferences:YES];
     }];
+    [self _updateBadge];
 }
 
 - (void)awakeFromNib {
@@ -265,6 +273,10 @@
 }
 - (void)_updateStyleAnimated {
     [self _updateStyleFromPreferences:YES];
+}
+
+- (void)_updateBadge {
+    self.settingsBadge.hidden = !FsNeedsRepositoryUpdate();
 }
 
 - (UIStatusBarStyle)preferredStatusBarStyle {

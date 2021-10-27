@@ -10,6 +10,8 @@
 
 @interface TerminalView : UIView <UITextInput, WKScriptMessageHandler, UIScrollViewDelegate>
 
+@property IBInspectable BOOL canBecomeFirstResponder;
+
 @property (nonatomic) CGFloat overrideFontSize;
 @property (readonly) CGFloat effectiveFontSize;
 

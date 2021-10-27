@@ -36,6 +36,7 @@ struct rowcol {
 @implementation TerminalView
 @synthesize inputDelegate;
 @synthesize tokenizer;
+@synthesize canBecomeFirstResponder;
 
 - (void)awakeFromNib {
     [super awakeFromNib];
@@ -171,10 +172,6 @@ static NSString *const HANDLERS[] = {@"syncFocus", @"focus", @"newScrollHeight",
 }
 
 #pragma mark Focus and scrolling
-
-- (BOOL)canBecomeFirstResponder {
-    return YES;
-}
 
 - (void)setTerminalFocused:(BOOL)terminalFocused {
     _terminalFocused = terminalFocused;
