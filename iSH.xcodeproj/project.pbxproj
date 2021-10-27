@@ -375,6 +375,7 @@
 /* Begin PBXFileReference section */
 		408A2639236440F8008A4E81 /* iOSFS.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iOSFS.m; sourceTree = "<group>"; };
 		408A263B23644102008A4E81 /* iOSFS.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iOSFS.h; sourceTree = "<group>"; };
+		494D03F72727DAC6004F0CCE /* xcode-ninja.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "xcode-ninja.sh"; sourceTree = "<group>"; };
 		497F6BDA254E5C0D00C82F46 /* mem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mem.h; sourceTree = "<group>"; };
 		497F6BDB254E5C0D00C82F46 /* path.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = path.c; sourceTree = "<group>"; };
 		497F6BDC254E5C0D00C82F46 /* dev.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = dev.c; sourceTree = "<group>"; };
@@ -826,6 +827,7 @@
 			isa = PBXGroup;
 			children = (
 				BB13F7C8200ACC24003D1C4D /* xcode-meson.sh */,
+				494D03F72727DAC6004F0CCE /* xcode-ninja.sh */,
 			);
 			name = Scripts;
 			sourceTree = "<group>";
@@ -1260,7 +1262,7 @@
 			buildConfigurationList = BB13F7D1200ACCA2003D1C4D /* Build configuration list for PBXLegacyTarget "Ninja" */;
 			buildPhases = (
 			);
-			buildToolPath = "$(NINJA)";
+			buildToolPath = "$(SRCROOT)/xcode-ninja.sh";
 			buildWorkingDirectory = "$(MESON_BUILD_DIR)";
 			dependencies = (
 				BB13F7D5200ACCA8003D1C4D /* PBXTargetDependency */,
