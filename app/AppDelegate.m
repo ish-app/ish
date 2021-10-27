@@ -105,7 +105,10 @@ static NSString *const kSkipStartupMessage = @"Skip Startup Message";
 
         NSURL *repositories = [NSBundle.mainBundle URLForResource:@"repositories" withExtension:@"txt"];
         if (repositories != nil) {
-            NSData *repositoriesData = [NSData dataWithContentsOfURL:repositories];
+            NSMutableData *repositoriesData = [@"# This file contains pinned repositories managed by iSH. If the /ish directory\n"
+                                               @"# exists, iSH uses the metadata stored in it to keep this file up to date (by\n"
+                                               @"# overwriting the contents on boot.)\n" dataUsingEncoding:NSUTF8StringEncoding].mutableCopy;
+            [repositoriesData appendData:[NSData dataWithContentsOfURL:repositories]];
             struct fd *repositories_fd = generic_open("/etc/apk/repositories", O_WRONLY_|O_TRUNC_, 0);
             if (!IS_ERR(repositories_fd)) {
                 repositories_fd->ops->write(repositories_fd, repositoriesData.bytes, repositoriesData.length);
