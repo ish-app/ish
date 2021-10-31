@@ -15,4 +15,3 @@ rbuf[0]: Welcome to ASYNC world -
 rbuf[1]:  now you're writing with
 close success
 io_destroy success
-

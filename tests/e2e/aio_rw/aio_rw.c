@@ -5,6 +5,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
+#include <stdint.h>
 
 const char* info = "Welcome to ASYNC world!";
 
@@ -34,7 +35,7 @@ void main() {
 	req.aio_data = 0xDEADBEEF;
 	req.aio_lio_opcode = IOCB_CMD_PWRITE;
 	req.aio_fildes = fd;
-	req.aio_buf = (__u64)info;
+	req.aio_buf = (uintptr_t)info;
 	req.aio_nbytes = strlen(info);
 	req.aio_offset = 0;
 	
@@ -64,11 +65,11 @@ void main() {
 	printf("io_getevents success: %d\n", err);
 	printf("evt.data: 0x%llX\n", evt.data);
 	
-	if (evt.obj == (__u64)&req) {
+	if (evt.obj == (uintptr_t)&req) {
 		printf("evt.obj matches &req\n");
 	} else {
 		printf("evt.obj does NOT match &req, 0x%llX given\n", evt.obj);
-		printf("(&req is 0x%llX)\n", (__u64)&req);
+		printf("(&req is 0x%llX)\n", (__u64)(uintptr_t)&req);
 	}
 	
 	printf("evt.res:  %lld\n", evt.res);
@@ -80,7 +81,7 @@ void main() {
 	req.aio_data = 0xCAFEBABE;
 	req.aio_lio_opcode = IOCB_CMD_PREAD;
 	req.aio_fildes = fd;
-	req.aio_buf = (__u64)rbuf;
+	req.aio_buf = (uintptr_t)rbuf;
 	req.aio_nbytes = 512;
 	req.aio_offset = 0;
 	
@@ -105,11 +106,11 @@ void main() {
 	printf("io_getevents success: %d\n", err);
 	printf("evt.data: 0x%llX\n", evt.data);
 	
-	if (evt.obj == (__u64)&req) {
+	if (evt.obj == (__u32)&req) {
 		printf("evt.obj matches &req\n");
 	} else {
 		printf("evt.obj does NOT match &req, 0x%llX given\n", evt.obj);
-		printf("(&req is 0x%llX)\n", (__u64)&req);
+		printf("(&req is 0x%llX)\n", (__u64)(__u32)&req);
 	}
 	
 	printf("evt.res:  %lld\n", evt.res);

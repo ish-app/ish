@@ -1,11 +1,12 @@
 #include <linux/aio_abi.h>
 #include <sys/syscall.h>
-#include <sys/uio.h>;
+#include <sys/uio.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
+#include <stdint.h>
 
 const char* info0 = "Welcome to ASYNC world - ";
 const char* info1 = "now you're writing with vectors";
@@ -42,7 +43,7 @@ void main() {
 	req.aio_data = 0x31337;
 	req.aio_lio_opcode = IOCB_CMD_PWRITEV;
 	req.aio_fildes = fd;
-	req.aio_buf = (__u64)&req_vecs;
+	req.aio_buf = (uintptr_t)&req_vecs;
 	req.aio_nbytes = 2;
 	req.aio_offset = 0;
 	
@@ -72,11 +73,11 @@ void main() {
 	printf("io_getevents success: %d\n", err);
 	printf("evt.data: 0x%llX\n", evt.data);
 	
-	if (evt.obj == (__u64)&req) {
+	if (evt.obj == (uintptr_t)&req) {
 		printf("evt.obj matches &req\n");
 	} else {
 		printf("evt.obj does NOT match &req, 0x%llX given\n", evt.obj);
-		printf("(&req is 0x%llX)\n", (__u64)&req);
+		printf("(&req is 0x%llX)\n", (__u64)(uintptr_t)&req);
 	}
 	
 	printf("evt.res:  %lld\n", evt.res);
@@ -96,7 +97,7 @@ void main() {
 	req.aio_data = 0xCAFEBABE;
 	req.aio_lio_opcode = IOCB_CMD_PREADV;
 	req.aio_fildes = fd;
-	req.aio_buf = (__u64)req_vecs;
+	req.aio_buf = (uintptr_t)req_vecs;
 	req.aio_nbytes = 2;
 	req.aio_offset = 0;
 	
@@ -121,11 +122,11 @@ void main() {
 	printf("io_getevents success: %d\n", err);
 	printf("evt.data: 0x%llX\n", evt.data);
 	
-	if (evt.obj == (__u64)&req) {
+	if (evt.obj == (uintptr_t)&req) {
 		printf("evt.obj matches &req\n");
 	} else {
 		printf("evt.obj does NOT match &req, 0x%llX given\n", evt.obj);
-		printf("(&req is 0x%llX)\n", (__u64)&req);
+		printf("(&req is 0x%llX)\n", (__u64)(uintptr_t)&req);
 	}
 	
 	printf("evt.res:  %lld\n", evt.res);
