@@ -9,18 +9,33 @@
 
 // Guest memory offsets for the IOCB structure.
 // Calculated by a test program compiled and ran in iSH itself.
-const size_t AIO_IOCB_DATA = 0;
-const size_t AIO_IOCB_KEY = 8;
-const size_t AIO_IOCB_RW_FLAGS = 12;
-const size_t AIO_IOCB_LIO_OPCODE = 16;
-const size_t AIO_IOCB_REQPRIO = 18;
-const size_t AIO_IOCB_FILDES = 20;
-const size_t AIO_IOCB_BUF = 24;
-const size_t AIO_IOCB_NBYTES = 32;
-const size_t AIO_IOCB_OFFSET = 40;
-const size_t AIO_IOCB_RESERVED2 = 48;
-const size_t AIO_IOCB_FLAGS = 56;
-const size_t AIO_IOCB_RESFD = 60;
+struct _guest_iocb {
+    uint64_t data;
+    uint32_t key;
+    uint32_t rw_flags;
+    uint16_t lio_opcode;
+    int16_t reqprio;
+    uint32_t fildes;
+    uint64_t buf;
+    uint64_t nbytes;
+    int64_t offset;
+    uint64_t reserved2;
+    uint32_t flags;
+    uint32_t resfd;
+};
+
+static_assert(offsetof(struct _guest_iocb, data) == 0, "IOCB order");
+static_assert(offsetof(struct _guest_iocb, key) == 8, "IOCB order");
+static_assert(offsetof(struct _guest_iocb, rw_flags) == 12, "IOCB order");
+static_assert(offsetof(struct _guest_iocb, lio_opcode) == 16, "IOCB order");
+static_assert(offsetof(struct _guest_iocb, reqprio) == 18, "IOCB order");
+static_assert(offsetof(struct _guest_iocb, fildes) == 20, "IOCB order");
+static_assert(offsetof(struct _guest_iocb, buf) == 24, "IOCB order");
+static_assert(offsetof(struct _guest_iocb, nbytes) == 32, "IOCB order");
+static_assert(offsetof(struct _guest_iocb, offset) == 40, "IOCB order");
+static_assert(offsetof(struct _guest_iocb, reserved2) == 48, "IOCB order");
+static_assert(offsetof(struct _guest_iocb, flags) == 56, "IOCB order");
+static_assert(offsetof(struct _guest_iocb, resfd) == 60, "IOCB order");
 
 // Guest memory offsets for the IO_EVENT structure.
 // Also confirmed by test program.
@@ -124,19 +139,16 @@ dword_t sys_io_submit(dword_t ctx_id, dword_t u_nr, addr_t iocbpp) {
         addr_t iocbp = 0;
         if (user_get(iocbpp + i * sizeof(addr_t), iocbp)) goto fault;
 
-        uint64_t user_data = 0;
-        if (user_get(iocbp + AIO_IOCB_DATA, user_data)) goto fault;
+        struct _guest_iocb giocb = {0};
+        if (user_get(iocbp, giocb)) goto fault;
 
         struct aioctx_event_pending host_iocb;
-        uint16_t op = 0;
         
-        if (user_get(iocbp + AIO_IOCB_LIO_OPCODE, op)) goto fault;
-        host_iocb.op = (enum aioctx_op)op;
-
-        if (user_get(iocbp + AIO_IOCB_FILDES, host_iocb.fd)) goto fault;
-        if (user_get(iocbp + AIO_IOCB_BUF, host_iocb.buf)) goto fault;
-        if (user_get(iocbp + AIO_IOCB_NBYTES, host_iocb.nbytes)) goto fault;
-        if (user_get(iocbp + AIO_IOCB_OFFSET, host_iocb.offset)) goto fault;
+        host_iocb.op = (enum aioctx_op)giocb.lio_opcode;
+        host_iocb.fd = giocb.fildes;
+        host_iocb.buf = giocb.buf;
+        host_iocb.nbytes = giocb.nbytes;
+        host_iocb.offset = giocb.offset;
 
         lock(&current->files->lock);
 
@@ -152,7 +164,7 @@ dword_t sys_io_submit(dword_t ctx_id, dword_t u_nr, addr_t iocbpp) {
             break;
         }
 
-        err = aioctx_submit_pending_event(ctx, user_data, iocbp, host_iocb);
+        err = aioctx_submit_pending_event(ctx, giocb.data, iocbp, host_iocb);
         if (err < 0) {
             // TODO: This assumes the usual pattern of "first IOCB errors, all
             // others stop processing without erroring"
