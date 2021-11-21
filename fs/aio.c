@@ -45,6 +45,7 @@ struct aioctx *aioctx_new(int events_capacity, pid_t pid) {
     memset(aioctx_events, 0, sizeof(struct aioctx_event) * events_capacity);
 
     lock_init(&aioctx->lock);
+    cond_init(&aioctx->cond);
 
     aioctx->refcount = 1;
     aioctx->events_capacity = events_capacity;
@@ -65,6 +66,7 @@ void aioctx_retain(struct aioctx *ctx) {
 
 static void _aioctx_decrement_ref(struct aioctx *ctx) {
     if (--ctx->refcount == 0) {
+        cond_destroy(&ctx->cond);
         free(ctx->events);
         free(ctx);
     } else {
@@ -143,6 +145,7 @@ void aioctx_complete_event(struct aioctx *ctx, unsigned int index, int64_t resul
         ctx->events[index].data.as_complete = data;
     }
 
+    notify_once(&ctx->cond);
     unlock(&ctx->lock);
 }
 
@@ -171,6 +174,16 @@ bool aioctx_consume_completed_event(struct aioctx *ctx, uint64_t *user_data, add
     return result;
 }
 
+int aioctx_wait_for_completion(struct aioctx *ctx, struct timespec *timeout) {
+    if (ctx == NULL) return _EINVAL;
+
+    lock(&ctx->lock);
+    int err = wait_for(&ctx->cond, &ctx->lock, timeout);
+    unlock(&ctx->lock);
+
+    return err;
+}
+
 void aioctx_lock(struct aioctx* ctx) {
     if (ctx == NULL) return;
 
@@ -194,18 +207,17 @@ signed int aioctx_get_pending_event(struct aioctx *ctx, unsigned int index, stru
     return 0;
 }
 
-struct aioctx_table *aioctx_table_new(unsigned int capacity) {
-    struct aioctx_table *tbl = malloc(sizeof(struct aioctx_table));
-    if (tbl == NULL) return NULL;
+signed int aioctx_table_new(struct aioctx_table *tbl, unsigned int capacity) {
+    if (tbl == NULL) return _EINVAL;
     
     tbl->capacity = 0;
     tbl->contexts = NULL;
     lock_init(&tbl->lock);
 
     int err = _aioctx_table_ensure(tbl, capacity);
-    if (err < 0) return ERR_PTR(err);
+    if (err < 0) return err;
 
-    return tbl;
+    return 0;
 }
 
 void aioctx_table_delete(struct aioctx_table *tbl) {
@@ -218,7 +230,6 @@ void aioctx_table_delete(struct aioctx_table *tbl) {
         }
     }
     free(tbl->contexts);
-    free(tbl);
 }
 
 signed int aioctx_table_insert(struct aioctx_table *tbl, struct aioctx *ctx) {

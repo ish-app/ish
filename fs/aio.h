@@ -90,6 +90,7 @@ struct aioctx_event {
 struct aioctx {
     atomic_uint refcount;
     lock_t lock;
+    cond_t cond;
     
     // Indicates if this context is owned by a task.
     // 
@@ -128,7 +129,12 @@ struct aioctx_table {
     struct aioctx **contexts;
 };
 
-struct aioctx_table *aioctx_table_new(unsigned int capacity);
+// In-place construct an AIO context table.
+// 
+// Returns an error value if internal table buffers could not be allocated.
+signed int aioctx_table_new(struct aioctx_table *tbl, unsigned int capacity);
+
+// In-place destroy an AIO context table.
 void aioctx_table_delete(struct aioctx_table *tbl);
 
 // Insert an AIO context into a given table.
@@ -192,6 +198,9 @@ void aioctx_cancel_event(struct aioctx *ctx, unsigned int index);
 // 
 // This accepts two result parameters, whose meaning is determined solely by
 // the event opcode.
+// 
+// This also signals any threads waiting on the context that an event has been
+// completed.
 void aioctx_complete_event(struct aioctx *ctx, unsigned int index, int64_t result0, int64_t result1);
 
 // Consume a completed I/O event.
@@ -204,6 +213,19 @@ void aioctx_complete_event(struct aioctx *ctx, unsigned int index, int64_t resul
 // If this function returns false, there were no completed events to remove
 // from the queue, and the passed-in parameters should not be used.
 bool aioctx_consume_completed_event(struct aioctx *ctx, uint64_t *user_data, addr_t *iocbp, struct aioctx_event_complete *completed_data);
+
+// Wait for an event to complete.
+// 
+// This function blocks the current thread until an event completion is posted
+// to the context, or the timeout expires. When new events are completed, this
+// function will return 0. If the timeout expired, this function will return
+// _ETIMEDOUT. Any other error codes should be sent to client code.
+// 
+// Please note that this function returning with 0 is not a guarantee that
+// `aioctx_consume_completed_event` will yield data. This function may
+// spuriously return 0 or some other thread may have claimed the event in
+// between this function returning and the other function being called.
+int aioctx_wait_for_completion(struct aioctx *ctx, struct timespec *timeout);
 
 void aioctx_lock(struct aioctx* ctx);
 void aioctx_unlock(struct aioctx* ctx);

@@ -3,6 +3,7 @@
 #include "kernel/task.h"
 #include "kernel/aio.h"
 #include "kernel/fs.h"
+#include "kernel/time.h"
 #include "fs/aio.h"
 #include "fs/fd.h"
 
@@ -36,7 +37,7 @@ dword_t sys_io_setup(dword_t nr_events, addr_t ctx_idp) {
     if (ctx == NULL) return _ENOMEM;
     if (IS_ERR(ctx)) return PTR_ERR(ctx);
 
-    int ctx_id = aioctx_table_insert(current->aioctx, ctx);
+    int ctx_id = aioctx_table_insert(&current->aioctx, ctx);
     aioctx_release(ctx);
     if (ctx_id < 0) {
         return ctx_id;
@@ -52,7 +53,7 @@ dword_t sys_io_setup(dword_t nr_events, addr_t ctx_idp) {
 dword_t sys_io_destroy(dword_t ctx_id) {
     STRACE("io_destroy(%d)", ctx_id);
 
-    int err = aioctx_table_remove(current->aioctx, ctx_id) < 0;
+    int err = aioctx_table_remove(&current->aioctx, ctx_id) < 0;
     if (err < 0) {
         return err;
     }
@@ -60,12 +61,24 @@ dword_t sys_io_destroy(dword_t ctx_id) {
     return 0;
 }
 
-dword_t sys_io_getevents(dword_t ctx_id, dword_t min_nr, dword_t nr, addr_t events, addr_t timeout) {
-    STRACE("io_getevents(0x%x, %d, %d, 0x%x, 0x%x)", ctx_id, min_nr, nr, events, timeout);
+dword_t sys_io_getevents(dword_t ctx_id, dword_t min_nr, dword_t nr, addr_t events, addr_t timeout_addr) {
+    STRACE("io_getevents(0x%x, %d, %d, 0x%x, 0x%x)", ctx_id, min_nr, nr, events, timeout_addr);
 
-    struct aioctx *ctx = aioctx_table_get_and_retain(current->aioctx, ctx_id);
+    struct aioctx *ctx = aioctx_table_get_and_retain(&current->aioctx, ctx_id);
     if (ctx == NULL) return _EINVAL;
     if (events == 0) return _EFAULT;
+    
+    struct timespec_ guest_timeout;
+    struct timespec host_timeout;
+    struct timespec *timeout = &host_timeout;
+
+    if (timeout_addr != 0) {
+        if (user_get(timeout_addr, guest_timeout)) return _EFAULT;
+        host_timeout.tv_sec = guest_timeout.sec;
+        host_timeout.tv_nsec = guest_timeout.nsec;
+    } else {
+        timeout = NULL;
+    }
 
     dword_t i = 0;
     for (i = 0; i < nr; i += 1) {
@@ -74,8 +87,13 @@ dword_t sys_io_getevents(dword_t ctx_id, dword_t min_nr, dword_t nr, addr_t even
         struct aioctx_event_complete cdata;
 
         if (!aioctx_consume_completed_event(ctx, &user_data, &iocbp, &cdata)) {
-            //TODO: Block until min_nr events recieved or timeout exceeded
-            break;
+            if (i >= min_nr) break;
+
+            int err = aioctx_wait_for_completion(ctx, timeout);
+
+            if (err == _ETIMEDOUT) break;
+            if (err < 0) return err;
+            continue;
         }
 
         uint64_t obj = (uint64_t)iocbp;
@@ -97,7 +115,7 @@ dword_t sys_io_submit(dword_t ctx_id, dword_t u_nr, addr_t iocbpp) {
 
     if (nr < 0) return _EINVAL;
 
-    struct aioctx *ctx = aioctx_table_get_and_retain(current->aioctx, ctx_id);
+    struct aioctx *ctx = aioctx_table_get_and_retain(&current->aioctx, ctx_id);
     if (ctx == NULL) return _EINVAL;
 
     sdword_t i;

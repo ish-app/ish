@@ -38,7 +38,7 @@ struct task {
     struct fs_info *fs;
 
     // Currently active AIO contexts. Contains internal lock.
-    struct aioctx_table *aioctx;
+    struct aioctx_table aioctx;
 
     // locked by sighand->lock
     struct sighand *sighand;

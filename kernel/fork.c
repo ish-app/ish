@@ -123,9 +123,8 @@ static int copy_task(struct task *task, dword_t flags, addr_t stack, addr_t ptid
         task->clear_tid = ctid_addr;
     task->exit_signal = flags & CSIGNAL_;
 
-    task->aioctx = aioctx_table_new(0);
-    if (IS_ERR(task->aioctx)) {
-        err = PTR_ERR(task->aioctx);
+    err = aioctx_table_new(&task->aioctx, 0);
+    if (err < 0) {
         goto fail_free_sighand;
     }
 
