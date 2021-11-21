@@ -7,8 +7,6 @@
 #include "fs/aio.h"
 #include "fs/fd.h"
 
-// Guest memory offsets for the IOCB structure.
-// Calculated by a test program compiled and ran in iSH itself.
 struct _guest_iocb {
     uint64_t data;
     uint32_t key;
@@ -24,6 +22,8 @@ struct _guest_iocb {
     uint32_t resfd;
 };
 
+// Guest memory offsets for the IOCB structure.
+// Calculated by a test program compiled and ran in iSH itself.
 static_assert(offsetof(struct _guest_iocb, data) == 0, "IOCB order");
 static_assert(offsetof(struct _guest_iocb, key) == 8, "IOCB order");
 static_assert(offsetof(struct _guest_iocb, rw_flags) == 12, "IOCB order");
@@ -37,13 +37,20 @@ static_assert(offsetof(struct _guest_iocb, reserved2) == 48, "IOCB order");
 static_assert(offsetof(struct _guest_iocb, flags) == 56, "IOCB order");
 static_assert(offsetof(struct _guest_iocb, resfd) == 60, "IOCB order");
 
+struct _guest_ioevent {
+    uint64_t data;
+    uint64_t obj;
+    int64_t res;
+    int64_t res2;
+};
+
 // Guest memory offsets for the IO_EVENT structure.
 // Also confirmed by test program.
-const size_t AIO_IO_EVENT_DATA = 0;
-const size_t AIO_IO_EVENT_OBJ = 8;
-const size_t AIO_IO_EVENT_RES = 16;
-const size_t AIO_IO_EVENT_RES2 = 24;
-const size_t AIO_IO_EVENT_SIZEOF = 32;
+static_assert(offsetof(struct _guest_ioevent, data) == 0, "IOEVENT order");
+static_assert(offsetof(struct _guest_ioevent, obj) == 8, "IOEVENT order");
+static_assert(offsetof(struct _guest_ioevent, res) == 16, "IOEVENT order");
+static_assert(offsetof(struct _guest_ioevent, res2) == 24, "IOEVENT order");
+static_assert(sizeof(struct _guest_ioevent) == 32, "IOEVENT size");
 
 dword_t sys_io_setup(dword_t nr_events, addr_t ctx_idp) {
     STRACE("io_setup(%d, 0x%x)", nr_events, ctx_idp);
@@ -110,15 +117,16 @@ dword_t sys_io_getevents(dword_t ctx_id, dword_t min_nr, dword_t nr, addr_t even
             if (err < 0) return err;
             continue;
         }
+        
+        struct _guest_ioevent gevent = {0};
+        gevent.data = user_data;
+        gevent.obj = (uint64_t)iocbp;
+        gevent.res = cdata.result[0];
+        gevent.res2 = cdata.result[1];
 
-        uint64_t obj = (uint64_t)iocbp;
+        if (user_put(events, gevent)) return _EFAULT;
 
-        if (user_put(events + AIO_IO_EVENT_DATA, user_data)) return _EFAULT;
-        if (user_put(events + AIO_IO_EVENT_OBJ, obj)) return _EFAULT;
-        if (user_put(events + AIO_IO_EVENT_RES, cdata.result[0])) return _EFAULT;
-        if (user_put(events + AIO_IO_EVENT_RES2, cdata.result[1])) return _EFAULT;
-
-        events += AIO_IO_EVENT_SIZEOF;
+        events += sizeof(struct _guest_ioevent);
     }
 
     return i;
