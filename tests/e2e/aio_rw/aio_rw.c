@@ -1,4 +1,3 @@
-#include <linux/aio_abi.h>
 #include <sys/syscall.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -6,6 +5,40 @@
 #include <unistd.h>
 #include <errno.h>
 #include <stdint.h>
+
+typedef uint64_t aio_context_t;
+
+enum {
+	IOCB_CMD_PREAD = 0,
+	IOCB_CMD_PWRITE = 1,
+	IOCB_CMD_FSYNC = 2,
+	IOCB_CMD_FDSYNC = 3,
+	IOCB_CMD_NOOP = 6,
+	IOCB_CMD_PREADV = 7,
+	IOCB_CMD_PWRITEV = 8,
+};
+
+struct iocb {
+    uint64_t aio_data;
+    uint32_t aio_key;
+    uint32_t aio_rw_flags;
+    uint16_t aio_lio_opcode;
+    int16_t aio_reqprio;
+    uint32_t aio_fildes;
+    uint64_t aio_buf;
+    uint64_t aio_nbytes;
+    int64_t aio_offset;
+    uint64_t aio_reserved2;
+    uint32_t aio_flags;
+    uint32_t aio_resfd;
+};
+
+struct io_event {
+    uint64_t data;
+    uint64_t obj;
+    int64_t res;
+    int64_t res2;
+};
 
 const char* info = "Welcome to ASYNC world!";
 
@@ -69,7 +102,7 @@ void main() {
 		printf("evt.obj matches &req\n");
 	} else {
 		printf("evt.obj does NOT match &req, 0x%llX given\n", evt.obj);
-		printf("(&req is 0x%llX)\n", (__u64)(uintptr_t)&req);
+		printf("(&req is 0x%llX)\n", (uint64_t)(uintptr_t)&req);
 	}
 	
 	printf("evt.res:  %lld\n", evt.res);
@@ -106,11 +139,11 @@ void main() {
 	printf("io_getevents success: %d\n", err);
 	printf("evt.data: 0x%llX\n", evt.data);
 	
-	if (evt.obj == (__u32)&req) {
+	if (evt.obj == (uint32_t)&req) {
 		printf("evt.obj matches &req\n");
 	} else {
 		printf("evt.obj does NOT match &req, 0x%llX given\n", evt.obj);
-		printf("(&req is 0x%llX)\n", (__u64)(__u32)&req);
+		printf("(&req is 0x%llX)\n", (uint64_t)(uint32_t)&req);
 	}
 	
 	printf("evt.res:  %lld\n", evt.res);
