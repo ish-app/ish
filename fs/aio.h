@@ -109,7 +109,7 @@ struct aioctx {
     dword_t events_capacity;
 
     // The current table of pending and completed events.
-    struct aioctx_event* events;
+    struct aioctx_event *events;
 };
 
 // The table of AIO contexts for a given process.
@@ -227,8 +227,8 @@ bool aioctx_consume_completed_event(struct aioctx *ctx, uint64_t *user_data, add
 // between this function returning and the other function being called.
 int aioctx_wait_for_completion(struct aioctx *ctx, struct timespec *timeout);
 
-void aioctx_lock(struct aioctx* ctx);
-void aioctx_unlock(struct aioctx* ctx);
+void aioctx_lock(struct aioctx *ctx);
+void aioctx_unlock(struct aioctx *ctx);
 
 // Get a pending event from the AIOCTX.
 // 

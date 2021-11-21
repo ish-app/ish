@@ -184,13 +184,13 @@ int aioctx_wait_for_completion(struct aioctx *ctx, struct timespec *timeout) {
     return err;
 }
 
-void aioctx_lock(struct aioctx* ctx) {
+void aioctx_lock(struct aioctx *ctx) {
     if (ctx == NULL) return;
 
     lock(&ctx->lock);
 }
 
-void aioctx_unlock(struct aioctx* ctx) {
+void aioctx_unlock(struct aioctx *ctx) {
     if (ctx == NULL) return;
 
     unlock(&ctx->lock);
