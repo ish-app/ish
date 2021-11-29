@@ -29,6 +29,8 @@ if [[ "$srctree/arch/ish/configs/$defconfig" -nt "$objtree/.config" ]]; then
     make -C "$srctree" O="$(realpath "$objtree")" "${makeargs[@]}" "$defconfig"
 fi
 
+make -C "$objtree" "${makeargs[@]}" syncconfig
+
 case "$(uname)" in
     Darwin) cpus=$(sysctl -n hw.ncpu) ;;
     Linux) cpus=$(nproc) ;;
