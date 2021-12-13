@@ -83,6 +83,7 @@ NAME(si_gadgets):
         mov _xaddr, x19
         ret
 
+.global segfault_\type
 segfault_\type:
     ldr _addr, [_tlb, -TLB_entries+TLB_segfault_addr]
     str _addr, [_cpu, CPU_segfault_addr]
