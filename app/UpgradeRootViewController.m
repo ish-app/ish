@@ -72,13 +72,14 @@
     [self setDismissable:YES];
     int code = [notif.userInfo[@"code"] intValue];
     if (code != 0) {
-        [self printToTerminal:@"Upgrade failed! exit status %d\r\n", code];
+        [self showAlertWithTitle:@"Upgrade failed" message:@"exit status %d", code];
     } else {
         lock(&pids_lock);
         current = pid_get_task(1); // pray
         unlock(&pids_lock);
         FsUpdateRepositories();
         current = NULL;
+        [self showAlertWithTitle:@"Upgrade succeeded" message:@""];
     }
     [self.terminal destroy];
     self.terminal = nil;
