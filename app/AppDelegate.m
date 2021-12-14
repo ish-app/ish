@@ -12,6 +12,7 @@
 #import "AboutViewController.h"
 #import "AppDelegate.h"
 #import "AppGroup.h"
+#import "CurrentRoot.h"
 #import "iOSFS.h"
 #import "SceneDelegate.h"
 #import "PasteboardDevice.h"
@@ -70,7 +71,6 @@ void ReportPanic(const char *message, void (^completion)(void)) {
 #endif
 
 static int bootError;
-static int fs_ish_version;
 static NSString *const kSkipStartupMessage = @"Skip Startup Message";
 
 @implementation AppDelegate
@@ -91,44 +91,7 @@ static NSString *const kSkipStartupMessage = @"Skip Startup Message";
     if (err < 0)
         return err;
 
-    // /ish/version is the last ish version that opened this root. Used to migrate the filesystem.
-    struct fd *ish_version_fd = generic_open("/ish/version", O_RDONLY_, 0);
-    if (!IS_ERR(ish_version_fd)) {
-        char buf[100];
-        ssize_t n = ish_version_fd->ops->read(ish_version_fd, buf, sizeof(buf));
-        if (n < 0)
-            return (int) n;
-        NSString *version = [[NSString alloc] initWithBytesNoCopy:buf length:n encoding:NSUTF8StringEncoding freeWhenDone:NO];
-        version = [version stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
-        fs_ish_version = version.intValue;
-        fd_close(ish_version_fd);
-
-        NSURL *repositories = [NSBundle.mainBundle URLForResource:@"repositories" withExtension:@"txt"];
-        if (repositories != nil) {
-            NSMutableData *repositoriesData = [@"# This file contains pinned repositories managed by iSH. If the /ish directory\n"
-                                               @"# exists, iSH uses the metadata stored in it to keep this file up to date (by\n"
-                                               @"# overwriting the contents on boot.)\n" dataUsingEncoding:NSUTF8StringEncoding].mutableCopy;
-            [repositoriesData appendData:[NSData dataWithContentsOfURL:repositories]];
-            struct fd *repositories_fd = generic_open("/etc/apk/repositories", O_WRONLY_|O_TRUNC_, 0);
-            if (!IS_ERR(repositories_fd)) {
-                repositories_fd->ops->write(repositories_fd, repositoriesData.bytes, repositoriesData.length);
-                fd_close(repositories_fd);
-            }
-        }
-        generic_rmdirat(AT_PWD, "/ish/apk");
-
-        NSString *currentVersion = NSBundle.mainBundle.infoDictionary[(__bridge NSString *) kCFBundleVersionKey];
-        if (currentVersion.intValue > fs_ish_version) {
-            fs_ish_version = currentVersion.intValue;
-            ish_version_fd = generic_open("/ish/version", O_WRONLY_|O_TRUNC_, 0644);
-            if (!IS_ERR(ish_version_fd)) {
-                NSString *file = [NSString stringWithFormat:@"%@\n", currentVersion];
-                ish_version_fd->ops->write(ish_version_fd, file.UTF8String, [file lengthOfBytesUsingEncoding:NSUTF8StringEncoding]);
-                fd_close(ish_version_fd);
-            }
-        }
-
-    }
+    FsInitialize();
 
     // create some device nodes
     // this will do nothing if they already exist
@@ -257,7 +220,7 @@ static NSString *const kSkipStartupMessage = @"Skip Startup Message";
 + (void)maybePresentStartupMessageOnViewController:(UIViewController *)vc {
     if ([NSUserDefaults.standardUserDefaults integerForKey:kSkipStartupMessage] >= 1)
         return;
-    if (fs_ish_version == 0) {
+    if (!FsIsManaged()) {
         UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Install iSH’s built-in APK?"
                                                                        message:@"iSH now includes the APK package manager, but it must be manually activated."
                                                                 preferredStyle:UIAlertControllerStyleAlert];
