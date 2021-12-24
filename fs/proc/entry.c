@@ -2,6 +2,7 @@
 #include <string.h>
 #include "fs/stat.h"
 #include "fs/proc.h"
+#include "kernel/task.h"
 
 mode_t_ proc_entry_mode(struct proc_entry *entry) {
     mode_t_ mode = entry->meta->mode;
@@ -21,6 +22,17 @@ mode_t_ proc_entry_mode(struct proc_entry *entry) {
 int proc_entry_stat(struct proc_entry *entry, struct statbuf *stat) {
     memset(stat, 0, sizeof(*stat));
     stat->mode = proc_entry_mode(entry);
+
+    lock(&pids_lock);
+    struct task *task = pid_get_task(entry->pid);
+
+    if (task != NULL) {
+        stat->uid = task->uid;
+        stat->gid = task->gid;
+    } // else the memset above will have initialized memory to zero, which is the root uid/gid
+
+    unlock(&pids_lock);
+
     stat->inode = entry->meta->inode | entry->pid << 16 | (uint64_t) entry->fd << 48;
     return 0;
 }
