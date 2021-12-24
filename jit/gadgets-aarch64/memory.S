@@ -86,6 +86,12 @@ NAME(si_gadgets):
 segfault_\type:
     ldr _addr, [_tlb, -TLB_entries+TLB_segfault_addr]
     str _addr, [_cpu, CPU_segfault_addr]
+    .ifc \type,read
+        mov w0, 0
+    .else
+        mov w0, 1
+    .endif
+    strb w0, [_cpu, CPU_segfault_was_write]
     ldr eip, [_ip]
     mov x0, INT_GPF
     b jit_exit
