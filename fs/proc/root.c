@@ -97,6 +97,7 @@ static int proc_show_mounts(struct proc_entry *UNUSED(entry), struct proc_data *
 
 // in alphabetical order
 struct proc_dir_entry proc_root_entries[] = {
+    {"ish", S_IFDIR, .children = &proc_ish_children},
     {"meminfo", .show = proc_show_meminfo},
     {"mounts", .show = proc_show_mounts},
     {"self", S_IFLNK, .readlink = proc_readlink_self},

@@ -48,6 +48,7 @@ struct proc_children {
 
 extern struct proc_dir_entry proc_root;
 extern struct proc_dir_entry proc_pid;
+extern struct proc_children proc_ish_children;
 
 mode_t_ proc_entry_mode(struct proc_entry *entry);
 void proc_entry_getname(struct proc_entry *entry, char *buf);

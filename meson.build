@@ -123,6 +123,7 @@ if get_option('kernel') == 'ish'
 
         'fs/proc.c',
         'fs/proc/entry.c',
+        'fs/proc/ish.c',
         'fs/proc/root.c',
         'fs/proc/pid.c',
 

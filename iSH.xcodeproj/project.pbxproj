@@ -21,6 +21,7 @@
 /* End PBXAggregateTarget section */
 
 /* Begin PBXBuildFile section */
+		49302D8E277669D300C9885A /* ish.c in Sources */ = {isa = PBXBuildFile; fileRef = 49302D8D277669D300C9885A /* ish.c */; };
 		497F6CF5254E5EA500C82F46 /* float80-test.c in Sources */ = {isa = PBXBuildFile; fileRef = 497F6C5A254E5C7E00C82F46 /* float80-test.c */; };
 		497F6CF6254E5EA500C82F46 /* float80.c in Sources */ = {isa = PBXBuildFile; fileRef = 497F6C66254E5C7F00C82F46 /* float80.c */; };
 		497F6CF7254E5EA500C82F46 /* fpu.c in Sources */ = {isa = PBXBuildFile; fileRef = 497F6C5D254E5C7E00C82F46 /* fpu.c */; };
@@ -377,6 +378,7 @@
 /* Begin PBXFileReference section */
 		408A2639236440F8008A4E81 /* iOSFS.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iOSFS.m; sourceTree = "<group>"; };
 		408A263B23644102008A4E81 /* iOSFS.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iOSFS.h; sourceTree = "<group>"; };
+		49302D8D277669D300C9885A /* ish.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ish.c; sourceTree = "<group>"; };
 		494D03F72727DAC6004F0CCE /* xcode-ninja.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "xcode-ninja.sh"; sourceTree = "<group>"; };
 		497F6BDA254E5C0D00C82F46 /* mem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mem.h; sourceTree = "<group>"; };
 		497F6BDB254E5C0D00C82F46 /* path.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = path.c; sourceTree = "<group>"; };
@@ -737,9 +739,10 @@
 		497F6BF1254E5C0D00C82F46 /* proc */ = {
 			isa = PBXGroup;
 			children = (
+				497F6BF4254E5C0D00C82F46 /* entry.c */,
+				49302D8D277669D300C9885A /* ish.c */,
 				497F6BF2254E5C0D00C82F46 /* pid.c */,
 				497F6BF3254E5C0D00C82F46 /* root.c */,
-				497F6BF4254E5C0D00C82F46 /* entry.c */,
 			);
 			path = proc;
 			sourceTree = "<group>";
@@ -1952,6 +1955,7 @@
 				497F6D36254E5EA600C82F46 /* user.c in Sources */,
 				497F6D37254E5EA600C82F46 /* vdso.c in Sources */,
 				497F6D38254E5EA600C82F46 /* darwin.c in Sources */,
+				49302D8E277669D300C9885A /* ish.c in Sources */,
 				497F6D39254E5EA600C82F46 /* linux.c in Sources */,
 				497F6D3A254E5EA600C82F46 /* fifo.c in Sources */,
 				497F6D3B254E5EA600C82F46 /* sync.c in Sources */,
