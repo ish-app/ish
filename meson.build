@@ -2,7 +2,7 @@ project('ish', 'c',
     default_options: ['default_library=static', 'c_std=gnu11', 'warning_level=2'])
 cc = meson.get_compiler('c')
 
-if cc.get_id() == '/opt/homebrew/opt/llvm/bin/clang'
+if cc.get_id() == 'clang'
     add_project_arguments('-Wimplicit-fallthrough', '-Wtautological-constant-in-range-compare', language: 'c')
 endif
 
@@ -33,9 +33,9 @@ includes = [include_directories('.')]
 threads = dependency('threads')
 librt = cc.find_library('rt', required: false)
 libm = cc.find_library('m', required: false)
+libdl = cc.find_library('dl', required: false)
 sqlite3 = cc.find_library('sqlite3')
-
-dependencies = [librt, libm, threads, sqlite3]
+dependencies = [librt, libm, libdl, threads, sqlite3]
 
 subdir('vdso') # ish depends on the vdso
 
@@ -73,102 +73,123 @@ endif
 
 libish_emu = library('ish_emu', emu_src, include_directories: includes)
 
-src = [
-    'kernel/init.c',
-    'kernel/errno.c',
+libfakefs = library('fakefs',
+    ['fs/fake-db.c', 'fs/fake-migrate.c', 'fs/fake-rebuild.c'],
+    include_directories: includes,
+    dependencies: sqlite3)
 
-    'kernel/calls.c',
-    'kernel/user.c',
-    'kernel/vdso.c', vdso,
-    'kernel/task.c',
-    'kernel/group.c',
-    'kernel/log.c',
+subdir('deps')
 
-    'kernel/fork.c',
-    'kernel/exec.c',
-    'kernel/exit.c',
-    'kernel/time.c',
-    'kernel/mmap.c',
-    'kernel/uname.c',
-    'kernel/tls.c',
-    'kernel/futex.c',
-    'kernel/getset.c',
-    'kernel/signal.c',
-    'kernel/resource.c',
-    'kernel/random.c',
-    'kernel/misc.c',
-    'kernel/eventfd.c',
-    'kernel/ipc.c',
-    'kernel/ptrace.c',
+if get_option('kernel') == 'ish'
+    src = [
+        'kernel/init.c',
+        'kernel/errno.c',
 
-    'kernel/fs.c',
-    'kernel/fs_info.c',
-    'fs/mount.c',
-    'fs/fd.c',
-    'fs/inode.c',
-    'fs/stat.c',
-    'fs/dir.c',
-    'fs/generic.c',
-    'fs/path.c',
-    'fs/real.c',
-    'fs/fake.c',
-    'fs/fake-migrate.c',
-    'fs/fake-rebuild.c',
+        'kernel/calls.c',
+        'kernel/user.c',
+        'kernel/vdso.c', vdso,
+        'kernel/task.c',
+        'kernel/group.c',
+        'kernel/log.c',
 
-    'fs/proc.c',
-    'fs/proc/entry.c',
-    'fs/proc/root.c',
-    'fs/proc/pid.c',
+        'kernel/fork.c',
+        'kernel/exec.c',
+        'kernel/exit.c',
+        'kernel/time.c',
+        'kernel/mmap.c',
+        'kernel/uname.c',
+        'kernel/tls.c',
+        'kernel/futex.c',
+        'kernel/getset.c',
+        'kernel/signal.c',
+        'kernel/resource.c',
+        'kernel/random.c',
+        'kernel/misc.c',
+        'kernel/eventfd.c',
+        'kernel/ipc.c',
+        'kernel/ptrace.c',
 
-    'fs/dyndev.c',
+        'kernel/fs.c',
+        'kernel/fs_info.c',
+        'fs/mount.c',
+        'fs/fd.c',
+        'fs/inode.c',
+        'fs/stat.c',
+        'fs/dir.c',
+        'fs/generic.c',
+        'fs/path.c',
+        'fs/real.c',
+        'fs/fake.c',
 
-    'fs/adhoc.c',
-    'fs/sock.c',
-    'fs/pipe.c',
-    'fs/sockrestart.c',
-    'fs/lock.c',
+        'fs/proc.c',
+        'fs/proc/entry.c',
+        'fs/proc/root.c',
+        'fs/proc/pid.c',
 
-    'fs/dev.c',
-    'fs/mem.c',
-    'fs/tty.c',
-    'fs/tty-real.c',
-    'fs/pty.c',
-    'fs/tmp.c',
+        'fs/dyndev.c',
 
-    'fs/poll.c',
-    'kernel/poll.c',
-    'kernel/epoll.c',
+        'fs/adhoc.c',
+        'fs/sock.c',
+        'fs/pipe.c',
+        'fs/sockrestart.c',
+        'fs/lock.c',
 
-    'util/timer.c',
-    'util/sync.c',
-    'util/fifo.c',
+        'fs/dev.c',
+        'fs/mem.c',
+        'fs/tty.c',
+        'fs/tty-real.c',
+        'fs/pty.c',
+        'fs/tmp.c',
 
-    'emu/memory.c',
+        'fs/poll.c',
+        'kernel/poll.c',
+        'kernel/epoll.c',
 
-    'platform/' + host_machine.system() + '.c',
-]
+        'util/timer.c',
+        'util/sync.c',
+        'util/fifo.c',
 
-libish = library('ish', src,
-    include_directories: includes)
-ish = declare_dependency(
-    link_with: [libish, libish_emu],
-    dependencies: dependencies,
-    include_directories: includes)
+        'emu/memory.c',
 
-# ptraceomatic et al
-subdir('tools')
+        'platform/' + host_machine.system() + '.c',
+    ]
 
-if not meson.is_cross_build()
-    executable('ish', ['main.c'], dependencies: ish)
+    libish = library('ish', src,
+        include_directories: includes)
+    ish = declare_dependency(
+        link_with: [libish, libish_emu, libfakefs],
+        dependencies: dependencies,
+        include_directories: includes)
+
+    # ptraceomatic et al
+    subdir('tools')
+
+    if not meson.is_cross_build()
+        executable('ish', ['main.c'], dependencies: ish)
+    endif
+
+    gdb_scripts = ['ish-gdb.gdb']
+    foreach script : gdb_scripts
+        custom_target(script,
+            output: script, input: script,
+            command: ['ln', '-sf', '@INPUT@', '@OUTPUT@'],
+            build_by_default: true)
+    endforeach
+elif get_option('kernel') == 'linux'
+    modules = static_library('linux_modules', [
+        'linux/main.c',
+        'linux/fakefs.c',
+    ], dependencies: [linux_headers, sqlite3])
+    executable('ish', [build_linux],
+        link_with: [libfakefs],
+        dependencies: [
+            liblinux,
+            libm,
+            libdl,
+            threads,
+            declare_dependency(link_whole: modules),
+        ])
 endif
-
-gdb_scripts = ['ish-gdb.gdb']
-foreach script : gdb_scripts
-    custom_target(script,
-        output: script, input: script,
-        command: ['ln', '-sf', '@INPUT@', '@OUTPUT@'],
-        build_by_default: true)
-endforeach
 
 if not meson.is_cross_build()
     # test for floating point library

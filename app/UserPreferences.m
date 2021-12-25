@@ -19,6 +19,7 @@ static NSString *const kPreferenceThemeKey = @"Theme";
 static NSString *const kPreferenceDisableDimmingKey = @"Disable Dimming";
 NSString *const kPreferenceLaunchCommandKey = @"Init Command";
 NSString *const kPreferenceBootCommandKey = @"Boot Command";
+NSString *const kPreferenceHideStatusBar = @"Status Bar";
 
 @implementation UserPreferences {
     NSUserDefaults *_defaults;
@@ -37,7 +38,7 @@ NSString *const kPreferenceBootCommandKey = @"Boot Command";
     self = [super init];
     if (self) {
         _defaults = [NSUserDefaults standardUserDefaults];
-        Theme *defaultTheme = [Theme presetThemeNamed:@"Amber"];
+        Theme *defaultTheme = [Theme presetThemeNamed:@"Light"];
         [_defaults registerDefaults:@{
             kPreferenceFontFamilyKey: @"Menlo",
             kPreferenceFontSizeKey: @(12),
@@ -48,10 +49,19 @@ NSString *const kPreferenceBootCommandKey = @"Boot Command";
             kPreferenceDisableDimmingKey: @(NO),
             kPreferenceLaunchCommandKey: @[@"/bin/login", @"-f", @"root"],
             kPreferenceBootCommandKey: @[@"/sbin/init"],
+            kPreferenceHideStatusBar: @(NO),
         }];
         _theme = [[Theme alloc] initWithProperties:[_defaults objectForKey:kPreferenceThemeKey]];
     }
     return self;
+}
+
+- (BOOL)hideStatusBar {
+    return [_defaults boolForKey:kPreferenceHideStatusBar];
+}
+
+- (void)setHideStatusBar:(BOOL)showStatusBar {
+    [_defaults setBool:showStatusBar forKey:kPreferenceHideStatusBar];
 }
 
 - (CapsLockMapping)capsLockMapping {
@@ -207,14 +217,12 @@ NSDictionary<NSString *, Theme *> *presetThemes;
                                                backgroundColor:UIColor.whiteColor],
                      @"Dark":  [self _themeWithForegroundColor:UIColor.whiteColor
                                                backgroundColor:UIColor.blackColor],
-                     @"Amber":  [self _themeWithForegroundColor:UIColor.orangeColor
-                                               backgroundColor:UIColor.blackColor],
                      @"1337":  [self _themeWithForegroundColor:UIColor.greenColor
                                                backgroundColor:UIColor.blackColor]};
 }
 
 + (NSArray<NSString *> *)presetNames {
-    return @[@"Light", @"Dark", @"Amber", @"1337"];
+    return @[@"Light", @"Dark", @"1337"];
 }
 + (instancetype)presetThemeNamed:(NSString *)name {
     return presetThemes[name];

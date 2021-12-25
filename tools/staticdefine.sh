@@ -3,12 +3,12 @@ compile_commands=$1
 input=$2
 output=$3
 dep=$4
-flags=$(python - <<END
+flags=$(python3 - <<END
 import json
 with open('$compile_commands') as f:
     commands = json.load(f)
 for command in commands:
-    if command['file'].endswith('emu/jit.c'):
+    if command['file'].endswith('jit/jit.c'):
         break
 command = command['command']
 command = command.split()[:-9] + ['-MD', '-MQ', '$output', '-MF', '$dep']

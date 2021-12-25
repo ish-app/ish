@@ -50,10 +50,8 @@ noreturn void do_exit(int status) {
     }
 
     // release all our resources
-    lock(&current->general_lock); //mke
     mm_release(current->mm);
     current->mm = NULL;
-    unlock(&current->general_lock); //mke
     fdtable_release(current->files);
     current->files = NULL;
     fs_info_release(current->fs);
@@ -192,7 +190,6 @@ dword_t sys_exit_group(dword_t status) {
 static bool reap_if_zombie(struct task *task, struct siginfo_ *info_out, struct rusage_ *rusage_out, int options) {
     if (!task->zombie)
         return false;
-    
     lock(&task->group->lock);
 
     dword_t exit_code = task->exit_code;
@@ -221,7 +218,7 @@ static bool reap_if_zombie(struct task *task, struct siginfo_ *info_out, struct 
     list_remove(&task->group->pgroup);
     free(task->group);
 
-    task_destroy(task);  // No call to lock(&pids_lock)/unlock for some reason?  -mke
+    task_destroy(task);
     return true;
 }
 

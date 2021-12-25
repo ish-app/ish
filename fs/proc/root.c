@@ -47,8 +47,14 @@ static void show_kb(struct proc_data *buf, const char *name, uint64_t value) {
     proc_printf(buf, "%s%8"PRIu64" kB\n", name, value / 1000);
 }
 
+static int proc_show_filesystems(struct proc_entry *UNUSED(entry), struct proc_data *buf) {
+    char *filesystems = get_filesystems();
+    proc_printf(buf, "%s", filesystems);
+    return 0;
+}
+
 char * parse_edx_flags(dword_t edx, char *edx_flags) { /* Translate edx bit flags into text */
-    
+
     if(edx & (1<<0))
         strcat(edx_flags, "fpu ");
     if(edx & (1<<1))
@@ -111,15 +117,15 @@ char * parse_edx_flags(dword_t edx, char *edx_flags) { /* Translate edx bit flag
         strcat(edx_flags, "Reserved ");
     if(edx & (1<<31))
         strcat(edx_flags, "pbe ");
-    
+
     strcat(edx_flags, "\0");
-    
+
     return(edx_flags);
 }
 
 char * translate_vendor_id(dword_t *ebx, dword_t *ecx, dword_t *edx) {
     char *byteArray = calloc(12 + 1, sizeof(char)); // vendor_id is fixed at 12 bytes
-                                        
+
     // convert from an unsigned long int to a 4-byte array
     byteArray[0] = (int)((*ebx & 0XFF));
     byteArray[1] = (int)((*ebx >> 8) & 0XFF);
@@ -134,7 +140,7 @@ char * translate_vendor_id(dword_t *ebx, dword_t *ecx, dword_t *edx) {
     byteArray[10] = (int)((*ecx >> 16) & 0xFF) ;
     byteArray[11] = (int)((*ecx >> 24) & 0xFF) ;
     byteArray[12] = 0;
-    
+
     return(byteArray);
 }
 
@@ -143,23 +149,23 @@ static int proc_show_cpuinfo(struct proc_entry *UNUSED(entry), struct proc_data 
     dword_t *ebx = malloc(sizeof(dword_t));
     dword_t *ecx = malloc(sizeof(dword_t));
     dword_t *edx = malloc(sizeof(dword_t));
-    
+   
     *eax = 0x00; // Get vendor_id.  It is returned as four bytes each in ebx, ecx & edx
     do_cpuid(eax, ebx, ecx, edx); // Get vendor_id
-    
+   
     char *vendor_id = calloc(12 + 1, sizeof(char)); // vendor_id is fixed at 12 bytes
-    
+
     vendor_id = translate_vendor_id(ebx, ecx, edx);
-    
+   
     *eax = 1;
     do_cpuid(eax, ebx, ecx, edx);
-    
+   
     char *edx_flags=calloc(151, sizeof(char)); // Max size if all flags set
     parse_edx_flags(*edx, edx_flags);
-    
+   
     int cpu_count = get_cpu_count(); // One entry per device processor
     int i;
-    
+   
     for( i=0; i<cpu_count ; i++ ) {
         proc_printf(buf, "processor       : %d\n",i);
         proc_printf(buf, "vendor_id       : %s\n", vendor_id);
@@ -192,25 +198,15 @@ static int proc_show_cpuinfo(struct proc_entry *UNUSED(entry), struct proc_data 
     return 0;
 }
 
-static int proc_show_filesystems(struct proc_entry *UNUSED(entry), struct proc_data *buf) {
-    char *filesystems = get_filesystems();
-    proc_printf(buf, "%s", filesystems);
-    return 0;
-}
-
 static int proc_show_meminfo(struct proc_entry *UNUSED(entry), struct proc_data *buf) {
     struct mem_usage usage = get_mem_usage();
     show_kb(buf, "MemTotal:       ", usage.total);
     show_kb(buf, "MemFree:        ", usage.free);
-    show_kb(buf, "MemAvailable:   ", usage.available);
-    show_kb(buf, "Buffers:        ", 0);
-    show_kb(buf, "Cached:         ", usage.cached);
     show_kb(buf, "MemShared:      ", usage.free);
-    show_kb(buf, "Active:         ", usage.active);
-    show_kb(buf, "Inactive:       ", usage.inactive);
-    show_kb(buf, "SwapCached:     ", 0);
     // a bunch of crap busybox top needs to see or else it gets stack garbage
     show_kb(buf, "Shmem:          ", 0);
+    show_kb(buf, "Buffers:        ", 0);
+    show_kb(buf, "Cached:         ", 0);
     show_kb(buf, "SwapTotal:      ", 0);
     show_kb(buf, "SwapFree:       ", 0);
     show_kb(buf, "Dirty:          ", 0);
@@ -218,10 +214,6 @@ static int proc_show_meminfo(struct proc_entry *UNUSED(entry), struct proc_data 
     show_kb(buf, "AnonPages:      ", 0);
     show_kb(buf, "Mapped:         ", 0);
     show_kb(buf, "Slab:           ", 0);
-    // Stuff that doesn't map elsehwere
-    show_kb(buf, "Swapins:        ", usage.swapins);
-    show_kb(buf, "Swapouts:       ", usage.swapouts);
-    show_kb(buf, "WireCount:      ", usage.wirecount);
     return 0;
 }
 

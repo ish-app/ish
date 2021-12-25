@@ -173,12 +173,12 @@
     NSLog(@"copying %@ to %@", self.path, url);
     NSURL *itemURL = self.URL;
     NSError *err;
-    lock(&self.fd->mount->lock);
+    sqlite3_mutex_enter(self.fd->mount->fakefs.lock);
     [NSFileManager.defaultManager removeItemAtURL:url error:nil];
     BOOL success = [NSFileManager.defaultManager copyItemAtURL:itemURL
                                                          toURL:url
                                                          error:&err];
-    unlock(&self.fd->mount->lock);
+    sqlite3_mutex_leave(self.fd->mount->fakefs.lock);
     if (!success) {
         NSLog(@"error copying to %@: %@", url, err);
     }
@@ -188,12 +188,12 @@
     NSLog(@"copying %@ from %@", self.path, url);
     NSURL *itemURL = self.URL;
     NSError *err;
-    lock(&self.fd->mount->lock);
+    sqlite3_mutex_enter(self.fd->mount->fakefs.lock);
     [NSFileManager.defaultManager removeItemAtURL:itemURL error:nil];
     BOOL success = [NSFileManager.defaultManager copyItemAtURL:url
                                                          toURL:itemURL
                                                          error:&err];
-    unlock(&self.fd->mount->lock);
+    sqlite3_mutex_leave(self.fd->mount->fakefs.lock);
     if (!success) {
         NSLog(@"error copying to %@: %@", url, err);
     }

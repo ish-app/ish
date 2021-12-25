@@ -1,13 +1,10 @@
 #include <mach/mach.h>
-#include <mach/mach_time.h>
 #include <sys/sysctl.h>
 #include <sys/time.h>
 #include <sys/mman.h>
 #include "kernel/errno.h"
 #include "platform/platform.h"
 #include "debug.h"
-
-typedef double CFTimeInterval;
 
 struct cpu_usage get_total_cpu_usage() {
     host_cpu_load_info_data_t load;
@@ -19,7 +16,14 @@ struct cpu_usage get_total_cpu_usage() {
     usage.idle_ticks = load.cpu_ticks[CPU_STATE_IDLE];
     usage.nice_ticks = load.cpu_ticks[CPU_STATE_NICE];
     return usage;
-} 
+}
+
+int get_cpu_count() {
+    int ncpu;
+    size_t size = sizeof(int);
+    sysctlbyname("hw.ncpu", &ncpu, &size, NULL, 0);
+    return ncpu;
+}
 
 struct mem_usage get_mem_usage() {
     host_basic_info_data_t basic = {};
@@ -32,38 +36,17 @@ struct mem_usage get_mem_usage() {
     struct mem_usage usage;
     usage.total = basic.max_mem;
     usage.free = vm.free_count * vm_page_size;
-    usage.available = basic.memory_size;
-    usage.cached = vm.speculative_count * vm_page_size;
     usage.active = vm.active_count * vm_page_size;
     usage.inactive = vm.inactive_count * vm_page_size;
-    usage.wirecount = vm.wire_count * vm_page_size;
-    usage.swapins = vm.swapins * vm_page_size;
-    usage.swapouts = vm.swapouts * vm_page_size;
-    
     return usage;
-}
-
-CFTimeInterval getSystemUptime(void)
-{
-    enum { NANOSECONDS_IN_SEC = 1000 * 1000 * 1000 };
-    static double multiply = 0;
-    if (multiply == 0)
-    {
-        mach_timebase_info_data_t s_timebase_info;
-        kern_return_t result = mach_timebase_info(&s_timebase_info);
-        assert(result == 0);
-        // multiply to get value in the nano seconds
-        multiply = (double)s_timebase_info.numer / (double)s_timebase_info.denom;
-        // multiply to get value in the seconds
-        multiply /= NANOSECONDS_IN_SEC;
-    }
-    return mach_continuous_time() * multiply;
 }
 
 struct uptime_info get_uptime() {
     uint64_t kern_boottime[2];
     size_t size = sizeof(kern_boottime);
     sysctlbyname("kern.boottime", &kern_boottime, &size, NULL, 0);
+    struct timeval now;
+    gettimeofday(&now, NULL);
 
     struct {
         uint32_t ldavg[3];
@@ -79,22 +62,14 @@ struct uptime_info get_uptime() {
         else
             vm_loadavg.ldavg[i] >>= FSHIFT - 16;
     }
-    
+
     struct uptime_info uptime = {
-        //.uptime_ticks = now.tv_sec - kern_boottime[0],
-        .uptime_ticks = getSystemUptime() * 100, // This works but shouldn't.  -mke
+        .uptime_ticks = now.tv_sec - kern_boottime[0],
         .load_1m = vm_loadavg.ldavg[0],
         .load_5m = vm_loadavg.ldavg[1],
         .load_15m = vm_loadavg.ldavg[2],
     };
     return uptime;
-}
-
-int get_cpu_count() {
-    int ncpu;
-    size_t size = sizeof(int);
-    sysctlbyname("hw.ncpu", &ncpu, &size, NULL, 0);
-    return ncpu;
 }
 
 int get_per_cpu_usage(struct cpu_usage** cpus_usage) {

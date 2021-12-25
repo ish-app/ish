@@ -1,13 +1,22 @@
-# [iSH-AOK](https://github.com/emkey1/ish-AOK)
+# [iSH](https://ish.app)
 
-A fork of the iSH project.  The goal of iSH is to get a Linux shell running on iOS, using usermode x86 emulation and syscall translation.
+[![Build Status](https://travis-ci.org/ish-app/ish.svg?branch=master)](https://travis-ci.org/ish-app/ish)
+[![goto counter](https://img.shields.io/github/search/ish-app/ish/goto.svg)](https://github.com/ish-app/ish/search?q=goto)
+[![fuck counter](https://img.shields.io/github/search/ish-app/ish/fuck.svg)](https://github.com/ish-app/ish/search?q=fuck)
 
-Most of the text below is specific to the original iSH currently.  -emkey1
+<p align="center">
+<a href="https://ish.app">
+<img src="https://ish.app/assets/github-readme.png">
+</a>
+</p>
+
+A project to get a Linux shell running on iOS, using usermode x86 emulation and syscall translation.
 
 For the current status of the project, check the issues tab, and the commit logs.
 
-- [TestFlight beta](https://testflight.apple.com/join/X1flyiqE)
-- [Discord server](https://discord.com/channels/776432683302649866/776441982406492181)
+- [App Store page](https://apps.apple.com/us/app/ish-shell/id1436902243)
+- [TestFlight beta](https://testflight.apple.com/join/97i7KM8O)
+- [Discord server](https://discord.gg/HFAXj44)
 - [Wiki with help and tutorials](https://github.com/ish-app/ish/wiki)
 - [README中文](https://github.com/ish-app/ish/blob/master/README_ZH.md) (如若未能保持最新，请提交PR以更新)
 
@@ -26,7 +35,7 @@ You'll need these things to build the project:
 
 ## Build for iOS
 
-Open the project in Xcode, open iSH.xcconfig, and change `ROOT_BUNDLE_IDENTIFIER` to something unique. Then click Run. There are scripts that should do everything else automatically. If you run into any problems, open an issue and I'll try to help.
+Open the project in Xcode, open iSH.xcconfig, and change `ROOT_BUNDLE_IDENTIFIER` to something unique. You'll also need to update the development team ID in the project (not target!) build settings. Then click Run. There are scripts that should do everything else automatically. If you run into any problems, open an issue and I'll try to help.
 
 ## Build command line tool for testing
 
@@ -41,7 +50,7 @@ You can replace `ish` with `tools/ptraceomatic` to run the program in a real pro
 iSH has several logging channels which can be enabled at build time. By default, all of them are disabled. To enable them:
 
 - In Xcode: Set the `ISH_LOG` setting in iSH.xcconfig to a space-separated list of log channels.
-- With Meson (command line tool for testing): Run `meson configure -Dlog="<space-separated list of log channels>`.
+- With Meson (command line tool for testing): Run `meson configure -Dlog="<space-separated list of log channels>"`.
 
 Available channels:
 

@@ -5,10 +5,12 @@
 //  Created by Theodore Dubois on 9/23/18.
 //
 
-#import "UIApplication+OpenURL.h"
 #import "AboutViewController.h"
-#import "UserPreferences.h"
+#import "AppDelegate.h"
+#import "CurrentRoot.h"
 #import "AppGroup.h"
+#import "UserPreferences.h"
+#import "UIApplication+OpenURL.h"
 #import "NSObject+SaneKVO.h"
 
 @interface AboutViewController ()
@@ -23,6 +25,9 @@
 @property (weak, nonatomic) IBOutlet UITableViewCell *openTwitter;
 @property (weak, nonatomic) IBOutlet UITableViewCell *openDiscord;
 
+@property (weak, nonatomic) IBOutlet UITableViewCell *upgradeApkCell;
+@property (weak, nonatomic) IBOutlet UILabel *upgradeApkLabel;
+@property (weak, nonatomic) IBOutlet UIView *upgradeApkBadge;
 @property (weak, nonatomic) IBOutlet UITableViewCell *exportContainerCell;
 
 @property (weak, nonatomic) IBOutlet UILabel *versionLabel;
@@ -33,7 +38,7 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    [self _updatePreferenceUI];
+    [self _updateUI];
     if (self.recoveryMode) {
         self.includeDebugPanel = YES;
         self.navigationItem.title = @"Recovery Mode";
@@ -49,8 +54,14 @@
 
     [UserPreferences.shared observe:@[@"capsLockMapping", @"fontSize", @"launchCommand", @"bootCommand"]
                             options:0 owner:self usingBlock:^(typeof(self) self) {
-        [self _updatePreferenceUI];
+        [self _updateUI];
     }];
+    [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(_updateUI) name:FsUpdatedNotification object:nil];
+}
+
+- (void)viewWillAppear:(BOOL)animated {
+    [super viewWillAppear:animated];
+    [self _updateUI];
 }
 
 - (IBAction)dismiss:(id)sender {
@@ -62,12 +73,17 @@
     exit(0);
 }
 
-- (void)_updatePreferenceUI {
+- (void)_updateUI {
     UserPreferences *prefs = UserPreferences.shared;
     self.themeCell.detailTextLabel.text = prefs.theme.presetName;
     self.disableDimmingSwitch.on = UserPreferences.shared.shouldDisableDimming;
     self.launchCommandField.text = [UserPreferences.shared.launchCommand componentsJoinedByString:@" "];
     self.bootCommandField.text = [UserPreferences.shared.bootCommand componentsJoinedByString:@" "];
+
+    self.upgradeApkCell.userInteractionEnabled = FsNeedsRepositoryUpdate();
+    self.upgradeApkLabel.enabled = FsNeedsRepositoryUpdate();
+    self.upgradeApkBadge.hidden = !FsNeedsRepositoryUpdate();
+    [self.tableView reloadData];
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
@@ -90,6 +106,19 @@
                                               error:nil];
     }
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
+}
+
+- (NSString *)tableView:(UITableView *)tableView titleForFooterInSection:(NSInteger)section {
+    if (section == 1) { // filesystems / upgrade
+        if (!FsIsManaged()) {
+            return @"The current filesystem is not managed by iSH.";
+        } else if (!FsNeedsRepositoryUpdate()) {
+            return [NSString stringWithFormat:@"The current filesystem is using %s, which is the latest version.", NEWEST_APK_VERSION];
+        } else {
+            return [NSString stringWithFormat:@"An upgrade to %s is available.", NEWEST_APK_VERSION];
+        }
+    }
+    return [super tableView:tableView titleForFooterInSection:section];
 }
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {

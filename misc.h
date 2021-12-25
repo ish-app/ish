@@ -1,14 +1,15 @@
 #ifndef MISC_H
 #define MISC_H
 
-#ifndef __KERNEL__
+#ifdef __KERNEL__
+#include <linux/types.h>
+#else
 #include <assert.h>
 #include <sys/types.h>
 #include <stdnoreturn.h>
 #include <stdbool.h>
-#endif
-
 #include <stdint.h>
+#endif
 
 // utility macros
 #define glue(a, b) _glue(a, b)

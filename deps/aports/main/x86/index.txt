@@ -1,5 +1,1 @@
-<<<<<<< HEAD
-APKINDEX-v3.12-2021-05-29.tar.gz
-=======
-APKINDEX-v3.12-2021-05-20.tar.gz
->>>>>>> a56db1af84ac6df5df3aa75199d11546130ca444
+APKINDEX-v3.14-2021-12-21.tar.gz

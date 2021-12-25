@@ -12,6 +12,7 @@
 #import "ArrowBarButton.h"
 #import "UserPreferences.h"
 #import "AboutViewController.h"
+#import "CurrentRoot.h"
 #import "NSObject+SaneKVO.h"
 #include "kernel/init.h"
 #include "kernel/task.h"
@@ -37,6 +38,7 @@
 @property (weak, nonatomic) IBOutlet NSLayoutConstraint *barLeading;
 @property (weak, nonatomic) IBOutlet NSLayoutConstraint *barTrailing;
 @property (weak, nonatomic) IBOutlet NSLayoutConstraint *barButtonWidth;
+@property (weak, nonatomic) IBOutlet UIView *settingsBadge;
 
 @property (weak, nonatomic) IBOutlet UIButton *infoButton;
 @property (weak, nonatomic) IBOutlet UIButton *pasteButton;
@@ -44,7 +46,6 @@
 
 @property int sessionPid;
 @property (nonatomic) Terminal *sessionTerminal;
-@property int sessionTerminalNumber;
 
 @property BOOL ignoreKeyboardMotion;
 @property (nonatomic) BOOL hasExternalKeyboard;
@@ -55,7 +56,8 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    
+
+#if !ISH_LINUX
     int bootError = [AppDelegate bootError];
     if (bootError < 0) {
         NSString *message = [NSString stringWithFormat:@"could not boot"];
@@ -65,8 +67,9 @@
         [self showMessage:message subtitle:subtitle];
         NSLog(@"boot failed with code %d", bootError);
     }
+#endif
 
-    self.termView.terminal = self.terminal;
+    self.terminal = self.terminal;
     [self.termView becomeFirstResponder];
 
     NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
@@ -78,6 +81,11 @@
                selector:@selector(keyboardDidSomething:)
                    name:UIKeyboardDidChangeFrameNotification
                  object:nil];
+    [center addObserver:self
+               selector:@selector(_updateBadge)
+                   name:FsUpdatedNotification
+                 object:nil];
+
 
     [self _updateStyleFromPreferences:NO];
     
@@ -104,19 +112,30 @@
         [self.escapeKey setTitle:nil forState:UIControlStateNormal];
         [self.escapeKey setImage:[UIImage systemImageNamed:@"escape"] forState:UIControlStateNormal];
     }
-
+    
+    [UserPreferences.shared observe:@[@"hideStatusBar"] options:0 owner:self usingBlock:^(typeof(self) self) {
+        [self setNeedsStatusBarAppearanceUpdate];
+    }];
     [UserPreferences.shared observe:@[@"theme", @"hideExtraKeysWithExternalKeyboard"]
                             options:0 owner:self usingBlock:^(typeof(self) self) {
         [self _updateStyleFromPreferences:YES];
     }];
+    [self _updateBadge];
 }
 
 - (void)awakeFromNib {
     [super awakeFromNib];
+#if !ISH_LINUX
     [NSNotificationCenter.defaultCenter addObserver:self
                                            selector:@selector(processExited:)
                                                name:ProcessExitedNotification
                                              object:nil];
+#else
+    [NSNotificationCenter.defaultCenter addObserver:self
+                                           selector:@selector(kernelPanicked:)
+                                               name:KernelPanicNotification
+                                             object:nil];
+#endif
 }
 
 - (void)viewDidAppear:(BOOL)animated {
@@ -143,6 +162,7 @@
 }
 
 - (int)startSession {
+#if !ISH_LINUX
     int err = become_new_init_child();
     if (err < 0)
         return err;
@@ -154,7 +174,6 @@
         return (int) PTR_ERR(tty);
     }
     self.sessionTerminal = terminal;
-    self.sessionTerminalNumber = tty->num;
     NSString *stdioFile = [NSString stringWithFormat:@"/dev/pts/%d", tty->num];
     err = create_stdio(stdioFile.fileSystemRepresentation, TTY_PSEUDO_SLAVE_MAJOR, tty->num);
     if (err < 0)
@@ -170,16 +189,19 @@
         return err;
     self.sessionPid = current->pid;
     task_start(current);
+#else
+    self.sessionTerminal = [Terminal terminalWithType:4 number:1];
+#endif
     return 0;
 }
 
+#if !ISH_LINUX
 - (void)processExited:(NSNotification *)notif {
     int pid = [notif.userInfo[@"pid"] intValue];
     if (pid != self.sessionPid)
         return;
 
     [self.sessionTerminal destroy];
-    self.sessionTerminalNumber = 0;
     // On iOS 13, there are multiple windows, so just close this one.
     if (@available(iOS 13, *)) {
         // On iPhone, destroying scenes will fail, but the error doesn't actually go to the error handler, which is really stupid. Apple doesn't fix bugs, so I'm forced to just add a check here.
@@ -195,6 +217,15 @@
     current = NULL; // it's been freed
     [self startNewSession];
 }
+#endif
+
+#if ISH_LINUX
+- (void)kernelPanicked:(NSNotification *)notif {
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"panik" message:notif.userInfo[@"message"] preferredStyle:UIAlertControllerStyleAlert];
+    [alert addAction:[UIAlertAction actionWithTitle:@"k" style:UIAlertActionStyleDefault handler:nil]];
+    [self presentViewController:alert animated:YES completion:nil];
+}
+#endif
 
 - (void)showMessage:(NSString *)message subtitle:(NSString *)subtitle {
     dispatch_async(dispatch_get_main_queue(), ^{
@@ -239,10 +270,13 @@
         [self.termView reloadInputViews];
         self.ignoreKeyboardMotion = NO;
     }
-    [self setNeedsStatusBarAppearanceUpdate];
 }
 - (void)_updateStyleAnimated {
     [self _updateStyleFromPreferences:YES];
+}
+
+- (void)_updateBadge {
+    self.settingsBadge.hidden = !FsNeedsRepositoryUpdate();
 }
 
 - (UIStatusBarStyle)preferredStatusBarStyle {
@@ -250,8 +284,7 @@
 }
 
 - (BOOL)prefersStatusBarHidden {
-    BOOL isIPhoneX = self.view.window.safeAreaInsets.top > 20;
-    return !isIPhoneX;
+    return UserPreferences.shared.hideStatusBar;
 }
 
 - (void)keyboardDidSomething:(NSNotification *)notification {
@@ -292,21 +325,6 @@
 - (void)setHasExternalKeyboard:(BOOL)hasExternalKeyboard {
     _hasExternalKeyboard = hasExternalKeyboard;
     [self _updateStyleFromPreferences:YES];
-}
-
-- (void)ishExited:(NSNotification *)notification {
-    [self performSelectorOnMainThread:@selector(displayExitThing) withObject:nil waitUntilDone:YES];
-}
-
-- (void)displayExitThing {
-    UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"attempted to kill init" message:nil preferredStyle:UIAlertControllerStyleAlert];
-    [alert addAction:[UIAlertAction actionWithTitle:@"exit" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-        id delegate = [UIApplication sharedApplication].delegate;
-        [delegate exitApp];
-    }]];
-    if ([UserPreferences.shared hasChangedLaunchCommand])
-        [alert addAction:[UIAlertAction actionWithTitle:@"i typed the init command wrong, let me fix it" style:UIAlertActionStyleDefault handler:nil]];
-    [self presentViewController:alert animated:YES completion:nil];
 }
 
 - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
@@ -458,8 +476,10 @@
 
 @interface BarView : UIInputView
 @property (weak) IBOutlet TerminalViewController *terminalViewController;
+@property (nonatomic) IBInspectable BOOL allowsSelfSizing;
 @end
 @implementation BarView
+@dynamic allowsSelfSizing;
 
 - (void)layoutSubviews {
     [self.terminalViewController resizeBar];

@@ -1,11 +1,14 @@
-#!/bin/bash -x
-mkdir -p $MESON_BUILD_DIR
-cd $MESON_BUILD_DIR
-PATH="/usr/local/bin:$PATH:/opt/homebrew/bin" 
+#!/bin/bash
 
-config=$(/opt/homebrew/bin/meson introspect --buildoptions)
+# Try to figure out the user's PATH to pick up their installed utilities.
+export PATH="$PATH:$(sudo -u "$USER" -i echo '$PATH')"
+
+mkdir -p "$MESON_BUILD_DIR"
+cd "$MESON_BUILD_DIR"
+
+config=$(meson introspect --buildoptions)
 if [[ $? -ne 0 ]]; then
-    export CC_FOR_BUILD="env -u SDKROOT -u IPHONEOS_DEPLOYMENT_TARGET xcrun /opt/homebrew/opt/llvm/bin/clang"
+    export CC_FOR_BUILD="env -u SDKROOT -u IPHONEOS_DEPLOYMENT_TARGET xcrun clang"
     export CC="$CC_FOR_BUILD" # compatibility with meson < 0.54.0
     crossfile=cross.txt
     echo $ARCHS
@@ -18,7 +21,7 @@ if [[ $? -ne 0 ]]; then
     esac
     cat > $crossfile <<EOF
 [binaries]
-c = '/opt/homebrew/opt/llvm/bin/clang'
+c = 'clang'
 ar = 'ar'
 
 [host_machine]
@@ -31,8 +34,8 @@ endian = 'little'
 c_args = ['-arch', '$arch']
 needs_exe_wrapper = true
 EOF
-    /opt/homebrew/bin/meson $SRCROOT --cross-file $crossfile || exit $?
-    config=$(/opt/homebrew/bin/meson introspect --buildoptions)
+    (set -x; meson $SRCROOT --cross-file $crossfile) || exit $?
+    config=$(meson introspect --buildoptions)
 fi
 
 buildtype=debug
@@ -46,10 +49,14 @@ if [[ -n "$ENABLE_ADDRESS_SANITIZER" ]]; then
 fi
 log=$ISH_LOG
 log_handler=$ISH_LOGGER
-for var in buildtype log b_ndebug b_sanitize log_handler; do
+kernel=ish
+if [[ -n "$ISH_KERNEL" ]]; then
+    kernel=$ISH_KERNEL
+fi
+for var in buildtype log b_ndebug b_sanitize log_handler kernel; do
     old_value=$(python3 -c "import sys, json; v = next(x['value'] for x in json.load(sys.stdin) if x['name'] == '$var'); print(str(v).lower() if isinstance(v, bool) else v)" <<< $config)
     new_value=${!var}
     if [[ $old_value != $new_value ]]; then
-        /opt/homebrew/bin/meson configure "-D$var=$new_value"
+        set -x; meson configure "-D$var=$new_value"
     fi
 done

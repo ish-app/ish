@@ -26,7 +26,7 @@ void fs_register(const struct fs_ops *fs) {
 char * get_filesystems(void) {
     char *fs_list = calloc(MAX_FILESYSTEMS * 50, sizeof(char)); // Reasonable assumption?
     unsigned int i;
-    
+
     for ( i = 0; i < MAX_FILESYSTEMS; i++ ) {
         if (filesystems[i] != NULL) {
             fs_list = strcat(fs_list, "nodev    ");
@@ -34,7 +34,7 @@ char * get_filesystems(void) {
             fs_list = strcat(fs_list, "\n");
         }
     }
-  
+
     return fs_list;
 }
 
@@ -207,4 +207,3 @@ dword_t sys_umount2(addr_t target_addr, dword_t flags) {
 
 struct list mounts = {&mounts, &mounts};
 lock_t mounts_lock = LOCK_INITIALIZER;
-

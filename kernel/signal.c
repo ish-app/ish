@@ -668,11 +668,9 @@ int_t sys_rt_sigtimedwait(addr_t set_addr, addr_t info_addr, addr_t timeout_addr
     assert(current->waiting == 0);
     current->waiting = set;
     int err;
-    TASK_MAY_BLOCK {
-        do {
-            err = wait_for(&current->pause, &current->sighand->lock, timeout_addr == 0 ? NULL : &timeout);
-        } while (err != 0);
-    }
+    do {
+        err = wait_for(&current->pause, &current->sighand->lock, timeout_addr == 0 ? NULL : &timeout);
+    } while (err == 0);
     current->waiting = 0;
     if (err == _ETIMEDOUT) {
         unlock(&current->sighand->lock);

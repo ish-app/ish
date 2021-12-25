@@ -236,6 +236,10 @@ dword_t sys_ptrace(dword_t request, dword_t pid, addr_t addr, dword_t data) {
             return 0;
         }
 
+        case PTRACE_SETOPTIONS_:
+            STRACE("ptrace(PTRACE_SETOPTIONS, %d, %#x, %#x)", pid, addr, data);
+            return _EINVAL;
+
         case PTRACE_GETSIGINFO_: {
             STRACE("ptrace(PTRACE_GETSIGINFO, %d, %#x, %#x)", pid, addr, data);
             struct task *child = find_child(pid);
@@ -252,10 +256,5 @@ dword_t sys_ptrace(dword_t request, dword_t pid, addr_t addr, dword_t data) {
         default:
             STRACE("ptrace(%d, %d, %#x, %#x)", request, pid, addr, data);
             return _EPERM;
-            
-       // case PTRACE_SETOPTIONS_:
-         //   STRACE("ptrace(PTRACE_SETOPTIONS, %d, %#x, %#x)", pid, addr, data);
-           // return _EINVAL;
-            
     }
 }

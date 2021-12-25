@@ -2,16 +2,16 @@ name: CI
 
 on:
   push:
-      branches: [master]
   pull_request:
       branches: [master]
 
 jobs:
   build-linux:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     strategy:
       matrix:
         cc: [clang, gcc]
+        kernel: [ish, linux]
     steps:
       - uses: actions/checkout@v2
         with:
@@ -21,13 +21,41 @@ jobs:
             python-version: '3.x'
       - name: Install dependencies
         run: |
-          sudo apt-get install ninja-build libarchive-dev
-          pip3 install meson
+          sudo apt-get update
+          sudo apt-get install libarchive-dev
+          pip3 install meson ninja
+      - name: Clone Linux
+        if: matrix.kernel == 'linux'
+        run: deps/clone-linux.sh
       - name: Build
         run: |
-          meson build -Dengine=jit
+          meson build -Dengine=jit -Dkernel=${{matrix.kernel}}
           ninja -C build
         env:
           CC: ${{matrix.cc}}
       - name: Test
+        if: matrix.kernel == 'ish'
         run: ninja -C build test
+
+  build-mac:
+    runs-on: macos-10.15
+    strategy:
+      matrix:
+        kernel: [ish, linux]
+    steps:
+      - uses: actions/checkout@v2
+        with:
+            submodules: true
+      - name: Install dependencies
+        run: |
+          brew install llvm ninja libarchive
+          pip3 install meson
+      - name: Clone Linux
+        if: matrix.kernel == 'linux'
+        run: deps/clone-linux.sh
+      - name: Build
+        if: matrix.kernel == 'ish'
+        run: xcodebuild -project iSH.xcodeproj -scheme iSH -arch arm64 -sdk iphoneos CODE_SIGNING_ALLOWED=NO
+      - name: Build
+        if: matrix.kernel == 'linux'
+        run: xcodebuild -project iSH.xcodeproj -scheme iSH+Linux -arch x86_64 -sdk iphonesimulator CODE_SIGNING_ALLOWED=NO

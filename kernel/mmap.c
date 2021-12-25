@@ -44,7 +44,7 @@ void mm_release(struct mm *mm) {
             fd_close(mm->exefile);
         mem_destroy(&mm->mem);
         free(mm);
-    }   
+    }
 }
 
 static addr_t do_mmap(addr_t addr, dword_t len, dword_t prot, dword_t flags, fd_t fd_no, dword_t offset) {

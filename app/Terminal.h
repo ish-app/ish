@@ -21,7 +21,7 @@ struct tty;
 
 + (void)convertCommand:(NSArray<NSString *> *)command toArgs:(char *)argv limitSize:(size_t)maxSize;
 
-- (int)write:(const void *)buf length:(size_t)len;
+- (int)sendOutput:(const void *)buf length:(int)len;
 - (void)sendInput:(const char *)buf length:(size_t)len;
 
 - (NSString *)arrow:(char)direction;
