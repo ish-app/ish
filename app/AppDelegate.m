@@ -35,7 +35,6 @@
 @interface AppDelegate ()
 
 @property BOOL exiting;
-@property NSString *unameVersion;
 @property NSString *ishVersion;
 @property NSString *unameHostname;
 @property SCNetworkReachabilityRef reachability;
@@ -265,12 +264,9 @@ void NetworkReachabilityCallback(SCNetworkReachabilityRef target, SCNetworkReach
         [UIView setAnimationsEnabled:NO];
 
 #if !ISH_LINUX
-    self.unameVersion = [NSString stringWithFormat:@"iSH %@ (%@)",
     self.ishVersion = [NSString stringWithFormat:@"iSH %@ (%@)",
                          [NSBundle.mainBundle objectForInfoDictionaryKey:@"CFBundleShortVersionString"],
                          [NSBundle.mainBundle objectForInfoDictionaryKey:(NSString *) kCFBundleVersionKey]];
-    extern const char *uname_version;
-    uname_version = self.unameVersion.UTF8String;
     extern const char *proc_ish_version;
     proc_ish_version = self.ishVersion.UTF8String;
     // this defaults key is set when taking app store screenshots
