@@ -8,7 +8,7 @@
 	</array>
 	<key>com.apple.security.application-groups</key>
 	<array>
-		<string>group.app.ish.emkeyiSH</string>
+		<string>$(PRODUCT_APP_GROUP_IDENTIFIER)</string>
 	</array>
 </dict>
 </plist>
