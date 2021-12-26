@@ -51,9 +51,9 @@ bool proc_dir_read(struct proc_entry *entry, unsigned long *index, struct proc_e
         return entry->meta->readdir(entry, index, next_entry);
 
     if (entry->meta->children) {
-        if (*index >= entry->meta->children_sizeof/sizeof(entry->meta->children[0]))
+        if (*index >= entry->meta->children->count)
             return false;
-        next_entry->meta = &entry->meta->children[*index];
+        next_entry->meta = &entry->meta->children->entries[*index];
         next_entry->pid = entry->pid;
         (*index)++;
         return true;

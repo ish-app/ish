@@ -260,18 +260,17 @@ static int proc_pid_exe_readlink(struct proc_entry *entry, char *buf) {
     return err;
 }
 
-struct proc_dir_entry proc_pid_entries[] = {
+struct proc_children proc_pid_children = PROC_CHILDREN({
     {"auxv", .show = proc_pid_auxv_show},
     {"cmdline", .show = proc_pid_cmdline_show},
     {"exe", S_IFLNK, .readlink = proc_pid_exe_readlink},
     {"fd", S_IFDIR, .readdir = proc_pid_fd_readdir},
     {"maps", .show = proc_pid_maps_show},
     {"stat", .show = proc_pid_stat_show},
-};
+});
 
 struct proc_dir_entry proc_pid = {NULL, S_IFDIR,
-    .children = proc_pid_entries, .children_sizeof = sizeof(proc_pid_entries),
-    .getname = proc_pid_getname};
+    .children = &proc_pid_children, .getname = proc_pid_getname};
 
 static struct proc_dir_entry proc_pid_fd = {NULL, S_IFLNK,
     .getname = proc_pid_fd_getname, .readlink = proc_pid_fd_readlink};

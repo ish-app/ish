@@ -30,8 +30,7 @@ struct proc_dir_entry {
     int (*readlink)(struct proc_entry *entry, char *buf);
 
     // directory with static list
-    struct proc_dir_entry *children;
-    size_t children_sizeof;
+    struct proc_children *children;
 
     // directory with dynamic contents
     bool (*readdir)(struct proc_entry *entry, unsigned long *index, struct proc_entry *next_entry);
@@ -39,6 +38,13 @@ struct proc_dir_entry {
     struct proc_dir_entry *parent;
     int inode;
 };
+
+struct proc_children {
+    size_t count;
+    struct proc_dir_entry entries[];
+};
+
+#define PROC_CHILDREN(...) { .count = sizeof((struct proc_dir_entry[])__VA_ARGS__) / sizeof(struct proc_dir_entry), .entries = __VA_ARGS__ }
 
 extern struct proc_dir_entry proc_root;
 extern struct proc_dir_entry proc_pid;
