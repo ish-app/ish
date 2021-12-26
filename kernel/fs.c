@@ -76,10 +76,7 @@ fd_t sys_openat(fd_t at_f, addr_t path_addr, dword_t flags, mode_t_ mode) {
     struct fd *at = at_fd(at_f);
     if (at == NULL)
         return _EBADF;
-    struct fd *fd;
-    TASK_MAY_BLOCK {
-        fd = generic_openat(at, path, flags, mode);
-    }
+    struct fd *fd = generic_openat(at, path, flags, mode);
     if (IS_ERR(fd))
         return PTR_ERR(fd);
     return f_install(fd, flags);
@@ -244,11 +241,7 @@ dword_t sys_read(fd_t fd_no, addr_t buf_addr, dword_t size) {
     char *buf = (char *) malloc(size);
     if (buf == NULL)
         return _ENOMEM;
-    
-    int_t res = 0;
-    TASK_MAY_BLOCK {
-        res = sys_read_buf(fd_no, buf, size);
-    }
+    int_t res = sys_read_buf(fd_no, buf, size);
     if (res >= 0) {
         if (user_write(buf_addr, buf, res))
             res = _EFAULT;
@@ -289,9 +282,7 @@ dword_t sys_write(fd_t fd_no, addr_t buf_addr, dword_t size) {
     if (print_size > 100) print_size = 100;
     STRACE("write(%d, \"%.*s\", %d)", fd_no, print_size, buf, size);
 
-    TASK_MAY_BLOCK {
-        res = sys_write_buf(fd_no, buf, size);
-    }
+    res = sys_write_buf(fd_no, buf, size);
 out:
     free(buf);
     return res;
@@ -334,10 +325,7 @@ dword_t sys_readv(fd_t fd_no, addr_t iovec_addr, dword_t iovec_count) {
         free(iovec);
         return _ENOMEM;
     }
-    ssize_t res = 0;
-    TASK_MAY_BLOCK {
-        res = sys_read_buf(fd_no, buf, io_size);
-    }
+    ssize_t res = sys_read_buf(fd_no, buf, io_size);
     if (res < 0)
         goto error;
 
@@ -385,9 +373,8 @@ dword_t sys_writev(fd_t fd_no, addr_t iovec_addr, dword_t iovec_count) {
         STRACE(" {\"%.*s\", %u}", print_size, buf + offset, iovec[i].len);
         offset += iovec[i].len;
     }
-    TASK_MAY_BLOCK {
-        res = sys_write_buf(fd_no, buf, io_size);
-    }
+    res = sys_write_buf(fd_no, buf, io_size);
+
 error:
     free(buf);
     free(iovec);
@@ -435,7 +422,6 @@ dword_t sys_pread(fd_t f, addr_t buf_addr, dword_t size, off_t_ off) {
     char *buf = malloc(size+1);
     if (buf == NULL)
         return _ENOMEM;
-    task_may_block_start();
     lock(&fd->lock);
     ssize_t res;
     if (fd->ops->pread) {
@@ -461,7 +447,6 @@ dword_t sys_pread(fd_t f, addr_t buf_addr, dword_t size, off_t_ off) {
     }
 out:
     unlock(&fd->lock);
-    task_may_block_end();
     free(buf);
     return res;
 }
@@ -476,24 +461,20 @@ dword_t sys_pwrite(fd_t f, addr_t buf_addr, dword_t size, off_t_ off) {
         return _ENOMEM;
     if (user_read(buf_addr, buf, size))
         return _EFAULT;
-    
     lock(&fd->lock);
     ssize_t res;
-    
-    TASK_MAY_BLOCK {
-        if (fd->ops->pwrite) {
-            res = fd->ops->pwrite(fd, buf, size, off);
-        } else {
-            off_t_ saved_off = fd->ops->lseek(fd, 0, LSEEK_CUR);
-            if ((res = fd->ops->lseek(fd, off, LSEEK_SET)) >= 0) {
-                res = fd->ops->write(fd, buf, size);
-                // This really shouldn't fail. The lseek man page lists these reasons:
-                // EBADF, ESPIPE: can't happen because the last lseek wouldn't have succeeded.
-                // EOVERFLOW: can't happen for LSEEK_SET.
-                // EINVAL: can't happen other than typoing LSEEK_SET, because we know saved_off is not negative.
-                off_t_ lseek_res = fd->ops->lseek(fd, saved_off, LSEEK_SET);
-                assert(lseek_res >= 0);
-            }
+    if (fd->ops->pwrite) {
+        res = fd->ops->pwrite(fd, buf, size, off);
+    } else {
+        off_t_ saved_off = fd->ops->lseek(fd, 0, LSEEK_CUR);
+        if ((res = fd->ops->lseek(fd, off, LSEEK_SET)) >= 0) {
+            res = fd->ops->write(fd, buf, size);
+            // This really shouldn't fail. The lseek man page lists these reasons:
+            // EBADF, ESPIPE: can't happen because the last lseek wouldn't have succeeded.
+            // EOVERFLOW: can't happen for LSEEK_SET.
+            // EINVAL: can't happen other than typoing LSEEK_SET, because we know saved_off is not negative.
+            off_t_ lseek_res = fd->ops->lseek(fd, saved_off, LSEEK_SET);
+            assert(lseek_res >= 0);
         }
     }
     unlock(&fd->lock);
@@ -550,12 +531,7 @@ dword_t sys_ioctl(fd_t f, dword_t cmd, dword_t arg) {
             bit_clear(f, current->files->cloexec);
             return 0;
     }
-    
-    dword_t res = 0;
-    TASK_MAY_BLOCK {
-        res = fd_ioctl(fd, cmd, arg);
-    }
-    return res;
+    return fd_ioctl(fd, cmd, arg);
 }
 
 dword_t sys_getcwd(addr_t buf_addr, dword_t size) {
@@ -977,10 +953,8 @@ dword_t sys_fsync(fd_t f) {
     if (fd == NULL)
         return _EBADF;
     int err = 0;
-    TASK_MAY_BLOCK {
-        if (fd->ops->fsync)
-            err = fd->ops->fsync(fd);
-    }
+    if (fd->ops->fsync)
+        err = fd->ops->fsync(fd);
     return err;
 }
 

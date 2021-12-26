@@ -1,12 +1,9 @@
 #include <mach/mach.h>
 #include <sys/sysctl.h>
 #include <sys/time.h>
-#include <sys/mman.h>
-#include "kernel/errno.h"
 #include "platform/platform.h"
-#include "debug.h"
 
-struct cpu_usage get_total_cpu_usage() {
+struct cpu_usage get_cpu_usage() {
     host_cpu_load_info_data_t load;
     mach_msg_type_number_t fuck = HOST_CPU_LOAD_INFO_COUNT;
     host_statistics(mach_host_self(), HOST_CPU_LOAD_INFO, (host_info_t) &load, &fuck);
@@ -16,13 +13,6 @@ struct cpu_usage get_total_cpu_usage() {
     usage.idle_ticks = load.cpu_ticks[CPU_STATE_IDLE];
     usage.nice_ticks = load.cpu_ticks[CPU_STATE_NICE];
     return usage;
-}
-
-int get_cpu_count() {
-    int ncpu;
-    size_t size = sizeof(int);
-    sysctlbyname("hw.ncpu", &ncpu, &size, NULL, 0);
-    return ncpu;
 }
 
 struct mem_usage get_mem_usage() {
@@ -70,36 +60,4 @@ struct uptime_info get_uptime() {
         .load_15m = vm_loadavg.ldavg[2],
     };
     return uptime;
-}
-
-int get_per_cpu_usage(struct cpu_usage** cpus_usage) {
-    mach_msg_type_number_t info_size = sizeof(processor_cpu_load_info_t);
-    processor_cpu_load_info_t sys_load_data = 0;
-    natural_t ncpu;
-    
-    int err = host_processor_info(mach_host_self(), PROCESSOR_CPU_LOAD_INFO, &ncpu, (processor_info_array_t*)&sys_load_data, &info_size);
-    if (err) {
-        STRACE("Unable to get per cpu usage");
-        return err;
-    }
-    
-    struct cpu_usage* cpus_load_data = (struct cpu_usage*)calloc(ncpu, sizeof(struct cpu_usage));
-    if (!cpus_load_data) {
-        return _ENOMEM;
-    }
-    
-    for (natural_t i = 0; i < ncpu; i++) {
-        cpus_load_data[i].user_ticks = sys_load_data[i].cpu_ticks[CPU_STATE_USER];
-        cpus_load_data[i].system_ticks = sys_load_data[i].cpu_ticks[CPU_STATE_SYSTEM];
-        cpus_load_data[i].idle_ticks = sys_load_data[i].cpu_ticks[CPU_STATE_IDLE];
-        cpus_load_data[i].nice_ticks = sys_load_data[i].cpu_ticks[CPU_STATE_NICE];
-    }
-    *cpus_usage = cpus_load_data;
-    
-    // Freeing cpu load information
-    if (sys_load_data) {
-        munmap(sys_load_data, vm_page_size);
-    }
-    
-    return 0;
 }

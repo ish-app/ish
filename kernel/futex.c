@@ -103,9 +103,7 @@ static int futex_wait(addr_t uaddr, dword_t val, struct timespec *timeout) {
         wait.cond = COND_INITIALIZER;
         wait.futex = futex;
         list_add_tail(&futex->queue, &wait.queue);
-        TASK_MAY_BLOCK {
-            err = wait_for(&wait.cond, &futex_lock, timeout);
-        }
+        err = wait_for(&wait.cond, &futex_lock, timeout);
         futex = wait.futex;
         list_remove_safe(&wait.queue);
     }

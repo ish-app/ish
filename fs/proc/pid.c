@@ -32,17 +32,12 @@ static int proc_pid_stat_show(struct proc_entry *entry, struct proc_data *buf) {
     lock(&task->group->lock);
     lock(&task->sighand->lock);
 
-    // program reads this using read-like syscall, so we are in blocking area,
-    // which means its io_block is set to true. When a proc reads an
-    // information about itself, but it shouldn't be marked as blocked.
-    char proc_state = (task->zombie ? 'Z' :
-                       task->group->stopped ? 'T' :
-                       task->io_block && task->pid != current->pid ? 'S' :
-                       'R');
-    
     proc_printf(buf, "%d ", task->pid);
     proc_printf(buf, "(%.16s) ", task->comm);
-    proc_printf(buf, "%c ", proc_state);
+    proc_printf(buf, "%c ",
+            task->zombie ? 'Z' :
+            task->group->stopped ? 'T' :
+            'R'); // I have no visibility into sleep state at the moment
     proc_printf(buf, "%d ", task->parent ? task->parent->pid : 0);
     proc_printf(buf, "%d ", task->group->pgid);
     proc_printf(buf, "%d ", task->group->sid);
@@ -105,17 +100,6 @@ static int proc_pid_stat_show(struct proc_entry *entry, struct proc_data *buf) {
     unlock(&task->group->lock);
     unlock(&task->general_lock);
     proc_put_task(task);
-    return 0;
-}
-
-static int proc_pid_statm_show(struct proc_entry *UNUSED(entry), struct proc_data *buf) {
-    proc_printf(buf, "%lu ", 0l); // size
-    proc_printf(buf, "%lu ", 0l); // resident
-    proc_printf(buf, "%lu ", 0l); // shared
-    proc_printf(buf, "%lu ", 0l); // text
-    proc_printf(buf, "%lu ", 0l); // lib (unused since Linux 2.6)
-    proc_printf(buf, "%lu ", 0l); // data
-    proc_printf(buf, "%lu\n", 0l); // dt (unused since Linux 2.6)
     return 0;
 }
 
@@ -276,19 +260,17 @@ static int proc_pid_exe_readlink(struct proc_entry *entry, char *buf) {
     return err;
 }
 
-struct proc_dir_entry proc_pid_entries[] = {
+struct proc_children proc_pid_children = PROC_CHILDREN({
     {"auxv", .show = proc_pid_auxv_show},
     {"cmdline", .show = proc_pid_cmdline_show},
     {"exe", S_IFLNK, .readlink = proc_pid_exe_readlink},
     {"fd", S_IFDIR, .readdir = proc_pid_fd_readdir},
     {"maps", .show = proc_pid_maps_show},
     {"stat", .show = proc_pid_stat_show},
-    {"statm", .show = proc_pid_statm_show},
-};
+});
 
 struct proc_dir_entry proc_pid = {NULL, S_IFDIR,
-    .children = proc_pid_entries, .children_sizeof = sizeof(proc_pid_entries),
-    .getname = proc_pid_getname};
+    .children = &proc_pid_children, .getname = proc_pid_getname};
 
 static struct proc_dir_entry proc_pid_fd = {NULL, S_IFLNK,
     .getname = proc_pid_fd_getname, .readlink = proc_pid_fd_readlink};

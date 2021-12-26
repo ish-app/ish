@@ -23,21 +23,6 @@ void fs_register(const struct fs_ops *fs) {
     assert(!"reached filesystem limit");
 }
 
-char * get_filesystems(void) {
-    char *fs_list = calloc(MAX_FILESYSTEMS * 50, sizeof(char)); // Reasonable assumption?
-    unsigned int i;
-
-    for ( i = 0; i < MAX_FILESYSTEMS; i++ ) {
-        if (filesystems[i] != NULL) {
-            fs_list = strcat(fs_list, "nodev    ");
-            fs_list = strcat(fs_list, filesystems[i]->name);
-            fs_list = strcat(fs_list, "\n");
-        }
-    }
-
-    return fs_list;
-}
-
 struct mount *mount_find(char *path) {
     assert(path_is_normalized(path));
     lock(&mounts_lock);

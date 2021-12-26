@@ -9,8 +9,7 @@ struct cpu_usage {
     uint64_t idle_ticks;
     uint64_t nice_ticks;
 };
-struct cpu_usage get_total_cpu_usage(void);
-int get_per_cpu_usage(struct cpu_usage** cpus_usage);
+struct cpu_usage get_cpu_usage(void);
 
 struct mem_usage {
     uint64_t total;
@@ -25,7 +24,5 @@ struct uptime_info {
     uint64_t load_1m, load_5m, load_15m;
 };
 struct uptime_info get_uptime(void);
-
-int get_cpu_count(void);
 
 #endif
