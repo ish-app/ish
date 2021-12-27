@@ -25,4 +25,6 @@ struct uptime_info {
 };
 struct uptime_info get_uptime(void);
 
+int get_cpu_count(void);
+
 #endif
