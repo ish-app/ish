@@ -9,7 +9,7 @@
 #include <sys/sysinfo.h>
 #endif
 
-const char *uname_version = "SUPER AWESOME";
+const char *uname_version = "AOK";
 const char *uname_hostname_override = NULL;
 
 void do_uname(struct uname *uts) {
