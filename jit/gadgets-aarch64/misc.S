@@ -87,7 +87,14 @@
 .gadget_array cmpxchg
 .gadget_array atomic_cmpxchg
 
+.extern segfault_write
+
 .gadget atomic_cmpxchg8b
+    #Test for alignment.
+    tst _addr, 0x7
+    b.ne 2f
+
+    #cmpxchg8b via aligned exclusive 8b load
     write_prep 64, atomic_cmpxchg8b
     mov w9, eax
     bfi x9, xdx, 32, 32
@@ -114,6 +121,10 @@
     str w9, [_cpu, CPU_eflags]
     gret 1
     write_bullshit 64, atomic_cmpxchg8b
+
+2:  #All unaligned paths
+    b segfault_write
+
 
 .gadget cmpxchg8b
     write_prep 64, cmpxchg8b
