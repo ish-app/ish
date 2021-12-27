@@ -38,7 +38,7 @@ NSString *const kPreferenceHideStatusBar = @"Status Bar";
     self = [super init];
     if (self) {
         _defaults = [NSUserDefaults standardUserDefaults];
-        Theme *defaultTheme = [Theme presetThemeNamed:@"Light"];
+        Theme *defaultTheme = [Theme presetThemeNamed:@"Amber"];
         [_defaults registerDefaults:@{
             kPreferenceFontFamilyKey: @"Menlo",
             kPreferenceFontSizeKey: @(12),
@@ -213,7 +213,9 @@ static UIColor *UnarchiveColor(id data) {
 
 NSDictionary<NSString *, Theme *> *presetThemes;
 + (void)initialize {
-    presetThemes = @{@"Light": [self _themeWithForegroundColor:UIColor.blackColor
+    presetThemes = @{@"Amber":  [self _themeWithForegroundColor:UIColor.orangeColor
+                                               backgroundColor:UIColor.blackColor],
+                     @"Light": [self _themeWithForegroundColor:UIColor.blackColor
                                                backgroundColor:UIColor.whiteColor],
                      @"Dark":  [self _themeWithForegroundColor:UIColor.whiteColor
                                                backgroundColor:UIColor.blackColor],
@@ -222,7 +224,7 @@ NSDictionary<NSString *, Theme *> *presetThemes;
 }
 
 + (NSArray<NSString *> *)presetNames {
-    return @[@"Light", @"Dark", @"1337"];
+    return @[@"Amber", @"Light", @"Dark", @"1337"];
 }
 + (instancetype)presetThemeNamed:(NSString *)name {
     return presetThemes[name];
