@@ -2341,6 +2341,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CURRENT_PROJECT_VERSION = 301;
+				MARKETING_VERSION = "1.2.4-AOK";
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = "Debug-ApplePleaseFixFB19282108";
@@ -2351,6 +2352,8 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CURRENT_PROJECT_VERSION = 301;
+				DEVELOPMENT_TEAM = UYU5FM4LQ4;
+				MARKETING_VERSION = "1.2.4-AOK";
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
@@ -2369,6 +2372,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CURRENT_PROJECT_VERSION = 301;
+				MARKETING_VERSION = "1.2.4-AOK";
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = DebugLinux;
@@ -2589,6 +2593,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CURRENT_PROJECT_VERSION = 301;
+				MARKETING_VERSION = "1.2.4-AOK";
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = ReleaseLinux;
