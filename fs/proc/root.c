@@ -25,6 +25,7 @@ static void show_kb(struct proc_data *buf, const char *name, uint64_t value) {
 static int proc_show_filesystems(struct proc_entry *UNUSED(entry), struct proc_data *buf) {
     char *filesystems = get_filesystems();
     proc_printf(buf, "%s", filesystems);
+    free(filesystems);
     return 0;
 }
 

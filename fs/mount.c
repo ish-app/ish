@@ -27,7 +27,7 @@ char * get_filesystems(void) {
     char *fs_list = calloc(MAX_FILESYSTEMS * 50, sizeof(char)); // Reasonable assumption?
     unsigned int i;
 
-    for ( i = 0; i < MAX_FILESYSTEMS; i++ ) {
+    for (i = 0; i < MAX_FILESYSTEMS; i++) {
         if (filesystems[i] != NULL) {
             fs_list = strcat(fs_list, "nodev    ");
             fs_list = strcat(fs_list, filesystems[i]->name);
