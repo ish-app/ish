@@ -1,3 +1,6 @@
+#ifdef __ARM_NEON__
+#include <arm_neon.h>
+#endif
 #include <math.h>
 #include <string.h>
 
@@ -91,8 +94,15 @@ void vec_shiftr_q128(NO_CPU, union xmm_reg *amount, union xmm_reg *dst) {
 }
 
 void vec_add_b128(NO_CPU, union xmm_reg *src, union xmm_reg *dst) {
+#ifdef __ARM_NEON__
+    uint8x16_t neon_dst = vld1q_u8(dst->u8);
+    uint8x16_t neon_src = vld1q_u8(src->u8);
+    uint8x16_t neon_res = vaddq_u8(neon_dst, neon_src);
+    vst1q_u8(dst->u8, neon_res);
+#else
     for (unsigned i = 0; i < array_size(src->u8); i++)
         dst->u8[i] += src->u8[i];
+#endif
 }
 void vec_add_d128(NO_CPU, union xmm_reg *src, union xmm_reg *dst) {
     for (unsigned i = 0; i < array_size(src->u32); i++)
@@ -142,9 +152,16 @@ void vec_xor64(NO_CPU, union mm_reg *src, union mm_reg *dst) {
 }
 
 void vec_min_ub128(NO_CPU, union xmm_reg *src, union xmm_reg *dst) {
+#ifdef __ARM_NEON__
+    uint8x16_t neon_dst = vld1q_u8(dst->u8);
+    uint8x16_t neon_src = vld1q_u8(src->u8);
+    uint8x16_t neon_res = vminq_u8(neon_dst, neon_src);
+    vst1q_u8(dst->u8, neon_res);
+#else
     for (unsigned i = 0; i < array_size(src->u8); i++)
         if (src->u8[i] < dst->u8[i])
             dst->u8[i] = src->u8[i];
+#endif
 }
 
 void vec_max_ub128(NO_CPU, union xmm_reg *src, union xmm_reg *dst) {
@@ -259,20 +276,46 @@ void vec_shuffle_d128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst, uint
 }
 
 void vec_compare_eqb128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst) {
+#ifdef __ARM_NEON__
+    uint8x16_t neon_dst = vld1q_u8(dst->u8);
+    uint8x16_t neon_src = vld1q_u8(src->u8);
+    uint8x16_t neon_res = vceqq_u8(neon_dst, neon_src);
+    vst1q_u8(dst->u8, neon_res);
+#else
     for (unsigned i = 0; i < array_size(src->u8); i++)
         dst->u8[i] = dst->u8[i] == src->u8[i] ? ~0 : 0;
+#endif
 }
 void vec_compare_eqd128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst) {
     for (unsigned i = 0; i < array_size(src->u32); i++)
         dst->u32[i] = dst->u32[i] == src->u32[i] ? ~0 : 0;
 }
 
+/*
+ * Neon algo: (only one part (64bits) is demonstrated, algo works the same for another part)
+ * z - is a bit which forms the mask, X - is not interesting bit.
+ * neon_src: zXXXXXXXzXXXXXXXzXXXXXXXzXXXXXXXzXXXXXXXzXXXXXXXzXXXXXXXzXXXXXXX...
+ * step1:    0000000z0000000z0000000z0000000z0000000z0000000z0000000z0000000z...
+ * step2:    00000000000000zz00000000000000zz00000000000000zz00000000000000zz...
+ * step3:    0000000000000000000000000000zzzz0000000000000000000000000000zzzz...
+ * step4:    00000000000000000000000000000000000000000000000000000000zzzzzzzz...
+ * After step4, 8 bits at the end of each 64bit lane are loaded into dst.
+ */
 void vec_movmask_b128(NO_CPU, const union xmm_reg *src, uint32_t *dst) {
     *dst = 0;
+#if defined(__ARM_NEON__) && defined(__LITTLE_ENDIAN__)
+    uint8x16_t neon_src = vld1q_u8(src->u8);
+    uint16x8_t step1 = vshrq_n_u8(neon_src, 7);
+    uint32x4_t step2 = vsraq_n_u16(step1, step1, 7);
+    uint64x2_t step3 = vsraq_n_u32(step2, step2, 14);
+    uint16x8_t step4 = vsraq_n_u64(step3, step3, 28);
+    *dst |= (vgetq_lane_u8(step4, 8) << 8) | (vgetq_lane_u8(step4, 0));
+#else
     for (unsigned i = 0; i < array_size(src->u8); i++) {
         if (src->u8[i] & (1 << 7))
             *dst |= 1 << i;
     }
+#endif
 }
 
 void vec_fmovmask_d128(NO_CPU, const union xmm_reg *src, uint32_t *dst) {
