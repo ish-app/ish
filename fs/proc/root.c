@@ -1,7 +1,9 @@
+#include <sys/param.h> // for MIN and MAX
 #include <sys/stat.h>
 #include <inttypes.h>
 #include <string.h>
 #include "kernel/calls.h"
+#include "kernel/task.h"
 #include "fs/proc.h"
 #include "platform/platform.h"
 
@@ -13,8 +15,30 @@ static int proc_show_version(struct proc_entry *UNUSED(entry), struct proc_data 
 }
 
 static int proc_show_stat(struct proc_entry *UNUSED(entry), struct proc_data *buf) {
-    struct cpu_usage usage = get_cpu_usage();
-    proc_printf(buf, "cpu  %"PRIu64" %"PRIu64" %"PRIu64" %"PRIu64"\n", usage.user_ticks, usage.nice_ticks, usage.system_ticks, usage.idle_ticks);
+    int ncpus = get_cpu_count();
+    struct cpu_usage total_usage = get_total_cpu_usage();
+    struct cpu_usage* per_cpu_usage = 0;
+    struct uptime_info uptime_info = get_uptime();
+    unsigned uptime = uptime_info.uptime_ticks;
+    
+    proc_printf(buf, "cpu  %"PRIu64" %"PRIu64" %"PRIu64" %"PRIu64" 0 0 0 0\n", total_usage.user_ticks, total_usage.nice_ticks, total_usage.system_ticks, total_usage.idle_ticks);
+    
+    int err = get_per_cpu_usage(&per_cpu_usage);
+    if (!err) {
+        for (int i = 0; i < ncpus; i++) {
+            proc_printf(buf, "cpu%d  %"PRIu64" %"PRIu64" %"PRIu64" %"PRIu64" 0 0 0 0\n", i, per_cpu_usage[i].user_ticks, per_cpu_usage[i].nice_ticks, per_cpu_usage[i].system_ticks, per_cpu_usage[i].idle_ticks);
+        }
+        free(per_cpu_usage);
+    }
+    
+    int blocked_task_count = get_count_of_blocked_tasks();
+    int alive_task_count = get_count_of_alive_tasks();
+    proc_printf(buf, "ctxt 0\n");
+    proc_printf(buf, "btime %u\n", uptime);
+    proc_printf(buf, "processes %d\n", alive_task_count);
+    proc_printf(buf, "procs_running %d\n", alive_task_count - blocked_task_count);
+    proc_printf(buf, "procs_blocked %d\n", blocked_task_count);
+    
     return 0;
 }
 
@@ -45,6 +69,21 @@ static int proc_show_uptime(struct proc_entry *UNUSED(entry), struct proc_data *
     struct uptime_info uptime_info = get_uptime();
     unsigned uptime = uptime_info.uptime_ticks;
     proc_printf(buf, "%u.%u %u.%u\n", uptime / 100, uptime % 100, uptime / 100, uptime % 100);
+    return 0;
+}
+
+static int proc_show_loadavg(struct proc_entry *UNUSED(entry), struct proc_data *buf) {
+    struct uptime_info uptime = get_uptime();
+    struct pid *last_pid = pid_get_last_allocated();
+    int last_pid_id = last_pid ? last_pid->id : 0;
+    double load_1m = uptime.load_1m / 65536.0;
+    double load_5m = uptime.load_5m / 65536.0;
+    double load_15m = uptime.load_15m / 65536.0;
+    int blocked_task_count = get_count_of_blocked_tasks();
+    int alive_task_count = get_count_of_alive_tasks();
+    // running_task_count is calculated approximetly, since we don't know the real number of currently running tasks.
+    int running_task_count = MIN(get_cpu_count(), (int)(alive_task_count - blocked_task_count));
+    proc_printf(buf, "%.2f %.2f %.2f %u/%u %u\n", load_1m, load_5m, load_15m, running_task_count, alive_task_count, last_pid_id);
     return 0;
 }
 
@@ -98,6 +137,7 @@ static int proc_show_mounts(struct proc_entry *UNUSED(entry), struct proc_data *
 // in alphabetical order
 struct proc_dir_entry proc_root_entries[] = {
     {"ish", S_IFDIR, .children = &proc_ish_children},
+    {"loadavg", .show = proc_show_loadavg},
     {"meminfo", .show = proc_show_meminfo},
     {"mounts", .show = proc_show_mounts},
     {"self", S_IFLNK, .readlink = proc_readlink_self},

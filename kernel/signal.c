@@ -309,15 +309,17 @@ void signal_delivery_stop(int sig, struct siginfo_ *info) {
 
     unlock(&current->sighand->lock);
     lock(&current->ptrace.lock);
-    while (current->ptrace.stopped) {
-        wait_for_ignore_signals(&current->ptrace.cond, &current->ptrace.lock, NULL);
-        lock(&current->sighand->lock);
-        bool got_sigkill = sigset_has(current->pending, SIGKILL_);
-        unlock(&current->sighand->lock);
-        if (got_sigkill) {
-            STRACE("%d received a SIGKILL in signal delivery stop\n", current->pid);
-            unlock(&current->ptrace.lock);
-            do_exit_group(SIGKILL_);
+    TASK_MAY_BLOCK {
+        while (current->ptrace.stopped) {
+            wait_for_ignore_signals(&current->ptrace.cond, &current->ptrace.lock, NULL);
+            lock(&current->sighand->lock);
+            bool got_sigkill = sigset_has(current->pending, SIGKILL_);
+            unlock(&current->sighand->lock);
+            if (got_sigkill) {
+                STRACE("%d received a SIGKILL in signal delivery stop\n", current->pid);
+                unlock(&current->ptrace.lock);
+                do_exit_group(SIGKILL_);
+            }
         }
     }
     unlock(&current->ptrace.lock);
@@ -627,8 +629,10 @@ int_t sys_rt_sigsuspend(addr_t mask_addr, uint_t size) {
 
     lock(&current->sighand->lock);
     sigmask_set_temp_unlocked(mask);
-    while (wait_for(&current->pause, &current->sighand->lock, NULL) != _EINTR)
-        continue;
+    TASK_MAY_BLOCK {
+        while (wait_for(&current->pause, &current->sighand->lock, NULL) != _EINTR)
+            continue;
+    }
     unlock(&current->sighand->lock);
     STRACE("%d done sigsuspend", current->pid);
     return _EINTR;
@@ -636,8 +640,10 @@ int_t sys_rt_sigsuspend(addr_t mask_addr, uint_t size) {
 
 int_t sys_pause() {
     lock(&current->sighand->lock);
-    while (wait_for(&current->pause, &current->sighand->lock, NULL) != _EINTR)
-        continue;
+    TASK_MAY_BLOCK {
+        while (wait_for(&current->pause, &current->sighand->lock, NULL) != _EINTR)
+            continue;
+    }
     unlock(&current->sighand->lock);
     return _EINTR;
 }

@@ -90,6 +90,7 @@ int become_first_process() {
     // now seems like a nice time
     establish_signal_handlers();
 
+    list_init(&alive_pids_list);
     struct task *task = construct_task(NULL);
     if (IS_ERR(task))
         return PTR_ERR(task);

@@ -91,7 +91,10 @@ dword_t sys_select(fd_t nfds, addr_t readfds_addr, addr_t writefds_addr, addr_t 
     memset(writefds, 0, fdset_size);
     memset(exceptfds, 0, fdset_size);
     struct select_context context = {readfds, writefds, exceptfds};
-    int err = poll_wait(poll, select_event_callback, &context, timeout_addr == 0 ? NULL : &timeout_ts);
+    int err = 0;
+    TASK_MAY_BLOCK {
+        err = poll_wait(poll, select_event_callback, &context, timeout_addr == 0 ? NULL : &timeout_ts);
+    }
     STRACE("%d end select ", current->pid);
     for (fd_t i = 0; i < nfds; i++) {
         if (bit_test(i, readfds) || bit_test(i, writefds) || bit_test(i, exceptfds)) {
@@ -191,7 +194,10 @@ dword_t sys_poll(addr_t fds, dword_t nfds, int_t timeout) {
         timeout_ts.tv_sec = timeout / 1000;
         timeout_ts.tv_nsec = (timeout % 1000) * 1000000;
     }
-    int res = poll_wait(poll, poll_event_callback, &context, timeout < 0 ? NULL : &timeout_ts);
+    int res = 0;
+    TASK_MAY_BLOCK {
+        res = poll_wait(poll, poll_event_callback, &context, timeout < 0 ? NULL : &timeout_ts);
+    }
     poll_destroy(poll);
     for (unsigned i = 0; i < nfds; i++) {
         if (files[i] != NULL)
