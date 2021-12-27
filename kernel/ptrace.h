@@ -16,10 +16,13 @@
 #define PTRACE_SETREGS_ 13
 #define PTRACE_GETFPREGS_ 14
 #define PTRACE_SETFPREGS_ 15
+#define PTRACE_SYSCALL_ 24
 #define PTRACE_SETOPTIONS_ 0x4200
 #define PTRACE_GETSIGINFO_ 0x4202
 
 #define PTRACE_EVENT_FORK_ 1
+
+#define PTRACE_O_TRACESYSGOOD_ 1
 
 struct user_regs_struct_ {
     dword_t ebx;

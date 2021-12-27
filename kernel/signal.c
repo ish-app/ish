@@ -300,7 +300,7 @@ static void receive_signal(struct sighand *sighand, struct siginfo_ *info) {
 void signal_delivery_stop(int sig, struct siginfo_ *info) {
     lock(&current->ptrace.lock);
     current->ptrace.stopped = true;
-    current->ptrace.signal = sig;
+    current->ptrace.signal = sig | current->ptrace.stop_at_syscall << 7;
     current->ptrace.info = *info;
     unlock(&current->ptrace.lock);
     notify(&current->parent->group->child_exit);

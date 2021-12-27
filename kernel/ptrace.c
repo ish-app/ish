@@ -45,6 +45,12 @@ static void get_user_regs(struct cpu_state *cpu, struct user_regs_struct_ *user_
 }
 
 // Ensure stopped, ptrace locked, etc. before calling this
+static void get_user_regs_and_syscall(struct task *task, struct user_regs_struct_ *user_regs_) {
+    get_user_regs(&task->cpu, user_regs_);
+    user_regs_->orig_eax = task->ptrace.syscall;
+}
+
+// Ensure stopped, ptrace locked, etc. before calling this
 static void set_user_regs(struct cpu_state *cpu, struct user_regs_struct_ *user_regs_) {
     cpu->ebx = user_regs_->ebx;
     cpu->ecx = user_regs_->ecx;
@@ -98,7 +104,7 @@ dword_t sys_ptrace(dword_t request, dword_t pid, addr_t addr, dword_t data) {
             if (!child) return _EPERM;
 
             struct user_ user_ = {};
-            get_user_regs(&child->cpu, &user_.user_regs);
+            get_user_regs_and_syscall(child, &user_.user_regs);
 
             if (addr & (sizeof(peek) - 1) || addr >= sizeof(struct user_))
                 return _EIO;
@@ -177,7 +183,8 @@ dword_t sys_ptrace(dword_t request, dword_t pid, addr_t addr, dword_t data) {
             if (!child) return _EPERM;
 
             struct user_regs_struct_ user_regs_ = {};
-            get_user_regs(&child->cpu, &user_regs_);
+            get_user_regs_and_syscall(child, &user_regs_);
+            user_regs_.orig_eax = child->ptrace.syscall;
             if (user_put(data, user_regs_)) {
                 unlock(&child->ptrace.lock);
                 return _EFAULT;
@@ -236,9 +243,38 @@ dword_t sys_ptrace(dword_t request, dword_t pid, addr_t addr, dword_t data) {
             return 0;
         }
 
-        case PTRACE_SETOPTIONS_:
+        case PTRACE_SYSCALL_: {
+            STRACE("ptrace(PTRACE_SYSCALL, %d, %#x, %#x)", pid, addr, data);
+            struct task *child = find_child(pid);
+            if (!child) return _EPERM;
+
+            child->cpu.tf = false;
+            child->ptrace.stopped = false;
+            child->ptrace.stop_at_syscall = true;
+            notify(&child->ptrace.cond);
+            unlock(&child->ptrace.lock);
+
+            return 0;
+        }
+
+        case PTRACE_SETOPTIONS_: {
             STRACE("ptrace(PTRACE_SETOPTIONS, %d, %#x, %#x)", pid, addr, data);
-            return _EINVAL;
+            struct task *child = find_child(pid);
+            if (!child) return _EPERM;
+            // Ideally we would have this condition, but strace annonyingly
+            // uses PTRACE_O_SYSGOOD | PTRACE_O_TRACEEXEC | PTRACE_O_TRACEEXIT
+            // (we don't support the other two). Since this isn't a big deal we
+            // will just pretend like we do support it to make that check pass.
+            // if (data == PTRACE_O_TRACESYSGOOD_ || !data) {
+            if (true) {
+                child->ptrace.sysgood = !!(data & PTRACE_O_TRACESYSGOOD_);
+                unlock(&child->ptrace.lock);
+                return 0;
+            } else {
+                unlock(&child->ptrace.lock);
+                return _EINVAL;
+            }
+        }
 
         case PTRACE_GETSIGINFO_: {
             STRACE("ptrace(PTRACE_GETSIGINFO, %d, %#x, %#x)", pid, addr, data);

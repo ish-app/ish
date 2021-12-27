@@ -217,6 +217,7 @@ syscall_t syscall_table[] = {
     [332] = (syscall_t) syscall_stub, // inotify_init1
     [340] = (syscall_t) sys_prlimit64,
     [345] = (syscall_t) sys_sendmmsg,
+    [347] = (syscall_t) syscall_stub, // process_vm_readv
     [352] = (syscall_t) syscall_stub, // sched_getattr
     [353] = (syscall_t) sys_renameat2,
     [355] = (syscall_t) sys_getrandom,
@@ -255,10 +256,29 @@ void handle_interrupt(int interrupt) {
             if (syscall_table[syscall_num] == (syscall_t) syscall_stub) {
                 printk("%d(%s) stub syscall %d\n",current->pid, current->comm, syscall_num);
             }
+            lock(&current->ptrace.lock);
+            if (current->ptrace.stop_at_syscall) {
+                send_signal(current, SIGTRAP_, SIGINFO_NIL);
+                unlock(&current->ptrace.lock);
+                receive_signals();
+                lock(&current->ptrace.lock);
+                current->ptrace.stop_at_syscall = false;
+            }
+            unlock(&current->ptrace.lock);
             STRACE("%d call %-3d ", current->pid, syscall_num);
             int result = syscall_table[syscall_num](cpu->ebx, cpu->ecx, cpu->edx, cpu->esi, cpu->edi, cpu->ebp);
             STRACE(" = 0x%x\n", result);
             cpu->eax = result;
+            lock(&current->ptrace.lock);
+            if (current->ptrace.stop_at_syscall) {
+                current->ptrace.syscall = syscall_num;
+                send_signal(current, SIGTRAP_, SIGINFO_NIL);
+                unlock(&current->ptrace.lock);
+                receive_signals();
+                lock(&current->ptrace.lock);
+                current->ptrace.stop_at_syscall = false;
+            }
+            unlock(&current->ptrace.lock);
         }
     } else if (interrupt == INT_GPF) {
         printk("%d page fault on 0x%x at 0x%x\n", current->pid, cpu->segfault_addr, cpu->eip);
