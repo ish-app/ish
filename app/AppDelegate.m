@@ -264,7 +264,7 @@ void NetworkReachabilityCallback(SCNetworkReachabilityRef target, SCNetworkReach
         [UIView setAnimationsEnabled:NO];
 
 #if !ISH_LINUX
-    self.ishVersion = [NSString stringWithFormat:@"iSH %@ (%@)",
+    self.ishVersion = [NSString stringWithFormat:@"iSH-AOK %@ (%@)",
                          [NSBundle.mainBundle objectForInfoDictionaryKey:@"CFBundleShortVersionString"],
                          [NSBundle.mainBundle objectForInfoDictionaryKey:(NSString *) kCFBundleVersionKey]];
     extern const char *proc_ish_version;
