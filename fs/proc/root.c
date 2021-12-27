@@ -191,6 +191,13 @@ static void show_kb(struct proc_data *buf, const char *name, uint64_t value) {
     proc_printf(buf, "%s%8"PRIu64" kB\n", name, value / 1000);
 }
 
+static int proc_show_filesystems(struct proc_entry *UNUSED(entry), struct proc_data *buf) {
+    char *filesystems = get_filesystems();
+    proc_printf(buf, "%s", filesystems);
+    free(filesystems);
+    return 0;
+}
+
 static int proc_show_meminfo(struct proc_entry *UNUSED(entry), struct proc_data *buf) {
     struct mem_usage usage = get_mem_usage();
     show_kb(buf, "MemTotal:       ", usage.total);
@@ -282,6 +289,7 @@ static int proc_show_mounts(struct proc_entry *UNUSED(entry), struct proc_data *
 // in alphabetical order
 struct proc_dir_entry proc_root_entries[] = {
     {"cpuinfo", .show = proc_show_cpuinfo},
+    {"filesystems", .show = proc_show_filesystems},
     {"ish", S_IFDIR, .children = &proc_ish_children},
     {"loadavg", .show = proc_show_loadavg},
     {"meminfo", .show = proc_show_meminfo},
