@@ -29,8 +29,13 @@ struct mem_usage get_mem_usage() {
     struct mem_usage usage;
     usage.total = basic.max_mem;
     usage.free = vm.free_count * vm_page_size;
+    usage.available = basic.memory_size;
+    usage.cached = vm.speculative_count * vm_page_size;
     usage.active = vm.active_count * vm_page_size;
     usage.inactive = vm.inactive_count * vm_page_size;
+    usage.wirecount = vm.wire_count * vm_page_size;
+    usage.swapins = vm.swapins * vm_page_size;
+    usage.swapouts = vm.swapouts * vm_page_size;
     return usage;
 }
 

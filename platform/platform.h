@@ -15,8 +15,13 @@ int get_per_cpu_usage(struct cpu_usage** cpus_usage);
 struct mem_usage {
     uint64_t total;
     uint64_t free;
+    uint64_t available;
+    uint64_t cached;
     uint64_t active;
     uint64_t inactive;
+    uint64_t swapins;
+    uint64_t swapouts;
+    uint64_t wirecount;
 };
 struct mem_usage get_mem_usage(void);
 
