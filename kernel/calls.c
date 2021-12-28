@@ -250,11 +250,11 @@ void handle_interrupt(int interrupt) {
     if (interrupt == INT_SYSCALL) {
         unsigned syscall_num = cpu->eax;
         if (syscall_num >= NUM_SYSCALLS || syscall_table[syscall_num] == NULL) {
-            printk("%d missing syscall %d\n", current->pid, syscall_num);
+            printk("%d(%s) missing syscall %d\n", current->pid, current->comm, syscall_num);
             deliver_signal(current, SIGSYS_, SIGINFO_NIL);
         } else {
             if (syscall_table[syscall_num] == (syscall_t) syscall_stub) {
-                printk("%d(%s) stub syscall %d\n",current->pid, current->comm, syscall_num);
+                printk("%d(%s) stub syscall %d\n", current->pid, current->comm, syscall_num);
             }
             lock(&current->ptrace.lock);
             if (current->ptrace.stop_at_syscall) {
