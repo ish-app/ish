@@ -129,7 +129,8 @@ static inline void wrlock_init(wrlock_t *lock) {
 
 extern int current_pid(void);
 static inline void wrlock_destroy(wrlock_t *lock) {
-    if (pthread_rwlock_destroy(&lock->l) != 0) __builtin_trap();
+    //if (pthread_rwlock_destroy(&lock->l) != 0) __builtin_trap();
+    if (pthread_rwlock_destroy(&lock->l) != 0) printk("pthread_rwlock_destroy error \n");
 }
 static inline void read_wrlock(wrlock_t *lock) {
     if (pthread_rwlock_rdlock(&lock->l) != 0) __builtin_trap();
