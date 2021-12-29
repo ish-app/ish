@@ -23,13 +23,17 @@ if [[ $? -ne 0 ]]; then
     [binaries]
     c = 'clang'
     ar = 'ar'
+
     [host_machine]
     system = 'darwin'
     cpu_family = '$meson_arch'
     cpu = '$meson_arch'
     endian = 'little'
-    [properties]
+
+    [built-in options]
     c_args = [$arch_args]
+    
+    [properties]
     needs_exe_wrapper = true
 EOF
     (set -x; meson $SRCROOT --cross-file $crossfile) || exit $?
