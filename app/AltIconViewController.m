@@ -80,7 +80,7 @@
 }
 
 - (IBAction)openSubmissions:(id)sender {
-    [UIApplication openURL:@"https://github.com/tbodt/ish/issues/578"];
+    [UIApplication openURL:@"https://github.com/tblodt/ish/issues/578"];
 }
 
 - (CGFloat)sideInset:(UICollectionViewFlowLayout *)layout {

@@ -3,7 +3,6 @@ xcuserdata/
 .floo
 
 cross-*.txt
-root.tar.gz
 
 node_modules
 app/xtermjs/xterm-dist

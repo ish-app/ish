@@ -6,9 +6,15 @@
 	<array>
 		<string>app-usage</string>
 	</array>
+	<key>com.apple.security.app-sandbox</key>
+	<true/>
 	<key>com.apple.security.application-groups</key>
 	<array>
-		<string>$(PRODUCT_APP_GROUP_IDENTIFIER)</string>
+		<string>group.app.ish.iSH-AOK</string>
 	</array>
+	<key>com.apple.security.network.client</key>
+	<true/>
+	<key>com.apple.security.personal-information.location</key>
+	<true/>
 </dict>
 </plist>
