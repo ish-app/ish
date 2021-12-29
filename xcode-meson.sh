@@ -11,28 +11,26 @@ if [[ $? -ne 0 ]]; then
     export CC_FOR_BUILD="env -u SDKROOT -u IPHONEOS_DEPLOYMENT_TARGET xcrun clang"
     export CC="$CC_FOR_BUILD" # compatibility with meson < 0.54.0
     crossfile=cross.txt
-    echo $ARCHS
-    arch=${ARCHS%% *}
-    meson_arch=$arch
-    case "$arch" in
-        arm64)
-            meson_arch=aarch64
-            ;;
+    for arch in $ARCHS; do
+        arch_args="'-arch', '$arch', $arch_args"
+    done
+    arch_args="${arch_args%%, }"
+    meson_arch=${ARCHS%% *}
+    case "$meson_arch" in
+        arm64) meson_arch=aarch64 ;;
     esac
-    cat > $crossfile <<EOF
-[binaries]
-c = 'clang'
-ar = 'ar'
-
-[host_machine]
-system = 'darwin'
-cpu_family = '$meson_arch'
-cpu = '$meson_arch'
-endian = 'little'
-
-[properties]
-c_args = ['-arch', '$arch']
-needs_exe_wrapper = true
+    cat | tee $crossfile <<-EOF
+    [binaries]
+    c = 'clang'
+    ar = 'ar'
+    [host_machine]
+    system = 'darwin'
+    cpu_family = '$meson_arch'
+    cpu = '$meson_arch'
+    endian = 'little'
+    [properties]
+    c_args = [$arch_args]
+    needs_exe_wrapper = true
 EOF
     (set -x; meson $SRCROOT --cross-file $crossfile) || exit $?
     config=$(meson introspect --buildoptions)
