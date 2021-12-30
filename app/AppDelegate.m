@@ -167,14 +167,15 @@ static NSString *const kSkipStartupMessage = @"Skip Startup Message";
         return _EINVAL;
     }
     NSArray<NSString *> *args = @[
-        @"rootfstype=fakefs",
-        [NSString stringWithFormat:@"root=\"%s\"", root.fileSystemRepresentation],
-        @"rw",
     ];
     actuate_kernel([args componentsJoinedByString:@" "].UTF8String);
 #endif
     
     return 0;
+}
+
+const char *DefaultRootPath() {
+    return [Roots.instance rootUrl:Roots.instance.defaultRoot].fileSystemRepresentation;
 }
 
 - (void)configureDns {

@@ -1,16 +1,20 @@
 if get_option('kernel') == 'linux'
     build_linux = custom_target('linux',
         command: [
+            'env',
+            'HOSTCC='+ ' '.join(meson.get_compiler('c', native: true).cmd_array() + get_option('build.c_args')),
+            'CC='+ ' '.join(meson.get_compiler('c', native: false).cmd_array() + get_option('c_args')),
+            'ISH_CFLAGS='+ '-I'+meson.project_source_root(),
+            'LIB_ISH_EMU='+ meson.project_build_root() + '/libish_emu.a',
             find_program('linux-build.sh'),
             '@OUTPUT0@',
             '@SOURCE_ROOT@/deps/linux',
             '@OUTPUT1@',
             '@DEPFILE@',
-
-            # hack to find the right directories because meson is bad
-             '-I'+meson.project_source_root(), # ISH_CFLAGS
-            meson.project_build_root() + '/libish_emu.a', # LIB_ISH_EMU
         ],
+        env: {
+            # hack to find the right directories because meson is bad
+        },
         depend_files: ['makefilter.py'],
         depends: [libish_emu],
         console: true,
