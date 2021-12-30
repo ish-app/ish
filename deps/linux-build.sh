@@ -3,8 +3,6 @@ output="$1"
 srctree="$2"
 objtree="$3"
 depfile="$4"
-export ISH_CFLAGS="$5"
-export LIB_ISH_EMU="$6"
 export ARCH=ish
 
 # https://stackoverflow.com/a/3572105/1455016
@@ -13,9 +11,13 @@ realpath() {
 }
 
 makeargs=()
-if [[ -n "$LINUX_HOSTCC" ]]; then
-    makeargs+="HOSTCC=$LINUX_HOSTCC"
+if [[ -n "$HOSTCC" ]]; then
+    makeargs+=("HOSTCC=$HOSTCC")
 fi
+if [[ -n "$CC" ]]; then
+    makeargs+=("CC=$CC")
+fi
+makeargs+=("LLVM_IAS=1")
 
 mkdir -p "$objtree"
 export ISH_MESON_VARS="$(realpath "$objtree/meson_vars.mk")"

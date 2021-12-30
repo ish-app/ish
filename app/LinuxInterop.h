@@ -22,6 +22,7 @@ void sync_do_in_ios(void (^block)(void (^done)(void)));
 
 void ReportPanic(const char *message, void (^completion)(void));
 void ConsoleLog(const char *data, unsigned len);
+const char *DefaultRootPath();
 
 typedef const void *nsobj_t;
 void objc_put(nsobj_t object);
