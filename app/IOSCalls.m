@@ -8,6 +8,7 @@
 #if ISH_LINUX
 
 #include <Foundation/Foundation.h>
+#include "Roots.h"
 #include "LinuxInterop.h"
 
 void async_do_in_ios(void (^block)(void)) {
