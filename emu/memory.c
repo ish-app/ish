@@ -16,6 +16,9 @@
 #include "kernel/task.h"
 #include "fs/fd.h"
 
+// The Evil global lock.  Use sparingly or not at all
+extern pthread_mutex_t global_lock;
+
 // increment the change count
 static void mem_changed(struct mem *mem);
 static struct mmu_ops mem_mmu_ops;
