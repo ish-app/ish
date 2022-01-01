@@ -11,11 +11,13 @@
 #include <linux/slab.h>
 #include <linux/kernel.h>
 #include <linux/notifier.h>
+#include <linux/termios.h>
 #include <linux/string.h>
 #include <linux/completion.h>
 #include <linux/interrupt.h>
 #include <linux/file.h>
 #include <linux/umh.h>
+#include <linux/syscalls.h>
 #include <asm/irq.h>
 #include <user/fs.h>
 #include <user/irq.h>
@@ -110,6 +112,12 @@ struct ish_session {
 
 static int session_init(struct subprocess_info *info, struct cred *cred) {
     struct ish_session *session = info->data;
+    int err = ksys_setsid();
+    if (err < 0)
+        return err;
+    err = vfs_ioctl(session->tty, TIOCSCTTY, 0);
+    if (err < 0)
+        return err;
     for (int fd = 0; fd <= 2; fd++) {
         int err = replace_fd(fd, session->tty, 0);
         if (err < 0)
