@@ -271,7 +271,7 @@ static NSString *const HANDLERS[] = {@"syncFocus", @"focus", @"newScrollHeight",
 
     text = [text stringByReplacingOccurrencesOfString:@"\n" withString:@"\r"];
     NSData *data = [text dataUsingEncoding:NSUTF8StringEncoding];
-    [self.terminal sendInput:data.bytes length:data.length];
+    [self.terminal sendInput:data];
 }
 
 - (void)insertControlChar:(char)ch {
@@ -281,7 +281,7 @@ static NSString *const HANDLERS[] = {@"syncFocus", @"focus", @"newScrollHeight",
         if (ch == '6') ch = '^';
         if (ch != '\0')
             ch = toupper(ch) ^ 0x40;
-        [self.terminal sendInput:&ch length:1];
+        [self.terminal sendInput:[NSData dataWithBytes:&ch length:1]];
     }
 }
 
