@@ -653,4 +653,4 @@ static int fakefs_init(void) {
     return register_filesystem(&fakefs_type);
 }
 
-__initcall(fakefs_init);
+fs_initcall(fakefs_init);

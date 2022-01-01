@@ -14,6 +14,7 @@
 #import "AboutViewController.h"
 #import "CurrentRoot.h"
 #import "NSObject+SaneKVO.h"
+#import "LinuxInterop.h"
 #include "kernel/init.h"
 #include "kernel/task.h"
 #include "kernel/calls.h"
@@ -162,6 +163,8 @@
 }
 
 - (int)startSession {
+    NSArray<NSString *> *command = UserPreferences.shared.launchCommand;
+
 #if !ISH_LINUX
     int err = become_new_init_child();
     if (err < 0)
@@ -179,9 +182,8 @@
     if (err < 0)
         return err;
     tty_release(tty);
-    
+
     char argv[4096];
-    NSArray<NSString *> *command = UserPreferences.shared.launchCommand;
     [Terminal convertCommand:command toArgs:argv limitSize:sizeof(argv)];
     const char *envp = "TERM=xterm-256color\0";
     err = do_execve(command[0].UTF8String, command.count, argv, envp);
@@ -190,7 +192,33 @@
     self.sessionPid = current->pid;
     task_start(current);
 #else
-    self.sessionTerminal = [Terminal terminalWithType:4 number:1];
+    const char *argv_arr[command.count + 1];
+    for (NSUInteger i = 0; i < command.count; i++)
+        argv_arr[i] = command[i].UTF8String;
+    argv_arr[command.count] = NULL;
+    const char *envp_arr[] = {
+        "TERM=xterm256-color",
+        NULL,
+    };
+    const char *const *argv = argv_arr;
+    const char *const *envp = envp_arr;
+    __block Terminal *terminal = nil;
+    __block int sessionPid = 0;
+    __block int err = 1;
+    sync_do_in_workqueue(^(void (^done)(void)) {
+        start_session(argv[0], argv, envp, ^(int retval, int pid, nsobj_t term) {
+            err = retval;
+            if (term)
+                terminal = CFBridgingRelease(term);
+            sessionPid = pid;
+            done();
+        });
+    });
+    NSAssert(err <= 0, @"session start did not finish??");
+    if (err < 0)
+        return err;
+    self.sessionTerminal = terminal;
+    self.sessionPid = sessionPid;
 #endif
     return 0;
 }

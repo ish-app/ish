@@ -13,8 +13,10 @@ struct tty;
 @interface Terminal : NSObject
 
 + (Terminal *)terminalWithType:(int)type number:(int)number;
+#if !ISH_LINUX
 // Returns a strong struct tty and a Terminal that has a weak reference to the same tty
 + (Terminal *)createPseudoTerminal:(struct tty **)tty;
+#endif
 
 + (Terminal *)terminalWithUUID:(NSUUID *)uuid;
 @property (readonly) NSUUID *uuid;
@@ -22,7 +24,7 @@ struct tty;
 + (void)convertCommand:(NSArray<NSString *> *)command toArgs:(char *)argv limitSize:(size_t)maxSize;
 
 - (int)sendOutput:(const void *)buf length:(int)len;
-- (void)sendInput:(const char *)buf length:(size_t)len;
+- (void)sendInput:(NSData *)input;
 
 - (NSString *)arrow:(char)direction;
 
