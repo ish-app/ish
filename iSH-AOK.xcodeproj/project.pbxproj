@@ -657,13 +657,9 @@
 		BBECF3A22691314C00DEC937 /* libiSH-AOKLinux.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libiSH-AOKLinux.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		BBECF3B8269136E100DEC937 /* liblinux.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = liblinux.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		BBECF3BA2691379100DEC937 /* StaticLibLinux.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = StaticLibLinux.xcconfig; sourceTree = "<group>"; };
-<<<<<<< HEAD:iSH-AOK.xcodeproj/project.pbxproj
 		BBEF191E26806364001225BD /* libiSH-AOKApp.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libiSH-AOKApp.a"; sourceTree = BUILT_PRODUCTS_DIR; };
-=======
 		BBEEA9E7277D25090069495B /* LinuxRoot.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = LinuxRoot.c; sourceTree = "<group>"; };
 		BBEEA9E9277DAB400069495B /* LinuxPTY.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = LinuxPTY.c; sourceTree = "<group>"; };
-		BBEF191E26806364001225BD /* libiSHApp.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libiSHApp.a; sourceTree = BUILT_PRODUCTS_DIR; };
->>>>>>> ffdc46939cbb79772c65c6a4f9a97d5b987937b9:iSH.xcodeproj/project.pbxproj
 		BBEF192C26806546001225BD /* AppLib.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppLib.xcconfig; sourceTree = "<group>"; };
 		BBEF199C268066D1001225BD /* iSH-AOK.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "iSH-AOK.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		BBEF19BA26806D7E001225BD /* Linux.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Linux.xcconfig; sourceTree = "<group>"; };
