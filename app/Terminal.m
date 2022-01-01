@@ -30,6 +30,8 @@ typedef struct linux_tty *tty_t;
 
 @property BOOL loaded;
 @property (nonatomic) tty_t tty;
+// nil: we are currently sending the data out
+// lock with dataLock for !linux and @synchronized(self) for linux
 @property (nonatomic) NSMutableData *pendingData;
 
 @property DelayedUITask *refreshTask;
@@ -236,6 +238,7 @@ static NSMapTable<NSUUID *, Terminal *> *terminalsByUUID;
         return;
     }
     NSData *data = _pendingData;
+    _pendingData = nil;
     unlock(&_dataLock);
 #else
     NSData *data;
@@ -245,7 +248,7 @@ static NSMapTable<NSUUID *, Terminal *> *terminalsByUUID;
             return;
         }
         data = _pendingData;
-        _pendingData = [[NSMutableData alloc] initWithCapacity:BUF_SIZE];
+        _pendingData = nil;
     }
 #endif
 
