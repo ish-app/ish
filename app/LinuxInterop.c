@@ -8,11 +8,14 @@
 #include "LinuxInterop.h"
 #include <Block.h>
 #include <linux/start_kernel.h>
+#include <linux/slab.h>
 #include <linux/kernel.h>
 #include <linux/notifier.h>
 #include <linux/string.h>
 #include <linux/completion.h>
 #include <linux/interrupt.h>
+#include <linux/file.h>
+#include <linux/umh.h>
 #include <asm/irq.h>
 #include <user/fs.h>
 #include <user/irq.h>
@@ -24,23 +27,10 @@ void actuate_kernel(const char *cmdline) {
     run_kernel();
 }
 
-void sync_do_in_ios(void (^block)(void (^done)(void))) {
-    DECLARE_COMPLETION(panic_report_done);
-    struct completion *done_ptr = &panic_report_done;
-    async_do_in_ios(^{
-        block(^{
-            async_do_in_irq(^{
-                complete(done_ptr);
-            });
-        });
-    });
-    wait_for_completion(done_ptr);
-}
-
 static int panic_report(struct notifier_block *nb, unsigned long action, void *data) {
     const char *message = data;
-    sync_do_in_ios(^(void (^done)(void)) {
-        ReportPanic(message, done);
+    async_do_in_ios(^{
+        ReportPanic(message);
     });
     return 0;
 }
@@ -77,6 +67,27 @@ void async_do_in_irq(void (^block)(void)) {
     trigger_irq(CALL_BLOCK_IRQ);
 }
 
+struct ios_work {
+    void (^block)(void);
+    struct work_struct work;
+};
+
+static void do_ios_work(struct work_struct *work) {
+    struct ios_work *ios_work = container_of(work, struct ios_work, work);
+    ios_work->block();
+    Block_release(ios_work->block);
+    kfree(ios_work);
+}
+
+void async_do_in_workqueue(void (^block)(void)) {
+    async_do_in_irq(^{
+        struct ios_work *work = kzalloc(sizeof(*work), GFP_KERNEL);
+        work->block = Block_copy(block);
+        INIT_WORK(&work->work, do_ios_work);
+        schedule_work(&work->work);
+    });
+}
+
 static int __init call_block_init(void) {
     int err = host_pipe(&block_request_read, &block_request_write);
     if (err < 0)
@@ -90,3 +101,40 @@ static int __init call_block_init(void) {
     return 0;
 }
 subsys_initcall(call_block_init);
+
+struct ish_session {
+    struct file *tty;
+    nsobj_t terminal;
+    StartSessionDoneBlock callback;
+};
+
+static int session_init(struct subprocess_info *info, struct cred *cred) {
+    struct ish_session *session = info->data;
+    for (int fd = 0; fd <= 2; fd++) {
+        int err = replace_fd(fd, session->tty, 0);
+        if (err < 0)
+            return err;
+    }
+    return 0;
+}
+
+static void session_cleanup(struct subprocess_info *info) {
+    struct ish_session *session = info->data;
+    if (info->pid != 0 || info->retval != 0)
+        session->callback(info->retval, info->pid, objc_get(session->terminal));
+    else; // otherwise, there was a synchronous failure, returned directly from call_usermodehelper_exec
+    if (session->tty != NULL)
+        fput(session->tty);
+    objc_put(session->terminal);
+    kfree(session);
+}
+
+void start_session(const char *exe, const char *const *argv, const char *const *envp, StartSessionDoneBlock done) {
+    struct ish_session *session = kzalloc(sizeof(*session), GFP_KERNEL);
+    session->tty = ios_pty_open(&session->terminal);
+    session->callback = done;
+    struct subprocess_info *proc = call_usermodehelper_setup(exe, (char **) argv, (char **) envp, GFP_KERNEL, session_init, session_cleanup, session);
+    int err = call_usermodehelper_exec(proc, UMH_WAIT_EXEC);
+    if (err < 0)
+        done(err, 0, NULL);
+}

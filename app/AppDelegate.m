@@ -65,7 +65,7 @@ static void ios_handle_die(const char *msg) {
     pthread_setname_np(newName.UTF8String);
 }
 #elif ISH_LINUX
-void ReportPanic(const char *message, void (^completion)(void)) {
+void ReportPanic(const char *message) {
     [NSNotificationCenter.defaultCenter postNotificationName:KernelPanicNotification object:nil userInfo:@{@"message":@(message)}];
 }
 #endif

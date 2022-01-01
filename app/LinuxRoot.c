@@ -19,7 +19,7 @@ static __init int ish_rootfs(void) {
     const char *fakefs_path = DefaultRootPath();
     int err = do_mount(fakefs_path, "/root", "fakefs", MS_SILENT, NULL);
     if (err < 0) {
-        pr_emerg("fakefs: failed to mount root from %s: %s\n", fakefs_path, errname(err));
+        pr_emerg("ish: failed to mount fakefs root from %s: %s\n", fakefs_path, errname(err));
         return err;
     }
     ksys_chdir("/root");
@@ -27,7 +27,7 @@ static __init int ish_rootfs(void) {
     devtmpfs_mount();
     err = do_mount("proc", "proc", "proc", MS_SILENT, NULL);
     if (err < 0) {
-        pr_warn("procfs: failed to mount: %s", errname(err));
+        pr_warn("ish: failed to mount procfs: %s", errname(err));
     }
 
     do_mount(".", "/", NULL, MS_MOVE, NULL);

@@ -181,6 +181,8 @@
 		BBECF3AE2691330F00DEC937 /* libiSHLinux.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BBECF3A22691314C00DEC937 /* libiSHLinux.a */; };
 		BBECF3B9269136FB00DEC937 /* liblinux.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BBECF3B8269136E100DEC937 /* liblinux.a */; };
 		BBECF3BC26913F1600DEC937 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = BB792B541F96D90D00FFB7A4 /* AppDelegate.m */; };
+		BBEEA9E8277D25090069495B /* LinuxRoot.c in Sources */ = {isa = PBXBuildFile; fileRef = BBEEA9E7277D25090069495B /* LinuxRoot.c */; };
+		BBEEA9EA277DAB400069495B /* LinuxPTY.c in Sources */ = {isa = PBXBuildFile; fileRef = BBEEA9E9277DAB400069495B /* LinuxPTY.c */; };
 		BBEF1970268066D1001225BD /* libiSHApp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BBEF191E26806364001225BD /* libiSHApp.a */; };
 		BBEF1972268066D1001225BD /* libish_emu.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BBFB2C5B2590257E00545EAB /* libish_emu.a */; };
 		BBEF1973268066D1001225BD /* libarchive.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BB10E5C8248DBAA1009C7A74 /* libarchive.a */; };
@@ -654,6 +656,8 @@
 		BBECF3A22691314C00DEC937 /* libiSHLinux.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libiSHLinux.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		BBECF3B8269136E100DEC937 /* liblinux.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = liblinux.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		BBECF3BA2691379100DEC937 /* StaticLibLinux.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = StaticLibLinux.xcconfig; sourceTree = "<group>"; };
+		BBEEA9E7277D25090069495B /* LinuxRoot.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = LinuxRoot.c; sourceTree = "<group>"; };
+		BBEEA9E9277DAB400069495B /* LinuxPTY.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = LinuxPTY.c; sourceTree = "<group>"; };
 		BBEF191E26806364001225BD /* libiSHApp.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libiSHApp.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		BBEF192C26806546001225BD /* AppLib.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppLib.xcconfig; sourceTree = "<group>"; };
 		BBEF199C268066D1001225BD /* iSH.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iSH.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -1193,6 +1197,8 @@
 				BB123ACD26C9F13500419CDA /* IOSCalls.m */,
 				BBECF39D2691313B00DEC937 /* LinuxInterop.c */,
 				BB123ACB26C9EFD900419CDA /* LinuxTTY.c */,
+				BBEEA9E9277DAB400069495B /* LinuxPTY.c */,
+				BBEEA9E7277D25090069495B /* LinuxRoot.c */,
 				BB8C3AFD26B7B8AF00E38DDC /* fakefs.c */,
 			);
 			name = LinuxInterop;
@@ -2017,7 +2023,9 @@
 			files = (
 				BBECF3AD269132F400DEC937 /* LinuxInterop.c in Sources */,
 				BB8C3AFF26B7B8CF00E38DDC /* fakefs.c in Sources */,
+				BBEEA9E8277D25090069495B /* LinuxRoot.c in Sources */,
 				BB123ACC26C9EFD900419CDA /* LinuxTTY.c in Sources */,
+				BBEEA9EA277DAB400069495B /* LinuxPTY.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

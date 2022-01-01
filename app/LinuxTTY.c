@@ -42,11 +42,8 @@ static struct ios_tty ios_ttys[NUM_TTYS];
 
 static int ios_tty_port_activate(struct tty_port *port, struct tty_struct *tty) {
     BUG_ON(port != &ios_ttys[tty->index].port);
-    sync_do_in_ios(^(void (^done)(void)) {
-        port->client_data = (void *) Terminal_terminalWithType_number(TTY_MAJOR, tty->index);
-        Terminal_setLinuxTTY(port->client_data, &container_of(port, struct ios_tty, port)->linux_tty);
-        done();
-    });
+    port->client_data = (void *) Terminal_terminalWithType_number(TTY_MAJOR, tty->index);
+    Terminal_setLinuxTTY(port->client_data, &container_of(port, struct ios_tty, port)->linux_tty);
     return 0;
 }
 static void ios_tty_port_destruct(struct tty_port *port) {
@@ -62,7 +59,7 @@ static struct tty_port_operations ios_tty_port_ops = {
     .destruct = ios_tty_port_destruct,
 };
 
-static void ios_tty_cb_wakeup(struct linux_tty *linux_tty) {
+static void ios_tty_cb_can_output(struct linux_tty *linux_tty) {
     struct ios_tty *tty = container_of(linux_tty, struct ios_tty, linux_tty);
     tty_port_tty_wakeup(&tty->port);
 }
@@ -73,9 +70,14 @@ static void ios_tty_cb_send_input(struct linux_tty *linux_tty, const char *data,
     tty_flip_buffer_push(&tty->port);
 }
 
+static void ios_tty_cb_hangup(struct linux_tty *linux_tty) {
+    // nah
+}
+
 static struct linux_tty_callbacks ios_tty_callbacks = {
-    .wakeup = ios_tty_cb_wakeup,
+    .can_output = ios_tty_cb_can_output,
     .send_input = ios_tty_cb_send_input,
+    .hangup = ios_tty_cb_hangup,
 };
 
 static int ios_tty_open(struct tty_struct *tty, struct file *filp) {
@@ -87,8 +89,7 @@ static int ios_tty_write(struct tty_struct *tty, const unsigned char *data, int 
 }
 
 static int ios_tty_write_room(struct tty_struct *tty) {
-    int room = Terminal_roomForOutput(tty->port->client_data);
-    return room;
+    return Terminal_roomForOutput(tty->port->client_data);
 }
 
 static struct tty_operations ios_tty_ops = {
@@ -98,10 +99,7 @@ static struct tty_operations ios_tty_ops = {
 };
 
 static int ios_tty_console_setup(struct console *console, char *what) {
-    sync_do_in_ios(^(void (^done)(void)) {
-        console->data = (void *) Terminal_terminalWithType_number(TTY_MAJOR, 1);
-        done();
-    });
+    console->data = (void *) Terminal_terminalWithType_number(TTY_MAJOR, 1);
     return 0;
 }
 
