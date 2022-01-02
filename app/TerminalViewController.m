@@ -115,11 +115,15 @@
     }
     
     [UserPreferences.shared observe:@[@"hideStatusBar"] options:0 owner:self usingBlock:^(typeof(self) self) {
-        [self setNeedsStatusBarAppearanceUpdate];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self setNeedsStatusBarAppearanceUpdate];
+        });
     }];
     [UserPreferences.shared observe:@[@"theme", @"hideExtraKeysWithExternalKeyboard"]
                             options:0 owner:self usingBlock:^(typeof(self) self) {
-        [self _updateStyleFromPreferences:YES];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self _updateStyleFromPreferences:YES];
+        });
     }];
     [self _updateBadge];
 }
@@ -274,6 +278,7 @@
 }
 
 - (void)_updateStyleFromPreferences:(BOOL)animated {
+    NSAssert(NSThread.isMainThread, @"This method needs to be called on the main thread");
     NSTimeInterval duration = animated ? 0.1 : 0;
     [UIView animateWithDuration:duration animations:^{
         self.view.backgroundColor = UserPreferences.shared.theme.backgroundColor;

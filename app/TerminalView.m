@@ -67,11 +67,15 @@ struct rowcol {
     UserPreferences *prefs = UserPreferences.shared;
     [prefs observe:@[@"capsLockMapping", @"optionMapping", @"backtickMapEscape", @"overrideControlSpace"]
            options:0 owner:self usingBlock:^(typeof(self) self) {
-        self->_keyCommands = nil;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            self->_keyCommands = nil;
+        });
     }];
     [prefs observe:@[@"fontFamily", @"fontSize", @"theme"]
            options:0 owner:self usingBlock:^(typeof(self) self) {
-        [self _updateStyle];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self _updateStyle];
+        });
     }];
 
     self.markedRange = [UITextRange new];
@@ -158,6 +162,7 @@ static NSString *const HANDLERS[] = {@"syncFocus", @"focus", @"newScrollHeight",
 }
 
 - (void)_updateStyle {
+    NSAssert(NSThread.isMainThread, @"This method needs to be called on the main thread");
     if (!self.terminal.loaded)
         return;
     UserPreferences *prefs = [UserPreferences shared];
