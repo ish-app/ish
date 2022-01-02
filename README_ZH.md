@@ -42,7 +42,7 @@ iSH 是一个运行在 iOS 上的 Linux shell。本项目使用了 x86 用户模
 
 为了建立一个自有的 Alpine linux 文件系统，请从 [Alpine 网站](https://alpinelinux.org/downloads/) 下载 `Alpine minirotfs tarball for i386` 并运行 `tools/fakefsify` 。将 minirotfs tarball 指定为第一个参数，将输出目录的名称（如`alpine`）指定为第二个参数，即 `tools/fakefsify $MinirotfsTarballFilename alpine` 然后在 Alpine 文件系统中运行 `/ish -f alpine/bin/login -f root`。如果 `build` 目录下找不到 `tools/fakefsify`，可能是系统上找不到 `libarchive` 的依赖（请参照前面的章节进行安装）。
 
-除了可以使用 `ish`，你也可以使用 `tools/ptraceomatic` 替代它，以便在某个真实进程中单步比较寄存器。我通常使用它来进行调试（需要64 位 Linux 4.11 或更高版本）。
+除了可以使用 `ish`，你也可以使用 `tools/ptraceomatic` 替代它，以便在某个真实进程中单步比较寄存器。我通常使用它来进行调试（需要 64 位 Linux 4.11 或更高版本）。
 
 ## 日志
 
