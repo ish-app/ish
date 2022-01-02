@@ -6,6 +6,7 @@
 
 struct proc_entry {
     struct proc_dir_entry *meta;
+    unsigned long index;
     pid_t_ pid;
     sdword_t fd; // typedef might not have been read yet
 };
