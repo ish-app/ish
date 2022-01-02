@@ -5,9 +5,14 @@
 //  Created by Charlie Melbye on 11/12/18.
 //
 
+#import <os/lock.h>
 #import <UIKit/UIKit.h>
 #import "UserPreferences.h"
+#import "fs/proc/ish.h"
 
+// IMPORTANT: If you add a constant here and expose it via UserPreferences,
+// consider if it also needs to be exposed as a friendly preference and included
+// in the KVO list below. (In most circumstances, the answer is "yes".)
 static NSString *const kPreferenceCapsLockMappingKey = @"Caps Lock Mapping";
 static NSString *const kPreferenceOptionMappingKey = @"Option Mapping";
 static NSString *const kPreferenceBacktickEscapeKey = @"Backtick Mapping Escape";
@@ -20,6 +25,107 @@ static NSString *const kPreferenceDisableDimmingKey = @"Disable Dimming";
 NSString *const kPreferenceLaunchCommandKey = @"Init Command";
 NSString *const kPreferenceBootCommandKey = @"Boot Command";
 NSString *const kPreferenceHideStatusBarKey = @"Status Bar";
+
+NSDictionary<NSString *, NSString *> *friendlyPreferenceMapping;
+NSDictionary<NSString *, NSString *> *friendlyPreferenceReverseMapping;
+NSDictionary<NSString *, NSString *> *kvoProperties;
+
+os_unfair_lock user_default_keys_lock = OS_UNFAIR_LOCK_INIT;
+int user_default_keys_retain_count;
+
+void user_default_keys_requisition_impl(void) {
+    os_unfair_lock_lock(&user_default_keys_lock);
+    if (!user_default_keys_retain_count++) {
+        NSArray<NSString *> *preferenceKeys = NSUserDefaults.standardUserDefaults.dictionaryRepresentation.allKeys;
+        user_default_keys.count = preferenceKeys.count;
+        user_default_keys.entries = malloc(sizeof(struct user_default_key) * preferenceKeys.count);
+        for (NSUInteger i = 0; i < preferenceKeys.count; ++i) {
+            user_default_keys.entries[i].underlying_name = strdup(preferenceKeys[i].UTF8String);
+            if (friendlyPreferenceReverseMapping[preferenceKeys[i]]) {
+                user_default_keys.entries[i].name = strdup(friendlyPreferenceReverseMapping[preferenceKeys[i]].UTF8String);
+            } else {
+                user_default_keys.entries[i].name = NULL;
+            }
+        }
+    }
+    os_unfair_lock_unlock(&user_default_keys_lock);
+}
+
+void user_default_keys_relinquish_impl(void) {
+    os_unfair_lock_lock(&user_default_keys_lock);
+    assert(user_default_keys_retain_count > 0);
+    if (!--user_default_keys_retain_count) {
+        for (size_t i = 0; i < user_default_keys.count; ++i)  {
+            free(user_default_keys.entries[i].name);
+            free(user_default_keys.entries[i].underlying_name);
+        }
+        free(user_default_keys.entries);
+    }
+    os_unfair_lock_unlock(&user_default_keys_lock);
+}
+
+bool get_user_default_impl(char *name, char **buffer, size_t *size) {
+    id value = [NSUserDefaults.standardUserDefaults objectForKey:[NSString stringWithUTF8String:name]];
+    // Since we are writing with fragments, wrap the object in an array to have
+    // a top-level object to check.
+    if (!value || ![NSJSONSerialization isValidJSONObject:@[value]]) {
+        return false;
+    }
+    NSError *error;
+    NSJSONWritingOptions options = NSJSONWritingFragmentsAllowed | NSJSONWritingSortedKeys | NSJSONWritingPrettyPrinted;
+    if (@available(iOS 13.0, *)) {
+        options |= NSJSONWritingWithoutEscapingSlashes;
+    }
+    NSData *data = [NSJSONSerialization dataWithJSONObject:value options:options error:&error];
+    if (error) {
+        return false;
+    }
+    *buffer = malloc(data.length + 1);
+    memcpy(*buffer, data.bytes, data.length);
+    (*buffer)[data.length] = '\n';
+    *size = data.length + 1;
+    return true;
+}
+
+bool set_user_default_impl(char *name, char *buffer, size_t size) {
+    NSString *key = [NSString stringWithUTF8String:name];
+    NSData *data = [NSData dataWithBytesNoCopy:buffer length:size freeWhenDone:NO];
+    NSError *error;
+    id value = [NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingFragmentsAllowed error:&error];
+    if (error) {
+        return false;
+    }
+    NSString *property = kvoProperties[key];
+    if (property) {
+        [UserPreferences.shared setValue:value forKey:property];
+    } else {
+        [NSUserDefaults.standardUserDefaults setValue:value forKey:key];
+    }
+    return true;
+}
+
+bool remove_user_default_impl(char *name) {
+    NSString *key = [NSString stringWithUTF8String:name];
+    NSString *property = kvoProperties[key];
+    if (property) {
+        [UserPreferences.shared willChangeValueForKey:property];
+    }
+    [NSUserDefaults.standardUserDefaults removeObjectForKey:key];
+    if (property) {
+        [UserPreferences.shared didChangeValueForKey:property];
+    }
+    return true;
+}
+
+// TODO: Move these to Linux
+#if ISH_LINUX
+struct all_user_default_keys user_default_keys;
+void (*user_default_keys_requisition)(void);
+void (*user_default_keys_relinquish)(void);
+bool (*get_user_default)(char *name, char **buffer, size_t *size);
+bool (*set_user_default)(char *name, char *buffer, size_t size);
+bool (*remove_user_default)(char *name);
+#endif
 
 @implementation UserPreferences {
     NSUserDefaults *_defaults;
@@ -52,6 +158,45 @@ NSString *const kPreferenceHideStatusBarKey = @"Status Bar";
             kPreferenceHideStatusBarKey: @(NO),
         }];
         _theme = [[Theme alloc] initWithProperties:[_defaults objectForKey:kPreferenceThemeKey]];
+        user_default_keys_requisition = user_default_keys_requisition_impl;
+        user_default_keys_relinquish = user_default_keys_relinquish_impl;
+        get_user_default = get_user_default_impl;
+        set_user_default = set_user_default_impl;
+        remove_user_default = remove_user_default_impl;
+        friendlyPreferenceMapping = @{
+            @"caps_lock_mapping": kPreferenceCapsLockMappingKey,
+            @"option_mapping": kPreferenceOptionMappingKey,
+            @"backtick_mapping_escape": kPreferenceBacktickEscapeKey,
+            @"hide_extra_keys_with_external_keyboard": kPreferenceHideExtraKeysWithExternalKeyboardKey,
+            @"override_control_space": kPreferenceOverrideControlSpaceKey,
+            @"font_family": kPreferenceFontFamilyKey,
+            @"font_size": kPreferenceFontSizeKey,
+            @"disable_dimming": kPreferenceDisableDimmingKey,
+            @"launch_command": kPreferenceLaunchCommandKey,
+            @"boot_command": kPreferenceBootCommandKey,
+            @"hide_status_bar": kPreferenceHideStatusBarKey,
+        };
+        NSMutableDictionary <NSString *, NSString *> *reverseMapping = [NSMutableDictionary new];
+        for (NSString *key in friendlyPreferenceMapping) {
+            reverseMapping[friendlyPreferenceMapping[key]] = key;
+        }
+        friendlyPreferenceReverseMapping = reverseMapping;
+        // Helps a bit with compile-time safety and autocompletion
+#define property(x) NSStringFromSelector(@selector(x))
+        kvoProperties = @{
+            kPreferenceCapsLockMappingKey: property(capsLockMapping),
+            kPreferenceOptionMappingKey: property(optionMapping),
+            kPreferenceBacktickEscapeKey: property(backtickMapEscape),
+            kPreferenceHideExtraKeysWithExternalKeyboardKey: property(hideExtraKeysWithExternalKeyboard),
+            kPreferenceOverrideControlSpaceKey: property(overrideControlSpace),
+            kPreferenceFontFamilyKey: property(fontFamily),
+            kPreferenceFontSizeKey: property(fontSize),
+            kPreferenceDisableDimmingKey: property(shouldDisableDimming),
+            kPreferenceLaunchCommandKey: property(launchCommand),
+            kPreferenceBootCommandKey: property(bootCommand),
+            kPreferenceHideStatusBarKey: property(hideStatusBar),
+        };
+#undef property
     }
     return self;
 }
