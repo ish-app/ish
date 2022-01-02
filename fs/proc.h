@@ -56,7 +56,7 @@ int proc_entry_stat(struct proc_entry *entry, struct statbuf *stat);
 
 bool proc_dir_read(struct proc_entry *entry, unsigned long *index, struct proc_entry *next_entry);
 
-void proc_buf_write(struct proc_data *buf, const void *data, size_t size);
+void proc_buf_append(struct proc_data *buf, const void *data, size_t size);
 void proc_printf(struct proc_data *buf, const char *format, ...);
 
 #endif

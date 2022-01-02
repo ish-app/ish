@@ -130,6 +130,28 @@ static ssize_t proc_pread(struct fd *fd, void *buf, size_t bufsize, off_t off) {
     return n;
 }
 
+static void proc_buf_write(struct proc_data *buf, const void *data, size_t size, size_t off) {
+    assert(off <= buf->size);
+    size_t tidemark = off + size;
+    if (tidemark > buf->capacity) {
+        size_t new_capacity = buf->capacity + 1;
+        while (tidemark > new_capacity)
+            new_capacity *= 2;
+        char *new_data = realloc(buf->data, new_capacity);
+        if (new_data == NULL) {
+            // just give up, error reporting is a pain
+            return;
+        }
+        buf->data = new_data;
+        buf->capacity = new_capacity;
+    }
+    assert(tidemark <= buf->capacity);
+    memcpy(buf->data + off, data, size);
+    if (tidemark > buf->size) {
+        buf->size = tidemark;
+    }
+}
+
 static int proc_readdir(struct fd *fd, struct dir_entry *entry) {
     struct proc_entry proc_entry;
     bool any_left = proc_dir_read(&fd->proc.entry, &fd->offset, &proc_entry);
@@ -171,24 +193,8 @@ static ssize_t proc_readlink(struct mount *UNUSED(mount), const char *path, char
     return bufsize;
 }
 
-void proc_buf_write(struct proc_data *buf, const void *data, size_t size) {
-    if (buf->size + size > buf->capacity) {
-        size_t new_capacity = buf->capacity;
-        if (new_capacity == 0)
-            new_capacity = 1;
-        while (buf->size + size > new_capacity)
-            new_capacity *= 2;
-        char *new_data = realloc(buf->data, new_capacity);
-        if (new_data == NULL) {
-            // just give up, error reporting is a pain
-            return;
-        }
-        buf->data = new_data;
-        buf->capacity = new_capacity;
-    }
-    assert(buf->size + size <= buf->capacity);
-    memcpy(&buf->data[buf->size], data, size);
-    buf->size += size;
+void proc_buf_append(struct proc_data *buf, const void *data, size_t size) {
+    proc_buf_write(buf, data, size, buf->size);
 }
 
 void proc_printf(struct proc_data *buf, const char *format, ...) {
@@ -197,7 +203,7 @@ void proc_printf(struct proc_data *buf, const char *format, ...) {
     va_start(args, format);
     size_t size = vsnprintf(data, sizeof(data), format, args);
     va_end(args);
-    proc_buf_write(buf, data, size);
+    proc_buf_append(buf, data, size);
 }
 
 const struct fs_ops procfs = {
