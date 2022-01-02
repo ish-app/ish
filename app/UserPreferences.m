@@ -11,15 +11,15 @@
 static NSString *const kPreferenceCapsLockMappingKey = @"Caps Lock Mapping";
 static NSString *const kPreferenceOptionMappingKey = @"Option Mapping";
 static NSString *const kPreferenceBacktickEscapeKey = @"Backtick Mapping Escape";
-static NSString *const kPreferenceHideExtraKeysWithExternalKeyboard = @"Hide Extra Keys With External Keyboard";
-static NSString *const kPreferenceOverrideControlSpace = @"Override Control Space";
+static NSString *const kPreferenceHideExtraKeysWithExternalKeyboardKey = @"Hide Extra Keys With External Keyboard";
+static NSString *const kPreferenceOverrideControlSpaceKey = @"Override Control Space";
 static NSString *const kPreferenceFontFamilyKey = @"Font Family";
 static NSString *const kPreferenceFontSizeKey = @"Font Size";
 static NSString *const kPreferenceThemeKey = @"Theme";
 static NSString *const kPreferenceDisableDimmingKey = @"Disable Dimming";
 NSString *const kPreferenceLaunchCommandKey = @"Init Command";
 NSString *const kPreferenceBootCommandKey = @"Boot Command";
-NSString *const kPreferenceHideStatusBar = @"Status Bar";
+NSString *const kPreferenceHideStatusBarKey = @"Status Bar";
 
 @implementation UserPreferences {
     NSUserDefaults *_defaults;
@@ -49,71 +49,83 @@ NSString *const kPreferenceHideStatusBar = @"Status Bar";
             kPreferenceDisableDimmingKey: @(NO),
             kPreferenceLaunchCommandKey: @[@"/bin/login", @"-f", @"root"],
             kPreferenceBootCommandKey: @[@"/sbin/init"],
-            kPreferenceHideStatusBar: @(NO),
+            kPreferenceHideStatusBarKey: @(NO),
         }];
         _theme = [[Theme alloc] initWithProperties:[_defaults objectForKey:kPreferenceThemeKey]];
     }
     return self;
 }
 
-- (BOOL)hideStatusBar {
-    return [_defaults boolForKey:kPreferenceHideStatusBar];
-}
+// MARK: - Preference properties
 
-- (void)setHideStatusBar:(BOOL)showStatusBar {
-    [_defaults setBool:showStatusBar forKey:kPreferenceHideStatusBar];
-}
-
+// MARK: capsLockMapping
 - (CapsLockMapping)capsLockMapping {
     return [_defaults integerForKey:kPreferenceCapsLockMappingKey];
 }
+
 - (void)setCapsLockMapping:(CapsLockMapping)capsLockMapping {
     [_defaults setInteger:capsLockMapping forKey:kPreferenceCapsLockMappingKey];
 }
 
+// MARK: optionMapping
 - (OptionMapping)optionMapping {
     return [_defaults integerForKey:kPreferenceOptionMappingKey];
 }
+
 - (void)setOptionMapping:(OptionMapping)optionMapping {
     [_defaults setInteger:optionMapping forKey:kPreferenceOptionMappingKey];
 }
 
+// MARK: backtickMapEscape
 - (BOOL)backtickMapEscape {
     return [_defaults boolForKey:kPreferenceBacktickEscapeKey];
 }
+
 - (void)setBacktickMapEscape:(BOOL)backtickMapEscape {
     [_defaults setBool:backtickMapEscape forKey:kPreferenceBacktickEscapeKey];
 }
 
+// MARK: hideExtraKeysWithExternalKeyboard
 - (BOOL)hideExtraKeysWithExternalKeyboard {
-    return [_defaults boolForKey:kPreferenceHideExtraKeysWithExternalKeyboard];
+    return [_defaults boolForKey:kPreferenceHideExtraKeysWithExternalKeyboardKey];
 }
+
 - (void)setHideExtraKeysWithExternalKeyboard:(BOOL)hideExtraKeysWithExternalKeyboard {
-    [_defaults setBool:hideExtraKeysWithExternalKeyboard forKey:kPreferenceHideExtraKeysWithExternalKeyboard];
+    [_defaults setBool:hideExtraKeysWithExternalKeyboard forKey:kPreferenceHideExtraKeysWithExternalKeyboardKey];
 }
+
+// MARK: overrideControlSpace
 - (BOOL)overrideControlSpace {
-    return [_defaults boolForKey:kPreferenceOverrideControlSpace];
+    return [_defaults boolForKey:kPreferenceOverrideControlSpaceKey];
 }
+
 - (void)setOverrideControlSpace:(BOOL)overrideControlSpace {
-    [_defaults setBool:overrideControlSpace forKey:kPreferenceOverrideControlSpace];
+    [_defaults setBool:overrideControlSpace forKey:kPreferenceOverrideControlSpaceKey];
 }
+
+// MARK: fontSize
 - (NSNumber *)fontSize {
     return [_defaults objectForKey:kPreferenceFontSizeKey];
 }
+
 - (void)setFontSize:(NSNumber *)fontSize {
     [_defaults setObject:fontSize forKey:kPreferenceFontSizeKey];
 }
 
+// MARK: fontFamily
 - (NSString *)fontFamily {
     return [_defaults objectForKey:kPreferenceFontFamilyKey];
 }
+
 - (void)setFontFamily:(NSString *)fontFamily {
     [_defaults setObject:fontFamily forKey:kPreferenceFontFamilyKey];
 }
 
+// MARK: theme
 - (UIColor *)foregroundColor {
     return self.theme.foregroundColor;
 }
+
 - (UIColor *)backgroundColor {
     return self.theme.backgroundColor;
 }
@@ -123,29 +135,45 @@ NSString *const kPreferenceHideStatusBar = @"Status Bar";
     [_defaults setObject:theme.properties forKey:kPreferenceThemeKey];
 }
 
+// MARK: shouldDisableDimming
 - (BOOL)shouldDisableDimming {
     return [_defaults boolForKey:kPreferenceDisableDimmingKey];
 }
+
 - (void)setShouldDisableDimming:(BOOL)dim {
     [_defaults setBool:dim forKey:kPreferenceDisableDimmingKey];
 }
 
+// MARK: launchCommand
 - (NSArray<NSString *> *)launchCommand {
     return [_defaults stringArrayForKey:kPreferenceLaunchCommandKey];
 }
+
 - (void)setLaunchCommand:(NSArray<NSString *> *)launchCommand {
     [_defaults setObject:launchCommand forKey:kPreferenceLaunchCommandKey];
 }
+
 - (BOOL)hasChangedLaunchCommand {
     NSArray *defaultLaunchCommand = [[[NSUserDefaults alloc] initWithSuiteName:NSRegistrationDomain] stringArrayForKey:kPreferenceLaunchCommandKey];
     return ![self.launchCommand isEqual:defaultLaunchCommand];
 }
 
+// MARK: bootCommand
 - (NSArray<NSString *> *)bootCommand {
     return [_defaults stringArrayForKey:kPreferenceBootCommandKey];
 }
+
 - (void)setBootCommand:(NSArray<NSString *> *)bootCommand {
     [_defaults setObject:bootCommand forKey:kPreferenceBootCommandKey];
+}
+
+// MARK: hideStatusBar
+- (BOOL)hideStatusBar {
+    return [_defaults boolForKey:kPreferenceHideStatusBarKey];
+}
+
+- (void)setHideStatusBar:(BOOL)showStatusBar {
+    [_defaults setBool:showStatusBar forKey:kPreferenceHideStatusBarKey];
 }
 
 @end
