@@ -30,6 +30,9 @@ struct proc_dir_entry {
 
     // file with custom show data function
     int (*show)(struct proc_entry *entry, struct proc_data *data);
+    
+    // file with a custom write function
+    int (*update)(struct proc_entry *entry, struct proc_data *data);
 
     // symlink
     int (*readlink)(struct proc_entry *entry, char *buf);

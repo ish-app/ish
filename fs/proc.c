@@ -171,6 +171,22 @@ static void proc_buf_write(struct proc_data *buf, const void *data, size_t size,
     }
 }
 
+static ssize_t proc_pwrite(struct fd *fd, const void *buf, size_t bufsize, off_t UNUSED(off)) {
+    mode_t_ mode = proc_entry_mode(&fd->proc.entry);
+    if (S_ISDIR(mode))
+        return _EISDIR;
+    assert(S_ISREG(mode));
+    
+    if (!fd->proc.entry.meta->update) {
+        return _EPERM;
+    }
+    
+    struct proc_data data = {(char *)buf, bufsize, bufsize};
+    fd->proc.entry.meta->update(&fd->proc.entry, &data);
+    
+    return bufsize;
+}
+
 static int proc_readdir(struct fd *fd, struct dir_entry *entry) {
     struct proc_entry proc_entry;
     bool any_left = proc_dir_read(&fd->proc.entry, &fd->offset, &proc_entry);
@@ -192,6 +208,7 @@ static int proc_close(struct fd *fd) {
 
 const struct fd_ops procfs_fdops = {
     .pread = proc_pread,
+    .pwrite = proc_pwrite,
     .lseek = proc_seek,
     .readdir = proc_readdir,
     .close = proc_close,
