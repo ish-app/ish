@@ -238,6 +238,24 @@ static ssize_t proc_readlink(struct mount *UNUSED(mount), const char *path, char
     return bufsize;
 }
 
+static int proc_unlink(struct mount *UNUSED(mount), const char *path) {
+    struct proc_entry entry = {};
+    int err = proc_lookup(path, &entry);
+    if (err < 0)
+        return err;
+    if (!entry.meta->unlink) {
+        return _EPERM;
+    }
+    if (entry.meta->ref) {
+        entry.meta->ref(&entry);
+    }
+    int ret = entry.meta->unlink(&entry);
+    if (entry.meta->unref) {
+        entry.meta->unref(&entry);
+    }
+    return ret;
+}
+
 void proc_buf_append(struct proc_data *buf, const void *data, size_t size) {
     proc_buf_write(buf, data, size, buf->size);
 }
@@ -258,4 +276,5 @@ const struct fs_ops procfs = {
     .stat = proc_stat,
     .fstat = proc_fstat,
     .readlink = proc_readlink,
+    .unlink = proc_unlink,
 };

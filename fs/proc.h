@@ -36,6 +36,9 @@ struct proc_dir_entry {
 
     // symlink
     int (*readlink)(struct proc_entry *entry, char *buf);
+    
+    // remove
+    int (*unlink)(struct proc_entry *entry);
 
     // directory with static list
     struct proc_children *children;
