@@ -20,6 +20,10 @@ struct proc_dir_entry {
     const char *name;
     mode_t_ mode;
 
+    // files that need extra resource management
+    void (*ref)(struct proc_entry *entry);
+    void (*unref)(struct proc_entry *entry);
+    
     // file with dynamic name
     void (*getname)(struct proc_entry *entry, char *buf);
 

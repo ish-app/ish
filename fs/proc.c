@@ -16,6 +16,9 @@ static int proc_lookup(const char *path, struct proc_entry *entry) {
         unsigned long index = 0;
         struct proc_entry next_entry;
         char entry_name[MAX_NAME];
+        if (entry->meta->ref) {
+            entry->meta->ref(entry);
+        }
         while (proc_dir_read(entry, &index, &next_entry)) {
             // tack on some dynamically generated attributes
             if (next_entry.meta->parent == NULL)
@@ -30,8 +33,14 @@ static int proc_lookup(const char *path, struct proc_entry *entry) {
             if (strcmp(entry_name, component) == 0)
                 goto found;
         }
+        if (entry->meta->unref) {
+            entry->meta->unref(entry);
+        }
         return _ENOENT;
 found:
+        if (entry->meta->unref) {
+            entry->meta->unref(entry);
+        }
         *entry = next_entry;
     }
     return err;
@@ -44,6 +53,9 @@ static struct fd *proc_open(struct mount *UNUSED(mount), const char *path, int U
     int err = proc_lookup(path, &entry);
     if (err < 0)
         return ERR_PTR(err);
+    if (entry.meta->ref) {
+        entry.meta->ref(&entry);
+    }
     struct fd *fd = fd_create(&procfs_fdops);
     fd->proc.entry = entry;
     fd->proc.data.data = NULL;
@@ -74,7 +86,14 @@ static int proc_stat(struct mount *UNUSED(mount), const char *path, struct statb
     int err = proc_lookup(path, &entry);
     if (err < 0)
         return err;
-    return proc_entry_stat(&entry, stat);
+    if (entry.meta->ref) {
+        entry.meta->ref(&entry);
+    }
+    int ret = proc_entry_stat(&entry, stat);
+    if (entry.meta->unref) {
+        entry.meta->unref(&entry);
+    }
+    return ret;
 }
 
 static int proc_fstat(struct fd *fd, struct statbuf *stat) {
@@ -165,6 +184,9 @@ static int proc_readdir(struct fd *fd, struct dir_entry *entry) {
 static int proc_close(struct fd *fd) {
     if (fd->proc.data.data != NULL)
         free(fd->proc.data.data);
+    if (fd->proc.entry.meta->unref) {
+        fd->proc.entry.meta->unref(&fd->proc.entry);
+    }
     return 0;
 }
 
@@ -184,7 +206,13 @@ static ssize_t proc_readlink(struct mount *UNUSED(mount), const char *path, char
         return _EINVAL;
 
     char target[MAX_PATH + 1];
+    if (entry.meta->ref) {
+        entry.meta->ref(&entry);
+    }
     err = entry.meta->readlink(&entry, target);
+    if (entry.meta->unref) {
+        entry.meta->unref(&entry);
+    }
     if (err < 0)
         return err;
     if (bufsize > strlen(target))
