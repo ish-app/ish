@@ -97,7 +97,11 @@ bool set_user_default_impl(char *name, char *buffer, size_t size) {
     }
     NSString *property = kvoProperties[key];
     if (property) {
-        [UserPreferences.shared setValue:value forKey:property];
+        if ([UserPreferences.shared validateValue:&value forKey:property error:nil]) {
+            [UserPreferences.shared setValue:value forKey:property];
+        } else {
+            return false;
+        }
     } else {
         [NSUserDefaults.standardUserDefaults setValue:value forKey:key];
     }
@@ -212,6 +216,14 @@ bool (*remove_user_default)(char *name);
     [_defaults setInteger:capsLockMapping forKey:kPreferenceCapsLockMappingKey];
 }
 
+- (BOOL)validateCapsLockMapping:(id *)value error:(NSError **)error {
+    if (![*value isKindOfClass:NSNumber.class]) {
+        return NO;
+    }
+    int _value = [(NSNumber *)(*value) intValue];
+    return _value >= __CapsLockMapLast && value < __CapsLockMapFirst;
+}
+
 // MARK: optionMapping
 - (OptionMapping)optionMapping {
     return [_defaults integerForKey:kPreferenceOptionMappingKey];
@@ -219,6 +231,14 @@ bool (*remove_user_default)(char *name);
 
 - (void)setOptionMapping:(OptionMapping)optionMapping {
     [_defaults setInteger:optionMapping forKey:kPreferenceOptionMappingKey];
+}
+
+- (BOOL)validateOptionMapping:(id *)value error:(NSError **)error {
+    if (![*value isKindOfClass:NSNumber.class]) {
+        return NO;
+    }
+    int _value = [(NSNumber *)(*value) intValue];
+    return _value >= __OptionMapFirst && value < __OptionMapFirst;
 }
 
 // MARK: backtickMapEscape
@@ -230,6 +250,10 @@ bool (*remove_user_default)(char *name);
     [_defaults setBool:backtickMapEscape forKey:kPreferenceBacktickEscapeKey];
 }
 
+- (BOOL)validateBacktickMapEscape:(id *)value error:(NSError **)error {
+    return [*value isKindOfClass:NSNumber.class];
+}
+
 // MARK: hideExtraKeysWithExternalKeyboard
 - (BOOL)hideExtraKeysWithExternalKeyboard {
     return [_defaults boolForKey:kPreferenceHideExtraKeysWithExternalKeyboardKey];
@@ -237,6 +261,10 @@ bool (*remove_user_default)(char *name);
 
 - (void)setHideExtraKeysWithExternalKeyboard:(BOOL)hideExtraKeysWithExternalKeyboard {
     [_defaults setBool:hideExtraKeysWithExternalKeyboard forKey:kPreferenceHideExtraKeysWithExternalKeyboardKey];
+}
+
+- (BOOL)validateHideExtraKeysWithExternalKeyboard:(id *)value error:(NSError **)error {
+    return [*value isKindOfClass:NSNumber.class];
 }
 
 // MARK: overrideControlSpace
@@ -248,6 +276,10 @@ bool (*remove_user_default)(char *name);
     [_defaults setBool:overrideControlSpace forKey:kPreferenceOverrideControlSpaceKey];
 }
 
+- (BOOL)validateOverrideControlSpace:(id *)value error:(NSError **)error {
+    return [*value isKindOfClass:NSNumber.class];
+}
+
 // MARK: fontSize
 - (NSNumber *)fontSize {
     return [_defaults objectForKey:kPreferenceFontSizeKey];
@@ -257,6 +289,10 @@ bool (*remove_user_default)(char *name);
     [_defaults setObject:fontSize forKey:kPreferenceFontSizeKey];
 }
 
+- (BOOL)validateFontSize:(id *)value error:(NSError **)error {
+    return [*value isKindOfClass:NSNumber.class];
+}
+
 // MARK: fontFamily
 - (NSString *)fontFamily {
     return [_defaults objectForKey:kPreferenceFontFamilyKey];
@@ -264,6 +300,10 @@ bool (*remove_user_default)(char *name);
 
 - (void)setFontFamily:(NSString *)fontFamily {
     [_defaults setObject:fontFamily forKey:kPreferenceFontFamilyKey];
+}
+
+- (BOOL)validateFontFamily:(id *)value error:(NSError **)error {
+    return [*value isKindOfClass:NSString.class];
 }
 
 // MARK: theme
@@ -289,6 +329,10 @@ bool (*remove_user_default)(char *name);
     [_defaults setBool:dim forKey:kPreferenceDisableDimmingKey];
 }
 
+- (BOOL)validateShouldDisableDimming:(id *)value error:(NSError **)error {
+    return [*value isKindOfClass:NSNumber.class];
+}
+
 // MARK: launchCommand
 - (NSArray<NSString *> *)launchCommand {
     return [_defaults stringArrayForKey:kPreferenceLaunchCommandKey];
@@ -296,6 +340,18 @@ bool (*remove_user_default)(char *name);
 
 - (void)setLaunchCommand:(NSArray<NSString *> *)launchCommand {
     [_defaults setObject:launchCommand forKey:kPreferenceLaunchCommandKey];
+}
+
+- (BOOL)validateLaunchCommand:(id *)value error:(NSError **)error {
+    if (![*value isKindOfClass:NSArray.class]) {
+        return NO;
+    }
+    for (id element in (NSArray *)(*value)) {
+        if (![element isKindOfClass:NSString.class]) {
+            return NO;
+        }
+    }
+    return YES;
 }
 
 - (BOOL)hasChangedLaunchCommand {
@@ -312,6 +368,18 @@ bool (*remove_user_default)(char *name);
     [_defaults setObject:bootCommand forKey:kPreferenceBootCommandKey];
 }
 
+- (BOOL)validateBootCommand:(id *)value error:(NSError **)error {
+    if (![*value isKindOfClass:NSArray.class]) {
+        return NO;
+    }
+    for (id element in (NSArray *)(*value)) {
+        if (![element isKindOfClass:NSString.class]) {
+            return NO;
+        }
+    }
+    return YES;
+}
+
 // MARK: hideStatusBar
 - (BOOL)hideStatusBar {
     return [_defaults boolForKey:kPreferenceHideStatusBarKey];
@@ -319,6 +387,10 @@ bool (*remove_user_default)(char *name);
 
 - (void)setHideStatusBar:(BOOL)showStatusBar {
     [_defaults setBool:showStatusBar forKey:kPreferenceHideStatusBarKey];
+}
+
+- (BOOL)validateHideStatusBar:(id *)value error:(NSError **)error {
+    return [*value isKindOfClass:NSNumber.class];
 }
 
 @end
