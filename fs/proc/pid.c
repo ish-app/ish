@@ -10,7 +10,7 @@
 #include "util/sync.h"
 
 // The Evil global lock.  Use sparingly or not at all
-extern pthread_mutex_t global_lock;
+//extern pthread_mutex_t global_lock;
 
 static void proc_pid_getname(struct proc_entry *entry, char *buf) {
     sprintf(buf, "%d", entry->pid);
@@ -162,10 +162,8 @@ static int proc_pid_cmdline_show(struct proc_entry *entry, struct proc_data *buf
         err = _ENOMEM;
         goto out_free_task;
     }
-    pthread_mutex_lock(&global_lock); // Attempt to avoid race condition.  -mke
     if (user_read_task(task, task->mm->argv_start, data, size) == 0)
         proc_buf_write(buf, data, size);
-    pthread_mutex_unlock(&global_lock); // Attempt to avoid race condition.  -mke
     free(data);
 
 out_free_task:
