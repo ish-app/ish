@@ -174,9 +174,11 @@ static NSString *const kSkipStartupMessage = @"Skip Startup Message";
     return 0;
 }
 
+#if ISH_LINUX
 const char *DefaultRootPath() {
     return [Roots.instance rootUrl:Roots.instance.defaultRoot].fileSystemRepresentation;
 }
+#endif
 
 - (void)configureDns {
 #if !ISH_LINUX
