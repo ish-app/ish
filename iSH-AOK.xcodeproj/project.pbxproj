@@ -181,9 +181,9 @@
 		BBECF3AE2691330F00DEC937 /* libiSH-AOKLinux.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BBECF3A22691314C00DEC937 /* libiSH-AOKLinux.a */; };
 		BBECF3B9269136FB00DEC937 /* liblinux.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BBECF3B8269136E100DEC937 /* liblinux.a */; };
 		BBECF3BC26913F1600DEC937 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = BB792B541F96D90D00FFB7A4 /* AppDelegate.m */; };
-		BBEF1970268066D1001225BD /* libiSH-AOKApp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BBEF191E26806364001225BD /* libiSH-AOKApp.a */; };
 		BBEEA9E8277D25090069495B /* LinuxRoot.c in Sources */ = {isa = PBXBuildFile; fileRef = BBEEA9E7277D25090069495B /* LinuxRoot.c */; };
 		BBEEA9EA277DAB400069495B /* LinuxPTY.c in Sources */ = {isa = PBXBuildFile; fileRef = BBEEA9E9277DAB400069495B /* LinuxPTY.c */; };
+		BBEF1970268066D1001225BD /* libiSH-AOKApp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BBEF191E26806364001225BD /* libiSH-AOKApp.a */; };
 		BBEF1972268066D1001225BD /* libish_emu.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BBFB2C5B2590257E00545EAB /* libish_emu.a */; };
 		BBEF1973268066D1001225BD /* libarchive.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BB10E5C8248DBAA1009C7A74 /* libarchive.a */; };
 		BBEF1974268066D1001225BD /* CoreLocation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BB235536235D49B300139E00 /* CoreLocation.framework */; };
@@ -657,9 +657,9 @@
 		BBECF3A22691314C00DEC937 /* libiSH-AOKLinux.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libiSH-AOKLinux.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		BBECF3B8269136E100DEC937 /* liblinux.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = liblinux.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		BBECF3BA2691379100DEC937 /* StaticLibLinux.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = StaticLibLinux.xcconfig; sourceTree = "<group>"; };
-		BBEF191E26806364001225BD /* libiSH-AOKApp.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libiSH-AOKApp.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		BBEEA9E7277D25090069495B /* LinuxRoot.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = LinuxRoot.c; sourceTree = "<group>"; };
 		BBEEA9E9277DAB400069495B /* LinuxPTY.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = LinuxPTY.c; sourceTree = "<group>"; };
+		BBEF191E26806364001225BD /* libiSH-AOKApp.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libiSH-AOKApp.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		BBEF192C26806546001225BD /* AppLib.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppLib.xcconfig; sourceTree = "<group>"; };
 		BBEF199C268066D1001225BD /* iSH-AOK.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "iSH-AOK.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		BBEF19BA26806D7E001225BD /* Linux.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Linux.xcconfig; sourceTree = "<group>"; };
@@ -2362,7 +2362,7 @@
 			baseConfigurationReference = BB0B86CD2586FD8800208600 /* App.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CURRENT_PROJECT_VERSION = 303;
+				CURRENT_PROJECT_VERSION = 306;
 				DEVELOPMENT_TEAM = UYU5FM4LQ4;
 				MARKETING_VERSION = 1.2.4;
 				PRODUCT_BUNDLE_IDENTIFIER = "app.ish.iSH-AOK";
@@ -2377,7 +2377,7 @@
 			baseConfigurationReference = BB0B86CD2586FD8800208600 /* App.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CURRENT_PROJECT_VERSION = 303;
+				CURRENT_PROJECT_VERSION = 306;
 				DEVELOPMENT_TEAM = UYU5FM4LQ4;
 				MARKETING_VERSION = 1.2.4;
 				PRODUCT_BUNDLE_IDENTIFIER = "app.ish.iSH-AOK";
@@ -2400,7 +2400,7 @@
 			baseConfigurationReference = BB0B86CD2586FD8800208600 /* App.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CURRENT_PROJECT_VERSION = 303;
+				CURRENT_PROJECT_VERSION = 306;
 				DEVELOPMENT_TEAM = UYU5FM4LQ4;
 				MARKETING_VERSION = 1.2.4;
 				PRODUCT_BUNDLE_IDENTIFIER = "app.ish.iSH-AOK";
@@ -2655,7 +2655,7 @@
 			baseConfigurationReference = BB0B86CD2586FD8800208600 /* App.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CURRENT_PROJECT_VERSION = 303;
+				CURRENT_PROJECT_VERSION = 306;
 				DEVELOPMENT_TEAM = UYU5FM4LQ4;
 				MARKETING_VERSION = 1.2.4;
 				PRODUCT_BUNDLE_IDENTIFIER = "app.ish.iSH-AOK";
