@@ -16,6 +16,21 @@ struct rowcol {
     int col;
 };
 
+@interface WeakScriptMessageHandler : NSObject <WKScriptMessageHandler>
+@property (weak) id <WKScriptMessageHandler> handler;
+@end
+@implementation WeakScriptMessageHandler
+- (instancetype)initWithHandler:(id <WKScriptMessageHandler>)handler {
+    if (self = [super init]) {
+        self.handler = handler;
+    }
+    return self;
+}
+- (void)userContentController:(WKUserContentController *)userContentController didReceiveScriptMessage:(WKScriptMessage *)message {
+    [self.handler userContentController:userContentController didReceiveScriptMessage:message];
+}
+@end
+
 @interface TerminalView ()
 
 @property (nonatomic) NSMutableArray<UIKeyCommand *> *keyCommands;
@@ -44,12 +59,11 @@ struct rowcol {
     self.inputAssistantItem.trailingBarButtonGroups = @[];
 
     ScrollbarView *scrollbarView = self.scrollbarView = [[ScrollbarView alloc] initWithFrame:self.bounds];
-    self.scrollbarView = scrollbarView;
     scrollbarView.delegate = self;
     scrollbarView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     scrollbarView.bounces = NO;
     [self addSubview:scrollbarView];
-    
+
     UserPreferences *prefs = UserPreferences.shared;
     [prefs observe:@[@"capsLockMapping", @"optionMapping", @"backtickMapEscape", @"overrideControlSpace"]
            options:0 owner:self usingBlock:^(typeof(self) self) {
@@ -105,8 +119,9 @@ static NSString *const HANDLERS[] = {@"syncFocus", @"focus", @"newScrollHeight",
     webView.scrollView.delaysContentTouches = NO;
     webView.scrollView.canCancelContentTouches = NO;
     webView.scrollView.panGestureRecognizer.enabled = NO;
+    id <WKScriptMessageHandler> handler = [[WeakScriptMessageHandler alloc] initWithHandler:self];
     for (int i = 0; i < sizeof(HANDLERS)/sizeof(HANDLERS[0]); i++) {
-        [webView.configuration.userContentController addScriptMessageHandler:self name:HANDLERS[i]];
+        [webView.configuration.userContentController addScriptMessageHandler:handler name:HANDLERS[i]];
     }
     webView.frame = self.bounds;
     self.opaque = webView.opaque = NO;
@@ -492,7 +507,6 @@ static const char *metaKeys = "abcdefghijklmnopqrstuvwxyz0123456789-=[]\\;',./";
                                                 modifierFlags:modifiers
                                                        action:@selector(handleKeyCommand:)];
     [_keyCommands addObject:command];
-    
 }
 
 - (void)keyCommandTriggered:(UIKeyCommand *)sender {
