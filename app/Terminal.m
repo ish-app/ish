@@ -30,9 +30,10 @@ typedef struct linux_tty *tty_t;
 
 @property BOOL loaded;
 @property (nonatomic) tty_t tty;
-// nil: we are currently sending the data out
 // lock with dataLock for !linux and @synchronized(self) for linux
 @property (nonatomic) NSMutableData *pendingData;
+// sending output is an asynchronous thing due to javascript, this is used to ensure it doesn't happen twice at once
+@property (nonatomic) BOOL outputInProgress;
 
 @property DelayedUITask *refreshTask;
 @property DelayedUITask *scrollToBottomTask;
@@ -175,7 +176,7 @@ static NSMapTable<NSUUID *, Terminal *> *terminalsByUUID;
     if (!NSThread.isMainThread) {
         // The main thread is the only one that can unblock this, so sleeping here would be a deadlock.
         // The only reason for this to be called on the main thread is if input is echoed.
-        while (_pendingData == nil || _pendingData.length > BUF_SIZE)
+        while (_pendingData.length > BUF_SIZE)
             wait_for_ignore_signals(&_dataConsumed, &_dataLock, NULL);
     }
     [_pendingData appendData:[NSData dataWithBytes:buf length:len]];
@@ -197,7 +198,7 @@ static NSMapTable<NSUUID *, Terminal *> *terminalsByUUID;
 
 #if ISH_LINUX
 - (int)roomForOutput {
-    if (_pendingData == nil || _pendingData.length > BUF_SIZE)
+    if (_pendingData.length > BUF_SIZE)
         return 0;
     return BUF_SIZE - (int) _pendingData.length;
 }
@@ -232,23 +233,30 @@ static NSMapTable<NSUUID *, Terminal *> *terminalsByUUID;
 
 #if !ISH_LINUX
     lock(&_dataLock);
-    if (_pendingData == nil) {
+    if (_outputInProgress) {
         unlock(&_dataLock);
         [self.refreshTask schedule];
         return;
     }
     NSData *data = _pendingData;
-    _pendingData = nil;
+    _pendingData = [[NSMutableData alloc] initWithCapacity:BUF_SIZE];
+    _outputInProgress = YES;
+    notify(&self->_dataConsumed);
     unlock(&_dataLock);
 #else
     NSData *data;
     @synchronized (self) {
-        if (_pendingData == nil) {
+        if (_outputInProgress) {
             [self.refreshTask schedule];
             return;
         }
         data = _pendingData;
-        _pendingData = nil;
+        _pendingData = [[NSMutableData alloc] initWithCapacity:BUF_SIZE];
+        _outputInProgress = YES;
+        if (self->_tty)
+            async_do_in_irq(^{
+                self->_tty->ops->can_output(self->_tty);
+            });
     }
 #endif
 
@@ -262,17 +270,11 @@ static NSMapTable<NSUUID *, Terminal *> *terminalsByUUID;
     [self.webView evaluateJavaScript:jsToEvaluate completionHandler:^(id result, NSError *error) {
 #if !ISH_LINUX
         lock(&self->_dataLock);
-        self->_pendingData = [[NSMutableData alloc] initWithCapacity:BUF_SIZE];
-        notify(&self->_dataConsumed);
+        self->_outputInProgress = NO;
         unlock(&self->_dataLock);
 #else
         @synchronized (self) {
-            self->_pendingData = [[NSMutableData alloc] initWithCapacity:BUF_SIZE];
-        }
-        if (self->_tty) {
-            async_do_in_irq(^{
-                self->_tty->ops->can_output(self->_tty);
-            });
+            self->_outputInProgress = NO;
         }
 #endif
         if (error != nil) {

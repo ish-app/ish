@@ -45,6 +45,10 @@ struct ios_pty {
 static void ios_pty_output_work(struct work_struct *output_work) {
     struct ios_pty *pty = container_of(output_work, struct ios_pty, output_work);
     size_t room = Terminal_roomForOutput(pty->terminal);
+    if (room == 0) {
+        printk(KERN_WARNING "ios: no room for pty output\n");
+        return;
+    }
     char *buf = kvmalloc(room, GFP_KERNEL);
     ssize_t size;
     for (;;) {
