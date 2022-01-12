@@ -37,10 +37,9 @@ struct ios_pty {
     struct ios_pty_wq wqs[4];
     poll_table pt;
 
+    struct work_struct poll_cb_work;
     struct work_struct output_work;
-    struct work_struct cleanup_work;
 };
-
 
 static void ios_pty_output_work(struct work_struct *output_work) {
     struct ios_pty *pty = container_of(output_work, struct ios_pty, output_work);
@@ -66,8 +65,7 @@ static void ios_pty_output_work(struct work_struct *output_work) {
     kvfree(buf);
 }
 
-static void ios_pty_cleanup_work(struct work_struct *cleanup_work) {
-    struct ios_pty *pty = container_of(cleanup_work, struct ios_pty, cleanup_work);
+static void ios_pty_cleanup(struct ios_pty *pty) {
     for (int i = 0; i < pty->n_wqs; i++)
         remove_wait_queue(pty->wqs[i].head, &pty->wqs[i].wq);
     fput(pty->ptm);
@@ -92,7 +90,7 @@ static void ios_pty_cb_send_input(struct linux_tty *linux_tty, const char *data,
 }
 
 static void ios_pty_cb_hangup(struct linux_tty *linux_tty) {
-    
+    // TODO: figure out what this should be doing
 }
 
 static struct linux_tty_callbacks ios_pty_callbacks = {
@@ -101,13 +99,18 @@ static struct linux_tty_callbacks ios_pty_callbacks = {
     .hangup = ios_pty_cb_hangup,
 };
 
+static void ios_pty_poll_cb_work(struct work_struct *work) {
+    struct ios_pty *pty = container_of(work, struct ios_pty, poll_cb_work);
+    __poll_t events = vfs_poll(pty->ptm, NULL);
+    if (events & EPOLLIN)
+        ios_pty_output_work(&pty->output_work);
+    if (events & EPOLLHUP)
+        ios_pty_cleanup(pty);
+}
+
 static int ptm_callback(struct wait_queue_entry *wq_entry, unsigned mode, int flags, void *key) {
     struct ios_pty *pty = container_of(wq_entry, struct ios_pty_wq, wq)->pty;
-    __poll_t events = vfs_poll(pty->ptm, NULL);
-    if (events & EPOLLHUP)
-        schedule_work(&pty->cleanup_work);
-    if (events & EPOLLIN)
-        schedule_work(&pty->output_work);
+    schedule_work(&pty->poll_cb_work);
     return 0;
 }
 
@@ -147,8 +150,8 @@ struct file *ios_pty_open(nsobj_t *terminal_out) {
     }
     pty->ptm = ptm_file;
 
+    INIT_WORK(&pty->poll_cb_work, ios_pty_poll_cb_work);
     INIT_WORK(&pty->output_work, ios_pty_output_work);
-    INIT_WORK(&pty->cleanup_work, ios_pty_cleanup_work);
 
     pty->pts_rdev = pts_file->f_inode->i_rdev;
     pty->terminal = Terminal_terminalWithType_number(MAJOR(pty->pts_rdev), MINOR(pty->pts_rdev));
