@@ -68,7 +68,7 @@ void FsInitialize() {
             fs_ish_apk_version = version.intValue;
         }
 
-        if (fs_ish_apk_version > COMPATIBLE_APK_VERSION)
+        if (fs_ish_apk_version >= COMPATIBLE_APK_VERSION)
             FsUpdateRepositories();
 
         if (currentVersion.intValue > fs_ish_version) {
