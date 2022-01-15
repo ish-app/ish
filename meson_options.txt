@@ -4,6 +4,7 @@ option('log_handler', type: 'string', value: 'dprintf')
 
 option('engine', type: 'combo', choices: ['jit', 'interp'], value: 'jit')
 option('kernel', type: 'combo', choices: ['ish', 'linux'], value: 'ish')
+option('kconfig', type: 'array', value: [])
 
 option('vdso_c_args', type: 'string', value: '')
 
