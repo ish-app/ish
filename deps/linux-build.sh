@@ -1,4 +1,5 @@
 #!/bin/bash -e
+set -o pipefail
 output="$1"
 srctree="$2"
 objtree="$3"
@@ -26,12 +27,19 @@ export ISH_CFLAGS = $ISH_CFLAGS
 export LIB_ISH_EMU = $LIB_ISH_EMU
 END
 
-defconfig=app_defconfig
-if [[ "$srctree/arch/ish/configs/$defconfig" -nt "$objtree/.config" ]]; then
-    make -C "$srctree" O="$(realpath "$objtree")" "${makeargs[@]}" "$defconfig"
+defconfig="$srctree/arch/ish/configs/ish_defconfig"
+for fragment in "$defconfig" $KCONFIG_FRAGMENTS; do
+    if [[ "$fragment" -nt "$objtree/.config" ]]; then
+        regen_config=1
+    fi
+done
+if [[ -n "$regen_config" ]]; then
+    export KCONFIG_CONFIG="$objtree/.config"
+    "$srctree/scripts/kconfig/merge_config.sh" -m "$srctree/arch/ish/configs/ish_defconfig" $KCONFIG_FRAGMENTS
+    unset KCONFIG_CONFIG
 fi
 
-make -C "$objtree" "${makeargs[@]}" syncconfig
+make -C "$objtree" "${makeargs[@]}" olddefconfig
 
 case "$(uname)" in
     Darwin) cpus=$(sysctl -n hw.ncpu) ;;
