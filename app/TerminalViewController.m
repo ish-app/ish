@@ -197,7 +197,7 @@
         argv_arr[i] = command[i].UTF8String;
     argv_arr[command.count] = NULL;
     const char *envp_arr[] = {
-        "TERM=xterm256-color",
+        "TERM=xterm-256color",
         NULL,
     };
     const char *const *argv = argv_arr;
