@@ -39,7 +39,7 @@ if [[ -n "$regen_config" ]]; then
     unset KCONFIG_CONFIG
 fi
 
-make -C "$objtree" "${makeargs[@]}" olddefconfig
+make -C "$srctree" O="$(realpath "$objtree")" "${makeargs[@]}" olddefconfig
 
 case "$(uname)" in
     Darwin) cpus=$(sysctl -n hw.ncpu) ;;
