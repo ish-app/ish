@@ -36,6 +36,7 @@ struct linux_tty {
 struct linux_tty_callbacks {
     void (*can_output)(struct linux_tty *tty);
     void (*send_input)(struct linux_tty *tty, const char *data, size_t length);
+    void (*resize)(struct linux_tty *tty, int cols, int rows);
     void (*hangup)(struct linux_tty *tty);
 };
 

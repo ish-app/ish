@@ -151,14 +151,18 @@ static NSMapTable<NSUUID *, Terminal *> *terminalsByUUID;
 
 - (void)syncWindowSize {
     [self.webView evaluateJavaScript:@"exports.getSize()" completionHandler:^(NSArray<NSNumber *> *dimensions, NSError *error) {
-#if !ISH_LINUX
         int cols = dimensions[0].intValue;
         int rows = dimensions[1].intValue;
         if (self.tty == NULL)
             return;
+#if !ISH_LINUX
         lock(&self.tty->lock);
         tty_set_winsize(self.tty, (struct winsize_) {.col = cols, .row = rows});
         unlock(&self.tty->lock);
+#else
+        async_do_in_workqueue(^{
+            self->_tty->ops->resize(self->_tty, cols, rows);
+        });
 #endif
     }];
 }

@@ -89,6 +89,15 @@ static void ios_pty_cb_send_input(struct linux_tty *linux_tty, const char *data,
         printk(KERN_WARNING "ios: dropped %ld bytes of pty input\n", length - written);
 }
 
+static void ios_pty_cb_resize(struct linux_tty *linux_tty, int cols, int rows) {
+    struct ios_pty *pty = container_of(linux_tty, struct ios_pty, linux_tty);
+    struct winsize ws = {
+        .ws_row = rows,
+        .ws_col = cols,
+    };
+    vfs_ioctl(pty->ptm, TIOCSWINSZ, (unsigned long) &ws);
+}
+
 static void ios_pty_cb_hangup(struct linux_tty *linux_tty) {
     // TODO: figure out what this should be doing
 }
@@ -96,6 +105,7 @@ static void ios_pty_cb_hangup(struct linux_tty *linux_tty) {
 static struct linux_tty_callbacks ios_pty_callbacks = {
     .can_output = ios_pty_cb_can_output,
     .send_input = ios_pty_cb_send_input,
+    .resize = ios_pty_cb_resize,
     .hangup = ios_pty_cb_hangup,
 };
 

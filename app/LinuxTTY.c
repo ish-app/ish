@@ -70,6 +70,15 @@ static void ios_tty_cb_send_input(struct linux_tty *linux_tty, const char *data,
     tty_flip_buffer_push(&tty->port);
 }
 
+static void ios_tty_cb_resize(struct linux_tty *linux_tty, int cols, int rows) {
+    struct ios_tty *tty = container_of(linux_tty, struct ios_tty, linux_tty);
+    struct winsize ws = {
+        .ws_row = rows,
+        .ws_col = cols,
+    };
+    tty_do_resize(tty->port.tty, &ws);
+}
+
 static void ios_tty_cb_hangup(struct linux_tty *linux_tty) {
     // nah
 }
@@ -77,6 +86,7 @@ static void ios_tty_cb_hangup(struct linux_tty *linux_tty) {
 static struct linux_tty_callbacks ios_tty_callbacks = {
     .can_output = ios_tty_cb_can_output,
     .send_input = ios_tty_cb_send_input,
+    .resize = ios_tty_cb_resize,
     .hangup = ios_tty_cb_hangup,
 };
 
