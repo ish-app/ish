@@ -256,10 +256,12 @@ void SyncHostname(void) {
 
     bootError = [self boot];
 
+#if ISH_LINUX
     [NSNotificationCenter.defaultCenter addObserverForName:UIApplicationWillEnterForegroundNotification object:UIApplication.sharedApplication queue:nil usingBlock:^(NSNotification * _Nonnull note) {
         SyncHostname();
     }];
     SyncHostname();
+#endif
 
     return YES;
 }
