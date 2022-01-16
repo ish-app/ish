@@ -46,6 +46,8 @@ struct file *ios_pty_open(nsobj_t *terminal_out);
 typedef void (^StartSessionDoneBlock)(int retval, int pid, nsobj_t terminal);
 void start_session(const char *exe, const char *const *argv, const char *const *envp, StartSessionDoneBlock done);
 
+void linux_sethostname(const char *hostname);
+
 nsobj_t Terminal_terminalWithType_number(int type, int number);
 void Terminal_setLinuxTTY(nsobj_t _self, struct linux_tty *tty);
 int Terminal_sendOutput_length(nsobj_t _self, const char *data, int size);

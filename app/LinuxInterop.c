@@ -18,6 +18,7 @@
 #include <linux/file.h>
 #include <linux/umh.h>
 #include <linux/syscalls.h>
+#include <linux/utsname.h>
 #include <asm/irq.h>
 #include <user/fs.h>
 #include <user/irq.h>
@@ -145,4 +146,18 @@ void start_session(const char *exe, const char *const *argv, const char *const *
     int err = call_usermodehelper_exec(proc, UMH_WAIT_EXEC);
     if (err < 0)
         done(err, 0, NULL);
+}
+
+void linux_sethostname(const char *hostname) {
+    int len = strlen(hostname);
+    if (len > __NEW_UTS_LEN)
+        len = __NEW_UTS_LEN;
+    down_write(&uts_sem);
+    struct new_utsname *u = utsname();
+    if (strncmp(u->nodename, hostname, len) != 0) {
+        memcpy(u->nodename, hostname, len);
+        memset(u->nodename + len, 0, sizeof(u->nodename) - len);
+        uts_proc_notify(UTS_PROC_HOSTNAME);
+    }
+    up_write(&uts_sem);
 }
