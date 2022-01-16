@@ -138,7 +138,7 @@ static void session_cleanup(struct subprocess_info *info) {
     kfree(session);
 }
 
-void start_session(const char *exe, const char *const *argv, const char *const *envp, StartSessionDoneBlock done) {
+void linux_start_session(const char *exe, const char *const *argv, const char *const *envp, StartSessionDoneBlock done) {
     struct ish_session *session = kzalloc(sizeof(*session), GFP_KERNEL);
     session->tty = ios_pty_open(&session->terminal);
     session->callback = done;
@@ -160,4 +160,24 @@ void linux_sethostname(const char *hostname) {
         uts_proc_notify(UTS_PROC_HOSTNAME);
     }
     up_write(&uts_sem);
+}
+
+ssize_t linux_read_file(const char *path, char *buf, size_t size) {
+    struct file *filp = filp_open(path, O_RDONLY, 0);
+    if (IS_ERR(filp))
+        return PTR_ERR(filp);
+    ssize_t res = vfs_read(filp, buf, size, NULL);
+    filp_close(filp, NULL);
+    if (res >= size)
+        return -ENAMETOOLONG;
+    return res;
+}
+ssize_t linux_write_file(const char *path, const char *buf, size_t size) {
+    struct file *filp = filp_open(path, O_WRONLY, 0);
+    ssize_t res = vfs_write(filp, buf, size, NULL);
+    filp_close(filp, NULL);
+    return res;
+}
+int linux_remove_directory(const char *path) {
+    return ksys_rmdir(path);
 }

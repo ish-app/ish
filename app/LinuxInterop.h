@@ -15,12 +15,14 @@
 #include <linux/fs.h>
 #endif
 
-void actuate_kernel(const char *cmdline);
-
 void async_do_in_irq(void (^block)(void));
 void async_do_in_workqueue(void (^block)(void));
 void async_do_in_ios(void (^block)(void));
 void sync_do_in_workqueue(void (^block)(void (^done)(void)));
+
+// call into ios from kernel:
+
+void actuate_kernel(const char *cmdline);
 
 void ReportPanic(const char *message);
 void ConsoleLog(const char *data, unsigned len);
@@ -44,14 +46,20 @@ struct linux_tty_callbacks {
 struct file *ios_pty_open(nsobj_t *terminal_out);
 #endif
 
-typedef void (^StartSessionDoneBlock)(int retval, int pid, nsobj_t terminal);
-void start_session(const char *exe, const char *const *argv, const char *const *envp, StartSessionDoneBlock done);
-
-void linux_sethostname(const char *hostname);
-
 nsobj_t Terminal_terminalWithType_number(int type, int number);
 void Terminal_setLinuxTTY(nsobj_t _self, struct linux_tty *tty);
 int Terminal_sendOutput_length(nsobj_t _self, const char *data, int size);
 int Terminal_roomForOutput(nsobj_t _self);
+
+// call into kernel from ios:
+
+typedef void (^StartSessionDoneBlock)(int retval, int pid, nsobj_t terminal);
+void linux_start_session(const char *exe, const char *const *argv, const char *const *envp, StartSessionDoneBlock done);
+
+void linux_sethostname(const char *hostname);
+
+ssize_t linux_read_file(const char *path, char *buf, size_t size);
+ssize_t linux_write_file(const char *path, const char *buf, size_t size);
+int linux_remove_directory(const char *path);
 
 #endif /* LinuxInterop_h */

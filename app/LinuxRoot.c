@@ -13,6 +13,8 @@
 #include <uapi/linux/mount.h>
 #include "LinuxInterop.h"
 
+void FsInitialize(void);
+
 static __init int ish_rootfs(void) {
     rootfs_mounted = true;
 
@@ -32,6 +34,8 @@ static __init int ish_rootfs(void) {
 
     do_mount(".", "/", NULL, MS_MOVE, NULL);
     ksys_chroot(".");
+
+    FsInitialize();
     return 0;
 }
 

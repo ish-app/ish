@@ -9,6 +9,10 @@
 #include "kernel/calls.h"
 #include "fs/path.h"
 
+#ifdef ISH_LINUX
+#import "LinuxInterop.h"
+#endif
+
 int fs_ish_version;
 int fs_ish_apk_version;
 
@@ -36,15 +40,9 @@ static int remove_directory(const char *path) {
     return generic_rmdirat(AT_PWD, path);
 }
 #else
-static ssize_t read_file(const char *path, char *buf, size_t size) {
-    return _ENOSYS;
-}
-static ssize_t write_file(const char *path, const char *buf, size_t size) {
-    return _ENOSYS;
-}
-static int remove_directory(const char *path) {
-    return _ENOSYS;
-}
+#define read_file linux_read_file
+#define write_file linux_write_file
+#define remove_directory linux_remove_directory
 #endif
 
 void FsInitialize() {
@@ -104,7 +102,9 @@ void FsUpdateRepositories() {
     fs_ish_apk_version = currentVersion.intValue;
     write_file("/ish/apk-version", currentVersionFile.UTF8String, [currentVersionFile lengthOfBytesUsingEncoding:NSUTF8StringEncoding]);
     remove_directory("/ish/apk");
-    [NSNotificationCenter.defaultCenter postNotificationName:FsUpdatedNotification object:nil];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [NSNotificationCenter.defaultCenter postNotificationName:FsUpdatedNotification object:nil];
+    });
 }
 
 NSString *const FsUpdatedNotification = @"FsUpdatedNotification";

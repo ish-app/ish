@@ -206,7 +206,7 @@
     __block int sessionPid = 0;
     __block int err = 1;
     sync_do_in_workqueue(^(void (^done)(void)) {
-        start_session(argv[0], argv, envp, ^(int retval, int pid, nsobj_t term) {
+        linux_start_session(argv[0], argv, envp, ^(int retval, int pid, nsobj_t term) {
             err = retval;
             if (term)
                 terminal = CFBridgingRelease(term);
