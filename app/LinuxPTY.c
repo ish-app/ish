@@ -43,17 +43,18 @@ struct ios_pty {
 
 static void ios_pty_output_work(struct work_struct *output_work) {
     struct ios_pty *pty = container_of(output_work, struct ios_pty, output_work);
-    size_t room = Terminal_roomForOutput(pty->terminal);
-    if (room == 0) {
-        printk(KERN_WARNING "ios: no room for pty output\n");
-        return;
-    }
-    char *buf = kvmalloc(room, GFP_KERNEL);
+    char *buf = kvmalloc(PAGE_SIZE, GFP_KERNEL);
     ssize_t size;
     for (;;) {
-        size = kernel_read(pty->ptm, buf, PAGE_SIZE, NULL);
+        size_t room = Terminal_roomForOutput(pty->terminal);
+        if (room == 0) {
+            printk(KERN_WARNING "ios: no room for pty output\n");
+            break;
+        }
+        size = kernel_read(pty->ptm, buf, room, NULL);
         if (size < 0) {
-            printk(KERN_WARNING "ios: pty read failed: %s\n", errname(size));
+            if (size != -EAGAIN)
+                printk(KERN_WARNING "ios: pty read failed: %s\n", errname(size));
             break;
         }
         int sent = Terminal_sendOutput_length(pty->terminal, buf, size);
@@ -142,6 +143,9 @@ struct file *ios_pty_open(nsobj_t *terminal_out) {
 
     int lock_pty = 0;
     vfs_ioctl(ptm_file, TIOCSPTLCK, (unsigned long) &lock_pty);
+    spin_lock(&ptm_file->f_lock);
+    ptm_file->f_flags |= O_NONBLOCK;
+    spin_unlock(&ptm_file->f_lock);
 
     // sadly this api can't just return a struct file *
     int fd = vfs_ioctl(ptm_file, TIOCGPTPEER, O_RDWR);
