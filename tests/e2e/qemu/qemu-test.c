@@ -2530,7 +2530,7 @@ void test_sse(void)
     SSE_OP2(andps);
     SSE_OP2(andpd);
     SSE_OP2(andnps);
-    // SSE_OP2(andnpd);
+    SSE_OP2(andnpd);
     SSE_OP2(orps);
     SSE_OP2(orpd);
     SSE_OP2(xorps);
@@ -2555,12 +2555,12 @@ void test_sse(void)
     // SHIFT_OP(psllw, 7);
     // SHIFT_OP(psllw, 16);
 
-    // SHIFT_OP(psrld, 7);
-    // SHIFT_OP(psrld, 32);
+    SHIFT_DQ_IM(psrld, 7);
+    SHIFT_DQ_IM(psrld, 32);
     // SHIFT_OP(psrad, 7);
     // SHIFT_OP(psrad, 32);
-    // SHIFT_OP(pslld, 7);
-    // SHIFT_OP(pslld, 32);
+    SHIFT_DQ_IM(pslld, 7);
+    SHIFT_DQ_IM(pslld, 32);
 
     SHIFT_OP(psrlq, 7);
     SHIFT_OP(psrlq, 32);
@@ -2609,9 +2609,9 @@ void test_sse(void)
             b.s[3] = q_nan.d;
         }
 
-        SSE_OPS_S(add);
-        SSE_OPS_S(mul);
-        SSE_OPS_S(sub);
+        SSE_OPS(add);
+        SSE_OPS(mul);
+        SSE_OPS(sub);
         // SSE_OPS(min);
         SSE_OPS_S(div);
         // SSE_OPS(max);
@@ -2634,21 +2634,21 @@ void test_sse(void)
             a.d[0] = q_nan.d;
             b.d[1] = q_nan.d;
         }
-        SSE_OPD_S(add);
-        SSE_OPD_S(mul);
-        SSE_OPD_S(sub);
+        SSE_OPD(add);
+        SSE_OPD(mul);
+        SSE_OPD(sub);
         SSE_OPD_S(min);
         SSE_OPD_S(div);
         SSE_OPD_S(max);
         SSE_OPD_S(sqrt);
-        SSE_OPD_S(cmpeq);
-        SSE_OPD_S(cmplt);
-        SSE_OPD_S(cmple);
-        SSE_OPD_S(cmpunord);
-        SSE_OPD_S(cmpneq);
-        SSE_OPD_S(cmpnlt);
-        SSE_OPD_S(cmpnle);
-        SSE_OPD_S(cmpord);
+        SSE_OPD(cmpeq);
+        SSE_OPD(cmplt);
+        SSE_OPD(cmple);
+        SSE_OPD(cmpunord);
+        SSE_OPD(cmpneq);
+        SSE_OPD(cmpnlt);
+        SSE_OPD(cmpnle);
+        SSE_OPD(cmpord);
     }
 
     /* float to float/int */
@@ -2663,7 +2663,7 @@ void test_sse(void)
     // CVT_OP_XMM2REG(cvtss2si);
     CVT_OP_XMM2REG(cvttss2si);
     // CVT_OP_XMM(cvtps2dq);
-    // CVT_OP_XMM(cvttps2dq);
+    CVT_OP_XMM(cvttps2dq);
 
     a.d[0] = 2.6;
     a.d[1] = -3.4;
@@ -2674,7 +2674,7 @@ void test_sse(void)
     // CVT_OP_XMM2REG(cvtsd2si);
     CVT_OP_XMM2REG(cvttsd2si);
     // CVT_OP_XMM(cvtpd2dq);
-    // CVT_OP_XMM(cvttpd2dq);
+    CVT_OP_XMM(cvttpd2dq);
 
     /* sse/mmx moves */
     // CVT_OP_XMM2MMX(movdq2q);
