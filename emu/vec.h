@@ -19,8 +19,10 @@ void vec_merge64(NO_CPU, const void *src, void *dst);
 void vec_merge128(NO_CPU, const void *src, void *dst);
 
 void vec_imm_shiftl_q128(NO_CPU, const uint8_t amount, union xmm_reg *dst);
+void vec_imm_shiftl_d128(NO_CPU, const uint8_t amount, union xmm_reg *dst);
 void vec_imm_shiftl_q64(NO_CPU, const uint8_t amount, union mm_reg *dst);
 void vec_imm_shiftr_q128(NO_CPU, const uint8_t amount, union xmm_reg *dst);
+void vec_imm_shiftr_d128(NO_CPU, const uint8_t amount, union xmm_reg *dst);
 void vec_imm_shiftr_q64(NO_CPU, const uint8_t amount, union mm_reg *dst);
 void vec_imm_shiftl_dq128(NO_CPU, const uint8_t amount, union xmm_reg *dst);
 void vec_shiftl_q128(NO_CPU, union xmm_reg *amount, union xmm_reg *dst);
@@ -32,6 +34,13 @@ void vec_add_q64(NO_CPU, union mm_reg *src, union mm_reg *dst);
 void vec_sub_q128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
 void vec_mulu_dq128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
 void vec_mulu_dq64(NO_CPU, union mm_reg *src, union mm_reg *dst);
+
+void vec_add_p64(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
+void vec_add_p32(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
+void vec_sub_p64(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
+void vec_sub_p32(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
+void vec_mul_p64(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
+void vec_mul_p32(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
 
 void vec_and128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
 void vec_and64(NO_CPU, union mm_reg *src, union mm_reg *dst);
@@ -59,12 +68,17 @@ void vec_single_ucomi32(struct cpu_state *cpu, const float *src, const float *ds
 void vec_single_ucomi64(struct cpu_state *cpu, const double *src, const double *dst);
 void vec_single_fcmp64(NO_CPU, const double *src, union xmm_reg *dst, uint8_t type);
 
+void vec_fcmp_p64(NO_CPU, const union xmm_reg *src, union xmm_reg *dst, uint8_t type);
+
 void vec_cvtsi2sd32(NO_CPU, const int32_t *src, double *dst);
 void vec_cvttsd2si64(NO_CPU, const double *src, int32_t *dst);
 void vec_cvtsd2ss64(NO_CPU, const double *src, float *dst);
 void vec_cvtsi2ss32(NO_CPU, const int32_t *src, float *dst);
 void vec_cvttss2si32(NO_CPU, const float *src, int32_t *dst);
 void vec_cvtss2sd32(NO_CPU, const float *src, double *dst);
+
+void vec_cvttpd2dq64(NO_CPU, const union xmm_reg *src, union xmm_reg *dst);
+void vec_cvttps2dq32(NO_CPU, const union xmm_reg *src, union xmm_reg *dst);
 
 // TODO organize
 void vec_unpack_bw128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst);

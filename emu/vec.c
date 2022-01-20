@@ -39,6 +39,18 @@ void vec_imm_shiftl_q128(NO_CPU, const uint8_t amount, union xmm_reg *dst) {
         dst->qw[1] <<= amount;
     }
 }
+
+void vec_imm_shiftl_d128(NO_CPU, const uint8_t amount, union xmm_reg *dst) {
+    if (amount > 31) {
+        zero_xmm(dst);
+    } else {
+        dst->u32[0] <<= amount;
+        dst->u32[1] <<= amount;
+        dst->u32[2] <<= amount;
+        dst->u32[3] <<= amount;
+    }
+}
+
 void vec_imm_shiftl_q64(NO_CPU, const uint8_t amount, union mm_reg *dst) {
     if (amount > 63)
         dst->qw = 0;
@@ -54,6 +66,18 @@ void vec_imm_shiftr_q128(NO_CPU, const uint8_t amount, union xmm_reg *dst) {
         dst->qw[1] >>= amount;
     }
 }
+
+void vec_imm_shiftr_d128(NO_CPU, const uint8_t amount, union xmm_reg *dst) {
+    if (amount > 31) {
+        zero_xmm(dst);
+    } else {
+        dst->u32[0] >>= amount;
+        dst->u32[1] >>= amount;
+        dst->u32[2] >>= amount;
+        dst->u32[3] >>= amount;
+    }
+}
+
 void vec_imm_shiftr_q64(NO_CPU, const uint8_t amount, union mm_reg *dst) {
     if (amount > 63)
         dst->qw = 0;
@@ -209,24 +233,62 @@ void vec_single_ucomi64(struct cpu_state *cpu, const double *src, const double *
     cpu->sf_res = 0;
 }
 
+#define VEC_PACKED_OP(name, op, field, size, n) \
+    void vec_##name##size(NO_CPU, union xmm_reg *src, union xmm_reg *dst) { \
+        for (int i = 0; i < n; ++i) { \
+            dst->field[i] op##= src->field[i]; \
+        } \
+    }
+
+VEC_PACKED_OP(add_p, +, f64, 64, 2)
+VEC_PACKED_OP(add_p, +, f32, 32, 4)
+VEC_PACKED_OP(sub_p, -, f64, 64, 2)
+VEC_PACKED_OP(sub_p, -, f32, 32, 4)
+VEC_PACKED_OP(mul_p, *, f64, 64, 2)
+VEC_PACKED_OP(mul_p, *, f32, 32, 4)
+
+void vec_fcmp_p64(NO_CPU, const union xmm_reg *src, union xmm_reg *dst, uint8_t type) {
+    for (size_t i = 0; i < sizeof(dst->f64) / sizeof(*dst->f64); ++i) {
+        dst->qw[i] = cmpd(dst->f64[i], src->f64[i], type) ? -1 : 0;
+    }
+}
+
 // come to the dark side of macros
 #define _ISNAN_int32_t(x) false
 #define _ISNAN_float(x) isnan(x)
 #define _ISNAN_double(x) isnan(x)
 #define _ISNAN(x, t) _ISNAN_##t(x)
+#define _VEC_CVT(src, dst, src_t, dst_t, n) \
+    do { \
+        for (int i = 0; i < n; ++i) { \
+            if (_ISNAN(((src_t *)src)[i], src_t)) \
+                ((dst_t *)dst)[i] = INT32_MIN; \
+            else \
+                ((dst_t *)dst)[i] = ((src_t *)src)[i]; \
+        } \
+    } while (0)
+
 #define VEC_CVT(name, src_t, dst_t) \
     void vec_cvt##name(NO_CPU, const src_t *src, dst_t *dst) { \
-        if (_ISNAN(*src, src_t)) \
-            *dst = INT32_MIN; \
-        else \
-            *dst = *src; \
+        _VEC_CVT(src, dst, src_t, dst_t, 1); \
     }
+
+#define PACKED_VEC_CVT(name, src_field, dst_field, src_t, dst_t, n) \
+    void vec_cvt##name(NO_CPU, const union xmm_reg *src, union xmm_reg *dst) { \
+        _VEC_CVT(src->src_field, dst->dst_field, src_t, dst_t, n); \
+        /* Note: this needs to be second, because src and dst may alias */ \
+        memset(dst->dst_field + n, 0, sizeof(*dst) - n * sizeof(*dst->dst_field)); \
+    }
+
 VEC_CVT(si2sd32, int32_t, double)
 VEC_CVT(tsd2si64, double, int32_t)
 VEC_CVT(sd2ss64, double, float)
 VEC_CVT(si2ss32, int32_t, float)
 VEC_CVT(tss2si32, float, int32_t)
 VEC_CVT(ss2sd32, float, double)
+
+PACKED_VEC_CVT(tpd2dq64, f64, u32, double, int32_t, 2)
+PACKED_VEC_CVT(tps2dq32, f32, u32, float, int32_t, 4)
 
 void vec_unpack_bw128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst) {
     for (int i = 7; i >= 0; i--) {

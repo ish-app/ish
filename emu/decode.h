@@ -234,6 +234,9 @@ restart:
                            READMODRM; XADD(modrm_reg, modrm_val,8); break;
                 case 0xc1: TRACEI("xadd reg, modrm");
                            READMODRM; XADD(modrm_reg, modrm_val,oz); break;
+                case 0xc2: TRACEI("cmppd xmm:modrm, xmm, imm8");
+                           READMODRM; READIMM8; V_OP_IMM(fcmp_p, xmm_modrm_val, xmm_modrm_reg,64); break;
+printf("asdf\n");
 
                 case 0xc7: READMODRM_MEM; switch (modrm.opcode) {
                                case 1: TRACEI("cmpxchg8b modrm");
@@ -272,10 +275,18 @@ restart:
 
                 case 0x54: TRACEI("andpd xmm:modrm, xmm");
                            READMODRM; V_OP(and, xmm_modrm_val, xmm_modrm_reg,128); break;
+                case 0x55: TRACEI("andnpd xmm:modrm, xmm");
+                           READMODRM; V_OP(andn, xmm_modrm_val, xmm_modrm_reg,128); break;
                 case 0x56: TRACEI("orpd xmm:modrm, xmm");
                            READMODRM; V_OP(or, xmm_modrm_val, xmm_modrm_reg,128); break;
                 case 0x57: TRACEI("xorpd xmm:modrm, xmm");
                            READMODRM; V_OP(xor, xmm_modrm_val, xmm_modrm_reg,128); break;
+                case 0x58: TRACEI("addpd xmm:modrm, xmm");
+                           READMODRM; V_OP(add_p, xmm_modrm_val, xmm_modrm_reg,64); break;
+                case 0x59: TRACEI("mulpd xmm:modrm, xmm");
+                           READMODRM; V_OP(mul_p, xmm_modrm_val, xmm_modrm_reg,64); break;
+                case 0x5c: TRACEI("subpd xmm:modrm, xmm");
+                           READMODRM; V_OP(sub_p, xmm_modrm_val, xmm_modrm_reg,64); break;
                 case 0x60: TRACEI("punpcklbw xmm:modrm, xmm");
                            READMODRM; V_OP(unpack_bw, xmm_modrm_val, xmm_modrm_reg,128); break;
                 case 0x62: TRACEI("punpckldq xmm:modrm, xmm");
@@ -292,6 +303,15 @@ restart:
                 case 0x70: TRACEI("pshufd xmm:modrm, xmm, imm8");
                            READMODRM; READIMM8; V_OP_IMM(shuffle_d, xmm_modrm_val, xmm_modrm_reg,128); break;
 
+                case 0x72: READMODRM_NOMEM;
+                            switch (modrm.opcode) {
+                                case 2: TRACEI("psrld imm, xmm");
+                                        READIMM8; V_OP(imm_shiftr_d, imm, xmm_modrm_reg, 128); break;
+                                case 6: TRACEI("pslld imm, xmm");
+                                        READIMM8; V_OP(imm_shiftl_d, imm, xmm_modrm_reg, 128); break;
+                                default: UNDEFINED;
+                            }
+                            break;
                 case 0x73: READMODRM_NOMEM;
                            switch (modrm.opcode) {
                                case 2: TRACEI("psrlq imm, xmm");
@@ -337,6 +357,8 @@ restart:
                            READMODRM; V_OP(max_ub, xmm_modrm_val, xmm_modrm_reg,128); break;
                 case 0xdf: TRACEI("pandn xmm:modrm, xmm");
                            READMODRM; V_OP(andn, xmm_modrm_val, xmm_modrm_reg,128); break;
+                case 0xe6: TRACEI("cvttpd2dq xmm:modrm, xmm");
+                           READMODRM; V_OP(cvttpd2dq, xmm_modrm_val, xmm_modrm_reg,64); break;
                 case 0xeb: TRACEI("por xmm:modrm, xmm");
                            READMODRM; V_OP(or, xmm_modrm_val, xmm_modrm_reg,128); break;
                 case 0xef: TRACEI("pxor xmm:modrm, xmm");
@@ -370,6 +392,13 @@ restart:
                            READMODRM; V_OP(or, xmm_modrm_val, xmm_modrm_reg,128); break;
                 case 0x57: TRACEI("xorps xmm:modrm, xmm");
                            READMODRM; V_OP(xor, xmm_modrm_val, xmm_modrm_reg,128); break;
+                    
+                case 0x58: TRACEI("addps xmm:modrm, xmm");
+                           READMODRM; V_OP(add_p, xmm_modrm_val, xmm_modrm_reg,32); break;
+                case 0x59: TRACEI("mulps xmm:modrm, xmm");
+                           READMODRM; V_OP(mul_p, xmm_modrm_val, xmm_modrm_reg,32); break;
+                case 0x5c: TRACEI("subps xmm:modrm, xmm");
+                           READMODRM; V_OP(sub_p, xmm_modrm_val, xmm_modrm_reg,32); break;
 
                 case 0x62: TRACEI("punpckldq mm:modrm, mm");
                            READMODRM; V_OP(unpack_dq, mm_modrm_val, mm_modrm_reg,64); break;
@@ -1051,6 +1080,8 @@ restart:
                                    READMODRM; V_OP(cvttss2si, xmm_modrm_val, modrm_reg,32); break;
                         case 0x5a: TRACEI("cvtss2sd xmm:modrm, xmm");
                                    READMODRM; V_OP(cvtss2sd, xmm_modrm_val, xmm_modrm_reg,32); break;
+                        case 0x5b: TRACEI("cvttps2dq xmm:modrm, xmm");
+                                   READMODRM; V_OP(cvttps2dq, xmm_modrm_val, xmm_modrm_reg,32); break;
 
                         case 0x58: TRACEI("addss xmm:modrm, xmm");
                                    READMODRM; V_OP(single_fadd, xmm_modrm_val, xmm_modrm_reg,32); break;
