@@ -101,7 +101,7 @@ void send_signal(struct task *task, int sig, struct siginfo_ info) {
     // signal zero is for testing whether a process exists
     if (sig == 0)
         return;
-    if (task->zombie)
+    if (task->zombie || task->exiting)
         return;
 
     struct sighand *sighand = task->sighand;
