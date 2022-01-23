@@ -36,6 +36,7 @@ void jit_free(struct jit *jit) {
         }
     }
     jit_free_jetsam(jit);
+    free(jit->page_hash);
     free(jit->hash);
     free(jit);
 }
