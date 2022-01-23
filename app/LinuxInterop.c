@@ -84,7 +84,7 @@ static void do_ios_work(struct work_struct *work) {
 
 void async_do_in_workqueue(void (^block)(void)) {
     async_do_in_irq(^{
-        struct ios_work *work = kzalloc(sizeof(*work), GFP_KERNEL);
+        struct ios_work *work = kzalloc(sizeof(*work), GFP_ATOMIC);
         work->block = Block_copy(block);
         INIT_WORK(&work->work, do_ios_work);
         schedule_work(&work->work);
