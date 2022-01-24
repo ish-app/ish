@@ -54,7 +54,9 @@
 
     [UserPreferences.shared observe:@[@"capsLockMapping", @"fontSize", @"launchCommand", @"bootCommand"]
                             options:0 owner:self usingBlock:^(typeof(self) self) {
-        [self _updateUI];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self _updateUI];
+        });
     }];
     [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(_updateUI) name:FsUpdatedNotification object:nil];
 }
@@ -74,6 +76,7 @@
 }
 
 - (void)_updateUI {
+    NSAssert(NSThread.isMainThread, @"This method needs to be called on the main thread");
     UserPreferences *prefs = UserPreferences.shared;
     self.themeCell.detailTextLabel.text = prefs.theme.presetName;
     self.disableDimmingSwitch.on = UserPreferences.shared.shouldDisableDimming;

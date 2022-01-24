@@ -61,3 +61,16 @@ bool proc_dir_read(struct proc_entry *entry, unsigned long *index, struct proc_e
     assert(!"read from invalid proc directory");
 }
 
+void free_string_array(char **array) {
+    for (int i = 0; array[i] != NULL; i++)
+        free(array[i]);
+    free(array);
+}
+
+void proc_entry_cleanup(struct proc_entry *entry) {
+    if (entry->name != NULL)
+        free(entry->name);
+    if (entry->child_names != NULL)
+        free_string_array(entry->child_names);
+    *entry = (struct proc_entry) {0};
+}

@@ -119,7 +119,7 @@ static int proc_pid_auxv_show(struct proc_entry *entry, struct proc_data *buf) {
         goto out_free_task;
     }
     if (user_read_task(task, task->mm->auxv_start, data, size) == 0)
-        proc_buf_write(buf, data, size);
+        proc_buf_append(buf, data, size);
     free(data);
 
 out_free_task:
@@ -144,7 +144,7 @@ static int proc_pid_cmdline_show(struct proc_entry *entry, struct proc_data *buf
         goto out_free_task;
     }
     if (user_read_task(task, task->mm->argv_start, data, size) == 0)
-        proc_buf_write(buf, data, size);
+        proc_buf_append(buf, data, size);
     free(data);
 
 out_free_task:

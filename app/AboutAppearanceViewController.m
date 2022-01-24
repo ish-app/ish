@@ -22,8 +22,10 @@
     [super viewDidLoad];
     [UserPreferences.shared observe:@[@"theme", @"fontSize", @"fontFamily", @"hideStatusBar"]
                             options:0 owner:self usingBlock:^(typeof(self) self) {
-        [self.tableView reloadData];
-        [self setNeedsStatusBarAppearanceUpdate];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self.tableView reloadData];
+            [self setNeedsStatusBarAppearanceUpdate];
+        });
     }];
 }
 

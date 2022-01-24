@@ -8,14 +8,18 @@
 #import <Foundation/Foundation.h>
 
 typedef NS_ENUM(NSInteger, CapsLockMapping) {
+    __CapsLockMapFirst = 0,
     CapsLockMapNone = 0,
     CapsLockMapControl,
     CapsLockMapEscape,
+    __CapsLockMapLast,
 };
 
 typedef enum : NSUInteger {
+    __OptionMapFirst = 0,
     OptionMapNone = 0,
     OptionMapEsc,
+    __OptionMapLast,
 } OptionMapping;
 
 NS_ASSUME_NONNULL_BEGIN

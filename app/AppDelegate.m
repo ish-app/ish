@@ -292,7 +292,9 @@ void NetworkReachabilityCallback(SCNetworkReachabilityRef target, SCNetworkReach
     
     [UserPreferences.shared observe:@[@"shouldDisableDimming"] options:NSKeyValueObservingOptionInitial
                               owner:self usingBlock:^(typeof(self) self) {
-        UIApplication.sharedApplication.idleTimerDisabled = UserPreferences.shared.shouldDisableDimming;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            UIApplication.sharedApplication.idleTimerDisabled = UserPreferences.shared.shouldDisableDimming;
+        });
     }];
     
     struct sockaddr_in6 address = {
