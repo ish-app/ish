@@ -5,7 +5,6 @@
 //  Created by Charlie Melbye on 11/12/18.
 //
 
-#import <os/lock.h>
 #import <UIKit/UIKit.h>
 #import "UserPreferences.h"
 #import "fs/proc/ish.h"
@@ -30,41 +29,27 @@ NSDictionary<NSString *, NSString *> *friendlyPreferenceMapping;
 NSDictionary<NSString *, NSString *> *friendlyPreferenceReverseMapping;
 NSDictionary<NSString *, NSString *> *kvoProperties;
 
-os_unfair_lock user_default_keys_lock = OS_UNFAIR_LOCK_INIT;
-int user_default_keys_retain_count;
-
-void user_default_keys_requisition_impl(void) {
-    os_unfair_lock_lock(&user_default_keys_lock);
-    if (!user_default_keys_retain_count++) {
-        NSArray<NSString *> *preferenceKeys = NSUserDefaults.standardUserDefaults.dictionaryRepresentation.allKeys;
-        user_default_keys.count = preferenceKeys.count;
-        user_default_keys.entries = malloc(sizeof(struct user_default_key) * preferenceKeys.count);
-        for (NSUInteger i = 0; i < preferenceKeys.count; ++i) {
-            user_default_keys.entries[i].underlying_name = strdup(preferenceKeys[i].UTF8String);
-            if (friendlyPreferenceReverseMapping[preferenceKeys[i]]) {
-                user_default_keys.entries[i].name = strdup(friendlyPreferenceReverseMapping[preferenceKeys[i]].UTF8String);
-            } else {
-                user_default_keys.entries[i].name = NULL;
-            }
-        }
-    }
-    os_unfair_lock_unlock(&user_default_keys_lock);
+char **get_all_defaults_keys_impl(void) {
+    NSArray<NSString *> *preferenceKeys = NSUserDefaults.standardUserDefaults.dictionaryRepresentation.allKeys;
+    char **entries = malloc((preferenceKeys.count + 1) * sizeof(*entries));
+    for (NSUInteger i = 0; i < preferenceKeys.count; ++i)
+        entries[i] = strdup(preferenceKeys[i].UTF8String);
+    entries[preferenceKeys.count] = NULL;
+    return entries;
 }
 
-void user_default_keys_relinquish_impl(void) {
-    os_unfair_lock_lock(&user_default_keys_lock);
-    assert(user_default_keys_retain_count > 0);
-    if (!--user_default_keys_retain_count) {
-        for (size_t i = 0; i < user_default_keys.count; ++i)  {
-            free(user_default_keys.entries[i].name);
-            free(user_default_keys.entries[i].underlying_name);
-        }
-        free(user_default_keys.entries);
-    }
-    os_unfair_lock_unlock(&user_default_keys_lock);
+char *get_friendly_name_impl(const char *name) {
+    const char *friendly_name = friendlyPreferenceReverseMapping[[NSString stringWithUTF8String:name]].UTF8String;
+    if (friendly_name == NULL)
+        return NULL;
+    return strdup(friendly_name);
 }
 
-bool get_user_default_impl(char *name, char **buffer, size_t *size) {
+char *get_underlying_name_impl(const char *name) {
+    return strdup(friendlyPreferenceMapping[[NSString stringWithUTF8String:name]].UTF8String);
+}
+
+bool get_user_default_impl(const char *name, char **buffer, size_t *size) {
     id value = [NSUserDefaults.standardUserDefaults objectForKey:[NSString stringWithUTF8String:name]];
     // Since we are writing with fragments, wrap the object in an array to have
     // a top-level object to check.
@@ -87,7 +72,7 @@ bool get_user_default_impl(char *name, char **buffer, size_t *size) {
     return true;
 }
 
-bool set_user_default_impl(char *name, char *buffer, size_t size) {
+bool set_user_default_impl(const char *name, char *buffer, size_t size) {
     NSString *key = [NSString stringWithUTF8String:name];
     NSData *data = [NSData dataWithBytesNoCopy:buffer length:size freeWhenDone:NO];
     NSError *error;
@@ -108,7 +93,7 @@ bool set_user_default_impl(char *name, char *buffer, size_t size) {
     return true;
 }
 
-bool remove_user_default_impl(char *name) {
+bool remove_user_default_impl(const char *name) {
     NSString *key = [NSString stringWithUTF8String:name];
     NSString *property = kvoProperties[key];
     if (property) {
@@ -123,12 +108,12 @@ bool remove_user_default_impl(char *name) {
 
 // TODO: Move these to Linux
 #if ISH_LINUX
-struct all_user_default_keys user_default_keys;
-void (*user_default_keys_requisition)(void);
-void (*user_default_keys_relinquish)(void);
-bool (*get_user_default)(char *name, char **buffer, size_t *size);
-bool (*set_user_default)(char *name, char *buffer, size_t size);
-bool (*remove_user_default)(char *name);
+char **(*get_all_defaults_keys)(void);
+char *(*get_friendly_name)(const char *name);
+char *(*get_underlying_name)(const char *name);
+bool (*get_user_default)(const char *name, char **buffer, size_t *size);
+bool (*set_user_default)(const char *name, char *buffer, size_t size);
+bool (*remove_user_default)(const char *name);
 #endif
 
 @implementation UserPreferences {
@@ -162,8 +147,9 @@ bool (*remove_user_default)(char *name);
             kPreferenceHideStatusBarKey: @(NO),
         }];
         _theme = [[Theme alloc] initWithProperties:[_defaults objectForKey:kPreferenceThemeKey]];
-        user_default_keys_requisition = user_default_keys_requisition_impl;
-        user_default_keys_relinquish = user_default_keys_relinquish_impl;
+        get_all_defaults_keys = get_all_defaults_keys_impl;
+        get_friendly_name = get_friendly_name_impl;
+        get_underlying_name = get_underlying_name_impl;
         get_user_default = get_user_default_impl;
         set_user_default = set_user_default_impl;
         remove_user_default = remove_user_default_impl;

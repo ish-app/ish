@@ -7,6 +7,8 @@
 struct proc_entry {
     struct proc_dir_entry *meta;
     unsigned long index;
+    char **child_names;
+    char *name;
     pid_t_ pid;
     sdword_t fd; // typedef might not have been read yet
 };
@@ -20,10 +22,6 @@ struct proc_data {
 struct proc_dir_entry {
     const char *name;
     mode_t_ mode;
-
-    // files that need extra resource management
-    void (*ref)(struct proc_entry *entry);
-    void (*unref)(struct proc_entry *entry);
     
     // file with dynamic name
     void (*getname)(struct proc_entry *entry, char *buf);
@@ -64,6 +62,9 @@ extern struct proc_children proc_ish_children;
 mode_t_ proc_entry_mode(struct proc_entry *entry);
 void proc_entry_getname(struct proc_entry *entry, char *buf);
 int proc_entry_stat(struct proc_entry *entry, struct statbuf *stat);
+void proc_entry_cleanup(struct proc_entry *entry);
+
+void free_string_array(char **array);
 
 bool proc_dir_read(struct proc_entry *entry, unsigned long *index, struct proc_entry *next_entry);
 

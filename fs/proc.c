@@ -10,15 +10,14 @@ static int proc_lookup(const char *path, struct proc_entry *entry) {
     char component[MAX_NAME + 1];
     int err = 0;
     while (path_next_component(&path, component, &err)) {
-        if (!S_ISDIR(proc_entry_mode(entry)))
-            return _ENOTDIR;
+        if (!S_ISDIR(proc_entry_mode(entry))) {
+            err = _ENOTDIR;
+            break;
+        }
 
         unsigned long index = 0;
-        struct proc_entry next_entry;
+        struct proc_entry next_entry = {0};
         char entry_name[MAX_NAME];
-        if (entry->meta->ref) {
-            entry->meta->ref(entry);
-        }
         while (proc_dir_read(entry, &index, &next_entry)) {
             // tack on some dynamically generated attributes
             if (next_entry.meta->parent == NULL)
@@ -32,30 +31,26 @@ static int proc_lookup(const char *path, struct proc_entry *entry) {
             proc_entry_getname(&next_entry, entry_name);
             if (strcmp(entry_name, component) == 0)
                 goto found;
+            proc_entry_cleanup(&next_entry);
         }
-        if (entry->meta->unref) {
-            entry->meta->unref(entry);
-        }
-        return _ENOENT;
+        err = _ENOENT;
+        break;
 found:
-        if (entry->meta->unref) {
-            entry->meta->unref(entry);
-        }
+        proc_entry_cleanup(entry);
         *entry = next_entry;
     }
+    if (err < 0)
+        proc_entry_cleanup(entry);
     return err;
 }
 
 extern const struct fd_ops procfs_fdops;
 
 static struct fd *proc_open(struct mount *UNUSED(mount), const char *path, int UNUSED(flags), int UNUSED(mode)) {
-    struct proc_entry entry;
+    struct proc_entry entry = {0};
     int err = proc_lookup(path, &entry);
     if (err < 0)
         return ERR_PTR(err);
-    if (entry.meta->ref) {
-        entry.meta->ref(&entry);
-    }
     struct fd *fd = fd_create(&procfs_fdops);
     fd->proc.entry = entry;
     fd->proc.data.data = NULL;
@@ -82,17 +77,12 @@ static int proc_getpath(struct fd *fd, char *buf) {
 }
 
 static int proc_stat(struct mount *UNUSED(mount), const char *path, struct statbuf *stat) {
-    struct proc_entry entry = {};
+    struct proc_entry entry = {0};
     int err = proc_lookup(path, &entry);
     if (err < 0)
         return err;
-    if (entry.meta->ref) {
-        entry.meta->ref(&entry);
-    }
     int ret = proc_entry_stat(&entry, stat);
-    if (entry.meta->unref) {
-        entry.meta->unref(&entry);
-    }
+    proc_entry_cleanup(&entry);
     return ret;
 }
 
@@ -111,8 +101,8 @@ static int proc_refresh_data(struct fd *fd) {
         fd->proc.data.data = malloc(fd->proc.data.capacity); // default size
     }
     fd->proc.data.size = 0;
-    struct proc_entry entry = fd->proc.entry;
-    int err = entry.meta->show(&entry, &fd->proc.data);
+    struct proc_entry *entry = &fd->proc.entry;
+    int err = entry->meta->show(entry, &fd->proc.data);
     if (err < 0)
         return err;
     return 0;
@@ -188,21 +178,20 @@ static ssize_t proc_pwrite(struct fd *fd, const void *buf, size_t bufsize, off_t
 }
 
 static int proc_readdir(struct fd *fd, struct dir_entry *entry) {
-    struct proc_entry proc_entry;
+    struct proc_entry proc_entry = {0};
     bool any_left = proc_dir_read(&fd->proc.entry, &fd->offset, &proc_entry);
     if (!any_left)
         return 0;
     proc_entry_getname(&proc_entry, entry->name);
     entry->inode = proc_entry.meta->inode;
+    proc_entry_cleanup(&proc_entry);
     return 1;
 }
 
 static int proc_close(struct fd *fd) {
     if (fd->proc.data.data != NULL)
         free(fd->proc.data.data);
-    if (fd->proc.entry.meta->unref) {
-        fd->proc.entry.meta->unref(&fd->proc.entry);
-    }
+    proc_entry_cleanup(&fd->proc.entry);
     return 0;
 }
 
@@ -215,21 +204,18 @@ const struct fd_ops procfs_fdops = {
 };
 
 static ssize_t proc_readlink(struct mount *UNUSED(mount), const char *path, char *buf, size_t bufsize) {
-    struct proc_entry entry;
+    struct proc_entry entry = {0};
     int err = proc_lookup(path, &entry);
     if (err < 0)
         return err;
-    if (!S_ISLNK(proc_entry_mode(&entry)))
+    if (!S_ISLNK(proc_entry_mode(&entry))) {
+        proc_entry_cleanup(&entry);
         return _EINVAL;
+    }
 
     char target[MAX_PATH + 1];
-    if (entry.meta->ref) {
-        entry.meta->ref(&entry);
-    }
     err = entry.meta->readlink(&entry, target);
-    if (entry.meta->unref) {
-        entry.meta->unref(&entry);
-    }
+    proc_entry_cleanup(&entry);
     if (err < 0)
         return err;
     if (bufsize > strlen(target))
@@ -239,21 +225,15 @@ static ssize_t proc_readlink(struct mount *UNUSED(mount), const char *path, char
 }
 
 static int proc_unlink(struct mount *UNUSED(mount), const char *path) {
-    struct proc_entry entry = {};
+    struct proc_entry entry = {0};
     int err = proc_lookup(path, &entry);
     if (err < 0)
         return err;
-    if (!entry.meta->unlink) {
-        return _EPERM;
-    }
-    if (entry.meta->ref) {
-        entry.meta->ref(&entry);
-    }
-    int ret = entry.meta->unlink(&entry);
-    if (entry.meta->unref) {
-        entry.meta->unref(&entry);
-    }
-    return ret;
+    err = _EPERM;
+    if (entry.meta->unlink)
+        err = entry.meta->unlink(&entry);
+    proc_entry_cleanup(&entry);
+    return err;
 }
 
 void proc_buf_append(struct proc_data *buf, const void *data, size_t size) {
