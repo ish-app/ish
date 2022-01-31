@@ -44,6 +44,13 @@ static int read_inode(struct inode *ino);
 
 #define INODE_FD(ino) (*((uintptr_t *) &(ino)->i_private))
 
+static int open_fd_for_dentry(struct inode *dir, struct dentry *dentry) {
+    int fd = host_openat(INODE_FD(dir), dentry->d_name.name, O_RDWR, 0);
+    if (fd == -EISDIR)
+        fd = host_openat(INODE_FD(dir), dentry->d_name.name, O_RDONLY, 0);
+    return fd;
+}
+
 static struct dentry *fakefs_lookup(struct inode *ino, struct dentry *dentry, unsigned int flags) {
     struct fakefs_super *info = ino->i_sb->s_fs_info;
     struct inode *child = NULL;
@@ -58,9 +65,11 @@ static struct dentry *fakefs_lookup(struct inode *ino, struct dentry *dentry, un
     if (child_ino == 0)
         goto out;
 
-    int fd = host_openat(INODE_FD(ino), dentry->d_name.name, O_RDWR, 0);
-    if (fd == -EISDIR)
-        fd = host_openat(INODE_FD(ino), dentry->d_name.name, O_RDONLY, 0);
+    child = ilookup(ino->i_sb, child_ino);
+    if (child != NULL)
+        goto out;
+
+    int fd = open_fd_for_dentry(ino, dentry);
     if (fd < 0) {
         child = ERR_PTR(fd);
         goto out;
@@ -94,7 +103,7 @@ static int __finish_make_node(struct inode *dir, struct dentry *dentry, umode_t 
     int err;
 
     if (fd == -1)
-        fd = host_openat(INODE_FD(dir), dentry->d_name.name, O_RDONLY, 0);
+        fd = open_fd_for_dentry(dir, dentry);
     if (fd < 0) {
         err = fd;
         goto fail;
@@ -184,6 +193,7 @@ static int fakefs_rename(struct inode *from_dir, struct dentry *from_dentry, str
 
 static int fakefs_link(struct dentry *from, struct inode *ino, struct dentry *to) {
     struct fakefs_super *info = ino->i_sb->s_fs_info;
+    struct inode *inode;
 
     char *from_path = dentry_name(from);
     if (from_path == NULL)
@@ -199,14 +209,17 @@ static int fakefs_link(struct dentry *from, struct inode *ino, struct dentry *to
     __putname(from_path);
     __putname(to_path);
 
-    int err = host_linkat(INODE_FD(from->d_parent->d_inode), from->d_name.name,
-                          INODE_FD(to->d_parent->d_inode), to->d_name.name);
+    int err = host_linkat(INODE_FD(d_inode(from->d_parent)), from->d_name.name,
+                          INODE_FD(d_inode(to->d_parent)), to->d_name.name);
     if (err < 0) {
         db_rollback(&info->db);
         return err;
     }
     db_commit(&info->db);
 
+    inode = d_inode(from);
+    ihold(inode);
+    d_instantiate(to, inode);
     return 0;
 }
 
@@ -238,7 +251,7 @@ static int fakefs_rmdir(struct inode *dir, struct dentry *dentry) {
 }
 
 static int fakefs_symlink(struct inode *dir, struct dentry *dentry, const char *target) {
-    int fd = host_openat(INODE_FD(dir), dentry->d_name.name, O_WRONLY | O_CREAT | O_TRUNC, 0666);
+    int fd = host_openat(INODE_FD(dir), dentry->d_name.name, O_RDWR | O_CREAT | O_TRUNC, 0666);
     if (fd < 0)
         return fd;
     ssize_t res = host_write(fd, target, strlen(target));
@@ -261,7 +274,7 @@ static int fakefs_mkdir(struct inode *dir, struct dentry *dentry, umode_t mode) 
 }
 
 static int fakefs_mknod(struct inode *dir, struct dentry *dentry, umode_t mode, dev_t dev) {
-    int fd = host_openat(INODE_FD(dir), dentry->d_name.name, O_WRONLY | O_CREAT | O_TRUNC, 0666);
+    int fd = host_openat(INODE_FD(dir), dentry->d_name.name, O_RDWR | O_CREAT | O_TRUNC, 0666);
     if (fd < 0)
         return fd;
     return __finish_make_node(dir, dentry, mode, dev, fd);
@@ -271,7 +284,7 @@ static int fakefs_setattr(struct dentry *dentry, struct iattr *attr) {
     int err = setattr_prepare(dentry, attr);
     if (err < 0)
         return err;
-    struct inode *inode = dentry->d_inode;
+    struct inode *inode = d_inode(dentry);
 
     // attributes of ishstat
     struct fakefs_super *info = inode->i_sb->s_fs_info;
