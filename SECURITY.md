@@ -4,4 +4,4 @@ The goal of this project is to support a Linux shell on iOS. As such, its securi
 
 As such, most types of bugs that are security issues in most projects are not security issues in iSH. Insufficient permission checks, memory corruption, and thread safety issues are generally considered correctness bugs and would be best filed as GitHub issues. We will prioritize bugs encountered by real programs in typical use.
 
-We expect real security bugs to be very rare, but not impossible. For example, a bug allowing remote code execution without user consent would be a security bug. If you think you found one, you can send it to tblodt@icloud.com. We'll work with you to resolve it appropriately.
+In our security model, we expect real security bugs to be very rare. It's not completely impossible, e.g. a bug allowing remote code execution without user consent would be a security bug. If you think you found one, you can send it to security@ish.app. We'll work with you to resolve it appropriately.
