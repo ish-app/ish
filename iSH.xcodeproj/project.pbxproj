@@ -1515,7 +1515,7 @@
 			isa = PBXProject;
 			attributes = {
 				CLASSPREFIX = "";
-				LastUpgradeCheck = 1320;
+				LastUpgradeCheck = 1330;
 				TargetAttributes = {
 					497F6CE3254E5E4C00C82F46 = {
 						CreatedOnToolsVersion = 12.2;
