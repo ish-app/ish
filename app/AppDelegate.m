@@ -76,9 +76,9 @@ static NSString *const kSkipStartupMessage = @"Skip Startup Message";
 @implementation AppDelegate
 
 - (int)boot {
+#if !ISH_LINUX
     NSURL *root = [Roots.instance rootUrl:Roots.instance.defaultRoot];
 
-#if !ISH_LINUX
     int err = mount_root(&fakefs, [root URLByAppendingPathComponent:@"data"].fileSystemRepresentation);
     if (err < 0)
         return err;
