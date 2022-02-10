@@ -12,6 +12,38 @@
 
 struct mount *find_mount_and_trim_path(char *path) {
     struct mount *mount = mount_find(path);
+    // trying to be clever here ...
+    // if we're opening something like:
+    //   /proc/self/fd/xxx
+    // - or -
+    //   /proc/<current pid>/fd/xxx
+    // we should check whether it's a adhoc_fd, like pipes etc.
+    // do not let proc hanle their io, working around issue #164
+    if (mount->fs == &procfs) {
+        char fdstr[MAX_NAME];
+        *fdstr = '\0';
+        if (strncmp(path, "/proc/self/fd/", 14) == 0) {
+            strcpy(fdstr, path + 13);
+        } else {
+            char s[MAX_PATH];
+            sprintf(s, "/proc/%d/fd/", current->pid);
+            if (strncmp(path, s, strlen(s)) == 0) {
+                strcpy(fdstr, path + strlen(s) - 1);
+            }
+        }
+        if (*fdstr != '\0') {
+            // parse fd and check whether it's adhoc_fd
+            fd_t nfd = atol(fdstr);
+            if (nfd >= 0) {
+                struct fd* fd = f_get(nfd);
+                if (!IS_ERR(fd) && is_adhoc_fd(fd)) {
+                    strcpy(path, fdstr);
+                    return fd->mount;
+                }
+            }
+        }
+    }
+    // should not be opening any adhoc_fd, continue normally
     char *dst = path;
     const char *src = path + strlen(mount->point);
     while (*src != '\0')

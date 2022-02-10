@@ -17,6 +17,34 @@ struct fd *adhoc_fd_create(const struct fd_ops *ops) {
     return fd;
 }
 
+static struct fd *adhoc_open(struct mount *UNUSED(mount), const char *path, int UNUSED(flags), int UNUSED(mode))  {
+    if (*path != '/') {
+        return ERR_PTR(_EBADF);
+    }
+    char fdstr[MAX_NAME];
+    strcpy(fdstr, path+1);
+    fd_t nfd = atol(fdstr);
+    if (nfd < 0) {
+        return ERR_PTR(_EBADF);
+    }
+    
+    return fd_retain(f_get(nfd));
+}
+
+static int adhoc_stat(struct mount *UNUSED(mount), const char *path, struct statbuf *stat) {
+    if (*path != '/') {
+        return _EBADF;
+    }
+    char fdstr[MAX_NAME];
+    strcpy(fdstr, path+1);
+    fd_t nfd = atol(fdstr);
+    if (nfd < 0) {
+        return _EBADF;
+    }
+    struct fd* fd = f_get(nfd);
+    return fd->mount->fs->fstat(fd, stat);
+}
+
 static int adhoc_fstat(struct fd *fd, struct statbuf *stat) {
     *stat = fd->stat;
     return 0;
@@ -57,6 +85,8 @@ static const struct fs_ops adhoc_fs = {
     .fstat = adhoc_fstat,
     .fsetattr = adhoc_fsetattr,
     .getpath = adhoc_getpath,
+    .open = adhoc_open,
+    .stat = adhoc_stat,
 };
 
 static struct mount adhoc_mount = {
