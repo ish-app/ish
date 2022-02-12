@@ -474,13 +474,11 @@ static NSString *const HANDLERS[] = {@"syncFocus", @"focus", @"newScrollHeight",
 
 - (void)handleKeyCommand:(UIKeyCommand *)command {
     NSString *key = command.input;
-    /*
     if (command.modifierFlags == 0) {
         if ([key isEqualToString:@"`"] && UserPreferences.shared.backtickMapEscape)
             key = UIKeyInputEscape;
         if ([key isEqualToString:UIKeyInputEscape])
             key = @"\x1b";
-
         else if ([key isEqualToString:UIKeyInputUpArrow])
             key = [self.terminal arrow:'A'];
         else if ([key isEqualToString:UIKeyInputDownArrow])
@@ -489,7 +487,6 @@ static NSString *const HANDLERS[] = {@"syncFocus", @"focus", @"newScrollHeight",
             key = [self.terminal arrow:'D'];
         else if ([key isEqualToString:UIKeyInputRightArrow])
             key = [self.terminal arrow:'C'];
-
         [self insertText:key];
     } else if (command.modifierFlags & UIKeyModifierShift) {
         [self insertText:[key uppercaseString]];
@@ -508,7 +505,6 @@ static NSString *const HANDLERS[] = {@"syncFocus", @"focus", @"newScrollHeight",
             key = @"_";
         [self insertControlChar:[key characterAtIndex:0]];
     }
-     */
 }
 
 static const char *alphabet = "abcdefghijklmnopqrstuvwxyz";
@@ -519,13 +515,11 @@ static const char *metaKeys = "abcdefghijklmnopqrstuvwxyz0123456789-=[]\\;',./";
     if (_keyCommands != nil)
         return _keyCommands;
     _keyCommands = [NSMutableArray new];
-/*
     [self addKeys:controlKeys withModifiers:UIKeyModifierControl];
     for (NSString *specialKey in @[UIKeyInputEscape, UIKeyInputUpArrow, UIKeyInputDownArrow,
                                    UIKeyInputLeftArrow, UIKeyInputRightArrow, @"\t"]) {
         [self addKey:specialKey withModifiers:0];
     }
-*/
     if (UserPreferences.shared.capsLockMapping != CapsLockMapNone) {
         if (@available(iOS 13, *)); else {
             [self addKeys:controlKeys withModifiers:UIKeyModifierAlphaShift];
@@ -534,14 +528,12 @@ static const char *metaKeys = "abcdefghijklmnopqrstuvwxyz0123456789-=[]\\;',./";
             [self addKey:@"" withModifiers:UIKeyModifierAlphaShift]; // otherwise tap of caps lock can switch layouts
         }
     }
-/*
     if (UserPreferences.shared.optionMapping == OptionMapEsc) {
         [self addKeys:metaKeys withModifiers:UIKeyModifierAlternate];
     }
     if (UserPreferences.shared.backtickMapEscape) {
         [self addKey:@"`" withModifiers:0];
     }
-*/
     [_keyCommands addObject:[UIKeyCommand keyCommandWithInput:@"k"
                                                 modifierFlags:UIKeyModifierCommand|UIKeyModifierShift
                                                        action:@selector(clearScrollback:)
@@ -581,13 +573,15 @@ static const char *metaKeys = "abcdefghijklmnopqrstuvwxyz0123456789-=[]\\;',./";
         [self addFunctionKey:UIKeyboardHIDUsageKeyboardF11 withNormalEscapeSequence:@"\x1b[23~" withShiftEscapeSequence:@"\x1b[23;2~" withControlEscapeSequence:@"\x1b[23;5~"];
         [self addFunctionKey:UIKeyboardHIDUsageKeyboardF12 withNormalEscapeSequence:@"\x1b[24~" withShiftEscapeSequence:@"\x1b[24;2~" withControlEscapeSequence:@"\x1b[24;5~"];
 
-        // DEBUGGING
+        // DEBUGGING - show defined function keys
+/*
         functionKeyStruct fkey;
         for (NSValue *functionKey in _functionKeys ) {
             [functionKey getValue:&fkey];
             NSLog( @"keycode: %lx Normal: %@ Shift: %@ Control: %@",(long)fkey.keyCode, fkey.normalEscapeSequence,fkey.shiftEscapeSequence, fkey.controlEscapeSequence  );
         }
-    }
+ */
+ }
 
     return _keyCommands;
 }
@@ -644,7 +638,7 @@ static const char *metaKeys = "abcdefghijklmnopqrstuvwxyz0123456789-=[]\\;',./";
 
 // This method runs once after a specified period before we start repeating the key
 - (void)startKeyRepeatTimer:(NSTimer *)timer {
-    NSLog(@"Got start repeat: %@ init %d", (NSString *)timer.userInfo, initiateKeyRepeatTimer);
+//    NSLog(@"Got start repeat: %@ init %d", (NSString *)timer.userInfo, initiateKeyRepeatTimer);
     if ( initiateKeyRepeatTimer && keyRepeatTimer == nil) {
         keyRepeatTimer = [NSTimer scheduledTimerWithTimeInterval:keyRepeatRepeat target:self selector:@selector(insertRepeatText:) userInfo:timer.userInfo repeats:YES];
     }
@@ -652,7 +646,7 @@ static const char *metaKeys = "abcdefghijklmnopqrstuvwxyz0123456789-=[]\\;',./";
 
 // This method repeatedly called after key repeat period to insert the current key
 - (void)insertRepeatText:(NSTimer *)timer {
-    NSLog(@"Got repeat: %@ init %d", (NSString *)timer.userInfo, initiateKeyRepeatTimer);
+//    NSLog(@"Got repeat: %@ init %d", (NSString *)timer.userInfo, initiateKeyRepeatTimer);
     [self insertRawText:(NSString *)timer.userInfo];
 }
 
@@ -676,7 +670,7 @@ static const char *metaKeys = "abcdefghijklmnopqrstuvwxyz0123456789-=[]\\;',./";
                 continue;
             }
 
-            NSLog( @"Modified: %@ Unmodified: %@(%lu) init %d", key.characters, key.charactersIgnoringModifiers,(unsigned long)[key.charactersIgnoringModifiers length], initiateKeyRepeatTimer);
+//            NSLog( @"Modified: %@ Unmodified: %@(%lu) Keycode: %ld init %d", key.characters, key.charactersIgnoringModifiers,(unsigned long)[key.charactersIgnoringModifiers length], key.keyCode, initiateKeyRepeatTimer);
 
             functionKeyStruct fkey;
             // really should use something like NSDictionary instead of NSArray for better efficiency
@@ -684,6 +678,9 @@ static const char *metaKeys = "abcdefghijklmnopqrstuvwxyz0123456789-=[]\\;',./";
                 [functionKey getValue:&fkey];
                 if ( key.keyCode == fkey.keyCode ) {
                     UIKeyModifierFlags modifier = key.modifierFlags;
+                    if ( modifier & UIKeyModifierNumericPad ) {
+                        modifier &= ~UIKeyModifierNumericPad;
+                    }
                     if ( modifier & UIKeyModifierAlphaShift) {
                         modifier &= ~UIKeyModifierAlphaShift;
                     }
@@ -710,7 +707,7 @@ static const char *metaKeys = "abcdefghijklmnopqrstuvwxyz0123456789-=[]\\;',./";
             if ( handled ) {
                 [self insertRawText:mykey];
                 initiateKeyRepeatTimer = TRUE;
-                NSLog(@"Starting kyStartTimer...");
+//                NSLog(@"Starting kyStartTimer...");
                 keyStartTimer = [NSTimer scheduledTimerWithTimeInterval:keyRepeatStart target:self selector:@selector(startKeyRepeatTimer:) userInfo:mykey repeats:NO];
                 continue;;
             }
@@ -773,7 +770,7 @@ static const char *metaKeys = "abcdefghijklmnopqrstuvwxyz0123456789-=[]\\;',./";
                 if ( handled ) {
                     [self insertRawText:mykey];
                     initiateKeyRepeatTimer = TRUE;
-                    NSLog(@"***Setting init to true NOW");
+//                    NSLog(@"***Setting init to true NOW");
                     keyStartTimer = [NSTimer scheduledTimerWithTimeInterval:keyRepeatStart target:self selector:@selector(startKeyRepeatTimer:) userInfo:mykey repeats:NO];
                     continue;
                 }
@@ -793,7 +790,7 @@ static const char *metaKeys = "abcdefghijklmnopqrstuvwxyz0123456789-=[]\\;',./";
 }
 
 - (NSTimer *)invalidateTimer:(NSTimer *) timer {
-    NSLog(@"Key up: invalidate Timer %@ init %d",timer, initiateKeyRepeatTimer);
+//    NSLog(@"Invalidate Timer %@ init %d",timer, initiateKeyRepeatTimer);
     if (timer != nil) {
         [timer invalidate];
         timer = nil;
