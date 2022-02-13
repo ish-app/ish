@@ -511,6 +511,9 @@ static const char *metaKeys = "abcdefghijklmnopqrstuvwxyz0123456789-=[]\\;',./";
     UIKeyCommand *command = [UIKeyCommand keyCommandWithInput:key
                                                 modifierFlags:modifiers
                                                        action:@selector(handleKeyCommand:)];
+    if (@available(iOS 15, *)) {
+        command.wantsPriorityOverSystemBehavior = YES;
+    }
     [_keyCommands addObject:command];
 }
 
