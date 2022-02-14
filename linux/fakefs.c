@@ -97,7 +97,7 @@ out:
     return d_splice_alias(child, dentry);
 }
 
-static int __finish_make_node(struct inode *dir, struct dentry *dentry, umode_t mode, dev_t rdev, int fd) {
+static int __finish_make_node(struct user_namespace *mnt_userns, struct inode *dir, struct dentry *dentry, umode_t mode, dev_t rdev, int fd) {
     struct fakefs_super *info = dir->i_sb->s_fs_info;
     struct inode *child = NULL;
     int err;
@@ -115,7 +115,7 @@ static int __finish_make_node(struct inode *dir, struct dentry *dentry, umode_t 
         host_close(fd);
         goto fail;
     }
-    inode_init_owner(child, dir, mode);
+    inode_init_owner(mnt_userns, child, dir, mode);
     INODE_FD(child) = fd;
 
     char *path = dentry_name(dentry);
@@ -150,18 +150,18 @@ fail:
     return err;
 }
 
-static int finish_make_node(struct inode *dir, struct dentry *dentry, umode_t mode, int fd) {
-    return __finish_make_node(dir, dentry, mode, 0, fd);
+static int finish_make_node(struct user_namespace *mnt_userns, struct inode *dir, struct dentry *dentry, umode_t mode, int fd) {
+    return __finish_make_node(mnt_userns, dir, dentry, mode, 0, fd);
 }
 
-static int fakefs_create(struct inode *dir, struct dentry *dentry, umode_t mode, bool excl) {
+static int fakefs_create(struct user_namespace *mnt_userns, struct inode *dir, struct dentry *dentry, umode_t mode, bool excl) {
     int fd = host_openat(INODE_FD(dir), dentry->d_name.name, O_CREAT | O_RDWR | (excl ? O_EXCL : 0), 0666);
     if (fd < 0)
         return fd;
-    return finish_make_node(dir, dentry, mode, fd);
+    return finish_make_node(mnt_userns, dir, dentry, mode, fd);
 }
 
-static int fakefs_rename(struct inode *from_dir, struct dentry *from_dentry, struct inode *to_dir, struct dentry *to_dentry, unsigned flags) {
+static int fakefs_rename(struct user_namespace *mnt_userns, struct inode *from_dir, struct dentry *from_dentry, struct inode *to_dir, struct dentry *to_dentry, unsigned flags) {
     if (flags != 0)
         return -EINVAL;
     struct fakefs_super *info = from_dir->i_sb->s_fs_info;
@@ -250,7 +250,7 @@ static int fakefs_rmdir(struct inode *dir, struct dentry *dentry) {
     return unlink_common(dir, dentry, 1);
 }
 
-static int fakefs_symlink(struct inode *dir, struct dentry *dentry, const char *target) {
+static int fakefs_symlink(struct user_namespace *mnt_userns, struct inode *dir, struct dentry *dentry, const char *target) {
     int fd = host_openat(INODE_FD(dir), dentry->d_name.name, O_RDWR | O_CREAT | O_TRUNC, 0666);
     if (fd < 0)
         return fd;
@@ -260,28 +260,28 @@ static int fakefs_symlink(struct inode *dir, struct dentry *dentry, const char *
         host_unlinkat(INODE_FD(dir), dentry->d_name.name);
         return res;
     }
-    return finish_make_node(dir, dentry, S_IFLNK | 0777, fd);
+    return finish_make_node(mnt_userns, dir, dentry, S_IFLNK | 0777, fd);
 }
 
-static int fakefs_mkdir(struct inode *dir, struct dentry *dentry, umode_t mode) {
+static int fakefs_mkdir(struct user_namespace *mnt_userns, struct inode *dir, struct dentry *dentry, umode_t mode) {
     int err = host_mkdirat(INODE_FD(dir), dentry->d_name.name, 0777);
     if (err < 0)
         return err;
-    err = finish_make_node(dir, dentry, S_IFDIR | mode, -1);
+    err = finish_make_node(mnt_userns, dir, dentry, S_IFDIR | mode, -1);
     if (err < 0)
         host_rmdirat(INODE_FD(dir), dentry->d_name.name);
     return err;
 }
 
-static int fakefs_mknod(struct inode *dir, struct dentry *dentry, umode_t mode, dev_t dev) {
+static int fakefs_mknod(struct user_namespace *mnt_userns, struct inode *dir, struct dentry *dentry, umode_t mode, dev_t dev) {
     int fd = host_openat(INODE_FD(dir), dentry->d_name.name, O_RDWR | O_CREAT | O_TRUNC, 0666);
     if (fd < 0)
         return fd;
-    return __finish_make_node(dir, dentry, mode, dev, fd);
+    return __finish_make_node(mnt_userns, dir, dentry, mode, dev, fd);
 }
 
-static int fakefs_setattr(struct dentry *dentry, struct iattr *attr) {
-    int err = setattr_prepare(dentry, attr);
+static int fakefs_setattr(struct user_namespace *mnt_userns, struct dentry *dentry, struct iattr *attr) {
+    int err = setattr_prepare(mnt_userns, dentry, attr);
     if (err < 0)
         return err;
     struct inode *inode = d_inode(dentry);
@@ -295,9 +295,9 @@ static int fakefs_setattr(struct dentry *dentry, struct iattr *attr) {
         if (attr->ia_valid & ATTR_MODE)
             stat.mode = attr->ia_mode;
         if (attr->ia_valid & ATTR_UID)
-            stat.uid = from_kuid(&init_user_ns, attr->ia_uid);
+            stat.uid = from_kuid(mnt_userns, attr->ia_uid);
         if (attr->ia_valid & ATTR_GID)
-            stat.gid = from_kgid(&init_user_ns, attr->ia_gid);
+            stat.gid = from_kgid(mnt_userns, attr->ia_gid);
         inode_write_stat(&info->db, inode->i_ino, &stat);
         db_commit(&info->db);
     }
@@ -335,7 +335,7 @@ static int fakefs_setattr(struct dentry *dentry, struct iattr *attr) {
             return err;
     }
 
-    setattr_copy(inode, attr);
+    setattr_copy(mnt_userns, inode, attr);
     mark_inode_dirty(inode); // TODO: is this actually necessary?
     return 0;
 }

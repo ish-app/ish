@@ -12,10 +12,12 @@
 #include <linux/fs.h>
 #include <linux/hashtable.h>
 #include <linux/syscalls.h>
+#include <linux/init_syscalls.h>
 #include <linux/init_task.h>
 #include <linux/termios.h>
 #include <linux/fcntl.h>
 #include <linux/vmalloc.h>
+#include <linux/fdtable.h>
 #include <uapi/linux/mount.h>
 #include "LinuxInterop.h"
 
@@ -154,7 +156,7 @@ struct file *ios_pty_open(nsobj_t *terminal_out) {
         return ERR_PTR(fd);
     }
     struct file *pts_file = fget(fd);
-    ksys_close(fd);
+    close_fd(fd);
 
     struct ios_pty *pty = kzalloc(sizeof(*pty), GFP_KERNEL);
     if (pty == NULL) {
@@ -181,7 +183,7 @@ struct file *ios_pty_open(nsobj_t *terminal_out) {
 }
 
 static __init int ios_pty_init(void) {
-    ksys_mkdir("/dev/pts", 0755);
+    init_mkdir("/dev/pts", 0755);
     int err = do_mount("devpts", "/dev/pts", "devpts", MS_SILENT, NULL);
     if (err < 0) {
         panic("ish: failed to mount devpts: %s", errname(err));

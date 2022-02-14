@@ -7,6 +7,7 @@
 
 #include <linux/init.h>
 #include <linux/syscalls.h>
+#include <linux/init_syscalls.h>
 #include <linux/fs.h>
 #include <linux/errname.h>
 #include <linux/device.h>
@@ -24,7 +25,7 @@ static __init int ish_rootfs(void) {
         pr_emerg("ish: failed to mount fakefs root from %s: %s\n", fakefs_path, errname(err));
         return err;
     }
-    ksys_chdir("/root");
+    init_chdir("/root");
 
     devtmpfs_mount();
     err = do_mount("proc", "proc", "proc", MS_SILENT, NULL);
@@ -33,7 +34,7 @@ static __init int ish_rootfs(void) {
     }
 
     do_mount(".", "/", NULL, MS_MOVE, NULL);
-    ksys_chroot(".");
+    init_chroot(".");
 
     FsInitialize();
     return 0;

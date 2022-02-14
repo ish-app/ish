@@ -38,7 +38,6 @@
 // keywords
 #define bitfield unsigned int
 #define forceinline inline __attribute__((always_inline))
-#define flatten __attribute__((flatten))
 #if defined(NDEBUG) || defined(__KERNEL__)
 #define posit __builtin_assume
 #else

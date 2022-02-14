@@ -1,10 +1,15 @@
 #ifndef EMU_H
 #define EMU_H
 
-#include <stddef.h>
 #include "misc.h"
 #include "emu/mmu.h"
 #include "emu/float80.h"
+
+#ifdef __KERNEL__
+#include <linux/stddef.h>
+#else
+#include <stddef.h>
+#endif
 
 struct cpu_state;
 struct tlb;

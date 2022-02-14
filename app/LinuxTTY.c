@@ -98,7 +98,7 @@ static int ios_tty_write(struct tty_struct *tty, const unsigned char *data, int 
     return Terminal_sendOutput_length(tty->port->client_data, data, len);
 }
 
-static int ios_tty_write_room(struct tty_struct *tty) {
+static unsigned int ios_tty_write_room(struct tty_struct *tty) {
     return Terminal_roomForOutput(tty->port->client_data);
 }
 
@@ -150,7 +150,7 @@ static __init int ios_tty_init(void) {
         ios_ttys[i].port.ops = &ios_tty_port_ops;
     }
 
-    ios_tty_driver = alloc_tty_driver(NUM_TTYS);
+    ios_tty_driver = tty_alloc_driver(NUM_TTYS, TTY_DRIVER_REAL_RAW | TTY_DRIVER_RESET_TERMIOS);
     ios_tty_driver->driver_name = "ios";
     ios_tty_driver->name = "tty";
     ios_tty_driver->name_base = 1;
@@ -159,7 +159,6 @@ static __init int ios_tty_init(void) {
     ios_tty_driver->type = TTY_DRIVER_TYPE_CONSOLE;
     ios_tty_driver->subtype = SYSTEM_TYPE_CONSOLE;
     ios_tty_driver->init_termios = tty_std_termios;
-    ios_tty_driver->flags = TTY_DRIVER_REAL_RAW | TTY_DRIVER_RESET_TERMIOS;
     tty_set_operations(ios_tty_driver, &ios_tty_ops);
 
     for (int i = 0; i < NUM_TTYS; i++) {

@@ -19,6 +19,8 @@
 #include <linux/umh.h>
 #include <linux/syscalls.h>
 #include <linux/utsname.h>
+#include <linux/panic_notifier.h>
+#include <linux/init_syscalls.h>
 #include <asm/irq.h>
 #include <user/fs.h>
 #include <user/irq.h>
@@ -108,6 +110,7 @@ subsys_initcall(call_block_init);
 struct ish_session {
     struct file *tty;
     nsobj_t terminal;
+    int pid;
     StartSessionDoneBlock callback;
 };
 
@@ -124,13 +127,14 @@ static int session_init(struct subprocess_info *info, struct cred *cred) {
         if (err < 0)
             return err;
     }
+    session->pid = task_pid_nr(current);
     return 0;
 }
 
 static void session_cleanup(struct subprocess_info *info) {
     struct ish_session *session = info->data;
-    if (info->pid != 0 || info->retval != 0)
-        session->callback(info->retval, info->pid, objc_get(session->terminal));
+    if (session->pid != 0 || info->retval != 0)
+        session->callback(info->retval, session->pid, objc_get(session->terminal));
     else; // otherwise, there was a synchronous failure, returned directly from call_usermodehelper_exec
     if (session->tty != NULL)
         fput(session->tty);
@@ -179,5 +183,5 @@ ssize_t linux_write_file(const char *path, const char *buf, size_t size) {
     return res;
 }
 int linux_remove_directory(const char *path) {
-    return ksys_rmdir(path);
+    return init_rmdir(path);
 }
