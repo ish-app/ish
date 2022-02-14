@@ -16,23 +16,6 @@ struct rowcol {
     int col;
 };
 
-struct API_AVAILABLE(ios(13.4)) functionKey {
-    NSString *normalEscapeSequence;
-    NSString *shiftEscapeSequence;
-    NSString *controlEscapeSequence;
-    UIKeyboardHIDUsage keyCode;
-};
-
-API_AVAILABLE(ios(13.4))
-typedef struct functionKey functionKeyStruct;
-NSTimer *keyRepeatTimer=nil;
-NSTimer *keyStartTimer=nil;
-BOOL initiateKeyRepeatTimer = FALSE;
-
-// the following should be replaced by UserPreferences
-const float keyRepeatStart = 0.3;
-const float keyRepeatRepeat = 0.05;
-
 @interface WeakScriptMessageHandler : NSObject <WKScriptMessageHandler>
 @property (weak) id <WKScriptMessageHandler> handler;
 @end
@@ -474,6 +457,12 @@ static NSString *const HANDLERS[] = {@"syncFocus", @"focus", @"newScrollHeight",
 
 - (void)handleKeyCommand:(UIKeyCommand *)command {
     NSString *key = command.input;
+    if (@available(iOS 13.0, *)) {
+        if ( command.propertyList != nil ) {
+            [self insertRawText:command.propertyList];
+            return;
+        }
+    }
     if (command.modifierFlags == 0) {
         if ([key isEqualToString:@"`"] && UserPreferences.shared.backtickMapEscape)
             key = UIKeyInputEscape;
@@ -516,9 +505,49 @@ static const char *metaKeys = "abcdefghijklmnopqrstuvwxyz0123456789-=[]\\;',./";
         return _keyCommands;
     _keyCommands = [NSMutableArray new];
     [self addKeys:controlKeys withModifiers:UIKeyModifierControl];
-    for (NSString *specialKey in @[UIKeyInputEscape, UIKeyInputUpArrow, UIKeyInputDownArrow,
+
+    if (@available(iOS 13.4, *)) {
+        [self addFunctionKey:UIKeyInputUpArrow withName:@"Up" withNormalEscapeSequence:@"\x1b[A" withShiftEscapeSequence:@"\x1b[1;2A" withControlEscapeSequence:@"\x1b[1;5A"];
+        [self addFunctionKey:UIKeyInputDownArrow withName:@"Down" withNormalEscapeSequence:@"\x1b[B" withShiftEscapeSequence:@"\x1b[1;2B" withControlEscapeSequence:@"\x1b[1;5B"];
+        [self addFunctionKey:UIKeyInputRightArrow withName:@"Right" withNormalEscapeSequence:@"\x1b[C" withShiftEscapeSequence:@"\x1b[1;2C" withControlEscapeSequence:@"\x1b[1;5C"];
+        [self addFunctionKey:UIKeyInputLeftArrow withName:@"Left" withNormalEscapeSequence:@"\x1b[D" withShiftEscapeSequence:@"\x1b[1;2D" withControlEscapeSequence:@"\x1b[1;5D"];
+        [self addFunctionKey:@"\t" withName:@"Tab" withNormalEscapeSequence:@"\t" withShiftEscapeSequence:@"\x1b[Z" withControlEscapeSequence:NULL];
+        
+        [self addFunctionKey:UIKeyInputEscape withName:@"Esc" withNormalEscapeSequence:@"\x1b" withShiftEscapeSequence:NULL withControlEscapeSequence:NULL];
+        // Navigation keys
+
+        /*
+         * Now UIKey equivalent for Ins/help keys presumably because Apple Keyboards don't have Ins key :-(  Have to handle these in pressesbegan
+        [self addFunctionKey:UIKeyInputInsert withNormalEscapeSequence:@"\x1b[2~" withShiftEscapeSequence:@"\x1b[2;2~" withControlEscapeSequence:@"\x1b[2;5~"];
+        [self addFunctionKey:UIKeyInputHelp withNormalEscapeSequence:@"\x1b[2~" withShiftEscapeSequence:@"\x1b[2;2~" withControlEscapeSequence:@"\x1b[2;5~"];
+         */
+        if (@available(iOS 15.0, *)) {
+            [self addFunctionKey:UIKeyInputDelete withName:@"Del" withNormalEscapeSequence:@"\x1b[3~" withShiftEscapeSequence:@"\x1b[3;2~" withControlEscapeSequence:@"\x1b[3;5~"];
+        }
+        [self addFunctionKey:UIKeyInputPageUp withName:@"PgUp" withNormalEscapeSequence:@"\x1b[5~" withShiftEscapeSequence:@"\x1b[5;2~" withControlEscapeSequence:@"\x1b[5;5~"];
+        [self addFunctionKey:UIKeyInputPageDown withName:@"PgDn" withNormalEscapeSequence:@"\x1b[6~" withShiftEscapeSequence:@"\x1b[6;2~" withControlEscapeSequence:@"\x1b[6;5~"];
+        [self addFunctionKey:UIKeyInputHome withName:@"Home" withNormalEscapeSequence:@"\x1bOH" withShiftEscapeSequence:@"\x1b[1;2H" withControlEscapeSequence:@"\x1b[1;5H"];
+        [self addFunctionKey:UIKeyInputEnd withName:@"End" withNormalEscapeSequence:@"\x1bOF" withShiftEscapeSequence:@"\x1b[1;2F" withControlEscapeSequence:@"\x1b[1;5F"];
+        // Function keys
+        [self addFunctionKey:UIKeyInputF1 withName:@"F1" withNormalEscapeSequence:@"\x1bOP" withShiftEscapeSequence:@"\x1b[1;2P" withControlEscapeSequence:@"\x1b[1;5P"];
+        [self addFunctionKey:UIKeyInputF2 withName:@"F2" withNormalEscapeSequence:@"\x1bOQ" withShiftEscapeSequence:@"\x1b[1;2Q" withControlEscapeSequence:@"\x1b[1;5Q"];
+        [self addFunctionKey:UIKeyInputF3 withName:@"F3" withNormalEscapeSequence:@"\x1bOR" withShiftEscapeSequence:@"\x1b[1;2R" withControlEscapeSequence:@"\x1b[1;5R"];
+        [self addFunctionKey:UIKeyInputF4 withName:@"F4" withNormalEscapeSequence:@"\x1bOS" withShiftEscapeSequence:@"\x1b[1;2S" withControlEscapeSequence:@"\x1b[1;5S"];
+        [self addFunctionKey:UIKeyInputF5 withName:@"F5" withNormalEscapeSequence:@"\x1b[15~" withShiftEscapeSequence:@"\x1b[15;2~" withControlEscapeSequence:@"\x1b[15;5~"];
+        // Yes, @"\x1b[16~" is missing; it is meant to be
+        [self addFunctionKey:UIKeyInputF6 withName:@"F6" withNormalEscapeSequence:@"\x1b[17~" withShiftEscapeSequence:@"\x1b[17;2~" withControlEscapeSequence:@"\x1b[17;5~"];
+        [self addFunctionKey:UIKeyInputF7 withName:@"F7" withNormalEscapeSequence:@"\x1b[18~" withShiftEscapeSequence:@"\x1b[18;2~" withControlEscapeSequence:@"\x1b[18;5~"];
+        [self addFunctionKey:UIKeyInputF8 withName:@"F8" withNormalEscapeSequence:@"\x1b[19~" withShiftEscapeSequence:@"\x1b[19;2~" withControlEscapeSequence:@"\x1b[19;5~"];
+        [self addFunctionKey:UIKeyInputF9 withName:@"F9" withNormalEscapeSequence:@"\x1b[20~" withShiftEscapeSequence:@"\x1b[20;2~" withControlEscapeSequence:@"\x1b[20;5~"];
+        [self addFunctionKey:UIKeyInputF10 withName:@"F10" withNormalEscapeSequence:@"\x1b[21~" withShiftEscapeSequence:@"\x1b[21;2~" withControlEscapeSequence:@"\x1b[21;5~"];
+        // Yes, @"\x1b[22~" is missing; it is meant to be
+        [self addFunctionKey:UIKeyInputF11 withName:@"F11" withNormalEscapeSequence:@"\x1b[23~" withShiftEscapeSequence:@"\x1b[23;2~" withControlEscapeSequence:@"\x1b[23;5~"];
+        [self addFunctionKey:UIKeyInputF12 withName:@"F12" withNormalEscapeSequence:@"\x1b[24~" withShiftEscapeSequence:@"\x1b[24;2~" withControlEscapeSequence:@"\x1b[24;5~"];
+    } else {
+        for (NSString *specialKey in @[UIKeyInputEscape, UIKeyInputUpArrow, UIKeyInputDownArrow,
                                    UIKeyInputLeftArrow, UIKeyInputRightArrow, @"\t"]) {
         [self addKey:specialKey withModifiers:0];
+        }
     }
     if (UserPreferences.shared.capsLockMapping != CapsLockMapNone) {
         if (@available(iOS 13, *)); else {
@@ -539,50 +568,6 @@ static const char *metaKeys = "abcdefghijklmnopqrstuvwxyz0123456789-=[]\\;',./";
                                                        action:@selector(clearScrollback:)
                                          discoverabilityTitle:@"Clear Scrollback"]];
 
-    // really should use something like NSDictionary instead of NSArray for better efficiency
-    if (@available(iOS 13.4, *)) {
-        _functionKeys = [[NSMutableArray alloc] init];
-        [self addFunctionKey:UIKeyboardHIDUsageKeyboardUpArrow withNormalEscapeSequence:@"\x1b[A" withShiftEscapeSequence:@"\x1b[1;2A" withControlEscapeSequence:@"\x1b[1;5A"];
-        [self addFunctionKey:UIKeyboardHIDUsageKeyboardDownArrow withNormalEscapeSequence:@"\x1b[B" withShiftEscapeSequence:@"\x1b[1;2B" withControlEscapeSequence:@"\x1b[1;5B"];
-        [self addFunctionKey:UIKeyboardHIDUsageKeyboardRightArrow withNormalEscapeSequence:@"\x1b[C" withShiftEscapeSequence:@"\x1b[1;2C" withControlEscapeSequence:@"\x1b[1;5C"];
-        [self addFunctionKey:UIKeyboardHIDUsageKeyboardLeftArrow withNormalEscapeSequence:@"\x1b[D" withShiftEscapeSequence:@"\x1b[1;2D" withControlEscapeSequence:@"\x1b[1;5D"];
-        [self addFunctionKey:UIKeyboardHIDUsageKeyboardTab withNormalEscapeSequence:@"\t" withShiftEscapeSequence:@"\x1b[Z" withControlEscapeSequence:NULL];
-        // escape sequence for ESC is empty because we prefix ESC with matching keys in this list
-        [self addFunctionKey:UIKeyboardHIDUsageKeyboardEscape withNormalEscapeSequence:@"\x1b" withShiftEscapeSequence:NULL withControlEscapeSequence:NULL];
-        // Navigation keys
-        [self addFunctionKey:UIKeyboardHIDUsageKeyboardInsert withNormalEscapeSequence:@"\x1b[2~" withShiftEscapeSequence:@"\x1b[2;2~" withControlEscapeSequence:@"\x1b[2;5~"];
-        [self addFunctionKey:UIKeyboardHIDUsageKeyboardHelp withNormalEscapeSequence:@"\x1b[2~" withShiftEscapeSequence:@"\x1b[2;2~" withControlEscapeSequence:@"\x1b[2;5~"];
-        [self addFunctionKey:UIKeyboardHIDUsageKeyboardDeleteForward withNormalEscapeSequence:@"\x1b[3~" withShiftEscapeSequence:@"\x1b[3;2~" withControlEscapeSequence:@"\x1b[3;5~"];
-        [self addFunctionKey:UIKeyboardHIDUsageKeyboardPageUp withNormalEscapeSequence:@"\x1b[5~" withShiftEscapeSequence:@"\x1b[5;2~" withControlEscapeSequence:@"\x1b[5;5~"];
-        [self addFunctionKey:UIKeyboardHIDUsageKeyboardPageDown withNormalEscapeSequence:@"\x1b[6~" withShiftEscapeSequence:@"\x1b[6;2~" withControlEscapeSequence:@"\x1b[6;5~"];
-        [self addFunctionKey:UIKeyboardHIDUsageKeyboardHome withNormalEscapeSequence:@"\x1bOH" withShiftEscapeSequence:@"\x1b[1;2H" withControlEscapeSequence:@"\x1b[1;5H"];
-        [self addFunctionKey:UIKeyboardHIDUsageKeyboardEnd withNormalEscapeSequence:@"\x1bOF" withShiftEscapeSequence:@"\x1b[1;2F" withControlEscapeSequence:@"\x1b[1;5F"];
-        // Function keys
-        [self addFunctionKey:UIKeyboardHIDUsageKeyboardF1 withNormalEscapeSequence:@"\x1bOP" withShiftEscapeSequence:@"\x1b[1;2P" withControlEscapeSequence:@"\x1b[1;5P"];
-        [self addFunctionKey:UIKeyboardHIDUsageKeyboardF2 withNormalEscapeSequence:@"\x1bOQ" withShiftEscapeSequence:@"\x1b[1;2Q" withControlEscapeSequence:@"\x1b[1;5Q"];
-        [self addFunctionKey:UIKeyboardHIDUsageKeyboardF3 withNormalEscapeSequence:@"\x1bOR" withShiftEscapeSequence:@"\x1b[1;2R" withControlEscapeSequence:@"\x1b[1;5R"];
-        [self addFunctionKey:UIKeyboardHIDUsageKeyboardF4 withNormalEscapeSequence:@"\x1bOS" withShiftEscapeSequence:@"\x1b[1;2S" withControlEscapeSequence:@"\x1b[1;5S"];
-        [self addFunctionKey:UIKeyboardHIDUsageKeyboardF5 withNormalEscapeSequence:@"\x1b[15~" withShiftEscapeSequence:@"\x1b[15;2~" withControlEscapeSequence:@"\x1b[15;5~"];
-        // Yes, @"\x1b[16~" is missing; it is meant to be
-        [self addFunctionKey:UIKeyboardHIDUsageKeyboardF6 withNormalEscapeSequence:@"\x1b[17~" withShiftEscapeSequence:@"\x1b[17;2~" withControlEscapeSequence:@"\x1b[17;5~"];
-        [self addFunctionKey:UIKeyboardHIDUsageKeyboardF7 withNormalEscapeSequence:@"\x1b[18~" withShiftEscapeSequence:@"\x1b[18;2~" withControlEscapeSequence:@"\x1b[18;5~"];
-        [self addFunctionKey:UIKeyboardHIDUsageKeyboardF8 withNormalEscapeSequence:@"\x1b[19~" withShiftEscapeSequence:@"\x1b[19;2~" withControlEscapeSequence:@"\x1b[19;5~"];
-        [self addFunctionKey:UIKeyboardHIDUsageKeyboardF9 withNormalEscapeSequence:@"\x1b[20~" withShiftEscapeSequence:@"\x1b[20;2~" withControlEscapeSequence:@"\x1b[20;5~"];
-        [self addFunctionKey:UIKeyboardHIDUsageKeyboardF10 withNormalEscapeSequence:@"\x1b[21~" withShiftEscapeSequence:@"\x1b[21;2~" withControlEscapeSequence:@"\x1b[21;5~"];
-        // Yes, @"\x1b[22~" is missing; it is meant to be
-        [self addFunctionKey:UIKeyboardHIDUsageKeyboardF11 withNormalEscapeSequence:@"\x1b[23~" withShiftEscapeSequence:@"\x1b[23;2~" withControlEscapeSequence:@"\x1b[23;5~"];
-        [self addFunctionKey:UIKeyboardHIDUsageKeyboardF12 withNormalEscapeSequence:@"\x1b[24~" withShiftEscapeSequence:@"\x1b[24;2~" withControlEscapeSequence:@"\x1b[24;5~"];
-
-        // DEBUGGING - show defined function keys
-/*
-        functionKeyStruct fkey;
-        for (NSValue *functionKey in _functionKeys ) {
-            [functionKey getValue:&fkey];
-            NSLog( @"keycode: %lx Normal: %@ Shift: %@ Control: %@",(long)fkey.keyCode, fkey.normalEscapeSequence,fkey.shiftEscapeSequence, fkey.controlEscapeSequence  );
-        }
- */
- }
-
     return _keyCommands;
 }
 
@@ -596,16 +581,34 @@ static const char *metaKeys = "abcdefghijklmnopqrstuvwxyz0123456789-=[]\\;',./";
     UIKeyCommand *command = [UIKeyCommand keyCommandWithInput:key
                                                 modifierFlags:modifiers
                                                        action:@selector(handleKeyCommand:)];
+    if (@available(iOS 15, *)) {
+        command.wantsPriorityOverSystemBehavior = YES;
+    }
+
     [_keyCommands addObject:command];
 }
 
-- (void)addFunctionKey:(UIKeyboardHIDUsage)keyCode withNormalEscapeSequence:(NSString *)normalEscapeSequence withShiftEscapeSequence:(NSString *)shiftEscapeSequence withControlEscapeSequence:(NSString *)controlEscapeSequence API_AVAILABLE(ios(13.4)) {
-    functionKeyStruct newkey;
-    newkey.normalEscapeSequence = normalEscapeSequence;
-    newkey.shiftEscapeSequence = shiftEscapeSequence;
-    newkey.controlEscapeSequence = controlEscapeSequence;
-    newkey.keyCode = keyCode;
-    [_functionKeys addObject:[NSValue valueWithBytes:&newkey objCType:@encode(functionKeyStruct)]];
+- (void)addFunctionKey:(NSString *)keyName withName:(NSString *)keyTitle withNormalEscapeSequence:(NSString *)normalEscapeSequence withShiftEscapeSequence:(NSString *)shiftEscapeSequence withControlEscapeSequence:(NSString *)controlEscapeSequence API_AVAILABLE(ios(13.4)) {
+
+    UIKeyCommand *command;
+
+    command = [UIKeyCommand commandWithTitle: @"" image: nil action:@selector(handleKeyCommand:) input: keyName modifierFlags:0 propertyList:normalEscapeSequence];
+    if (@available(iOS 15, *)) {
+        command.wantsPriorityOverSystemBehavior = YES;
+    }
+    [_keyCommands addObject:command];
+
+    command = [UIKeyCommand commandWithTitle: @"" image: nil action:@selector(handleKeyCommand:) input: keyName modifierFlags:UIKeyModifierShift propertyList:shiftEscapeSequence];
+    if (@available(iOS 15, *)) {
+        command.wantsPriorityOverSystemBehavior = YES;
+    }
+    [_keyCommands addObject:command];
+
+    command = [UIKeyCommand commandWithTitle: @"" image: nil action:@selector(handleKeyCommand:) input: keyName modifierFlags:UIKeyModifierControl propertyList:controlEscapeSequence];
+    if (@available(iOS 15, *)) {
+        command.wantsPriorityOverSystemBehavior = YES;
+    }
+    [_keyCommands addObject:command];
 }
 
 - (void)keyCommandTriggered:(UIKeyCommand *)sender {
@@ -636,28 +639,12 @@ static const char *metaKeys = "abcdefghijklmnopqrstuvwxyz0123456789-=[]\\;',./";
     [self handleKeyCommand:newCommand];
 }
 
-// This method runs once after a specified period before we start repeating the key
-- (void)startKeyRepeatTimer:(NSTimer *)timer {
-//    NSLog(@"Got start repeat: %@ init %d", (NSString *)timer.userInfo, initiateKeyRepeatTimer);
-    if ( initiateKeyRepeatTimer && keyRepeatTimer == nil) {
-        keyRepeatTimer = [NSTimer scheduledTimerWithTimeInterval:keyRepeatRepeat target:self selector:@selector(insertRepeatText:) userInfo:timer.userInfo repeats:YES];
-    }
-}
-
-// This method repeatedly called after key repeat period to insert the current key
-- (void)insertRepeatText:(NSTimer *)timer {
-//    NSLog(@"Got repeat: %@ init %d", (NSString *)timer.userInfo, initiateKeyRepeatTimer);
-    [self insertRawText:(NSString *)timer.userInfo];
-}
-
 - (void)pressesBegan:(NSSet<UIPress *> *)presses withEvent:(UIPressesEvent *)event {
     bool handled = false;
-    NSString *mykey;
-    // reset any current key repeat timers
-    initiateKeyRepeatTimer = FALSE;
-    keyRepeatTimer = [self invalidateTimer:keyRepeatTimer];
-
+    UIKeyModifierFlags modifier;
+ 
     if (@available(iOS 13.4, *)) {
+        // this is all to handle Ins/Help key as Apple don't support that key using UIKey interface
         UIKey *key;
 
         for (UIPress *aPress in presses) {
@@ -670,109 +657,28 @@ static const char *metaKeys = "abcdefghijklmnopqrstuvwxyz0123456789-=[]\\;',./";
                 continue;
             }
 
-//            NSLog( @"Modified: %@ Unmodified: %@(%lu) Keycode: %ld init %d", key.characters, key.charactersIgnoringModifiers,(unsigned long)[key.charactersIgnoringModifiers length], key.keyCode, initiateKeyRepeatTimer);
-
-            functionKeyStruct fkey;
-            // really should use something like NSDictionary instead of NSArray for better efficiency
-            for (NSValue *functionKey in _functionKeys ) {
-                [functionKey getValue:&fkey];
-                if ( key.keyCode == fkey.keyCode ) {
-                    UIKeyModifierFlags modifier = key.modifierFlags;
-                    if ( modifier & UIKeyModifierNumericPad ) {
-                        modifier &= ~UIKeyModifierNumericPad;
-                    }
-                    if ( modifier & UIKeyModifierAlphaShift) {
-                        modifier &= ~UIKeyModifierAlphaShift;
-                    }
-                    if ( modifier == 0 && fkey.normalEscapeSequence )  {
-                   //   mykey = [self.terminal escapeSequence:fkey.normalEscapeSequence];
-                        mykey = fkey.normalEscapeSequence;
-                        handled = true;
-                        break;
-                    }
-                    if ( modifier & UIKeyModifierShift && fkey.shiftEscapeSequence )  {
-//                      mykey = [self.terminal escapeSequence:fkey.shiftEscapeSequence];
-                        mykey = fkey.shiftEscapeSequence;
-                        handled = true;
-                        break;
-                    }
-                    if ( modifier & UIKeyModifierControl && fkey.controlEscapeSequence )  {
-//                      mykey = [self.terminal escapeSequence:fkey.controlEscapeSequence];
-                        mykey = fkey.controlEscapeSequence;
-                        handled = true;
-                        break;
-                    }
-                }
+            modifier = key.modifierFlags;
+            if ( modifier & UIKeyModifierNumericPad ) {
+                modifier &= ~UIKeyModifierNumericPad;
             }
-            if ( handled ) {
-                [self insertRawText:mykey];
-                initiateKeyRepeatTimer = TRUE;
-//                NSLog(@"Starting kyStartTimer...");
-                keyStartTimer = [NSTimer scheduledTimerWithTimeInterval:keyRepeatStart target:self selector:@selector(startKeyRepeatTimer:) userInfo:mykey repeats:NO];
-                continue;;
+            if ( modifier & UIKeyModifierAlphaShift) {
+                modifier &= ~UIKeyModifierAlphaShift;
             }
-
-            if ( [key.charactersIgnoringModifiers length] == 1 ) {
-                // special check for TAB because we define it as a function key but it is only 1 character long in the unmodified function key definition
-                /*
-                if ( key.keyCode == UIKeyboardHIDUsageKeyboardDeleteForward ) {
-                    // ensure this falls through to the Function Key check below
-                } else if ( key.keyCode == UIKeyboardHIDUsageKeyboardHelp ) {
-                    // ensure this falls through to the Function Key check below
-                } else if (key.keyCode == UIKeyboardHIDUsageKeyboardTab) {
-                   // for any modifiers set for TAB fall through to the check of function keys
-                }
-                else
-                 */
-                if ([key.charactersIgnoringModifiers isEqualToString:@"`"] && UserPreferences.shared.backtickMapEscape) {
-                    mykey = @"\x1b";
-//                    [self insertRawText:@"\x1b"];
+            if ( key.keyCode == UIKeyboardHIDUsageKeyboardInsert || key.keyCode == UIKeyboardHIDUsageKeyboardHelp ) {
+                if ( modifier == 0) {
+                    [self insertRawText:@"\x1b[2~"];
                     handled = true;
+                    break;
                 }
-                else if (key.modifierFlags == 0) {
-                    mykey = key.characters;
-//                    [self insertRawText:key.characters];
+                if ( modifier & UIKeyModifierShift )  {
+                    [self insertRawText:@"\x1b[2;2~"];
                     handled = true;
+                    break;
                 }
-                else if (key.modifierFlags & UIKeyModifierShift) {
-//                    [self insertRawText:[key.characters uppercaseString]];
-                    mykey = [key.characters uppercaseString];
+                if ( modifier & UIKeyModifierControl )  {
+                    [self insertRawText:@"\x1b[2;5~"];
                     handled = true;
-                }
-                else if (key.modifierFlags & UIKeyModifierAlternate) {
-                    mykey = [@"\x1b" stringByAppendingString:key.charactersIgnoringModifiers];
-//                    [self insertRawText:[@"\x1b" stringByAppendingString:key.charactersIgnoringModifiers]];
-                    handled = true;
-                } else if (key.modifierFlags & UIKeyModifierAlphaShift) {
-                // not sure if this is still required? ////[self handleCapsLockWithCommand:command];
-                } else if (key.modifierFlags & UIKeyModifierControl) { // why was a check for AlphaShift included here? --> || command.modifierFlags & UIKeyModifierAlphaShift) {
-                    /*
-                    if ([key.charactersIgnoringModifiers isEqualToString:@"2"])
-                        mykey = @"@";
-                    else if ([key.charactersIgnoringModifiers isEqualToString:@"6"])
-                        mykey = @"^";
-                    else if ([key.charactersIgnoringModifiers isEqualToString:@"-"])
-                        mykey = @"_";
-                    else
-                        mykey = key.charactersIgnoringModifiers;
-                    [self insertControlChar:[mykey characterAtIndex:0]];
-                    */
-                    if ( key.keyCode == UIKeyboardHIDUsageKeyboardSpacebar ) {
-                        if ( !UserPreferences.shared.overrideControlSpace ) {
-                            continue;
-                        }
-                        mykey = [self setControlChar:' '];
-                    } else {
-                        mykey = [self setControlChar:[key.charactersIgnoringModifiers characterAtIndex:0]];
-                    }
-                    handled = true;
-                }
-                if ( handled ) {
-                    [self insertRawText:mykey];
-                    initiateKeyRepeatTimer = TRUE;
-//                    NSLog(@"***Setting init to true NOW");
-                    keyStartTimer = [NSTimer scheduledTimerWithTimeInterval:keyRepeatStart target:self selector:@selector(startKeyRepeatTimer:) userInfo:mykey repeats:NO];
-                    continue;
+                    break;
                 }
             }
         }
@@ -783,19 +689,6 @@ static const char *metaKeys = "abcdefghijklmnopqrstuvwxyz0123456789-=[]\\;',./";
 }
 
 - (void)pressesEnded:(NSSet<UIPress *> *)presses withEvent:(UIPressesEvent *)event {
-   // return [super pressesBegan:presses withEvent:event];
-    keyRepeatTimer = [self invalidateTimer:keyRepeatTimer];
-    keyStartTimer = [self invalidateTimer:keyStartTimer];
-    initiateKeyRepeatTimer = FALSE;
-}
-
-- (NSTimer *)invalidateTimer:(NSTimer *) timer {
-//    NSLog(@"Invalidate Timer %@ init %d",timer, initiateKeyRepeatTimer);
-    if (timer != nil) {
-        [timer invalidate];
-        timer = nil;
-    }
-    return timer;
 }
 
 #pragma mark UITextInput stubs
