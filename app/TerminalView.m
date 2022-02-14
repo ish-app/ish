@@ -512,7 +512,7 @@ static const char *metaKeys = "abcdefghijklmnopqrstuvwxyz0123456789-=[]\\;',./";
         [self addFunctionKey:UIKeyInputRightArrow withName:@"Right" withNormalEscapeSequence:@"\x1b[C" withShiftEscapeSequence:@"\x1b[1;2C" withControlEscapeSequence:@"\x1b[1;5C"];
         [self addFunctionKey:UIKeyInputLeftArrow withName:@"Left" withNormalEscapeSequence:@"\x1b[D" withShiftEscapeSequence:@"\x1b[1;2D" withControlEscapeSequence:@"\x1b[1;5D"];
         [self addFunctionKey:@"\t" withName:@"Tab" withNormalEscapeSequence:@"\t" withShiftEscapeSequence:@"\x1b[Z" withControlEscapeSequence:NULL];
-        
+
         [self addFunctionKey:UIKeyInputEscape withName:@"Esc" withNormalEscapeSequence:@"\x1b" withShiftEscapeSequence:NULL withControlEscapeSequence:NULL];
         // Navigation keys
 
@@ -642,7 +642,7 @@ static const char *metaKeys = "abcdefghijklmnopqrstuvwxyz0123456789-=[]\\;',./";
 - (void)pressesBegan:(NSSet<UIPress *> *)presses withEvent:(UIPressesEvent *)event {
     bool handled = false;
     UIKeyModifierFlags modifier;
- 
+
     if (@available(iOS 13.4, *)) {
         // this is all to handle Ins/Help key as Apple don't support that key using UIKey interface
         UIKey *key;
