@@ -53,6 +53,7 @@ Kconfig*
 /net/bridge/
 
 !/include/linux/*/
+/include/linux/atomic/
 /include/linux/sched/
 /include/linux/device/
 /include/linux/byteorder/
