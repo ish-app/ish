@@ -97,21 +97,12 @@
 		497F6D3D254E5EA600C82F46 /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = BB7D93822087C2890008DA78 /* main.c */; };
 		497F6D5C254E609700C82F46 /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = BB7D93822087C2890008DA78 /* main.c */; };
 		497F6D87254E62E100C82F46 /* libish.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BB13F7DC200AD81D003D1C4D /* libish.a */; };
-		BB0B88062589661A00208600 /* rgb.png in Resources */ = {isa = PBXBuildFile; fileRef = BB0B88052589661A00208600 /* rgb.png */; };
-		BB0B880F2589662200208600 /* sprite64.png in Resources */ = {isa = PBXBuildFile; fileRef = BB0B880E2589662200208600 /* sprite64.png */; };
-		BB0B88182589662A00208600 /* reworked.png in Resources */ = {isa = PBXBuildFile; fileRef = BB0B88172589662A00208600 /* reworked.png */; };
-		BB0B88212589734B00208600 /* notsurewhatthisis.png in Resources */ = {isa = PBXBuildFile; fileRef = BB0B88202589734A00208600 /* notsurewhatthisis.png */; };
 		BB0F552E239F8A790032A2A1 /* Icons.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB0F552D239F8A790032A2A1 /* Icons.plist */; };
-		BB0F5530239F8B360032A2A1 /* uninspired.png in Resources */ = {isa = PBXBuildFile; fileRef = BB0F552F239F8B360032A2A1 /* uninspired.png */; };
-		BB0F553223A0AB9C0032A2A1 /* pydann1.png in Resources */ = {isa = PBXBuildFile; fileRef = BB0F553123A0AB9B0032A2A1 /* pydann1.png */; };
-		BB0F553423A0AC760032A2A1 /* ihash1.png in Resources */ = {isa = PBXBuildFile; fileRef = BB0F553323A0AC760032A2A1 /* ihash1.png */; };
-		BB0F553623A0ACFC0032A2A1 /* pydann2.png in Resources */ = {isa = PBXBuildFile; fileRef = BB0F553523A0ACFC0032A2A1 /* pydann2.png */; };
 		BB10E5C9248DBAAC009C7A74 /* libarchive.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BB10E5C8248DBAA1009C7A74 /* libarchive.a */; };
 		BB10E5D0248DC21D009C7A74 /* Roots.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = BB10E5CF248DC21D009C7A74 /* Roots.storyboard */; };
 		BB123ACC26C9EFD900419CDA /* LinuxTTY.c in Sources */ = {isa = PBXBuildFile; fileRef = BB123ACB26C9EFD900419CDA /* LinuxTTY.c */; };
 		BB123ACE26C9F13500419CDA /* IOSCalls.m in Sources */ = {isa = PBXBuildFile; fileRef = BB123ACD26C9F13500419CDA /* IOSCalls.m */; };
 		BB13F7EA200ADCED003D1C4D /* libish.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BB13F7DC200AD81D003D1C4D /* libish.a */; };
-		BB1B9A4323A5E96900414052 /* icon.png in Resources */ = {isa = PBXBuildFile; fileRef = BB1B9A4223A5E96900414052 /* icon.png */; };
 		BB21A1702689048200BD19B4 /* libfakefs.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BB21A16F2689041500BD19B4 /* libfakefs.a */; };
 		BB21A18426890C7E00BD19B4 /* libfakefs.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BB21A16F2689041500BD19B4 /* libfakefs.a */; };
 		BB21A18526894F9400BD19B4 /* libish.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BB13F7DC200AD81D003D1C4D /* libish.a */; };
@@ -149,10 +140,34 @@
 		BB2B4DAD231D998300CB578B /* term.js in Resources */ = {isa = PBXBuildFile; fileRef = BB4A539C1FAA490C00A72ACE /* term.js */; };
 		BB2B4DAE231D998300CB578B /* term.css in Resources */ = {isa = PBXBuildFile; fileRef = BB4A53AF1FAA787900A72ACE /* term.css */; };
 		BB2B4DAF231D998300CB578B /* term.html in Resources */ = {isa = PBXBuildFile; fileRef = BB4A53A91FAA496700A72ACE /* term.html */; };
+		BB38597827BCEC70000A1082 /* circular.png in Resources */ = {isa = PBXBuildFile; fileRef = BB38597627BCEC70000A1082 /* circular.png */; };
+		BB38597D27BCEC78000A1082 /* dollarblock1.png in Resources */ = {isa = PBXBuildFile; fileRef = BB38597927BCEC78000A1082 /* dollarblock1.png */; };
+		BB38597F27BCEC78000A1082 /* dollarblock2.png in Resources */ = {isa = PBXBuildFile; fileRef = BB38597A27BCEC78000A1082 /* dollarblock2.png */; };
+		BB38598127BCEC78000A1082 /* freeiosterminal.png in Resources */ = {isa = PBXBuildFile; fileRef = BB38597B27BCEC78000A1082 /* freeiosterminal.png */; };
+		BB38598527BCEC84000A1082 /* ishcolontildehash.png in Resources */ = {isa = PBXBuildFile; fileRef = BB38598227BCEC83000A1082 /* ishcolontildehash.png */; };
+		BB38599327BCEE6B000A1082 /* notsurewhatthisis.png in Resources */ = {isa = PBXBuildFile; fileRef = BB0B88202589734A00208600 /* notsurewhatthisis.png */; };
+		BB38599427BCEE6B000A1082 /* pydann1.png in Resources */ = {isa = PBXBuildFile; fileRef = BB0F553123A0AB9B0032A2A1 /* pydann1.png */; };
+		BB38599527BCEE6B000A1082 /* pydann2.png in Resources */ = {isa = PBXBuildFile; fileRef = BB0F553523A0ACFC0032A2A1 /* pydann2.png */; };
+		BB38599627BCEE6B000A1082 /* idollarhash.png in Resources */ = {isa = PBXBuildFile; fileRef = BBC8297D24EDAC11009D042C /* idollarhash.png */; };
+		BB38599727BCEE6B000A1082 /* freeiosterminal.png in Resources */ = {isa = PBXBuildFile; fileRef = BB38597B27BCEC78000A1082 /* freeiosterminal.png */; };
+		BB38599827BCEE6B000A1082 /* metal.png in Resources */ = {isa = PBXBuildFile; fileRef = BBC8298624EE5853009D042C /* metal.png */; };
+		BB38599927BCEE6B000A1082 /* dollarblock1.png in Resources */ = {isa = PBXBuildFile; fileRef = BB38597927BCEC78000A1082 /* dollarblock1.png */; };
+		BB38599A27BCEE6B000A1082 /* is.png in Resources */ = {isa = PBXBuildFile; fileRef = BB38598327BCEC83000A1082 /* is.png */; };
+		BB38599B27BCEE6B000A1082 /* rgb.png in Resources */ = {isa = PBXBuildFile; fileRef = BB0B88052589661A00208600 /* rgb.png */; };
+		BB38599C27BCEE6B000A1082 /* sprite64.png in Resources */ = {isa = PBXBuildFile; fileRef = BB0B880E2589662200208600 /* sprite64.png */; };
+		BB38599D27BCEE6B000A1082 /* icon.png in Resources */ = {isa = PBXBuildFile; fileRef = BB1B9A4223A5E96900414052 /* icon.png */; };
+		BB38599E27BCEE6B000A1082 /* circular.png in Resources */ = {isa = PBXBuildFile; fileRef = BB38597627BCEC70000A1082 /* circular.png */; };
+		BB38599F27BCEE6B000A1082 /* icon1337.png in Resources */ = {isa = PBXBuildFile; fileRef = BB4A922D24EDA461002F5A96 /* icon1337.png */; };
+		BB3859A027BCEE6B000A1082 /* 3d.png in Resources */ = {isa = PBXBuildFile; fileRef = BB4A923124EDA560002F5A96 /* 3d.png */; };
+		BB3859A127BCEE6B000A1082 /* iinhash.png in Resources */ = {isa = PBXBuildFile; fileRef = BBC8298024EDACBB009D042C /* iinhash.png */; };
+		BB3859A227BCEE6B000A1082 /* dollarblock2.png in Resources */ = {isa = PBXBuildFile; fileRef = BB38597A27BCEC78000A1082 /* dollarblock2.png */; };
+		BB3859A327BCEE6B000A1082 /* ihash1.png in Resources */ = {isa = PBXBuildFile; fileRef = BB0F553323A0AC760032A2A1 /* ihash1.png */; };
+		BB3859A427BCEE6B000A1082 /* ishcolontildehash.png in Resources */ = {isa = PBXBuildFile; fileRef = BB38598227BCEC83000A1082 /* ishcolontildehash.png */; };
+		BB3859A527BCEE6B000A1082 /* reworked.png in Resources */ = {isa = PBXBuildFile; fileRef = BB0B88172589662A00208600 /* reworked.png */; };
+		BB3859A627BCEE6B000A1082 /* colontildehash.png in Resources */ = {isa = PBXBuildFile; fileRef = BB4A922F24EDA55C002F5A96 /* colontildehash.png */; };
+		BB3859A727BCEE6B000A1082 /* uninspired.png in Resources */ = {isa = PBXBuildFile; fileRef = BB0F552F239F8B360032A2A1 /* uninspired.png */; };
+		BB3859A827BCEE6C000A1082 /* is.png in Resources */ = {isa = PBXBuildFile; fileRef = BB38598327BCEC83000A1082 /* is.png */; };
 		BB41591F255EF9E300E0950C /* UITests.m in Sources */ = {isa = PBXBuildFile; fileRef = BB41591E255EF9E300E0950C /* UITests.m */; };
-		BB4A922E24EDA461002F5A96 /* icon1337.png in Resources */ = {isa = PBXBuildFile; fileRef = BB4A922D24EDA461002F5A96 /* icon1337.png */; };
-		BB4A923024EDA55C002F5A96 /* colontildehash.png in Resources */ = {isa = PBXBuildFile; fileRef = BB4A922F24EDA55C002F5A96 /* colontildehash.png */; };
-		BB4A923224EDA560002F5A96 /* 3d.png in Resources */ = {isa = PBXBuildFile; fileRef = BB4A923124EDA560002F5A96 /* 3d.png */; };
 		BB6DB261216435340047A611 /* libiconv.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = BB6DB260216435330047A611 /* libiconv.tbd */; };
 		BB77636726E486A7008DB44A /* fakefs.c in Sources */ = {isa = PBXBuildFile; fileRef = BB10E5C2248DBA7B009C7A74 /* fakefs.c */; };
 		BB792B5B1F96D90D00FFB7A4 /* Terminal.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = BB792B591F96D90D00FFB7A4 /* Terminal.storyboard */; };
@@ -172,9 +187,6 @@
 		BBBFE94921C5CFF100509DD5 /* NSError+ISHErrno.m in Sources */ = {isa = PBXBuildFile; fileRef = BB13F4DD21C5770000343E17 /* NSError+ISHErrno.m */; };
 		BBC3863E276817A900CC8C2E /* UpgradeRootViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = BBA5D87D27536E7600B39D77 /* UpgradeRootViewController.m */; };
 		BBC3863F276817AD00CC8C2E /* CurrentRoot.m in Sources */ = {isa = PBXBuildFile; fileRef = BB565EA32734F1FB00C93EAE /* CurrentRoot.m */; };
-		BBC8297E24EDAC11009D042C /* idollarhash.png in Resources */ = {isa = PBXBuildFile; fileRef = BBC8297D24EDAC11009D042C /* idollarhash.png */; };
-		BBC8298124EDACBB009D042C /* iinhash.png in Resources */ = {isa = PBXBuildFile; fileRef = BBC8298024EDACBB009D042C /* iinhash.png */; };
-		BBC8298724EE5853009D042C /* metal.png in Resources */ = {isa = PBXBuildFile; fileRef = BBC8298624EE5853009D042C /* metal.png */; };
 		BBD23D5F258DA450003DCB40 /* Screenshots.m in Sources */ = {isa = PBXBuildFile; fileRef = BBD23D5E258DA450003DCB40 /* Screenshots.m */; };
 		BBD23D77258DA4BC003DCB40 /* SnapshotHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBD23D76258DA4BC003DCB40 /* SnapshotHelper.swift */; };
 		BBECF3AD269132F400DEC937 /* LinuxInterop.c in Sources */ = {isa = PBXBuildFile; fileRef = BBECF39D2691313B00DEC937 /* LinuxInterop.c */; };
@@ -586,6 +598,12 @@
 		BB28C7532689522C00BDC834 /* ProjectDebugLinux.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = ProjectDebugLinux.xcconfig; sourceTree = "<group>"; };
 		BB28C755268956C900BDC834 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS15.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		BB2B4DAB231D94C300CB578B /* hterm_all.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = hterm_all.js; path = ../../deps/libapps/hterm/dist/js/hterm_all.js; sourceTree = "<group>"; };
+		BB38597627BCEC70000A1082 /* circular.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = circular.png; sourceTree = "<group>"; };
+		BB38597927BCEC78000A1082 /* dollarblock1.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = dollarblock1.png; sourceTree = "<group>"; };
+		BB38597A27BCEC78000A1082 /* dollarblock2.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = dollarblock2.png; sourceTree = "<group>"; };
+		BB38597B27BCEC78000A1082 /* freeiosterminal.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = freeiosterminal.png; sourceTree = "<group>"; };
+		BB38598227BCEC83000A1082 /* ishcolontildehash.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = ishcolontildehash.png; sourceTree = "<group>"; };
+		BB38598327BCEC83000A1082 /* is.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = is.png; sourceTree = "<group>"; };
 		BB41591C255EF9E300E0950C /* iSHUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = iSHUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		BB41591E255EF9E300E0950C /* UITests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = UITests.m; sourceTree = "<group>"; };
 		BB415920255EF9E300E0950C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -852,12 +870,18 @@
 			children = (
 				BB0F552D239F8A790032A2A1 /* Icons.plist */,
 				BB4A923124EDA560002F5A96 /* 3d.png */,
+				BB38597627BCEC70000A1082 /* circular.png */,
 				BB4A922F24EDA55C002F5A96 /* colontildehash.png */,
+				BB38597927BCEC78000A1082 /* dollarblock1.png */,
+				BB38597A27BCEC78000A1082 /* dollarblock2.png */,
+				BB38597B27BCEC78000A1082 /* freeiosterminal.png */,
 				BB1B9A4223A5E96900414052 /* icon.png */,
 				BB4A922D24EDA461002F5A96 /* icon1337.png */,
 				BBC8297D24EDAC11009D042C /* idollarhash.png */,
 				BB0F553323A0AC760032A2A1 /* ihash1.png */,
 				BBC8298024EDACBB009D042C /* iinhash.png */,
+				BB38598327BCEC83000A1082 /* is.png */,
+				BB38598227BCEC83000A1082 /* ishcolontildehash.png */,
 				BBC8298624EE5853009D042C /* metal.png */,
 				BB0B88202589734A00208600 /* notsurewhatthisis.png */,
 				BB0F553123A0AB9B0032A2A1 /* pydann1.png */,
@@ -1279,7 +1303,7 @@
 		};
 		BB13F7D0200ACCA2003D1C4D /* Ninja */ = {
 			isa = PBXLegacyTarget;
-			buildArgumentsString = "-d keepdepfile $(NINJA_TARGETS)";
+			buildArgumentsString = "$(NINJA_TARGETS)";
 			buildConfigurationList = BB13F7D1200ACCA2003D1C4D /* Build configuration list for PBXLegacyTarget "Ninja" */;
 			buildPhases = (
 			);
@@ -1632,32 +1656,38 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				BB4A923224EDA560002F5A96 /* 3d.png in Resources */,
-				BB4A923024EDA55C002F5A96 /* colontildehash.png in Resources */,
-				BBC8298724EE5853009D042C /* metal.png in Resources */,
+				BB38599627BCEE6B000A1082 /* idollarhash.png in Resources */,
+				BB3859A227BCEE6B000A1082 /* dollarblock2.png in Resources */,
+				BB3859A727BCEE6B000A1082 /* uninspired.png in Resources */,
+				BB38599B27BCEE6B000A1082 /* rgb.png in Resources */,
+				BB38599927BCEE6B000A1082 /* dollarblock1.png in Resources */,
+				BB38599C27BCEE6B000A1082 /* sprite64.png in Resources */,
 				BB792B5D1F96D90D00FFB7A4 /* Assets.xcassets in Resources */,
 				BB792B601F96D90D00FFB7A4 /* LaunchScreen.storyboard in Resources */,
+				BB3859A427BCEE6B000A1082 /* ishcolontildehash.png in Resources */,
+				BB38599D27BCEE6B000A1082 /* icon.png in Resources */,
 				BBBF7B5C2415CDBB00EC4C14 /* Settings.bundle in Resources */,
-				BB0F553223A0AB9C0032A2A1 /* pydann1.png in Resources */,
+				BB3859A527BCEE6B000A1082 /* reworked.png in Resources */,
 				BBBCE7E321D2F02200CA00B3 /* About.storyboard in Resources */,
+				BB3859A627BCEE6B000A1082 /* colontildehash.png in Resources */,
+				BB38599327BCEE6B000A1082 /* notsurewhatthisis.png in Resources */,
 				BB792B5B1F96D90D00FFB7A4 /* Terminal.storyboard in Resources */,
+				BB38599427BCEE6B000A1082 /* pydann1.png in Resources */,
 				BB0F552E239F8A790032A2A1 /* Icons.plist in Resources */,
-				BB0F5530239F8B360032A2A1 /* uninspired.png in Resources */,
-				BBC8298124EDACBB009D042C /* iinhash.png in Resources */,
-				BB0F553623A0ACFC0032A2A1 /* pydann2.png in Resources */,
-				BB0F553423A0AC760032A2A1 /* ihash1.png in Resources */,
+				BB38599527BCEE6B000A1082 /* pydann2.png in Resources */,
 				BB2B4DAF231D998300CB578B /* term.html in Resources */,
-				BB0B88212589734B00208600 /* notsurewhatthisis.png in Resources */,
-				BB0B88182589662A00208600 /* reworked.png in Resources */,
+				BB3859A027BCEE6B000A1082 /* 3d.png in Resources */,
 				BB10E5D0248DC21D009C7A74 /* Roots.storyboard in Resources */,
-				BBC8297E24EDAC11009D042C /* idollarhash.png in Resources */,
 				BB2B4DAC231D94C300CB578B /* hterm_all.js in Resources */,
-				BB4A922E24EDA461002F5A96 /* icon1337.png in Resources */,
-				BB0B88062589661A00208600 /* rgb.png in Resources */,
+				BB3859A327BCEE6B000A1082 /* ihash1.png in Resources */,
 				BB2B4DAE231D998300CB578B /* term.css in Resources */,
+				BB38599827BCEE6B000A1082 /* metal.png in Resources */,
 				BB2B4DAD231D998300CB578B /* term.js in Resources */,
-				BB0B880F2589662200208600 /* sprite64.png in Resources */,
-				BB1B9A4323A5E96900414052 /* icon.png in Resources */,
+				BB38599A27BCEE6B000A1082 /* is.png in Resources */,
+				BB38599E27BCEE6B000A1082 /* circular.png in Resources */,
+				BB38599F27BCEE6B000A1082 /* icon1337.png in Resources */,
+				BB3859A127BCEE6B000A1082 /* iinhash.png in Resources */,
+				BB38599727BCEE6B000A1082 /* freeiosterminal.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1677,12 +1707,14 @@
 				BBEF197F268066D1001225BD /* metal.png in Resources */,
 				BBEF1980268066D1001225BD /* Assets.xcassets in Resources */,
 				BBEF1981268066D1001225BD /* LaunchScreen.storyboard in Resources */,
+				BB38597D27BCEC78000A1082 /* dollarblock1.png in Resources */,
 				BBEF1982268066D1001225BD /* Settings.bundle in Resources */,
 				BBEF1983268066D1001225BD /* pydann1.png in Resources */,
 				BBEF1984268066D1001225BD /* About.storyboard in Resources */,
 				BBEF1985268066D1001225BD /* Terminal.storyboard in Resources */,
 				BBEF1986268066D1001225BD /* Icons.plist in Resources */,
 				BBEF1987268066D1001225BD /* uninspired.png in Resources */,
+				BB38598527BCEC84000A1082 /* ishcolontildehash.png in Resources */,
 				BBEF1988268066D1001225BD /* iinhash.png in Resources */,
 				BBEF1989268066D1001225BD /* pydann2.png in Resources */,
 				BBEF198A268066D1001225BD /* ihash1.png in Resources */,
@@ -1691,13 +1723,17 @@
 				BBEF198D268066D1001225BD /* reworked.png in Resources */,
 				BBEF198E268066D1001225BD /* Roots.storyboard in Resources */,
 				BBEF198F268066D1001225BD /* idollarhash.png in Resources */,
+				BB3859A827BCEE6C000A1082 /* is.png in Resources */,
+				BB38597F27BCEC78000A1082 /* dollarblock2.png in Resources */,
 				BBEF1990268066D1001225BD /* hterm_all.js in Resources */,
+				BB38597827BCEC70000A1082 /* circular.png in Resources */,
 				BBEF1991268066D1001225BD /* icon1337.png in Resources */,
 				BBEF1992268066D1001225BD /* rgb.png in Resources */,
 				BBEF1993268066D1001225BD /* term.css in Resources */,
 				BBEF1994268066D1001225BD /* term.js in Resources */,
 				BBEF1995268066D1001225BD /* sprite64.png in Resources */,
 				BBEF1996268066D1001225BD /* icon.png in Resources */,
+				BB38598127BCEC78000A1082 /* freeiosterminal.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
