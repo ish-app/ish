@@ -248,10 +248,9 @@
         .endifin
         .ifc \op,xadd
             # exchange, then add
-            mov w9, _tmp
-            mov _tmp, w8
-            mov w8, w9
-            do_add add, w8, _tmp, \s
+            mov w9, w8
+            mov w8, _tmp
+            do_add add, w8, w9, \s
         .endif
 
         .ifin(\op, add,sub,adc,sbc,and,orr,eor,xadd)
@@ -288,6 +287,9 @@
         b.ne 3f
         stlxr\s w13, w8, [_xaddr]
         cbnz w13, 2b
+        .ifc \op,xadd
+            mov _tmp, w9
+        .endif
         write_done \size, atomic_\opname\size\()_mem
         gret 1
         write_bullshit \size, atomic_\opname\size\()_mem
