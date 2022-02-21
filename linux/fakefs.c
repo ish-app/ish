@@ -60,7 +60,6 @@ static struct dentry *fakefs_lookup(struct inode *ino, struct dentry *dentry, un
         return ERR_PTR(PTR_ERR(path));
     db_begin(&info->db);
     inode_t child_ino = path_get_inode(&info->db, path);
-    db_commit(&info->db);
     __putname(path);
     if (child_ino == 0)
         goto out;
@@ -92,8 +91,12 @@ static struct dentry *fakefs_lookup(struct inode *ino, struct dentry *dentry, un
     }
 
 out:
-    if (IS_ERR(child))
+    if (IS_ERR(child)) {
+        db_rollback(&info->db);
         printk("fakefs_lookup failed: %pe\n", child);
+    } else {
+        db_commit(&info->db);
+    }
     return d_splice_alias(child, dentry);
 }
 
@@ -558,18 +561,22 @@ static int fakefs_fill_super(struct super_block *sb, struct fs_context *fc) {
     struct inode *root = new_inode(sb);
     if (root == NULL)
         return -ENOMEM;
+    db_begin(&info->db);
     root->i_ino = path_get_inode(&info->db, "");
     if (root->i_ino == 0) {
         printk("fakefs: could not find root inode\n");
+        db_rollback(&info->db);
         iput(root);
         return -EINVAL;
     }
     INODE_FD(root) = info->root_fd;
     int err = read_inode(root);
     if (err < 0) {
+        db_rollback(&info->db);
         iput(root);
         return err;
     }
+    db_commit(&info->db);
 
     sb->s_op = &fakefs_super_ops;
     sb->s_root = d_make_root(root);
