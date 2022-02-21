@@ -7,7 +7,7 @@
 
 #if ISH_LINUX
 
-#include <Foundation/Foundation.h>
+#include <UIKit/UIKit.h>
 #include <pthread.h>
 #include "Roots.h"
 #include "LinuxInterop.h"
@@ -45,6 +45,22 @@ void sync_do_in_workqueue(void (^block)(void (^done)(void))) {
     while (!flag)
         pthread_cond_wait(&cond, &mutex);
     pthread_mutex_unlock(&mutex);
+}
+
+long UIPasteboard_changeCount(void) {
+    return UIPasteboard.generalPasteboard.changeCount;
+}
+nsobj_t UIPasteboard_get(void) {
+    return (__bridge nsobj_t) [UIPasteboard.generalPasteboard.string dataUsingEncoding:NSUTF8StringEncoding];
+}
+void UIPasteboard_set(const char *data, size_t len) {
+    UIPasteboard.generalPasteboard.string = [[NSString alloc] initWithBytes:data length:len encoding:NSUTF8StringEncoding];
+}
+size_t NSData_length(nsobj_t data) {
+    return [(__bridge NSData *) data length];
+}
+const void *NSData_bytes(nsobj_t data) {
+    return [(__bridge NSData *) data bytes];
 }
 
 #endif
