@@ -5,33 +5,30 @@
 //  Created by Theodore Dubois on 9/20/18.
 //
 
-#include <sys/stat.h>
 #import <MobileCoreServices/MobileCoreServices.h>
+#include <sys/stat.h>
+#include <dirent.h>
 #import "FileProviderExtension.h"
 #import "FileProviderItem.h"
-#import "NSError+ISHErrno.h"
-#include "kernel/fs.h"
-#define ISH_INTERNAL
-#include "fs/fake.h"
+#include "fs/fake-db.h"
 #include "kernel/errno.h"
 
 @interface FileProviderItem ()
 
 @property (readonly) NSFileProviderItemIdentifier identifier;
-@property (readonly) struct mount *mount;
-@property (readonly) struct fd *fd;
+@property (readonly) int fd;
 @property (readonly) BOOL isRoot;
 
 @end
 
 @implementation FileProviderItem
 
-- (instancetype)initWithIdentifier:(NSFileProviderItemIdentifier)identifier mount:(struct mount *)mount error:(NSError *__autoreleasing  _Nullable *)error {
+- (instancetype)initWithIdentifier:(NSFileProviderItemIdentifier)identifier mount:(struct fakefs_mount *)mount error:(NSError *__autoreleasing  _Nullable *)error {
     if (self = [super init]) {
         _identifier = identifier;
         _mount = mount;
         _fd = [self openNewFDWithError:error];
-        if (_fd == NULL)
+        if (_fd == -1)
             return nil;
     }
     return self;
@@ -41,52 +38,73 @@
     return [self.identifier isEqualToString:NSFileProviderRootContainerItemIdentifier];
 }
 
-- (struct fd *)openNewFDWithError:(NSError *__autoreleasing  _Nullable *)error {
-    struct fd *fd;
+- (int)openNewFDWithError:(NSError *__autoreleasing  _Nullable *)error {
+    int fd = -1;
     if (self.isRoot) {
-        fd = self.mount->fs->open(self.mount, "", O_RDONLY_, 0);
+        fd = open(_mount->source, O_DIRECTORY | O_RDONLY);
     } else {
-        fd = fakefs_open_inode(self.mount, self.identifier.longLongValue);
-    }
-    if (IS_ERR(fd)) {
-        NSLog(@"opening %@ failed: %ld", self.identifier, PTR_ERR(fd));
-        if (error != nil) {
-            *error = [NSError errorWithISHErrno:PTR_ERR(fd) itemIdentifier:self.identifier];
+        db_begin(&_mount->db);
+        sqlite3_stmt *stmt = _mount->db.stmt.path_from_inode;
+        sqlite3_bind_int64(_mount->db.stmt.path_from_inode, 1, _identifier.longLongValue);
+        while (db_exec(&_mount->db, stmt)) {
+            const char *path = (const char *) sqlite3_column_text(stmt, 0);
+            fd = openat(_mount->root_fd, fix_path(path), O_RDWR);
+            if (fd == -1 && errno == EISDIR)
+                fd = openat(_mount->root_fd, fix_path(path), O_RDONLY);
+            if (fd == -1 && errno != ENOENT)
+                break;
         }
-        return NULL;
+        db_reset(&_mount->db, stmt);
+        db_commit(&_mount->db);
     }
-    fd->mount = self.mount;
+    if (fd == -1) {
+        if (error != nil) {
+            if (errno == ENOENT)
+                *error = [NSError fileProviderErrorForNonExistentItemWithIdentifier:_identifier];
+            else
+                *error = [NSError errorWithDomain:NSPOSIXErrorDomain code:errno userInfo:nil];
+        }
+        NSLog(@"opening %@ failed: %@", self.identifier, *error);
+        return -1;
+    }
     return fd;
 }
 
 - (NSString *)path {
-    char path[MAX_PATH] = "";
-    int err = self.fd->mount->fs->getpath(self.fd, path);
+    char path[PATH_MAX] = "";
+    int err = fcntl(_fd, F_GETPATH, path);
     [self handleError:err inFunction:@"getpath"];
-    return [NSString stringWithUTF8String:path];
+    return [NSString stringWithUTF8String:path + strlen(_mount->source)];
 }
 
 - (NSURL *)URL {
-    NSURL *rootURL = [NSURL fileURLWithPath:[NSString stringWithUTF8String:self.fd->mount->source]];
+    NSURL *rootURL = [NSURL fileURLWithPath:[NSString stringWithUTF8String:_mount->source]];
     if (self.isRoot)
         return rootURL;
-    
     return [rootURL URLByAppendingPathComponent:self.path];
 }
 
-- (struct statbuf)stat {
-    struct statbuf stat = {};
-    int err = self.fd->mount->fs->fstat(self.fd, &stat);
-    [self handleError:err inFunction:@"fstat"];
+- (struct ish_stat)ishStat {
+    struct ish_stat stat = {};
+    db_begin(&_mount->db);
+    inode_t inode = _identifier.longLongValue;
+    if ([_identifier isEqualToString:NSFileProviderRootContainerItemIdentifier])
+        inode = path_get_inode(&_mount->db, "");
+    inode_read_stat(&_mount->db, inode, &stat);
+    db_commit(&_mount->db);
     return stat;
+}
+- (struct stat)realStat {
+    struct stat statbuf;
+    int err = fstat(_fd, &statbuf);
+    [self handleError:err inFunction:@"realStat"];
+    return statbuf;
 }
 
 - (NSFileProviderItemIdentifier)itemIdentifier {
     if (self.isRoot)
         return NSFileProviderRootContainerItemIdentifier;
-    NSString *ident = [NSString stringWithFormat:@"%lu", (unsigned long) self.stat.inode];
-    NSLog(@"ident of %@ is %@", self.path, ident);
-    return ident;
+    return _identifier;
 }
 - (NSFileProviderItemIdentifier)parentItemIdentifier {
     if (self.isRoot) {
@@ -96,19 +114,20 @@
     NSString *parentPath = self.path.stringByDeletingLastPathComponent;
     if ([parentPath isEqualToString:@"/"])
         return NSFileProviderRootContainerItemIdentifier;
-    struct statbuf stat;
-    int err = self.fd->mount->fs->stat(self.fd->mount, parentPath.UTF8String, &stat);
-    [self handleError:err inFunction:@"stat"];
-    NSString *parent = [NSString stringWithFormat:@"%lu", (unsigned long) stat.inode];
+    db_begin(&_mount->db);
+    inode_t parentInode = path_get_inode(&_mount->db, parentPath.UTF8String);
+    db_commit(&_mount->db);
+    assert(parentInode != 0);
+    NSString *parent = [NSString stringWithFormat:@"%lu", (unsigned long) parentInode];
     NSLog(@"parent of %@ is %@", self.path, parent);
     return parent;
 }
 
 - (NSFileProviderItemCapabilities)capabilities {
     NSFileProviderItemCapabilities caps = NSFileProviderItemCapabilitiesAllowsDeleting | NSFileProviderItemCapabilitiesAllowsRenaming | NSFileProviderItemCapabilitiesAllowsReparenting;
-    if (S_ISREG(self.stat.mode))
+    if (S_ISREG(self.ishStat.mode))
         caps |= NSFileProviderItemCapabilitiesAllowsReading | NSFileProviderItemCapabilitiesAllowsWriting;
-    else if (S_ISDIR(self.stat.mode))
+    else if (S_ISDIR(self.ishStat.mode))
         caps |= NSFileProviderItemCapabilitiesAllowsAddingSubItems | NSFileProviderItemCapabilitiesAllowsContentEnumerating;
     else
         return 0;
@@ -124,28 +143,33 @@
 }
 
 - (NSNumber *)documentSize {
-    return [NSNumber numberWithUnsignedLongLong:self.stat.size];
+    struct stat statbuf;
+    int err = fstat(_fd, &statbuf);
+    [self handleError:err inFunction:@"documentSize"];
+    return [NSNumber numberWithUnsignedLongLong:statbuf.st_size];
 }
 
 - (NSNumber *)childItemCount {
-    if (!S_ISDIR(self.stat.mode))
+    if (!S_ISDIR(self.ishStat.mode))
         return @0;
-    struct fd *fd = [self openNewFDWithError:nil];
-    if (fd == NULL)
+    int fd = [self openNewFDWithError:nil];
+    if (fd == -1)
         return @0;
     unsigned n = 0;
-    struct dir_entry dirent;
-    while (fd->ops->readdir(fd, &dirent)) {
-        if (strcmp(dirent.name, ".") == 0 || strcmp(dirent.name, "..") == 0)
+    DIR *dir = fdopendir(fd);
+    struct dirent *dirent;
+    while ((dirent = readdir(dir))) {
+        if (strcmp(dirent->d_name, ".") == 0 || strcmp(dirent->d_name, "..") == 0)
             continue;
         n++;
     }
+    closedir(dir);
     return @(n);
 }
 
 - (NSDate *)contentModificationDate {
-    struct statbuf stat = self.stat;
-    return [NSDate dateWithTimeIntervalSince1970:stat.mtime + (NSTimeInterval) stat.mtime_nsec / 1000000000];
+    struct stat statbuf = self.realStat;
+    return [NSDate dateWithTimeIntervalSince1970:statbuf.st_mtimespec.tv_sec + (NSTimeInterval) statbuf.st_mtimespec.tv_nsec / 1000000000];
 }
 
 - (NSString *)typeIdentifier {
@@ -153,7 +177,7 @@
         NSLog(@"uti of %@ is %@", self.path, (NSString *) kUTTypeFolder);
         return (NSString *) kUTTypeFolder;
     }
-    mode_t_ mode = self.stat.mode;
+    mode_t_ mode = self.ishStat.mode;
     if ((mode & S_IFMT) == S_IFDIR)
         return (NSString *) kUTTypeFolder;
     if ((mode & S_IFMT) == S_IFLNK)
@@ -173,12 +197,12 @@
     NSLog(@"copying %@ to %@", self.path, url);
     NSURL *itemURL = self.URL;
     NSError *err;
-    sqlite3_mutex_enter(self.fd->mount->fakefs.lock);
+    sqlite3_mutex_enter(_mount->db.lock);
     [NSFileManager.defaultManager removeItemAtURL:url error:nil];
     BOOL success = [NSFileManager.defaultManager copyItemAtURL:itemURL
                                                          toURL:url
                                                          error:&err];
-    sqlite3_mutex_leave(self.fd->mount->fakefs.lock);
+    sqlite3_mutex_leave(_mount->db.lock);
     if (!success) {
         NSLog(@"error copying to %@: %@", url, err);
     }
@@ -188,25 +212,25 @@
     NSLog(@"copying %@ from %@", self.path, url);
     NSURL *itemURL = self.URL;
     NSError *err;
-    sqlite3_mutex_enter(self.fd->mount->fakefs.lock);
+    sqlite3_mutex_enter(_mount->db.lock);
     [NSFileManager.defaultManager removeItemAtURL:itemURL error:nil];
     BOOL success = [NSFileManager.defaultManager copyItemAtURL:url
                                                          toURL:itemURL
                                                          error:&err];
-    sqlite3_mutex_leave(self.fd->mount->fakefs.lock);
+    sqlite3_mutex_leave(_mount->db.lock);
     if (!success) {
         NSLog(@"error copying to %@: %@", url, err);
     }
 }
 
 - (void)dealloc {
-    if (self.fd != nil)
-        fd_close(self.fd);
+    if (self.fd != -1)
+        close(self.fd);
 }
 
 - (void)handleError:(long)err inFunction:(NSString *)func {
     if (err < 0) {
-        NSLog(@"%@ returned %ld", func, err);
+        NSLog(@"%@ returned %ld %d", func, err, errno);
         abort();
     }
 }

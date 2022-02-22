@@ -6,10 +6,16 @@
 //
 
 #import <FileProvider/FileProvider.h>
-#include "kernel/task.h"
+#include "fs/fake-db.h"
+
+struct fakefs_mount {
+    struct fakefs_db db;
+    int root_fd;
+    const char *source;
+};
 
 @interface FileProviderExtension : NSFileProviderExtension
 
-@end
+- (struct fakefs_mount *)mount;
 
-extern struct task *fake_task;
+@end

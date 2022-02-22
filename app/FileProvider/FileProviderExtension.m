@@ -9,52 +9,47 @@
 #import "FileProviderItem.h"
 #import "FileProviderEnumerator.h"
 #import "NSError+ISHErrno.h"
-#include "kernel/fs.h"
 #import "../AppGroup.h"
-#define ISH_INTERNAL
-#include "fs/fake.h"
-
-struct task *fake_task;
+#include "fs/fake-db.h"
 
 @interface FileProviderExtension () {
-    struct mount *_mount;
+    BOOL _mounted;
+    struct fakefs_mount _mount;
 };
 @property NSURL *root;
 @end
 
 @implementation FileProviderExtension
 
-- (BOOL)getMount:(struct mount **)mount error:(NSError **)error {
+- (struct fakefs_mount *)mount {
+    NSAssert(_mounted, @"");
+    return &_mount;
+}
+
+- (BOOL)getMount:(struct fakefs_mount **)mount error:(NSError **)error {
     @synchronized (self) {
-        if (_mount == NULL) {
+        if (!_mounted) {
             if (self.domain == nil) {
                 *error = [NSError errorWithDomain:NSFileProviderErrorDomain code:NSFileProviderErrorServerUnreachable userInfo:nil];
                 return NO;
             }
-            _mount = malloc(sizeof(struct mount));
-            if (_mount == NULL) {
-                *error = [NSError errorWithDomain:NSPOSIXErrorDomain code:ENOMEM userInfo:nil];
-                return NO;
-            }
-            _mount->fs = &fakefs;
             NSURL *container = ContainerURL();
-            _root = [[[container URLByAppendingPathComponent:@"roots"]
-                      URLByAppendingPathComponent:self.domain.identifier]
-                     URLByAppendingPathComponent:@"data"];
-            _mount->source = strdup(self.root.fileSystemRepresentation);
-            int err = _mount->fs->mount(_mount);
+            NSURL *fs_dir = [[container URLByAppendingPathComponent:@"roots"]
+                      URLByAppendingPathComponent:self.domain.identifier];
+            _root = [fs_dir URLByAppendingPathComponent:@"data"];
+            _mount.source = strdup(_root.fileSystemRepresentation);
+            _mount.root_fd = open(_mount.source, O_RDONLY | O_DIRECTORY);
+            int err = fake_db_init(&_mount.db, [fs_dir URLByAppendingPathComponent:@"meta.db"].fileSystemRepresentation, _mount.root_fd);
             if (err < 0) {
                 NSLog(@"error opening root: %d", err);
+                close(_mount.root_fd);
                 *error = [NSError errorWithISHErrno:err itemIdentifier:NSFileProviderRootContainerItemIdentifier];
-                free((void *) _mount->source);
-                free(_mount);
-                _mount = NULL;
                 return NO;
             }
+            *mount = &_mount;
+            _mounted = YES;
         }
-        NSAssert(_mount != NULL, @"mount initialization should have succeeded");
-        *mount = _mount;
-        
+
         // Run a cleanup every once in a while. The idea here is that this
         // function gets called while the file provider is being interacted
         // with, so this should generally get time to run at that point, but we
@@ -79,11 +74,11 @@ struct task *fake_task;
 }
 
 - (nullable NSFileProviderItem)itemForIdentifier:(NSFileProviderItemIdentifier)identifier error:(NSError * _Nullable *)error {
-    struct mount *mount;
+    struct fakefs_mount *mount;
     if (![self getMount:&mount error:error]) return nil;
     NSLog(@"item for id %@", identifier);
     NSError *err;
-    FileProviderItem *item = [[FileProviderItem alloc] initWithIdentifier:identifier mount:mount error:&err];
+    FileProviderItem *item = [[FileProviderItem alloc] initWithIdentifier:identifier mount:&_mount error:&err];
     if (item == nil) {
         if (error != nil)
             *error = err;
@@ -176,51 +171,51 @@ struct task *fake_task;
 // FIXME: not dry enough
 // It's ok to use _mount in these because in each case the caller has already invoked itemForIdentifier:error: at least once
 - (BOOL)doCreateDirectoryAt:(NSString *)path inode:(ino_t *)inode error:(NSError **)error {
-    NSURL *url = [[NSURL fileURLWithPath:[NSString stringWithUTF8String:_mount->source]] URLByAppendingPathComponent:path];
-    db_begin(&_mount->fakefs);
+    NSURL *url = [[NSURL fileURLWithPath:[NSString stringWithUTF8String:_mount.source]] URLByAppendingPathComponent:path];
+    db_begin(&_mount.db);
     if (![NSFileManager.defaultManager createDirectoryAtURL:url
                                 withIntermediateDirectories:NO
                                                  attributes:@{NSFilePosixPermissions: @0777}
                                                       error:error]) {
-        db_rollback(&_mount->fakefs);
+        db_rollback(&_mount.db);
         return nil;
     }
     struct ish_stat stat;
     NSString *parentPath = [path substringToIndex:[path rangeOfString:@"/" options:NSBackwardsSearch].location];
-    if (!path_read_stat(&_mount->fakefs, parentPath.fileSystemRepresentation, &stat, NULL)) {
-        db_rollback(&_mount->fakefs);
+    if (!path_read_stat(&_mount.db, parentPath.fileSystemRepresentation, &stat, NULL)) {
+        db_rollback(&_mount.db);
         *error = [NSError errorWithDomain:NSFileProviderErrorDomain code:NSFileProviderErrorNoSuchItem userInfo:nil];
         return nil;
     }
     stat.mode = (stat.mode & ~S_IFMT) | S_IFDIR;
-    path_create(&_mount->fakefs, path.fileSystemRepresentation, &stat);
+    path_create(&_mount.db, path.fileSystemRepresentation, &stat);
     if (inode != NULL)
-        *inode = path_get_inode(&_mount->fakefs, path.fileSystemRepresentation);
-    db_commit(&_mount->fakefs);
+        *inode = path_get_inode(&_mount.db, path.fileSystemRepresentation);
+    db_commit(&_mount.db);
     return YES;
 }
 
 - (BOOL)doCreateFileAt:(NSString *)path importFrom:(NSURL *)importURL inode:(ino_t *)inode error:(NSError **)error {
-    NSURL *url = [[NSURL fileURLWithPath:[NSString stringWithUTF8String:_mount->source]] URLByAppendingPathComponent:path];
-    db_begin(&_mount->fakefs);
+    NSURL *url = [[NSURL fileURLWithPath:[NSString stringWithUTF8String:_mount.source]] URLByAppendingPathComponent:path];
+    db_begin(&_mount.db);
     if (![NSFileManager.defaultManager copyItemAtURL:importURL
                                                toURL:url
                                                error:error]) {
-        db_rollback(&_mount->fakefs);
+        db_rollback(&_mount.db);
         return nil;
     }
     struct ish_stat stat;
     NSString *parentPath = [path substringToIndex:[path rangeOfString:@"/" options:NSBackwardsSearch].location];
-    if (!path_read_stat(&_mount->fakefs, parentPath.fileSystemRepresentation, &stat, NULL)) {
-        db_rollback(&_mount->fakefs);
+    if (!path_read_stat(&_mount.db, parentPath.fileSystemRepresentation, &stat, NULL)) {
+        db_rollback(&_mount.db);
         *error = [NSError errorWithDomain:NSFileProviderErrorDomain code:NSFileProviderErrorNoSuchItem userInfo:nil];
         return nil;
     }
     stat.mode = (stat.mode & ~S_IFMT & ~0111) | S_IFREG;
-    path_create(&_mount->fakefs, path.fileSystemRepresentation, &stat);
+    path_create(&_mount.db, path.fileSystemRepresentation, &stat);
     if (inode != NULL)
-        *inode = path_get_inode(&_mount->fakefs, path.fileSystemRepresentation);
-    db_commit(&_mount->fakefs);
+        *inode = path_get_inode(&_mount.db, path.fileSystemRepresentation);
+    db_commit(&_mount.db);
     return YES;
 }
 
@@ -289,7 +284,7 @@ struct task *fake_task;
 }
 
 - (NSString *)pathFromURL:(NSURL *)url {
-    NSURL *root = [NSURL fileURLWithPath:[NSString stringWithUTF8String:_mount->source]];
+    NSURL *root = [NSURL fileURLWithPath:[NSString stringWithUTF8String:_mount.source]];
     assert([url.path hasPrefix:root.path]);
     NSString *path = [url.path substringFromIndex:root.path.length];
     assert([path hasPrefix:@"/"]);
@@ -299,7 +294,7 @@ struct task *fake_task;
 }
 
 - (BOOL)doDelete:(NSString *)path itemIdentifier:(NSFileProviderItemIdentifier)identifier error:(NSError **)error {
-    NSURL *url = [[NSURL fileURLWithPath:[NSString stringWithUTF8String:_mount->source]] URLByAppendingPathComponent:path];
+    NSURL *url = [[NSURL fileURLWithPath:[NSString stringWithUTF8String:_mount.source]] URLByAppendingPathComponent:path];
     NSDirectoryEnumerator<NSURL *> *enumerator = [NSFileManager.defaultManager enumeratorAtURL:url
                                                                     includingPropertiesForKeys:nil
                                                                                        options:NSDirectoryEnumerationSkipsSubdirectoryDescendants
@@ -308,13 +303,17 @@ struct task *fake_task;
         if (![self doDelete:[self pathFromURL:suburl] itemIdentifier:identifier error:error])
             return NO;
     }
-    int err = fakefs.unlink(_mount, path.fileSystemRepresentation);
+    db_begin(&_mount.db);
+    path_unlink(&_mount.db, path.fileSystemRepresentation);
+    int err = unlinkat(_mount.root_fd, fix_path(path.fileSystemRepresentation), 0);
     if (err < 0)
-        err = fakefs.rmdir(_mount, path.fileSystemRepresentation);
+        err = unlinkat(_mount.root_fd, fix_path(path.fileSystemRepresentation), AT_REMOVEDIR);
     if (err < 0) {
-        *error = [NSError errorWithISHErrno:err itemIdentifier:identifier];
+        db_rollback(&_mount.db);
+        *error = [NSError errorWithDomain:NSPOSIXErrorDomain code:errno userInfo:nil];
         return NO;
     }
+    db_commit(&_mount.db);
     return YES;
 }
 
@@ -332,11 +331,15 @@ struct task *fake_task;
 }
 
 - (BOOL)doRename:(NSString *)src to:(NSString *)dst itemIdentifier:(NSFileProviderItemIdentifier)identifier error:(NSError **)error {
-    int err = fakefs.rename(_mount, src.fileSystemRepresentation, dst.fileSystemRepresentation);
+    db_begin(&_mount.db);
+    path_rename(&_mount.db, src.fileSystemRepresentation, dst.fileSystemRepresentation);
+    int err = renameat(_mount.root_fd, fix_path(src.fileSystemRepresentation), _mount.root_fd, fix_path(dst.fileSystemRepresentation));
     if (err < 0) {
-        *error = [NSError errorWithISHErrno:err itemIdentifier:identifier];
+        db_rollback(&_mount.db);
+        *error = [NSError errorWithDomain:NSPOSIXErrorDomain code:errno userInfo:nil];
         return NO;
     }
+    db_commit(&_mount.db);
     return YES;
 }
 
@@ -386,9 +389,10 @@ struct task *fake_task;
 }
 
 - (void)dealloc {
-    if (_mount) {
-        _mount->fs->umount(_mount);
-        free(_mount);
+    if (_mounted) {
+        free((void *) _mount.source);
+        close(_mount.root_fd);
+        fake_db_deinit(&_mount.db);
     }
 }
 
@@ -400,22 +404,27 @@ struct task *fake_task;
 // TODO: Create hardlinks into file provider storage instead of copies
 //
 - (void)cleanupStorage {
-    NSAssert(_mount, @"Mount should exist by this point");
+    NSAssert(_mounted, @"Mount should exist by this point");
 
     NSFileManager *manager = NSFileManager.defaultManager;
     NSArray<NSURL *> *storageDirs = [manager contentsOfDirectoryAtURL:self.storageURL includingPropertiesForKeys:nil options:0 error:nil];
     for (NSURL *dir in storageDirs) {
-        ino_t inode = dir.lastPathComponent.longLongValue;
+        inode_t inode = dir.lastPathComponent.longLongValue;
         if (inode == 0)
             continue;
-        struct fd *fd = fakefs_open_inode(_mount, inode);
-        if (IS_ERR(fd)) {
+
+        // TODO: make this a function in fake-db.c
+        db_begin(&_mount.db);
+        sqlite3_bind_int64(_mount.db.stmt.inode_read_stat, 1, inode);
+        BOOL exists = db_exec(&_mount.db, _mount.db.stmt.inode_read_stat);
+        db_reset(&_mount.db, _mount.db.stmt.inode_read_stat);
+        db_rollback(&_mount.db);
+
+        if (!exists) {
             NSLog(@"removing dead inode %llu", inode);
             NSError *err;
             if (![manager removeItemAtURL:dir error:&err])
                 NSLog(@"failed to remove dead inode: %@", err);
-        } else {
-            fd_close(fd);
         }
     }
 }
@@ -433,3 +442,18 @@ struct task *fake_task;
 }
 
 @end
+
+void die(const char *msg, ...) {
+    va_list args;
+    va_start(args, msg);
+    [NSException raise:@"ish die" format:[NSString stringWithUTF8String:msg] arguments:args];
+    abort();
+    va_end(args);
+}
+
+void ish_printk(const char *msg, ...) {
+    va_list args;
+    va_start(args, msg);
+    NSLogv([NSString stringWithUTF8String:msg], args);
+    va_end(args);
+}
