@@ -183,6 +183,7 @@
 		BBBCE7E321D2F02200CA00B3 /* About.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = BBBCE7E521D2F02200CA00B3 /* About.storyboard */; };
 		BBBD741426B7BE2E00321AC5 /* libfakefs.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BB21A16F2689041500BD19B4 /* libfakefs.a */; };
 		BBBF7B5C2415CDBB00EC4C14 /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = BBBF7B5B2415CDBB00EC4C14 /* Settings.bundle */; };
+		BBBF9CBD27C217B6002A30F7 /* PasteboardDeviceLinux.c in Sources */ = {isa = PBXBuildFile; fileRef = BBBF9CBB27C217A6002A30F7 /* PasteboardDeviceLinux.c */; };
 		BBBF9CBF27C44114002A30F7 /* iSHFileProvider.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = BB88F4902154760800A341FD /* iSHFileProvider.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		BBBFE94921C5CFF100509DD5 /* NSError+ISHErrno.m in Sources */ = {isa = PBXBuildFile; fileRef = BB13F4DD21C5770000343E17 /* NSError+ISHErrno.m */; };
 		BBC3863E276817A900CC8C2E /* UpgradeRootViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = BBA5D87D27536E7600B39D77 /* UpgradeRootViewController.m */; };
@@ -661,6 +662,7 @@
 		BBAEE33B249BDADC0069EBB5 /* ProgressReportViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ProgressReportViewController.m; sourceTree = "<group>"; };
 		BBBCE7E421D2F02200CA00B3 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/About.storyboard; sourceTree = "<group>"; };
 		BBBF7B5B2415CDBB00EC4C14 /* Settings.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = Settings.bundle; sourceTree = "<group>"; };
+		BBBF9CBB27C217A6002A30F7 /* PasteboardDeviceLinux.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = PasteboardDeviceLinux.c; sourceTree = "<group>"; };
 		BBBF9CC027C441C0002A30F7 /* fix_path.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = fix_path.h; sourceTree = "<group>"; };
 		BBBF9CC127C441C0002A30F7 /* fake-db.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "fake-db.h"; sourceTree = "<group>"; };
 		BBBF9CC227C448D5002A30F7 /* fake-db.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = "fake-db.c"; sourceTree = "<group>"; };
@@ -902,6 +904,7 @@
 			children = (
 				650B337222EA235C00B4C03E /* PasteboardDevice.h */,
 				650B337322EA235C00B4C03E /* PasteboardDevice.m */,
+				BBBF9CBB27C217A6002A30F7 /* PasteboardDeviceLinux.c */,
 				BB235535235D489400139E00 /* LocationDevice.h */,
 				BB235533235D488400139E00 /* LocationDevice.m */,
 				408A263B23644102008A4E81 /* iOSFS.h */,
@@ -2066,6 +2069,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				BBECF3AD269132F400DEC937 /* LinuxInterop.c in Sources */,
+				BBBF9CBD27C217B6002A30F7 /* PasteboardDeviceLinux.c in Sources */,
 				BB8C3AFF26B7B8CF00E38DDC /* fakefs.c in Sources */,
 				BBEEA9E8277D25090069495B /* LinuxRoot.c in Sources */,
 				BB123ACC26C9EFD900419CDA /* LinuxTTY.c in Sources */,
