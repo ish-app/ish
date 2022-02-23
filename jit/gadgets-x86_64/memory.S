@@ -86,10 +86,11 @@ segfault_\type:
     .else
         movb $1, CPU_segfault_was_write(%_cpu)
     .endif
-    movl (%_ip), %_eip
-    leaq -4(%_esp), %r14
-    btq $62, (%_ip)
-    cmovc $r14, $_esp
+    movq (%_ip), %_ip
+    leal -4(%_esp), %r14d
+    btq $62, %_ip
+    cmovcl %r14d, %_esp
+    movl %_eip, %_eip
     movl $INT_GPF, %_tmp
     jmp jit_exit
 
