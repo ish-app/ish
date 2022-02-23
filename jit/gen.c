@@ -12,6 +12,7 @@ static int gen_step16(struct gen_state *state, struct tlb *tlb);
 
 int gen_step(struct gen_state *state, struct tlb *tlb) {
     state->orig_ip = state->ip;
+    state->orig_ip_extra = 0;
     return gen_step32(state, tlb);
 }
 
@@ -207,7 +208,7 @@ static inline bool gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
     if (arg == arg_imm)
         GEN(*imm);
     else if (arg == arg_mem)
-        GEN(state->orig_ip);
+        GEN(state->orig_ip | state->orig_ip_extra);
     return true;
 }
 #define op(type, thing, z) do { \
@@ -239,7 +240,10 @@ static inline bool gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define NOT(val,z) load(val,z); gz(not, z); store(val,z)
 #define NEG(val,z) imm = 0; load(imm,z); op(sub, val,z); store(val,z)
 
-#define POP(thing,z) gg(pop, state->orig_ip); store(thing, z)
+#define POP(thing,z) \
+    gg(pop, state->orig_ip); \
+    state->orig_ip_extra = 1ul << 62; /* marks that on segfault the stack pointer should be adjusted */\
+    store(thing, z)
 #define PUSH(thing,z) load(thing, z); gg(push, state->orig_ip)
 
 #define INC(val,z) load(val, z); gz(inc, z); store(val, z)

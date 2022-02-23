@@ -7,6 +7,7 @@
 struct gen_state {
     addr_t ip;
     addr_t orig_ip;
+    unsigned long orig_ip_extra;
     struct jit_block *block;
     unsigned size;
     unsigned capacity;

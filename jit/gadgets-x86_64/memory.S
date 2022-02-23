@@ -56,26 +56,27 @@
     gret
 
 .irp type, read,write
-    .global handle_\type\()_miss
-    handle_\type\()_miss:
-        subq $8, %rsp
-        save_c
-        # %tlb actually points to tlb->entries
-        leaq -TLB_entries(%_tlb), %rdi
-        movl %_addr, %esi
-        .ifc \type,read
-            movq $0, %rdx
-        .else
-            movq $1, %rdx
-        .endif
-        call NAME(tlb_handle_miss)
-        movq %rax, %r15
-        restore_c
-        testq %r15, %r15
-        jz segfault_\type
-        movq %r15, %_addrq
-        addq $8, %rsp
-        ret
+
+.global handle_\type\()_miss
+handle_\type\()_miss:
+    subq $8, %rsp
+    save_c
+    # %tlb actually points to tlb->entries
+    leaq -TLB_entries(%_tlb), %rdi
+    movl %_addr, %esi
+    .ifc \type,read
+        movq $0, %rdx
+    .else
+        movq $1, %rdx
+    .endif
+    call NAME(tlb_handle_miss)
+    movq %rax, %r15
+    restore_c
+    testq %r15, %r15
+    jz segfault_\type
+    movq %r15, %_addrq
+    addq $8, %rsp
+    ret
 
 segfault_\type:
     movl -TLB_entries+TLB_segfault_addr(%_tlb), %_addr
@@ -86,8 +87,12 @@ segfault_\type:
         movb $1, CPU_segfault_was_write(%_cpu)
     .endif
     movl (%_ip), %_eip
+    leaq -4(%_esp), %r14
+    btq $62, (%_ip)
+    cmovc $r14, $_esp
     movl $INT_GPF, %_tmp
     jmp jit_exit
+
 .endr
 
 .global crosspage_load

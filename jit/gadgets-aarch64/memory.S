@@ -9,7 +9,6 @@
     sub esp, esp, 4
     gret 1
     write_bullshit 32, push
-
 .gadget pop
     mov _addr, esp
     read_prep 32, pop
@@ -65,23 +64,24 @@ NAME(si_gadgets):
     gret
 
 .irp type, read,write
-    .global handle_\type\()_miss
-    handle_\type\()_miss:
-        save_c
-        # %tlb actually points to tlb->entries
-        sub x0, _tlb, TLB_entries
-        mov w1, _addr
-        .ifc \type,read
-            mov x2, xzr
-        .else
-            mov x2, 1
-        .endif
-        bl NAME(tlb_handle_miss)
-        mov x19, x0
-        restore_c
-        cbz x19, segfault_\type
-        mov _xaddr, x19
-        ret
+
+.global handle_\type\()_miss
+handle_\type\()_miss:
+    save_c
+    # %tlb actually points to tlb->entries
+    sub x0, _tlb, TLB_entries
+    mov w1, _addr
+    .ifc \type,read
+        mov x2, xzr
+    .else
+        mov x2, 1
+    .endif
+    bl NAME(tlb_handle_miss)
+    mov x19, x0
+    restore_c
+    cbz x19, segfault_\type
+    mov _xaddr, x19
+    ret
 
 .global segfault_\type
 segfault_\type:
@@ -93,9 +93,14 @@ segfault_\type:
         mov w0, 1
     .endif
     strb w0, [_cpu, CPU_segfault_was_write]
-    ldr eip, [_ip]
+    ldr x0, [_ip]
+    mov eip, w0
+    sub w8, esp, 4
+    tst x0, 1 << 62
+    csel esp, esp, w8, eq
     mov x0, INT_GPF
     b jit_exit
+
 .endr
 
 .global crosspage_load
