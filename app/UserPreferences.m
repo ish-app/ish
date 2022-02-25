@@ -29,6 +29,8 @@ NSDictionary<NSString *, NSString *> *friendlyPreferenceMapping;
 NSDictionary<NSString *, NSString *> *friendlyPreferenceReverseMapping;
 NSDictionary<NSString *, NSString *> *kvoProperties;
 
+static NSString *const kSystemMonospacedFontName = @"ui-monospace";
+
 char **get_all_defaults_keys_impl(void) {
     NSArray<NSString *> *preferenceKeys = NSUserDefaults.standardUserDefaults.dictionaryRepresentation.allKeys;
     char **entries = malloc((preferenceKeys.count + 1) * sizeof(*entries));
@@ -135,7 +137,6 @@ bool (*remove_user_default)(const char *name);
         _defaults = [NSUserDefaults standardUserDefaults];
         Theme *defaultTheme = [Theme presetThemeNamed:@"Light"];
         [_defaults registerDefaults:@{
-            kPreferenceFontFamilyKey: @"Menlo",
             kPreferenceFontSizeKey: @(12),
             kPreferenceThemeKey: defaultTheme.properties,
             kPreferenceCapsLockMappingKey: @(CapsLockMapControl),
@@ -146,6 +147,16 @@ bool (*remove_user_default)(const char *name);
             kPreferenceBootCommandKey: @[@"/sbin/init"],
             kPreferenceHideStatusBarKey: @(NO),
         }];
+        // https://webkit.org/blog/10247/new-webkit-features-in-safari-13-1/
+        if (@available(iOS 13.4, *)) {
+            [_defaults registerDefaults:@{
+                kPreferenceFontFamilyKey: kSystemMonospacedFontName,
+            }];
+        } else {
+            [_defaults registerDefaults:@{
+                kPreferenceFontFamilyKey: @"Menlo",
+            }];
+        }
         _theme = [[Theme alloc] initWithProperties:[_defaults objectForKey:kPreferenceThemeKey]];
         get_all_defaults_keys = get_all_defaults_keys_impl;
         get_friendly_name = get_friendly_name_impl;
@@ -285,11 +296,19 @@ bool (*remove_user_default)(const char *name);
 }
 
 - (void)setFontFamily:(NSString *)fontFamily {
-    [_defaults setObject:fontFamily forKey:kPreferenceFontFamilyKey];
+    if (fontFamily) {
+        [_defaults setObject:fontFamily forKey:kPreferenceFontFamilyKey];
+    } else {
+        [_defaults removeObjectForKey:kPreferenceFontFamilyKey];
+    }
 }
 
 - (BOOL)validateFontFamily:(id *)value error:(NSError **)error {
     return [*value isKindOfClass:NSString.class];
+}
+
+- (NSString *)fontFamilyUserFacingName {
+    return [self.fontFamily isEqualToString:kSystemMonospacedFontName] ? @"System" : @"Menlo";
 }
 
 // MARK: theme

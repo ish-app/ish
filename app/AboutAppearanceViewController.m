@@ -40,6 +40,7 @@
         self.fontPicker.preferredContentSize = CGSizeZero;
         self.fontPicker.navigationItem.title = @"Font";
         self.fontPicker.delegate = self;
+        self.fontPicker.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"Reset" style:UIBarButtonItemStylePlain target:self action:@selector(resetFont:)];
     }
 }
 
@@ -106,7 +107,7 @@ enum {
             
         case FontSection:
             if (indexPath.row == 0) {
-                cell.detailTextLabel.text = UserPreferences.shared.fontFamily;
+                cell.detailTextLabel.text = UserPreferences.shared.fontFamilyUserFacingName;
             } else if (indexPath.row == 1) {
                 UserPreferences *prefs = [UserPreferences shared];
                 UILabel *label = [cell viewWithTag:1];
@@ -161,6 +162,11 @@ enum {
 
 - (void)fontPickerViewControllerDidPickFont:(UIFontPickerViewController *)viewController API_AVAILABLE(ios(13.0)) {
     UserPreferences.shared.fontFamily = viewController.selectedFontDescriptor.fontAttributes[UIFontDescriptorFamilyAttribute];
+    [self.navigationController popToViewController:self animated:YES];
+}
+
+- (IBAction)resetFont:(UIBarButtonItem *)sender API_AVAILABLE(ios(13)) {
+    UserPreferences.shared.fontFamily = nil;
     [self.navigationController popToViewController:self animated:YES];
 }
 
