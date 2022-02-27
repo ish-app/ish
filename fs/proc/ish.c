@@ -14,6 +14,44 @@ bool (*get_user_default)(const char *name, char **buffer, size_t *size);
 bool (*set_user_default)(const char *name, char *buffer, size_t size);
 bool (*remove_user_default)(const char *name);
 
+static int proc_ish_show_colors(struct proc_entry *UNUSED(entry), struct proc_data *buf) {
+    proc_printf(buf,
+                "\x1B[30m" "iSH" "\x1B[39m "
+                "\x1B[31m" "iSH" "\x1B[39m "
+                "\x1B[32m" "iSH" "\x1B[39m "
+                "\x1B[33m" "iSH" "\x1B[39m "
+                "\x1B[34m" "iSH" "\x1B[39m "
+                "\x1B[35m" "iSH" "\x1B[39m "
+                "\x1B[36m" "iSH" "\x1B[39m "
+                "\x1B[37m" "iSH" "\x1B[39m" "\n\x1B[7m"
+                "\x1B[40m" "iSH" "\x1B[39m "
+                "\x1B[41m" "iSH" "\x1B[39m "
+                "\x1B[42m" "iSH" "\x1B[39m "
+                "\x1B[43m" "iSH" "\x1B[39m "
+                "\x1B[44m" "iSH" "\x1B[39m "
+                "\x1B[45m" "iSH" "\x1B[39m "
+                "\x1B[46m" "iSH" "\x1B[39m "
+                "\x1B[47m" "iSH" "\x1B[39m" "\x1B[0m\x1B[1m\n"
+                "\x1B[90m" "iSH" "\x1B[39m "
+                "\x1B[91m" "iSH" "\x1B[39m "
+                "\x1B[92m" "iSH" "\x1B[39m "
+                "\x1B[93m" "iSH" "\x1B[39m "
+                "\x1B[94m" "iSH" "\x1B[39m "
+                "\x1B[95m" "iSH" "\x1B[39m "
+                "\x1B[96m" "iSH" "\x1B[39m "
+                "\x1B[97m" "iSH" "\x1B[39m" "\n\x1B[7m"
+                "\x1B[100m" "iSH" "\x1B[39m "
+                "\x1B[101m" "iSH" "\x1B[39m "
+                "\x1B[102m" "iSH" "\x1B[39m "
+                "\x1B[103m" "iSH" "\x1B[39m "
+                "\x1B[104m" "iSH" "\x1B[39m "
+                "\x1B[105m" "iSH" "\x1B[39m "
+                "\x1B[106m" "iSH" "\x1B[39m "
+                "\x1B[107m" "iSH" "\x1B[39m" "\x1B[0m\n"
+                );
+    return 0;
+}
+
 static void proc_ish_defaults_getname(struct proc_entry *entry, char *buf) {
     strcpy(buf, entry->name);
 }
@@ -103,6 +141,7 @@ static int proc_ish_show_version(struct proc_entry *UNUSED(entry), struct proc_d
 }
 
 struct proc_children proc_ish_children = PROC_CHILDREN({
+    {"colors", .show = proc_ish_show_colors},
     {".defaults", S_IFDIR, .readdir = proc_ish_underlying_defaults_readdir},
     {"defaults", S_IFDIR, .readdir = proc_ish_defaults_readdir},
     {"version", .show = proc_ish_show_version},
