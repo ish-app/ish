@@ -227,7 +227,20 @@ static void mem_changed(struct mem *mem) {
     mem->mmu.changes++;
 }
 
+// This version will return NULL instead of making necessary pagetable changes.
+// Used by the emulator to avoid deadlocks.
+static void *mem_ptr_nofault(struct mem *mem, addr_t addr, int type) {
+    struct pt_entry *entry = mem_pt(mem, PAGE(addr));
+    if (entry == NULL)
+        return NULL;
+    if (type == MEM_WRITE && !P_WRITABLE(entry->flags))
+        return NULL;
+    return entry->data->data + entry->offset + PGOFFSET(addr);
+}
+
 void *mem_ptr(struct mem *mem, addr_t addr, int type) {
+    void *old_ptr = mem_ptr_nofault(mem, addr, type); // just for an assert
+
     page_t page = PAGE(addr);
     struct pt_entry *entry = mem_pt(mem, page);
 
@@ -243,7 +256,7 @@ void *mem_ptr(struct mem *mem, addr_t addr, int type) {
             return NULL;
 
         // Changing memory maps must be done with the write lock. But this is
-        // called with the read lock, e.g. by tlb_handle_miss.
+        // called with the read lock.
         // This locking stuff is copy/pasted for all the code in this function
         // which changes memory maps.
         // TODO: factor the lock/unlock code here into a new function. Do this
@@ -285,13 +298,13 @@ void *mem_ptr(struct mem *mem, addr_t addr, int type) {
         }
     }
 
-    if (entry == NULL)
-        return NULL;
-    return entry->data->data + entry->offset + PGOFFSET(addr);
+    void *ptr = mem_ptr_nofault(mem, addr, type);
+    assert(old_ptr == NULL || old_ptr == ptr);
+    return ptr2;
 }
 
 static void *mem_mmu_translate(struct mmu *mmu, addr_t addr, int type) {
-    return mem_ptr(container_of(mmu, struct mem, mmu), addr, type);
+    return mem_ptr_nofault(container_of(mmu, struct mem, mmu), addr, type);
 }
 
 static struct mmu_ops mem_mmu_ops = {

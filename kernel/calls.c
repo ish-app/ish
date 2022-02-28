@@ -2,6 +2,7 @@
 #include "debug.h"
 #include "kernel/calls.h"
 #include "emu/interrupt.h"
+#include "emu/memory.h"
 #include "kernel/signal.h"
 #include "kernel/task.h"
 
@@ -261,12 +262,18 @@ void handle_interrupt(int interrupt) {
             cpu->eax = result;
         }
     } else if (interrupt == INT_GPF) {
-        printk("%d page fault on 0x%x at 0x%x\n", current->pid, cpu->segfault_addr, cpu->eip);
-        struct siginfo_ info = {
-            .code = mem_segv_reason(current->mem, cpu->segfault_addr),
-            .fault.addr = cpu->segfault_addr,
-        };
-        deliver_signal(current, SIGSEGV_, info);
+        // some page faults, such as stack growing or CoW clones, are handled by mem_ptr
+        read_wrlock(&current->mem->lock);
+        void *ptr = mem_ptr(current->mem, cpu->segfault_addr, cpu->segfault_was_write ? MEM_WRITE : MEM_READ);
+        read_wrunlock(&current->mem->lock);
+        if (ptr == NULL) {
+            printk("%d page fault on 0x%x at 0x%x\n", current->pid, cpu->segfault_addr, cpu->eip);
+            struct siginfo_ info = {
+                .code = mem_segv_reason(current->mem, cpu->segfault_addr),
+                .fault.addr = cpu->segfault_addr,
+            };
+            deliver_signal(current, SIGSEGV_, info);
+        }
     } else if (interrupt == INT_UNDEFINED) {
         printk("%d illegal instruction at 0x%x: ", current->pid, cpu->eip);
         for (int i = 0; i < 8; i++) {
