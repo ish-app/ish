@@ -300,7 +300,7 @@ void *mem_ptr(struct mem *mem, addr_t addr, int type) {
 
     void *ptr = mem_ptr_nofault(mem, addr, type);
     assert(old_ptr == NULL || old_ptr == ptr);
-    return ptr2;
+    return ptr;
 }
 
 static void *mem_mmu_translate(struct mmu *mmu, addr_t addr, int type) {
