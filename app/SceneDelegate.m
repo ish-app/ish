@@ -21,7 +21,8 @@ static NSString *const TerminalUUID = @"TerminalUUID";
 @implementation SceneDelegate
 
 - (void)scene:(UIScene *)scene willConnectToSession:(UISceneSession *)session options:(UISceneConnectionOptions *)connectionOptions {
-    if ([NSUserDefaults.standardUserDefaults boolForKey:@"recovery"]) {
+    bool fromRecoveryAction = (connectionOptions.shortcutItem != NULL) ? [connectionOptions.shortcutItem.type isEqualToString:@"recoveryQuickAction"] : false; // Came from Quick Action?
+    if ([NSUserDefaults.standardUserDefaults boolForKey:@"recovery"] || fromRecoveryAction) {
         UINavigationController *vc = [[UIStoryboard storyboardWithName:@"About" bundle:nil] instantiateInitialViewController];
         AboutViewController *avc = (AboutViewController *) vc.topViewController;
         avc.recoveryMode = YES;
@@ -62,6 +63,15 @@ static NSString *const TerminalUUID = @"TerminalUUID";
 
     if (currentTerminalViewController == terminalViewController) {
         currentTerminalViewController = NULL;
+    }
+}
+
+- (void)windowScene:(UIWindowScene *)windowScene performActionForShortcutItem:(UIApplicationShortcutItem *)shortcutItem completionHandler:(void (^)(BOOL))completionHandler { // Quick Action while running for iOS >=13
+    if([shortcutItem.type isEqualToString:@"recoveryQuickAction"]) {
+        UINavigationController *vc = [[UIStoryboard storyboardWithName:@"About" bundle:nil] instantiateInitialViewController];
+        AboutViewController *avc = (AboutViewController *) vc.topViewController;
+        avc.recoveryMode = YES;
+        self.window.rootViewController = vc;
     }
 }
 
