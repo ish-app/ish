@@ -540,6 +540,10 @@ static int read_inode(struct inode *ino) {
     return 0;
 }
 
+static const struct dentry_operations fakefs_dops = {
+    .d_delete = always_delete_dentry,
+};
+
 /***** superblock *****/
 
 static void fakefs_evict_inode(struct inode *ino) {
@@ -552,6 +556,7 @@ static void fakefs_evict_inode(struct inode *ino) {
 }
 
 static const struct super_operations fakefs_super_ops = {
+    .drop_inode = generic_delete_inode,
     .evict_inode = fakefs_evict_inode,
 };
 
@@ -579,6 +584,7 @@ static int fakefs_fill_super(struct super_block *sb, struct fs_context *fc) {
     db_commit(&info->db);
 
     sb->s_op = &fakefs_super_ops;
+    sb->s_d_op = &fakefs_dops;
     sb->s_root = d_make_root(root);
     if (sb->s_root == NULL) {
         iput(root);
