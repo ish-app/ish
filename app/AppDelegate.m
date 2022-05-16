@@ -162,6 +162,8 @@ static NSString *const kSkipStartupMessage = @"Skip Startup Message";
     task_start(current);
 
 #else
+    // On first launch, this will trigger the import of the default root. Make sure to do this before entering the kernel, because it needs to run something on the main thread, and that would deadlock.
+    [Roots instance];
     NSArray<NSString *> *args = @[];
     actuate_kernel([args componentsJoinedByString:@" "].UTF8String);
 #endif
