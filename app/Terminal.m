@@ -202,9 +202,11 @@ static NSMapTable<NSUUID *, Terminal *> *terminalsByUUID;
 
 #if ISH_LINUX
 - (int)roomForOutput {
-    if (_pendingData.length > BUF_SIZE)
-        return 0;
-    return BUF_SIZE - (int) _pendingData.length;
+    @synchronized (self) {
+        if (_pendingData.length > BUF_SIZE)
+            return 0;
+        return BUF_SIZE - (int) _pendingData.length;
+    }
 }
 #endif
 
@@ -238,8 +240,8 @@ static NSMapTable<NSUUID *, Terminal *> *terminalsByUUID;
 #if !ISH_LINUX
     lock(&_dataLock);
     if (_outputInProgress) {
-        unlock(&_dataLock);
         [self.refreshTask schedule];
+        unlock(&_dataLock);
         return;
     }
     NSData *data = _pendingData;
