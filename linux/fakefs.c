@@ -20,14 +20,10 @@ struct fakefs_super {
 
 // free with __putname
 static char *dentry_name(struct dentry *dentry) {
-    /* I know this sucks, but __dentry_path isn't public for some reason */
-    struct vfsmount fake_mnt = {};
-    struct path root = {.dentry = dentry->d_sb->s_root, .mnt = &fake_mnt};
-    struct path new_path = {.dentry = dentry, .mnt = &fake_mnt};
     char *name = __getname();
     if (name == NULL)
         return ERR_PTR(-ENOMEM);
-    char *path = __d_path(&new_path, &root, name, PATH_MAX);
+    char *path = dentry_path_raw(dentry, name, PATH_MAX);
     if (IS_ERR(path))
         return path;
     BUG_ON(path[0] != '/');
@@ -170,12 +166,12 @@ static int fakefs_rename(struct user_namespace *mnt_userns, struct inode *from_d
     struct fakefs_super *info = from_dir->i_sb->s_fs_info;
 
     char *from_path = dentry_name(from_dentry);
-    if (from_path == NULL)
-        return -ENOMEM;
+    if (IS_ERR(from_path))
+        return PTR_ERR(from_path);
     char *to_path = dentry_name(to_dentry);
-    if (to_path == NULL) {
+    if (IS_ERR(to_path)) {
         __putname(from_path);
-        return -ENOMEM;
+        return PTR_ERR(to_path);
     }
 
     db_begin(&info->db);
@@ -199,12 +195,12 @@ static int fakefs_link(struct dentry *from, struct inode *ino, struct dentry *to
     struct inode *inode;
 
     char *from_path = dentry_name(from);
-    if (from_path == NULL)
-        return -ENOMEM;
+    if (IS_ERR(from_path))
+        return PTR_ERR(from_path);
     char *to_path = dentry_name(to);
-    if (to_path == NULL) {
+    if (IS_ERR(to_path)) {
         __putname(from_path);
-        return -ENOMEM;
+        return PTR_ERR(to_path);
     }
 
     db_begin(&info->db);
@@ -229,8 +225,8 @@ static int fakefs_link(struct dentry *from, struct inode *ino, struct dentry *to
 static int unlink_common(struct inode *dir, struct dentry *dentry, int is_dir) {
     struct fakefs_super *info = dir->i_sb->s_fs_info;
     char *path = dentry_name(dentry);
-    if (path == NULL)
-        return -ENOMEM;
+    if (IS_ERR(path))
+        return PTR_ERR(path);
 
     db_begin(&info->db);
     path_unlink(&info->db, path);
@@ -369,6 +365,8 @@ static const struct inode_operations fakefs_link_iops = {
 #define FILE_DIR(file) ((file)->private_data)
 
 static int fakefs_iterate(struct file *file, struct dir_context *ctx) {
+    struct fakefs_super *info = file->f_inode->i_sb->s_fs_info;
+
     if (FILE_DIR(file) == NULL) {
         int err = host_dup_opendir(INODE_FD(file->f_inode), &FILE_DIR(file));
         if (err < 0)
@@ -382,14 +380,33 @@ static int fakefs_iterate(struct file *file, struct dir_context *ctx) {
         res = host_seekdir(dir, ctx->pos - 1);
     if (res < 0)
         return res;
+
+    char *dir_path = dentry_name(file->f_path.dentry);
+    if (IS_ERR(dir_path))
+        return PTR_ERR(dir_path);
+    size_t dir_path_len = strlen(dir_path);
+
+
     struct host_dirent ent;
     for (;;) {
         res = host_readdir(dir, &ent);
         if (res <= 0)
             break;
         ctx->pos = host_telldir(dir) + 1;
-        // TODO fix inode numbers!!!!!
-        ent.ino = 0;
+        // Get the inode number by constructing the file path and looking it up in the database
+        if (strcmp(ent.name, ".") == 0) {
+            ent.ino = file->f_inode->i_ino;
+        } else if (strcmp(ent.name, "..") == 0) {
+            ent.ino = d_inode(file->f_path.dentry->d_parent)->i_ino;
+        } else {
+            db_begin(&info->db);
+            if (dir_path_len + 1 + strlen(ent.name) + 1 > PATH_MAX)
+                continue; // a
+            dir_path[dir_path_len] = '/';
+            strcpy(&dir_path[dir_path_len + 1], ent.name);
+            ent.ino = path_get_inode(&info->db, dir_path);
+            db_commit(&info->db);
+        }
         if (!dir_emit(ctx, ent.name, strlen(ent.name), ent.ino, ent.type))
             break;
     }
