@@ -449,11 +449,13 @@ NSDictionary<NSString *, Theme *> *presetThemes;
                      @"Dark":  [self _themeWithForegroundColor:UIColor.whiteColor
                                                backgroundColor:UIColor.blackColor],
                      @"1337":  [self _themeWithForegroundColor:UIColor.greenColor
+                                               backgroundColor:UIColor.blackColor],
+                     @"Amber": [self _themeWithForegroundColor:UIColor.orangeColor
                                                backgroundColor:UIColor.blackColor]};
 }
 
 + (NSArray<NSString *> *)presetNames {
-    return @[@"Light", @"Dark", @"1337"];
+    return @[@"Light", @"Dark", @"1337", @"Amber"];
 }
 + (instancetype)presetThemeNamed:(NSString *)name {
     return presetThemes[name];
