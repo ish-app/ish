@@ -20,7 +20,7 @@ void FsUpdateRepositories(void);
 
 /// The smallest value for /ish/apk-version for which updating /etc/apk/repositories does not require running /sbin/apk upgrade, given that every update to /etc/apk/repositories is followed by copying /ish/version to /ish/apk-version.
 #define COMPATIBLE_APK_VERSION 296
-#define NEWEST_APK_VERSION "Alpine v3.14"
+#define NEWEST_APK_VERSION "Alpine v3.16"
 
 extern NSString *const FsUpdatedNotification;
 
