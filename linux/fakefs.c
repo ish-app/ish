@@ -364,6 +364,19 @@ static const struct inode_operations fakefs_link_iops = {
 
 #define FILE_DIR(file) ((file)->private_data)
 
+static int fakefs_file_release(struct inode *inode, struct file *file) {
+    filemap_write_and_wait(inode->i_mapping);
+    return 0;
+}
+
+static int fakefs_fsync(struct file *file, loff_t start, loff_t end,
+                        int datasync) {
+    int err = file_write_and_wait_range(file, start, end);
+    if (err)
+        return err;
+    return host_fsync(INODE_FD(file->f_inode), datasync);
+}
+
 static int fakefs_iterate(struct file *file, struct dir_context *ctx) {
     struct fakefs_super *info = file->f_inode->i_sb->s_fs_info;
 
@@ -424,7 +437,9 @@ static const struct file_operations fakefs_file_fops = {
     .splice_read = generic_file_splice_read,
     .read_iter = generic_file_read_iter,
     .write_iter = generic_file_write_iter,
-    .mmap  = generic_file_mmap,
+    .mmap = generic_file_mmap,
+    .release = fakefs_file_release,
+    .fsync = fakefs_fsync,
 };
 
 static const struct file_operations fakefs_dir_fops = {
@@ -446,11 +461,39 @@ static int fakefs_readpage(struct file *file, struct page *page) {
     memset(buffer + res, 0, PAGE_SIZE - res);
 
     res = 0;
+    ClearPageError(page);
     SetPageUptodate(page);
 
 out:
     flush_dcache_page(page);
     kunmap(page);
+    unlock_page(page);
+    return res;
+}
+
+static int fakefs_writepage(struct page *page, struct writeback_control *wbc) {
+    struct inode *inode = page->mapping->host;
+
+    loff_t start = page_offset(page);
+    int len = PAGE_SIZE;
+    if (page->index > (inode->i_size >> PAGE_SHIFT))
+        len = inode->i_size & (PAGE_SIZE - 1);
+
+    void *buffer = kmap(page);
+    ssize_t res = host_pwrite(INODE_FD(inode), buffer, len, start);
+    kunmap(page);
+
+    if (res != len) {
+        ClearPageUptodate(page);
+        goto out;
+    }
+
+    if (start + len > inode->i_size)
+        inode->i_size = start + len;
+    ClearPageError(page);
+    res = 0;
+
+out:
     unlock_page(page);
     return res;
 }
@@ -470,10 +513,9 @@ static int fakefs_write_end(struct file *file, struct address_space *mapping,
                             loff_t pos, unsigned len, unsigned copied,
                             struct page *page, void *fsdata) {
     struct inode *inode = mapping->host;
-    void *buffer;
     unsigned from = pos & (PAGE_SIZE - 1);
 
-    buffer = kmap(page);
+    void *buffer = kmap(page);
     ssize_t res = host_pwrite(INODE_FD(file->f_inode), buffer + from, copied, pos);
     kunmap(page);
     if (res < 0)
@@ -494,6 +536,7 @@ out:
 
 static const struct address_space_operations fakefs_aops = {
     .readpage = fakefs_readpage,
+    .writepage = fakefs_writepage,
     .set_page_dirty = __set_page_dirty_nobuffers,
     .write_begin = fakefs_write_begin,
     .write_end = fakefs_write_end,
@@ -580,6 +623,11 @@ static const struct super_operations fakefs_super_ops = {
 static int fakefs_fill_super(struct super_block *sb, struct fs_context *fc) {
     struct fakefs_super *info = sb->s_fs_info;
 
+    // https://lore.kernel.org/all/d9bcb237-39e1-29b1-9718-b720a7e7540b@collabora.com/T/
+    int err = super_setup_bdi(sb);
+    if (err < 0)
+        return err;
+
     struct inode *root = new_inode(sb);
     if (root == NULL)
         return -ENOMEM;
@@ -592,7 +640,7 @@ static int fakefs_fill_super(struct super_block *sb, struct fs_context *fc) {
         return -EINVAL;
     }
     INODE_FD(root) = info->root_fd;
-    int err = read_inode(root);
+    err = read_inode(root);
     if (err < 0) {
         db_rollback(&info->db);
         iput(root);
