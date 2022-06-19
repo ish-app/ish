@@ -4,9 +4,9 @@ import re
 import os
 line_re = re.compile(r'^  [A-Z]+\s+')
 dep_re = [
-	re.compile(r'\s+Prerequisite `([^\']*)\' is (older|newer) than target'),
-	re.compile(r'\s+No need to remake target `[^\']*\'; using VPATH name `([^\']*)\''),
-	re.compile(r'\s+No need to remake target `([^\']*)\'.'),
+	re.compile(r"\s+Prerequisite [`']([^']*)' is (older|newer) than target"),
+	re.compile(r"\s+No need to remake target [`'][^']*'; using VPATH name `([^']*)'"),
+	re.compile(r"\s+No need to remake target [`']([^']*)'."),
 ]
 deps = set()
 for line in sys.stdin:
