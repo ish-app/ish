@@ -236,7 +236,6 @@ restart:
                            READMODRM; XADD(modrm_reg, modrm_val,oz); break;
                 case 0xc2: TRACEI("cmppd xmm:modrm, xmm, imm8");
                            READMODRM; READIMM8; V_OP_IMM(fcmp_p, xmm_modrm_val, xmm_modrm_reg,64); break;
-printf("asdf\n");
 
                 case 0xc7: READMODRM_MEM; switch (modrm.opcode) {
                                case 1: TRACEI("cmpxchg8b modrm");
