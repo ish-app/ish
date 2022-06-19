@@ -7,6 +7,7 @@
 #include <linux/limits.h>
 #include <linux/mount.h>
 #include <linux/pagemap.h>
+#include <linux/statfs.h>
 #include <user/fs.h>
 
 #include <sqlite3.h>
@@ -615,9 +616,28 @@ static void fakefs_evict_inode(struct inode *ino) {
     clear_inode(ino);
 }
 
+static int fakefs_statfs(struct dentry *dentry, struct kstatfs *kstat) {
+    struct host_statfs stat;
+    int err = host_fstatfs(INODE_FD(d_inode(dentry)), &stat);
+    if (err < 0)
+        return err;
+    kstat->f_type = 0x66616b65;
+    kstat->f_bsize = stat.bsize;
+    kstat->f_frsize = stat.frsize;
+    kstat->f_blocks = stat.blocks;
+    kstat->f_bfree = stat.bfree;
+    kstat->f_bavail = stat.bavail;
+    kstat->f_files = stat.files;
+    kstat->f_ffree = stat.ffree;
+    kstat->f_fsid = u64_to_fsid(stat.fsid);
+    kstat->f_namelen = stat.namemax;
+    return 0;
+}
+
 static const struct super_operations fakefs_super_ops = {
     .drop_inode = generic_delete_inode,
     .evict_inode = fakefs_evict_inode,
+    .statfs = fakefs_statfs,
 };
 
 static int fakefs_fill_super(struct super_block *sb, struct fs_context *fc) {
