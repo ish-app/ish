@@ -88,9 +88,10 @@ void gen_exit(struct gen_state *state) {
     return !end_block
 
 #define RESTORE_IP state->ip = state->orig_ip
-#define _READIMM(name, size) \
+#define _READIMM(name, size) do {\
     state->ip += size/8; \
-    if (!tlb_read(tlb, state->ip - size/8, &name, size/8)) SEGFAULT; else
+    if (!tlb_read(tlb, state->ip - size/8, &name, size/8)) SEGFAULT; \
+} while (0)
 
 #define READMODRM if (!modrm_decode32(&state->ip, tlb, &modrm)) SEGFAULT
 #define READADDR _READIMM(addr_offset, 32)
