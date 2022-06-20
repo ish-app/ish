@@ -79,6 +79,7 @@ libfakefs = library('fakefs',
     dependencies: sqlite3)
 
 subdir('deps')
+subdir('tools')
 
 if get_option('kernel') == 'ish'
     src = [
@@ -162,20 +163,10 @@ if get_option('kernel') == 'ish'
         dependencies: dependencies,
         include_directories: includes)
 
-    # ptraceomatic et al
-    subdir('tools')
-
     if not meson.is_cross_build()
         executable('ish', ['main.c'], dependencies: ish)
     endif
 
-    gdb_scripts = ['ish-gdb.gdb']
-    foreach script : gdb_scripts
-        custom_target(script,
-            output: script, input: script,
-            command: ['ln', '-sf', '@INPUT@', '@OUTPUT@'],
-            build_by_default: true)
-    endforeach
 elif get_option('kernel') == 'linux'
     modules = static_library('linux_modules', [
         'linux/main.c',
@@ -191,6 +182,14 @@ elif get_option('kernel') == 'linux'
             declare_dependency(link_whole: modules),
         ])
 endif
+
+gdb_scripts = ['ish-gdb.gdb']
+foreach script : gdb_scripts
+    custom_target(script,
+        output: script, input: script,
+        command: ['ln', '-sf', '@INPUT@', '@OUTPUT@'],
+        build_by_default: true)
+endforeach
 
 if not meson.is_cross_build()
     # test for floating point library
