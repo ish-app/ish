@@ -79,7 +79,6 @@ libfakefs = library('fakefs',
     dependencies: sqlite3)
 
 subdir('deps')
-subdir('tools')
 
 if get_option('kernel') == 'ish'
     src = [
@@ -182,6 +181,8 @@ elif get_option('kernel') == 'linux'
             declare_dependency(link_whole: modules),
         ])
 endif
+
+subdir('tools')
 
 gdb_scripts = ['ish-gdb.gdb']
 foreach script : gdb_scripts
