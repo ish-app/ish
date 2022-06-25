@@ -406,7 +406,6 @@ static int fakefs_iterate(struct file *file, struct dir_context *ctx) {
         res = host_readdir(dir, &ent);
         if (res <= 0)
             break;
-        ctx->pos = host_telldir(dir) + 1;
         // Get the inode number by constructing the file path and looking it up in the database
         if (strcmp(ent.name, ".") == 0) {
             ent.ino = file->f_inode->i_ino;
@@ -423,6 +422,7 @@ static int fakefs_iterate(struct file *file, struct dir_context *ctx) {
         }
         if (!dir_emit(ctx, ent.name, strlen(ent.name), ent.ino, ent.type))
             break;
+        ctx->pos = host_telldir(dir) + 1;
     }
     return res;
 }
