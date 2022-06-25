@@ -88,7 +88,7 @@
 
 - (int)startUpgrade {
     if (self.upgradePid != 0)
-        return -EEXIST;
+        return _EEXIST;
 #if !ISH_LINUX
     int err = become_new_init_child();
     if (err < 0)
@@ -106,7 +106,7 @@
     current = NULL;
     return 0;
 #else
-    return -ENOSYS;
+    return _ENOSYS;
 #endif
 }
 
