@@ -47,5 +47,5 @@ case "$(uname)" in
     *) cpus=1 ;;
 esac
 
-make -C "$objtree" -j "$cpus" "${makeargs[@]}" --debug=v | "$srctree/../makefilter.py" "$depfile" "$output" "$objtree"
+make -C "$objtree" -j "$cpus" "${makeargs[@]}" all compile_commands.json --debug=v | "$srctree/../makefilter.py" "$depfile" "$output" "$objtree"
 cp "$objtree/vmlinux" "$output"
