@@ -10,14 +10,18 @@
 #endif
 
 const char *uname_version = "SUPER AWESOME";
+const char *uname_hostname_override = NULL;
 
 void do_uname(struct uname *uts) {
     struct utsname real_uname;
     uname(&real_uname);
+    const char *hostname = real_uname.nodename;
+    if (uname_hostname_override)
+        hostname = uname_hostname_override;
 
     memset(uts, 0, sizeof(struct uname));
     strcpy(uts->system, "Linux");
-    strcpy(uts->hostname, real_uname.nodename);
+    strcpy(uts->hostname, hostname);
     strcpy(uts->release, "4.20.69-ish");
     snprintf(uts->version, sizeof(uts->version), "%s %s %s", uname_version, __DATE__, __TIME__);
     strcpy(uts->arch, "i686");

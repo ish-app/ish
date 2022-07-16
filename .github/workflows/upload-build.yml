@@ -1,0 +1,55 @@
+name: Upload Build
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 6 * * *"
+
+jobs:
+  upload-build:
+    if: github.repository == 'ish-app/ish'
+    runs-on: macos-11
+    timeout-minutes: 720
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+          fetch-depth: 0
+
+      - name: Install deps
+        run: |
+          pip3 install meson
+          brew install ninja llvm
+          bundle install
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+
+      - name: Fastlane
+        timeout-minutes: 720
+        run: script fastlane.log bundle exec fastlane upload_build
+        env:
+          APP_STORE_CONNECT_API_KEY_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_API_KEY_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_API_KEY_KEY: ${{ secrets.APP_STORE_CONNECT_KEY }}
+          MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.MATCH_GITHUB_AUTH }}
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSPHRASE }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          SLACK_URL: ${{ secrets.SLACK_URL }}
+          FASTLANE_SKIP_UPDATE_CHECK: 1
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: App
+          path: |
+            iSH.ipa
+            iSH.app.dSYM.zip
+            iSH-appstore.app.dSYM.zip
+
+      - uses: actions/upload-artifact@v2
+        if: always()
+        with:
+          name: Fastlane Logs
+          path: |
+            fastlane.log
+            ~/Library/Logs/gym
+

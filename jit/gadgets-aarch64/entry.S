@@ -46,7 +46,10 @@ jit_exit:
 
 .gadget interrupt
     ldr _tmp, [_ip]
+    ldr w8, [_ip, 16]
+    str w8, [_cpu, CPU_segfault_addr]
     ldr eip, [_ip, 8]
+    strb wzr, [_cpu, CPU_segfault_was_write]
     b jit_exit
 
 .gadget exit

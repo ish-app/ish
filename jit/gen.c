@@ -7,6 +7,15 @@
 #include "emu/vec.h"
 #include "emu/interrupt.h"
 
+static int gen_step32(struct gen_state *state, struct tlb *tlb);
+static int gen_step16(struct gen_state *state, struct tlb *tlb);
+
+int gen_step(struct gen_state *state, struct tlb *tlb) {
+    state->orig_ip = state->ip;
+    state->orig_ip_extra = 0;
+    return gen_step32(state, tlb);
+}
+
 static void gen(struct gen_state *state, unsigned long thing) {
     assert(state->size <= state->capacity);
     if (state->size >= state->capacity) {
@@ -71,7 +80,6 @@ void gen_exit(struct gen_state *state) {
 }
 
 #define DECLARE_LOCALS \
-    dword_t saved_ip = state->ip; \
     dword_t addr_offset = 0; \
     bool end_block = false; \
     bool seg_gs = false
@@ -79,10 +87,11 @@ void gen_exit(struct gen_state *state) {
 #define FINISH \
     return !end_block
 
-#define RESTORE_IP state->ip = saved_ip
-#define _READIMM(name, size) \
-    if (!tlb_read(tlb, state->ip, &name, size/8)) SEGFAULT; \
-    state->ip += size/8
+#define RESTORE_IP state->ip = state->orig_ip
+#define _READIMM(name, size) do {\
+    state->ip += size/8; \
+    if (!tlb_read(tlb, state->ip - size/8, &name, size/8)) SEGFAULT; \
+} while (0)
 
 #define READMODRM if (!modrm_decode32(&state->ip, tlb, &modrm)) SEGFAULT
 #define READADDR _READIMM(addr_offset, 32)
@@ -134,11 +143,10 @@ typedef void (*gadget_t)(void);
 #define h(h) gg(helper_0, h)
 #define hh(h, a) ggg(helper_1, h, a)
 #define hhh(h, a, b) gggg(helper_2, h, a, b)
-#define h_read(h, z) do { g_addr(); gg_here(helper_read##z, h##z); } while (0)
-#define h_write(h, z) do { g_addr(); gg_here(helper_write##z, h##z); } while (0)
-#define gg_here(g, a) ggg(g, a, saved_ip)
-#define UNDEFINED do { gg_here(interrupt, INT_UNDEFINED); return false; } while (0)
-#define SEGFAULT do { gg_here(interrupt, INT_GPF); return false; } while (0)
+#define h_read(h, z) do { g_addr(); ggg(helper_read##z, state->orig_ip, h##z); } while (0)
+#define h_write(h, z) do { g_addr(); ggg(helper_write##z, state->orig_ip, h##z); } while (0)
+#define UNDEFINED do { gggg(interrupt, INT_UNDEFINED, state->orig_ip, state->orig_ip); return false; } while (0)
+#define SEGFAULT do { gggg(interrupt, INT_GPF, state->orig_ip, tlb->segfault_addr); return false; } while (0)
 
 static inline int sz(int size) {
     switch (size) {
@@ -149,7 +157,7 @@ static inline int sz(int size) {
     }
 }
 
-bool gen_addr(struct gen_state *state, struct modrm *modrm, bool seg_gs, dword_t saved_ip) {
+bool gen_addr(struct gen_state *state, struct modrm *modrm, bool seg_gs) {
     if (modrm->base == reg_none)
         gg(addr_none, modrm->offset);
     else
@@ -160,12 +168,12 @@ bool gen_addr(struct gen_state *state, struct modrm *modrm, bool seg_gs, dword_t
         g(seg_gs);
     return true;
 }
-#define g_addr() gen_addr(state, &modrm, seg_gs, saved_ip)
+#define g_addr() gen_addr(state, &modrm, seg_gs)
 
 // this really wants to use all the locals of the decoder, which we can do
 // really nicely in gcc using nested functions, but that won't work in clang,
 // so we explicitly pass 500 arguments. sorry for the mess
-static inline bool gen_op(struct gen_state *state, gadget_t *gadgets, enum arg arg, struct modrm *modrm, uint64_t *imm, int size, dword_t saved_ip, bool seg_gs, dword_t addr_offset) {
+static inline bool gen_op(struct gen_state *state, gadget_t *gadgets, enum arg arg, struct modrm *modrm, uint64_t *imm, int size, bool seg_gs, dword_t addr_offset) {
     size = sz(size);
     gadgets = gadgets + size * arg_count;
 
@@ -194,19 +202,19 @@ static inline bool gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
         UNDEFINED;
     }
     if (arg == arg_mem || arg == arg_addr) {
-        if (!gen_addr(state, modrm, seg_gs, saved_ip))
+        if (!gen_addr(state, modrm, seg_gs))
             return false;
     }
     GEN(gadgets[arg]);
     if (arg == arg_imm)
         GEN(*imm);
     else if (arg == arg_mem)
-        GEN(saved_ip);
+        GEN(state->orig_ip | state->orig_ip_extra);
     return true;
 }
 #define op(type, thing, z) do { \
     extern gadget_t type##_gadgets[]; \
-    if (!gen_op(state, type##_gadgets, arg_##thing, &modrm, &imm, z, saved_ip, seg_gs, addr_offset)) return false; \
+    if (!gen_op(state, type##_gadgets, arg_##thing, &modrm, &imm, z, seg_gs, addr_offset)) return false; \
 } while (0)
 
 #define load(thing, z) op(load, thing, z)
@@ -233,8 +241,11 @@ static inline bool gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define NOT(val,z) load(val,z); gz(not, z); store(val,z)
 #define NEG(val,z) imm = 0; load(imm,z); op(sub, val,z); store(val,z)
 
-#define POP(thing,z) gg(pop, saved_ip); store(thing, z)
-#define PUSH(thing,z) load(thing, z); gg(push, saved_ip)
+#define POP(thing,z) \
+    gg(pop, state->orig_ip); \
+    state->orig_ip_extra = 1ul << 62; /* marks that on segfault the stack pointer should be adjusted */\
+    store(thing, z)
+#define PUSH(thing,z) load(thing, z); gg(push, state->orig_ip)
 
 #define INC(val,z) load(val, z); gz(inc, z); store(val, z)
 #define DEC(val,z) load(val, z); gz(dec, z); store(val, z)
@@ -252,13 +263,13 @@ static inline bool gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define J_REL(cc, off)  jcc(cc, fake_ip + off, fake_ip)
 #define JN_REL(cc, off) jcc(cc, fake_ip, fake_ip + off)
 
-// saved_ip: for use with page fault handler;
+// state->orig_ip: for use with page fault handler;
 // -1: will be patched to block address in gen_end();
 // fake_ip: the first one is the return address, used for saving to stack and verifying the cached ip in return cache is correct;
 // fake_ip: the second one is the return target, patchable by return chaining.
 #define CALL(loc) do { \
     load(loc, OP_SIZE); \
-    ggggg(call_indir, saved_ip, -1, fake_ip, fake_ip); \
+    ggggg(call_indir, state->orig_ip, -1, fake_ip, fake_ip); \
     state->block_patch_ip = state->size - 3; \
     jump_ips(-1, 0); \
     end_block = true; \
@@ -266,13 +277,13 @@ static inline bool gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 // the first four arguments are the same with CALL,
 // the last one is the call target, patchable by return chaining.
 #define CALL_REL(off) do { \
-    gggggg(call, saved_ip, -1, fake_ip, fake_ip, fake_ip + off); \
+    gggggg(call, state->orig_ip, -1, fake_ip, fake_ip, fake_ip + off); \
     state->block_patch_ip = state->size - 4; \
     jump_ips(-2, -1); \
     end_block = true; \
 } while (0)
-#define RET_NEAR(imm) ggg(ret, saved_ip, 4 + imm); end_block = true
-#define INT(code) ggg(interrupt, (uint8_t) code, state->ip); end_block = true
+#define RET_NEAR(imm) ggg(ret, state->orig_ip, 4 + imm); end_block = true
+#define INT(code) gggg(interrupt, (uint8_t) code, state->ip, 0); end_block = true
 
 #define SET(cc, dst) ga(set, cond_##cc); store(dst, 8)
 #define SETN(cc, dst) ga(setn, cond_##cc); store(dst, 8)
@@ -335,14 +346,14 @@ static inline bool gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 
 #define BSWAP(dst) ga(bswap, arg_##dst)
 
-#define strop(op, rep, z) gag(op, sz(z) * size_count + rep_##rep, saved_ip)
+#define strop(op, rep, z) gag(op, sz(z) * size_count + rep_##rep, state->orig_ip)
 #define STR(op, z) strop(op, once, z)
 #define REP(op, z) strop(op, rep, z)
 #define REPZ(op, z) strop(op, repz, z)
 #define REPNZ(op, z) strop(op, repnz, z)
 
 #define CMPXCHG(src, dst,z) load(src, z); op(cmpxchg, dst, z)
-#define CMPXCHG8B(dst,z) g_addr(); gg(cmpxchg8b, saved_ip)
+#define CMPXCHG8B(dst,z) g_addr(); gg(cmpxchg8b, state->orig_ip)
 #define XADD(src, dst,z) XCHG(src, dst,z); ADD(src, dst,z)
 
 void helper_rdtsc(struct cpu_state *cpu);
@@ -365,7 +376,7 @@ void helper_rdtsc(struct cpu_state *cpu);
 #define ATOMIC_BTC(bit, val,z) lo(atomic_btc, val, bit, z)
 #define ATOMIC_BTS(bit, val,z) lo(atomic_bts, val, bit, z)
 #define ATOMIC_BTR(bit, val,z) lo(atomic_btr, val, bit, z)
-#define ATOMIC_CMPXCHG8B(dst,z) g_addr(); gg(atomic_cmpxchg8b, saved_ip)
+#define ATOMIC_CMPXCHG8B(dst,z) g_addr(); gg(atomic_cmpxchg8b, state->orig_ip)
 
 // fpu
 #define st_0 0
@@ -443,7 +454,7 @@ static inline uint16_t cpu_reg_offset(enum arg arg, int index) {
     return 0;
 }
 
-static inline bool gen_vec(enum arg src, enum arg dst, void (*helper)(), gadget_t read_mem_gadget, gadget_t write_mem_gadget, struct gen_state *state, struct modrm *modrm, uint8_t imm, dword_t saved_ip, bool seg_gs, bool has_imm) {
+static inline bool gen_vec(enum arg src, enum arg dst, void (*helper)(), gadget_t read_mem_gadget, gadget_t write_mem_gadget, struct gen_state *state, struct modrm *modrm, uint8_t imm, bool seg_gs, bool has_imm) {
     bool rm_is_src = !could_be_memory(dst);
     enum arg rm = rm_is_src ? src : dst;
     enum arg reg = rm_is_src ? dst : src;
@@ -479,9 +490,9 @@ static inline bool gen_vec(enum arg src, enum arg dst, void (*helper)(), gadget_
             break;
 
         case arg_mem:
-            gen_addr(state, modrm, seg_gs, saved_ip);
+            gen_addr(state, modrm, seg_gs);
             GEN(rm_is_src ? read_mem_gadget : write_mem_gadget);
-            GEN(saved_ip);
+            GEN(state->orig_ip);
             GEN(helper);
             GEN(reg_offset | imm_arg);
             break;
@@ -504,7 +515,7 @@ static inline bool gen_vec(enum arg src, enum arg dst, void (*helper)(), gadget_
 #define _v(src, dst, helper, _imm, z) do { \
     extern void gadget_vec_helper_read##z##_imm(void); \
     extern void gadget_vec_helper_write##z##_imm(void); \
-    if (!gen_vec(src, dst, (void (*)()) helper, gadget_vec_helper_read##z##_imm, gadget_vec_helper_write##z##_imm, state, &modrm, imm, saved_ip, seg_gs, has_imm_##_imm)) return false; \
+    if (!gen_vec(src, dst, (void (*)()) helper, gadget_vec_helper_read##z##_imm, gadget_vec_helper_write##z##_imm, state, &modrm, imm, seg_gs, has_imm_##_imm)) return false; \
 } while (0)
 #define v_(op, src, dst, _imm,z) _v(arg_##src, arg_##dst, vec_##op##z, _imm,z)
 #define v(op, src, dst,z) v_(op, src, dst,,z)
@@ -535,7 +546,7 @@ static inline bool gen_vec(enum arg src, enum arg dst, void (*helper)(), gadget_
 #define V_OP(op, src, dst, z) v(op, src, dst, z)
 #define V_OP_IMM(op, src, dst, z) v_imm(op, src, dst, z)
 
-#define DECODER_RET int
+#define DECODER_RET static int
 #define DECODER_NAME gen_step
 #define DECODER_ARGS struct gen_state *state, struct tlb *tlb
 #define DECODER_PASS_ARGS state, tlb

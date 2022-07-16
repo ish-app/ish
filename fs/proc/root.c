@@ -97,6 +97,7 @@ static int proc_show_mounts(struct proc_entry *UNUSED(entry), struct proc_data *
 
 // in alphabetical order
 struct proc_dir_entry proc_root_entries[] = {
+    {"ish", S_IFDIR, .children = &proc_ish_children},
     {"meminfo", .show = proc_show_meminfo},
     {"mounts", .show = proc_show_mounts},
     {"self", S_IFLNK, .readlink = proc_readlink_self},
@@ -108,7 +109,7 @@ struct proc_dir_entry proc_root_entries[] = {
 
 static bool proc_root_readdir(struct proc_entry *UNUSED(entry), unsigned long *index, struct proc_entry *next_entry) {
     if (*index < PROC_ROOT_LEN) {
-        *next_entry = (struct proc_entry) {&proc_root_entries[*index], 0, 0};
+        *next_entry = (struct proc_entry) {&proc_root_entries[*index], *index, NULL, NULL, 0, 0};
         (*index)++;
         return true;
     }

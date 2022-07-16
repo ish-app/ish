@@ -50,7 +50,10 @@ jit_exit:
 
 .gadget interrupt
     movl (%_ip), %_tmp
+    movl 16(%_ip), %r14d
+    movl %r14d, CPU_segfault_addr(%_cpu)
     movl 8(%_ip), %_eip
+    movb $0, CPU_segfault_was_write(%_cpu)
     jmp jit_exit
 
 .gadget exit

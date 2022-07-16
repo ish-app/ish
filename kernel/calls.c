@@ -2,6 +2,7 @@
 #include "debug.h"
 #include "kernel/calls.h"
 #include "emu/interrupt.h"
+#include "emu/memory.h"
 #include "kernel/signal.h"
 #include "kernel/task.h"
 
@@ -225,6 +226,7 @@ syscall_t syscall_table[] = {
     [361] = (syscall_t) sys_bind,
     [362] = (syscall_t) sys_connect,
     [363] = (syscall_t) sys_listen,
+    [364] = (syscall_t) syscall_stub, // accept4
     [365] = (syscall_t) sys_getsockopt,
     [366] = (syscall_t) sys_setsockopt,
     [367] = (syscall_t) sys_getsockname,
@@ -236,8 +238,9 @@ syscall_t syscall_table[] = {
     [373] = (syscall_t) sys_shutdown,
     [375] = (syscall_t) syscall_stub, // membarrier
     [377] = (syscall_t) sys_copy_file_range,
-    [383] = (syscall_t) syscall_stub,
+    [383] = (syscall_t) syscall_stub, // statx
     [384] = (syscall_t) sys_arch_prctl,
+    [439] = (syscall_t) syscall_stub, // faccessat2
 };
 
 #define NUM_SYSCALLS (sizeof(syscall_table) / sizeof(syscall_table[0]))
@@ -247,11 +250,11 @@ void handle_interrupt(int interrupt) {
     if (interrupt == INT_SYSCALL) {
         unsigned syscall_num = cpu->eax;
         if (syscall_num >= NUM_SYSCALLS || syscall_table[syscall_num] == NULL) {
-            printk("%d missing syscall %d\n", current->pid, syscall_num);
+            printk("%d(%s) missing syscall %d\n", current->pid, current->comm, syscall_num);
             deliver_signal(current, SIGSYS_, SIGINFO_NIL);
         } else {
             if (syscall_table[syscall_num] == (syscall_t) syscall_stub) {
-                printk("%d stub syscall %d\n", current->pid, syscall_num);
+                printk("%d(%s) stub syscall %d\n", current->pid, current->comm, syscall_num);
             }
             STRACE("%d call %-3d ", current->pid, syscall_num);
             int result = syscall_table[syscall_num](cpu->ebx, cpu->ecx, cpu->edx, cpu->esi, cpu->edi, cpu->ebp);
@@ -259,12 +262,18 @@ void handle_interrupt(int interrupt) {
             cpu->eax = result;
         }
     } else if (interrupt == INT_GPF) {
-        printk("%d page fault on 0x%x at 0x%x\n", current->pid, cpu->segfault_addr, cpu->eip);
-        struct siginfo_ info = {
-            .code = mem_segv_reason(cpu->mem, cpu->segfault_addr),
-            .fault.addr = cpu->segfault_addr,
-        };
-        deliver_signal(current, SIGSEGV_, info);
+        // some page faults, such as stack growing or CoW clones, are handled by mem_ptr
+        read_wrlock(&current->mem->lock);
+        void *ptr = mem_ptr(current->mem, cpu->segfault_addr, cpu->segfault_was_write ? MEM_WRITE : MEM_READ);
+        read_wrunlock(&current->mem->lock);
+        if (ptr == NULL) {
+            printk("%d page fault on 0x%x at 0x%x\n", current->pid, cpu->segfault_addr, cpu->eip);
+            struct siginfo_ info = {
+                .code = mem_segv_reason(current->mem, cpu->segfault_addr),
+                .fault.addr = cpu->segfault_addr,
+            };
+            deliver_signal(current, SIGSEGV_, info);
+        }
     } else if (interrupt == INT_UNDEFINED) {
         printk("%d illegal instruction at 0x%x: ", current->pid, cpu->eip);
         for (int i = 0; i < 8; i++) {

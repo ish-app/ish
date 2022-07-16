@@ -107,42 +107,50 @@ static int proc_pid_auxv_show(struct proc_entry *entry, struct proc_data *buf) {
     struct task *task = proc_get_task(entry);
     if (task == NULL)
         return _ESRCH;
+    int err = 0;
+    lock(&task->general_lock);
     if (task->mm == NULL)
         goto out_free_task;
 
     size_t size = task->mm->auxv_end - task->mm->auxv_start;
     char *data = malloc(size);
-    if (data == NULL)
-        return _ENOMEM;
-    int err = user_read_task(task, task->mm->auxv_start, data, size);
-    if (err == 0)
-        proc_buf_write(buf, data, size);
+    if (data == NULL) {
+        err = _ENOMEM;
+        goto out_free_task;
+    }
+    if (user_read_task(task, task->mm->auxv_start, data, size) == 0)
+        proc_buf_append(buf, data, size);
     free(data);
 
 out_free_task:
+    unlock(&task->general_lock);
     proc_put_task(task);
-    return 0;
+    return err;
 }
 
 static int proc_pid_cmdline_show(struct proc_entry *entry, struct proc_data *buf) {
     struct task *task = proc_get_task(entry);
     if (task == NULL)
         return _ESRCH;
+    int err = 0;
+    lock(&task->general_lock);
     if (task->mm == NULL)
         goto out_free_task;
 
     size_t size = task->mm->argv_end - task->mm->argv_start;
     char *data = malloc(size);
-    if (data == NULL)
-        return _ENOMEM;
-    int err = user_read_task(task, task->mm->argv_start, data, size);
-    if (err == 0)
-        proc_buf_write(buf, data, size);
+    if (data == NULL) {
+        err = _ENOMEM;
+        goto out_free_task;
+    }
+    if (user_read_task(task, task->mm->argv_start, data, size) == 0)
+        proc_buf_append(buf, data, size);
     free(data);
 
 out_free_task:
+    unlock(&task->general_lock);
     proc_put_task(task);
-    return 0;
+    return err;
 }
 
 void proc_maps_dump(struct task *task, struct proc_data *buf) {
@@ -245,23 +253,24 @@ static int proc_pid_exe_readlink(struct proc_entry *entry, char *buf) {
     struct task *task = proc_get_task(entry);
     if (task == NULL)
         return _ESRCH;
+    lock(&task->general_lock);
     int err = generic_getpath(task->mm->exefile, buf);
+    unlock(&task->general_lock);
     proc_put_task(task);
     return err;
 }
 
-struct proc_dir_entry proc_pid_entries[] = {
+struct proc_children proc_pid_children = PROC_CHILDREN({
     {"auxv", .show = proc_pid_auxv_show},
     {"cmdline", .show = proc_pid_cmdline_show},
     {"exe", S_IFLNK, .readlink = proc_pid_exe_readlink},
     {"fd", S_IFDIR, .readdir = proc_pid_fd_readdir},
     {"maps", .show = proc_pid_maps_show},
     {"stat", .show = proc_pid_stat_show},
-};
+});
 
 struct proc_dir_entry proc_pid = {NULL, S_IFDIR,
-    .children = proc_pid_entries, .children_sizeof = sizeof(proc_pid_entries),
-    .getname = proc_pid_getname};
+    .children = &proc_pid_children, .getname = proc_pid_getname};
 
 static struct proc_dir_entry proc_pid_fd = {NULL, S_IFLNK,
     .getname = proc_pid_fd_getname, .readlink = proc_pid_fd_readlink};

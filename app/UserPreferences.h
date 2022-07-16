@@ -8,14 +8,18 @@
 #import <Foundation/Foundation.h>
 
 typedef NS_ENUM(NSInteger, CapsLockMapping) {
+    __CapsLockMapFirst = 0,
     CapsLockMapNone = 0,
     CapsLockMapControl,
     CapsLockMapEscape,
+    __CapsLockMapLast,
 };
 
 typedef enum : NSUInteger {
+    __OptionMapFirst = 0,
     OptionMapNone = 0,
     OptionMapEsc,
+    __OptionMapLast,
 } OptionMapping;
 
 NS_ASSUME_NONNULL_BEGIN
@@ -45,6 +49,7 @@ extern NSString *const kThemeBackgroundColor;
 @property BOOL backtickMapEscape;
 @property BOOL hideExtraKeysWithExternalKeyboard;
 @property BOOL overrideControlSpace;
+@property BOOL hideStatusBar;
 @property (nonatomic) Theme *theme;
 @property BOOL shouldDisableDimming;
 @property NSString *fontFamily;

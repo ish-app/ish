@@ -8,18 +8,32 @@
 #import "Terminal.h"
 #import "DelayedUITask.h"
 #import "UserPreferences.h"
+#include "LinuxInterop.h"
 #include "fs/devices.h"
 #include "fs/tty.h"
 #include "fs/devices.h"
 
 extern struct tty_driver ios_pty_driver;
 
-@interface Terminal () <WKScriptMessageHandler>
+#if !ISH_LINUX
+typedef struct tty *tty_t;
+#else
+typedef struct linux_tty *tty_t;
+#endif
 
-@property WKWebView *webView;
+@interface Terminal () <WKScriptMessageHandler> {
+#if !ISH_LINUX
+    lock_t _dataLock;
+    cond_t _dataConsumed;
+#endif
+}
+
 @property BOOL loaded;
-@property (nonatomic) struct tty *tty;
-@property NSMutableData *pendingData;
+@property (nonatomic) tty_t tty;
+// lock with dataLock for !linux and @synchronized(self) for linux
+@property (nonatomic) NSMutableData *pendingData;
+// sending output is an asynchronous thing due to javascript, this is used to ensure it doesn't happen twice at once
+@property (nonatomic) BOOL outputInProgress;
 
 @property DelayedUITask *refreshTask;
 @property DelayedUITask *scrollToBottomTask;
@@ -50,21 +64,39 @@ extern struct tty_driver ios_pty_driver;
 @end
 
 @implementation Terminal
+@synthesize webView = _webView;
+
+static const int BUF_SIZE = 1<<14;
 
 static NSMapTable<NSNumber *, Terminal *> *terminals;
 static NSMapTable<NSUUID *, Terminal *> *terminalsByUUID;
 
 - (instancetype)initWithType:(int)type number:(int)num {
-    self.terminalsKey = @(dev_make(type, num));
-    Terminal *terminal = [terminals objectForKey:self.terminalsKey];
-    if (terminal)
-        return terminal;
-    
-    if (self = [super init]) {
-        self.pendingData = [NSMutableData new];
-        self.refreshTask = [[DelayedUITask alloc] initWithTarget:self action:@selector(refresh)];
-        self.scrollToBottomTask = [[DelayedUITask alloc] initWithTarget:self action:@selector(scrollToBottom)];
-        
+    @synchronized (Terminal.class) {
+        self.terminalsKey = @(dev_make(type, num));
+        Terminal *terminal = [terminals objectForKey:self.terminalsKey];
+        if (terminal)
+            return terminal;
+
+        if (self = [super init]) {
+            self.pendingData = [[NSMutableData alloc] initWithCapacity:BUF_SIZE];
+            self.refreshTask = [[DelayedUITask alloc] initWithTarget:self action:@selector(refresh)];
+            self.scrollToBottomTask = [[DelayedUITask alloc] initWithTarget:self action:@selector(scrollToBottom)];
+#if !ISH_LINUX
+            lock_init(&_dataLock);
+            cond_init(&_dataConsumed);
+#endif
+
+            [terminals setObject:self forKey:self.terminalsKey];
+            self.uuid = [NSUUID UUID];
+            [terminalsByUUID setObject:self forKey:self.uuid];
+        }
+        return self;
+    }
+}
+
+- (WKWebView *)webView {
+    if (_webView == nil) {
         WKWebViewConfiguration *config = [WKWebViewConfiguration new];
         [config.userContentController addScriptMessageHandler:self name:@"load"];
         [config.userContentController addScriptMessageHandler:self name:@"log"];
@@ -73,27 +105,27 @@ static NSMapTable<NSUUID *, Terminal *> *terminalsByUUID;
         [config.userContentController addScriptMessageHandler:self name:@"propUpdate"];
         // Make the web view really big so that if a program tries to write to the terminal before it's displayed, the text probably won't wrap too badly.
         CGRect webviewSize = CGRectMake(0, 0, 10000, 10000);
-        self.webView = [[CustomWebView alloc] initWithFrame:webviewSize configuration:config];
-        self.webView.scrollView.scrollEnabled = NO;
+        _webView = [[CustomWebView alloc] initWithFrame:webviewSize configuration:config];
+        _webView.scrollView.scrollEnabled = NO;
         NSURL *xtermHtmlFile = [NSBundle.mainBundle URLForResource:@"term" withExtension:@"html"];
-        [self.webView loadFileURL:xtermHtmlFile allowingReadAccessToURL:xtermHtmlFile];
-        
-        [terminals setObject:self forKey:self.terminalsKey];
-        self.uuid = [NSUUID UUID];
-        [terminalsByUUID setObject:self forKey:self.uuid];
+        [_webView loadFileURL:xtermHtmlFile allowingReadAccessToURL:xtermHtmlFile];
     }
-    return self;
+    return _webView;
 }
 
+#if !ISH_LINUX
 + (Terminal *)createPseudoTerminal:(struct tty **)tty {
     *tty = pty_open_fake(&ios_pty_driver);
     if (IS_ERR(*tty))
         return nil;
     return (__bridge Terminal *) (*tty)->data;
 }
+#endif
 
-- (void)setTty:(struct tty *)tty {
-    _tty = tty;
+- (void)setTty:(tty_t)tty {
+    @synchronized (self) {
+        _tty = tty;
+    }
     dispatch_async(dispatch_get_main_queue(), ^{
         [self syncWindowSize];
     });
@@ -109,7 +141,7 @@ static NSMapTable<NSUUID *, Terminal *> *terminalsByUUID;
         NSLog(@"%@", message.body);
     } else if ([message.name isEqualToString:@"sendInput"]) {
         NSData *data = [message.body dataUsingEncoding:NSUTF8StringEncoding];
-        [self sendInput:data.bytes length:data.length];
+        [self sendInput:data];
     } else if ([message.name isEqualToString:@"resize"]) {
         [self syncWindowSize];
     } else if ([message.name isEqualToString:@"propUpdate"]) {
@@ -119,14 +151,19 @@ static NSMapTable<NSUUID *, Terminal *> *terminalsByUUID;
 
 - (void)syncWindowSize {
     [self.webView evaluateJavaScript:@"exports.getSize()" completionHandler:^(NSArray<NSNumber *> *dimensions, NSError *error) {
-        if (self.tty == NULL) {
-            return;
-        }
         int cols = dimensions[0].intValue;
         int rows = dimensions[1].intValue;
+        if (self.tty == NULL)
+            return;
+#if !ISH_LINUX
         lock(&self.tty->lock);
         tty_set_winsize(self.tty, (struct winsize_) {.col = cols, .row = rows});
         unlock(&self.tty->lock);
+#else
+        async_do_in_workqueue(^{
+            self->_tty->ops->resize(self->_tty, cols, rows);
+        });
+#endif
     }];
 }
 
@@ -137,18 +174,53 @@ static NSMapTable<NSUUID *, Terminal *> *terminalsByUUID;
                    completionHandler:nil];
 }
 
-- (int)write:(const void *)buf length:(size_t)len {
-    @synchronized (self) {
-        [self.pendingData appendData:[NSData dataWithBytes:buf length:len]];
-        [self.refreshTask schedule];
+- (int)sendOutput:(const void *)buf length:(int)len {
+#if !ISH_LINUX
+    lock(&_dataLock);
+    if (!NSThread.isMainThread) {
+        // The main thread is the only one that can unblock this, so sleeping here would be a deadlock.
+        // The only reason for this to be called on the main thread is if input is echoed.
+        while (_pendingData.length > BUF_SIZE)
+            wait_for_ignore_signals(&_dataConsumed, &_dataLock, NULL);
     }
-    return 0;
+    [_pendingData appendData:[NSData dataWithBytes:buf length:len]];
+    [self.refreshTask schedule];
+    unlock(&_dataLock);
+#else
+    @synchronized (self) {
+        int room = [self roomForOutput];
+        if (len > room)
+            len = room;
+        if (len > 0) {
+            [_pendingData appendData:[NSData dataWithBytes:buf length:len]];
+            [_refreshTask schedule];
+        }
+    }
+#endif
+    return len;
 }
 
-- (void)sendInput:(const char *)buf length:(size_t)len {
+#if ISH_LINUX
+- (int)roomForOutput {
+    @synchronized (self) {
+        if (_pendingData.length > BUF_SIZE)
+            return 0;
+        return BUF_SIZE - (int) _pendingData.length;
+    }
+}
+#endif
+
+- (void)sendInput:(NSData *)input {
     if (self.tty == NULL)
         return;
-    tty_input(self.tty, buf, len, 0);
+#if !ISH_LINUX
+    tty_input(self.tty, input.bytes, input.length, 0);
+#else
+    async_do_in_workqueue(^{
+        NSData *inputRef = input;
+        self.tty->ops->send_input(self.tty, inputRef.bytes, inputRef.length);
+    });
+#endif
     [self.webView evaluateJavaScript:@"exports.setUserGesture()" completionHandler:nil];
     [self.scrollToBottomTask schedule];
 }
@@ -161,83 +233,61 @@ static NSMapTable<NSUUID *, Terminal *> *terminalsByUUID;
     return [NSString stringWithFormat:@"\x1b%c%c", self.applicationCursor ? 'O' : '[', direction];
 }
 
-NSData *removeInvalidUTF8(NSData *data) {
-    static const uint32_t mins[4] = {0, 128, 2048, 65536};
-    NSMutableData *cleanData = [NSMutableData dataWithLength:data.length];
-    const uint8_t *bytes = data.bytes;
-    uint8_t *clean_bytes = cleanData.mutableBytes;
-    size_t clean_length = 0;
-    size_t clean_i = 0;
-    unsigned continuations = 0;
-    uint32_t c = 0;
-    uint32_t min_c = 0;
-    for (size_t i = 0; i < data.length; i++) {
-        if (bytes[i] >> 6 != 0b10) {
-            // start of new sequence
-            if (continuations != 0)
-                goto discard;
-            if (bytes[i] >> 7 == 0b0) {
-                continuations = 0;
-                c = bytes[i] & 0b1111111;
-            } else if (bytes[i] >> 5 == 0b110) {
-                continuations = 1;
-                c = bytes[i] & 0b11111;
-            } else if (bytes[i] >> 4 == 0b1110) {
-                continuations = 2;
-                c = bytes[i] & 0b1111;
-            } else if (bytes[i] >> 3 == 0b11110) {
-                continuations = 3;
-                c = bytes[i] & 0b111;
-            } else {
-                goto discard;
-            }
-            min_c = mins[continuations];
-        } else {
-            // continuation
-            if (continuations == 0)
-                goto discard;
-            continuations--;
-            c = (c << 6) | (bytes[i] & 0b111111);
-        }
-        clean_bytes[clean_i++] = bytes[i];
-        if (continuations == 0) {
-            if (c < min_c || c > 0x10FFFF)
-                goto discard; // out of range
-            if ((c >> 11) == 0x1b)
-                goto discard; // surrogate pair (this isn't cesu8)
-            clean_length = clean_i;
-        }
-        continue;
-        
-    discard:
-        // if we were in the middle of the sequence, see if this byte could start a sequence
-        if (clean_i != clean_length)
-            i--;
-        clean_i = clean_length;
-        continuations = 0;
-    }
-    cleanData.length = clean_length;
-    return cleanData;
-}
-
 - (void)refresh {
     if (!self.loaded)
         return;
-    
+
+#if !ISH_LINUX
+    lock(&_dataLock);
+    if (_outputInProgress) {
+        [self.refreshTask schedule];
+        unlock(&_dataLock);
+        return;
+    }
+    NSData *data = _pendingData;
+    _pendingData = [[NSMutableData alloc] initWithCapacity:BUF_SIZE];
+    _outputInProgress = YES;
+    notify(&self->_dataConsumed);
+    unlock(&_dataLock);
+#else
     NSData *data;
     @synchronized (self) {
-        data = self.pendingData;
-        self.pendingData = [NSMutableData new];
+        if (_outputInProgress) {
+            [self.refreshTask schedule];
+            return;
+        }
+        data = _pendingData;
+        _pendingData = [[NSMutableData alloc] initWithCapacity:BUF_SIZE];
+        _outputInProgress = YES;
+        if (self->_tty)
+            async_do_in_irq(^{
+                self->_tty->ops->can_output(self->_tty);
+            });
     }
-    NSData *cleanData = removeInvalidUTF8(data);
-    NSString *str = [[NSString alloc] initWithData:cleanData encoding:NSUTF8StringEncoding];
+#endif
 
-    NSError *err = nil;
-    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:@[str] options:0 error:&err];
-    NSString *json = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
-    NSAssert(err == nil, @"JSON serialization failed, wtf");
-    NSString *jsToEvaluate = [NSString stringWithFormat:@"exports.write(%@[0])", json];
-    [self.webView evaluateJavaScript:jsToEvaluate completionHandler:nil];
+    NSString *dataString = [[NSString alloc] initWithBytes:data.bytes length:data.length encoding:NSISOLatin1StringEncoding];
+    // escape for javascript. only have to worry about the first 256 codepoints, because of the latin-1 encoding.
+    dataString = [dataString stringByReplacingOccurrencesOfString:@"\\" withString:@"\\\\"];
+    dataString = [dataString stringByReplacingOccurrencesOfString:@"\r" withString:@"\\r"];
+    dataString = [dataString stringByReplacingOccurrencesOfString:@"\n" withString:@"\\n"];
+    dataString = [dataString stringByReplacingOccurrencesOfString:@"\"" withString:@"\\\""];
+    NSString *jsToEvaluate = [NSString stringWithFormat:@"exports.write(\"%@\")", dataString];
+    [self.webView evaluateJavaScript:jsToEvaluate completionHandler:^(id result, NSError *error) {
+#if !ISH_LINUX
+        lock(&self->_dataLock);
+        self->_outputInProgress = NO;
+        unlock(&self->_dataLock);
+#else
+        @synchronized (self) {
+            self->_outputInProgress = NO;
+        }
+#endif
+        if (error != nil) {
+            NSLog(@"error sending bytes to the terminal: %@", error);
+            return;
+        }
+    }];
 }
 
 + (void)convertCommand:(NSArray<NSString *> *)command toArgs:(char *)argv limitSize:(size_t)maxSize {
@@ -259,26 +309,54 @@ NSData *removeInvalidUTF8(NSData *data) {
 }
 
 + (Terminal *)terminalWithUUID:(NSUUID *)uuid {
-    return [terminalsByUUID objectForKey:uuid];
+    @synchronized (Terminal.class) {
+        return [terminalsByUUID objectForKey:uuid];
+    }
 }
 
 - (void)destroy {
-    struct tty *tty = self.tty;
+    tty_t tty = self.tty;
     if (tty != NULL) {
-        lock(&tty->lock);
-        tty_hangup(tty);
-        unlock(&tty->lock);
+#if !ISH_LINUX
+        if (tty != NULL) {
+            lock(&tty->lock);
+            tty_hangup(tty);
+            unlock(&tty->lock);
+        }
+#else
+        tty->ops->hangup(tty);
+#endif
     }
-    [terminals removeObjectForKey:self.terminalsKey];
+    @synchronized (Terminal.class) {
+        [terminals removeObjectForKey:self.terminalsKey];
+    }
 }
 
 + (void)initialize {
-    terminals = [NSMapTable strongToWeakObjectsMapTable];
-    terminalsByUUID = [NSMapTable strongToWeakObjectsMapTable];
+    if (self == Terminal.class) {
+        terminals = [NSMapTable strongToWeakObjectsMapTable];
+        terminalsByUUID = [NSMapTable strongToWeakObjectsMapTable];
+    }
 }
 
 @end
 
+#if ISH_LINUX
+nsobj_t Terminal_terminalWithType_number(int type, int number) {
+    return CFBridgingRetain([Terminal terminalWithType:type number:number]);
+}
+int Terminal_sendOutput_length(nsobj_t _self, const char *data, int size) {
+    return [(__bridge Terminal *) _self sendOutput:data length:size];
+}
+int Terminal_roomForOutput(nsobj_t _self) {
+    return [(__bridge Terminal *) _self roomForOutput];
+}
+void Terminal_setLinuxTTY(nsobj_t _self, struct linux_tty *tty) {
+    return [(__bridge Terminal *) _self setTty:tty];
+}
+#endif
+
+#if !ISH_LINUX
 static int ios_tty_init(struct tty *tty) {
     // This is called with ttys_lock but that results in deadlock since the main thread can also acquire ttys_lock. So release it.
     unlock(&ttys_lock);
@@ -298,7 +376,7 @@ static int ios_tty_init(struct tty *tty) {
 
 static int ios_tty_write(struct tty *tty, const void *buf, size_t len, bool blocking) {
     Terminal *terminal = (__bridge Terminal *) tty->data;
-    return [terminal write:buf length:len];
+    return [terminal sendOutput:buf length:(int) len];
 }
 
 static void ios_tty_cleanup(struct tty *tty) {
@@ -314,3 +392,4 @@ struct tty_driver_ops ios_tty_ops = {
 };
 DEFINE_TTY_DRIVER(ios_console_driver, &ios_tty_ops, TTY_CONSOLE_MAJOR, 64);
 struct tty_driver ios_pty_driver = {.ops = &ios_tty_ops};
+#endif

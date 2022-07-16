@@ -1,0 +1,13 @@
+// Change this to change all the bundle IDs and app groups
+ROOT_BUNDLE_IDENTIFIER = app.ish.iSH
+// It's easiest to specify your development team ID in the project build settings, but you can alternatively put it here to reduce merge conflicts
+DEVELOPMENT_TEAM =
+
+// Choose logging channels to enable. Separate by spaces. Try "verbose strace".
+ISH_LOG =
+ISH_LOGGER = $(ISH_LOGGER_$(PLATFORM_NAME))
+ISH_LOGGER_iphoneos = nslog
+ISH_LOGGER_iphonesimulator = nslog
+ISH_LOGGER_macosx = dprintf
+
+ROOTFS_URL = github.com/ish-app/roots/releases/download/g5739cf3df9f8bd3acb82b59c2397cb3daead19c4/appstore-apk.tar.gz

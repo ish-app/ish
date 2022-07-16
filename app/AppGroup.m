@@ -5,6 +5,7 @@
 //  Created by Theodore Dubois on 2/28/20.
 //
 
+#import "AppGroup.h"
 #import <Foundation/Foundation.h>
 #import <mach-o/ldsyms.h>
 #import <mach-o/loader.h>
@@ -96,7 +97,7 @@ static NSDictionary *AppEntitlements() {
                                                                       error:nil];
 }
 
-NSArray<NSString *> *CurrentAppGroups() {
+NSArray<NSString *> *CurrentAppGroups(void) {
     return AppEntitlements()[@"com.apple.security.application-groups"];
 }
 

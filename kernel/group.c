@@ -12,8 +12,10 @@ dword_t sys_setpgid(pid_t_ id, pid_t_ pgid) {
         pgid = id;
     lock(&pids_lock);
     struct pid *pid = pid_get(id);
-    struct task *task = pid->task;
     err = _ESRCH;
+    if (pid == NULL)
+        goto out;
+    struct task *task = pid->task;
     if (task == NULL)
         goto out;
     struct tgroup *tgroup = task->group;

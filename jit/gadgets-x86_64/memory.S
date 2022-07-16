@@ -2,11 +2,11 @@
 #include "emu/interrupt.h"
 
 .gadget push
-    sub $4, %_esp
-    movl %_esp, %_addr
+    leal -4(%_esp), %_addr
     write_prep 32, push
     movl %_tmp, (%_addrq)
     write_done 32, push
+    sub $4, %_esp
     gret 1
 .gadget pop
     movl %_esp, %_addr
@@ -56,32 +56,44 @@
     gret
 
 .irp type, read,write
-    .global handle_\type\()_miss
-    handle_\type\()_miss:
-        subq $8, %rsp
-        save_c
-        # %tlb actually points to tlb->entries
-        leaq -TLB_entries(%_tlb), %rdi
-        movl %_addr, %esi
-        .ifc \type,read
-            movq $0, %rdx
-        .else
-            movq $1, %rdx
-        .endif
-        call NAME(tlb_handle_miss)
-        movq %rax, %r15
-        restore_c
-        testq %r15, %r15
-        jz segfault_\type
-        movq %r15, %_addrq
-        addq $8, %rsp
-        ret
+
+.global handle_\type\()_miss
+handle_\type\()_miss:
+    subq $8, %rsp
+    save_c
+    # %tlb actually points to tlb->entries
+    leaq -TLB_entries(%_tlb), %rdi
+    movl %_addr, %esi
+    .ifc \type,read
+        movq $0, %rdx
+    .else
+        movq $1, %rdx
+    .endif
+    call NAME(tlb_handle_miss)
+    movq %rax, %r15
+    restore_c
+    testq %r15, %r15
+    jz segfault_\type
+    movq %r15, %_addrq
+    addq $8, %rsp
+    ret
 
 segfault_\type:
+    movl -TLB_entries+TLB_segfault_addr(%_tlb), %_addr
     movl %_addr, CPU_segfault_addr(%_cpu)
-    movl (%_ip), %_eip
+    .ifc \type,read
+        movb $0, CPU_segfault_was_write(%_cpu)
+    .else
+        movb $1, CPU_segfault_was_write(%_cpu)
+    .endif
+    movq (%_ip), %_ip
+    leal -4(%_esp), %r14d
+    btq $62, %_ip
+    cmovcl %r14d, %_esp
+    movl %_eip, %_eip
     movl $INT_GPF, %_tmp
     jmp jit_exit
+
 .endr
 
 .global crosspage_load

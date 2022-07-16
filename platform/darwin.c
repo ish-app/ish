@@ -19,9 +19,11 @@ struct mem_usage get_mem_usage() {
     host_basic_info_data_t basic = {};
     mach_msg_type_number_t fuck = HOST_BASIC_INFO_COUNT;
     kern_return_t status = host_info(mach_host_self(), HOST_BASIC_INFO, (host_info_t) &basic, &fuck);
+    assert(status == KERN_SUCCESS);
     vm_statistics64_data_t vm = {};
     fuck = HOST_VM_INFO64_COUNT;
     status = host_statistics64(mach_host_self(), HOST_VM_INFO64, (host_info_t) &vm, &fuck);
+    assert(status == KERN_SUCCESS);
 
     struct mem_usage usage;
     usage.total = basic.max_mem;

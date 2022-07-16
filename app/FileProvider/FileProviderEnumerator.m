@@ -6,11 +6,12 @@
 //
 
 #import <MobileCoreServices/MobileCoreServices.h>
-#import "FileProviderEnumerator.h"
+#include <dirent.h>
 #import "FileProviderExtension.h"
+#import "FileProviderEnumerator.h"
 #import "FileProviderItem.h"
 #import "NSError+ISHErrno.h"
-#include "kernel/fs.h"
+#include "fs/fake-db.h"
 
 @interface FileProviderEnumerator ()
 
@@ -42,36 +43,51 @@
     }
     
     NSError *error;
-    struct fd *fd = [self.item openNewFDWithError:&error];
-    if (fd == NULL) {
+    int fd = [self.item openNewFDWithError:&error];
+    if (fd == -1) {
         [observer finishEnumeratingWithError:error];
         return;
     }
+    DIR *dir = fdopendir(fd);
     NSMutableArray<FileProviderItem *> *items = [NSMutableArray new];
-    while (true) {
-        struct dir_entry dirent = {};
-        int err = fd->ops->readdir(fd, &dirent);
-        if (err < 0) {
-            NSLog(@"readdir returned %d", err);
-            [observer finishEnumeratingWithError:[NSError errorWithISHErrno:err itemIdentifier:self.item.itemIdentifier]];
-            fd_close(fd);
-            return;
-        }
-        if (err == 0)
-            break;
-        if (strcmp(dirent.name, ".") == 0 || strcmp(dirent.name, "..") == 0)
+    struct dirent *dirent;
+    errno = 0;
+    while ((dirent = readdir(dir))) {
+        if (strcmp(dirent->d_name, ".") == 0 || strcmp(dirent->d_name, "..") == 0)
             continue;
-        NSString *childIdent = [NSString stringWithFormat:@"%lu", (unsigned long) dirent.inode];
-        NSLog(@"returning %s %@", dirent.name, childIdent);
-        FileProviderItem *item = [[FileProviderItem alloc] initWithIdentifier:childIdent mount:fd->mount error:&error];
+
+        // this is annoying
+        NSString *path = _item.path;
+        NSString *childIdent;
+        if (strcmp(dirent->d_name, "..") == 0) {
+            childIdent = _item.parentItemIdentifier;
+        } else if (strcmp(dirent->d_name, ".") != 0) {
+            db_begin(&_item.mount->db);
+            inode_t inode = path_get_inode(&_item.mount->db, [path stringByAppendingFormat:@"/%@", [NSString stringWithUTF8String:dirent->d_name]].fileSystemRepresentation);
+            NSAssert(inode != 0, @"");
+            db_commit(&_item.mount->db);
+            childIdent = [NSString stringWithFormat:@"%lu", (unsigned long) inode];
+        }
+
+        NSLog(@"returning %s %@", dirent->d_name, childIdent);
+        FileProviderItem *item = [[FileProviderItem alloc] initWithIdentifier:childIdent mount:_item.mount error:&error];
         if (item == nil) {
             [observer finishEnumeratingWithError:error];
-            fd_close(fd);
+            closedir(dir);
             return;
         }
         [items addObject:item];
+        errno = 0;
     }
-    fd_close(fd);
+    if (errno != 0) {
+        NSError *error = [NSError errorWithDomain:NSPOSIXErrorDomain code:errno userInfo:nil];
+        NSLog(@"readdir returned %@", error);
+        [observer finishEnumeratingWithError:error];
+        closedir(dir);
+        return;
+    }
+
+    closedir(dir);
     NSLog(@"returning %@", items);
     [observer didEnumerateItems:items];
     [observer finishEnumeratingUpToPage:nil];

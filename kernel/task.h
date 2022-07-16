@@ -16,8 +16,8 @@
 // locking, unless otherwise specified
 struct task {
     struct cpu_state cpu;
-    struct mm *mm;
-    struct mem *mem; // copy of cpu.mem, for convenience
+    struct mm *mm; // locked by general_lock
+    struct mem *mem; // pointer to mm.mem, for convenience
     pthread_t thread;
     uint64_t threadid;
 
@@ -30,7 +30,7 @@ struct task {
 #define MAX_GROUPS 32
     unsigned ngroups;
     uid_t_ groups[MAX_GROUPS];
-    char comm[16] __strncpy_safe;
+    char comm[16] __strncpy_safe; // locked by general_lock
     bool did_exec; // for that one annoying setsid edge case
 
     struct fdtable *files;
@@ -81,7 +81,7 @@ struct task {
     int exit_signal;
 
     // lock for anything that needs locking but is not covered by some other lock
-    // right now, just comm
+    // specifically: comm, mm
     lock_t general_lock;
 
     struct task_sockrestart sockrestart;
@@ -98,7 +98,8 @@ extern __thread struct task *current;
 
 static inline void task_set_mm(struct task *task, struct mm *mm) {
     task->mm = mm;
-    task->mem = task->cpu.mem = &task->mm->mem;
+    task->mem = &task->mm->mem;
+    task->cpu.mmu = &task->mem->mmu;
 }
 
 // Creates a new process, initializes most fields from the parent. Specify

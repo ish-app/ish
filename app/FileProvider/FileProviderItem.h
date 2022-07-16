@@ -6,20 +6,20 @@
 //
 
 #import <FileProvider/FileProvider.h>
-#include "kernel/fs.h"
+#include "fs/fake-db.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
 @interface FileProviderItem : NSObject <NSFileProviderItem>
 
-- (instancetype)initWithIdentifier:(NSFileProviderItemIdentifier)identifier mount:(struct mount *)mount error:(NSError *_Nullable *)err;
+- (instancetype)initWithIdentifier:(NSFileProviderItemIdentifier)identifier mount:(struct fakefs_mount *)mount error:(NSError *_Nullable *)err;
 - (void)loadToURL:(NSURL *)url;
 - (void)saveFromURL:(NSURL *)url;
-- (struct fd *)openNewFDWithError:(NSError *_Nullable *)err;
+- (int)openNewFDWithError:(NSError *_Nullable *)err;
 
 @property (readonly) NSURL *URL;
 @property (readonly) NSString *path;
-@property (readonly) struct statbuf stat;
+@property (readonly) struct fakefs_mount *mount;
 
 @end
 

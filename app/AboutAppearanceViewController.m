@@ -10,11 +10,9 @@
 #import "UserPreferences.h"
 #import "NSObject+SaneKVO.h"
 
-static NSString *const ThemeNameCellIdentifier = @"Theme Name";
-static NSString *const FontSizeCellIdentifier = @"Font Size";
-static NSString *const PreviewCellIdentifier = @"Preview";
-
 @interface AboutAppearanceViewController ()
+
+@property UIFontPickerViewController *fontPicker API_AVAILABLE(ios(13));
 
 @end
 
@@ -22,17 +20,34 @@ static NSString *const PreviewCellIdentifier = @"Preview";
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    [UserPreferences.shared observe:@[@"theme", @"fontSize", @"fontFamily"]
+    [UserPreferences.shared observe:@[@"theme", @"fontSize", @"fontFamily", @"hideStatusBar"]
                             options:0 owner:self usingBlock:^(typeof(self) self) {
-        [self.tableView reloadData];
-        [self setNeedsStatusBarAppearanceUpdate];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self.tableView reloadData];
+            [self setNeedsStatusBarAppearanceUpdate];
+        });
     }];
+}
+
+- (void)viewDidAppear:(BOOL)animated {
+    if (@available(iOS 13, *)) {
+        // Initialize the font picker ASAP, as it takes about a quarter second to initialize (XPC crap) and appears invisible until then.
+        // Re-initialize it after navigating away from it, to reset the table view highlight.
+        UIFontPickerViewControllerConfiguration *config = [UIFontPickerViewControllerConfiguration new];
+        config.filteredTraits = UIFontDescriptorTraitMonoSpace;
+        self.fontPicker = [[UIFontPickerViewController alloc] initWithConfiguration:config];
+        // Prevent the font picker from resizing the popup when it appears
+        self.fontPicker.preferredContentSize = CGSizeZero;
+        self.fontPicker.navigationItem.title = @"Font";
+        self.fontPicker.delegate = self;
+    }
 }
 
 #pragma mark - Table view data source
 
 enum {
     ThemeNameSection,
+    StatusBarSection,
     FontSection,
     PreviewSection,
     NumberOfSections,
@@ -47,6 +62,7 @@ enum {
         case ThemeNameSection: return Theme.presetNames.count;
         case FontSection: return 2;
         case PreviewSection: return 1;
+        case StatusBarSection: return 1;
         default: NSAssert(NO, @"unhandled section"); return 0;
     }
 }
@@ -55,6 +71,7 @@ enum {
     switch (section) {
         case ThemeNameSection: return @"Theme";
         case PreviewSection: return @"Preview";
+        case StatusBarSection: return @"Status Bar";
         default: return nil;
     }
 }
@@ -68,6 +85,7 @@ enum {
         case ThemeNameSection: return @"Theme Name";
         case FontSection: return @[@"Font", @"Font Size"][indexPath.row];
         case PreviewSection: return @"Preview";
+        case StatusBarSection: return @"Status Bar";
         default: return nil;
     }
 }
@@ -105,6 +123,14 @@ enum {
             cell.textLabel.text = [NSString stringWithFormat:@"%@:~# ps aux", [UIDevice currentDevice].name];
             cell.selectionStyle = UITableViewCellSelectionStyleNone;
             break;
+        
+        case StatusBarSection:
+            cell.selectionStyle = UITableViewCellSelectionStyleNone;
+            UISwitch *statusBarToggle = [[UISwitch alloc] initWithFrame:CGRectZero];
+            cell.accessoryView = statusBarToggle;
+            statusBarToggle.on = prefs.hideStatusBar;
+            [statusBarToggle addTarget:self action:@selector(hideStatusBarChanged:) forControlEvents:UIControlEventValueChanged];
+            break;
     }
     
     return cell;
@@ -123,13 +149,9 @@ enum {
     }
 }
 
-- (IBAction)selectFont:(id)sender {
+- (void)selectFont:(id)sender {
     if (@available(iOS 13, *)) {
-        UIFontPickerViewControllerConfiguration *config = [UIFontPickerViewControllerConfiguration new];
-        config.filteredTraits = UIFontDescriptorTraitMonoSpace;
-        UIFontPickerViewController *fontPicker = [[UIFontPickerViewController alloc] initWithConfiguration:config];
-        fontPicker.delegate = self;
-        [self presentViewController:fontPicker animated:YES completion:nil];
+        [self.navigationController pushViewController:self.fontPicker animated:YES];
         return;
     }
     
@@ -139,10 +161,16 @@ enum {
 
 - (void)fontPickerViewControllerDidPickFont:(UIFontPickerViewController *)viewController API_AVAILABLE(ios(13.0)) {
     UserPreferences.shared.fontFamily = viewController.selectedFontDescriptor.fontAttributes[UIFontDescriptorFamilyAttribute];
+    [self.navigationController popToViewController:self animated:YES];
 }
 
 - (IBAction)fontSizeChanged:(UIStepper *)sender {
     UserPreferences.shared.fontSize = @((int) sender.value);
+}
+
+- (void) hideStatusBarChanged:(UISwitch *)sender {
+    UserPreferences.shared.hideStatusBar = sender.on;
+    [self setNeedsStatusBarAppearanceUpdate];
 }
 
 @end

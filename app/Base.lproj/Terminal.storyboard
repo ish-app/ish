@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="17506" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="BYZ-38-t0r">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="19455" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="BYZ-38-t0r">
     <device id="retina6_5" orientation="portrait" appearance="light"/>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="17505"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="19454"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+        <capability name="System colors in document resources" minToolsVersion="11.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <scenes>
@@ -19,18 +20,14 @@
                             <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="FQi-r8-odu" customClass="TerminalView">
                                 <rect key="frame" x="0.0" y="44" width="414" height="852"/>
                                 <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                <userDefinedRuntimeAttributes>
+                                    <userDefinedRuntimeAttribute type="boolean" keyPath="canBecomeFirstResponder" value="YES"/>
+                                </userDefinedRuntimeAttributes>
                                 <connections>
                                     <outlet property="controlKey" destination="W9v-cj-FWz" id="HgQ-u7-5IL"/>
                                     <outlet property="inputAccessoryView" destination="GyN-ob-WFz" id="rBB-FQ-HiM"/>
                                 </connections>
                             </view>
-                            <containerView opaque="NO" contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4UX-TH-4BQ" customClass="PassthroughView">
-                                <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
-                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                                <connections>
-                                    <segue destination="hWN-qz-BEH" kind="embed" id="mcY-QX-RE9"/>
-                                </connections>
-                            </containerView>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="IVs-Oh-AhK"/>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
@@ -56,15 +53,16 @@
                         <outlet property="hideKeyboardButton" destination="7qw-ie-p4d" id="n5f-XX-i98"/>
                         <outlet property="infoButton" destination="5dl-UV-6qh" id="jaF-Xd-IYp"/>
                         <outlet property="pasteButton" destination="hmm-tv-z35" id="mgi-xs-C8r"/>
+                        <outlet property="settingsBadge" destination="QyP-z0-o0M" id="B0a-GT-d21"/>
                         <outlet property="tabKey" destination="cJt-oG-BnW" id="YaE-o4-lKm"/>
                         <outlet property="termView" destination="FQi-r8-odu" id="QIa-yI-fmG"/>
                         <outletCollection property="barButtons" destination="cJt-oG-BnW" id="Yjx-uz-RbI"/>
                         <outletCollection property="barButtons" destination="W9v-cj-FWz" id="OFf-FH-2Xy"/>
                         <outletCollection property="barButtons" destination="IPm-l0-f25" id="dHH-gh-Tzq"/>
                         <outletCollection property="barButtons" destination="VCr-TW-PIZ" id="NlS-hh-ara"/>
-                        <outletCollection property="barControls" destination="5dl-UV-6qh" id="ocU-st-RdO"/>
                         <outletCollection property="barControls" destination="7qw-ie-p4d" id="fDV-Yg-Dec"/>
                         <outletCollection property="barControls" destination="hmm-tv-z35" id="EEv-5m-po5"/>
+                        <outletCollection property="barControls" destination="5dl-UV-6qh" id="ocU-st-RdO"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
@@ -138,21 +136,48 @@
                                 <view contentMode="scaleToFill" horizontalHuggingPriority="100" translatesAutoresizingMaskIntoConstraints="NO" id="qmg-M1-7W8" userLabel="Spacer">
                                     <rect key="frame" x="148" y="0.0" width="229" height="43"/>
                                 </view>
-                                <button contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="infoLight" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="5dl-UV-6qh" userLabel="Info">
+                                <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="QqP-xI-1vv">
                                     <rect key="frame" x="383" y="0.0" width="31" height="43"/>
-                                    <accessibility key="accessibilityConfiguration" label="Settings"/>
+                                    <subviews>
+                                        <button contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="infoLight" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="5dl-UV-6qh" userLabel="Info">
+                                            <rect key="frame" x="0.0" y="0.0" width="31" height="43"/>
+                                            <accessibility key="accessibilityConfiguration" label="Settings"/>
+                                            <constraints>
+                                                <constraint firstAttribute="width" constant="31" id="1Ax-5U-2CI"/>
+                                            </constraints>
+                                            <color key="tintColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                            <state key="normal">
+                                                <color key="titleColor" systemColor="darkTextColor"/>
+                                            </state>
+                                            <connections>
+                                                <action selector="showAbout:" destination="BYZ-38-t0r" eventType="primaryActionTriggered" id="xbI-EN-avC"/>
+                                                <outletCollection property="gestureRecognizers" destination="reB-As-gYu" appends="YES" id="ehk-hz-UIY"/>
+                                            </connections>
+                                        </button>
+                                        <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="QyP-z0-o0M" userLabel="Badge">
+                                            <rect key="frame" x="20" y="4.6666666666666661" width="12" height="11.999999999999998"/>
+                                            <color key="backgroundColor" systemColor="systemRedColor"/>
+                                            <constraints>
+                                                <constraint firstAttribute="width" constant="12" id="BA0-yo-Kjp"/>
+                                                <constraint firstAttribute="height" constant="12" id="omS-5z-6nP"/>
+                                            </constraints>
+                                            <userDefinedRuntimeAttributes>
+                                                <userDefinedRuntimeAttribute type="number" keyPath="layer.cornerRadius">
+                                                    <integer key="value" value="6"/>
+                                                </userDefinedRuntimeAttribute>
+                                            </userDefinedRuntimeAttributes>
+                                        </view>
+                                    </subviews>
                                     <constraints>
-                                        <constraint firstAttribute="width" constant="31" id="1Ax-5U-2CI"/>
+                                        <constraint firstItem="5dl-UV-6qh" firstAttribute="top" secondItem="QqP-xI-1vv" secondAttribute="top" id="Bmc-yy-8n3"/>
+                                        <constraint firstAttribute="bottom" secondItem="5dl-UV-6qh" secondAttribute="bottom" id="HF9-Df-jMg"/>
+                                        <constraint firstAttribute="trailing" secondItem="5dl-UV-6qh" secondAttribute="trailing" id="V23-Wf-LRF"/>
+                                        <constraint firstAttribute="trailing" secondItem="QyP-z0-o0M" secondAttribute="trailing" constant="-1" id="bKG-3n-DTG"/>
+                                        <constraint firstItem="5dl-UV-6qh" firstAttribute="leading" secondItem="QqP-xI-1vv" secondAttribute="leading" id="cU3-kZ-7ce"/>
+                                        <constraint firstAttribute="width" constant="31" id="jE7-Z3-L7t"/>
+                                        <constraint firstItem="QyP-z0-o0M" firstAttribute="centerY" secondItem="QqP-xI-1vv" secondAttribute="centerY" multiplier="0.5" id="o5C-lE-of0"/>
                                     </constraints>
-                                    <color key="tintColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-                                    <state key="normal">
-                                        <color key="titleColor" systemColor="darkTextColor"/>
-                                    </state>
-                                    <connections>
-                                        <action selector="showAbout:" destination="BYZ-38-t0r" eventType="primaryActionTriggered" id="xbI-EN-avC"/>
-                                        <outletCollection property="gestureRecognizers" destination="reB-As-gYu" appends="YES" id="ehk-hz-UIY"/>
-                                    </connections>
-                                </button>
+                                </view>
                                 <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="hmm-tv-z35" userLabel="Paste">
                                     <rect key="frame" x="420" y="0.0" width="31" height="43"/>
                                     <accessibility key="accessibilityConfiguration" label="Paste"/>
@@ -190,6 +215,9 @@
                         <constraint firstItem="hgN-L1-K1S" firstAttribute="trailing" secondItem="4pc-Ei-ihz" secondAttribute="trailing" constant="6" id="RAD-x5-aAI"/>
                         <constraint firstItem="4pc-Ei-ihz" firstAttribute="top" secondItem="GyN-ob-WFz" secondAttribute="top" constant="6" id="gtD-Rx-Gdo"/>
                     </constraints>
+                    <userDefinedRuntimeAttributes>
+                        <userDefinedRuntimeAttribute type="boolean" keyPath="allowsSelfSizing" value="YES"/>
+                    </userDefinedRuntimeAttributes>
                     <connections>
                         <outlet property="terminalViewController" destination="BYZ-38-t0r" id="Pog-Oc-1za"/>
                     </connections>
@@ -202,14 +230,6 @@
             </objects>
             <point key="canvasLocation" x="31.875" y="32.74647887323944"/>
         </scene>
-        <!--APKDownloads-->
-        <scene sceneID="cCe-Da-UCg">
-            <objects>
-                <viewControllerPlaceholder storyboardName="APKDownloads" id="hWN-qz-BEH" sceneMemberID="viewController"/>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="OiW-pN-fBS" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
-            </objects>
-            <point key="canvasLocation" x="755" y="33"/>
-        </scene>
     </scenes>
     <resources>
         <image name="Hide Keyboard" width="32" height="32"/>
@@ -217,20 +237,8 @@
         <systemColor name="darkTextColor">
             <color white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
         </systemColor>
-        <systemColor name="darkTextColor">
-            <color white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-        </systemColor>
-        <systemColor name="darkTextColor">
-            <color white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-        </systemColor>
-        <systemColor name="darkTextColor">
-            <color white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-        </systemColor>
-        <systemColor name="darkTextColor">
-            <color white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-        </systemColor>
-        <systemColor name="darkTextColor">
-            <color white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+        <systemColor name="systemRedColor">
+            <color red="1" green="0.23137254901960785" blue="0.18823529411764706" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </systemColor>
     </resources>
 </document>
