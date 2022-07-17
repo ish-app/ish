@@ -12,3 +12,4 @@ extern char *(*get_underlying_name)(const char *name);
 extern bool (*get_user_default)(const char *name, char **buffer, size_t *size);
 extern bool (*set_user_default)(const char *name, char *buffer, size_t size);
 extern bool (*remove_user_default)(const char *name);
+extern char *(*get_documents_directory)(void);

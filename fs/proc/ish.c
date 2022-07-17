@@ -1,6 +1,7 @@
 #include "fs/proc.h"
 #include "fs/proc/ish.h"
 #include "kernel/errno.h"
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -13,6 +14,7 @@ char *(*get_underlying_name)(const char *name);
 bool (*get_user_default)(const char *name, char **buffer, size_t *size);
 bool (*set_user_default)(const char *name, char *buffer, size_t size);
 bool (*remove_user_default)(const char *name);
+char *(*get_documents_directory)(void);
 
 static int proc_ish_show_colors(struct proc_entry *UNUSED(entry), struct proc_data *buf) {
     proc_printf(buf,
@@ -49,6 +51,13 @@ static int proc_ish_show_colors(struct proc_entry *UNUSED(entry), struct proc_da
                 "\x1B[106m" "iSH" "\x1B[39m "
                 "\x1B[107m" "iSH" "\x1B[39m" "\x1B[0m\n"
                 );
+    return 0;
+}
+
+static int proc_ish_show_documents(struct proc_entry *UNUSED(entry), struct proc_data *buf) {
+    char *directory = get_documents_directory();
+    proc_printf(buf, "%s\n", directory);
+    free(directory);
     return 0;
 }
 
@@ -144,5 +153,6 @@ struct proc_children proc_ish_children = PROC_CHILDREN({
     {"colors", .show = proc_ish_show_colors},
     {".defaults", S_IFDIR, .readdir = proc_ish_underlying_defaults_readdir},
     {"defaults", S_IFDIR, .readdir = proc_ish_defaults_readdir},
+    {"documents", .show = proc_ish_show_documents},
     {"version", .show = proc_ish_show_version},
 });
