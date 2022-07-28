@@ -1,5 +1,5 @@
 // Change this to change all the bundle IDs and app groups
-ROOT_BUNDLE_IDENTIFIER = app.ish.iSH
+ = app.ish.iSH
 // It's easiest to specify your development team ID in the project build settings, but you can alternatively put it here to reduce merge conflicts
 DEVELOPMENT_TEAM =
 
