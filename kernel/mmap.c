@@ -117,7 +117,8 @@ dword_t sys_membarrier(dword_t cmd, dword_t flags, dword_t cpuid) {
         case MEMBARRIER_CMD_QUERY:
             return MEMBARRIER_SUPPORTS_ALL;
         default:
-            __asm__ __volatile__("" : : : "memory");
+            __atomic_thread_fence(__ATOMIC_SEQ_CST);
+            // __asm__ __volatile__("" : : : "memory");
     }
     return 0;
 }
