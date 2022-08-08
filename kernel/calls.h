@@ -57,6 +57,7 @@ dword_t sys_madvise(addr_t addr, dword_t len, dword_t advice);
 dword_t sys_mbind(addr_t addr, dword_t len, int_t mode, addr_t nodemask, dword_t maxnode, uint_t flags);
 int_t sys_mlock(addr_t addr, dword_t len);
 int_t sys_msync(addr_t addr, dword_t len, int_t flags);
+dword_t sys_membarrier(dword_t cmd, dword_t flags, dword_t cpuid);
 
 // file descriptor things
 #define LOCK_SH_ 1
