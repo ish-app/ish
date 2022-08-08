@@ -108,19 +108,18 @@ addr_t sys_mmap2(addr_t addr, dword_t len, dword_t prot, dword_t flags, fd_t fd_
 
 enum membarrier_cmd {
     MEMBARRIER_CMD_QUERY = 0,
-    MEMBARRIER_CMD_GLOBAL,
+    MEMBARRIER_SUPPORTS_ALL = 31, // lies
 };
 
 dword_t sys_membarrier(dword_t cmd, dword_t flags, dword_t cpuid) {
     STRACE("membarrier(0x%x, 0x%x, 0x%x)", cmd, flags, cpuid);
     switch (cmd) {
         case MEMBARRIER_CMD_QUERY:
-            return MEMBARRIER_CMD_GLOBAL;
-         case MEMBARRIER_CMD_GLOBAL:
+            return MEMBARRIER_SUPPORTS_ALL;
+        default:
             __asm__ __volatile__("" : : : "memory");
-            return 0;
     }
-    return _EINVAL;
+    return 0;
 }
 
 struct mmap_arg_struct {
