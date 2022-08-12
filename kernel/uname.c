@@ -22,7 +22,7 @@ void do_uname(struct uname *uts) {
     static const struct uname u = {
         .arch = "i686",
         .domain = "(none)",
-        .release = "4.20.69-ish",
+        .release = "4.20.69-ish_aok",
         .system = "Linux"
     };
     *uts = u; // Implicit memcpy
