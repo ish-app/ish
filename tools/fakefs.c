@@ -129,7 +129,7 @@ bool fakefs_import(const char *archive_path, const char *fs, struct fakefsify_er
         }
         if (!progress_update(&p, (double) archive_filter_bytes(archive, -1) / archive_bytes, entry_path))
             CANCEL();
-        if (!*entry_path)
+        if (strcmp(entry_path, "") == 0)
             archive_has_root = true;
 
         const char *hardlink = archive_entry_hardlink(entry);

@@ -216,7 +216,7 @@ static int tmpfs_mount(struct mount *mount) {
     }
 
     tmp_dirent_init(root);
-    memcpy(root->name, "", 1);
+    strcpy(root->name, "");
     root->inode = root_inode;
     root->parent = NULL;
 

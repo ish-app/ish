@@ -188,7 +188,7 @@ void proc_maps_dump(struct task *task, struct proc_data *buf) {
         // output info
         char path[MAX_PATH] = "";
         if (start_pt->flags & P_GROWSDOWN) {
-            memcpy(path, "[stack]", 8);
+            strcpy(path, "[stack]");
         } else if (data->name != NULL) {
             strcpy(path, data->name);
         } else if (data->fd != NULL) {
