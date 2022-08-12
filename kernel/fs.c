@@ -550,7 +550,7 @@ dword_t sys_getcwd(addr_t buf_addr, dword_t size) {
     char *buf = malloc(size);
     if (buf == NULL)
         return _ENOMEM;
-    strcpy(buf, pwd);
+    memcpy(buf, pwd, size);
     STRACE(" \"%.*s\"", size, buf);
     dword_t res = size;
     if (user_write(buf_addr, buf, size))

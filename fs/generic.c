@@ -112,7 +112,7 @@ int generic_getpath(struct fd *fd, char *buf) {
     memmove(buf + strlen(fd->mount->point), buf, strlen(buf) + 1);
     memcpy(buf, fd->mount->point, strlen(fd->mount->point));
     if (buf[0] == '\0')
-        strcpy(buf, "/");
+        memcpy(buf, "/", 2);
     return 0;
 }
 

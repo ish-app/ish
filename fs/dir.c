@@ -38,9 +38,9 @@ size_t fill_dirent_32(void *dirent_data, ino_t inode, off_t_ offset, const char 
     struct linux_dirent_ *dirent = dirent_data;
     dirent->inode = inode;
     dirent->offset = offset;
-    dirent->reclen = offsetof(struct linux_dirent_, name) +
-        strlen(name) + 2; // name, null terminator, type
-    strcpy(dirent->name, name);
+    const size_t namelen = strlen(name) + 1; // Include null terminator
+    dirent->reclen = offsetof(struct linux_dirent_, name) + namelen + 1; // name, null terminator, type
+    memcpy(dirent->name, name, namelen);
     *((char *) dirent + dirent->reclen - 1) = type;
     return dirent->reclen;
 }
@@ -49,10 +49,10 @@ size_t fill_dirent_64(void *dirent_data, ino_t inode, off_t_ offset, const char 
     struct linux_dirent64_ *dirent = dirent_data;
     dirent->inode = inode;
     dirent->offset = offset;
-    dirent->reclen = offsetof(struct linux_dirent64_, name) +
-        strlen(name) + 1; // name, null terminator
+    const size_t namelen = strlen(name) + 1; // Include null terminator
+    dirent->reclen = offsetof(struct linux_dirent64_, name) + namelen; // name, null terminator
     dirent->type = type;
-    strcpy(dirent->name, name);
+    memcpy(dirent->name, name, namelen);
     return dirent->reclen;
 }
 

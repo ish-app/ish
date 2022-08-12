@@ -98,9 +98,9 @@ static inline int xX_main_Xx(int argc, char *const argv[], const char *envp) {
     int i = optind;
     size_t p = 0;
     while (i < argc) {
-        strcpy(&argv_copy[p], argv[i]);
-        p += strlen(argv[i]) + 1;
-        i++;
+        const size_t arg_len = strlen(argv[i]) + 1;
+        memcpy(&argv_copy[p], argv[i++], arg_len);
+        p += arg_len;
     }
     argv_copy[p] = '\0';
     err = do_execve(argv[optind], argc - optind, argv_copy, envp == NULL ? "\0" : envp);

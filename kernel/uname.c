@@ -19,13 +19,15 @@ void do_uname(struct uname *uts) {
     if (uname_hostname_override)
         hostname = uname_hostname_override;
 
-    memset(uts, 0, sizeof(struct uname));
-    strcpy(uts->system, "Linux");
+    static const struct uname u = {
+        .arch = "i686",
+        .domain = "(none)",
+        .release = "4.20.69-ish_aok",
+        .system = "Linux"
+    };
+    *uts = u; // Implicit memcpy
     strcpy(uts->hostname, hostname);
-    strcpy(uts->release, "4.20.69-ish");
     snprintf(uts->version, sizeof(uts->version), "%s %s %s", uname_version, __DATE__, __TIME__);
-    strcpy(uts->arch, "i686");
-    strcpy(uts->domain, "(none)");
 }
 
 dword_t sys_uname(addr_t uts_addr) {

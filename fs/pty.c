@@ -156,7 +156,7 @@ static bool devpts_pty_exists(int pty_num) {
 // this has a slightly weird error returning convention
 // I'm lucky that ENOENT is -2 and not -1
 static int devpts_get_pty_num(const char *path) {
-    if (strcmp(path, "") == 0)
+    if (!*path)
         return -1; // root
     if (path[0] != '/' || path[1] == '\0' || strchr(path + 1, '/') != NULL)
         return _ENOENT;
@@ -186,7 +186,7 @@ static struct fd *devpts_open(struct mount *UNUSED(mount), const char *path, int
 
 static int devpts_getpath(struct fd *fd, char *buf) {
     if (fd->devpts.num == -1)
-        strcpy(buf, "");
+        memcpy(buf, "", 1);
     else
         sprintf(buf, "/%d", fd->devpts.num);
     return 0;

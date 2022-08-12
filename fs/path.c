@@ -15,13 +15,14 @@ static int __path_normalize(const char *at_path, const char *path, char *out, in
     *o = '\0';
     int n = MAX_PATH - 1;
 
-    if (strcmp(path, "") == 0)
+    if (!*path)
         return _ENOENT;
 
     if (at_path != NULL && strcmp(at_path, "/") != 0) {
         strcpy(o, at_path);
-        n -= strlen(at_path);
-        o += strlen(at_path);
+        const size_t len = strlen(at_path);
+        n -= len;
+        o += len;
     }
 
     while (*p == '/')
@@ -86,7 +87,7 @@ static int __path_normalize(const char *at_path, const char *path, char *out, in
                     memmove(out, c, strlen(c) + 1);
                 char *expanded_path = possible_symlink;
                 strcpy(expanded_path, out);
-                if (strcmp(p, "") != 0) {
+                if (*p) {
                     strcat(expanded_path, "/");
                     strcat(expanded_path, p);
                 }
@@ -120,7 +121,7 @@ static int __path_normalize(const char *at_path, const char *path, char *out, in
 
 int path_normalize(struct fd *at, const char *path, char *out, int flags) {
     assert(at != NULL);
-    if (strcmp(path, "") == 0)
+    if (!*path)
         return _ENOENT;
 
     // start with root or cwd, depending on whether it starts with a slash

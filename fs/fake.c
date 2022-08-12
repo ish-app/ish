@@ -328,7 +328,7 @@ retry:
     char entry_path[MAX_PATH + 1];
     realfs_getpath(fd, entry_path);
     if (strcmp(entry->name, "..") == 0) {
-        if (strcmp(entry_path, "") != 0) {
+        if (*entry_path) {
             *strrchr(entry_path, '/') = '\0';
         }
     } else if (strcmp(entry->name, ".") != 0) {
@@ -359,7 +359,7 @@ static int fakefs_mount(struct mount *mount) {
     strcpy(db_path, mount->source);
     char *basename = strrchr(db_path, '/') + 1;
     assert(strcmp(basename, "data") == 0);
-    strcpy(basename, "meta.db");
+    memcpy(basename, "meta.db", 8);
 
     // do this now so rebuilding can use root_fd
     int err = realfs.mount(mount);

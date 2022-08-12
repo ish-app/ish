@@ -89,7 +89,7 @@ static int proc_show_mounts(struct proc_entry *UNUSED(entry), struct proc_data *
             proc_printf_comma(buf, &at_start, "nodev");
         if (mount->flags & MS_NOEXEC_)
             proc_printf_comma(buf, &at_start, "noexec");
-        if (strcmp(mount->info, "") != 0)
+        if (*mount->info)
             proc_printf_comma(buf, &at_start, "%s", mount->info);
         proc_printf(buf, " 0 0\n");
     };
