@@ -54,7 +54,7 @@ static int proc_readlink_self(struct proc_entry *UNUSED(entry), char *buf) {
 }
 
 static void proc_print_escaped(struct proc_data *buf, const char *str) {
-    for (size_t i = 0; str && str[i]; i++) {
+    for (size_t i = 0; str[i]; i++) {
         switch (str[i]) {
             case '\t': case ' ': case '\\':
                 proc_printf(buf, "\\%03o", str[i]);
