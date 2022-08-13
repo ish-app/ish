@@ -348,3 +348,35 @@ void vec_fmovmask_d128(NO_CPU, const union xmm_reg *src, uint32_t *dst) {
 void vec_extract_w128(NO_CPU, const union xmm_reg *src, uint32_t *dst, uint8_t index) {
     *dst = src->u16[index % 8];
 }
+
+void vec_mull128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst) {
+    for (int i = 0; i < 8; i++) {
+        dst->u16[i] = (uint16_t)(dst->u16[i] * src->u16[i]);
+    }
+}
+void vec_mull64(NO_CPU, const union mm_reg *src, union mm_reg *dst) {
+    union vec { uint64_t qw; uint16_t u16[4]; };
+    union vec s = { .qw = src->qw };
+    union vec d = { .qw = dst->qw };
+    for (int i = 0; i < 4; i++) {
+        d.u16[i] = (uint16_t)(d.u16[i] * s.u16[i]);
+    }
+    dst->qw = d.qw;
+}
+
+void vec_mulu128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst) {
+    for (int i = 0; i < 8; i++) {
+        uint32_t res = ((int16_t)dst->u16[i] * (int16_t)src->u16[i]);
+        dst->u16[i] = ((res >> 16) & 0xffff);
+    }
+}
+void vec_mulu64(NO_CPU, const union mm_reg *src, union mm_reg *dst) {
+    union vec { uint64_t qw; uint16_t u16[4]; };
+    union vec s = { .qw = src->qw };
+    union vec d = { .qw = dst->qw };
+    for (int i = 0; i < 4; i++) {
+        uint32_t res = ((int16_t)d.u16[i] * (int16_t)s.u16[i]);
+        d.u16[i] = ((res >> 16) & 0xffff);
+    }
+    dst->qw = d.qw;
+}
