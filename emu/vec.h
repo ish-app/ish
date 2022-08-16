@@ -34,6 +34,10 @@ void vec_add_q64(NO_CPU, union mm_reg *src, union mm_reg *dst);
 void vec_sub_q128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
 void vec_mulu_dq128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
 void vec_mulu_dq64(NO_CPU, union mm_reg *src, union mm_reg *dst);
+void vec_mulu64(NO_CPU, const union mm_reg *src, union mm_reg *dst);
+void vec_mull64(NO_CPU, const union mm_reg *src, union mm_reg *dst);
+void vec_mulu128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst);
+void vec_mull128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst);
 
 void vec_add_p64(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
 void vec_add_p32(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
