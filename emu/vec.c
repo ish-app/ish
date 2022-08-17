@@ -96,6 +96,15 @@ void vec_imm_shiftr_d128(NO_CPU, const uint8_t amount, union xmm_reg *dst) {
         dst->u32[3] >>= amount;
     }
 }
+void vec_imm_shiftr_w128(NO_CPU, const uint8_t amount, union xmm_reg *dst) {
+    if (amount > 15) {
+        zero_xmm(dst);
+    } else {
+        for (unsigned i = 0; i < 8; i++) {
+            dst->u16[i] >>= amount;
+        }
+    }
+}
 
 void vec_imm_shiftr_q64(NO_CPU, const uint8_t amount, union mm_reg *dst) {
     if (amount > 63)
@@ -410,6 +419,12 @@ void vec_shuffle_lw128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst, uin
     for (int i = 0; i < 4; i++)
         dst->u16[i] = src_copy.u16[(encoding >> (i*2)) % 4];
     dst->qw[1] = src->qw[1];
+}
+void vec_shuffle_hw128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst, uint8_t encoding) {
+    union xmm_reg src_copy = *src;
+    dst->qw[0] = src->qw[0];
+    dst->u32[2] = src_copy.u16[(encoding >> 0 & 3) | 4] | src_copy.u16[(encoding >> 2 & 3) | 4] << 16;
+    dst->u32[3] = src_copy.u16[(encoding >> 4 & 3) | 4] | src_copy.u16[(encoding >> 6 & 3) | 4] << 16;
 }
 void vec_shuffle_d128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst, uint8_t encoding) {
     union xmm_reg src_copy = *src;

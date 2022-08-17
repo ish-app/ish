@@ -2546,10 +2546,10 @@ void test_sse(void)
 
     PSHUF_OP(pshufd, 0x78);
     PSHUF_OP(pshuflw, 0x78);
-    // PSHUF_OP(pshufhw, 0x78);
+    PSHUF_OP(pshufhw, 0x78);
 
-    // SHIFT_OP(psrlw, 7);
-    // SHIFT_OP(psrlw, 16);
+    SHIFT_DQ_IM(psrlw, 7);
+    SHIFT_DQ_IM(psrlw, 16);
     SHIFT_DQ_IM(psraw, 7);
     SHIFT_DQ_IM(psraw, 16);
     SHIFT_DQ_IM(psllw, 7);

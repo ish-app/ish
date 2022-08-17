@@ -292,7 +292,7 @@ restart:
                            READMODRM; V_OP(unpackl_w, xmm_modrm_val, xmm_modrm_reg,128); break;
                 case 0x62: TRACEI("punpckldq xmm:modrm, xmm");
                            READMODRM; V_OP(unpackl_dq, xmm_modrm_val, xmm_modrm_reg,128); break;
-                        
+
                 case 0x68: TRACEI("punpckhbw xmm:modrm, xmm");
                            READMODRM; V_OP(unpackh_bw, xmm_modrm_val, xmm_modrm_reg,128); break;
                 case 0x69: TRACEI("punpckhwd xmm:modrm, xmm");
@@ -315,6 +315,8 @@ restart:
                            READMODRM; READIMM8; V_OP_IMM(shuffle_d, xmm_modrm_val, xmm_modrm_reg,128); break;
                 case 0x71: READMODRM_NOMEM;
                            switch (modrm.opcode) {
+                                case 2: TRACEI("psrlw imm, xmm");
+                                        READIMM8; V_OP(imm_shiftr_w, imm, xmm_modrm_reg, 128); break;
                                 case 4: TRACEI("psraw imm, xmm");
                                         READIMM8; V_OP(imm_shiftrs_w, imm, xmm_modrm_reg, 128); break;
                                 case 6: TRACEI("psllw imm, xmm");
@@ -1144,6 +1146,9 @@ restart:
                                    READMODRM; VMOV(xmm_modrm_val, xmm_modrm_reg,64); break;
 
                         case 0x18 ... 0x1f: TRACEI("repz nop modrm\t"); READMODRM; break;
+
+                        case 0x70: TRACEI("pshufhw xmm:modrm, xmm, imm8");
+                                   READMODRM; READIMM8; V_OP_IMM(shuffle_hw, xmm_modrm_val, xmm_modrm_reg,128); break;
 
                         case 0x7f: TRACEI("movdqu xmm, xmm:modrm");
                                    READMODRM; VMOV(xmm_modrm_reg, xmm_modrm_val,128); break;
