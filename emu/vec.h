@@ -37,7 +37,9 @@ void vec_add_w128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
 void vec_add_d128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
 void vec_add_q128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
 void vec_add_q64(NO_CPU, union mm_reg *src, union mm_reg *dst);
+void vec_sub_b128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
 void vec_sub_w128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
+void vec_sub_d128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
 void vec_sub_q128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
 void vec_mulu_dq128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
 void vec_mulu_dq64(NO_CPU, union mm_reg *src, union mm_reg *dst);
@@ -94,6 +96,7 @@ void vec_cvttpd2dq64(NO_CPU, const union xmm_reg *src, union xmm_reg *dst);
 void vec_cvttps2dq32(NO_CPU, const union xmm_reg *src, union xmm_reg *dst);
 
 // TODO organize
+void vec_packss_w128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst);
 void vec_packss_d128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst);
 
 void vec_unpackl_bw128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst);
@@ -114,5 +117,7 @@ void vec_compare_eqd128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst);
 void vec_movmask_b128(NO_CPU, const union xmm_reg *src, uint32_t *dst);
 void vec_fmovmask_d128(NO_CPU, const union xmm_reg *src, uint32_t *dst);
 void vec_extract_w128(NO_CPU, const union xmm_reg *src, uint32_t *dst, uint8_t index);
+void vec_avg_b128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst);
+void vec_avg_w128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst);
 
 #endif
