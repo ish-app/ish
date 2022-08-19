@@ -72,7 +72,15 @@
 #define CC_S    0x0080
 #define CC_O    0x0800
 
-#define __init_call	__attribute__ ((unused,__section__ ("initcall")))
+#ifdef __APPLE__
+    extern void *__start_initcall asm("section$start$__DATA$initcall");
+    extern void *__stop_initcall asm("section$end$__DATA$initcall");
+    #define __init_call	__attribute__ ((unused,__section__("__DATA,initcall")))
+#else
+    extern void *__start_initcall;
+    extern void *__stop_initcall;
+    #define __init_call	__attribute__ ((unused,__section__ ("initcall")))
+#endif
 
 #define CC_MASK (CC_C | CC_P | CC_Z | CC_S | CC_O | CC_A)
 
@@ -1694,6 +1702,7 @@ void test_vm86(void)
 }
 #endif
 
+#ifndef __APPLE__
 /* exception tests */
 #if defined(__i386__) && !defined(REG_EAX)
 #define REG_EAX EAX
@@ -2104,7 +2113,7 @@ static void test_enter(void)
     TEST_ENTER("w", uint16_t, 2);
     TEST_ENTER("w", uint16_t, 31);
 }
-
+#endif
 #ifdef TEST_SSE
 
 typedef int __m64 __attribute__ ((__mode__ (__V2SI__)));
@@ -2426,19 +2435,19 @@ void test_sse(void)
 
     // NOTE: when the MMX op is implemented, just change SSE_OP2 to MMX_OP2, which tests both
     SSE_OP2(punpcklbw);
-    // MMX_OP2(punpcklwd);
+    SSE_OP2(punpcklwd);
     SSE_OP2(punpckldq);
-    // MMX_OP2(packsswb);
+    SSE_OP2(packsswb);
     // MMX_OP2(pcmpgtb);
     // MMX_OP2(pcmpgtw);
     // MMX_OP2(pcmpgtd);
     // MMX_OP2(packuswb);
-    // MMX_OP2(punpckhbw);
-    // MMX_OP2(punpckhwd);
-    // MMX_OP2(punpckhdq);
-    // MMX_OP2(packssdw);
+    SSE_OP2(punpckhbw);
+    SSE_OP2(punpckhwd);
+    SSE_OP2(punpckhdq);
+    SSE_OP2(packssdw);
     SSE_OP2(pcmpeqb);
-    // MMX_OP2(pcmpeqw);
+    SSE_OP2(pcmpeqw);
     SSE_OP2(pcmpeqd);
 
     MMX_OP2(paddq);
@@ -2452,7 +2461,7 @@ void test_sse(void)
     SSE_OP2(pmaxub);
     SSE_OP2(pandn);
 
-    // MMX_OP2(pmulhuw);
+    SSE_OP2(pmulhuw);
     MMX_OP2(pmulhw);
 
     // MMX_OP2(psubsb);
@@ -2464,18 +2473,18 @@ void test_sse(void)
     // MMX_OP2(pmaxsw);
     MMX_OP2(pxor);
     MMX_OP2(pmuludq);
-    // MMX_OP2(pmaddwd);
+    SSE_OP2(pmaddwd);
     // MMX_OP2(psadbw);
-    // MMX_OP2(psubb);
-    // MMX_OP2(psubw);
-    // MMX_OP2(psubd);
+    SSE_OP2(psubb);
+    SSE_OP2(psubw);
+    SSE_OP2(psubd);
     SSE_OP2(psubq);
     SSE_OP2(paddb);
-    // MMX_OP2(paddw);
+    SSE_OP2(paddw);
     SSE_OP2(paddd);
 
-    // MMX_OP2(pavgb);
-    // MMX_OP2(pavgw);
+    SSE_OP2(pavgb);
+    SSE_OP2(pavgw);
 
     // asm volatile ("pinsrw $1, %1, %0" : "=y" (r.q[0]) : "r" (0x12345678));
     // printf("%-9s: r=" FMT64X "\n", "pinsrw", r.q[0]);
@@ -2526,7 +2535,7 @@ void test_sse(void)
     asm volatile ("emms");
 
     SSE_OP2(punpcklqdq);
-    // SSE_OP2(punpckhqdq);
+    SSE_OP2(punpckhqdq);
     SSE_OP2(andps);
     SSE_OP2(andpd);
     SSE_OP2(andnps);
@@ -2546,19 +2555,19 @@ void test_sse(void)
 
     PSHUF_OP(pshufd, 0x78);
     PSHUF_OP(pshuflw, 0x78);
-    // PSHUF_OP(pshufhw, 0x78);
+    PSHUF_OP(pshufhw, 0x78);
 
-    // SHIFT_OP(psrlw, 7);
-    // SHIFT_OP(psrlw, 16);
-    // SHIFT_OP(psraw, 7);
-    // SHIFT_OP(psraw, 16);
-    // SHIFT_OP(psllw, 7);
-    // SHIFT_OP(psllw, 16);
+    SHIFT_DQ_IM(psrlw, 7);
+    SHIFT_DQ_IM(psrlw, 16);
+    SHIFT_DQ_IM(psraw, 7);
+    SHIFT_DQ_IM(psraw, 16);
+    SHIFT_DQ_IM(psllw, 7);
+    SHIFT_DQ_IM(psllw, 16);
 
     SHIFT_DQ_IM(psrld, 7);
     SHIFT_DQ_IM(psrld, 32);
-    // SHIFT_OP(psrad, 7);
-    // SHIFT_OP(psrad, 32);
+    SHIFT_DQ_IM(psrad, 7);
+    SHIFT_DQ_IM(psrad, 32);
     SHIFT_DQ_IM(pslld, 7);
     SHIFT_DQ_IM(pslld, 32);
 
@@ -2567,8 +2576,8 @@ void test_sse(void)
     SHIFT_OP(psllq, 7);
     SHIFT_OP(psllq, 32);
 
-    // SHIFT_DQ_IM(psrldq, 16);
-    // SHIFT_DQ_IM(psrldq, 7);
+    SHIFT_DQ_IM(psrldq, 16);
+    SHIFT_DQ_IM(psrldq, 7);
     SHIFT_DQ_IM(pslldq, 16);
     SHIFT_DQ_IM(pslldq, 7);
     SHIFT_IM(psrlq, 16);
@@ -2750,10 +2759,6 @@ void test_conv(void)
     }
 #endif
 }
-
-extern void *__start_initcall;
-extern void *__stop_initcall;
-
 
 int main(int argc, char **argv)
 {
