@@ -325,16 +325,23 @@
         return;
 
     CGRect keyboardFrame = [notification.userInfo[UIKeyboardFrameEndUserInfoKey] CGRectValue];
+    keyboardFrame = [self.view convertRect:keyboardFrame fromView:self.view.window];
     if (CGRectEqualToRect(keyboardFrame, CGRectZero))
         return;
     NSLog(@"%@ %@", notification.name, [NSValue valueWithCGRect:keyboardFrame]);
     self.hasExternalKeyboard = keyboardFrame.size.height < 100;
-    CGFloat pad = UIScreen.mainScreen.bounds.size.height - keyboardFrame.origin.y;
-    if (pad != keyboardFrame.size.height) {
-        pad = 0; // keyboard is not right at the bottom of the screen, must be floating or something
-    }
-    if (pad == 0) {
-        pad = self.view.safeAreaInsets.bottom;
+    CGFloat pad = self.view.bounds.size.height - keyboardFrame.origin.y;
+    // In Slide Over, we get a keyboard frame that is in screen coordinates but
+    // the app is slightly shorter than the screen height. Try to determine the
+    // screen position by assuming the app is vertically centered, then
+    // correcting for the difference.
+    pad += (UIScreen.mainScreen.bounds.size.height - self.view.frame.size.height) / 2;
+    // The keyboard appears to be undocked. This means it can either be split or
+    // truly floating. In the former case we want to keep the pad, but in the
+    // latter we should fall back to the input accessory view instead of the
+    // keyboard.
+    if (pad != keyboardFrame.size.height && keyboardFrame.size.width != UIScreen.mainScreen.bounds.size.width) {
+        pad = MAX(self.view.safeAreaInsets.bottom, self.termView.inputAccessoryView.frame.size.height);
     }
     // NSLog(@"pad %f", pad);
     self.bottomConstraint.constant = pad;
