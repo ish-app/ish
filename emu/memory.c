@@ -299,7 +299,7 @@ void *mem_ptr(struct mem *mem, addr_t addr, int type) {
     }
 
     void *ptr = mem_ptr_nofault(mem, addr, type);
-    assert(old_ptr == NULL || old_ptr == ptr);
+    assert(old_ptr == NULL || old_ptr == ptr || type == MEM_WRITE_PTRACE);
     return ptr;
 }
 
