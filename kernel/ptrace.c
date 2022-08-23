@@ -119,12 +119,7 @@ dword_t sys_ptrace(dword_t request, dword_t pid, addr_t addr, dword_t data) {
             struct task *child = find_child(pid);
             if (!child) return _EPERM;
 
-            read_wrlock(&child->mem->lock);
-            char *ptr = mem_ptr(child->mem, addr, MEM_WRITE_PTRACE);
-            read_wrunlock(&child->mem->lock);
-            if (ptr) {
-                memcpy(ptr, &data, sizeof(data));
-            } else {
+            if (user_write_task_ptrace(child, addr, &data, sizeof(data))) {
                 unlock(&child->ptrace.lock);
                 return _EFAULT;
             }
