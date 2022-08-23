@@ -121,6 +121,11 @@ static off_t_ proc_seek(struct fd *fd, off_t_ off, int whence) {
 }
 
 static ssize_t proc_pread(struct fd *fd, void *buf, size_t bufsize, off_t off) {
+    if (fd->proc.entry.meta->pread) {
+        struct proc_data data = {buf, bufsize, bufsize};
+        return fd->proc.entry.meta->pread(&fd->proc.entry, &data, off);
+    }
+    
     int err = proc_refresh_data(fd);
     if (err < 0)
         return err;
@@ -161,11 +166,16 @@ static void proc_buf_write(struct proc_data *buf, const void *data, size_t size,
     }
 }
 
-static ssize_t proc_pwrite(struct fd *fd, const void *buf, size_t bufsize, off_t UNUSED(off)) {
+static ssize_t proc_pwrite(struct fd *fd, const void *buf, size_t bufsize, off_t off) {
     mode_t_ mode = proc_entry_mode(&fd->proc.entry);
     if (S_ISDIR(mode))
         return _EISDIR;
     assert(S_ISREG(mode));
+    
+    if (fd->proc.entry.meta->pwrite) {
+        struct proc_data data = {buf, bufsize, bufsize};
+        return fd->proc.entry.meta->pwrite(&fd->proc.entry, &data, off);
+    }
     
     if (!fd->proc.entry.meta->update) {
         return _EPERM;
