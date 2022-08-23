@@ -216,6 +216,25 @@ static int proc_pid_maps_show(struct proc_entry *entry, struct proc_data *buf) {
     return 0;
 }
 
+static ssize_t proc_pid_mem_pread(struct proc_entry *entry, struct proc_data *buf, off_t offset) {
+    struct task *task = proc_get_task(entry);
+    if (task == NULL)
+        return _ESRCH;
+    int result = user_read_task(task, (addr_t)offset, buf->data, buf->size);
+    proc_put_task(task);
+    return result ? -1 : buf->size;
+}
+
+static ssize_t proc_pid_mem_pwrite(struct proc_entry *entry, struct proc_data *buf, off_t offset) {
+    struct task *task = proc_get_task(entry);
+    if (task == NULL)
+        return _ESRCH;
+    int result = user_write_task_ptrace(task, (addr_t)offset, buf->data, buf->size);
+    proc_put_task(task);
+    return result ? -1 : buf->size;
+}
+
+
 static struct proc_dir_entry proc_pid_fd;
 
 static bool proc_pid_fd_readdir(struct proc_entry *entry, unsigned long *index, struct proc_entry *next_entry) {
@@ -260,13 +279,33 @@ static int proc_pid_exe_readlink(struct proc_entry *entry, char *buf) {
     return err;
 }
 
+static void proc_pid_task_getname(struct proc_entry *entry, char *buf) {
+    sprintf(buf, "%d", entry->pid);
+}
+
+static int proc_pid_task_readlink(struct proc_entry *entry, char *buf) {
+    sprintf(buf, "/proc/%d", entry->pid);
+    return 0;
+}
+
+static struct proc_dir_entry proc_pid_task;
+
+static bool proc_pid_task_readdir(struct proc_entry *entry, unsigned long *index, struct proc_entry *next_entry) {
+    // TODO: Expose all threads
+    *next_entry = (struct proc_entry) {&proc_pid_task, .pid = entry->pid};
+    return !(*index)++;
+}
+
+
 struct proc_children proc_pid_children = PROC_CHILDREN({
     {"auxv", .show = proc_pid_auxv_show},
     {"cmdline", .show = proc_pid_cmdline_show},
     {"exe", S_IFLNK, .readlink = proc_pid_exe_readlink},
     {"fd", S_IFDIR, .readdir = proc_pid_fd_readdir},
     {"maps", .show = proc_pid_maps_show},
+    {"mem", .pread = proc_pid_mem_pread, .pwrite = proc_pid_mem_pwrite},
     {"stat", .show = proc_pid_stat_show},
+    {"task", S_IFDIR, .readdir = proc_pid_task_readdir},
 });
 
 struct proc_dir_entry proc_pid = {NULL, S_IFDIR,
@@ -274,3 +313,6 @@ struct proc_dir_entry proc_pid = {NULL, S_IFDIR,
 
 static struct proc_dir_entry proc_pid_fd = {NULL, S_IFLNK,
     .getname = proc_pid_fd_getname, .readlink = proc_pid_fd_readlink};
+
+static struct proc_dir_entry proc_pid_task = {NULL, S_IFLNK,
+    .getname = proc_pid_task_getname, .readlink = proc_pid_task_readlink};
