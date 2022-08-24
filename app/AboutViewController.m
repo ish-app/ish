@@ -58,7 +58,7 @@
             [self _updateUI];
         });
     }];
-    [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(_updateUI) name:FsUpdatedNotification object:nil];
+    [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(_updateUI:) name:FsUpdatedNotification object:nil];
 }
 
 - (void)viewWillAppear:(BOOL)animated {
@@ -73,6 +73,10 @@
 - (void)exitRecovery:(id)sender {
     [NSUserDefaults.standardUserDefaults setBool:NO forKey:@"recovery"];
     exit(0);
+}
+
+- (void)_updateUI:(NSNotification *)notification {
+    [self _updateUI];
 }
 
 - (void)_updateUI {
