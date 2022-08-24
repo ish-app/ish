@@ -17,14 +17,14 @@ static int __user_read_task(struct task *task, addr_t addr, void *buf, size_t co
     return 0;
 }
 
-static int __user_write_task(struct task *task, addr_t addr, const void *buf, size_t count) {
+static int __user_write_task(struct task *task, addr_t addr, const void *buf, size_t count, bool ptrace) {
     const char *cbuf = (const char *) buf;
     addr_t p = addr;
     while (p < addr + count) {
         addr_t chunk_end = (PAGE(p) + 1) << PAGE_BITS;
         if (chunk_end > addr + count)
             chunk_end = addr + count;
-        char *ptr = mem_ptr(task->mem, p, MEM_WRITE);
+        char *ptr = mem_ptr(task->mem, p, ptrace ? MEM_WRITE_PTRACE : MEM_WRITE);
         if (ptr == NULL)
             return 1;
         memcpy(ptr, &cbuf[p - addr], chunk_end - p);
@@ -46,7 +46,14 @@ int user_read(addr_t addr, void *buf, size_t count) {
 
 int user_write_task(struct task *task, addr_t addr, const void *buf, size_t count) {
     read_wrlock(&task->mem->lock);
-    int res = __user_write_task(task, addr, buf, count);
+    int res = __user_write_task(task, addr, buf, count, false);
+    read_wrunlock(&task->mem->lock);
+    return res;
+}
+
+int user_write_task_ptrace(struct task *task, addr_t addr, const void *buf, size_t count) {
+    read_wrlock(&task->mem->lock);
+    int res = __user_write_task(task, addr, buf, count, true);
     read_wrunlock(&task->mem->lock);
     return res;
 }
@@ -79,7 +86,7 @@ int user_write_string(addr_t addr, const char *buf) {
     read_wrlock(&current->mem->lock);
     size_t i = 0;
     do {
-        if (__user_write_task(current, addr + i, &buf[i], sizeof(buf[i]))) {
+        if (__user_write_task(current, addr + i, &buf[i], sizeof(buf[i]), false)) {
             read_wrunlock(&current->mem->lock);
             return 1;
         }
