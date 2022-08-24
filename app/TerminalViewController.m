@@ -119,7 +119,7 @@
             [self setNeedsStatusBarAppearanceUpdate];
         });
     }];
-    [UserPreferences.shared observe:@[@"theme", @"hideExtraKeysWithExternalKeyboard"]
+    [UserPreferences.shared observe:@[@"colorScheme", @"theme", @"hideExtraKeysWithExternalKeyboard"]
                             options:0 owner:self usingBlock:^(typeof(self) self) {
         dispatch_async(dispatch_get_main_queue(), ^{
             [self _updateStyleFromPreferences:YES];
@@ -281,8 +281,8 @@
     NSAssert(NSThread.isMainThread, @"This method needs to be called on the main thread");
     NSTimeInterval duration = animated ? 0.1 : 0;
     [UIView animateWithDuration:duration animations:^{
-        self.view.backgroundColor = UserPreferences.shared.theme.backgroundColor;
-        UIKeyboardAppearance keyAppearance = UserPreferences.shared.theme.keyboardAppearance;
+        self.view.backgroundColor = [[UIColor alloc] ish_initWithHexString:UserPreferences.shared.palette.backgroundColor];
+        UIKeyboardAppearance keyAppearance = UserPreferences.shared.keyboardAppearance;
         self.termView.keyboardAppearance = keyAppearance;
         for (BarButton *button in self.barButtons) {
             button.keyAppearance = keyAppearance;
@@ -365,6 +365,16 @@
         // You might want to check if this is your embed segue here
         // in case there are other segues triggered from this view controller.
         segue.destinationViewController.view.translatesAutoresizingMaskIntoConstraints = NO;
+    }
+}
+
+- (void)traitCollectionDidChange:(UITraitCollection *)previousTraitCollection {
+    // Hack to resolve a layering mismatch between the the UI and preferences.
+    if (@available(iOS 12.0, *)) {
+        if (previousTraitCollection.userInterfaceStyle != self.traitCollection.userInterfaceStyle) {
+            // Ensure that the relevant things listening for this will update.
+            UserPreferences.shared.colorScheme = UserPreferences.shared.colorScheme;
+        }
     }
 }
 

@@ -77,8 +77,6 @@
 
 - (void)_updateUI {
     NSAssert(NSThread.isMainThread, @"This method needs to be called on the main thread");
-    UserPreferences *prefs = UserPreferences.shared;
-    self.themeCell.detailTextLabel.text = prefs.theme.presetName;
     self.disableDimmingSwitch.on = UserPreferences.shared.shouldDisableDimming;
     self.launchCommandField.text = [UserPreferences.shared.launchCommand componentsJoinedByString:@" "];
     self.bootCommandField.text = [UserPreferences.shared.bootCommand componentsJoinedByString:@" "];

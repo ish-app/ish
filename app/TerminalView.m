@@ -71,7 +71,7 @@ struct rowcol {
             self->_keyCommands = nil;
         });
     }];
-    [prefs observe:@[@"fontFamily", @"fontSize", @"theme"]
+    [prefs observe:@[@"colorScheme", @"fontFamily", @"fontSize", @"theme", @"cursorStyle", @"blinkCursor"]
            options:0 owner:self usingBlock:^(typeof(self) self) {
         dispatch_async(dispatch_get_main_queue(), ^{
             [self _updateStyle];
@@ -154,13 +154,6 @@ static NSString *const HANDLERS[] = {@"syncFocus", @"focus", @"newScrollHeight",
 
 #pragma mark Styling
 
-- (NSString *)cssColor:(UIColor *)color {
-    CGFloat red, green, blue, alpha;
-    [color getRed:&red green:&green blue:&blue alpha:&alpha];
-    return [NSString stringWithFormat:@"rgba(%ld, %ld, %ld, %ld)",
-            lround(red * 255), lround(green * 255), lround(blue * 255), lround(alpha * 255)];
-}
-
 - (void)_updateStyle {
     NSAssert(NSThread.isMainThread, @"This method needs to be called on the main thread");
     if (!self.terminal.loaded)
@@ -168,12 +161,21 @@ static NSString *const HANDLERS[] = {@"syncFocus", @"focus", @"newScrollHeight",
     UserPreferences *prefs = [UserPreferences shared];
     if (_overrideFontSize == prefs.fontSize.doubleValue)
         _overrideFontSize = 0;
-    id themeInfo = @{
+    Palette *palette = prefs.palette;
+    if (self.overrideAppearance != OverrideAppearanceNone) {
+        palette = self.overrideAppearance == OverrideAppearanceLight ? prefs.theme.lightPalette : prefs.theme.darkPalette;
+    }
+    NSMutableDictionary<NSString *, id> *themeInfo = [@{
         @"fontFamily": prefs.fontFamily,
         @"fontSize": @(self.effectiveFontSize),
-        @"foregroundColor": [self cssColor:prefs.theme.foregroundColor],
-        @"backgroundColor": [self cssColor:prefs.theme.backgroundColor],
-    };
+        @"foregroundColor": palette.foregroundColor,
+        @"backgroundColor": palette.backgroundColor,
+        @"blinkCursor": @(prefs.blinkCursor),
+        @"cursorShape": prefs.htermCursorShape,
+    } mutableCopy];
+    if (prefs.palette.colorPaletteOverrides) {
+        themeInfo[@"colorPaletteOverrides"] = palette.colorPaletteOverrides;
+    }
     NSString *json = [[NSString alloc] initWithData:[NSJSONSerialization dataWithJSONObject:themeInfo options:0 error:nil] encoding:NSUTF8StringEncoding];
     [self.terminal.webView evaluateJavaScript:[NSString stringWithFormat:@"exports.updateStyle(%@)", json] completionHandler:^(id result, NSError *error){
         [self updateFloatingCursorSensitivity];
@@ -182,6 +184,11 @@ static NSString *const HANDLERS[] = {@"syncFocus", @"focus", @"newScrollHeight",
 
 - (void)setOverrideFontSize:(CGFloat)overrideFontSize {
     _overrideFontSize = overrideFontSize;
+    [self _updateStyle];
+}
+
+- (void)setOverrideAppearance:(enum OverrideAppearance)overrideAppearance {
+    _overrideAppearance = overrideAppearance;
     [self _updateStyle];
 }
 
@@ -265,7 +272,14 @@ static NSString *const HANDLERS[] = {@"syncFocus", @"focus", @"newScrollHeight",
 }
 
 - (void)setKeyboardAppearance:(UIKeyboardAppearance)keyboardAppearance {
+    BOOL needsFirstResponderDance = self.isFirstResponder && _keyboardAppearance != keyboardAppearance;
+    if (needsFirstResponderDance) {
+        [self resignFirstResponder];
+    }
     _keyboardAppearance = keyboardAppearance;
+    if (needsFirstResponderDance) {
+        [self becomeFirstResponder];
+    }
     if (keyboardAppearance == UIKeyboardAppearanceLight) {
         self.scrollbarView.indicatorStyle = UIScrollViewIndicatorStyleBlack;
     } else {

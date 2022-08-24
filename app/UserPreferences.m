@@ -5,7 +5,6 @@
 //  Created by Charlie Melbye on 11/12/18.
 //
 
-#import <UIKit/UIKit.h>
 #import "UserPreferences.h"
 #import "fs/proc/ish.h"
 
@@ -19,15 +18,24 @@ static NSString *const kPreferenceHideExtraKeysWithExternalKeyboardKey = @"Hide 
 static NSString *const kPreferenceOverrideControlSpaceKey = @"Override Control Space";
 static NSString *const kPreferenceFontFamilyKey = @"Font Family";
 static NSString *const kPreferenceFontSizeKey = @"Font Size";
-static NSString *const kPreferenceThemeKey = @"Theme";
+static NSString *const kPreferenceThemeKey = @"ModernTheme";
 static NSString *const kPreferenceDisableDimmingKey = @"Disable Dimming";
 NSString *const kPreferenceLaunchCommandKey = @"Init Command";
 NSString *const kPreferenceBootCommandKey = @"Boot Command";
+static NSString *const kPreferenceCursorStyleKey = @"Cursor Style";
+static NSString *const kPreferenceBlinkCursorKey = @"Blink Cursor";
 NSString *const kPreferenceHideStatusBarKey = @"Status Bar";
+static NSString *const kPreferenceColorSchemeKey = @"Color Scheme";
 
 NSDictionary<NSString *, NSString *> *friendlyPreferenceMapping;
 NSDictionary<NSString *, NSString *> *friendlyPreferenceReverseMapping;
 NSDictionary<NSString *, NSString *> *kvoProperties;
+
+static NSString *const kSystemMonospacedFontName = @"ui-monospace";
+
+@interface UserPreferences ()
+- (void)updateTheme;
+@end
 
 char **get_all_defaults_keys_impl(void) {
     NSArray<NSString *> *preferenceKeys = NSUserDefaults.standardUserDefaults.dictionaryRepresentation.allKeys;
@@ -103,6 +111,11 @@ bool remove_user_default_impl(const char *name) {
     if (property) {
         [UserPreferences.shared didChangeValueForKey:property];
     }
+    
+    // This particular property needs special handling to stay up-to-date
+    if ([property isEqualToString:@"userTheme"]) {
+        [UserPreferences.shared updateTheme];
+    }
     return true;
 }
 
@@ -133,20 +146,30 @@ bool (*remove_user_default)(const char *name);
     self = [super init];
     if (self) {
         _defaults = [NSUserDefaults standardUserDefaults];
-        Theme *defaultTheme = [Theme presetThemeNamed:@"Light"];
         [_defaults registerDefaults:@{
-            kPreferenceFontFamilyKey: @"Menlo",
             kPreferenceFontSizeKey: @(12),
-            kPreferenceThemeKey: defaultTheme.properties,
             kPreferenceCapsLockMappingKey: @(CapsLockMapControl),
             kPreferenceOptionMappingKey: @(OptionMapNone),
             kPreferenceBacktickEscapeKey: @(NO),
             kPreferenceDisableDimmingKey: @(NO),
             kPreferenceLaunchCommandKey: @[@"/bin/login", @"-f", @"root"],
             kPreferenceBootCommandKey: @[@"/sbin/init"],
+            kPreferenceBlinkCursorKey: @(NO),
+            kPreferenceCursorStyleKey: @(CursorStyleBlock),
             kPreferenceHideStatusBarKey: @(NO),
+            kPreferenceColorSchemeKey: @(ColorSchemeMatchSystem),
+            kPreferenceThemeKey: @"Default",
         }];
-        _theme = [[Theme alloc] initWithProperties:[_defaults objectForKey:kPreferenceThemeKey]];
+        // https://webkit.org/blog/10247/new-webkit-features-in-safari-13-1/
+        if (@available(iOS 13.4, *)) {
+            [_defaults registerDefaults:@{
+                kPreferenceFontFamilyKey: kSystemMonospacedFontName,
+            }];
+        } else {
+            [_defaults registerDefaults:@{
+                kPreferenceFontFamilyKey: @"Menlo",
+            }];
+        }
         get_all_defaults_keys = get_all_defaults_keys_impl;
         get_friendly_name = get_friendly_name_impl;
         get_underlying_name = get_underlying_name_impl;
@@ -164,7 +187,11 @@ bool (*remove_user_default)(const char *name);
             @"disable_dimming": kPreferenceDisableDimmingKey,
             @"launch_command": kPreferenceLaunchCommandKey,
             @"boot_command": kPreferenceBootCommandKey,
+            @"cursor_style": kPreferenceCursorStyleKey,
+            @"blink_cursor": kPreferenceBlinkCursorKey,
             @"hide_status_bar": kPreferenceHideStatusBarKey,
+            @"color_scheme": kPreferenceColorSchemeKey,
+            @"theme": kPreferenceThemeKey,
         };
         NSMutableDictionary <NSString *, NSString *> *reverseMapping = [NSMutableDictionary new];
         for (NSString *key in friendlyPreferenceMapping) {
@@ -184,9 +211,20 @@ bool (*remove_user_default)(const char *name);
             kPreferenceDisableDimmingKey: property(shouldDisableDimming),
             kPreferenceLaunchCommandKey: property(launchCommand),
             kPreferenceBootCommandKey: property(bootCommand),
+            kPreferenceCursorStyleKey: property(cursorStyle),
+            kPreferenceBlinkCursorKey: property(blinkCursor),
             kPreferenceHideStatusBarKey: property(hideStatusBar),
+            kPreferenceColorSchemeKey: property(colorScheme),
+            // This one is a little bit special, so it needs extra handling.
+            // The backing property for this is intentionally underscored.
+            kPreferenceThemeKey: @"userTheme",
         };
 #undef property
+        
+        [self updateTheme];
+        
+        [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(updateTheme:) name:ThemesUpdatedNotification object:nil];
+        [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(updateTheme:) name:ThemeUpdatedNotification object:nil];
     }
     return self;
 }
@@ -285,25 +323,68 @@ bool (*remove_user_default)(const char *name);
 }
 
 - (void)setFontFamily:(NSString *)fontFamily {
-    [_defaults setObject:fontFamily forKey:kPreferenceFontFamilyKey];
+    if (fontFamily) {
+        [_defaults setObject:fontFamily forKey:kPreferenceFontFamilyKey];
+    } else {
+        [_defaults removeObjectForKey:kPreferenceFontFamilyKey];
+    }
 }
 
 - (BOOL)validateFontFamily:(id *)value error:(NSError **)error {
     return [*value isKindOfClass:NSString.class];
 }
 
+- (NSString *)fontFamilyUserFacingName {
+    return [self.fontFamily isEqualToString:kSystemMonospacedFontName] ? @"System" : self.fontFamily;
+}
+
+- (UIFont *)approximateFont {
+    if (@available(iOS 13.4, *)) {
+        if ([self.fontFamily isEqualToString:kSystemMonospacedFontName]) {
+            return [UIFont monospacedSystemFontOfSize:self.fontSize.doubleValue weight:UIFontWeightRegular];
+        }
+    }
+    UIFont *font = [UIFont fontWithName:self.fontFamily size:self.fontSize.doubleValue];
+    return font ? font : [UIFont fontWithName:@"Menlo" size:self.fontSize.doubleValue];
+}
+
 // MARK: theme
-- (UIColor *)foregroundColor {
-    return self.theme.foregroundColor;
-}
-
-- (UIColor *)backgroundColor {
-    return self.theme.backgroundColor;
-}
-
 - (void)setTheme:(Theme *)theme {
     _theme = theme;
-    [_defaults setObject:theme.properties forKey:kPreferenceThemeKey];
+    [_defaults setObject:theme.name forKey:kPreferenceThemeKey];
+}
+
+// These are provided because user theme validation is done with strings
+- (NSString *)_userTheme {
+    return self.theme.name;
+}
+
+- (void)_setUserTheme:(NSString *)userTheme {
+    Theme *theme;
+    if ((theme = [Theme themeForName:userTheme includingDefaultThemes:YES])) {
+        self.theme = theme;
+    } else {
+        self.theme = Theme.defaultThemes.lastObject;
+    }
+}
+
+- (BOOL)_validateUserTheme:(id *)value error:(NSError **)error {
+    return [*value isKindOfClass:NSString.class];
+}
+
+- (void)updateTheme:(NSNotification *)notification {
+    if (notification.object) {
+        [_defaults setValue:notification.object forKey:kPreferenceThemeKey];
+    }
+    [self updateTheme];
+}
+
+- (void)updateTheme {
+    [self _setUserTheme:[_defaults valueForKey:kPreferenceThemeKey]];
+}
+
+- (Palette *)palette {
+    return self.requestingDarkAppearance ? self.theme.darkPalette : self.theme.lightPalette;
 }
 
 // MARK: shouldDisableDimming
@@ -366,6 +447,52 @@ bool (*remove_user_default)(const char *name);
     return YES;
 }
 
+// MARK: cursorStyle
+
+- (CursorStyle)cursorStyle {
+    return [_defaults integerForKey:kPreferenceCursorStyleKey];
+}
+
+- (void)setCursorStyle:(CursorStyle)cursorStyle {
+    [_defaults setInteger:cursorStyle forKey:kPreferenceCursorStyleKey];
+}
+
+- (BOOL)validateCursorStyle:(id *)value error:(NSError **)error {
+    if (![*value isKindOfClass:NSNumber.class]) {
+        return NO;
+    }
+    int _value = [(NSNumber *)(*value) intValue];
+    return _value >= __CursorStyleLast && value < __CursorStyleFirst;
+}
+
+- (NSString *)htermCursorShape {
+    switch (self.cursorStyle) {
+        case CursorStyleBlock:
+            return @"BLOCK";
+        case CursorStyleBeam:
+            return @"BEAM";
+        case CursorStyleUnderline:
+            return @"UNDERLINE";
+        default:
+            NSAssert(NO, @"Invalid cursor style");
+            return nil;
+    }
+}
+
+// MARK: blinkCursor
+
+- (BOOL)blinkCursor {
+    return [_defaults boolForKey:kPreferenceBlinkCursorKey];
+}
+
+- (void)setBlinkCursor:(BOOL)blinkCursor {
+    [_defaults setBool:blinkCursor forKey:kPreferenceBlinkCursorKey];
+}
+
+- (BOOL)validateBlinkCursor:(id *)value error:(NSError **)error {
+    return [*value isKindOfClass:NSNumber.class];
+}
+
 // MARK: hideStatusBar
 - (BOOL)hideStatusBar {
     return [_defaults boolForKey:kPreferenceHideStatusBarKey];
@@ -379,94 +506,54 @@ bool (*remove_user_default)(const char *name);
     return [*value isKindOfClass:NSNumber.class];
 }
 
-@end
-
-static id ArchiveColor(UIColor *color) {
-    CGFloat r, g, b;
-    [color getRed:&r green:&g blue:&b alpha:nil];
-    return [NSString stringWithFormat:@"%f %f %f", r, g, b];
-}
-static UIColor *UnarchiveColor(id data) {
-    NSArray<NSString *> *components = [data componentsSeparatedByString:@" "];
-    CGFloat r = components[0].doubleValue;
-    CGFloat g = components[1].doubleValue;
-    CGFloat b = components[2].doubleValue;
-    return [UIColor colorWithRed:r green:g blue:b alpha:1];
+- (ColorScheme)colorScheme {
+    return [_defaults integerForKey:kPreferenceColorSchemeKey];
 }
 
-@implementation Theme
+- (void)setColorScheme:(ColorScheme)colorScheme {
+    [_defaults setInteger:colorScheme forKey:kPreferenceColorSchemeKey];
+}
 
-- (instancetype)initWithProperties:(NSDictionary<NSString *,id> *)props {
-    if (self = [super init]) {
-        _foregroundColor = UnarchiveColor(props[kThemeForegroundColor]);
-        _backgroundColor = UnarchiveColor(props[kThemeBackgroundColor]);
+- (BOOL)validateColorScheme:(id *)value error:(NSError **)error {
+    if (![*value isKindOfClass:NSNumber.class]) {
+        return NO;
     }
-    return self;
+    int _value = [(NSNumber *)(*value) intValue];
+    return _value >= __ColorSchemeLast && value < __ColorSchemeFirst;
 }
 
-+ (instancetype)_themeWithForegroundColor:(UIColor *)foreground backgroundColor:(UIColor *)background {
-    return [[self alloc] initWithProperties:@{kThemeForegroundColor: ArchiveColor(foreground),
-                                              kThemeBackgroundColor: ArchiveColor(background)}];
-}
-
-- (UIStatusBarStyle)statusBarStyle {
-    CGFloat lightness;
-    [self.backgroundColor getWhite:&lightness alpha:nil];
-    if (lightness > 0.5) {
-        if (@available(iOS 13, *))
-            return UIStatusBarStyleDarkContent;
-        else
-            return UIStatusBarStyleDefault;
-    } else {
-        return UIStatusBarStyleLightContent;
+- (BOOL)requestingDarkAppearance {
+    switch (self.colorScheme) {
+        case ColorSchemeAlwaysDark:
+            return YES;
+        default:
+            NSAssert(NO, @"invalid color scheme");
+        case ColorSchemeMatchSystem:
+            if (@available(iOS 12.0, *)) {
+                switch (UIScreen.mainScreen.traitCollection.userInterfaceStyle) {
+                    case UIUserInterfaceStyleLight:
+                        return NO;
+                    case UIUserInterfaceStyleDark:
+                        return YES;
+                    default:
+                        break;
+                }
+            }
+        case ColorSchemeAlwaysLight:
+            return NO;
     }
+}
+
+- (UIUserInterfaceStyle)userInterfaceStyle {
+    return self.requestingDarkAppearance ? UIUserInterfaceStyleDark : UIUserInterfaceStyleLight;
 }
 
 - (UIKeyboardAppearance)keyboardAppearance {
-    CGFloat lightness;
-    [self.backgroundColor getWhite:&lightness alpha:nil];
-    if (lightness > 0.5)
-        return UIKeyboardAppearanceLight;
-    else
-        return UIKeyboardAppearanceDark;
+    return self.requestingDarkAppearance ? UIKeyboardAppearanceDark : UIKeyboardAppearanceLight;
 }
 
-- (NSDictionary<NSString *,id> *)properties {
-    return @{kThemeForegroundColor: ArchiveColor(self.foregroundColor),
-             kThemeBackgroundColor: ArchiveColor(self.backgroundColor)};
-}
-
-- (BOOL)isEqual:(id)object {
-    if ([self class] != [object class])
-        return NO;
-    return [self.properties isEqualToDictionary:[object properties]];
-}
-
-NSDictionary<NSString *, Theme *> *presetThemes;
-+ (void)initialize {
-    presetThemes = @{@"Light": [self _themeWithForegroundColor:UIColor.blackColor
-                                               backgroundColor:UIColor.whiteColor],
-                     @"Dark":  [self _themeWithForegroundColor:UIColor.whiteColor
-                                               backgroundColor:UIColor.blackColor],
-                     @"1337":  [self _themeWithForegroundColor:UIColor.greenColor
-                                               backgroundColor:UIColor.blackColor]};
-}
-
-+ (NSArray<NSString *> *)presetNames {
-    return @[@"Light", @"Dark", @"1337"];
-}
-+ (instancetype)presetThemeNamed:(NSString *)name {
-    return presetThemes[name];
-}
-- (NSString *)presetName {
-    for (NSString *name in presetThemes) {
-        if ([self isEqual:presetThemes[name]])
-            return name;
-    }
-    return nil;
+- (UIStatusBarStyle)statusBarStyle {
+    return 0;
 }
 
 @end
-
-NSString *const kThemeForegroundColor = @"ForegroundColor";
-NSString *const kThemeBackgroundColor = @"BackgroundColor";
