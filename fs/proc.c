@@ -173,7 +173,7 @@ static ssize_t proc_pwrite(struct fd *fd, const void *buf, size_t bufsize, off_t
     assert(S_ISREG(mode));
     
     if (fd->proc.entry.meta->pwrite) {
-        struct proc_data data = {buf, bufsize, bufsize};
+        struct proc_data data = {(char *)buf, bufsize, bufsize};
         return fd->proc.entry.meta->pwrite(&fd->proc.entry, &data, off);
     }
     
