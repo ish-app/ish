@@ -21,7 +21,10 @@
 /* End PBXAggregateTarget section */
 
 /* Begin PBXBuildFile section */
+		491B31E62883BF22008EEFB0 /* ThemeViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 491B31E52883BF22008EEFB0 /* ThemeViewController.m */; };
 		49302D8E277669D300C9885A /* ish.c in Sources */ = {isa = PBXBuildFile; fileRef = 49302D8D277669D300C9885A /* ish.c */; };
+		496C7AB227CC697E005D7613 /* Theme.m in Sources */ = {isa = PBXBuildFile; fileRef = 491C4C1E27C8FB65008B1DFA /* Theme.m */; };
+		496C7AB327CC734D005D7613 /* ThemesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 491C4C1627C8F84A008B1DFA /* ThemesViewController.m */; };
 		497F6CF5254E5EA500C82F46 /* float80-test.c in Sources */ = {isa = PBXBuildFile; fileRef = 497F6C5A254E5C7E00C82F46 /* float80-test.c */; };
 		497F6CF6254E5EA500C82F46 /* float80.c in Sources */ = {isa = PBXBuildFile; fileRef = 497F6C66254E5C7F00C82F46 /* float80.c */; };
 		497F6CF7254E5EA500C82F46 /* fpu.c in Sources */ = {isa = PBXBuildFile; fileRef = 497F6C5D254E5C7E00C82F46 /* fpu.c */; };
@@ -394,6 +397,12 @@
 /* Begin PBXFileReference section */
 		408A2639236440F8008A4E81 /* iOSFS.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iOSFS.m; sourceTree = "<group>"; };
 		408A263B23644102008A4E81 /* iOSFS.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iOSFS.h; sourceTree = "<group>"; };
+		491B31E42883BF22008EEFB0 /* ThemeViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ThemeViewController.h; sourceTree = "<group>"; };
+		491B31E52883BF22008EEFB0 /* ThemeViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ThemeViewController.m; sourceTree = "<group>"; };
+		491C4C1527C8F84A008B1DFA /* ThemesViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ThemesViewController.h; sourceTree = "<group>"; };
+		491C4C1627C8F84A008B1DFA /* ThemesViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ThemesViewController.m; sourceTree = "<group>"; };
+		491C4C1D27C8FB65008B1DFA /* Theme.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Theme.h; sourceTree = "<group>"; };
+		491C4C1E27C8FB65008B1DFA /* Theme.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Theme.m; sourceTree = "<group>"; };
 		49302D8D277669D300C9885A /* ish.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ish.c; sourceTree = "<group>"; };
 		49302D972777FAB400C9885A /* ish.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ish.h; sourceTree = "<group>"; };
 		494D03F72727DAC6004F0CCE /* xcode-ninja.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "xcode-ninja.sh"; sourceTree = "<group>"; };
@@ -1262,22 +1271,28 @@
 			isa = PBXGroup;
 			children = (
 				BBBCE7E521D2F02200CA00B3 /* About.storyboard */,
+				9A28E4E8219A8B670073D200 /* AboutAppearanceViewController.h */,
+				9A28E4E9219A8B670073D200 /* AboutAppearanceViewController.m */,
+				BB82A7FB21B4C2E8006AA5FD /* AboutExternalKeyboardViewController.h */,
+				BB82A7FC21B4C2E8006AA5FD /* AboutExternalKeyboardViewController.m */,
 				BB1D9D91234A8FE100F364E8 /* AboutNavigationController.h */,
 				BB1D9D92234A8FE100F364E8 /* AboutNavigationController.m */,
 				BBFB5577215876CD00DFE6DE /* AboutViewController.h */,
 				BBFB5578215876CD00DFE6DE /* AboutViewController.m */,
-				8632A7BD219A59FB00F02325 /* UserPreferences.h */,
-				8632A7BE219A59FB00F02325 /* UserPreferences.m */,
-				9A28E4E8219A8B670073D200 /* AboutAppearanceViewController.h */,
-				9A28E4E9219A8B670073D200 /* AboutAppearanceViewController.m */,
-				BB101B362364CF57000A93BC /* FontPickerViewController.h */,
-				BB101B372364CF57000A93BC /* FontPickerViewController.m */,
-				BB82A7FB21B4C2E8006AA5FD /* AboutExternalKeyboardViewController.h */,
-				BB82A7FC21B4C2E8006AA5FD /* AboutExternalKeyboardViewController.m */,
 				BB267FA423A48F1500ED7CAF /* AltIconViewController.h */,
 				BB267FA523A48F1500ED7CAF /* AltIconViewController.m */,
+				BB101B362364CF57000A93BC /* FontPickerViewController.h */,
+				BB101B372364CF57000A93BC /* FontPickerViewController.m */,
+				491C4C1D27C8FB65008B1DFA /* Theme.h */,
+				491C4C1E27C8FB65008B1DFA /* Theme.m */,
+				491C4C1527C8F84A008B1DFA /* ThemesViewController.h */,
+				491C4C1627C8F84A008B1DFA /* ThemesViewController.m */,
+				491B31E42883BF22008EEFB0 /* ThemeViewController.h */,
+				491B31E52883BF22008EEFB0 /* ThemeViewController.m */,
 				BBA5D87C27536E7600B39D77 /* UpgradeRootViewController.h */,
 				BBA5D87D27536E7600B39D77 /* UpgradeRootViewController.m */,
+				8632A7BD219A59FB00F02325 /* UserPreferences.h */,
+				8632A7BE219A59FB00F02325 /* UserPreferences.m */,
 			);
 			name = About;
 			sourceTree = "<group>";
@@ -1772,6 +1787,7 @@
 		};
 		BB13F813200AEFAC003D1C4D /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
 			files = (
 			);
@@ -1786,6 +1802,7 @@
 		};
 		BB21A1692689041500BD19B4 /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
 			files = (
 			);
@@ -1921,6 +1938,7 @@
 		};
 		BBFB2C572590257E00545EAB /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
 			files = (
 			);
@@ -2083,7 +2101,9 @@
 			files = (
 				BB28C79226896B1F00BDC834 /* AboutAppearanceViewController.m in Sources */,
 				BB28C79326896B1F00BDC834 /* AltIconViewController.m in Sources */,
+				491B31E62883BF22008EEFB0 /* ThemeViewController.m in Sources */,
 				BB28C7B226896C4600BDC834 /* main.m in Sources */,
+				496C7AB227CC697E005D7613 /* Theme.m in Sources */,
 				BB28C79426896B1F00BDC834 /* AboutNavigationController.m in Sources */,
 				BB28C79526896B1F00BDC834 /* TerminalViewController.m in Sources */,
 				BB123ACE26C9F13500419CDA /* IOSCalls.m in Sources */,
@@ -2108,6 +2128,7 @@
 				BB28C7A626896B1F00BDC834 /* AboutViewController.m in Sources */,
 				BB28C7A726896B1F00BDC834 /* UIViewController+Extras.m in Sources */,
 				BB28C7A826896B1F00BDC834 /* NSObject+SaneKVO.m in Sources */,
+				496C7AB327CC734D005D7613 /* ThemesViewController.m in Sources */,
 				BB77636726E486A7008DB44A /* fakefs.c in Sources */,
 				BB28C7B826896CE600BDC834 /* ArrowBarButton.m in Sources */,
 			);
@@ -2228,12 +2249,14 @@
 /* Begin XCBuildConfiguration section */
 		497F6CE8254E5E4C00C82F46 /* Debug-ApplePleaseFixFB19282108 */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = BB0B86D52587009D00208600 /* iOS.xcconfig */;
 			buildSettings = {
 			};
 			name = "Debug-ApplePleaseFixFB19282108";
 		};
 		497F6CE9254E5E4C00C82F46 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = BB0B86D52587009D00208600 /* iOS.xcconfig */;
 			buildSettings = {
 			};
 			name = Release;
@@ -2379,7 +2402,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = BB0B85A42586F1CB00208600 /* ProjectDebug.xcconfig */;
 			buildSettings = {
-				CURRENT_PROJECT_VERSION = 382;
+				CURRENT_PROJECT_VERSION = 406;
 			};
 			name = "Debug-ApplePleaseFixFB19282108";
 		};
@@ -2387,7 +2410,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = BB0B85A52586F1E100208600 /* ProjectRelease.xcconfig */;
 			buildSettings = {
-				CURRENT_PROJECT_VERSION = 382;
+				CURRENT_PROJECT_VERSION = 406;
 			};
 			name = Release;
 		};
@@ -2409,7 +2432,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = BB28C7532689522C00BDC834 /* ProjectDebugLinux.xcconfig */;
 			buildSettings = {
-				CURRENT_PROJECT_VERSION = 382;
+				CURRENT_PROJECT_VERSION = 406;
 			};
 			name = DebugLinux;
 		};
@@ -2499,6 +2522,7 @@
 		};
 		BB7F62102688EAB5003C0220 /* DebugLinux */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = BB0B86D52587009D00208600 /* iOS.xcconfig */;
 			buildSettings = {
 			};
 			name = DebugLinux;
@@ -2626,7 +2650,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = BB28C7522689522700BDC834 /* ProjectReleaseLinux.xcconfig */;
 			buildSettings = {
-				CURRENT_PROJECT_VERSION = 382;
+				CURRENT_PROJECT_VERSION = 406;
 			};
 			name = ReleaseLinux;
 		};
@@ -2715,6 +2739,7 @@
 		};
 		BBEF19B626806D1F001225BD /* ReleaseLinux */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = BB0B86D52587009D00208600 /* iOS.xcconfig */;
 			buildSettings = {
 			};
 			name = ReleaseLinux;

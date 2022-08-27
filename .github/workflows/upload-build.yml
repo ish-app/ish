@@ -19,7 +19,7 @@ jobs:
       - name: Install deps
         run: |
           pip3 install meson
-          brew install ninja
+          brew install ninja llvm
           bundle install
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
@@ -49,5 +49,7 @@ jobs:
         if: always()
         with:
           name: Fastlane Logs
-          path: fastlane.log
+          path: |
+            fastlane.log
+            ~/Library/Logs/gym
 

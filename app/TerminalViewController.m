@@ -119,7 +119,7 @@
             [self setNeedsStatusBarAppearanceUpdate];
         });
     }];
-    [UserPreferences.shared observe:@[@"theme", @"hideExtraKeysWithExternalKeyboard"]
+    [UserPreferences.shared observe:@[@"colorScheme", @"theme", @"hideExtraKeysWithExternalKeyboard"]
                             options:0 owner:self usingBlock:^(typeof(self) self) {
         dispatch_async(dispatch_get_main_queue(), ^{
             [self _updateStyleFromPreferences:YES];
@@ -281,8 +281,8 @@
     NSAssert(NSThread.isMainThread, @"This method needs to be called on the main thread");
     NSTimeInterval duration = animated ? 0.1 : 0;
     [UIView animateWithDuration:duration animations:^{
-        self.view.backgroundColor = UserPreferences.shared.theme.backgroundColor;
-        UIKeyboardAppearance keyAppearance = UserPreferences.shared.theme.keyboardAppearance;
+        self.view.backgroundColor = [[UIColor alloc] ish_initWithHexString:UserPreferences.shared.palette.backgroundColor];
+        UIKeyboardAppearance keyAppearance = UserPreferences.shared.keyboardAppearance;
         self.termView.keyboardAppearance = keyAppearance;
         for (BarButton *button in self.barButtons) {
             button.keyAppearance = keyAppearance;
@@ -325,16 +325,23 @@
         return;
 
     CGRect keyboardFrame = [notification.userInfo[UIKeyboardFrameEndUserInfoKey] CGRectValue];
+    keyboardFrame = [self.view convertRect:keyboardFrame fromView:self.view.window];
     if (CGRectEqualToRect(keyboardFrame, CGRectZero))
         return;
     NSLog(@"%@ %@", notification.name, [NSValue valueWithCGRect:keyboardFrame]);
     self.hasExternalKeyboard = keyboardFrame.size.height < 100;
-    CGFloat pad = UIScreen.mainScreen.bounds.size.height - keyboardFrame.origin.y;
-    if (pad != keyboardFrame.size.height) {
-        pad = 0; // keyboard is not right at the bottom of the screen, must be floating or something
-    }
-    if (pad == 0) {
-        pad = self.view.safeAreaInsets.bottom;
+    CGFloat pad = self.view.bounds.size.height - keyboardFrame.origin.y;
+    // In Slide Over, we get a keyboard frame that is in screen coordinates but
+    // the app is slightly shorter than the screen height. Try to determine the
+    // screen position by assuming the app is vertically centered, then
+    // correcting for the difference.
+    pad += (UIScreen.mainScreen.bounds.size.height - self.view.frame.size.height) / 2;
+    // The keyboard appears to be undocked. This means it can either be split or
+    // truly floating. In the former case we want to keep the pad, but in the
+    // latter we should fall back to the input accessory view instead of the
+    // keyboard.
+    if (pad != keyboardFrame.size.height && keyboardFrame.size.width != UIScreen.mainScreen.bounds.size.width) {
+        pad = MAX(self.view.safeAreaInsets.bottom, self.termView.inputAccessoryView.frame.size.height);
     }
     // NSLog(@"pad %f", pad);
     self.bottomConstraint.constant = pad;
@@ -365,6 +372,16 @@
         // You might want to check if this is your embed segue here
         // in case there are other segues triggered from this view controller.
         segue.destinationViewController.view.translatesAutoresizingMaskIntoConstraints = NO;
+    }
+}
+
+- (void)traitCollectionDidChange:(UITraitCollection *)previousTraitCollection {
+    // Hack to resolve a layering mismatch between the the UI and preferences.
+    if (@available(iOS 12.0, *)) {
+        if (previousTraitCollection.userInterfaceStyle != self.traitCollection.userInterfaceStyle) {
+            // Ensure that the relevant things listening for this will update.
+            UserPreferences.shared.colorScheme = UserPreferences.shared.colorScheme;
+        }
     }
 }
 

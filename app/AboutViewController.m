@@ -58,7 +58,7 @@
             [self _updateUI];
         });
     }];
-    [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(_updateUI) name:FsUpdatedNotification object:nil];
+    [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(_updateUI:) name:FsUpdatedNotification object:nil];
 }
 
 - (void)viewWillAppear:(BOOL)animated {
@@ -75,10 +75,12 @@
     exit(0);
 }
 
+- (void)_updateUI:(NSNotification *)notification {
+    [self _updateUI];
+}
+
 - (void)_updateUI {
     NSAssert(NSThread.isMainThread, @"This method needs to be called on the main thread");
-    UserPreferences *prefs = UserPreferences.shared;
-    self.themeCell.detailTextLabel.text = prefs.theme.presetName;
     self.disableDimmingSwitch.on = UserPreferences.shared.shouldDisableDimming;
     self.launchCommandField.text = [UserPreferences.shared.launchCommand componentsJoinedByString:@" "];
     self.bootCommandField.text = [UserPreferences.shared.bootCommand componentsJoinedByString:@" "];
