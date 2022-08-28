@@ -436,6 +436,12 @@ int realfs_statfs(struct mount *mount, struct statfsbuf *stat) {
 }
 
 int realfs_mount(struct mount *mount) {
+    char *source_realpath = realpath(mount->source, NULL);
+    if (source_realpath == NULL)
+        return errno_map();
+    free((void *) mount->source);
+    mount->source = source_realpath;
+
     mount->root_fd = open(mount->source, O_DIRECTORY);
     if (mount->root_fd < 0)
         return errno_map();
