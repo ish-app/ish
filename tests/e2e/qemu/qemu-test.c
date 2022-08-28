@@ -2438,9 +2438,9 @@ void test_sse(void)
     SSE_OP2(punpcklwd);
     SSE_OP2(punpckldq);
     SSE_OP2(packsswb);
-    // MMX_OP2(pcmpgtb);
-    // MMX_OP2(pcmpgtw);
-    // MMX_OP2(pcmpgtd);
+    SSE_OP2(pcmpgtb);
+    SSE_OP2(pcmpgtw);
+    SSE_OP2(pcmpgtd);
     // MMX_OP2(packuswb);
     SSE_OP2(punpckhbw);
     SSE_OP2(punpckhwd);
@@ -2474,7 +2474,7 @@ void test_sse(void)
     MMX_OP2(pxor);
     MMX_OP2(pmuludq);
     SSE_OP2(pmaddwd);
-    // MMX_OP2(psadbw);
+    SSE_OP2(psadbw);
     SSE_OP2(psubb);
     SSE_OP2(psubw);
     SSE_OP2(psubd);
