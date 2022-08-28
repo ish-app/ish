@@ -399,6 +399,14 @@ void vec_unpackl_dq64(NO_CPU, const union mm_reg *src, union mm_reg *dst) {
 void vec_unpackl_qdq128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst) {
     dst->qw[1] = src->qw[0];
 }
+void vec_unpackl_ps128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst) {
+    dst->u32[2] = dst->u32[1];
+    dst->u32[1] = src->u32[0];
+    dst->u32[3] = src->u32[1];
+}
+void vec_unpackl_pd128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst) {
+    dst->f64[1] = src->f64[0];
+}
 void vec_unpackh_bw128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst) {
     for (int i = 0; i < 8; i++) {
         dst->u8[2 * i + 0] = dst->u8[i + 8];
@@ -420,6 +428,16 @@ void vec_unpackh_d128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst) {
 void vec_unpackh_dq128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst) {
     dst->qw[0] = dst->qw[1];
     dst->qw[1] = src->qw[1];
+}
+void vec_unpackh_ps128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst) {
+    dst->u32[0] = dst->u32[2];
+    dst->u32[1] = src->u32[2];
+    dst->u32[2] = dst->u32[3];
+    dst->u32[3] = src->u32[3];
+}
+void vec_unpackh_pd128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst) {
+    dst->f64[0] = dst->f64[1];
+    dst->f64[1] = src->f64[1];
 }
 
 void vec_packss_w128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst) {

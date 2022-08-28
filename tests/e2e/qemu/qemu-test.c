@@ -2545,10 +2545,10 @@ void test_sse(void)
     SSE_OP2(xorps);
     SSE_OP2(xorpd);
 
-    // SSE_OP2(unpcklps);
-    // SSE_OP2(unpcklpd);
-    // SSE_OP2(unpckhps);
-    // SSE_OP2(unpckhpd);
+    SSE_OP2(unpcklps);
+    SSE_OP2(unpcklpd);
+    SSE_OP2(unpckhps);
+    SSE_OP2(unpckhpd);
 
     // SHUF_OP(shufps, 0x78);
     // SHUF_OP(shufpd, 0x02);
