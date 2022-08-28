@@ -2,6 +2,6 @@
 output="$1"
 shift
 : > "$output"
-for cfg in "$@"; do
+for cfg in $@; do
     echo "$cfg" >> "$output"
 done
