@@ -37,10 +37,18 @@ void vec_add_w128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
 void vec_add_d128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
 void vec_add_q128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
 void vec_add_q64(NO_CPU, union mm_reg *src, union mm_reg *dst);
+void vec_addus_b128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
+void vec_addus_w128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
+void vec_addss_b128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
+void vec_addss_w128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
 void vec_sub_b128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
 void vec_sub_w128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
 void vec_sub_d128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
 void vec_sub_q128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
+void vec_subus_b128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
+void vec_subus_w128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
+void vec_subss_b128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
+void vec_subss_w128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
 void vec_mulu_dq128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
 void vec_mulu_dq64(NO_CPU, union mm_reg *src, union mm_reg *dst);
 void vec_mulu64(NO_CPU, const union mm_reg *src, union mm_reg *dst);
@@ -98,6 +106,7 @@ void vec_cvttps2dq32(NO_CPU, const union xmm_reg *src, union xmm_reg *dst);
 
 // TODO organize
 void vec_packss_w128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst);
+void vec_packsu_w128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst);
 void vec_packss_d128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst);
 
 void vec_unpackl_bw128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst);
