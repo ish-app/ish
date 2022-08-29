@@ -9,7 +9,7 @@ static inline void zero_xmm(union xmm_reg *xmm) {
     xmm->qw[1] = 0;
 }
 
-static inline int32_t satw(int32_t dw) {
+static inline int32_t satsw(int32_t dw) {
     if (dw > 0xff80)
         dw &= 0xff;
     else if (dw > 0x7fff)
@@ -18,13 +18,30 @@ static inline int32_t satw(int32_t dw) {
         dw = 0x7f;
     return dw;
 }
-static inline uint32_t satd(uint32_t dw) {
+static inline uint32_t satud(uint32_t dw) {
     if (dw > 0xffff8000)
         dw &= 0xffff;
     else if (dw > 0x7fffffff)
         dw = 0x8000;
     else if (dw > 0x7fff)
         dw = 0x7fff;
+    return dw;
+}
+static inline uint32_t satub(uint32_t dw) {
+    if (dw >= 0x8000)
+        dw = 0;
+    else if (dw > 0xff)
+        dw = 0xff;
+    return dw;
+}
+static inline uint32_t satsb(uint32_t dw)
+{
+    if (dw > 0xffffff80)
+        dw &= 0xff;
+    else if (dw > 0x7fffffff)
+        dw = 0x80;
+    else if (dw > 0x7f)
+        dw = 0x7f;
     return dw;
 }
 
@@ -192,6 +209,27 @@ void vec_add_q128(NO_CPU, union xmm_reg *src, union xmm_reg *dst) {
 void vec_add_q64(NO_CPU, union mm_reg *src, union mm_reg *dst) {
     dst->qw += src->qw;
 }
+void vec_addus_b128(NO_CPU, union xmm_reg *src, union xmm_reg *dst) {
+    for (unsigned i = 0; i < 16; i++) {
+        const int32_t sb = dst->u8[i] + src->u8[i];
+        dst->u8[i] = sb > 0xff ? 0xff : sb;
+    }
+}
+void vec_addus_w128(NO_CPU, union xmm_reg *src, union xmm_reg *dst) {
+    for (unsigned i = 0; i < 8; i++) {
+        const int32_t sw = dst->u16[i] + src->u16[i];
+        dst->u16[i] = sw > 0xffff ? 0xffff : sw;
+    }
+}
+void vec_addss_b128(NO_CPU, union xmm_reg *src, union xmm_reg *dst) {
+    for (unsigned i = 0; i < 16; i++)
+        dst->u8[i] = satsb((int8_t)dst->u8[i] + (int8_t)src->u8[i]);
+}
+void vec_addss_w128(NO_CPU, union xmm_reg *src, union xmm_reg *dst) {
+    for (unsigned i = 0; i < 8; i++)
+        dst->u16[i] = satud((int16_t)dst->u16[i] + (int16_t)src->u16[i]);
+}
+
 void vec_sub_b128(NO_CPU, union xmm_reg *src, union xmm_reg *dst) {
     for (unsigned i = 0; i < array_size(src->u8); i++)
         dst->u8[i] -= src->u8[i];
@@ -207,6 +245,26 @@ void vec_sub_d128(NO_CPU, union xmm_reg *src, union xmm_reg *dst) {
 void vec_sub_q128(NO_CPU, union xmm_reg *src, union xmm_reg *dst) {
     dst->qw[0] -= src->qw[0];
     dst->qw[1] -= src->qw[1];
+}
+void vec_subus_b128(NO_CPU, union xmm_reg *src, union xmm_reg *dst) {
+    for (unsigned i = 0; i < 16; i++) {
+        const int32_t sb = dst->u8[i] - src->u8[i];
+        dst->u8[i] = sb < 0 ? 0 : sb;
+    }
+}
+void vec_subus_w128(NO_CPU, union xmm_reg *src, union xmm_reg *dst) {
+    for (unsigned i = 0; i < 8; i++) {
+        const int32_t sw = dst->u16[i] - src->u16[i];
+        dst->u16[i] = sw < 0 ? 0 : sw;
+    }
+}
+void vec_subss_b128(NO_CPU, union xmm_reg *src, union xmm_reg *dst) {
+    for (unsigned i = 0; i < 16; i++)
+        dst->u8[i] = satsb((int8_t)dst->u8[i] - (int8_t)src->u8[i]);
+}
+void vec_subss_w128(NO_CPU, union xmm_reg *src, union xmm_reg *dst) {
+    for (unsigned i = 0; i < 8; i++)
+        dst->u16[i] = satud((int16_t)dst->u16[i] - (int16_t)src->u16[i]);
 }
 
 void vec_madd_d128(NO_CPU, union xmm_reg *src, union xmm_reg *dst) {
@@ -457,20 +515,30 @@ void vec_movlh_ps128(NO_CPU, union xmm_reg *src, union xmm_reg *dst) {
 }
 
 void vec_packss_w128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst) {
-    dst->u32[0] = (satw(dst->u16[0]) << 0x00) | (satw(dst->u16[1]) << 0x08) |
-                  (satw(dst->u16[2]) << 0x10) | (satw(dst->u16[3]) << 0x18);
-    dst->u32[1] = (satw(dst->u16[4]) << 0x00) | (satw(dst->u16[5]) << 0x08) |
-                  (satw(dst->u16[6]) << 0x10) | (satw(dst->u16[7]) << 0x18);
-    dst->u32[2] = (satw(src->u16[0]) << 0x00) | (satw(src->u16[1]) << 0x08) |
-                  (satw(src->u16[2]) << 0x10) | (satw(src->u16[3]) << 0x18);
-    dst->u32[3] = (satw(src->u16[4]) << 0x00) | (satw(src->u16[5]) << 0x08) |
-                  (satw(src->u16[6]) << 0x10) | (satw(src->u16[7]) << 0x18);
+    dst->u32[0] = (satsw(dst->u16[0]) << 0x00) | (satsw(dst->u16[1]) << 0x08) |
+                  (satsw(dst->u16[2]) << 0x10) | (satsw(dst->u16[3]) << 0x18);
+    dst->u32[1] = (satsw(dst->u16[4]) << 0x00) | (satsw(dst->u16[5]) << 0x08) |
+                  (satsw(dst->u16[6]) << 0x10) | (satsw(dst->u16[7]) << 0x18);
+    dst->u32[2] = (satsw(src->u16[0]) << 0x00) | (satsw(src->u16[1]) << 0x08) |
+                  (satsw(src->u16[2]) << 0x10) | (satsw(src->u16[3]) << 0x18);
+    dst->u32[3] = (satsw(src->u16[4]) << 0x00) | (satsw(src->u16[5]) << 0x08) |
+                  (satsw(src->u16[6]) << 0x10) | (satsw(src->u16[7]) << 0x18);
 }
 void vec_packss_d128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst) {
-    dst->u32[0] = satd(dst->u32[0]) | (satd(dst->u32[1]) << 16);
-    dst->u32[1] = satd(dst->u32[2]) | (satd(dst->u32[3]) << 16);
-    dst->u32[2] = satd(src->u32[0]) | (satd(src->u32[1]) << 16);
-    dst->u32[3] = satd(src->u32[2]) | (satd(src->u32[3]) << 16);
+    dst->u32[0] = satud(dst->u32[0]) | (satud(dst->u32[1]) << 16);
+    dst->u32[1] = satud(dst->u32[2]) | (satud(dst->u32[3]) << 16);
+    dst->u32[2] = satud(src->u32[0]) | (satud(src->u32[1]) << 16);
+    dst->u32[3] = satud(src->u32[2]) | (satud(src->u32[3]) << 16);
+}
+void vec_packsu_w128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst) {
+    dst->u32[0] = (satub(dst->u16[0]) << 0x00) | (satub(dst->u16[1]) << 0x08) |
+                  (satub(dst->u16[2]) << 0x10) | (satub(dst->u16[3]) << 0x18);
+    dst->u32[1] = (satub(dst->u16[4]) << 0x00) | (satub(dst->u16[5]) << 0x08) |
+                  (satub(dst->u16[6]) << 0x10) | (satub(dst->u16[7]) << 0x18);
+    dst->u32[2] = (satub(src->u16[0]) << 0x00) | (satub(src->u16[1]) << 0x08) |
+                  (satub(src->u16[2]) << 0x10) | (satub(src->u16[3]) << 0x18);
+    dst->u32[3] = (satub(src->u16[4]) << 0x00) | (satub(src->u16[5]) << 0x08) |
+                  (satub(src->u16[6]) << 0x10) | (satub(src->u16[7]) << 0x18);
 }
 
 void vec_shuffle_lw128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst, uint8_t encoding) {
