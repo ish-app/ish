@@ -74,6 +74,10 @@
 - (void)setEditing:(BOOL)editing animated:(BOOL)animated {
     self->_importButtonEditingMode = editing;
     [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:ImportSection] withRowAnimation:UITableViewRowAnimationAutomatic];
+    
+    if (!editing && self->_pendingUpdate) {
+        [self deferredReload];
+    }
 
     [super setEditing:editing animated:animated];
 }
@@ -291,6 +295,7 @@ enum {
         [[[Theme alloc] initWithName:url.lastPathComponent.stringByDeletingPathExtension data:[NSData dataWithContentsOfURL:url]] addUserTheme];
     }
     [self documentPickerWasCancelled:controller];
+    [self setEditing:NO animated:YES];
 }
 
 @end
