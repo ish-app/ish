@@ -165,6 +165,7 @@ enum {
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:[self reuseIdentifierForIndexPath:indexPath] forIndexPath:indexPath];
+    cell.selectionStyle = UITableViewCellSelectionStyleDefault;
     
     switch (indexPath.section) {
         case PreviewSection:
@@ -178,6 +179,7 @@ enum {
                     UISegmentedControl *segmentedControl = [cell viewWithTag:1];
                     [segmentedControl addTarget:self action:@selector(changePreviewTheme:) forControlEvents:UIControlEventValueChanged];
                     [self changePreviewTheme:segmentedControl];
+                    cell.selectionStyle = UITableViewCellSelectionStyleNone;
                     break;
                 }
             }
@@ -198,6 +200,7 @@ enum {
                     UIStepper *stepper = [cell viewWithTag:2];
                     label.text = prefs.fontSize.stringValue;
                     stepper.value = prefs.fontSize.doubleValue;
+                    cell.selectionStyle = UITableViewCellSelectionStyleNone;
                     break;
                 }
             }
@@ -218,6 +221,7 @@ enum {
             cell.accessoryType = indexPath.row == UserPreferences.shared.colorScheme ? UITableViewCellAccessoryCheckmark : UITableViewCellAccessoryNone;
             break;
             
+        case CursorSection:
         case StatusBarSection:
             cell.selectionStyle = UITableViewCellSelectionStyleNone;
             break;
