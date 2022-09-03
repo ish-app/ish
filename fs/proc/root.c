@@ -18,6 +18,16 @@ static int proc_show_stat(struct proc_entry *UNUSED(entry), struct proc_data *bu
     return 0;
 }
 
+static int proc_show_cpuinfo(struct proc_entry *UNUSED(entry), struct proc_data *buf) {
+    unsigned cpus = sysconf(_SC_NPROCESSORS_ONLN);
+    for (unsigned i = 0; i < cpus; i++) {
+        proc_printf(buf, "processor\t: %u\n", i);
+        proc_printf(buf, "vendor_id\t: iSH\n");
+        proc_printf(buf, "\n");
+    }
+    return 0;
+}
+
 static void show_kb(struct proc_data *buf, const char *name, uint64_t value) {
     proc_printf(buf, "%s%8"PRIu64" kB\n", name, value / 1000);
 }
@@ -98,6 +108,7 @@ static int proc_show_mounts(struct proc_entry *UNUSED(entry), struct proc_data *
 
 // in alphabetical order
 struct proc_dir_entry proc_root_entries[] = {
+    {"cpuinfo", .show = proc_show_cpuinfo},
     {"ish", S_IFDIR, .children = &proc_ish_children},
     {"meminfo", .show = proc_show_meminfo},
     {"mounts", .show = proc_show_mounts},
