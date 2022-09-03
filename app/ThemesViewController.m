@@ -292,11 +292,7 @@ enum {
 
 - (void)documentPicker:(UIDocumentPickerViewController *)controller didPickDocumentsAtURLs:(NSArray<NSURL *> *)urls {
     for (NSURL *url in urls) {
-        if (![url startAccessingSecurityScopedResource]) {
-            continue;
-        }
         [[[Theme alloc] initWithName:url.lastPathComponent.stringByDeletingPathExtension data:[NSData dataWithContentsOfURL:url]] addUserTheme];
-        [url stopAccessingSecurityScopedResource];
     }
     [self documentPickerWasCancelled:controller];
     [self setEditing:NO animated:YES];
