@@ -74,6 +74,10 @@
 - (void)setEditing:(BOOL)editing animated:(BOOL)animated {
     self->_importButtonEditingMode = editing;
     [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:ImportSection] withRowAnimation:UITableViewRowAnimationAutomatic];
+    
+    if (!editing && self->_pendingUpdate) {
+        [self deferredReload];
+    }
 
     [super setEditing:editing animated:animated];
 }
@@ -288,9 +292,14 @@ enum {
 
 - (void)documentPicker:(UIDocumentPickerViewController *)controller didPickDocumentsAtURLs:(NSArray<NSURL *> *)urls {
     for (NSURL *url in urls) {
+        if (![url startAccessingSecurityScopedResource]) {
+            continue;
+        }
         [[[Theme alloc] initWithName:url.lastPathComponent.stringByDeletingPathExtension data:[NSData dataWithContentsOfURL:url]] addUserTheme];
+        [url stopAccessingSecurityScopedResource];
     }
     [self documentPickerWasCancelled:controller];
+    [self setEditing:NO animated:YES];
 }
 
 @end
