@@ -90,7 +90,7 @@ char *previewString = "# cat /proc/ish/colors\r\n"
         // Initialize the font picker ASAP, as it takes about a quarter second to initialize (XPC crap) and appears invisible until then.
         // Re-initialize it after navigating away from it, to reset the table view highlight.
         UIFontPickerViewControllerConfiguration *config = [UIFontPickerViewControllerConfiguration new];
-        config.filteredTraits = UIFontDescriptorTraitMonoSpace;
+
         self.fontPicker = [[UIFontPickerViewController alloc] initWithConfiguration:config];
         // Prevent the font picker from resizing the popup when it appears
         self.fontPicker.preferredContentSize = CGSizeZero;
