@@ -230,6 +230,8 @@ static int cpu_step_to_interrupt(struct cpu_state *cpu, struct tlb *tlb) {
         TRACE("%d %08x --- cycle %ld\n", current_pid(), ip, frame->cpu.cycle);
 
         interrupt = jit_enter(block, frame, tlb);
+        if (interrupt == INT_NONE && __atomic_exchange_n(cpu->poked_ptr, false, __ATOMIC_SEQ_CST))
+            interrupt = INT_TIMER;
         if (interrupt == INT_NONE && ++frame->cpu.cycle % (1 << 10) == 0)
             interrupt = INT_TIMER;
         *cpu = frame->cpu;
@@ -259,6 +261,8 @@ static int cpu_single_step(struct cpu_state *cpu, struct tlb *tlb) {
 }
 
 int cpu_run_to_interrupt(struct cpu_state *cpu, struct tlb *tlb) {
+    if (cpu->poked_ptr == NULL)
+        cpu->poked_ptr = &cpu->_poked;
     tlb_refresh(tlb, cpu->mmu);
     int interrupt = (cpu->tf ? cpu_single_step : cpu_step_to_interrupt)(cpu, tlb);
     cpu->trapno = interrupt;
@@ -278,4 +282,8 @@ int cpu_run_to_interrupt(struct cpu_state *cpu, struct tlb *tlb) {
     unlock(&jit->lock);
 
     return interrupt;
+}
+
+void cpu_poke(struct cpu_state *cpu) {
+    __atomic_store_n(cpu->poked_ptr, true, __ATOMIC_SEQ_CST);
 }

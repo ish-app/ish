@@ -14,6 +14,7 @@
 struct cpu_state;
 struct tlb;
 int cpu_run_to_interrupt(struct cpu_state *cpu, struct tlb *tlb);
+void cpu_poke(struct cpu_state *cpu);
 
 union mm_reg {
     qword_t qw;
@@ -167,6 +168,9 @@ struct cpu_state {
     bool segfault_was_write;
 
     dword_t trapno;
+    // access atomically
+    bool *poked_ptr;
+    bool _poked;
 };
 
 #define CPU_OFFSET(field) offsetof(struct cpu_state, field)

@@ -1,3 +1,4 @@
+#include <stdatomic.h>
 #include "emu/cpu.h"
 
 // keep in sync with asm
