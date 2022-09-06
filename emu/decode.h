@@ -268,6 +268,10 @@ restart:
                            READMODRM; VMOV(xmm_modrm_val, xmm_modrm_reg,128); break;
                 case 0x11: TRACEI("movupd xmm, xmm:modrm");
                            READMODRM; VMOV(xmm_modrm_reg, xmm_modrm_val,128); break;
+                case 0x12: TRACEI("movlpd xmm, xmm:modrm");
+                           READMODRM; V_OP(movl_pd, xmm_modrm_val, xmm_modrm_reg,128); break;
+                case 0x13: TRACEI("movlpd xmm:modrm, reg");
+                           READMODRM; V_OP(movl_mem_pd, xmm_modrm_val, modrm_reg,128); break;
                 case 0x14: TRACEI("unpcklpd xmm, xmm:modrm");
                            READMODRM; V_OP(unpackl_pd, xmm_modrm_val, xmm_modrm_reg,128); break;
                 case 0x15: TRACEI("unpckhpd xmm, xmm:modrm");

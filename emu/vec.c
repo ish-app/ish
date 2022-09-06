@@ -364,18 +364,6 @@ static bool cmps(float a, float b, int type) {
     return res;
 }
 
-static bool cmps(float a, float b, int type) {
-    bool res;
-    switch (type % 4) {
-        case 0: res = a == b; break;
-        case 1: res = a < b; break;
-        case 2: res = a <= b; break;
-        case 3: res = isnan(a) || isnan(b); break;
-    }
-    if (type >= 4) res = !res;
-    return res;
-}
-
 void vec_single_fcmp64(NO_CPU, const double *src, union xmm_reg *dst, uint8_t type) {
     dst->qw[0] = cmpd(dst->f64[0], *src, type) ? -1 : 0;
 }
@@ -639,6 +627,13 @@ void vec_fmovmask_d128(NO_CPU, const union xmm_reg *src, uint32_t *dst) {
         if (signbit(src->f64[i]))
             *dst |= 1 << i;
     }
+}
+
+void vec_movl_pd128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst) {
+    dst->qw[0] = src->qw[0];
+}
+void vec_movl_mem_pd128(NO_CPU, const union xmm_reg *src, uint64_t *dst) {
+    *dst = src->qw[0];
 }
 
 void vec_extract_w128(NO_CPU, const union xmm_reg *src, uint32_t *dst, uint8_t index) {

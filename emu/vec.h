@@ -139,6 +139,8 @@ void vec_compares_gtb128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst);
 void vec_compares_gtw128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst);
 void vec_compares_gtd128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst);
 
+void vec_movl_pd128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst);
+void vec_movl_mem_pd128(NO_CPU, const union xmm_reg *src, uint64_t *dst);
 void vec_movmask_b128(NO_CPU, const union xmm_reg *src, uint32_t *dst);
 void vec_fmovmask_d128(NO_CPU, const union xmm_reg *src, uint32_t *dst);
 void vec_extract_w128(NO_CPU, const union xmm_reg *src, uint32_t *dst, uint8_t index);
