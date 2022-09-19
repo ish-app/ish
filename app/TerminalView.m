@@ -443,6 +443,10 @@ static NSString *const HANDLERS[] = {@"syncFocus", @"focus", @"newScrollHeight",
 - (UITextAutocorrectionType)autocorrectionType {
     return UITextAutocorrectionTypeNo;
 }
+// Apparently required on iOS 15+: https://stackoverflow.com/a/72359764
+- (UITextSpellCheckingType)spellCheckingType {
+    return UITextSpellCheckingTypeNo;
+}
 
 #pragma mark Hardware Keyboard
 
