@@ -368,7 +368,7 @@ bool (*remove_user_default)(const char *name);
     }
 }
 
-- (BOOL)_validateUserTheme:(id *)value error:(NSError **)error {
+- (BOOL)validateUserTheme:(id *)value error:(NSError **)error {
     return [*value isKindOfClass:NSString.class];
 }
 
