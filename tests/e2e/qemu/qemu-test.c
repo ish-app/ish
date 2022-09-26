@@ -1035,7 +1035,7 @@ void test_floats(void)
     //test_fbcd(-123451234567890.0);
     //test_fenv();
     if (TEST_CMOV) {
-        //test_fcmov();
+        test_fcmov();
     }
 }
 
@@ -2466,11 +2466,11 @@ void test_sse(void)
 
     SSE_OP2(psubsb);
     SSE_OP2(psubsw);
-    // MMX_OP2(pminsw);
+    SSE_OP2(pminsw);
     SSE_OP2(por);
     SSE_OP2(paddsb);
     SSE_OP2(paddsw);
-    // MMX_OP2(pmaxsw);
+    SSE_OP2(pmaxsw);
     MMX_OP2(pxor);
     MMX_OP2(pmuludq);
     SSE_OP2(pmaddwd);
@@ -2625,14 +2625,14 @@ void test_sse(void)
         SSE_OPS_S(div);
         // SSE_OPS(max);
         // SSE_OPS(sqrt);
-        // SSE_OPS(cmpeq);
-        // SSE_OPS(cmplt);
-        // SSE_OPS(cmple);
-        // SSE_OPS(cmpunord);
-        // SSE_OPS(cmpneq);
-        // SSE_OPS(cmpnlt);
-        // SSE_OPS(cmpnle);
-        // SSE_OPS(cmpord);
+        SSE_OPS_S(cmpeq);
+        SSE_OPS_S(cmplt);
+        SSE_OPS_S(cmple);
+        SSE_OPS_S(cmpunord);
+        SSE_OPS_S(cmpneq);
+        SSE_OPS_S(cmpnlt);
+        SSE_OPS_S(cmpnle);
+        SSE_OPS_S(cmpord);
 
 
         a.d[0] = 2.7;
