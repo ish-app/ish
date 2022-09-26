@@ -437,6 +437,14 @@ void helper_rdtsc(struct cpu_state *cpu);
 #define FSIN() h(fpu_sin)
 #define FCOS() h(fpu_cos)
 #define FXTRACT() h(fpu_xtract)
+#define FCMOVB(src) hh(fpu_cmovb, src)
+#define FCMOVE(src) hh(fpu_cmove, src)
+#define FCMOVBE(src) hh(fpu_cmovbe, src)
+#define FCMOVU(src) hh(fpu_cmovu, src)
+#define FCMOVNB(src) hh(fpu_cmovnb, src)
+#define FCMOVNE(src) hh(fpu_cmovne, src)
+#define FCMOVNBE(src) hh(fpu_cmovnbe, src)
+#define FCMOVNU(src) hh(fpu_cmovnu, src)
 
 // vector
 
