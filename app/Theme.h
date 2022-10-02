@@ -23,7 +23,6 @@ NS_ASSUME_NONNULL_BEGIN
 @property(class, readonly) NSArray<Theme *> *userThemes;
 
 @property(readonly) NSString *name;
-@property(readonly) UIStatusBarStyle statusBarStyle;
 @property(readonly) Palette *lightPalette;
 @property(readonly) Palette *darkPalette;
 

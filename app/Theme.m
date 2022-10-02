@@ -146,7 +146,6 @@ NSString *const ThemesUpdatedNotification = @"ThemesUpdatedNotification";
 NSString *const ThemeUpdatedNotification = @"ThemeUpdatedNotification";
 
 @interface Theme ()
-@property(readonly) BOOL isDark;
 @property(readonly, nonnull) NSData *data;
 @end
 
@@ -296,22 +295,6 @@ char *(*get_documents_directory)(void);
     }
     [themes sortUsingDescriptors:@[[NSSortDescriptor sortDescriptorWithKey:@"name" ascending:YES selector:@selector(localizedStandardCompare:)]]];
     return themes;
-}
-
-- (BOOL)isDark {
-    return NO;
-}
-
-- (UIStatusBarStyle)statusBarStyle {
-    if (self.isDark) {
-        return UIStatusBarStyleLightContent;
-    } else {
-        if (@available(iOS 13.0, *)) {
-            return UIStatusBarStyleDarkContent;
-        } else {
-            return UIStatusBarStyleDefault;
-        }
-    }
 }
 
 - (NSData *)data {

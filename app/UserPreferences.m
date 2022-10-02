@@ -553,7 +553,7 @@ bool (*remove_user_default)(const char *name);
 }
 
 - (UIStatusBarStyle)statusBarStyle {
-    return 0;
+    return self.requestingDarkAppearance ? UIStatusBarStyleLightContent : UIStatusBarStyleDefault;
 }
 
 @end
