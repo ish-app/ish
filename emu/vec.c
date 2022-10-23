@@ -381,11 +381,18 @@ void vec_single_fdiv64(NO_CPU, const double *src, double *dst) { *dst /= *src; }
 void vec_single_fdiv32(NO_CPU, const float *src, float *dst) { *dst /= *src; }
 
 void vec_single_fsqrt64(NO_CPU, const double *src, double *dst) { *dst = sqrt(*src); }
+void vec_single_fsqrt32(NO_CPU, const float *src, float *dst) { *dst = sqrtf(*src); }
 
 void vec_single_fmax64(NO_CPU, const double *src, double *dst) {
     if (*src > *dst || isnan(*src) || isnan(*dst)) *dst = *src;
 }
 void vec_single_fmin64(NO_CPU, const double *src, double *dst) {
+    if (*src < *dst || isnan(*src) || isnan(*dst)) *dst = *src;
+}
+void vec_single_fmax32(NO_CPU, const float *src, float *dst) {
+    if (*src > *dst || isnan(*src) || isnan(*dst)) *dst = *src;
+}
+void vec_single_fmin32(NO_CPU, const float *src, float *dst) {
     if (*src < *dst || isnan(*src) || isnan(*dst)) *dst = *src;
 }
 
@@ -531,9 +538,6 @@ void vec_unpackh_pd128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst) {
     dst->f64[0] = dst->f64[1];
     dst->f64[1] = src->f64[1];
 }
-void vec_movlh_ps128(NO_CPU, union xmm_reg *src, union xmm_reg *dst) {
-    dst->qw[1] = src->qw[0];
-}
 
 void vec_packss_w128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst) {
     dst->u32[0] = (satsw(dst->u16[0]) << 0x00) | (satsw(dst->u16[1]) << 0x08) |
@@ -620,6 +624,19 @@ void vec_fmovmask_d128(NO_CPU, const union xmm_reg *src, uint32_t *dst) {
         if (signbit(src->f64[i]))
             *dst |= 1 << i;
     }
+}
+
+void vec_movl_p64(NO_CPU, const uint64_t *src, union xmm_reg *dst) {
+    dst->qw[0] = *src;
+}
+void vec_movl_pm64(NO_CPU, const union xmm_reg *src, uint64_t *dst) {
+    *dst = src->qw[0];
+}
+void vec_movh_p64(NO_CPU, const uint64_t *src, union xmm_reg *dst) {
+    dst->qw[1] = *src;
+}
+void vec_movh_pm64(NO_CPU, const union xmm_reg *src, uint64_t *dst) {
+    *dst = src->qw[1];
 }
 
 void vec_extract_w128(NO_CPU, const union xmm_reg *src, uint32_t *dst, uint8_t index) {
