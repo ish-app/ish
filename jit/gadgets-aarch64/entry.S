@@ -21,9 +21,17 @@ NAME(jit_enter):
 jit_ret_chain:
     cmp _ip, 0
     b.lt jit_ret
+    ldr x8, [_cpu, CPU_poked_ptr]
+    ldrb w8, [x8]
+    cmp w8, 0
+    b.ne poke
     sub x8, _ip, JIT_BLOCK_code
     str x8, [_cpu, LOCAL_last_block]
     gret
+
+poke:
+    ldr eip, [_ip, -JIT_BLOCK_code+JIT_BLOCK_addr]
+    # fallthrough
 
 .global jit_ret
 jit_ret:

@@ -23,22 +23,22 @@ NAME(jit_enter):
 .global jit_ret_chain
 jit_ret_chain:
     btq $63, %_ip
-    jc 1f
+    jc jit_ret
     mov CPU_poked_ptr(%_cpu), %r10
-    testb $1, (%r10)
+    cmpb $0, (%r10)
     jnz poke
     leaq -JIT_BLOCK_code(%_ip), %r10
     mov %r10, LOCAL_last_block(%_cpu)
     gret
-1:
-.global jit_ret
-jit_ret:
-    movl $-1, %_tmp
-    jmp jit_exit
 
 poke:
     mov -JIT_BLOCK_code+JIT_BLOCK_addr(%_ip), %_eip
-    jmp jit_ret
+    # fallthrough
+
+.global jit_ret
+jit_ret:
+    movl $-1, %_tmp
+    # fallthrough
 
 .global jit_exit
 jit_exit:
