@@ -6,10 +6,16 @@
 #include "kernel/signal.h"
 #include "kernel/task.h"
 
-dword_t syscall_stub() {
+dword_t syscall_stub(void) {
     return _ENOSYS;
 }
-dword_t syscall_success_stub() {
+// While identical, this version of the stub doesn't log below. Use this for
+// syscalls that are optional (i.e. fallback on something else) but called
+// frequently.
+dword_t syscall_silent_stub(void) {
+    return _ENOSYS;
+}
+dword_t syscall_success_stub(void) {
     return 0;
 }
 
@@ -238,9 +244,9 @@ syscall_t syscall_table[] = {
     [373] = (syscall_t) sys_shutdown,
     [375] = (syscall_t) syscall_stub, // membarrier
     [377] = (syscall_t) sys_copy_file_range,
-    [383] = (syscall_t) syscall_stub, // statx
+    [383] = (syscall_t) syscall_silent_stub, // statx
     [384] = (syscall_t) sys_arch_prctl,
-    [439] = (syscall_t) syscall_stub, // faccessat2
+    [439] = (syscall_t) syscall_silent_stub, // faccessat2
 };
 
 #define NUM_SYSCALLS (sizeof(syscall_table) / sizeof(syscall_table[0]))
@@ -315,7 +321,7 @@ void handle_interrupt(int interrupt) {
     unlock(&group->lock);
 }
 
-void dump_maps() {
+void dump_maps(void) {
     extern void proc_maps_dump(struct task *task, struct proc_data *buf);
     struct proc_data buf = {};
     proc_maps_dump(current, &buf);
