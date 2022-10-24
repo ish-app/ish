@@ -384,7 +384,16 @@ bool (*remove_user_default)(const char *name);
 }
 
 - (Palette *)palette {
-    return self.requestingDarkAppearance ? self.theme.darkPalette : self.theme.lightPalette;
+    switch (self.colorScheme) {
+        case ColorSchemeMatchSystem:
+            return self.class.systemThemeIsDark ? self.theme.darkPalette : self.theme.lightPalette;
+        case ColorSchemeAlwaysDark:
+            return self.theme.darkPalette;
+        default:
+            NSAssert(NO, @"invalid color scheme");
+        case ColorSchemeAlwaysLight:
+            return self.theme.lightPalette;
+    }
 }
 
 // MARK: shouldDisableDimming
@@ -522,26 +531,22 @@ bool (*remove_user_default)(const char *name);
     return _value >= __ColorSchemeLast && value < __ColorSchemeFirst;
 }
 
-- (BOOL)requestingDarkAppearance {
-    switch (self.colorScheme) {
-        case ColorSchemeAlwaysDark:
-            return YES;
-        default:
-            NSAssert(NO, @"invalid color scheme");
-        case ColorSchemeMatchSystem:
-            if (@available(iOS 12.0, *)) {
-                switch (UIScreen.mainScreen.traitCollection.userInterfaceStyle) {
-                    case UIUserInterfaceStyleLight:
-                        return NO;
-                    case UIUserInterfaceStyleDark:
-                        return YES;
-                    default:
-                        break;
-                }
-            }
-        case ColorSchemeAlwaysLight:
-            return NO;
++ (BOOL)systemThemeIsDark {
+    if (@available(iOS 12.0, *)) {
+        switch (UIScreen.mainScreen.traitCollection.userInterfaceStyle) {
+            case UIUserInterfaceStyleLight:
+                return NO;
+            case UIUserInterfaceStyleDark:
+                return YES;
+            default:
+                break;
+        }
     }
+    return NO;
+}
+
+- (BOOL)requestingDarkAppearance {
+    return (self.class.systemThemeIsDark && !self.theme.appearance.darkOverride) || (!self.class.systemThemeIsDark && self.theme.appearance.lightOverride);
 }
 
 - (UIUserInterfaceStyle)userInterfaceStyle {

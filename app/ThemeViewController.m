@@ -40,11 +40,14 @@ struct PaletteTextFields {
 @implementation ThemeViewController {
     UITextField *_nameTextField;
     UISwitch *_singlePaletteSwitch;
+    UISwitch *_lightOverrideSwitch;
+    UISwitch *_darkOverrideSwitch;
+    BOOL _touchedOverrideSwitches;
     struct PaletteTextFields _paletteTextFields[2];
     BOOL _duplicated;
 }
 
-- (UITextField *)detailTextFieldWithText:(NSString *)text monospaced:(BOOL)monospaced {
++ (UITextField *)detailTextFieldWithText:(NSString *)text monospaced:(BOOL)monospaced {
     UITextField *textField = [UITextField new];
     textField.tag = 1;
     [textField addTarget:self action:@selector(textFieldChanged:) forControlEvents:UIControlEventEditingChanged];
@@ -64,19 +67,19 @@ struct PaletteTextFields {
     
     self.navigationItem.title = self.theme.name;
     
-    _nameTextField = [self detailTextFieldWithText:_theme.name monospaced: NO];
+    _nameTextField = [self.class detailTextFieldWithText:_theme.name monospaced: NO];
     _singlePaletteSwitch = [UISwitch new];
     _singlePaletteSwitch.on = self.theme.lightPalette == self.theme.darkPalette;
     [_singlePaletteSwitch addTarget:self action:@selector(singlePaletteChanged:) forControlEvents:UIControlEventValueChanged];
     
     for (int i = 0; i < sizeof(_paletteTextFields) / sizeof(*_paletteTextFields); ++i) {
         Palette *palette = i ? self.theme.darkPalette : self.theme.lightPalette;
-        _paletteTextFields[i].foregroundTextField = [self detailTextFieldWithText:palette.foregroundColor monospaced:YES];
-        _paletteTextFields[i].backgroundTextField = [self detailTextFieldWithText:palette.backgroundColor monospaced:YES];
-        _paletteTextFields[i].cursorTextField = [self detailTextFieldWithText:palette.cursorColor monospaced:YES];
+        _paletteTextFields[i].foregroundTextField = [self.class detailTextFieldWithText:palette.foregroundColor monospaced:YES];
+        _paletteTextFields[i].backgroundTextField = [self.class detailTextFieldWithText:palette.backgroundColor monospaced:YES];
+        _paletteTextFields[i].cursorTextField = [self.class detailTextFieldWithText:palette.cursorColor monospaced:YES];
         NSMutableArray<UITextField *> *textFields = [NSMutableArray new];
         for (int j = 0; j < COLORS; ++j) {
-            UITextField *textField = [self detailTextFieldWithText:palette.colorPaletteOverrides ? palette.colorPaletteOverrides[j] : nil monospaced: YES];
+            UITextField *textField = [self.class detailTextFieldWithText:palette.colorPaletteOverrides ? palette.colorPaletteOverrides[j] : nil monospaced: YES];
             textField.autocorrectionType = UITextAutocorrectionTypeNo;
             textField.autocapitalizationType = UITextAutocapitalizationTypeNone;
             [textFields addObject:textField];
@@ -87,6 +90,13 @@ struct PaletteTextFields {
     if (!self.isEditable) {
         _singlePaletteSwitch.enabled = NO;
     }
+    
+    _lightOverrideSwitch = [UISwitch new];
+    _lightOverrideSwitch.on = self.theme.appearance.lightOverride;
+    [_lightOverrideSwitch addTarget:self action:@selector(touchedOverrideSwitch:) forControlEvents:UIControlEventValueChanged];
+    _darkOverrideSwitch = [UISwitch new];
+    _darkOverrideSwitch.on = self.theme.appearance.darkOverride;
+    [_darkOverrideSwitch addTarget:self action:@selector(touchedOverrideSwitch:) forControlEvents:UIControlEventValueChanged];
     
     self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"Duplicate" style:UIBarButtonItemStylePlain target:self action:@selector(duplicate:)];
 }
@@ -114,10 +124,11 @@ Palette *createPalette(struct PaletteTextFields *paletteTextFields) {
     [super viewDidDisappear:animated];
     if (self.isEditable && !self->_duplicated && [self validateTheme]) {
         Theme *theme;
+        ThemeAppearance *appearance = self->_touchedOverrideSwitches ? [[ThemeAppearance alloc] initWithLightOverride:self->_lightOverrideSwitch.on darkOverride:self->_darkOverrideSwitch.on] : nil;
         if (_singlePaletteSwitch.on) {
-            theme = [[Theme alloc] initWithName:_nameTextField.text palette:createPalette(_paletteTextFields + 0)];
+            theme = [[Theme alloc] initWithName:_nameTextField.text palette:createPalette(_paletteTextFields + 0) appearance:appearance];
         } else {
-            theme = [[Theme alloc] initWithName:_nameTextField.text lightPalette:createPalette(_paletteTextFields + 0) darkPalette:createPalette(_paletteTextFields + 1)];
+            theme = [[Theme alloc] initWithName:_nameTextField.text lightPalette:createPalette(_paletteTextFields + 0) darkPalette:createPalette(_paletteTextFields + 1) appearance:appearance];
         }
         [self.theme replaceWithUserTheme:theme];
     }
@@ -130,6 +141,7 @@ enum {
     SinglePaletteSection,
     PaletteSection,
     PaletteSection2,
+    UIOverrideSection,
     NumberOfSections,
 };
 
@@ -141,10 +153,13 @@ enum {
 };
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-    return NumberOfSections - _singlePaletteSwitch.on;
+    return NumberOfSections;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
+    if ([self shouldHideSection:section]) {
+        return 0;
+    }
     switch (section) {
         case NameSection:
             return 1;
@@ -153,39 +168,55 @@ enum {
         case PaletteSection:
         case PaletteSection2:
             return NumberOfRows;
+        case UIOverrideSection:
+            return 2;
         default:
             NSAssert(NO, @"unhandled section"); return 0;
     }
 }
 
+- (BOOL)shouldHideSection:(NSInteger)section {
+    return section == PaletteSection2 && _singlePaletteSwitch.on;
+}
+
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
+    if ([self shouldHideSection:section]) {
+        return nil;
+    }
     switch (section) {
         case PaletteSection:
             return _singlePaletteSwitch.on ? @"Palette" : @"Light Palette";
         case PaletteSection2:
             return @"Dark Palette";
+        case UIOverrideSection:
+            return @"UI Overrides";
         default:
             return nil;
     }
 }
 
 - (NSString *)tableView:(UITableView *)tableView titleForFooterInSection:(NSInteger)section {
+    if ([self shouldHideSection:section]) {
+        return nil;
+    }
     switch (section) {
         case NameSection:
             return ![_nameTextField.text isEqualToString:self.theme.name] && [Theme themeForName:_nameTextField.text includingDefaultThemes:NO] ? @"A user theme with this name already exists." : nil;
         case SinglePaletteSection:
             return @"When this is enabled, light and dark color schemes will share a single palette.";
+        case UIOverrideSection:
+            return @"Use a customized color scheme for user interface elements (keyboard, status bar) rather than one that matches the current palette.";
         default:
             return nil;
     }
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section {
-    return UITableViewAutomaticDimension;
+    return [self shouldHideSection:section] ? CGFLOAT_MIN : UITableViewAutomaticDimension;
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForFooterInSection:(NSInteger)section {
-    return UITableViewAutomaticDimension;
+    return [self shouldHideSection:section] ? CGFLOAT_MIN : UITableViewAutomaticDimension;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
@@ -254,7 +285,23 @@ enum {
                     cell.detailTextLabel.font = [UIFont monospacedSystemFontOfSize:cell.detailTextLabel.font.pointSize weight:UIFontWeightRegular];
                 }
             }
+            break;
         }
+        case UIOverrideSection:
+            cell.detailTextLabel.hidden = YES;
+            switch (indexPath.row) {
+                case 0:
+                    cell.textLabel.text = @"Use Dark UI for Light Color Scheme";
+                    cell.accessoryView = self->_lightOverrideSwitch;
+                    break;
+                case 1:
+                    cell.textLabel.text = @"Use Light UI for Dark Color Scheme";
+                    cell.accessoryView = self->_darkOverrideSwitch;
+                    break;
+                default:
+                    NSAssert(NO, @"Invalid row");
+            }
+            break;
     }
     
     if (!self.isEditable) {
@@ -301,14 +348,20 @@ enum {
 
 - (void)singlePaletteChanged:(UISwitch *)sender {
     [self.tableView performBatchUpdates:^{
-        if (sender.on) {
-            [self.tableView deleteSections:[NSIndexSet indexSetWithIndex:PaletteSection2] withRowAnimation:UITableViewRowAnimationFade];
-        } else {
-            [self.tableView insertSections:[NSIndexSet indexSetWithIndex:PaletteSection2] withRowAnimation:UITableViewRowAnimationFade];
+        for (int i = 0; i < NumberOfRows; ++i) {
+            if (sender.on) {
+                [self.tableView deleteRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:i inSection:PaletteSection2]] withRowAnimation:UITableViewRowAnimationFade];
+            } else {
+                [self.tableView insertRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:i inSection:PaletteSection2]] withRowAnimation:UITableViewRowAnimationFade];
+            }
         }
+        [self.tableView reloadSections:[NSIndexSet indexSetWithIndexesInRange:NSMakeRange(PaletteSection, PaletteSection2 - PaletteSection)] withRowAnimation:UITableViewRowAnimationAutomatic];
     } completion:nil];
-    [self.tableView reloadSections:[NSIndexSet indexSetWithIndexesInRange:NSMakeRange(PaletteSection, PaletteSection2 - PaletteSection)] withRowAnimation:UITableViewRowAnimationNone];
     [self validateTheme];
+}
+
+- (void)touchedOverrideSwitch:(UISwitch *)sender {
+    self->_touchedOverrideSwitches = YES;
 }
 
 @end
