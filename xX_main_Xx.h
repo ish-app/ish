@@ -103,6 +103,8 @@ static inline int xX_main_Xx(int argc, char *const argv[], const char *envp) {
         i++;
     }
     argv_copy[p] = '\0';
+    if (argv[optind] == NULL)
+	    return _ENOENT;
     err = do_execve(argv[optind], argc - optind, argv_copy, envp == NULL ? "\0" : envp);
     if (err < 0)
         return err;
