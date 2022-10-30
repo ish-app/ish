@@ -120,7 +120,7 @@ static int __path_normalize(const char *at_path, const char *path, char *out, in
 
 int path_normalize(struct fd *at, const char *path, char *out, int flags) {
     assert(at != NULL);
-    if ((path == NULL) || (strcmp(path, "") == 0))
+    if ((strcmp(path, "") == 0))
         return _ENOENT;
 
     // start with root or cwd, depending on whether it starts with a slash
