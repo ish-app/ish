@@ -313,7 +313,7 @@
 }
 
 - (UIStatusBarStyle)preferredStatusBarStyle {
-    return UserPreferences.shared.theme.statusBarStyle;
+    return UserPreferences.shared.statusBarStyle;
 }
 
 - (BOOL)prefersStatusBarHidden {

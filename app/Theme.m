@@ -141,12 +141,54 @@ char *get_documents_directory_impl(void) {
 
 @end
 
+@interface ThemeAppearance ()
+@property(readonly, nonnull) NSDictionary *serializedRepresentation;
+
+- (nullable instancetype)initWithSerializedRepresentation:(nonnull NSDictionary *)serializedRepresentation;
+@end
+
+@implementation ThemeAppearance
+
+- (instancetype)initWithLightOverride:(BOOL)lightOverride darkOverride:(BOOL)darkOverride {
+    if (self = [super init]) {
+        self->_lightOverride = lightOverride;
+        self->_darkOverride = darkOverride;
+    }
+    return self;
+}
+
+- (instancetype)initWithSerializedRepresentation:(NSDictionary *)serializedRepresentation {
+    id lightOverride = serializedRepresentation[@"lightOverride"];
+    id darkOverride = serializedRepresentation[@"darkOverride"];
+    if ([lightOverride isKindOfClass:NSNumber.class] && [darkOverride isKindOfClass:NSNumber.class]) {
+        return [self initWithLightOverride:[lightOverride boolValue] darkOverride:[darkOverride boolValue]];
+    } else {
+        return nil;
+    }
+}
+
++ (instancetype)alwaysLight {
+    return [[self alloc] initWithLightOverride:NO darkOverride:YES];
+}
+
++ (instancetype)alwaysDark {
+    return [[self alloc] initWithLightOverride:YES darkOverride:NO];
+}
+
+- (NSDictionary *)serializedRepresentation {
+    return @{
+        @"lightOverride": @(self.lightOverride),
+        @"darkOverride": @(self.darkOverride),
+    };
+}
+
+@end
+
 DirectoryWatcher *directoryWatcher;
 NSString *const ThemesUpdatedNotification = @"ThemesUpdatedNotification";
 NSString *const ThemeUpdatedNotification = @"ThemeUpdatedNotification";
 
 @interface Theme ()
-@property(readonly) BOOL isDark;
 @property(readonly, nonnull) NSData *data;
 @end
 
@@ -155,9 +197,7 @@ NSString *const ThemeUpdatedNotification = @"ThemeUpdatedNotification";
 char *(*get_documents_directory)(void);
 #endif
 
-@implementation Theme {
-}
-
+@implementation Theme
 + (void)initialize {
     directoryWatcher = [[DirectoryWatcher alloc] initWithURL:self.themesDirectory handler:^{
         [NSNotificationCenter.defaultCenter postNotificationName:ThemesUpdatedNotification object:nil];
@@ -168,15 +208,17 @@ char *(*get_documents_directory)(void);
     [NSFileManager.defaultManager createDirectoryAtURL:self.themesDirectory withIntermediateDirectories:YES attributes:nil error:nil];
 }
 
-- (instancetype)initWithName:(NSString *)name palette:(Palette *)palette {
-    return [self initWithName:name lightPalette:palette darkPalette:palette];
+- (instancetype)initWithName:(NSString *)name palette:(Palette *)palette appearance:(ThemeAppearance *)appearance {
+    Theme *theme = [self initWithName:name lightPalette:palette darkPalette:palette appearance:appearance];
+    return theme;
 }
 
-- (instancetype)initWithName:(NSString *)name lightPalette:(nonnull Palette *)lightPalette darkPalette:(nonnull Palette *)darkPalette {
+- (instancetype)initWithName:(NSString *)name lightPalette:(nonnull Palette *)lightPalette darkPalette:(nonnull Palette *)darkPalette appearance:(nullable ThemeAppearance *)appearance {
     if (self = [super init]) {
         self->_name = name;
         self->_lightPalette = lightPalette;
         self->_darkPalette = darkPalette;
+        self->_appearance = appearance;
     }
     return self;
 }
@@ -191,16 +233,18 @@ char *(*get_documents_directory)(void);
         NSLog(@"Rejecting theme %@ with invalid version number", name);
         return nil;
     }
+    id _appearance = json[@"appearance"];
+    ThemeAppearance *appearance = [_appearance isKindOfClass:NSDictionary.class] ? [[ThemeAppearance alloc] initWithSerializedRepresentation:_appearance] : nil;
     id shared = json[@"shared"];
     id light = json[@"light"];
     id dark = json[@"dark"];
     if ([shared isKindOfClass:NSDictionary.class]) {
         Palette *palette = [[Palette alloc] initWithSerializedRepresentation:shared];
-        return palette ? [self initWithName:name palette:palette] : nil;
+        return palette ? [self initWithName:name palette:palette appearance:appearance] : nil;
     } else if ([light isKindOfClass:NSDictionary.class] && [dark isKindOfClass:NSDictionary.class]) {
         Palette *lightPalette = [[Palette alloc] initWithSerializedRepresentation:light];
         Palette *darkPalette = [[Palette alloc] initWithSerializedRepresentation:dark];
-        return lightPalette && darkPalette ? [self initWithName:name lightPalette:lightPalette darkPalette:darkPalette] : nil;
+        return lightPalette && darkPalette ? [self initWithName:name lightPalette:lightPalette darkPalette:darkPalette appearance:appearance] : nil;
     } else {
         NSLog(@"Rejecting theme %@ with invalid palette(s)", name);
         return nil;
@@ -219,12 +263,14 @@ char *(*get_documents_directory)(void);
                            darkPalette:[[Palette alloc] initWithForegroundColor:@"#fff"
                                                                 backgroundColor:@"#000"
                                                                     cursorColor:nil
-                                                          colorPaletteOverrides:nil]],
+                                                          colorPaletteOverrides:nil]
+                            appearance:nil],
             [[self alloc] initWithName:@"1337"
                                palette:[[Palette alloc] initWithForegroundColor:@"#0f0"
                                                                 backgroundColor:@"#000"
                                                                     cursorColor:nil
-                                                          colorPaletteOverrides:nil]],
+                                                          colorPaletteOverrides:nil]
+                            appearance:ThemeAppearance.alwaysDark],
             [[self alloc] initWithName:@"Solarized"
                           lightPalette:[[Palette alloc] initWithForegroundColor:@"#657b83"
                                                                 backgroundColor:@"#fdf6e3"
@@ -268,6 +314,7 @@ char *(*get_documents_directory)(void);
                             @"#93a1a1",
                             @"#fdf6e3",
                            ]]
+                            appearance:nil
             ],
             // Because this is a hidden theme, it needs to be last. There's
             // logic in UserPreferences and ThemesViewController which will not
@@ -276,7 +323,8 @@ char *(*get_documents_directory)(void);
                                palette:[[Palette alloc] initWithForegroundColor:@"#ff0"
                                                                 backgroundColor:@"#f00"
                                                                     cursorColor:nil
-                                                          colorPaletteOverrides:nil]],
+                                                          colorPaletteOverrides:nil]
+                            appearance:nil],
         ];
     }
     return defaultThemes;
@@ -298,31 +346,20 @@ char *(*get_documents_directory)(void);
     return themes;
 }
 
-- (BOOL)isDark {
-    return NO;
-}
-
-- (UIStatusBarStyle)statusBarStyle {
-    if (self.isDark) {
-        return UIStatusBarStyleLightContent;
-    } else {
-        if (@available(iOS 13.0, *)) {
-            return UIStatusBarStyleDarkContent;
-        } else {
-            return UIStatusBarStyleDefault;
-        }
-    }
-}
-
 - (NSData *)data {
-    return [NSJSONSerialization dataWithJSONObject:self.lightPalette == self.darkPalette ? @{
+    NSMutableDictionary *representation = [@{
         @"version": @(THEME_VERSION),
-        @"shared" : self.lightPalette.serializedRepresentation,
-    } : @{
-        @"version": @(THEME_VERSION),
-        @"light": self.lightPalette.serializedRepresentation,
-        @"dark": self.darkPalette.serializedRepresentation,
-    } options:NSJSONWritingSortedKeys | NSJSONWritingPrettyPrinted error:nil];
+    } mutableCopy];
+    if (self.lightPalette == self.darkPalette) {
+        representation[@"shared"] = self.lightPalette.serializedRepresentation;
+    } else {
+        representation[@"light"] = self.lightPalette.serializedRepresentation;
+        representation[@"dark"] = self.darkPalette.serializedRepresentation;
+    }
+    if (self.appearance) {
+        representation[@"appearance"] = self.appearance.serializedRepresentation;
+    }
+    return [NSJSONSerialization dataWithJSONObject:representation options:NSJSONWritingSortedKeys | NSJSONWritingPrettyPrinted error:nil];
 }
 
 + (Theme *)themeForName:(NSString *)name includingDefaultThemes:(BOOL)includingDefaultThemes {
