@@ -245,7 +245,7 @@ bool (*remove_user_default)(const char *name);
         return NO;
     }
     int _value = [(NSNumber *)(*value) intValue];
-    return _value >= __CapsLockMapLast && value < __CapsLockMapFirst;
+    return _value >= __CapsLockMapFirst && _value < __CapsLockMapLast;
 }
 
 // MARK: optionMapping
@@ -262,7 +262,7 @@ bool (*remove_user_default)(const char *name);
         return NO;
     }
     int _value = [(NSNumber *)(*value) intValue];
-    return _value >= __OptionMapFirst && value < __OptionMapFirst;
+    return _value >= __OptionMapFirst && _value < __OptionMapLast;
 }
 
 // MARK: backtickMapEscape
