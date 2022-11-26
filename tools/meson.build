@@ -24,9 +24,9 @@ endif
 libarchive = dependency('libarchive', required: false)
 if not libarchive.found()
     # homebrew
-    libarchive_lib = cc.find_library('libarchive', dirs: ['/usr/local/opt/libarchive/lib'], required: false)
+    libarchive_lib = cc.find_library('archive', dirs: ['/usr/local/opt/libarchive/lib'], required: false)
     if not libarchive_lib.found()
-        libarchive_lib = cc.find_library('libarchive', dirs: ['/opt/homebrew/opt/libarchive/lib'], required: false)
+        libarchive_lib = cc.find_library('archive', dirs: ['/opt/homebrew/opt/libarchive/lib'], required: false)
     endif
     if libarchive_lib.found()
         libarchive = declare_dependency(dependencies: [libarchive_lib], include_directories: include_directories(['/usr/local/opt/libarchive/include']))

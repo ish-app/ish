@@ -39,7 +39,8 @@ if get_option('kernel') == 'linux'
     run_command('mkdir', [
         '-p',
         meson.current_build_dir()+'/linux/include/generated/uapi',
-        meson.current_build_dir()+'/linux/arch/ish/include/generated/uapi'])
+        meson.current_build_dir()+'/linux/arch/ish/include/generated/uapi'],
+        check: false)
 
     linux_headers = declare_dependency(
         include_directories: [include_directories(
