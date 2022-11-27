@@ -203,16 +203,15 @@ int_t sys_sched_getaffinity(pid_t_ pid, dword_t cpusetsize, addr_t cpuset_addr) 
     }
 
     unsigned cpus = sysconf(_SC_NPROCESSORS_ONLN);
-    char cpuset[cpus / 8 + 1];
-    if (cpusetsize < sizeof(cpuset))
-        return _EINVAL;
+    if (cpus > cpusetsize * 8)
+        cpus = cpusetsize * 8;
+    char cpuset[cpusetsize];
     memset(cpuset, 0, sizeof(cpuset));
     for (unsigned i = 0; i < cpus; i++)
         bit_set(i, cpuset);
-    if (user_write(cpuset_addr, cpuset, sizeof(cpuset)))
+    if (user_write(cpuset_addr, cpuset, cpusetsize))
         return _EFAULT;
-    // return the number of bytes written
-    return sizeof(cpuset);
+    return 0;
 }
 int_t sys_sched_setaffinity(pid_t_ UNUSED(pid), dword_t UNUSED(cpusetsize), addr_t UNUSED(cpuset_addr)) {
     // meh
