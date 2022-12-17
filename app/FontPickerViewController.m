@@ -20,10 +20,7 @@
     [super viewDidLoad];
     NSMutableArray *families = [NSMutableArray new];
     for (NSString *family in UIFont.familyNames) {
-        UIFont *font = [UIFont fontWithName:family size:1];
-        if (font.fontDescriptor.symbolicTraits & UIFontDescriptorTraitMonoSpace) {
-            [families addObject:family];
-        }
+        [families addObject:family];
     }
     self.fontFamilies = families;
 }
