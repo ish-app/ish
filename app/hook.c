@@ -19,6 +19,9 @@
 
 #if __arm64__
 
+// No Foundation.h
+extern void NSLog(CFStringRef, ...);
+
 kern_return_t catch_mach_exception_raise(
     mach_port_t exception_port,
     mach_port_t thread,
@@ -94,6 +97,7 @@ static bool initialize_if_needed() {
 #define CHECK(x)          \
     do {                  \
         if (!(x)) {       \
+            NSLog(CFSTR("hook failed: " #x)); \
             return false; \
         }                 \
     } while (0)
@@ -144,6 +148,7 @@ void *find_symbol(void *base, char *symbol) {
 #define CHECK(x)         \
     do {                 \
         if (!(x)) {      \
+            NSLog(CFSTR("hook failed: " #x)); \
             return NULL; \
         }                \
     } while (0)
@@ -189,6 +194,7 @@ void *find_symbol(void *base, char *symbol) {
 
     struct dyld_cache_header *header = (struct dyld_cache_header *)file;
     if (strcmp(header->magic, "dyld_v1   arm64") && strcmp(header->magic, "dyld_v1  arm64e")) {
+        NSLog(CFSTR("hook failed: unknown shared cache magic %s"), header->magic); \
         goto done;
     }
 
@@ -219,6 +225,7 @@ bool hook(void *old, void *new) {
 #define CHECK(x)          \
     do {                  \
         if (!(x)) {       \
+            NSLog(CFSTR("hook failed: " #x)); \
             return false; \
         }                 \
     } while (0)
@@ -245,6 +252,7 @@ bool hook(void *old, void *new) {
     task_threads(mach_task_self(), &threads, &thread_count);
     for (int i = 0; i < thread_count; ++i) {
         if (thread_set_state(threads[i], ARM_DEBUG_STATE64, (thread_state_t)&state, ARM_DEBUG_STATE64_COUNT) != KERN_SUCCESS) {
+            NSLog(CFSTR("hook failed: could not set thread 0x%x debug state"), threads[i]);
             success = false;
             goto done;
         }
