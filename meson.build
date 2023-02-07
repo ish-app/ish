@@ -47,6 +47,7 @@ emu_src = [
     'emu/tlb.c',
     'emu/fpu.c',
     'emu/vec.c',
+    'emu/mmx.c',
     'emu/float80.c',
 
 ]
