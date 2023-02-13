@@ -2306,22 +2306,6 @@ static uint64_t __attribute__((aligned(16))) test_values[4][2] = {
     }\
 }
 
-#define SHIFT_OP_MM(op,ib)\
-{\
-    int i;\
-    for(i=0;i<2;i++) {\
-    a.q[0] = test_values[2*i][0];\
-    b.q[0] = ib;\
-    a.q[1] = b.q[1] = 0;\
-    asm volatile (#op " %2, %0" : "=y" (r.q[0]) : "0" (a.q[0]), "y" (b.q[0]));\
-    printf("%-9s: a=" FMT64X " b=" FMT64X " r=" FMT64X "\n",\
-           #op,\
-           a.q[0],\
-           b.q[0],\
-           r.q[0]);\
-    }\
-}
-
 #define SHIFT_OP(op, ib)\
 {\
     int i;\
@@ -2337,6 +2321,17 @@ static uint64_t __attribute__((aligned(16))) test_values[4][2] = {
            a.q[1], a.q[0],\
            b.q[1], b.q[0],\
            r.q[1], r.q[0]);\
+    }\
+    for(i=0;i<2;i++) {\
+    a.q[0] = test_values[2*i][0];\
+    b.q[0] = ib;\
+    a.q[1] = b.q[1] = 0;\
+    asm volatile (#op " %2, %0" : "=y" (r.q[0]) : "0" (a.q[0]), "y" (b.q[0]));\
+    printf("%-9s: a=" FMT64X " b=" FMT64X " r=" FMT64X "\n",\
+           #op,\
+           a.q[0],\
+           b.q[0],\
+           r.q[0]);\
     }\
 }
 
@@ -2646,19 +2641,19 @@ void test_sse(void)
     PSHUF_OP(pshuflw, 0x78);
     PSHUF_OP(pshufhw, 0x78);
 
-    SHIFT_DQ_IM(psrlw, 7);
-    SHIFT_DQ_IM(psrlw, 16);
-    SHIFT_DQ_IM(psraw, 7);
-    SHIFT_DQ_IM(psraw, 16);
-    SHIFT_DQ_IM(psllw, 7);
-    SHIFT_DQ_IM(psllw, 16);
+    SHIFT_OP(psrlw, 7);
+    SHIFT_OP(psrlw, 16);
+    SHIFT_OP(psraw, 7);
+    SHIFT_OP(psraw, 16);
+    SHIFT_OP(psllw, 7);
+    SHIFT_OP(psllw, 16);
 
-    SHIFT_DQ_IM(psrld, 7);
-    SHIFT_DQ_IM(psrld, 32);
-    SHIFT_DQ_IM(psrad, 7);
-    SHIFT_DQ_IM(psrad, 32);
-    SHIFT_DQ_IM(pslld, 7);
-    SHIFT_DQ_IM(pslld, 32);
+    SHIFT_OP(psrld, 7);
+    SHIFT_OP(psrld, 32);
+    SHIFT_OP(psrad, 7);
+    SHIFT_OP(psrad, 32);
+    SHIFT_OP(pslld, 7);
+    SHIFT_OP(pslld, 32);
 
     SHIFT_OP(psrlq, 7);
     SHIFT_OP(psrlq, 32);
@@ -2669,25 +2664,6 @@ void test_sse(void)
     SHIFT_DQ_IM(psrldq, 7);
     SHIFT_DQ_IM(pslldq, 16);
     SHIFT_DQ_IM(pslldq, 7);
-    SHIFT_IM(psrlq, 16);
-    SHIFT_IM(psrlq, 7);
-    SHIFT_IM(psllq, 16);
-    SHIFT_IM(psllq, 7);
-
-    SHIFT_OP_MM(psllw, 16);
-    SHIFT_OP_MM(psllw, 7);
-    SHIFT_OP_MM(psrlw, 16);
-    SHIFT_OP_MM(psrlw, 7);
-
-    SHIFT_OP_MM(pslld, 32);
-    SHIFT_OP_MM(pslld, 7);
-    SHIFT_OP_MM(psrld, 32);
-    SHIFT_OP_MM(psrld, 7);
-
-    SHIFT_OP_MM(psllq, 32);
-    SHIFT_OP_MM(psllq, 7);
-    SHIFT_OP_MM(psrlq, 32);
-    SHIFT_OP_MM(psrlq, 7);
 
     // MOVMSK(movmskps);
     MOVMSK(movmskpd);
