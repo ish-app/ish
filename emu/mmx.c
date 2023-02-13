@@ -112,17 +112,97 @@ void vec_shiftr_q64(NO_CPU, const union mm_reg *src, union mm_reg *dst) {
         dst->qw >>= src->qw;
 }
 
+void vec_imm_shiftl_w64(NO_CPU, const uint8_t amount, union mm_reg *dst) {
+    if (amount > 15) {
+        dst->qw = 0;
+    } else {
+        union vec d = { .qw = dst->qw};
+        for (unsigned i = 0; i < array_size(d.u16); i++)
+            d.u16[i] <<= amount;
+        dst->qw = d.qw;
+    }
+}
+void vec_imm_shiftl_d64(NO_CPU, const uint8_t amount, union mm_reg *dst) {
+    if (amount > 31) {
+        dst->qw = 0;
+    } else {
+        dst->dw[0] <<= amount;
+        dst->dw[1] <<= amount;
+    }
+}
 void vec_imm_shiftl_q64(NO_CPU, const uint8_t amount, union mm_reg *dst) {
     if (amount > 63)
         dst->qw = 0;
     else
         dst->qw <<= amount;
 }
+
+void vec_imm_shiftr_w64(NO_CPU, const uint8_t amount, union mm_reg *dst) {
+    if (amount > 15) {
+        dst->qw = 0;
+    } else {
+        union vec d = { .qw = dst->qw};
+        for (unsigned i = 0; i < array_size(d.u16); i++)
+            d.u16[i] >>= amount;
+        dst->qw = d.qw;
+    }
+}
+void vec_imm_shiftr_d64(NO_CPU, const uint8_t amount, union mm_reg *dst) {
+    if (amount > 31) {
+        dst->qw = 0;
+    } else {
+        dst->dw[0] >>= amount;
+        dst->dw[1] >>= amount;
+    }
+}
 void vec_imm_shiftr_q64(NO_CPU, const uint8_t amount, union mm_reg *dst) {
     if (amount > 63)
         dst->qw = 0;
     else
         dst->qw >>= amount;
+}
+
+void vec_shiftrs_w64(NO_CPU, const union mm_reg *src, union mm_reg *dst) {
+    union vec d = { .qw = dst->qw };
+    const uint8_t amount = src->qw;
+    for (unsigned i = 0; i < 4; i++) {
+        if (amount > 15)
+            d.u16[i] = ((d.u16[i] >> 15) & (uint16_t)1) ? 0xffff : 0;
+        else
+            d.u16[i] = ((int16_t)(d.u16[i])) >> amount;
+    }
+    dst->qw = d.qw;
+}
+void vec_shiftrs_d64(NO_CPU, const union mm_reg *src, union mm_reg *dst) {
+    union vec d = { .qw = dst->qw };
+    const uint8_t amount = src->qw;
+    for (unsigned i = 0; i < 2; i++) {
+        if (amount > 31)
+            d.u32[i] = ((d.u32[i] >> 31) & (uint32_t)1) ? 0xffffffff : 0;
+        else
+            d.u32[i] = ((int32_t)(d.u32[i])) >> amount;
+    }
+    dst->qw = d.qw;
+}
+void vec_imm_shiftrs_w64(NO_CPU, const uint8_t amount, union mm_reg *dst) {
+    union vec d = { .qw = dst->qw };
+    for (unsigned i = 0; i < 4; i++) {
+        if (amount > 15)
+            d.u16[i] = ((d.u16[i] >> 15) & (uint16_t)1) ? 0xffff : 0;
+        else
+            d.u16[i] = ((int16_t)(d.u16[i])) >> amount;
+    }
+    dst->qw = d.qw;
+}
+void vec_imm_shiftrs_d64(NO_CPU, const uint8_t amount, union mm_reg *dst) {
+    union vec d = { .qw = dst->qw };
+    for (unsigned i = 0; i < 2; i++) {
+        if (amount > 31)
+            d.u32[i] = ((d.u32[i] >> 31) & (uint32_t)1) ? 0xffffffff : 0;
+        else
+            d.u32[i] = ((int32_t)(d.u32[i])) >> amount;
+    }
+    dst->qw = d.qw;
 }
 
 void vec_mulu64(NO_CPU, const union mm_reg *src, union mm_reg *dst) {

@@ -136,28 +136,86 @@ void vec_imm_shiftr_dq128(NO_CPU, uint8_t amount, union xmm_reg *dst) {
         dst->u128 >>= amount * 8;
 }
 
-void vec_shiftl_q128(NO_CPU, union xmm_reg *amount, union xmm_reg *dst) {
-    uint64_t amount_qw = amount->qw[0];
-
-    if (amount_qw > 63) {
+void vec_shiftl_w128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst) {
+    const uint8_t amount = src->u8[0];
+    if (amount > 15) {
         zero_xmm(dst);
     } else {
-        dst->qw[0] <<= amount_qw;
-        dst->qw[1] <<= amount_qw;
+        for (unsigned i = 0; i < 8; i++) {
+            dst->u16[i] <<= amount;
+        }
+    }
+}
+void vec_shiftl_d128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst) {
+    const uint8_t amount = src->u8[0];
+    if (amount > 31) {
+        zero_xmm(dst);
+    } else {
+        dst->u32[0] <<= amount;
+        dst->u32[1] <<= amount;
+        dst->u32[2] <<= amount;
+        dst->u32[3] <<= amount;
+    }
+}
+void vec_shiftl_q128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst) {
+    const uint8_t amount = src->u8[0];
+    if (amount > 63) {
+        zero_xmm(dst);
+    } else {
+        dst->qw[0] <<= amount;
+        dst->qw[1] <<= amount;
     }
 }
 
-void vec_shiftr_q128(NO_CPU, union xmm_reg *amount, union xmm_reg *dst) {
-    uint64_t amount_qw = amount->qw[0];
-
-    if (amount_qw > 63) {
+void vec_shiftr_w128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst) {
+    const uint8_t amount = src->u8[0];
+    if (amount > 15) {
         zero_xmm(dst);
     } else {
-        dst->qw[0] >>= amount_qw;
-        dst->qw[1] >>= amount_qw;
+        for (unsigned i = 0; i < 8; i++) {
+            dst->u16[i] >>= amount;
+        }
+    }
+}
+void vec_shiftr_d128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst) {
+    const uint8_t amount = src->u8[0];
+    if (amount > 31) {
+        zero_xmm(dst);
+    } else {
+        dst->u32[0] >>= amount;
+        dst->u32[1] >>= amount;
+        dst->u32[2] >>= amount;
+        dst->u32[3] >>= amount;
+    }
+}
+void vec_shiftr_q128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst) {
+    const uint8_t amount = src->u8[0];
+    if (amount > 63) {
+        zero_xmm(dst);
+    } else {
+        dst->qw[0] >>= amount;
+        dst->qw[1] >>= amount;
     }
 }
 
+void vec_shiftrs_w128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst) {
+    const uint8_t amount = src->u8[0];
+    for (unsigned i = 0; i < 8; i++) {
+        if (amount > 15)
+            dst->u16[i] = ((dst->u16[i] >> 15) & (uint16_t)1) ? 0xffff : 0;
+        else
+            dst->u16[i] = ((int16_t)(dst->u16[i])) >> amount;
+    }
+}
+void vec_shiftrs_d128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst) {
+    const uint8_t amount = src->u8[0];
+    for (unsigned i = 0; i < 4; i++) {
+        if (amount > 31)
+            dst->u32[i] = ((dst->u32[i] >> 31) & (uint32_t)1) ? 0xffffffff : 0;
+        else
+            dst->u32[i] = ((int32_t)(dst->u32[i])) >> amount;
+    }
+}
 void vec_imm_shiftrs_w128(NO_CPU, const uint8_t amount, union xmm_reg *dst) {
     for (unsigned i = 0; i < 8; i++) {
         if (amount > 15)
