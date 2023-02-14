@@ -21,6 +21,7 @@
 /* End PBXAggregateTarget section */
 
 /* Begin PBXBuildFile section */
+		0FC2383C2991FBA6004C09EC /* mmx.c in Sources */ = {isa = PBXBuildFile; fileRef = 0FC2383B2991FB82004C09EC /* mmx.c */; };
 		491B31E62883BF22008EEFB0 /* ThemeViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 491B31E52883BF22008EEFB0 /* ThemeViewController.m */; };
 		49302D8E277669D300C9885A /* ish.c in Sources */ = {isa = PBXBuildFile; fileRef = 49302D8D277669D300C9885A /* ish.c */; };
 		496C7AB227CC697E005D7613 /* Theme.m in Sources */ = {isa = PBXBuildFile; fileRef = 491C4C1E27C8FB65008B1DFA /* Theme.m */; };
@@ -414,6 +415,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		0FC2383B2991FB82004C09EC /* mmx.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = mmx.c; sourceTree = "<group>"; };
 		408A2639236440F8008A4E81 /* iOSFS.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iOSFS.m; sourceTree = "<group>"; };
 		408A263B23644102008A4E81 /* iOSFS.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iOSFS.h; sourceTree = "<group>"; };
 		49087C13295DF0490058075B /* hook.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = hook.h; sourceTree = "<group>"; };
@@ -1202,6 +1204,7 @@
 		BB8636F82167F4F200E7ADC0 /* emu */ = {
 			isa = PBXGroup;
 			children = (
+				0FC2383B2991FB82004C09EC /* mmx.c */,
 				497F6C62254E5C7F00C82F46 /* cpu.h */,
 				497F6C58254E5C7E00C82F46 /* cpuid.h */,
 				497F6C5E254E5C7E00C82F46 /* decode.h */,
@@ -2039,6 +2042,7 @@
 				497F6D25254E5EA600C82F46 /* futex.c in Sources */,
 				497F6D26254E5EA600C82F46 /* getset.c in Sources */,
 				497F6D27254E5EA600C82F46 /* group.c in Sources */,
+				0FC2383C2991FBA6004C09EC /* mmx.c in Sources */,
 				497F6D28254E5EA600C82F46 /* init.c in Sources */,
 				497F6D29254E5EA600C82F46 /* ipc.c in Sources */,
 				497F6D2A254E5EA600C82F46 /* log.c in Sources */,

@@ -18,33 +18,71 @@ void vec_merge32(NO_CPU, const void *src, void *dst);
 void vec_merge64(NO_CPU, const void *src, void *dst);
 void vec_merge128(NO_CPU, const void *src, void *dst);
 
+void vec_shiftl_w64(NO_CPU, const union mm_reg *src, union mm_reg *dst);
+void vec_shiftl_d64(NO_CPU, const union mm_reg *src, union mm_reg *dst);
+void vec_shiftl_q64(NO_CPU, const union mm_reg *src, union mm_reg *dst);
+void vec_shiftr_w64(NO_CPU, const union mm_reg *src, union mm_reg *dst);
+void vec_shiftr_d64(NO_CPU, const union mm_reg *src, union mm_reg *dst);
+void vec_shiftr_q64(NO_CPU, const union mm_reg *src, union mm_reg *dst);
+void vec_shiftrs_w64(NO_CPU, const union mm_reg *src, union mm_reg *dst);
+void vec_shiftrs_d64(NO_CPU, const union mm_reg *src, union mm_reg *dst);
+
+void vec_shiftl_w128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst);
+void vec_shiftl_d128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst);
+void vec_shiftl_q128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst);
+void vec_shiftr_w128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst);
+void vec_shiftr_d128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst);
+void vec_shiftr_q128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst);
+void vec_shiftrs_w128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst);
+void vec_shiftrs_d128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst);
+
+void vec_imm_shiftl_w64(NO_CPU, const uint8_t amount, union mm_reg *dst);
+void vec_imm_shiftl_d64(NO_CPU, const uint8_t amount, union mm_reg *dst);
+void vec_imm_shiftl_q64(NO_CPU, const uint8_t amount, union mm_reg *dst);
+void vec_imm_shiftr_w64(NO_CPU, const uint8_t amount, union mm_reg *dst);
+void vec_imm_shiftr_d64(NO_CPU, const uint8_t amount, union mm_reg *dst);
+void vec_imm_shiftr_q64(NO_CPU, const uint8_t amount, union mm_reg *dst);
+void vec_imm_shiftrs_w64(NO_CPU, const uint8_t amount, union mm_reg *dst);
+void vec_imm_shiftrs_d64(NO_CPU, const uint8_t amount, union mm_reg *dst);
+
 void vec_imm_shiftl_w128(NO_CPU, const uint8_t amount, union xmm_reg *dst);
 void vec_imm_shiftl_q128(NO_CPU, const uint8_t amount, union xmm_reg *dst);
 void vec_imm_shiftl_d128(NO_CPU, const uint8_t amount, union xmm_reg *dst);
 void vec_imm_shiftl_dq128(NO_CPU, const uint8_t amount, union xmm_reg *dst);
-void vec_imm_shiftl_q64(NO_CPU, const uint8_t amount, union mm_reg *dst);
+
 void vec_imm_shiftr_q128(NO_CPU, const uint8_t amount, union xmm_reg *dst);
 void vec_imm_shiftr_w128(NO_CPU, const uint8_t amount, union xmm_reg *dst);
 void vec_imm_shiftr_d128(NO_CPU, const uint8_t amount, union xmm_reg *dst);
-void vec_imm_shiftr_q64(NO_CPU, const uint8_t amount, union mm_reg *dst);
+
 void vec_imm_shiftr_dq128(NO_CPU, uint8_t amount, union xmm_reg *dst);
 void vec_imm_shiftrs_w128(NO_CPU, const uint8_t amount, union xmm_reg *dst);
 void vec_imm_shiftrs_d128(NO_CPU, const uint8_t amount, union xmm_reg *dst);
-void vec_shiftl_q128(NO_CPU, union xmm_reg *amount, union xmm_reg *dst);
-void vec_shiftr_q128(NO_CPU, union xmm_reg *amount, union xmm_reg *dst);
+
+void vec_add_b64(NO_CPU, const union mm_reg *src, union mm_reg *dst);
+void vec_add_w64(NO_CPU, const union mm_reg *src, union mm_reg *dst);
+void vec_add_d64(NO_CPU, const union mm_reg *src, union mm_reg *dst);
+void vec_add_q64(NO_CPU, const union mm_reg *src, union mm_reg *dst);
+
+void vec_sub_b64(NO_CPU, const union mm_reg *src, union mm_reg *dst);
+void vec_sub_w64(NO_CPU, const union mm_reg *src, union mm_reg *dst);
+void vec_sub_d64(NO_CPU, const union mm_reg *src, union mm_reg *dst);
+void vec_sub_q64(NO_CPU, const union mm_reg *src, union mm_reg *dst);
+
 void vec_add_b128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
 void vec_add_w128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
 void vec_add_d128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
 void vec_add_q128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
-void vec_add_q64(NO_CPU, union mm_reg *src, union mm_reg *dst);
+
 void vec_addus_b128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
 void vec_addus_w128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
 void vec_addss_b128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
 void vec_addss_w128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
+
 void vec_sub_b128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
 void vec_sub_w128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
 void vec_sub_d128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
 void vec_sub_q128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
+
 void vec_subus_b128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
 void vec_subus_w128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
 void vec_subss_b128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
@@ -67,11 +105,13 @@ void vec_mul_p64(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
 void vec_mul_p32(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
 
 void vec_and128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
-void vec_and64(NO_CPU, union mm_reg *src, union mm_reg *dst);
 void vec_andn128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
 void vec_or128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
 void vec_xor128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
-void vec_xor64(NO_CPU, union mm_reg *src, union mm_reg *dst);
+
+void vec_or_q64(NO_CPU, const union mm_reg *src, union mm_reg *dst);
+void vec_and_q64(NO_CPU, const union mm_reg *src, union mm_reg *dst);
+void vec_xor_q64(NO_CPU, const union mm_reg *src, union mm_reg *dst);
 
 void vec_min_ub128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
 void vec_mins_w128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
@@ -128,9 +168,21 @@ void vec_unpackh_dq128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst);
 void vec_unpackh_ps128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst);
 void vec_unpackh_pd128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst);
 
+void vec_shuffle_w64(NO_CPU, const union mm_reg *src, union mm_reg *dst, uint8_t encoding);
+
 void vec_shuffle_lw128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst, uint8_t encoding);
 void vec_shuffle_hw128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst, uint8_t encoding);
+
 void vec_shuffle_d128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst, uint8_t encoding);
+void vec_shuffle_ps128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst, uint8_t encoding);
+void vec_shuffle_pd128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst, uint8_t encoding);
+
+void vec_compare_eqb64(NO_CPU, const union mm_reg *src, union mm_reg *dst);
+void vec_compare_eqw64(NO_CPU, const union mm_reg *src, union mm_reg *dst);
+void vec_compare_eqd64(NO_CPU, const union mm_reg *src, union mm_reg *dst);
+void vec_compares_gtb64(NO_CPU, const union mm_reg *src, union mm_reg *dst);
+void vec_compares_gtw64(NO_CPU, const union mm_reg *src, union mm_reg *dst);
+void vec_compares_gtd64(NO_CPU, const union mm_reg *src, union mm_reg *dst);
 
 void vec_compare_eqb128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst);
 void vec_compare_eqw128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst);
@@ -144,9 +196,14 @@ void vec_movl_pm64(NO_CPU, const union xmm_reg *src, uint64_t *dst);
 void vec_movh_p64(NO_CPU, const uint64_t *src, union xmm_reg *dst);
 void vec_movh_pm64(NO_CPU, const union xmm_reg *src, uint64_t *dst);
 
+void vec_movmask_b64(NO_CPU, const union mm_reg *src, uint32_t *dst);
 void vec_movmask_b128(NO_CPU, const union xmm_reg *src, uint32_t *dst);
 void vec_fmovmask_d128(NO_CPU, const union xmm_reg *src, uint32_t *dst);
+
+void vec_insert_w64(NO_CPU, const uint32_t *src, union mm_reg *dst, uint8_t index);
+void vec_insert_w128(NO_CPU, const uint32_t *src, union xmm_reg *dst, uint8_t index);
 void vec_extract_w128(NO_CPU, const union xmm_reg *src, uint32_t *dst, uint8_t index);
+
 void vec_avg_b128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst);
 void vec_avg_w128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst);
 
