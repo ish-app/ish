@@ -4,6 +4,15 @@
 #include "emu/vec.h"
 #include "emu/cpu.h"
 
+union vec {
+    uint8_t u8[16];
+    uint16_t u16[8];
+    uint32_t u32[4];
+    uint64_t u64[2];
+    __uint128_t u128[1];
+    __uint128_t dqw;
+};
+
 static inline void zero_xmm(union xmm_reg *xmm) {
     xmm->qw[0] = 0;
     xmm->qw[1] = 0;
@@ -66,61 +75,77 @@ void vec_merge128(NO_CPU, const void *src, void *dst) {
     memcpy(dst, src, 16);
 }
 
-void vec_imm_shiftl_w128(NO_CPU, const uint8_t amount, union xmm_reg *dst) {
-    if (amount > 15) {
-        zero_xmm(dst);
-    } else {
-        for (int i = 0; i < 8; i++) {
-            dst->u16[i] <<= amount;
-        }
-    }
-}
-void vec_imm_shiftl_q128(NO_CPU, const uint8_t amount, union xmm_reg *dst) {
-    if (amount > 63) {
-        zero_xmm(dst);
-    } else {
-        dst->qw[0] <<= amount;
-        dst->qw[1] <<= amount;
-    }
-}
-void vec_imm_shiftl_d128(NO_CPU, const uint8_t amount, union xmm_reg *dst) {
-    if (amount > 31) {
-        zero_xmm(dst);
-    } else {
-        dst->u32[0] <<= amount;
-        dst->u32[1] <<= amount;
-        dst->u32[2] <<= amount;
-        dst->u32[3] <<= amount;
-    }
-}
+#define _SHIFT(op, size) \
+    do { \
+        if (unlikely(amount > (size)-1)) { \
+            zero_xmm(dst); \
+        } else { \
+            union vec d = { .dqw = dst->u128 }; \
+            for (unsigned i = 0; i < array_size(d.u##size); i++) \
+                d.u##size[i] op##= amount; \
+            dst->u128 = d.dqw; \
+        } \
+    } while (0)
 
-void vec_imm_shiftr_q128(NO_CPU, const uint8_t amount, union xmm_reg *dst) {
-    if (amount > 63) {
-        zero_xmm(dst);
-    } else {
-        dst->qw[0] >>= amount;
-        dst->qw[1] >>= amount;
+#define VEC_SSE_SHIFT(dir, suffix, op, size) \
+    void vec_shift##dir##_##suffix##128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst) { \
+        const uint8_t amount = src->u8[0]; \
+        _SHIFT(op, size); \
+    } \
+    void vec_imm_shift##dir##_##suffix##128(NO_CPU, const uint8_t amount, union xmm_reg *dst) { \
+        _SHIFT(op, size); \
     }
-}
-void vec_imm_shiftr_d128(NO_CPU, const uint8_t amount, union xmm_reg *dst) {
-    if (amount > 31) {
-        zero_xmm(dst);
-    } else {
-        dst->u32[0] >>= amount;
-        dst->u32[1] >>= amount;
-        dst->u32[2] >>= amount;
-        dst->u32[3] >>= amount;
+
+#define _VEC_SSE_CMP(sgn, usgn, suffix, relop, size) \
+    void vec_compare##sgn##_##suffix##128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst) { \
+        union vec s = { .dqw = src->u128 }, d = { .dqw = dst->u128 }; \
+        for (unsigned i = 0; i < array_size(s.u##size); i++) \
+            d.u##size[i] = (usgn##int##size##_t)d.u##size[i] relop (usgn##int##size##_t)s.u##size[i] ? ~0 : 0;\
+        dst->u128 = d.dqw; \
     }
-}
-void vec_imm_shiftr_w128(NO_CPU, const uint8_t amount, union xmm_reg *dst) {
-    if (amount > 15) {
-        zero_xmm(dst);
-    } else {
-        for (unsigned i = 0; i < 8; i++) {
-            dst->u16[i] >>= amount;
-        }
+
+#define VEC_SSE_CMPD(suffix, relop, size) \
+    _VEC_SSE_CMP(, u, suffix, relop, size)
+#define VEC_SSE_CMPS(suffix, relop, size) \
+    _VEC_SSE_CMP(s,, suffix, relop, size)
+
+#define VEC_SSE_OP(name, suffix, op, size) \
+    void vec_##name##_##suffix##128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst) { \
+        union vec s = { .dqw = src->u128 }, d = { .dqw = dst->u128 }; \
+        for (unsigned i = 0; i < array_size(s.u##size); i++) \
+            d.u##size[i] op##= s.u##size[i]; \
+        dst->u128 = d.dqw; \
     }
-}
+
+VEC_SSE_SHIFT(r, w, >>, 16)
+VEC_SSE_SHIFT(r, d, >>, 32)
+VEC_SSE_SHIFT(r, q, >>, 64)
+
+VEC_SSE_SHIFT(l, w, <<, 16)
+VEC_SSE_SHIFT(l, d, <<, 32)
+VEC_SSE_SHIFT(l, q, <<, 64)
+
+VEC_SSE_CMPD(eqb, ==,  8)
+VEC_SSE_CMPD(eqw, ==, 16)
+VEC_SSE_CMPD(eqd, ==, 32)
+
+VEC_SSE_CMPS(gtb, >,  8)
+VEC_SSE_CMPS(gtw, >, 16)
+VEC_SSE_CMPS(gtd, >, 32)
+
+VEC_SSE_OP(add, b, +, 8)
+VEC_SSE_OP(add, w, +, 16)
+VEC_SSE_OP(add, d, +, 32)
+VEC_SSE_OP(add, q, +, 64)
+
+VEC_SSE_OP(sub, b, -, 8)
+VEC_SSE_OP(sub, w, -, 16)
+VEC_SSE_OP(sub, d, -, 32)
+VEC_SSE_OP(sub, q, -, 64)
+
+VEC_SSE_OP(and, dq, &, 128)
+VEC_SSE_OP(or,  dq, |, 128)
+VEC_SSE_OP(xor, dq, ^, 128)
 
 void vec_imm_shiftl_dq128(NO_CPU, uint8_t amount, union xmm_reg *dst) {
     if (amount >= 16)
@@ -128,80 +153,16 @@ void vec_imm_shiftl_dq128(NO_CPU, uint8_t amount, union xmm_reg *dst) {
     else
         dst->u128 <<= amount * 8;
 }
-
 void vec_imm_shiftr_dq128(NO_CPU, uint8_t amount, union xmm_reg *dst) {
     if (amount >= 16)
         zero_xmm(dst);
     else
         dst->u128 >>= amount * 8;
 }
-
-void vec_shiftl_w128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst) {
-    const uint8_t amount = src->u8[0];
-    if (amount > 15) {
-        zero_xmm(dst);
-    } else {
-        for (unsigned i = 0; i < 8; i++) {
-            dst->u16[i] <<= amount;
-        }
-    }
-}
-void vec_shiftl_d128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst) {
-    const uint8_t amount = src->u8[0];
-    if (amount > 31) {
-        zero_xmm(dst);
-    } else {
-        dst->u32[0] <<= amount;
-        dst->u32[1] <<= amount;
-        dst->u32[2] <<= amount;
-        dst->u32[3] <<= amount;
-    }
-}
-void vec_shiftl_q128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst) {
-    const uint8_t amount = src->u8[0];
-    if (amount > 63) {
-        zero_xmm(dst);
-    } else {
-        dst->qw[0] <<= amount;
-        dst->qw[1] <<= amount;
-    }
-}
-
-void vec_shiftr_w128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst) {
-    const uint8_t amount = src->u8[0];
-    if (amount > 15) {
-        zero_xmm(dst);
-    } else {
-        for (unsigned i = 0; i < 8; i++) {
-            dst->u16[i] >>= amount;
-        }
-    }
-}
-void vec_shiftr_d128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst) {
-    const uint8_t amount = src->u8[0];
-    if (amount > 31) {
-        zero_xmm(dst);
-    } else {
-        dst->u32[0] >>= amount;
-        dst->u32[1] >>= amount;
-        dst->u32[2] >>= amount;
-        dst->u32[3] >>= amount;
-    }
-}
-void vec_shiftr_q128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst) {
-    const uint8_t amount = src->u8[0];
-    if (amount > 63) {
-        zero_xmm(dst);
-    } else {
-        dst->qw[0] >>= amount;
-        dst->qw[1] >>= amount;
-    }
-}
-
 void vec_shiftrs_w128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst) {
     const uint8_t amount = src->u8[0];
     for (unsigned i = 0; i < 8; i++) {
-        if (amount > 15)
+        if (unlikely(amount > 15))
             dst->u16[i] = ((dst->u16[i] >> 15) & (uint16_t)1) ? 0xffff : 0;
         else
             dst->u16[i] = ((int16_t)(dst->u16[i])) >> amount;
@@ -210,7 +171,7 @@ void vec_shiftrs_w128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst) {
 void vec_shiftrs_d128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst) {
     const uint8_t amount = src->u8[0];
     for (unsigned i = 0; i < 4; i++) {
-        if (amount > 31)
+        if (unlikely(amount > 31))
             dst->u32[i] = ((dst->u32[i] >> 31) & (uint32_t)1) ? 0xffffffff : 0;
         else
             dst->u32[i] = ((int32_t)(dst->u32[i])) >> amount;
@@ -218,7 +179,7 @@ void vec_shiftrs_d128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst) {
 }
 void vec_imm_shiftrs_w128(NO_CPU, const uint8_t amount, union xmm_reg *dst) {
     for (unsigned i = 0; i < 8; i++) {
-        if (amount > 15)
+        if (unlikely(amount > 15))
             dst->u16[i] = ((dst->u16[i] >> 15) & (uint16_t)1) ? 0xffff : 0;
         else
             dst->u16[i] = ((int16_t)(dst->u16[i])) >> amount;
@@ -226,28 +187,11 @@ void vec_imm_shiftrs_w128(NO_CPU, const uint8_t amount, union xmm_reg *dst) {
 }
 void vec_imm_shiftrs_d128(NO_CPU, const uint8_t amount, union xmm_reg *dst) {
     for (unsigned i = 0; i < 4; i++) {
-        if (amount > 31)
+        if (unlikely(amount > 31))
             dst->u32[i] = ((dst->u32[i] >> 31) & (uint32_t)1) ? 0xffffffff : 0;
         else
             dst->u32[i] = ((int32_t)(dst->u32[i])) >> amount;
     }
-}
-
-void vec_add_b128(NO_CPU, union xmm_reg *src, union xmm_reg *dst) {
-    for (unsigned i = 0; i < array_size(src->u8); i++)
-        dst->u8[i] += src->u8[i];
-}
-void vec_add_w128(NO_CPU, union xmm_reg *src, union xmm_reg *dst) {
-    for (unsigned i = 0; i < array_size(src->u16); i++)
-        dst->u16[i] += src->u16[i];
-}
-void vec_add_d128(NO_CPU, union xmm_reg *src, union xmm_reg *dst) {
-    for (unsigned i = 0; i < array_size(src->u32); i++)
-        dst->u32[i] += src->u32[i];
-}
-void vec_add_q128(NO_CPU, union xmm_reg *src, union xmm_reg *dst) {
-    dst->qw[0] += src->qw[0];
-    dst->qw[1] += src->qw[1];
 }
 
 void vec_addus_b128(NO_CPU, union xmm_reg *src, union xmm_reg *dst) {
@@ -271,22 +215,6 @@ void vec_addss_w128(NO_CPU, union xmm_reg *src, union xmm_reg *dst) {
         dst->u16[i] = satud((int16_t)dst->u16[i] + (int16_t)src->u16[i]);
 }
 
-void vec_sub_b128(NO_CPU, union xmm_reg *src, union xmm_reg *dst) {
-    for (unsigned i = 0; i < array_size(src->u8); i++)
-        dst->u8[i] -= src->u8[i];
-}
-void vec_sub_w128(NO_CPU, union xmm_reg *src, union xmm_reg *dst) {
-    for (unsigned i = 0; i < array_size(src->u16); i++)
-        dst->u16[i] -= src->u16[i];
-}
-void vec_sub_d128(NO_CPU, union xmm_reg *src, union xmm_reg *dst) {
-    for (unsigned i = 0; i < array_size(src->u32); i++)
-        dst->u32[i] -= src->u32[i];
-}
-void vec_sub_q128(NO_CPU, union xmm_reg *src, union xmm_reg *dst) {
-    dst->qw[0] -= src->qw[0];
-    dst->qw[1] -= src->qw[1];
-}
 void vec_subus_b128(NO_CPU, union xmm_reg *src, union xmm_reg *dst) {
     for (unsigned i = 0; i < 16; i++) {
         const int32_t sb = dst->u8[i] - src->u8[i];
@@ -337,22 +265,9 @@ void vec_mulu_dq128(NO_CPU, union xmm_reg *src, union xmm_reg *dst) {
     dst->qw[1] = (uint64_t) src->u32[2] * dst->u32[2];
 }
 
-void vec_and128(NO_CPU, union xmm_reg *src, union xmm_reg *dst) {
-    dst->qw[0] &= src->qw[0];
-    dst->qw[1] &= src->qw[1];
-}
-
 void vec_andn128(NO_CPU, union xmm_reg *src, union xmm_reg *dst) {
     dst->qw[0] = ~dst->qw[0] & src->qw[0];
     dst->qw[1] = ~dst->qw[1] & src->qw[1];
-}
-void vec_or128(NO_CPU, union xmm_reg *src, union xmm_reg *dst) {
-    dst->qw[0] |= src->qw[0];
-    dst->qw[1] |= src->qw[1];
-}
-void vec_xor128(NO_CPU, union xmm_reg *src, union xmm_reg *dst) {
-    dst->qw[0] ^= src->qw[0];
-    dst->qw[1] ^= src->qw[1];
 }
 
 void vec_min_ub128(NO_CPU, union xmm_reg *src, union xmm_reg *dst) {
@@ -626,32 +541,6 @@ void vec_shuffle_pd128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst, uin
     dst->qw[1] = src->qw[(encoding >> 1) & 1];
 }
 
-void vec_compare_eqb128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst) {
-    for (unsigned i = 0; i < array_size(src->u8); i++)
-        dst->u8[i] = dst->u8[i] == src->u8[i] ? ~0 : 0;
-}
-void vec_compare_eqw128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst) {
-    for (unsigned i = 0; i < array_size(src->u16); i++)
-        dst->u16[i] = dst->u16[i] == src->u16[i] ? ~0 : 0;
-}
-void vec_compare_eqd128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst) {
-    for (unsigned i = 0; i < array_size(src->u32); i++)
-        dst->u32[i] = dst->u32[i] == src->u32[i] ? ~0 : 0;
-}
-
-void vec_compares_gtb128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst) {
-    for (unsigned i = 0; i < array_size(src->u8); i++)
-        dst->u8[i] = (int8_t)dst->u8[i] > (int8_t)src->u8[i] ? ~0 : 0;
-}
-void vec_compares_gtw128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst) {
-    for (unsigned i = 0; i < array_size(src->u16); i++)
-        dst->u16[i] = (int16_t)dst->u16[i] > (int16_t)src->u16[i] ? ~0 : 0;
-}
-void vec_compares_gtd128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst) {
-    for (unsigned i = 0; i < array_size(src->u32); i++)
-        dst->u32[i] = (int32_t)dst->u32[i] > (int32_t)src->u32[i] ? ~0 : 0;
-}
-
 void vec_movmask_b128(NO_CPU, const union xmm_reg *src, uint32_t *dst) {
     *dst = 0;
     for (unsigned i = 0; i < array_size(src->u8); i++) {
@@ -659,7 +548,6 @@ void vec_movmask_b128(NO_CPU, const union xmm_reg *src, uint32_t *dst) {
             *dst |= 1 << i;
     }
 }
-
 void vec_fmovmask_d128(NO_CPU, const union xmm_reg *src, uint32_t *dst) {
     *dst = 0;
     for (unsigned i = 0; i < array_size(src->f64); i++) {
