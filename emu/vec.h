@@ -68,20 +68,20 @@ void vec_sub_w64(NO_CPU, const union mm_reg *src, union mm_reg *dst);
 void vec_sub_d64(NO_CPU, const union mm_reg *src, union mm_reg *dst);
 void vec_sub_q64(NO_CPU, const union mm_reg *src, union mm_reg *dst);
 
-void vec_add_b128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
-void vec_add_w128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
-void vec_add_d128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
-void vec_add_q128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
+void vec_add_b128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst);
+void vec_add_w128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst);
+void vec_add_d128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst);
+void vec_add_q128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst);
 
 void vec_addus_b128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
 void vec_addus_w128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
 void vec_addss_b128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
 void vec_addss_w128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
 
-void vec_sub_b128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
-void vec_sub_w128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
-void vec_sub_d128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
-void vec_sub_q128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
+void vec_sub_b128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst);
+void vec_sub_w128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst);
+void vec_sub_d128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst);
+void vec_sub_q128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst);
 
 void vec_subus_b128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
 void vec_subus_w128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
@@ -104,10 +104,10 @@ void vec_sub_p32(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
 void vec_mul_p64(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
 void vec_mul_p32(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
 
-void vec_and128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
+void vec_or_dq128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst);
+void vec_xor_dq128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst);
+void vec_and_dq128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst);
 void vec_andn128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
-void vec_or128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
-void vec_xor128(NO_CPU, union xmm_reg *src, union xmm_reg *dst);
 
 void vec_or_q64(NO_CPU, const union mm_reg *src, union mm_reg *dst);
 void vec_and_q64(NO_CPU, const union mm_reg *src, union mm_reg *dst);
