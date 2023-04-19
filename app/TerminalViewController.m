@@ -39,6 +39,7 @@
 @property (weak, nonatomic) IBOutlet NSLayoutConstraint *barLeading;
 @property (weak, nonatomic) IBOutlet NSLayoutConstraint *barTrailing;
 @property (weak, nonatomic) IBOutlet NSLayoutConstraint *barButtonWidth;
+@property (weak, nonatomic) IBOutlet NSLayoutConstraint *barHeight;
 @property (weak, nonatomic) IBOutlet UIView *settingsBadge;
 
 @property (weak, nonatomic) IBOutlet UIButton *infoButton;
@@ -95,9 +96,9 @@
         [self.hideKeyboardButton removeFromSuperview];
     }
     if (UIDevice.currentDevice.userInterfaceIdiom == UIUserInterfaceIdiomPhone) {
-        self.barView.frame = CGRectMake(0, 0, 100, 48);
+        self.barHeight.constant = 36;
     } else {
-        self.barView.frame = CGRectMake(0, 0, 100, 55);
+        self.barHeight.constant = 43;
     }
     
     // SF Symbols is cool
@@ -403,21 +404,17 @@
 }
 
 - (void)resizeBar {
-    CGSize screen = UIScreen.mainScreen.bounds.size;
     CGSize bar = self.barView.bounds.size;
     // set sizing parameters on bar
     // numbers stolen from iVim and modified somewhat
     if (UIDevice.currentDevice.userInterfaceIdiom == UIUserInterfaceIdiomPhone) {
         // phone
         [self setBarHorizontalPadding:6 verticalPadding:6 buttonWidth:32];
-    } else if (bar.width == screen.width || bar.width == screen.height) {
-        // full-screen ipad
+    } else if (bar.width >= 450) {
+        // wide ipad
         [self setBarHorizontalPadding:15 verticalPadding:8 buttonWidth:43];
-    } else if (bar.width <= 320) {
-        // slide over
-        [self setBarHorizontalPadding:8 verticalPadding:8 buttonWidth:26];
     } else {
-        // split view
+        // narrow ipad (slide over)
         [self setBarHorizontalPadding:10 verticalPadding:8 buttonWidth:36];
     }
     [UIView performWithoutAnimation:^{

@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="19455" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="BYZ-38-t0r">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="21701" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="BYZ-38-t0r">
     <device id="retina6_5" orientation="portrait" appearance="light"/>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="19454"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="21678"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
         <capability name="System colors in document resources" minToolsVersion="11.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
@@ -43,6 +43,7 @@
                         <outlet property="bar" destination="4pc-Ei-ihz" id="iy4-s8-7yt"/>
                         <outlet property="barBottom" destination="OK7-xG-JFg" id="vWW-y5-fIo"/>
                         <outlet property="barButtonWidth" destination="1Ax-5U-2CI" id="Wlc-g8-GEs"/>
+                        <outlet property="barHeight" destination="3cy-zm-9Qp" id="OcF-FY-cym"/>
                         <outlet property="barLeading" destination="Ha9-7V-oYm" id="o53-7B-f32"/>
                         <outlet property="barTop" destination="gtD-Rx-Gdo" id="zXm-Bb-ZyO"/>
                         <outlet property="barTrailing" destination="RAD-x5-aAI" id="Ele-Ty-xAK"/>
@@ -67,14 +68,14 @@
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
                 <view contentMode="scaleToFill" id="GyN-ob-WFz" customClass="BarView">
-                    <rect key="frame" x="0.0" y="0.0" width="500" height="55"/>
-                    <autoresizingMask key="autoresizingMask" widthSizable="YES"/>
+                    <rect key="frame" x="0.0" y="0.0" width="500" height="108"/>
+                    <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                     <subviews>
                         <stackView opaque="NO" contentMode="scaleToFill" spacing="6" translatesAutoresizingMaskIntoConstraints="NO" id="4pc-Ei-ihz">
-                            <rect key="frame" x="6" y="6" width="488" height="43"/>
+                            <rect key="frame" x="6" y="50" width="488" height="50"/>
                             <subviews>
                                 <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="cJt-oG-BnW" customClass="BarButton">
-                                    <rect key="frame" x="0.0" y="0.0" width="31" height="43"/>
+                                    <rect key="frame" x="0.0" y="0.0" width="31" height="50"/>
                                     <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                     <accessibility key="accessibilityConfiguration" label="Tab">
                                         <accessibilityTraits key="traits" button="YES"/>
@@ -89,7 +90,7 @@
                                     </connections>
                                 </button>
                                 <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="W9v-cj-FWz" customClass="BarButton">
-                                    <rect key="frame" x="37" y="0.0" width="31" height="43"/>
+                                    <rect key="frame" x="37" y="0.0" width="31" height="50"/>
                                     <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                     <accessibility key="accessibilityConfiguration" label="Control">
                                         <accessibilityTraits key="traits" button="YES"/>
@@ -107,7 +108,7 @@
                                     </connections>
                                 </button>
                                 <button contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="IPm-l0-f25" customClass="BarButton">
-                                    <rect key="frame" x="74" y="0.0" width="31" height="43"/>
+                                    <rect key="frame" x="74" y="0.0" width="31" height="50"/>
                                     <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                     <accessibility key="accessibilityConfiguration" label="Escape">
                                         <accessibilityTraits key="traits" button="YES"/>
@@ -122,7 +123,7 @@
                                     </connections>
                                 </button>
                                 <button contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="VCr-TW-PIZ" userLabel="Arrows" customClass="ArrowBarButton">
-                                    <rect key="frame" x="111" y="0.0" width="31" height="43"/>
+                                    <rect key="frame" x="111" y="0.0" width="31" height="50"/>
                                     <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                     <fontDescription key="fontDescription" type="system" pointSize="24"/>
                                     <color key="tintColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
@@ -134,13 +135,13 @@
                                     </connections>
                                 </button>
                                 <view contentMode="scaleToFill" horizontalHuggingPriority="100" translatesAutoresizingMaskIntoConstraints="NO" id="qmg-M1-7W8" userLabel="Spacer">
-                                    <rect key="frame" x="148" y="0.0" width="229" height="43"/>
+                                    <rect key="frame" x="148" y="0.0" width="229" height="50"/>
                                 </view>
                                 <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="QqP-xI-1vv">
-                                    <rect key="frame" x="383" y="0.0" width="31" height="43"/>
+                                    <rect key="frame" x="383" y="0.0" width="31" height="50"/>
                                     <subviews>
                                         <button contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="infoLight" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="5dl-UV-6qh" userLabel="Info">
-                                            <rect key="frame" x="0.0" y="0.0" width="31" height="43"/>
+                                            <rect key="frame" x="0.0" y="0.0" width="31" height="50"/>
                                             <accessibility key="accessibilityConfiguration" label="Settings"/>
                                             <constraints>
                                                 <constraint firstAttribute="width" constant="31" id="1Ax-5U-2CI"/>
@@ -155,7 +156,7 @@
                                             </connections>
                                         </button>
                                         <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="QyP-z0-o0M" userLabel="Badge">
-                                            <rect key="frame" x="20" y="4.6666666666666661" width="12" height="11.999999999999998"/>
+                                            <rect key="frame" x="20" y="6.6666666666666643" width="12" height="12"/>
                                             <color key="backgroundColor" systemColor="systemRedColor"/>
                                             <constraints>
                                                 <constraint firstAttribute="width" constant="12" id="BA0-yo-Kjp"/>
@@ -174,12 +175,12 @@
                                         <constraint firstAttribute="trailing" secondItem="5dl-UV-6qh" secondAttribute="trailing" id="V23-Wf-LRF"/>
                                         <constraint firstAttribute="trailing" secondItem="QyP-z0-o0M" secondAttribute="trailing" constant="-1" id="bKG-3n-DTG"/>
                                         <constraint firstItem="5dl-UV-6qh" firstAttribute="leading" secondItem="QqP-xI-1vv" secondAttribute="leading" id="cU3-kZ-7ce"/>
-                                        <constraint firstAttribute="width" constant="31" id="jE7-Z3-L7t"/>
                                         <constraint firstItem="QyP-z0-o0M" firstAttribute="centerY" secondItem="QqP-xI-1vv" secondAttribute="centerY" multiplier="0.5" id="o5C-lE-of0"/>
+                                        <constraint firstItem="5dl-UV-6qh" firstAttribute="width" secondItem="QqP-xI-1vv" secondAttribute="width" id="v7m-bU-plD"/>
                                     </constraints>
                                 </view>
                                 <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="hmm-tv-z35" userLabel="Paste">
-                                    <rect key="frame" x="420" y="0.0" width="31" height="43"/>
+                                    <rect key="frame" x="420" y="0.0" width="31" height="50"/>
                                     <accessibility key="accessibilityConfiguration" label="Paste"/>
                                     <color key="tintColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                     <state key="normal" image="Paste"/>
@@ -188,7 +189,7 @@
                                     </connections>
                                 </button>
                                 <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="7qw-ie-p4d">
-                                    <rect key="frame" x="457" y="0.0" width="31" height="43"/>
+                                    <rect key="frame" x="457" y="0.0" width="31" height="50"/>
                                     <accessibility key="accessibilityConfiguration" label="Hide Keyboard"/>
                                     <color key="tintColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                     <state key="normal" image="Hide Keyboard"/>
@@ -198,6 +199,7 @@
                                 </button>
                             </subviews>
                             <constraints>
+                                <constraint firstAttribute="height" constant="43" id="3cy-zm-9Qp"/>
                                 <constraint firstItem="7qw-ie-p4d" firstAttribute="width" secondItem="5dl-UV-6qh" secondAttribute="width" id="5aW-YN-2vX"/>
                                 <constraint firstItem="5dl-UV-6qh" firstAttribute="width" secondItem="hmm-tv-z35" secondAttribute="width" id="Nyk-On-Tyt"/>
                                 <constraint firstItem="W9v-cj-FWz" firstAttribute="width" secondItem="5dl-UV-6qh" secondAttribute="width" id="Xdt-z5-Zdb"/>
@@ -211,9 +213,9 @@
                     <color key="tintColor" systemColor="darkTextColor"/>
                     <constraints>
                         <constraint firstItem="4pc-Ei-ihz" firstAttribute="leading" secondItem="hgN-L1-K1S" secondAttribute="leading" constant="6" id="Ha9-7V-oYm"/>
-                        <constraint firstAttribute="bottom" secondItem="4pc-Ei-ihz" secondAttribute="bottom" constant="6" id="OK7-xG-JFg"/>
+                        <constraint firstItem="hgN-L1-K1S" firstAttribute="bottom" secondItem="4pc-Ei-ihz" secondAttribute="bottom" constant="6" id="OK7-xG-JFg"/>
                         <constraint firstItem="hgN-L1-K1S" firstAttribute="trailing" secondItem="4pc-Ei-ihz" secondAttribute="trailing" constant="6" id="RAD-x5-aAI"/>
-                        <constraint firstItem="4pc-Ei-ihz" firstAttribute="top" secondItem="GyN-ob-WFz" secondAttribute="top" constant="6" id="gtD-Rx-Gdo"/>
+                        <constraint firstItem="4pc-Ei-ihz" firstAttribute="top" secondItem="hgN-L1-K1S" secondAttribute="top" constant="6" id="gtD-Rx-Gdo"/>
                     </constraints>
                     <userDefinedRuntimeAttributes>
                         <userDefinedRuntimeAttribute type="boolean" keyPath="allowsSelfSizing" value="YES"/>
