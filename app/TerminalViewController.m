@@ -300,9 +300,11 @@
         self.termView.inputAccessoryView = self.barView;
     }
     if (self.termView.inputAccessoryView != oldBarView && self.termView.isFirstResponder) {
-        self.ignoreKeyboardMotion = YES; // avoid infinite recursion
-        [self.termView reloadInputViews];
-        self.ignoreKeyboardMotion = NO;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            self.ignoreKeyboardMotion = YES; // avoid infinite recursion
+            [self.termView reloadInputViews];
+            self.ignoreKeyboardMotion = NO;
+        });
     }
 }
 - (void)_updateStyleAnimated {
@@ -325,18 +327,19 @@
     if (self.ignoreKeyboardMotion)
         return;
 
-    CGRect keyboardFrame = [notification.userInfo[UIKeyboardFrameEndUserInfoKey] CGRectValue];
-    keyboardFrame = [self.view convertRect:keyboardFrame fromView:self.view.window];
+    CGRect screenKeyboardFrame = [notification.userInfo[UIKeyboardFrameEndUserInfoKey] CGRectValue];
+    UIScreen *screen = UIScreen.mainScreen;
+    // notification.object is nil before iOS 16.1 and the correct UIScreen after iOS 16.1
+    if (notification.object != nil)
+        screen = notification.object;
+    CGRect keyboardFrame = [self.view convertRect:screenKeyboardFrame fromCoordinateSpace:screen.coordinateSpace];
     if (CGRectEqualToRect(keyboardFrame, CGRectZero))
         return;
-    NSLog(@"%@ %@", notification.name, [NSValue valueWithCGRect:keyboardFrame]);
+    CGRect intersection = CGRectIntersection(keyboardFrame, self.view.bounds);
+    keyboardFrame = intersection;
+    NSLog(@"%@ %@", notification.name, @(keyboardFrame));
     self.hasExternalKeyboard = keyboardFrame.size.height < 100;
-    CGFloat pad = self.view.bounds.size.height - keyboardFrame.origin.y;
-    // In Slide Over, we get a keyboard frame that is in screen coordinates but
-    // the app is slightly shorter than the screen height. Try to determine the
-    // screen position by assuming the app is vertically centered, then
-    // correcting for the difference.
-    pad += (UIScreen.mainScreen.bounds.size.height - self.view.frame.size.height) / 2;
+    CGFloat pad = CGRectGetMaxY(self.view.bounds) - CGRectGetMinY(keyboardFrame);
     // The keyboard appears to be undocked. This means it can either be split or
     // truly floating. In the former case we want to keep the pad, but in the
     // latter we should fall back to the input accessory view instead of the
