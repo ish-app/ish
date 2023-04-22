@@ -29,6 +29,9 @@ x-row {
   text-rendering: optimizeLegibility;
   font-variant-ligatures: normal;
 }
+.uri-node {
+  text-decoration: underline;
+}
 `;
 
 function onTerminalReady() {
