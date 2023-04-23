@@ -30,6 +30,7 @@
     app.launchArguments = [app.launchArguments arrayByAddingObjectsFromArray:@[@"-hostnameOverride", hostnameOverride]];
     [app launch];
     XCTAssert([app.webViews.staticTexts.firstMatch waitForExistenceWithTimeout:10]);
+    [self chooseTheme:@"Solarized"];
 }
 
 - (XCUIElementQuery *)terminalLines {
@@ -64,17 +65,17 @@
     [self waitForPromptWithTimeout:timeout];
 }
 
+- (void)chooseTheme:(NSString *)name {
+    [self.app.buttons[@"Settings"] tap];
+    [self.app.tables.staticTexts[@"Appearance"] tap];
+    [self.app.tables.staticTexts[@"Theme"] tap];
+    [self.app.tables.staticTexts[name] tap];
+    [self.app.navigationBars[@"Themes"].buttons[@"Appearance"] tap];
+    [self.app.navigationBars[@"Appearance"].buttons[@"Settings"] tap];
+    [self.app.navigationBars[@"Settings"].buttons[@"Done"] tap];
+}
+
 - (void)snapshot:(NSString *)name order:(NSUInteger)order {
-    // choose mode
-//    [self.app.buttons[@"Settings"] tap];
-//    [self.app.tables.staticTexts[@"Appearance"] tap];
-//    if (order % 2 == 1) {
-//        [self.app.tables.staticTexts[@"Light"] tap];
-//    } else {
-//        [self.app.tables.staticTexts[@"Dark"] tap];
-//    }
-//    [self.app.navigationBars[@"Appearance"].buttons[@"About"] tap];
-//    [self.app.navigationBars[@"About"].buttons[@"Done"] tap];
     name = [NSString stringWithFormat:@"%02u%@", (unsigned) order, name];
     [Snapshot snapshot:name timeWaitingForIdle:10];
 }

@@ -281,15 +281,14 @@ void NetworkReachabilityCallback(SCNetworkReachabilityRef target, SCNetworkReach
         [UIView setAnimationsEnabled:NO];
 
 #if !ISH_LINUX
-    self.ishVersion = [NSString stringWithFormat:@"iSH %@ (%@)",
+    NSString *ishVersion = [NSString stringWithFormat:@"iSH %@ (%@)",
                          [NSBundle.mainBundle objectForInfoDictionaryKey:@"CFBundleShortVersionString"],
                          [NSBundle.mainBundle objectForInfoDictionaryKey:(NSString *) kCFBundleVersionKey]];
     extern const char *proc_ish_version;
-    proc_ish_version = self.ishVersion.UTF8String;
+    proc_ish_version = strdup(ishVersion.UTF8String);
     // this defaults key is set when taking app store screenshots
-    self.unameHostname = [NSUserDefaults.standardUserDefaults stringForKey:@"hostnameOverride"];
     extern const char *uname_hostname_override;
-    uname_hostname_override = self.unameHostname.UTF8String;
+    uname_hostname_override = strdup([NSUserDefaults.standardUserDefaults stringForKey:@"hostnameOverride"].UTF8String);
 #endif
     
     [UserPreferences.shared observe:@[@"shouldDisableDimming"] options:NSKeyValueObservingOptionInitial
