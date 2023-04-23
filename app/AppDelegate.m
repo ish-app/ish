@@ -35,8 +35,6 @@
 @interface AppDelegate ()
 
 @property BOOL exiting;
-@property NSString *ishVersion;
-@property NSString *unameHostname;
 @property SCNetworkReachabilityRef reachability;
 
 @end
@@ -288,7 +286,10 @@ void NetworkReachabilityCallback(SCNetworkReachabilityRef target, SCNetworkReach
     proc_ish_version = strdup(ishVersion.UTF8String);
     // this defaults key is set when taking app store screenshots
     extern const char *uname_hostname_override;
-    uname_hostname_override = strdup([NSUserDefaults.standardUserDefaults stringForKey:@"hostnameOverride"].UTF8String);
+    NSString *hostnameOverride = [NSUserDefaults.standardUserDefaults stringForKey:@"hostnameOverride"];
+    if (hostnameOverride) {
+        uname_hostname_override = strdup(uname_hostname_override);
+    }
 #endif
     
     [UserPreferences.shared observe:@[@"shouldDisableDimming"] options:NSKeyValueObservingOptionInitial
