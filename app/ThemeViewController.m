@@ -47,7 +47,7 @@ struct PaletteTextFields {
     BOOL _duplicated;
 }
 
-+ (UITextField *)detailTextFieldWithText:(NSString *)text monospaced:(BOOL)monospaced {
+- (UITextField *)detailTextFieldWithText:(NSString *)text monospaced:(BOOL)monospaced {
     UITextField *textField = [UITextField new];
     textField.tag = 1;
     [textField addTarget:self action:@selector(textFieldChanged:) forControlEvents:UIControlEventEditingChanged];
@@ -67,19 +67,19 @@ struct PaletteTextFields {
     
     self.navigationItem.title = self.theme.name;
     
-    _nameTextField = [self.class detailTextFieldWithText:_theme.name monospaced: NO];
+    _nameTextField = [self detailTextFieldWithText:_theme.name monospaced: NO];
     _singlePaletteSwitch = [UISwitch new];
     _singlePaletteSwitch.on = self.theme.lightPalette == self.theme.darkPalette;
     [_singlePaletteSwitch addTarget:self action:@selector(singlePaletteChanged:) forControlEvents:UIControlEventValueChanged];
     
     for (int i = 0; i < sizeof(_paletteTextFields) / sizeof(*_paletteTextFields); ++i) {
         Palette *palette = i ? self.theme.darkPalette : self.theme.lightPalette;
-        _paletteTextFields[i].foregroundTextField = [self.class detailTextFieldWithText:palette.foregroundColor monospaced:YES];
-        _paletteTextFields[i].backgroundTextField = [self.class detailTextFieldWithText:palette.backgroundColor monospaced:YES];
-        _paletteTextFields[i].cursorTextField = [self.class detailTextFieldWithText:palette.cursorColor monospaced:YES];
+        _paletteTextFields[i].foregroundTextField = [self detailTextFieldWithText:palette.foregroundColor monospaced:YES];
+        _paletteTextFields[i].backgroundTextField = [self detailTextFieldWithText:palette.backgroundColor monospaced:YES];
+        _paletteTextFields[i].cursorTextField = [self detailTextFieldWithText:palette.cursorColor monospaced:YES];
         NSMutableArray<UITextField *> *textFields = [NSMutableArray new];
         for (int j = 0; j < COLORS; ++j) {
-            UITextField *textField = [self.class detailTextFieldWithText:palette.colorPaletteOverrides ? palette.colorPaletteOverrides[j] : nil monospaced: YES];
+            UITextField *textField = [self detailTextFieldWithText:palette.colorPaletteOverrides ? palette.colorPaletteOverrides[j] : nil monospaced: YES];
             textField.autocorrectionType = UITextAutocorrectionTypeNo;
             textField.autocapitalizationType = UITextAutocapitalizationTypeNone;
             [textFields addObject:textField];
