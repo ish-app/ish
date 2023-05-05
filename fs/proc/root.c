@@ -15,6 +15,13 @@ static int proc_show_version(struct proc_entry *UNUSED(entry), struct proc_data 
 static int proc_show_stat(struct proc_entry *UNUSED(entry), struct proc_data *buf) {
     struct cpu_usage usage = get_cpu_usage();
     proc_printf(buf, "cpu  %"PRIu64" %"PRIu64" %"PRIu64" %"PRIu64"\n", usage.user_ticks, usage.nice_ticks, usage.system_ticks, usage.idle_ticks);
+
+    // calculate btime (boot time in seconds since epoch) by subtracting uptime from current time
+    struct uptime_info uptime = get_uptime();
+    struct timespec uptime_ts = {.tv_sec = uptime.uptime_ticks / 100, .tv_nsec = uptime.uptime_ticks % 100};
+    struct timespec boot_time = timespec_subtract(timespec_now(CLOCK_REALTIME), uptime_ts);
+    proc_printf(buf, "btime %ld\n", boot_time.tv_sec);
+
     return 0;
 }
 
@@ -53,8 +60,8 @@ static int proc_show_meminfo(struct proc_entry *UNUSED(entry), struct proc_data 
 
 static int proc_show_uptime(struct proc_entry *UNUSED(entry), struct proc_data *buf) {
     struct uptime_info uptime_info = get_uptime();
-    unsigned uptime = uptime_info.uptime_ticks;
-    proc_printf(buf, "%u.%u %u.%u\n", uptime / 100, uptime % 100, uptime / 100, uptime % 100);
+    unsigned long uptime = uptime_info.uptime_ticks;
+    proc_printf(buf, "%lu.%lu %lu.%lu\n", uptime / 100, uptime % 100, uptime / 100, uptime % 100);
     return 0;
 }
 
