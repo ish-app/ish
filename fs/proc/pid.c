@@ -92,13 +92,32 @@ static int proc_pid_stat_show(struct proc_entry *entry, struct proc_data *buf) {
     proc_printf(buf, "%lu ", 0l); // wchan (wtf)
     proc_printf(buf, "%lu ", 0l); // nswap
     proc_printf(buf, "%lu ", 0l); // cnswap
-    proc_printf(buf, "%d", task->exit_signal);
+    proc_printf(buf, "%d ", task->exit_signal);
+    proc_printf(buf, "%d", 0); // processor
     // that's enough for now
     proc_printf(buf, "\n");
 
     unlock(&task->sighand->lock);
     unlock(&task->group->lock);
     unlock(&task->general_lock);
+    proc_put_task(task);
+    return 0;
+}
+
+static int proc_pid_statm_show(struct proc_entry *entry, struct proc_data *buf) {
+    struct task *task = proc_get_task(entry);
+    if (task == NULL)
+        return _ESRCH;
+
+    proc_printf(buf, "%lu ", 0); // total vm size
+    proc_printf(buf, "%lu ", 0); // vm resident size
+    proc_printf(buf, "%lu ", 0); // resident shared
+    proc_printf(buf, "%lu ", 0); // text
+    proc_printf(buf, "%lu ", 0); // lib (always 0 since linux 2.6)
+    proc_printf(buf, "%lu ", 0); // data + stack
+    proc_printf(buf, "%lu ", 0); // dirty (always 0 since linux 2.6)
+    proc_printf(buf, "\n");
+
     proc_put_task(task);
     return 0;
 }
@@ -305,6 +324,7 @@ struct proc_children proc_pid_children = PROC_CHILDREN({
     {"maps", .show = proc_pid_maps_show},
     {"mem", .pread = proc_pid_mem_pread, .pwrite = proc_pid_mem_pwrite},
     {"stat", .show = proc_pid_stat_show},
+    {"statm", .show = proc_pid_statm_show},
     {"task", S_IFDIR, .readdir = proc_pid_task_readdir},
 });
 
