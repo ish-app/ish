@@ -104,6 +104,7 @@
 		497F6D3D254E5EA600C82F46 /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = BB7D93822087C2890008DA78 /* main.c */; };
 		497F6D5C254E609700C82F46 /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = BB7D93822087C2890008DA78 /* main.c */; };
 		497F6D87254E62E100C82F46 /* libish.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BB13F7DC200AD81D003D1C4D /* libish.a */; };
+		49FF844B2A06249F00850B7A /* ExceptionExfiltrator.m in Sources */ = {isa = PBXBuildFile; fileRef = 49FF844A2A06249F00850B7A /* ExceptionExfiltrator.m */; };
 		BB0F552E239F8A790032A2A1 /* Icons.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB0F552D239F8A790032A2A1 /* Icons.plist */; };
 		BB10E5C9248DBAAC009C7A74 /* libarchive.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BB10E5C8248DBAA1009C7A74 /* libarchive.a */; };
 		BB10E5D0248DC21D009C7A74 /* Roots.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = BB10E5CF248DC21D009C7A74 /* Roots.storyboard */; };
@@ -577,6 +578,8 @@
 		497F6CD3254E5CC800C82F46 /* bits.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = bits.h; sourceTree = "<group>"; };
 		497F6CE4254E5E4C00C82F46 /* MakeXcodeAutoCompleteWork */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = MakeXcodeAutoCompleteWork; sourceTree = BUILT_PRODUCTS_DIR; };
 		497F6D47254E605F00C82F46 /* ish */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = ish; sourceTree = BUILT_PRODUCTS_DIR; };
+		49FF844A2A06249F00850B7A /* ExceptionExfiltrator.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ExceptionExfiltrator.m; sourceTree = "<group>"; };
+		49FF844C2A0624AF00850B7A /* ExceptionExfiltrator.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ExceptionExfiltrator.h; sourceTree = "<group>"; };
 		650B337222EA235C00B4C03E /* PasteboardDevice.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PasteboardDevice.h; sourceTree = "<group>"; };
 		650B337322EA235C00B4C03E /* PasteboardDevice.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PasteboardDevice.m; sourceTree = "<group>"; };
 		8632A7BD219A59FB00F02325 /* UserPreferences.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = UserPreferences.h; sourceTree = "<group>"; };
@@ -1279,12 +1282,14 @@
 		BBFB557221586C6600DFE6DE /* Utilities */ = {
 			isa = PBXGroup;
 			children = (
+				497A08BC2961168400B323CF /* AccessibilityFixes.m */,
 				BB9C7B86240A29DE00F5D4F0 /* AppGroup.h */,
 				BB9C7B84240A240E00F5D4F0 /* AppGroup.m */,
 				BB455E0F1FB37F6600AFB48B /* DelayedUITask.h */,
 				BB455E101FB37F6600AFB48B /* DelayedUITask.m */,
+				49FF844C2A0624AF00850B7A /* ExceptionExfiltrator.h */,
+				49FF844A2A06249F00850B7A /* ExceptionExfiltrator.m */,
 				49087C14295DF0490058075B /* hook.c */,
-				497A08BC2961168400B323CF /* AccessibilityFixes.m */,
 				49087C13295DF0490058075B /* hook.h */,
 				49087C26295DF1350058075B /* mach_exc.defs */,
 				BBCED895255BB65A00CA0701 /* NSObject+SaneKVO.h */,
@@ -2161,6 +2166,7 @@
 				BB28C7A426896B1F00BDC834 /* AppGroup.m in Sources */,
 				BBECF3BC26913F1600DEC937 /* AppDelegate.m in Sources */,
 				BB28C7A526896B1F00BDC834 /* UIApplication+OpenURL.m in Sources */,
+				49FF844B2A06249F00850B7A /* ExceptionExfiltrator.m in Sources */,
 				497A08C12963401100B323CF /* AccessibilityFixes.m in Sources */,
 				BB28C7A626896B1F00BDC834 /* AboutViewController.m in Sources */,
 				BB28C7A726896B1F00BDC834 /* UIViewController+Extras.m in Sources */,
