@@ -9,10 +9,10 @@ jobs:
     if: github.repository == 'ish-app/ish'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Setup dependencies
         run: |
-          sudo apt-get install rclone
+          curl https://rclone.org/install.sh | sudo bash
           mkdir -p ~/.config/rclone
           echo "$RCLONE_CONFIG" > ~/.config/rclone/rclone.conf
         env:
