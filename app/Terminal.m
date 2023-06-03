@@ -106,6 +106,8 @@ static NSMapTable<NSUUID *, Terminal *> *terminalsByUUID;
         // Make the web view really big so that if a program tries to write to the terminal before it's displayed, the text probably won't wrap too badly.
         CGRect webviewSize = CGRectMake(0, 0, 10000, 10000);
         _webView = [[CustomWebView alloc] initWithFrame:webviewSize configuration:config];
+        if (@available(macOS 13.3, iOS 16.4, tvOS 16.4, *))
+            _webView.inspectable = YES;
         _webView.scrollView.scrollEnabled = NO;
         NSURL *xtermHtmlFile = [NSBundle.mainBundle URLForResource:@"term" withExtension:@"html"];
         [_webView loadFileURL:xtermHtmlFile allowingReadAccessToURL:xtermHtmlFile];
