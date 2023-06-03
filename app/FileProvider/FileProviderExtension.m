@@ -31,7 +31,7 @@
     @synchronized (self) {
         if (!_mounted) {
             if (self.domain == nil) {
-                *error = [NSError errorWithDomain:NSFileProviderErrorDomain code:NSFileProviderErrorServerUnreachable userInfo:nil];
+                *error = [NSError errorWithDomain:NSFileProviderErrorDomain code:NSFileProviderErrorNotAuthenticated userInfo:nil];
                 return NO;
             }
             NSURL *container = ContainerURL();

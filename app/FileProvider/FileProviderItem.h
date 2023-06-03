@@ -17,7 +17,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)saveFromURL:(NSURL *)url;
 - (int)openNewFDWithError:(NSError *_Nullable *)err;
 
-@property (readonly) NSURL *URL;
 @property (readonly) NSString *path;
 @property (readonly) struct fakefs_mount *mount;
 

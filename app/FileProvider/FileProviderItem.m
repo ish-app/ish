@@ -74,7 +74,8 @@
     char path[PATH_MAX] = "";
     int err = fcntl(_fd, F_GETPATH, path);
     [self handleError:err inFunction:@"getpath"];
-    return [NSString stringWithUTF8String:path + strlen(_mount->source)];
+    const char *myPath = path + strlen(_mount->source);
+    return [NSFileManager.defaultManager stringWithFileSystemRepresentation:myPath length:strlen(myPath)];
 }
 
 - (NSURL *)URL {
@@ -230,8 +231,7 @@
 
 - (void)handleError:(long)err inFunction:(NSString *)func {
     if (err < 0) {
-        NSLog(@"%@ returned %ld %d", func, err, errno);
-        abort();
+        [NSException raise:NSGenericException format:@"%@ returned %ld %d", func, err, errno];
     }
 }
 
