@@ -18,6 +18,7 @@ jobs:
 
       - name: Install deps
         run: |
+          xcode-select -s /Applications/Xcode_14.3.app
           pip3 install meson
           brew install ninja llvm
           bundle install
