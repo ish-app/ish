@@ -11,9 +11,18 @@ if [[ $? -ne 0 ]]; then
     export CC_FOR_BUILD="env -u SDKROOT -u IPHONEOS_DEPLOYMENT_TARGET xcrun clang"
     export CC="$CC_FOR_BUILD" # compatibility with meson < 0.54.0
     crossfile=cross.txt
+
+    # We need to reset archs to compensate for problematic universal builds showing up
+    # for certain targets.
+    # NOTE for x86: arm64 needs to be set in EXCLUDED_ARCHS
+    if [[ "$ARCHS" == *"x86"* ]]; then
+        ARCHS="x86_64"
+    fi
+
     for arch in $ARCHS; do
         arch_args="'-arch', '$arch', $arch_args"
     done
+
     arch_args="${arch_args%%, }"
     meson_arch=${ARCHS%% *}
     case "$meson_arch" in
