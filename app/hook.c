@@ -89,7 +89,7 @@ void *exception_handler(void *unused) {
     abort();
 }
 
-static bool initialize_if_needed() {
+static bool initialize_if_needed(void) {
     if (initialized) {
         return true;
     }

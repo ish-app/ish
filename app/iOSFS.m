@@ -102,10 +102,10 @@ static NSString *const kMountBookmarks = @"iOS Mount Bookmarks";
 // To avoid locking issues, only access from the main thread
 static NSMutableDictionary<NSString *, NSData *> *ios_mount_bookmarks;
 static bool mount_from_bookmarks = false; // This is a hack because I am bad at parameter passing
-static void sync_bookmarks() {
+static void sync_bookmarks(void) {
     [NSUserDefaults.standardUserDefaults setObject:ios_mount_bookmarks forKey:kMountBookmarks];
 }
-void iosfs_init() {
+void iosfs_init(void) {
     ios_mount_bookmarks = [NSUserDefaults.standardUserDefaults dictionaryForKey:kMountBookmarks].mutableCopy;
     if (ios_mount_bookmarks == nil)
         ios_mount_bookmarks = [NSMutableDictionary new];

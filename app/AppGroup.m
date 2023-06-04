@@ -33,7 +33,7 @@ struct cs_entitlements {
     char entitlements[];
 };
 
-static NSDictionary *AppEntitlements() {
+static NSDictionary *AppEntitlements(void) {
     static NSDictionary *entitlements;
     if (entitlements != nil)
         return entitlements;
@@ -101,7 +101,7 @@ NSArray<NSString *> *CurrentAppGroups(void) {
     return AppEntitlements()[@"com.apple.security.application-groups"];
 }
 
-NSURL *ContainerURL() {
+NSURL *ContainerURL(void) {
     NSString *appGroup = CurrentAppGroups()[0];
     return [NSFileManager.defaultManager containerURLForSecurityApplicationGroupIdentifier:appGroup];
 }

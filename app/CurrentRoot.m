@@ -45,7 +45,7 @@ static int remove_directory(const char *path) {
 #define remove_directory linux_remove_directory
 #endif
 
-void FsInitialize() {
+void FsInitialize(void) {
     // /ish/version is the last ish version that opened this root. Used to migrate the filesystem.
     char buf[1000];
     ssize_t n = read_file("/ish/version", buf, sizeof(buf));
@@ -76,15 +76,15 @@ void FsInitialize() {
     }
 }
 
-bool FsIsManaged() {
+bool FsIsManaged(void) {
     return fs_ish_version != 0;
 }
 
-bool FsNeedsRepositoryUpdate() {
+bool FsNeedsRepositoryUpdate(void) {
     return FsIsManaged() && fs_ish_apk_version < COMPATIBLE_APK_VERSION;
 }
 
-void FsUpdateOnlyRepositoriesFile() {
+void FsUpdateOnlyRepositoriesFile(void) {
     NSURL *repositories = [NSBundle.mainBundle URLForResource:@"repositories" withExtension:@"txt"];
     if (repositories != nil) {
         NSMutableData *repositoriesData = [@"# This file contains pinned repositories managed by iSH. If the /ish directory\n"
@@ -95,7 +95,7 @@ void FsUpdateOnlyRepositoriesFile() {
     }
 }
 
-void FsUpdateRepositories() {
+void FsUpdateRepositories(void) {
     NSString *currentVersion = NSBundle.mainBundle.infoDictionary[(__bridge NSString *) kCFBundleVersionKey];
     NSString *currentVersionFile = [NSString stringWithFormat:@"%@\n", currentVersion];
     FsUpdateOnlyRepositoriesFile();
