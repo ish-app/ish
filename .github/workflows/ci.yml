@@ -38,7 +38,7 @@ jobs:
         run: ninja -C build test
 
   build-mac:
-    runs-on: macos-11
+    runs-on: macos-13
     strategy:
       matrix:
         kernel: [ish, linux]
@@ -48,6 +48,7 @@ jobs:
             submodules: true
       - name: Install dependencies
         run: |
+          sudo xcode-select -s /Applications/Xcode_14.3.app
           brew install llvm ninja libarchive
           pip3 install meson
       - name: Clone Linux
