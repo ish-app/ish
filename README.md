@@ -30,7 +30,7 @@ You'll need these things to build the project:
    + Meson (`pip3 install meson`)
  - Ninja
  - Clang and LLD (on mac, `brew install llvm`, on linux, `sudo apt install clang lld` or `sudo pacman -S clang lld` or whatever)
- - sqlite3 (this is so common it may already be installed on linux and is definitely already installed on mac. if not, do something like `sudo apt install libsqlite3-dev`)
+ - sqlite3 (this is so common it may already be installed on linux and is definitely already installed on mac. If not, do something like `sudo apt install libsqlite3-dev`)
  - libarchive (`brew install libarchive`, `sudo port install libarchive`, `sudo apt install libarchive-dev`) TODO: bundle this dependency
 
 ## Build for iOS
