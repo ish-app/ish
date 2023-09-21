@@ -297,7 +297,7 @@ void NetworkReachabilityCallback(SCNetworkReachabilityRef target, SCNetworkReach
         });
     }];
     
-    // This code is IPv4 and IPv6 aware: see https://developer.apple.com/library/archive/samplecode/Reachability/Listings/ReadMe_md.html.
+    // This code is IPv4 and IPv6 aware: see https://developer.apple.com/library/archive/samplecode/Reachability/Listings/ReadMe_md.html
     struct sockaddr_in address = {
         .sin_len = sizeof(address),
         .sin_family = AF_INET,
