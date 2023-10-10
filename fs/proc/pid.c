@@ -315,10 +315,22 @@ static bool proc_pid_task_readdir(struct proc_entry *entry, unsigned long *index
     return !(*index)++;
 }
 
+static int proc_pid_cwd_readlink(struct proc_entry *entry, char *buf) {
+    struct task *task = proc_get_task(entry);
+    if (task == NULL)
+        return _ESRCH;
+    lock(&task->fs->lock);
+    int err = generic_getpath(task->fs->pwd, buf);
+    unlock(&task->fs->lock);
+    proc_put_task(task);
+    return err;
+}
+
 
 struct proc_children proc_pid_children = PROC_CHILDREN({
     {"auxv", .show = proc_pid_auxv_show},
     {"cmdline", .show = proc_pid_cmdline_show},
+    {"cwd", S_IFLNK, .readlink = proc_pid_cwd_readlink},
     {"exe", S_IFLNK, .readlink = proc_pid_exe_readlink},
     {"fd", S_IFDIR, .readdir = proc_pid_fd_readdir},
     {"maps", .show = proc_pid_maps_show},
