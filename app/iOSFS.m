@@ -123,6 +123,11 @@ void iosfs_init(void) {
     sync_bookmarks();
 }
 
+void iosfs_clear_all_bookmarks(void) {
+    [ios_mount_bookmarks removeAllObjects];
+    sync_bookmarks();
+}
+
 static int iosfs_mount(struct mount *mount) {
     NSURL *url = nil;
     if (mount_from_bookmarks) {
