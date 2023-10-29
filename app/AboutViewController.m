@@ -112,7 +112,9 @@
                                               toURL:[documents URLByAppendingPathComponent:@"roots copy"]
                                               error:nil];
     } else if (cell == self.resetMountsCell) {
+#if !ISH_LINUX
         iosfs_clear_all_bookmarks();
+#endif
     }
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
 }
