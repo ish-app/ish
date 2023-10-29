@@ -259,7 +259,7 @@ void handle_interrupt(int interrupt) {
         unsigned syscall_num = cpu->eax;
         if (syscall_num >= NUM_SYSCALLS || syscall_table[syscall_num] == NULL) {
             printk("%d(%s) missing syscall %d\n", current->pid, current->comm, syscall_num);
-            deliver_signal(current, SIGSYS_, SIGINFO_NIL);
+            cpu->eax = syscall_stub();
         } else {
             if (syscall_table[syscall_num] == (syscall_t) syscall_stub) {
                 printk("%d(%s) stub syscall %d\n", current->pid, current->comm, syscall_num);
