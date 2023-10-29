@@ -21,7 +21,7 @@ function update_repo() {
     index_name_file="$3/$version/$path/index.txt"
     remote_path="$archive_remote/$version/$path"
 
-    mkdir -p "$(basename "$index_name_file")"
+    mkdir -p "$(dirname "$index_name_file")"
     touch "$index_name_file"
 
     old_index_name="$(cat "$index_name_file")"
