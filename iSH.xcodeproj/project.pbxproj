@@ -432,7 +432,7 @@
 		49302D8D277669D300C9885A /* ish.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ish.c; sourceTree = "<group>"; };
 		49302D972777FAB400C9885A /* ish.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ish.h; sourceTree = "<group>"; };
 		493B378F290F5320000C41ED /* CLI.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = CLI.xcconfig; sourceTree = "<group>"; };
-		494D03F72727DAC6004F0CCE /* xcode-ninja.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "xcode-ninja.sh"; sourceTree = "<group>"; };
+		494D03F72727DAC6004F0CCE /* xcode-ninja.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; name = "xcode-ninja.sh"; path = "app/xcode-ninja.sh"; sourceTree = "<group>"; };
 		497A08BC2961168400B323CF /* AccessibilityFixes.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AccessibilityFixes.m; sourceTree = "<group>"; };
 		497F6BDA254E5C0D00C82F46 /* mem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mem.h; sourceTree = "<group>"; };
 		497F6BDB254E5C0D00C82F46 /* path.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = path.c; sourceTree = "<group>"; };
@@ -599,6 +599,7 @@
 		BB0B880E2589662200208600 /* sprite64.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = sprite64.png; sourceTree = "<group>"; };
 		BB0B88172589662A00208600 /* reworked.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = reworked.png; sourceTree = "<group>"; };
 		BB0B88202589734A00208600 /* notsurewhatthisis.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = notsurewhatthisis.png; sourceTree = "<group>"; };
+		BB0C03002AEEC85500E5ECBB /* gen_apk_repositories.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; name = gen_apk_repositories.py; path = app/gen_apk_repositories.py; sourceTree = "<group>"; };
 		BB0F552D239F8A790032A2A1 /* Icons.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Icons.plist; sourceTree = "<group>"; };
 		BB0F552F239F8B360032A2A1 /* uninspired.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = uninspired.png; sourceTree = "<group>"; };
 		BB0F553123A0AB9B0032A2A1 /* pydann1.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = pydann1.png; sourceTree = "<group>"; };
@@ -619,7 +620,7 @@
 		BB123ACD26C9F13500419CDA /* IOSCalls.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IOSCalls.m; sourceTree = "<group>"; };
 		BB13F4DC21C5770000343E17 /* NSError+ISHErrno.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSError+ISHErrno.h"; sourceTree = "<group>"; };
 		BB13F4DD21C5770000343E17 /* NSError+ISHErrno.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSError+ISHErrno.m"; sourceTree = "<group>"; };
-		BB13F7C8200ACC24003D1C4D /* xcode-meson.sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = "xcode-meson.sh"; sourceTree = "<group>"; };
+		BB13F7C8200ACC24003D1C4D /* xcode-meson.sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; name = "xcode-meson.sh"; path = "app/xcode-meson.sh"; sourceTree = "<group>"; };
 		BB13F7DC200AD81D003D1C4D /* libish.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libish.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		BB149E7E256DC97C00F57815 /* PassthroughView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PassthroughView.h; sourceTree = "<group>"; };
 		BB149E7F256DC97C00F57815 /* PassthroughView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PassthroughView.m; sourceTree = "<group>"; };
@@ -906,6 +907,7 @@
 			children = (
 				BB13F7C8200ACC24003D1C4D /* xcode-meson.sh */,
 				494D03F72727DAC6004F0CCE /* xcode-ninja.sh */,
+				BB0C03002AEEC85500E5ECBB /* gen_apk_repositories.py */,
 			);
 			name = Scripts;
 			sourceTree = "<group>";
@@ -1355,7 +1357,7 @@
 			buildConfigurationList = BB13F7CB200ACC31003D1C4D /* Build configuration list for PBXLegacyTarget "Meson" */;
 			buildPhases = (
 			);
-			buildToolPath = "$(SRCROOT)/xcode-meson.sh";
+			buildToolPath = "$(SRCROOT)/app/xcode-meson.sh";
 			buildWorkingDirectory = "";
 			dependencies = (
 			);
@@ -1369,7 +1371,7 @@
 			buildConfigurationList = BB13F7D1200ACCA2003D1C4D /* Build configuration list for PBXLegacyTarget "Ninja" */;
 			buildPhases = (
 			);
-			buildToolPath = "$(SRCROOT)/xcode-ninja.sh";
+			buildToolPath = "$(SRCROOT)/app/xcode-ninja.sh";
 			buildWorkingDirectory = "$(MESON_BUILD_DIR)";
 			dependencies = (
 				BB13F7D5200ACCA8003D1C4D /* PBXTargetDependency */,
@@ -1821,8 +1823,8 @@
 				"$(BUILT_PRODUCTS_DIR)/$(CONTENTS_FOLDER_PATH)/repositories.txt",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /usr/bin/python3;
-			shellScript = "import os\ndef trim(x, start, end):\n    assert x.startswith(start)\n    assert x.endswith(end)\n    return x[len(start):-len(end)]\nrepos_file = []\nfor repo in ['main', 'community']:\n    with open(f'{os.environ[\"SRCROOT\"]}/deps/aports/{repo}/x86/index.txt') as f:\n        index_name = f.read()\n    index_name = trim(index_name, 'APKINDEX-', '.tar.gz\\n')\n    repos_file.append(f'http://apk.ish.app/{index_name}/{repo}')\nwith open(os.path.join(os.environ['BUILT_PRODUCTS_DIR'], os.environ['CONTENTS_FOLDER_PATH'], 'repositories.txt'), 'w') as f:\n    for line in repos_file:\n        print(line, file=f)\n";
+			shellPath = "/bin/sh -e";
+			shellScript = "python3 $SRCROOT/app/gen_apk_repositories.py\n";
 		};
 		BB13F813200AEFAC003D1C4D /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -1939,8 +1941,8 @@
 				"$(BUILT_PRODUCTS_DIR)/$(CONTENTS_FOLDER_PATH)/repositories.txt",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /usr/bin/python3;
-			shellScript = "import os\ndef trim(x, start, end):\n    assert x.startswith(start)\n    assert x.endswith(end)\n    return x[len(start):-len(end)]\nrepos_file = []\nfor repo in ['main', 'community']:\n    with open(f'{os.environ[\"SRCROOT\"]}/deps/aports/{repo}/x86/index.txt') as f:\n        index_name = f.read()\n    index_name = trim(index_name, 'APKINDEX-', '.tar.gz\\n')\n    repos_file.append(f'http://apk.ish.app/{index_name}/{repo}')\nwith open(os.path.join(os.environ['BUILT_PRODUCTS_DIR'], os.environ['CONTENTS_FOLDER_PATH'], 'repositories.txt'), 'w') as f:\n    for line in repos_file:\n        print(line, file=f)\n";
+			shellPath = "/bin/sh -e";
+			shellScript = "python3 $SRCROOT/app/gen_apk_repositories.py\n";
 		};
 		BBEF197B268066D1001225BD /* Compile JavaScript */ = {
 			isa = PBXShellScriptBuildPhase;
