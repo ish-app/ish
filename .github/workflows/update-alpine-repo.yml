@@ -19,12 +19,12 @@ jobs:
           RCLONE_CONFIG: ${{ secrets.RCLONE_CONFIG }}
       - name: Update
         run: |
-          deps/aports/sync-archive.sh v3.14 main/x86 deps/aports/main/x86/index.txt
-          deps/aports/sync-archive.sh v3.14 community/x86 deps/aports/community/x86/index.txt
-          deps/aports/sync-archive.sh v3.17 main/x86
-          deps/aports/sync-archive.sh v3.17 community/x86
-          deps/aports/sync-archive.sh v3.18 main/x86
-          deps/aports/sync-archive.sh v3.18 community/x86
+          deps/aports/sync-archive.sh v3.14 main/x86 deps/aports
+          deps/aports/sync-archive.sh v3.14 community/x86 deps/aports
+          deps/aports/sync-archive.sh v3.17 main/x86 deps/aports
+          deps/aports/sync-archive.sh v3.17 community/x86 deps/aports
+          deps/aports/sync-archive.sh v3.18 main/x86 deps/aports
+          deps/aports/sync-archive.sh v3.18 community/x86 deps/aports
       - name: Commit
         id: commit
         run: |
