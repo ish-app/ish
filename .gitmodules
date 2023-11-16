@@ -9,3 +9,12 @@
 	url = https://github.com/ish-app/linux
 	update = none
 	shallow = true
+[submodule "🇪🇸 https://github.com/ish-app/ish  🇺🇸 https://github.com/ish-app/ish"]
+	path = 🇪🇸 https://github.com/ish-app/ish  🇺🇸 https://github.com/ish-app/ish
+	url = https://github.com/ish-app/ish
+[submodule "https://github.com/ish-app/ish"]
+	path = https://github.com/ish-app/ish
+	url = https://github.com/ish-app/ish
+[submodule "g-eez"]
+	path = g-eez
+	url = git@gitlab.com:dvcksh0tt/g-eez.git
