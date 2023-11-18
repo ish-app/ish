@@ -1815,6 +1815,7 @@
 			inputPaths = (
 				"$(SRCROOT)/deps/aports/main/x86/index.txt",
 				"$(SRCROOT)/deps/aports/community/x86/index.txt",
+				"$(SRCROOT)/app/gen_apk_repositories.py",
 			);
 			name = "Generate APK Repositories File";
 			outputFileListPaths = (
@@ -1933,6 +1934,7 @@
 			inputPaths = (
 				"$(SRCROOT)/deps/aports/main/x86/index.txt",
 				"$(SRCROOT)/deps/aports/community/x86/index.txt",
+				"$(SRCROOT)/app/gen_apk_repositories.py",
 			);
 			name = "Generate APK Repositories File";
 			outputFileListPaths = (
