@@ -6,13 +6,14 @@ def trim(x, start, end):
     return x[len(start):-len(end)]
 
 APK_REPOSITORIES = [
-    'v3.14/main/x86',
-    'v3.14/community/x86',
+    ('v3.14', 'main'),
+    ('v3.14', 'community'),
 ]
+ARCH = 'x86' # TODO: support more archs
 
 repos_file = []
-for repo in APK_REPOSITORIES:
-    with open(f'{os.environ["SRCROOT"]}/deps/aports/{repo}/index.txt') as f:
+for version, repo in APK_REPOSITORIES:
+    with open(f'{os.environ["SRCROOT"]}/deps/aports/{version}/{repo}/{ARCH}/index.txt') as f:
         index_name = f.read()
     index_name = trim(index_name, 'APKINDEX-', '.tar.gz\n')
     repos_file.append(f'http://apk.ish.app/{index_name}/{repo}')
