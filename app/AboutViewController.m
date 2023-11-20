@@ -23,7 +23,7 @@
 
 @property (weak, nonatomic) IBOutlet UITableViewCell *sendFeedback;
 @property (weak, nonatomic) IBOutlet UITableViewCell *openGithub;
-@property (weak, nonatomic) IBOutlet UITableViewCell *openTwitter;
+@property (weak, nonatomic) IBOutlet UITableViewCell *openFediverse;
 @property (weak, nonatomic) IBOutlet UITableViewCell *openDiscord;
 
 @property (weak, nonatomic) IBOutlet UITableViewCell *upgradeApkCell;
@@ -99,10 +99,10 @@
         [UIApplication openURL:@"mailto:tblodt@icloud.com?subject=Feedback%20for%20iSH"];
     } else if (cell == self.openGithub) {
         [UIApplication openURL:@"https://github.com/ish-app/ish"];
-    } else if (cell == self.openTwitter) {
-        [UIApplication openURL:@"https://twitter.com/tblodt"];
+    } else if (cell == self.openFediverse) {
+        [UIApplication openURL:@"https://publ.ish.app/ish"];
     } else if (cell == self.openDiscord) {
-        [UIApplication openURL:@"https://discord.gg/HFAXj44"];
+        [UIApplication openURL:@"https://discord.gg/ish"];
     } else if (cell == self.exportContainerCell) {
         // copy the files to the app container so they can be extracted from iTunes file sharing
         NSURL *container = ContainerURL();
