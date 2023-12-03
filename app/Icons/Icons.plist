@@ -137,5 +137,59 @@
 		<key>description</key>
 		<string>Sprite 64</string>
 	</dict>
+	<key>is</key>
+	<dict>
+		<key>link</key>
+		<string>https://github.com/ish-app/ish/issues/578#issuecomment-828967195</string>
+		<key>author</key>
+		<string>@MelinaCodesInMinecraft</string>
+		<key>description</key>
+		<string>iS</string>
+	</dict>
+	<key>circular</key>
+	<dict>
+		<key>link</key>
+		<string>https://github.com/ish-app/ish/issues/578#issuecomment-716465657</string>
+		<key>author</key>
+		<string>@haohailong</string>
+		<key>description</key>
+		<string>Circular</string>
+	</dict>
+	<key>dollarblock1</key>
+	<dict>
+		<key>link</key>
+		<string>https://github.com/ish-app/ish/issues/578#issuecomment-968200645</string>
+		<key>author</key>
+		<string>@omduggineni</string>
+		<key>description</key>
+		<string>$+block light</string>
+	</dict>
+	<key>dollarblock2</key>
+	<dict>
+		<key>link</key>
+		<string>https://github.com/ish-app/ish/issues/578#issuecomment-968201479</string>
+		<key>author</key>
+		<string>@omduggineni</string>
+		<key>description</key>
+		<string>$+block dark</string>
+	</dict>
+	<key>freeiosterminal</key>
+	<dict>
+		<key>link</key>
+		<string>https://github.com/ish-app/ish/issues/578#issuecomment-971898997</string>
+		<key>author</key>
+		<string>@huxl3</string>
+		<key>description</key>
+		<string>iOS iSH Free Ios Terminal</string>
+	</dict>
+	<key>ishcolontildehash</key>
+	<dict>
+		<key>link</key>
+		<string>https://github.com/ish-app/ish/issues/578#issuecomment-1038424724</string>
+		<key>author</key>
+		<string>@moontr3</string>
+		<key>description</key>
+		<string>iSH:~# dark</string>
+	</dict>
 </dict>
 </plist>

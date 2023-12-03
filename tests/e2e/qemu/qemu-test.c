@@ -72,7 +72,15 @@
 #define CC_S    0x0080
 #define CC_O    0x0800
 
-#define __init_call	__attribute__ ((unused,__section__ ("initcall")))
+#ifdef __APPLE__
+    extern void *__start_initcall asm("section$start$__DATA$initcall");
+    extern void *__stop_initcall asm("section$end$__DATA$initcall");
+    #define __init_call	__attribute__ ((unused,__section__("__DATA,initcall")))
+#else
+    extern void *__start_initcall;
+    extern void *__stop_initcall;
+    #define __init_call	__attribute__ ((unused,__section__ ("initcall")))
+#endif
 
 #define CC_MASK (CC_C | CC_P | CC_Z | CC_S | CC_O | CC_A)
 
@@ -1027,7 +1035,7 @@ void test_floats(void)
     //test_fbcd(-123451234567890.0);
     //test_fenv();
     if (TEST_CMOV) {
-        //test_fcmov();
+        test_fcmov();
     }
 }
 
@@ -1694,6 +1702,7 @@ void test_vm86(void)
 }
 #endif
 
+#ifndef __APPLE__
 /* exception tests */
 #if defined(__i386__) && !defined(REG_EAX)
 #define REG_EAX EAX
@@ -2104,11 +2113,11 @@ static void test_enter(void)
     TEST_ENTER("w", uint16_t, 2);
     TEST_ENTER("w", uint16_t, 31);
 }
-
+#endif
 #ifdef TEST_SSE
 
-typedef int __m64 __attribute__ ((__mode__ (__V2SI__)));
-typedef float __m128 __attribute__ ((__mode__(__V4SF__)));
+typedef int __m64 __attribute__ ((vector_size (8)));
+typedef float __m128 __attribute__ ((vector_size (16)));
 
 typedef union {
     double d[2];
@@ -2124,6 +2133,73 @@ static uint64_t __attribute__((aligned(16))) test_values[4][2] = {
     { 0x007c62c2085427f8, 0x231be9e8cde7438d },
     { 0x0f76255a085427f8, 0xc233e9e8c4c9439a },
 };
+
+#define MOV_OP(op, hi, rm)\
+{\
+    r.q[0] = r.q[1] = 0;\
+    if (rm) {\
+        uint64_t mem;\
+        asm volatile (#op " %1, %0" : "=m" (mem) : "x" (a.dq));\
+        printf("%-9s: a=" FMT64X "" FMT64X " r=" FMT64X "\n", #op, a.q[1], a.q[0], mem);\
+    } else {\
+        uint64_t mem = a.q[hi];\
+        asm volatile (#op " %1, %0" : "=x" (r.dq) : "m" (mem));\
+        printf("%-9s: a=" FMT64X " r=" FMT64X "" FMT64X "\n", #op, mem, r.q[1], r.q[0]);\
+    }\
+}
+#define MOV_OP_REGMEM(op, hi, rm)\
+{\
+    int i;\
+    for(i=0;i<2;i++) {\
+    a.q[0] = test_values[2*i][0];\
+    a.q[1] = test_values[2*i][1];\
+    MOV_OP(op, hi, rm);\
+    }\
+}
+#define MOVL_OP2(op)\
+{\
+    MOV_OP_REGMEM(op, 0, 0);\
+    MOV_OP_REGMEM(op, 0, 1);\
+}
+#define MOVH_OP2(op)\
+{\
+    MOV_OP_REGMEM(op, 1, 0);\
+    MOV_OP_REGMEM(op, 1, 1);\
+}
+#define MOVNT_OP(op, quad)\
+{\
+    r.q[0] = r.q[1] = 0;\
+    if (quad) {\
+        asm volatile (#op " %1, %0" : "=m" (r.dq) : "x" (a.dq));\
+        printf("%-9s: a=" FMT64X "" FMT64X " r=" FMT64X "" FMT64X "\n", #op, a.q[1], a.q[0], r.q[1], r.q[0]);\
+    } else {\
+        asm volatile (#op " %1, %0" : "=m" (r.q[0]) : "y" (a.q[0]));\
+        printf("%-9s: a=" FMT64X " r=" FMT64X "\n", #op, a.q[0], r.q[0]);\
+    }\
+}
+#define MOVNT_OP2(op,quad)\
+{\
+    int i;\
+    for(i=0;i<2;i++) {\
+    a.q[0] = test_values[2*i][0];\
+    a.q[1] = test_values[2*i][1];\
+    MOVNT_OP(op, quad);\
+    }\
+}
+#define MOVU_OP(op)\
+{\
+    asm volatile (#op " %1, %0" : "=x" (r.dq) : "x" (a.dq));\
+    printf("%-9s: a=" FMT64X "" FMT64X " r=" FMT64X "" FMT64X "\n",#op, a.q[1], a.q[0], r.q[1], r.q[0]);\
+}
+#define MOVU_OP2(op)\
+{\
+    int i;\
+    for(i=0;i<2;i++) {\
+    a.q[0] = test_values[2*i][0];\
+    a.q[1] = test_values[2*i][1];\
+    MOVU_OP(op);\
+    }\
+}
 
 #define SSE_OP(op)\
 {\
@@ -2245,6 +2321,17 @@ static uint64_t __attribute__((aligned(16))) test_values[4][2] = {
            a.q[1], a.q[0],\
            b.q[1], b.q[0],\
            r.q[1], r.q[0]);\
+    }\
+    for(i=0;i<2;i++) {\
+    a.q[0] = test_values[2*i][0];\
+    b.q[0] = ib;\
+    a.q[1] = b.q[1] = 0;\
+    asm volatile (#op " %2, %0" : "=y" (r.q[0]) : "0" (a.q[0]), "y" (b.q[0]));\
+    printf("%-9s: a=" FMT64X " b=" FMT64X " r=" FMT64X "\n",\
+           #op,\
+           a.q[0],\
+           b.q[0],\
+           r.q[0]);\
     }\
 }
 
@@ -2426,62 +2513,68 @@ void test_sse(void)
 
     // NOTE: when the MMX op is implemented, just change SSE_OP2 to MMX_OP2, which tests both
     SSE_OP2(punpcklbw);
-    // MMX_OP2(punpcklwd);
+    SSE_OP2(punpcklwd);
     SSE_OP2(punpckldq);
-    // MMX_OP2(packsswb);
-    // MMX_OP2(pcmpgtb);
-    // MMX_OP2(pcmpgtw);
-    // MMX_OP2(pcmpgtd);
-    // MMX_OP2(packuswb);
-    // MMX_OP2(punpckhbw);
-    // MMX_OP2(punpckhwd);
-    // MMX_OP2(punpckhdq);
-    // MMX_OP2(packssdw);
-    SSE_OP2(pcmpeqb);
-    // MMX_OP2(pcmpeqw);
-    SSE_OP2(pcmpeqd);
+    SSE_OP2(packsswb);
+    MMX_OP2(pcmpgtb);
+    MMX_OP2(pcmpgtw);
+    MMX_OP2(pcmpgtd);
+    SSE_OP2(packuswb);
+    SSE_OP2(punpckhbw);
+    SSE_OP2(punpckhwd);
+    SSE_OP2(punpckhdq);
+    SSE_OP2(packssdw);
+    MMX_OP2(pcmpeqb);
+    MMX_OP2(pcmpeqw);
+    MMX_OP2(pcmpeqd);
 
     MMX_OP2(paddq);
-    // MMX_OP2(pmullw);
-    // MMX_OP2(psubusb);
-    // MMX_OP2(psubusw);
+    MMX_OP2(pmullw);
+    SSE_OP2(psubusb);
+    SSE_OP2(psubusw);
     SSE_OP2(pminub);
     MMX_OP2(pand);
-    // MMX_OP2(paddusb);
-    // MMX_OP2(paddusw);
-    // MMX_OP2(pmaxub);
+    SSE_OP2(paddusb);
+    SSE_OP2(paddusw);
+    SSE_OP2(pmaxub);
     SSE_OP2(pandn);
 
-    // MMX_OP2(pmulhuw);
-    // MMX_OP2(pmulhw);
+    SSE_OP2(pmulhuw);
+    MMX_OP2(pmulhw);
 
-    // MMX_OP2(psubsb);
-    // MMX_OP2(psubsw);
-    // MMX_OP2(pminsw);
-    SSE_OP2(por);
-    // MMX_OP2(paddsb);
-    // MMX_OP2(paddsw);
-    // MMX_OP2(pmaxsw);
+    SSE_OP2(psubsb);
+    SSE_OP2(psubsw);
+    SSE_OP2(pminsw);
+    MMX_OP2(por);
+    SSE_OP2(paddsb);
+    SSE_OP2(paddsw);
+    SSE_OP2(pmaxsw);
     MMX_OP2(pxor);
     MMX_OP2(pmuludq);
-    // MMX_OP2(pmaddwd);
-    // MMX_OP2(psadbw);
-    // MMX_OP2(psubb);
-    // MMX_OP2(psubw);
-    // MMX_OP2(psubd);
-    SSE_OP2(psubq);
-    SSE_OP2(paddb);
-    // MMX_OP2(paddw);
-    SSE_OP2(paddd);
+    SSE_OP2(pmaddwd);
+    SSE_OP2(psadbw);
+    MMX_OP2(psubb);
+    MMX_OP2(psubw);
+    MMX_OP2(psubd);
+    MMX_OP2(psubq);
+    MMX_OP2(paddb);
+    MMX_OP2(paddw);
+    MMX_OP2(paddd);
 
-    // MMX_OP2(pavgb);
-    // MMX_OP2(pavgw);
+    SSE_OP2(pavgb);
+    SSE_OP2(pavgw);
 
-    // asm volatile ("pinsrw $1, %1, %0" : "=y" (r.q[0]) : "r" (0x12345678));
-    // printf("%-9s: r=" FMT64X "\n", "pinsrw", r.q[0]);
+    a.q[0] = test_values[0][0];
+    asm volatile ("pinsrw $1, %1, %0" : "=y" (r.q[0]) : "m" (a.l[0]));
+    printf("%-9s: r=" FMT64X "\n", "pinsrw", r.q[0]);
+    asm volatile ("pinsrw $1, %1, %0" : "=y" (r.q[0]) : "r" (0x12345678));
+    printf("%-9s: r=" FMT64X "\n", "pinsrw", r.q[0]);
 
-    // asm volatile ("pinsrw $5, %1, %0" : "=x" (r.dq) : "r" (0x12345678));
-    // printf("%-9s: r=" FMT64X "" FMT64X "\n", "pinsrw", r.q[1], r.q[0]);
+    a.q[0] = test_values[0][0];
+    asm volatile ("pinsrw $5, %1, %0" : "=x" (r.dq) : "m" (a.l[0]));
+    printf("%-9s: r=" FMT64X "" FMT64X "\n", "pinsrw", r.q[1], r.q[0]);
+    asm volatile ("pinsrw $5, %1, %0" : "=x" (r.dq) : "r" (0x12345678));
+    printf("%-9s: r=" FMT64X "" FMT64X "\n", "pinsrw", r.q[1], r.q[0]);
 
     a.q[0] = test_values[0][0];
     a.q[1] = test_values[0][1];
@@ -2491,8 +2584,8 @@ void test_sse(void)
     asm volatile ("pextrw $5, %1, %0" : "=r" (r.l[0]) : "x" (a.dq));
     printf("%-9s: r=%08x\n", "pextrw", r.l[0]);
 
-    // asm volatile ("pmovmskb %1, %0" : "=r" (r.l[0]) : "y" (a.q[0]));
-    // printf("%-9s: r=%08x\n", "pmovmskb", r.l[0]);
+    asm volatile ("pmovmskb %1, %0" : "=r" (r.l[0]) : "y" (a.q[0]));
+    printf("%-9s: r=%08x\n", "pmovmskb", r.l[0]);
 
     asm volatile ("pmovmskb %1, %0" : "=r" (r.l[0]) : "x" (a.dq));
     printf("%-9s: r=%08x\n", "pmovmskb", r.l[0]);
@@ -2526,55 +2619,51 @@ void test_sse(void)
     asm volatile ("emms");
 
     SSE_OP2(punpcklqdq);
-    // SSE_OP2(punpckhqdq);
+    SSE_OP2(punpckhqdq);
     SSE_OP2(andps);
     SSE_OP2(andpd);
     SSE_OP2(andnps);
-    // SSE_OP2(andnpd);
+    SSE_OP2(andnpd);
     SSE_OP2(orps);
     SSE_OP2(orpd);
     SSE_OP2(xorps);
     SSE_OP2(xorpd);
 
-    // SSE_OP2(unpcklps);
-    // SSE_OP2(unpcklpd);
-    // SSE_OP2(unpckhps);
-    // SSE_OP2(unpckhpd);
+    SSE_OP2(unpcklps);
+    SSE_OP2(unpcklpd);
+    SSE_OP2(unpckhps);
+    SSE_OP2(unpckhpd);
 
-    // SHUF_OP(shufps, 0x78);
-    // SHUF_OP(shufpd, 0x02);
+    SHUF_OP(shufps, 0x78);
+    SHUF_OP(shufpd, 0x02);
 
     PSHUF_OP(pshufd, 0x78);
     PSHUF_OP(pshuflw, 0x78);
-    // PSHUF_OP(pshufhw, 0x78);
+    PSHUF_OP(pshufhw, 0x78);
 
-    // SHIFT_OP(psrlw, 7);
-    // SHIFT_OP(psrlw, 16);
-    // SHIFT_OP(psraw, 7);
-    // SHIFT_OP(psraw, 16);
-    // SHIFT_OP(psllw, 7);
-    // SHIFT_OP(psllw, 16);
+    SHIFT_OP(psrlw, 7);
+    SHIFT_OP(psrlw, 16);
+    SHIFT_OP(psraw, 7);
+    SHIFT_OP(psraw, 16);
+    SHIFT_OP(psllw, 7);
+    SHIFT_OP(psllw, 16);
 
-    // SHIFT_OP(psrld, 7);
-    // SHIFT_OP(psrld, 32);
-    // SHIFT_OP(psrad, 7);
-    // SHIFT_OP(psrad, 32);
-    // SHIFT_OP(pslld, 7);
-    // SHIFT_OP(pslld, 32);
+    SHIFT_OP(psrld, 7);
+    SHIFT_OP(psrld, 32);
+    SHIFT_OP(psrad, 7);
+    SHIFT_OP(psrad, 32);
+    SHIFT_OP(pslld, 7);
+    SHIFT_OP(pslld, 32);
 
     SHIFT_OP(psrlq, 7);
     SHIFT_OP(psrlq, 32);
     SHIFT_OP(psllq, 7);
     SHIFT_OP(psllq, 32);
 
-    // SHIFT_DQ_IM(psrldq, 16);
-    // SHIFT_DQ_IM(psrldq, 7);
+    SHIFT_DQ_IM(psrldq, 16);
+    SHIFT_DQ_IM(psrldq, 7);
     SHIFT_DQ_IM(pslldq, 16);
     SHIFT_DQ_IM(pslldq, 7);
-    SHIFT_IM(psrlq, 16);
-    SHIFT_IM(psrlq, 7);
-    SHIFT_IM(psllq, 16);
-    SHIFT_IM(psllq, 7);
 
     // MOVMSK(movmskps);
     MOVMSK(movmskpd);
@@ -2609,21 +2698,21 @@ void test_sse(void)
             b.s[3] = q_nan.d;
         }
 
-        SSE_OPS_S(add);
-        SSE_OPS_S(mul);
-        SSE_OPS_S(sub);
+        SSE_OPS(add);
+        SSE_OPS(mul);
+        SSE_OPS(sub);
         // SSE_OPS(min);
         SSE_OPS_S(div);
         // SSE_OPS(max);
         // SSE_OPS(sqrt);
-        // SSE_OPS(cmpeq);
-        // SSE_OPS(cmplt);
-        // SSE_OPS(cmple);
-        // SSE_OPS(cmpunord);
-        // SSE_OPS(cmpneq);
-        // SSE_OPS(cmpnlt);
-        // SSE_OPS(cmpnle);
-        // SSE_OPS(cmpord);
+        SSE_OPS_S(cmpeq);
+        SSE_OPS_S(cmplt);
+        SSE_OPS_S(cmple);
+        SSE_OPS_S(cmpunord);
+        SSE_OPS_S(cmpneq);
+        SSE_OPS_S(cmpnlt);
+        SSE_OPS_S(cmpnle);
+        SSE_OPS_S(cmpord);
 
 
         a.d[0] = 2.7;
@@ -2634,21 +2723,21 @@ void test_sse(void)
             a.d[0] = q_nan.d;
             b.d[1] = q_nan.d;
         }
-        SSE_OPD_S(add);
-        SSE_OPD_S(mul);
-        SSE_OPD_S(sub);
+        SSE_OPD(add);
+        SSE_OPD(mul);
+        SSE_OPD(sub);
         SSE_OPD_S(min);
         SSE_OPD_S(div);
         SSE_OPD_S(max);
         SSE_OPD_S(sqrt);
-        SSE_OPD_S(cmpeq);
-        SSE_OPD_S(cmplt);
-        SSE_OPD_S(cmple);
-        SSE_OPD_S(cmpunord);
-        SSE_OPD_S(cmpneq);
-        SSE_OPD_S(cmpnlt);
-        SSE_OPD_S(cmpnle);
-        SSE_OPD_S(cmpord);
+        SSE_OPD(cmpeq);
+        SSE_OPD(cmplt);
+        SSE_OPD(cmple);
+        SSE_OPD(cmpunord);
+        SSE_OPD(cmpneq);
+        SSE_OPD(cmpnlt);
+        SSE_OPD(cmpnle);
+        SSE_OPD(cmpord);
     }
 
     /* float to float/int */
@@ -2663,7 +2752,7 @@ void test_sse(void)
     // CVT_OP_XMM2REG(cvtss2si);
     CVT_OP_XMM2REG(cvttss2si);
     // CVT_OP_XMM(cvtps2dq);
-    // CVT_OP_XMM(cvttps2dq);
+    CVT_OP_XMM(cvttps2dq);
 
     a.d[0] = 2.6;
     a.d[1] = -3.4;
@@ -2674,7 +2763,7 @@ void test_sse(void)
     // CVT_OP_XMM2REG(cvtsd2si);
     CVT_OP_XMM2REG(cvttsd2si);
     // CVT_OP_XMM(cvtpd2dq);
-    // CVT_OP_XMM(cvttpd2dq);
+    CVT_OP_XMM(cvttpd2dq);
 
     /* sse/mmx moves */
     // CVT_OP_XMM2MMX(movdq2q);
@@ -2691,6 +2780,21 @@ void test_sse(void)
     CVT_OP_REG2XMM(cvtsi2sd);
     // CVT_OP_XMM(cvtdq2ps);
     // CVT_OP_XMM(cvtdq2pd);
+
+    /* sse/sse2 moves */
+    MOVL_OP2(movlps);
+    MOVH_OP2(movhps);
+    MOVL_OP2(movlpd);
+    MOVH_OP2(movhpd);
+    MOVNT_OP2(movntq, 0);
+    MOVNT_OP2(movntdq, 1);
+    MOVU_OP2(movups);
+    MOVU_OP2(movupd);
+
+    /* misc sse ops*/
+    SSE_OP2(minss);
+    SSE_OP2(maxss);
+    SSE_OP2(sqrtss);
 
     /* XXX: test PNI insns */
 #if 0
@@ -2750,10 +2854,6 @@ void test_conv(void)
     }
 #endif
 }
-
-extern void *__start_initcall;
-extern void *__stop_initcall;
-
 
 int main(int argc, char **argv)
 {

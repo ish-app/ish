@@ -12,7 +12,9 @@
 #import "ArrowBarButton.h"
 #import "UserPreferences.h"
 #import "AboutViewController.h"
+#import "CurrentRoot.h"
 #import "NSObject+SaneKVO.h"
+#import "LinuxInterop.h"
 #include "kernel/init.h"
 #include "kernel/task.h"
 #include "kernel/calls.h"
@@ -37,6 +39,8 @@
 @property (weak, nonatomic) IBOutlet NSLayoutConstraint *barLeading;
 @property (weak, nonatomic) IBOutlet NSLayoutConstraint *barTrailing;
 @property (weak, nonatomic) IBOutlet NSLayoutConstraint *barButtonWidth;
+@property (weak, nonatomic) IBOutlet NSLayoutConstraint *barHeight;
+@property (weak, nonatomic) IBOutlet UIView *settingsBadge;
 
 @property (weak, nonatomic) IBOutlet UIButton *infoButton;
 @property (weak, nonatomic) IBOutlet UIButton *pasteButton;
@@ -44,7 +48,6 @@
 
 @property int sessionPid;
 @property (nonatomic) Terminal *sessionTerminal;
-@property int sessionTerminalNumber;
 
 @property BOOL ignoreKeyboardMotion;
 @property (nonatomic) BOOL hasExternalKeyboard;
@@ -55,7 +58,8 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    
+
+#if !ISH_LINUX
     int bootError = [AppDelegate bootError];
     if (bootError < 0) {
         NSString *message = [NSString stringWithFormat:@"could not boot"];
@@ -65,8 +69,9 @@
         [self showMessage:message subtitle:subtitle];
         NSLog(@"boot failed with code %d", bootError);
     }
+#endif
 
-    self.termView.terminal = self.terminal;
+    self.terminal = self.terminal;
     [self.termView becomeFirstResponder];
 
     NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
@@ -78,6 +83,11 @@
                selector:@selector(keyboardDidSomething:)
                    name:UIKeyboardDidChangeFrameNotification
                  object:nil];
+    [center addObserver:self
+               selector:@selector(_updateBadge)
+                   name:FsUpdatedNotification
+                 object:nil];
+
 
     [self _updateStyleFromPreferences:NO];
     
@@ -86,9 +96,9 @@
         [self.hideKeyboardButton removeFromSuperview];
     }
     if (UIDevice.currentDevice.userInterfaceIdiom == UIUserInterfaceIdiomPhone) {
-        self.barView.frame = CGRectMake(0, 0, 100, 48);
+        self.barHeight.constant = 36;
     } else {
-        self.barView.frame = CGRectMake(0, 0, 100, 55);
+        self.barHeight.constant = 43;
     }
     
     // SF Symbols is cool
@@ -104,19 +114,34 @@
         [self.escapeKey setTitle:nil forState:UIControlStateNormal];
         [self.escapeKey setImage:[UIImage systemImageNamed:@"escape"] forState:UIControlStateNormal];
     }
-
-    [UserPreferences.shared observe:@[@"theme", @"hideExtraKeysWithExternalKeyboard"]
-                            options:0 owner:self usingBlock:^(typeof(self) self) {
-        [self _updateStyleFromPreferences:YES];
+    
+    [UserPreferences.shared observe:@[@"hideStatusBar"] options:0 owner:self usingBlock:^(typeof(self) self) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self setNeedsStatusBarAppearanceUpdate];
+        });
     }];
+    [UserPreferences.shared observe:@[@"colorScheme", @"theme", @"hideExtraKeysWithExternalKeyboard"]
+                            options:0 owner:self usingBlock:^(typeof(self) self) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self _updateStyleFromPreferences:YES];
+        });
+    }];
+    [self _updateBadge];
 }
 
 - (void)awakeFromNib {
     [super awakeFromNib];
+#if !ISH_LINUX
     [NSNotificationCenter.defaultCenter addObserver:self
                                            selector:@selector(processExited:)
                                                name:ProcessExitedNotification
                                              object:nil];
+#else
+    [NSNotificationCenter.defaultCenter addObserver:self
+                                           selector:@selector(kernelPanicked:)
+                                               name:KernelPanicNotification
+                                             object:nil];
+#endif
 }
 
 - (void)viewDidAppear:(BOOL)animated {
@@ -143,6 +168,9 @@
 }
 
 - (int)startSession {
+    NSArray<NSString *> *command = UserPreferences.shared.launchCommand;
+
+#if !ISH_LINUX
     int err = become_new_init_child();
     if (err < 0)
         return err;
@@ -154,15 +182,13 @@
         return (int) PTR_ERR(tty);
     }
     self.sessionTerminal = terminal;
-    self.sessionTerminalNumber = tty->num;
     NSString *stdioFile = [NSString stringWithFormat:@"/dev/pts/%d", tty->num];
     err = create_stdio(stdioFile.fileSystemRepresentation, TTY_PSEUDO_SLAVE_MAJOR, tty->num);
     if (err < 0)
         return err;
     tty_release(tty);
-    
+
     char argv[4096];
-    NSArray<NSString *> *command = UserPreferences.shared.launchCommand;
     [Terminal convertCommand:command toArgs:argv limitSize:sizeof(argv)];
     const char *envp = "TERM=xterm-256color\0";
     err = do_execve(command[0].UTF8String, command.count, argv, envp);
@@ -170,16 +196,45 @@
         return err;
     self.sessionPid = current->pid;
     task_start(current);
+#else
+    const char *argv_arr[command.count + 1];
+    for (NSUInteger i = 0; i < command.count; i++)
+        argv_arr[i] = command[i].UTF8String;
+    argv_arr[command.count] = NULL;
+    const char *envp_arr[] = {
+        "TERM=xterm-256color",
+        NULL,
+    };
+    const char *const *argv = argv_arr;
+    const char *const *envp = envp_arr;
+    __block Terminal *terminal = nil;
+    __block int sessionPid = 0;
+    __block int err = 1;
+    sync_do_in_workqueue(^(void (^done)(void)) {
+        linux_start_session(argv[0], argv, envp, ^(int retval, int pid, nsobj_t term) {
+            err = retval;
+            if (term)
+                terminal = CFBridgingRelease(term);
+            sessionPid = pid;
+            done();
+        });
+    });
+    NSAssert(err <= 0, @"session start did not finish??");
+    if (err < 0)
+        return err;
+    self.sessionTerminal = terminal;
+    self.sessionPid = sessionPid;
+#endif
     return 0;
 }
 
+#if !ISH_LINUX
 - (void)processExited:(NSNotification *)notif {
     int pid = [notif.userInfo[@"pid"] intValue];
     if (pid != self.sessionPid)
         return;
 
     [self.sessionTerminal destroy];
-    self.sessionTerminalNumber = 0;
     // On iOS 13, there are multiple windows, so just close this one.
     if (@available(iOS 13, *)) {
         // On iPhone, destroying scenes will fail, but the error doesn't actually go to the error handler, which is really stupid. Apple doesn't fix bugs, so I'm forced to just add a check here.
@@ -195,6 +250,15 @@
     current = NULL; // it's been freed
     [self startNewSession];
 }
+#endif
+
+#if ISH_LINUX
+- (void)kernelPanicked:(NSNotification *)notif {
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"panik" message:notif.userInfo[@"message"] preferredStyle:UIAlertControllerStyleAlert];
+    [alert addAction:[UIAlertAction actionWithTitle:@"k" style:UIAlertActionStyleDefault handler:nil]];
+    [self presentViewController:alert animated:YES completion:nil];
+}
+#endif
 
 - (void)showMessage:(NSString *)message subtitle:(NSString *)subtitle {
     dispatch_async(dispatch_get_main_queue(), ^{
@@ -215,10 +279,11 @@
 }
 
 - (void)_updateStyleFromPreferences:(BOOL)animated {
+    NSAssert(NSThread.isMainThread, @"This method needs to be called on the main thread");
     NSTimeInterval duration = animated ? 0.1 : 0;
     [UIView animateWithDuration:duration animations:^{
-        self.view.backgroundColor = UserPreferences.shared.theme.backgroundColor;
-        UIKeyboardAppearance keyAppearance = UserPreferences.shared.theme.keyboardAppearance;
+        self.view.backgroundColor = [[UIColor alloc] ish_initWithHexString:UserPreferences.shared.palette.backgroundColor];
+        UIKeyboardAppearance keyAppearance = UserPreferences.shared.keyboardAppearance;
         self.termView.keyboardAppearance = keyAppearance;
         for (BarButton *button in self.barButtons) {
             button.keyAppearance = keyAppearance;
@@ -235,40 +300,52 @@
         self.termView.inputAccessoryView = self.barView;
     }
     if (self.termView.inputAccessoryView != oldBarView && self.termView.isFirstResponder) {
-        self.ignoreKeyboardMotion = YES; // avoid infinite recursion
-        [self.termView reloadInputViews];
-        self.ignoreKeyboardMotion = NO;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            self.ignoreKeyboardMotion = YES; // avoid infinite recursion
+            [self.termView reloadInputViews];
+            self.ignoreKeyboardMotion = NO;
+        });
     }
-    [self setNeedsStatusBarAppearanceUpdate];
 }
 - (void)_updateStyleAnimated {
     [self _updateStyleFromPreferences:YES];
 }
 
+- (void)_updateBadge {
+    self.settingsBadge.hidden = !FsNeedsRepositoryUpdate();
+}
+
 - (UIStatusBarStyle)preferredStatusBarStyle {
-    return UserPreferences.shared.theme.statusBarStyle;
+    return UserPreferences.shared.statusBarStyle;
 }
 
 - (BOOL)prefersStatusBarHidden {
-    BOOL isIPhoneX = self.view.window.safeAreaInsets.top > 20;
-    return !isIPhoneX;
+    return UserPreferences.shared.hideStatusBar;
 }
 
 - (void)keyboardDidSomething:(NSNotification *)notification {
     if (self.ignoreKeyboardMotion)
         return;
 
-    CGRect keyboardFrame = [notification.userInfo[UIKeyboardFrameEndUserInfoKey] CGRectValue];
+    CGRect screenKeyboardFrame = [notification.userInfo[UIKeyboardFrameEndUserInfoKey] CGRectValue];
+    UIScreen *screen = UIScreen.mainScreen;
+    // notification.object is nil before iOS 16.1 and the correct UIScreen after iOS 16.1
+    if (notification.object != nil)
+        screen = notification.object;
+    CGRect keyboardFrame = [self.view convertRect:screenKeyboardFrame fromCoordinateSpace:screen.coordinateSpace];
     if (CGRectEqualToRect(keyboardFrame, CGRectZero))
         return;
-    NSLog(@"%@ %@", notification.name, [NSValue valueWithCGRect:keyboardFrame]);
+    CGRect intersection = CGRectIntersection(keyboardFrame, self.view.bounds);
+    keyboardFrame = intersection;
+    NSLog(@"%@ %@", notification.name, @(keyboardFrame));
     self.hasExternalKeyboard = keyboardFrame.size.height < 100;
-    CGFloat pad = UIScreen.mainScreen.bounds.size.height - keyboardFrame.origin.y;
-    if (pad != keyboardFrame.size.height) {
-        pad = 0; // keyboard is not right at the bottom of the screen, must be floating or something
-    }
-    if (pad == 0) {
-        pad = self.view.safeAreaInsets.bottom;
+    CGFloat pad = CGRectGetMaxY(self.view.bounds) - CGRectGetMinY(keyboardFrame);
+    // The keyboard appears to be undocked. This means it can either be split or
+    // truly floating. In the former case we want to keep the pad, but in the
+    // latter we should fall back to the input accessory view instead of the
+    // keyboard.
+    if (pad != keyboardFrame.size.height && keyboardFrame.size.width != UIScreen.mainScreen.bounds.size.width) {
+        pad = MAX(self.view.safeAreaInsets.bottom, self.termView.inputAccessoryView.frame.size.height);
     }
     // NSLog(@"pad %f", pad);
     self.bottomConstraint.constant = pad;
@@ -294,26 +371,21 @@
     [self _updateStyleFromPreferences:YES];
 }
 
-- (void)ishExited:(NSNotification *)notification {
-    [self performSelectorOnMainThread:@selector(displayExitThing) withObject:nil waitUntilDone:YES];
-}
-
-- (void)displayExitThing {
-    UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"attempted to kill init" message:nil preferredStyle:UIAlertControllerStyleAlert];
-    [alert addAction:[UIAlertAction actionWithTitle:@"exit" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-        id delegate = [UIApplication sharedApplication].delegate;
-        [delegate exitApp];
-    }]];
-    if ([UserPreferences.shared hasChangedLaunchCommand])
-        [alert addAction:[UIAlertAction actionWithTitle:@"i typed the init command wrong, let me fix it" style:UIAlertActionStyleDefault handler:nil]];
-    [self presentViewController:alert animated:YES completion:nil];
-}
-
 - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
     if ([segue.identifier isEqualToString:@"embed"]) {
         // You might want to check if this is your embed segue here
         // in case there are other segues triggered from this view controller.
         segue.destinationViewController.view.translatesAutoresizingMaskIntoConstraints = NO;
+    }
+}
+
+- (void)traitCollectionDidChange:(UITraitCollection *)previousTraitCollection {
+    // Hack to resolve a layering mismatch between the the UI and preferences.
+    if (@available(iOS 12.0, *)) {
+        if (previousTraitCollection.userInterfaceStyle != self.traitCollection.userInterfaceStyle) {
+            // Ensure that the relevant things listening for this will update.
+            UserPreferences.shared.colorScheme = UserPreferences.shared.colorScheme;
+        }
     }
 }
 
@@ -335,21 +407,17 @@
 }
 
 - (void)resizeBar {
-    CGSize screen = UIScreen.mainScreen.bounds.size;
     CGSize bar = self.barView.bounds.size;
     // set sizing parameters on bar
     // numbers stolen from iVim and modified somewhat
     if (UIDevice.currentDevice.userInterfaceIdiom == UIUserInterfaceIdiomPhone) {
         // phone
         [self setBarHorizontalPadding:6 verticalPadding:6 buttonWidth:32];
-    } else if (bar.width == screen.width || bar.width == screen.height) {
-        // full-screen ipad
+    } else if (bar.width >= 450) {
+        // wide ipad
         [self setBarHorizontalPadding:15 verticalPadding:8 buttonWidth:43];
-    } else if (bar.width <= 320) {
-        // slide over
-        [self setBarHorizontalPadding:8 verticalPadding:8 buttonWidth:26];
     } else {
-        // split view
+        // narrow ipad (slide over)
         [self setBarHorizontalPadding:10 verticalPadding:8 buttonWidth:36];
     }
     [UIView performWithoutAnimation:^{
@@ -458,8 +526,10 @@
 
 @interface BarView : UIInputView
 @property (weak) IBOutlet TerminalViewController *terminalViewController;
+@property (nonatomic) IBInspectable BOOL allowsSelfSizing;
 @end
 @implementation BarView
+@dynamic allowsSelfSizing;
 
 - (void)layoutSubviews {
     [self.terminalViewController resizeBar];

@@ -12,7 +12,8 @@
 #import "AboutViewController.h"
 #import "AppDelegate.h"
 #import "AppGroup.h"
-#import "APKFilesystem.h"
+#import "CurrentRoot.h"
+#import "ExceptionExfiltrator.h"
 #import "iOSFS.h"
 #import "SceneDelegate.h"
 #import "PasteboardDevice.h"
@@ -28,15 +29,18 @@
 #include "fs/devices.h"
 #include "fs/path.h"
 
+#if ISH_LINUX
+#import "LinuxInterop.h"
+#endif
+
 @interface AppDelegate ()
 
 @property BOOL exiting;
-@property NSString *unameVersion;
-@property NSString *unameHostname;
 @property SCNetworkReachabilityRef reachability;
 
 @end
 
+#if !ISH_LINUX
 static void ios_handle_exit(struct task *task, int code) {
     // we are interested in init and in children of init
     // this is called with pids_lock as an implementation side effect, please do not cite as an example of good API design
@@ -52,78 +56,38 @@ static void ios_handle_exit(struct task *task, int code) {
     });
 }
 
-// Put the abort message in the thread name so it gets included in the crash dump
 static void ios_handle_die(const char *msg) {
-    char name[17];
-    pthread_getname_np(pthread_self(), name, sizeof(name));
-    NSString *newName = [NSString stringWithFormat:@"%s died: %s", name, msg];
-    pthread_setname_np(newName.UTF8String);
+    NSString *message = [NSString stringWithFormat:@"%s: %s", __func__, msg];
+    iSHExceptionHandler([[NSException alloc] initWithName:NSGenericException reason:message userInfo:nil]);
 }
+#elif ISH_LINUX
+void ReportPanic(const char *message) {
+    [NSNotificationCenter.defaultCenter postNotificationName:KernelPanicNotification object:nil userInfo:@{@"message":@(message)}];
+}
+#endif
 
 static int bootError;
-static int fs_ish_version;
 static NSString *const kSkipStartupMessage = @"Skip Startup Message";
 
 @implementation AppDelegate
 
 - (int)boot {
-    NSURL *root = [[Roots.instance rootUrl:Roots.instance.defaultRoot] URLByAppendingPathComponent:@"data"];
-    int err = mount_root(&fakefs, root.fileSystemRepresentation);
+#if !ISH_LINUX
+    NSURL *root = [Roots.instance rootUrl:Roots.instance.defaultRoot];
+
+    int err = mount_root(&fakefs, [root URLByAppendingPathComponent:@"data"].fileSystemRepresentation);
     if (err < 0)
         return err;
 
     fs_register(&iosfs);
     fs_register(&iosfs_unsafe);
-    fs_register(&apkfs);
 
     // need to do this first so that we can have a valid current for the generic_mknod calls
     err = become_first_process();
     if (err < 0)
         return err;
 
-    // /ish/version is the last ish version that opened this root. Used to migrate the filesystem.
-    struct fd *ish_version_fd = generic_open("/ish/version", O_RDONLY_, 0);
-    if (!IS_ERR(ish_version_fd)) {
-        char buf[100];
-        ssize_t n = ish_version_fd->ops->read(ish_version_fd, buf, sizeof(buf));
-        if (n < 0)
-            return (int) n;
-        NSString *version = [[NSString alloc] initWithBytesNoCopy:buf length:n encoding:NSUTF8StringEncoding freeWhenDone:NO];
-        version = [version stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
-        fs_ish_version = version.intValue;
-        fd_close(ish_version_fd);
-
-        // I forgot to add the community repo
-        if (fs_ish_version < 88) {
-            NSData *repositoriesData = [NSData dataWithContentsOfURL:[root URLByAppendingPathComponent:@"etc/apk/repositories"]];
-            NSString *repositories = [[NSString alloc] initWithData:repositoriesData encoding:NSUTF8StringEncoding];
-            NSString *communityRepo = @"file:///ish/apk/community";
-            if (![[repositories componentsSeparatedByString:@"\n"] containsObject:communityRepo]) {
-                NSString *addend = [communityRepo stringByAppendingString:@"\n"];
-                struct fd *repositories_fd = generic_open("/etc/apk/repositories", O_WRONLY_|O_APPEND_, 0);
-                if (!IS_ERR(repositories_fd)) {
-                    repositories_fd->ops->write(repositories_fd, addend.UTF8String, [addend lengthOfBytesUsingEncoding:NSUTF8StringEncoding]);
-                    fd_close(repositories_fd);
-                }
-            }
-        }
-
-        NSString *currentVersion = NSBundle.mainBundle.infoDictionary[(__bridge NSString *) kCFBundleVersionKey];
-        if (currentVersion.intValue > fs_ish_version) {
-            fs_ish_version = currentVersion.intValue;
-            ish_version_fd = generic_open("/ish/version", O_WRONLY_|O_TRUNC_, 0644);
-            if (!IS_ERR(ish_version_fd)) {
-                NSString *file = [NSString stringWithFormat:@"%@\n", currentVersion];
-                ish_version_fd->ops->write(ish_version_fd, file.UTF8String, [file lengthOfBytesUsingEncoding:NSUTF8StringEncoding]);
-                fd_close(ish_version_fd);
-            }
-        }
-
-        if ([NSBundle.mainBundle URLForResource:@"OnDemandResources" withExtension:@"plist"] != nil) {
-            generic_mkdirat(AT_PWD, "/ish/apk", 0755);
-            do_mount(&apkfs, "apk", "/ish/apk", "", 0);
-        }
-    }
+    FsInitialize();
 
     // create some device nodes
     // this will do nothing if they already exist
@@ -192,11 +156,34 @@ static NSString *const kSkipStartupMessage = @"Skip Startup Message";
     if (err < 0)
         return err;
     task_start(current);
+
+#else
+    // On first launch, this will trigger the import of the default root. Make sure to do this before entering the kernel, because it needs to run something on the main thread, and that would deadlock.
+    [Roots instance];
+    NSArray<NSString *> *args = @[];
+    actuate_kernel([args componentsJoinedByString:@" "].UTF8String);
+#endif
     
     return 0;
 }
 
+#if ISH_LINUX
+const char *DefaultRootPath() {
+    return [Roots.instance rootUrl:Roots.instance.defaultRoot].fileSystemRepresentation;
+}
+
+void SyncHostname(void) {
+    async_do_in_workqueue(^{
+        char hostname[256];
+        if (gethostname(hostname, sizeof(hostname)) < 0)
+            return;
+        linux_sethostname(hostname);
+    });
+}
+#endif
+
 - (void)configureDns {
+#if !ISH_LINUX
     struct __res_state res;
     if (EXIT_SUCCESS != res_ninit(&res)) {
         exit(2);
@@ -228,6 +215,7 @@ static NSString *const kSkipStartupMessage = @"Skip Startup Message";
         fd->ops->write(fd, resolvConf.UTF8String, [resolvConf lengthOfBytesUsingEncoding:NSUTF8StringEncoding]);
         fd_close(fd);
     }
+#endif
 }
 
 + (int)bootError {
@@ -237,7 +225,7 @@ static NSString *const kSkipStartupMessage = @"Skip Startup Message";
 + (void)maybePresentStartupMessageOnViewController:(UIViewController *)vc {
     if ([NSUserDefaults.standardUserDefaults integerForKey:kSkipStartupMessage] >= 1)
         return;
-    if (fs_ish_version == 0) {
+    if (!FsIsManaged()) {
         UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Install iSH’s built-in APK?"
                                                                        message:@"iSH now includes the APK package manager, but it must be manually activated."
                                                                 preferredStyle:UIAlertControllerStyleAlert];
@@ -265,6 +253,14 @@ static NSString *const kSkipStartupMessage = @"Skip Startup Message";
         return YES;
 
     bootError = [self boot];
+
+#if ISH_LINUX
+    [NSNotificationCenter.defaultCenter addObserverForName:UIApplicationWillEnterForegroundNotification object:UIApplication.sharedApplication queue:nil usingBlock:^(NSNotification * _Nonnull note) {
+        SyncHostname();
+    }];
+    SyncHostname();
+#endif
+
     return YES;
 }
 
@@ -279,25 +275,32 @@ void NetworkReachabilityCallback(SCNetworkReachabilityRef target, SCNetworkReach
 
     if ([NSUserDefaults.standardUserDefaults boolForKey:@"FASTLANE_SNAPSHOT"])
         [UIView setAnimationsEnabled:NO];
-    
-    self.unameVersion = [NSString stringWithFormat:@"iSH %@ (%@)",
+
+#if !ISH_LINUX
+    NSString *ishVersion = [NSString stringWithFormat:@"iSH %@ (%@)",
                          [NSBundle.mainBundle objectForInfoDictionaryKey:@"CFBundleShortVersionString"],
                          [NSBundle.mainBundle objectForInfoDictionaryKey:(NSString *) kCFBundleVersionKey]];
-    extern const char *uname_version;
-    uname_version = self.unameVersion.UTF8String;
+    extern const char *proc_ish_version;
+    proc_ish_version = strdup(ishVersion.UTF8String);
     // this defaults key is set when taking app store screenshots
-    self.unameHostname = [NSUserDefaults.standardUserDefaults stringForKey:@"hostnameOverride"];
     extern const char *uname_hostname_override;
-    uname_hostname_override = self.unameHostname.UTF8String;
+    NSString *hostnameOverride = [NSUserDefaults.standardUserDefaults stringForKey:@"hostnameOverride"];
+    if (hostnameOverride) {
+        uname_hostname_override = strdup(uname_hostname_override);
+    }
+#endif
     
     [UserPreferences.shared observe:@[@"shouldDisableDimming"] options:NSKeyValueObservingOptionInitial
                               owner:self usingBlock:^(typeof(self) self) {
-        UIApplication.sharedApplication.idleTimerDisabled = UserPreferences.shared.shouldDisableDimming;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            UIApplication.sharedApplication.idleTimerDisabled = UserPreferences.shared.shouldDisableDimming;
+        });
     }];
     
-    struct sockaddr_in6 address = {
-        .sin6_len = sizeof(address),
-        .sin6_family = AF_INET6,
+    // This code is IPv4 and IPv6 aware: see https://developer.apple.com/library/archive/samplecode/Reachability/Listings/ReadMe_md.html
+    struct sockaddr_in address = {
+        .sin_len = sizeof(address),
+        .sin_family = AF_INET,
     };
     self.reachability = SCNetworkReachabilityCreateWithAddress(kCFAllocatorDefault, (struct sockaddr *) &address);
     SCNetworkReachabilityContext context = {
@@ -349,4 +352,8 @@ void NetworkReachabilityCallback(SCNetworkReachabilityRef target, SCNetworkReach
 
 @end
 
+#if !ISH_LINUX
 NSString *const ProcessExitedNotification = @"ProcessExitedNotification";
+#else
+NSString *const KernelPanicNotification = @"KernelPanicNotification";
+#endif

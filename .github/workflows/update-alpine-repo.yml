@@ -1,31 +1,36 @@
-name: "Update Alpine Repo"
+name: "Update Repo"
 on:
-    workflow_dispatch:
-    schedule:
-        - cron: "0 0 * * *"
+  workflow_dispatch:
+  schedule:
+    - cron: "0 0 * * *"
 
 jobs:
   update:
+    if: github.repository == 'ish-app/ish'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Setup dependencies
         run: |
-            sudo apt-get install rclone
-            mkdir -p ~/.config/rclone
-            echo "$RCLONE_CONFIG" > ~/.config/rclone/rclone.conf
+          curl https://rclone.org/install.sh | sudo bash
+          mkdir -p ~/.config/rclone
+          echo "$RCLONE_CONFIG" > ~/.config/rclone/rclone.conf
         env:
-            RCLONE_CONFIG: ${{ secrets.RCLONE_CONFIG }}
+          RCLONE_CONFIG: ${{ secrets.RCLONE_CONFIG }}
       - name: Update
         run: |
-            deps/aports/sync-archive.sh v3.12 main/x86
-            deps/aports/sync-archive.sh v3.12 community/x86
+          deps/aports/sync-archive.sh v3.14 main/x86 deps/aports
+          deps/aports/sync-archive.sh v3.14 community/x86 deps/aports
+          deps/aports/sync-archive.sh v3.17 main/x86 deps/aports
+          deps/aports/sync-archive.sh v3.17 community/x86 deps/aports
+          deps/aports/sync-archive.sh v3.18 main/x86 deps/aports
+          deps/aports/sync-archive.sh v3.18 community/x86 deps/aports
       - name: Commit
         id: commit
         run: |
-          git config user.name github-actions
-          git config user.email github-actions@github.com
-          git add deps/aports/{main,community}/x86/index.txt
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add deps/aports
           git commit -m "Update Alpine repositories"
           # TODO add a summary of changes in the commit description
         continue-on-error: true

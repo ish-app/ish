@@ -80,6 +80,14 @@ struct tty *tty_get(struct tty_driver *driver, int type, int num) {
     return tty;
 }
 
+static struct tty *get_slave_side_tty(struct tty *tty) {
+  if (tty->type == TTY_PSEUDO_MASTER_MAJOR) {
+      return tty->pty.other;
+  } else {
+      return tty;
+  }
+}
+
 static void tty_poll_wakeup(struct tty *tty, int events) {
     unlock(&tty->lock);
     struct fd *fd;
@@ -605,7 +613,7 @@ static ssize_t tty_ioctl_size(int cmd) {
             return sizeof(struct termios_);
         case TIOCGWINSZ_: case TIOCSWINSZ_:
             return sizeof(struct winsize_);
-        case TIOCGPRGP_: case TIOCSPGRP_:
+        case TIOCGPGRP_: case TIOCSPGRP_:
         case TIOCSPTLCK_: case TIOCGPTN_:
         case TIOCPKT_: case TIOCGPKT_:
         case FIONREAD_:
@@ -654,6 +662,26 @@ static int tiocsctty(struct tty *tty, int force) {
     tty_set_controlling(current->group, tty);
 out:
     unlock(&pids_lock);
+    return err;
+}
+
+static int tiocgpgrp(struct tty *tty, pid_t_ *fg_group) {
+    int err = 0;
+    struct tty *slave = get_slave_side_tty(tty);
+    if (slave != tty) {
+        lock(&slave->lock);
+    }
+
+    if (tty == slave && !tty_is_current(slave) || slave->fg_group == 0) {
+        err = _ENOTTY;
+        goto error_no_ctrl_tty;
+    }
+    *fg_group = slave->fg_group;
+    STRACE("tty group = %d\n", slave->fg_group);
+
+error_no_ctrl_tty:
+    if (slave != tty)
+        unlock(&slave->lock);
     return err;
 }
 
@@ -730,13 +758,10 @@ static int tty_ioctl(struct fd *fd, int cmd, void *arg) {
             err = tiocsctty(tty, (uintptr_t) arg);
             break;
 
-        case TIOCGPRGP_:
-            if (!tty_is_current(tty) || tty->fg_group == 0) {
-                err = _ENOTTY;
-                break;
-            }
-            STRACE("tty group = %d\n", tty->fg_group);
-            *(dword_t *) arg = tty->fg_group; break;
+        case TIOCGPGRP_:
+            err = tiocgpgrp(tty, (pid_t_ *) arg);
+            break;
+
         case TIOCSPGRP_:
             // see "aaaaaaaa" comment above
             unlock(&tty->lock);

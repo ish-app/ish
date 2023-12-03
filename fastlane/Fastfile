@@ -29,18 +29,22 @@ lane :build do |options|
       project: "iSH.xcodeproj",
       scheme: "iSH",
       xcconfig: config,
+      xcargs: "DEVELOPMENT_TEAM=#{CredentialsManager::AppfileConfig.try_fetch_value(:team_id)}",
       output_name: options[:output],
     )
 end
 
 lane :upload_build do
-    app_store_connect_api_key
-
-    changelog = File.read("changelog.txt")
     last_tag = `git describe --tags --abbrev=0 --match builds/\*`.chomp
     shortlog = `git shortlog #{last_tag}..HEAD`
+    if shortlog.empty?
+        UI.error "No commits since last build"
+        next
+    end
+    changelog = "Automated daily build"
     testflight_changelog = changelog + "\n" + File.read("footer.txt") + shortlog
 
+    app_store_connect_api_key
     latest = latest_testflight_build_number.to_s.scan(/^\d+(?=\.|$)/).first.to_i
     build_number = latest + 1
     Dir.chdir("..") do
@@ -61,10 +65,12 @@ lane :upload_build do
         ipa: "iSH-appstore.ipa",
         changelog: testflight_changelog,
         wait_processing_interval: 300, # the processing is expected to take a total of 5 hours, so don't logspam too much
+        distribute_external: true,
+        groups: ["People"],
     )
 
     # uploading a build takes about 5 hours, so merge master back in if there have been any commits during that
-    git_pull(rebase: false)
+    sh "git pull --no-rebase"
     push_to_git_remote
     set_github_release(
         repository_name: "ish-app/ish",

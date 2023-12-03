@@ -1,14 +1,20 @@
 #ifndef EMU_H
 #define EMU_H
 
-#include <stddef.h>
 #include "misc.h"
 #include "emu/mmu.h"
 #include "emu/float80.h"
 
+#ifdef __KERNEL__
+#include <linux/stddef.h>
+#else
+#include <stddef.h>
+#endif
+
 struct cpu_state;
 struct tlb;
 int cpu_run_to_interrupt(struct cpu_state *cpu, struct tlb *tlb);
+void cpu_poke(struct cpu_state *cpu);
 
 union mm_reg {
     qword_t qw;
@@ -162,6 +168,9 @@ struct cpu_state {
     bool segfault_was_write;
 
     dword_t trapno;
+    // access atomically
+    bool *poked_ptr;
+    bool _poked;
 };
 
 #define CPU_OFFSET(field) offsetof(struct cpu_state, field)
@@ -174,7 +183,7 @@ static_assert(CPU_OFFSET(esp) == CPU_OFFSET(regs[4]), "register order");
 static_assert(CPU_OFFSET(ebp) == CPU_OFFSET(regs[5]), "register order");
 static_assert(CPU_OFFSET(esi) == CPU_OFFSET(regs[6]), "register order");
 static_assert(CPU_OFFSET(edi) == CPU_OFFSET(regs[7]), "register order");
-static_assert(sizeof(struct cpu_state) < UINT16_MAX, "cpu struct is too big for vector gadgets");
+static_assert(sizeof(struct cpu_state) < 0xffff, "cpu struct is too big for vector gadgets");
 
 // flags
 #define ZF (cpu->zf_res ? cpu->res == 0 : cpu->zf)

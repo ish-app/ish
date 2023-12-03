@@ -117,7 +117,8 @@ void task_leave_session(struct task *task);
 struct posix_timer {
     struct timer *timer;
     int_t timer_id;
-    struct task *task;
+    struct tgroup *tgroup;
+    pid_t_ thread_pid;
     int_t signal;
     union sigval_ sig_value;
 };

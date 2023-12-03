@@ -183,6 +183,8 @@ static inline int sock_flags_from_real(int real) {
 #define SO_TIMESTAMP_ 29
 #define SO_PROTOCOL_ 38
 #define SO_DOMAIN_ 39
+#define SO_RCVTIMEO_ 66
+#define SO_SNDTIMEO_ 67
 #define IP_TOS_ 1
 #define IP_TTL_ 2
 #define IP_HDRINCL_ 3
@@ -211,6 +213,8 @@ static inline int sock_opt_to_real(int fake, int level) {
             case SO_SNDBUF_: return SO_SNDBUF;
             case SO_RCVBUF_: return SO_RCVBUF;
             case SO_TIMESTAMP_: return SO_TIMESTAMP;
+            case SO_RCVTIMEO_: return SO_RCVTIMEO;
+            case SO_SNDTIMEO_: return SO_SNDTIMEO;
         } break;
         case IPPROTO_TCP: switch (fake) {
             case TCP_NODELAY_: return TCP_NODELAY;

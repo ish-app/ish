@@ -15,6 +15,23 @@ static int proc_show_version(struct proc_entry *UNUSED(entry), struct proc_data 
 static int proc_show_stat(struct proc_entry *UNUSED(entry), struct proc_data *buf) {
     struct cpu_usage usage = get_cpu_usage();
     proc_printf(buf, "cpu  %"PRIu64" %"PRIu64" %"PRIu64" %"PRIu64"\n", usage.user_ticks, usage.nice_ticks, usage.system_ticks, usage.idle_ticks);
+
+    // calculate btime (boot time in seconds since epoch) by subtracting uptime from current time
+    struct uptime_info uptime = get_uptime();
+    struct timespec uptime_ts = {.tv_sec = uptime.uptime_ticks / 100, .tv_nsec = uptime.uptime_ticks % 100};
+    struct timespec boot_time = timespec_subtract(timespec_now(CLOCK_REALTIME), uptime_ts);
+    proc_printf(buf, "btime %ld\n", boot_time.tv_sec);
+
+    return 0;
+}
+
+static int proc_show_cpuinfo(struct proc_entry *UNUSED(entry), struct proc_data *buf) {
+    unsigned cpus = sysconf(_SC_NPROCESSORS_ONLN);
+    for (unsigned i = 0; i < cpus; i++) {
+        proc_printf(buf, "processor\t: %u\n", i);
+        proc_printf(buf, "vendor_id\t: iSH\n");
+        proc_printf(buf, "\n");
+    }
     return 0;
 }
 
@@ -43,8 +60,8 @@ static int proc_show_meminfo(struct proc_entry *UNUSED(entry), struct proc_data 
 
 static int proc_show_uptime(struct proc_entry *UNUSED(entry), struct proc_data *buf) {
     struct uptime_info uptime_info = get_uptime();
-    unsigned uptime = uptime_info.uptime_ticks;
-    proc_printf(buf, "%u.%u %u.%u\n", uptime / 100, uptime % 100, uptime / 100, uptime % 100);
+    unsigned long uptime = uptime_info.uptime_ticks;
+    proc_printf(buf, "%lu.%lu %lu.%lu\n", uptime / 100, uptime % 100, uptime / 100, uptime % 100);
     return 0;
 }
 
@@ -54,12 +71,13 @@ static int proc_readlink_self(struct proc_entry *UNUSED(entry), char *buf) {
 }
 
 static void proc_print_escaped(struct proc_data *buf, const char *str) {
-    // FIXME: this is hella slow
-    for (size_t i = 0; str[i] != '\0'; i++) {
-        if (strchr(" \t\\", str[i]) != NULL) {
-            proc_printf(buf, "\\%03o", str[i]);
-        } else {
-            proc_printf(buf, "%c", str[i]);
+    for (size_t i = 0; str[i]; i++) {
+        switch (str[i]) {
+            case '\t': case ' ': case '\\':
+                proc_printf(buf, "\\%03o", str[i]);
+                break;
+            default:
+                proc_printf(buf, "%c", str[i]);
         }
     }
 }
@@ -97,6 +115,8 @@ static int proc_show_mounts(struct proc_entry *UNUSED(entry), struct proc_data *
 
 // in alphabetical order
 struct proc_dir_entry proc_root_entries[] = {
+    {"cpuinfo", .show = proc_show_cpuinfo},
+    {"ish", S_IFDIR, .children = &proc_ish_children},
     {"meminfo", .show = proc_show_meminfo},
     {"mounts", .show = proc_show_mounts},
     {"self", S_IFLNK, .readlink = proc_readlink_self},
@@ -108,7 +128,7 @@ struct proc_dir_entry proc_root_entries[] = {
 
 static bool proc_root_readdir(struct proc_entry *UNUSED(entry), unsigned long *index, struct proc_entry *next_entry) {
     if (*index < PROC_ROOT_LEN) {
-        *next_entry = (struct proc_entry) {&proc_root_entries[*index], 0, 0};
+        *next_entry = (struct proc_entry) {&proc_root_entries[*index], *index, NULL, NULL, 0, 0};
         (*index)++;
         return true;
     }

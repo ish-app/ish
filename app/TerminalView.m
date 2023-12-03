@@ -16,6 +16,21 @@ struct rowcol {
     int col;
 };
 
+@interface WeakScriptMessageHandler : NSObject <WKScriptMessageHandler>
+@property (weak) id <WKScriptMessageHandler> handler;
+@end
+@implementation WeakScriptMessageHandler
+- (instancetype)initWithHandler:(id <WKScriptMessageHandler>)handler {
+    if (self = [super init]) {
+        self.handler = handler;
+    }
+    return self;
+}
+- (void)userContentController:(WKUserContentController *)userContentController didReceiveScriptMessage:(WKScriptMessage *)message {
+    [self.handler userContentController:userContentController didReceiveScriptMessage:message];
+}
+@end
+
 @interface TerminalView ()
 
 @property (nonatomic) NSMutableArray<UIKeyCommand *> *keyCommands;
@@ -36,6 +51,7 @@ struct rowcol {
 @implementation TerminalView
 @synthesize inputDelegate;
 @synthesize tokenizer;
+@synthesize canBecomeFirstResponder;
 
 - (void)awakeFromNib {
     [super awakeFromNib];
@@ -43,20 +59,23 @@ struct rowcol {
     self.inputAssistantItem.trailingBarButtonGroups = @[];
 
     ScrollbarView *scrollbarView = self.scrollbarView = [[ScrollbarView alloc] initWithFrame:self.bounds];
-    self.scrollbarView = scrollbarView;
     scrollbarView.delegate = self;
     scrollbarView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     scrollbarView.bounces = NO;
     [self addSubview:scrollbarView];
-    
+
     UserPreferences *prefs = UserPreferences.shared;
     [prefs observe:@[@"capsLockMapping", @"optionMapping", @"backtickMapEscape", @"overrideControlSpace"]
            options:0 owner:self usingBlock:^(typeof(self) self) {
-        self->_keyCommands = nil;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            self->_keyCommands = nil;
+        });
     }];
-    [prefs observe:@[@"fontFamily", @"fontSize", @"theme"]
+    [prefs observe:@[@"colorScheme", @"fontFamily", @"fontSize", @"theme", @"cursorStyle", @"blinkCursor"]
            options:0 owner:self usingBlock:^(typeof(self) self) {
-        [self _updateStyle];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self _updateStyle];
+        });
     }];
 
     self.markedRange = [UITextRange new];
@@ -68,69 +87,95 @@ struct rowcol {
 }
 
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context {
-    if (object == self.terminal) {
-        if (self.terminal.loaded) {
+    if (object == _terminal) {
+        if (_terminal.loaded) {
+            [self installTerminalView];
             [self _updateStyle];
         }
     }
 }
 
+static NSString *const HANDLERS[] = {@"syncFocus", @"focus", @"newScrollHeight", @"newScrollTop", @"openLink"};
+
 - (void)setTerminal:(Terminal *)terminal {
-    NSArray<NSString *>* handlers = @[@"syncFocus", @"focus", @"newScrollHeight", @"newScrollTop", @"openLink"];
-    
-    if (self.terminal) {
-        // remove old terminal
-        NSAssert(self.terminal.webView.superview == self.scrollbarView, @"old terminal view was not in our view");
-        [self.terminal.webView removeFromSuperview];
-        self.scrollbarView.contentView = nil;
-        for (NSString *handler in handlers) {
-            [self.terminal.webView.configuration.userContentController removeScriptMessageHandlerForName:handler];
-        }
-        terminal.enableVoiceOverAnnounce = NO;
-        [self.terminal removeObserver:self forKeyPath:@"loaded"];
+    if (_terminal) {
+        [_terminal removeObserver:self forKeyPath:@"loaded"];
+        [self uninstallTerminalView];
     }
-    
+
     _terminal = terminal;
-    WKWebView *webView = terminal.webView;
-    terminal.enableVoiceOverAnnounce = YES;
+    [_terminal addObserver:self forKeyPath:@"loaded" options:NSKeyValueObservingOptionInitial context:nil];
+    if (_terminal.loaded)
+        [self installTerminalView];
+}
+
+- (void)installTerminalView {
+    NSAssert(_terminal.loaded, @"should probably not be installing a non-loaded terminal");
+    UIView *superview = self.terminal.webView.superview;
+    if (superview != nil) {
+        NSAssert(superview == self.scrollbarView, @"installing terminal that is already installed elsewhere");
+        return;
+    }
+
+    WKWebView *webView = _terminal.webView;
+    _terminal.enableVoiceOverAnnounce = YES;
     webView.scrollView.scrollEnabled = NO;
     webView.scrollView.delaysContentTouches = NO;
     webView.scrollView.canCancelContentTouches = NO;
     webView.scrollView.panGestureRecognizer.enabled = NO;
-    for (NSString *handler in handlers) {
-        [webView.configuration.userContentController addScriptMessageHandler:self name:handler];
+    id <WKScriptMessageHandler> handler = [[WeakScriptMessageHandler alloc] initWithHandler:self];
+    for (int i = 0; i < sizeof(HANDLERS)/sizeof(HANDLERS[0]); i++) {
+        [webView.configuration.userContentController addScriptMessageHandler:handler name:HANDLERS[i]];
     }
     webView.frame = self.bounds;
     self.opaque = webView.opaque = NO;
     webView.backgroundColor = UIColor.clearColor;
     webView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-    [self.terminal addObserver:self forKeyPath:@"loaded" options:NSKeyValueObservingOptionInitial context:nil];
-    
+
     self.scrollbarView.contentView = webView;
     [self.scrollbarView addSubview:webView];
 }
 
-#pragma mark Styling
+- (void)uninstallTerminalView {
+    // remove old terminal
+    UIView *superview = _terminal.webView.superview;
+    if (superview != self.scrollbarView) {
+        NSAssert(superview == nil, @"uninstalling terminal that is installed elsewhere");
+        return;
+    }
 
-- (NSString *)cssColor:(UIColor *)color {
-    CGFloat red, green, blue, alpha;
-    [color getRed:&red green:&green blue:&blue alpha:&alpha];
-    return [NSString stringWithFormat:@"rgba(%ld, %ld, %ld, %ld)",
-            lround(red * 255), lround(green * 255), lround(blue * 255), lround(alpha * 255)];
+    [_terminal.webView removeFromSuperview];
+    self.scrollbarView.contentView = nil;
+    for (int i = 0; i < sizeof(HANDLERS)/sizeof(HANDLERS[0]); i++) {
+        [_terminal.webView.configuration.userContentController removeScriptMessageHandlerForName:HANDLERS[i]];
+    }
+    _terminal.enableVoiceOverAnnounce = NO;
 }
 
+#pragma mark Styling
+
 - (void)_updateStyle {
+    NSAssert(NSThread.isMainThread, @"This method needs to be called on the main thread");
     if (!self.terminal.loaded)
         return;
     UserPreferences *prefs = [UserPreferences shared];
     if (_overrideFontSize == prefs.fontSize.doubleValue)
         _overrideFontSize = 0;
-    id themeInfo = @{
+    Palette *palette = prefs.palette;
+    if (self.overrideAppearance != OverrideAppearanceNone) {
+        palette = self.overrideAppearance == OverrideAppearanceLight ? prefs.theme.lightPalette : prefs.theme.darkPalette;
+    }
+    NSMutableDictionary<NSString *, id> *themeInfo = [@{
         @"fontFamily": prefs.fontFamily,
         @"fontSize": @(self.effectiveFontSize),
-        @"foregroundColor": [self cssColor:prefs.theme.foregroundColor],
-        @"backgroundColor": [self cssColor:prefs.theme.backgroundColor],
-    };
+        @"foregroundColor": palette.foregroundColor,
+        @"backgroundColor": palette.backgroundColor,
+        @"blinkCursor": @(prefs.blinkCursor),
+        @"cursorShape": prefs.htermCursorShape,
+    } mutableCopy];
+    if (prefs.palette.colorPaletteOverrides) {
+        themeInfo[@"colorPaletteOverrides"] = palette.colorPaletteOverrides;
+    }
     NSString *json = [[NSString alloc] initWithData:[NSJSONSerialization dataWithJSONObject:themeInfo options:0 error:nil] encoding:NSUTF8StringEncoding];
     [self.terminal.webView evaluateJavaScript:[NSString stringWithFormat:@"exports.updateStyle(%@)", json] completionHandler:^(id result, NSError *error){
         [self updateFloatingCursorSensitivity];
@@ -142,6 +187,11 @@ struct rowcol {
     [self _updateStyle];
 }
 
+- (void)setOverrideAppearance:(enum OverrideAppearance)overrideAppearance {
+    _overrideAppearance = overrideAppearance;
+    [self _updateStyle];
+}
+
 - (CGFloat)effectiveFontSize {
     if (self.overrideFontSize != 0)
         return self.overrideFontSize;
@@ -149,10 +199,6 @@ struct rowcol {
 }
 
 #pragma mark Focus and scrolling
-
-- (BOOL)canBecomeFirstResponder {
-    return YES;
-}
 
 - (void)setTerminalFocused:(BOOL)terminalFocused {
     _terminalFocused = terminalFocused;
@@ -226,7 +272,14 @@ struct rowcol {
 }
 
 - (void)setKeyboardAppearance:(UIKeyboardAppearance)keyboardAppearance {
+    BOOL needsFirstResponderDance = self.isFirstResponder && _keyboardAppearance != keyboardAppearance;
+    if (needsFirstResponderDance) {
+        [self resignFirstResponder];
+    }
     _keyboardAppearance = keyboardAppearance;
+    if (needsFirstResponderDance) {
+        [self becomeFirstResponder];
+    }
     if (keyboardAppearance == UIKeyboardAppearanceLight) {
         self.scrollbarView.indicatorStyle = UIScrollViewIndicatorStyleBlack;
     } else {
@@ -252,7 +305,7 @@ struct rowcol {
 
     text = [text stringByReplacingOccurrencesOfString:@"\n" withString:@"\r"];
     NSData *data = [text dataUsingEncoding:NSUTF8StringEncoding];
-    [self.terminal sendInput:data.bytes length:data.length];
+    [self.terminal sendInput:data];
 }
 
 - (void)insertControlChar:(char)ch {
@@ -262,7 +315,7 @@ struct rowcol {
         if (ch == '6') ch = '^';
         if (ch != '\0')
             ch = toupper(ch) ^ 0x40;
-        [self.terminal sendInput:&ch length:1];
+        [self.terminal sendInput:[NSData dataWithBytes:&ch length:1]];
     }
 }
 
@@ -390,6 +443,10 @@ struct rowcol {
 - (UITextAutocorrectionType)autocorrectionType {
     return UITextAutocorrectionTypeNo;
 }
+// Apparently required on iOS 15+: https://stackoverflow.com/a/72359764
+- (UITextSpellCheckingType)spellCheckingType {
+    return UITextSpellCheckingTypeNo;
+}
 
 #pragma mark Hardware Keyboard
 
@@ -472,8 +529,10 @@ static const char *metaKeys = "abcdefghijklmnopqrstuvwxyz0123456789-=[]\\;',./";
     UIKeyCommand *command = [UIKeyCommand keyCommandWithInput:key
                                                 modifierFlags:modifiers
                                                        action:@selector(handleKeyCommand:)];
+    if (@available(iOS 15, *)) {
+        command.wantsPriorityOverSystemBehavior = YES;
+    }
     [_keyCommands addObject:command];
-    
 }
 
 - (void)keyCommandTriggered:(UIKeyCommand *)sender {

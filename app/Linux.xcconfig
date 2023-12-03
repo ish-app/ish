@@ -1,0 +1,5 @@
+ISH_KERNEL = linux
+NINJA_TARGETS = deps/liblinux.a libfakefs.a libish_emu.a
+LINUX_HOSTCC = env -u SDKROOT -u IPHONEOS_DEPLOYMENT_TARGET xcrun clang
+GCC_PREPROCESSOR_DEFINITIONS = ISH_LINUX=1
+LINUX_APP_LDFLAGS = -sectalign __DATA __percpu_first 1000 -sectalign __DATA __tracepoints 20 -force_load $(BUILT_PRODUCTS_DIR)/liblinux.a -force_load $(BUILT_PRODUCTS_DIR)/libiSHLinux.a

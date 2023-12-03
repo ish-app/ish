@@ -1,14 +1,15 @@
 #ifndef MISC_H
 #define MISC_H
 
-#ifndef __KERNEL__
+#ifdef __KERNEL__
+#include <linux/types.h>
+#else
 #include <assert.h>
 #include <sys/types.h>
 #include <stdnoreturn.h>
 #include <stdbool.h>
-#endif
-
 #include <stdint.h>
+#endif
 
 // utility macros
 #define glue(a, b) _glue(a, b)
@@ -37,7 +38,6 @@
 // keywords
 #define bitfield unsigned int
 #define forceinline inline __attribute__((always_inline))
-#define flatten __attribute__((flatten))
 #if defined(NDEBUG) || defined(__KERNEL__)
 #define posit __builtin_assume
 #else

@@ -14,6 +14,9 @@
   "testTargets" : [
     {
       "skippedTests" : [
+        "Screenshots\/testEditorsInTmux",
+        "Screenshots\/testEmacs",
+        "Screenshots\/testLanguages",
         "UITests"
       ],
       "target" : {

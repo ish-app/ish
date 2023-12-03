@@ -1,0 +1,11 @@
+#include "StaticLib.xcconfig"
+
+HEADER_SEARCH_PATHS = $(SRCROOT)/deps/linux/arch/ish/include $(MESON_BUILD_DIR)/deps/linux/arch/ish/include/generated $(SRCROOT)/deps/linux/include $(MESON_BUILD_DIR)/deps/linux/include $(SRCROOT)/deps/linux/arch/ish/include/uapi $(MESON_BUILD_DIR)/deps/linux/arch/ish/include/generated/uapi $(SRCROOT)/deps/linux/include/uapi $(MESON_BUILD_DIR)/deps/linux/arch/ish/include/generated/uapi $(SRCROOT)/deps/linux/arch/ish/include/ishemu $(SRCROOT)
+GCC_PREPROCESSOR_DEFINITIONS = __KERNEL__
+OTHER_CFLAGS = -U__weak -include $(SRCROOT)/deps/linux/include/linux/kconfig.h -include $(SRCROOT)/deps/linux/include/linux/compiler_types.h -Wno-gnu-variable-sized-type-not-at-end -Wno-conditional-uninitialized
+// disable modules because it results in clashes between linux and clang headers
+CLANG_ENABLE_MODULES = NO
+// these warnings are tripped by linux
+CLANG_WARN_DOCUMENTATION_COMMENTS = NO
+GCC_WARN_ABOUT_POINTER_SIGNEDNESS = NO
+GCC_WARN_64_TO_32_BIT_CONVERSION = NO

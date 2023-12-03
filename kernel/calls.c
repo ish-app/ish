@@ -2,13 +2,20 @@
 #include "debug.h"
 #include "kernel/calls.h"
 #include "emu/interrupt.h"
+#include "emu/memory.h"
 #include "kernel/signal.h"
 #include "kernel/task.h"
 
-dword_t syscall_stub() {
+dword_t syscall_stub(void) {
     return _ENOSYS;
 }
-dword_t syscall_success_stub() {
+// While identical, this version of the stub doesn't log below. Use this for
+// syscalls that are optional (i.e. fallback on something else) but called
+// frequently.
+dword_t syscall_silent_stub(void) {
+    return _ENOSYS;
+}
+dword_t syscall_success_stub(void) {
     return 0;
 }
 
@@ -225,6 +232,7 @@ syscall_t syscall_table[] = {
     [361] = (syscall_t) sys_bind,
     [362] = (syscall_t) sys_connect,
     [363] = (syscall_t) sys_listen,
+    [364] = (syscall_t) syscall_stub, // accept4
     [365] = (syscall_t) sys_getsockopt,
     [366] = (syscall_t) sys_setsockopt,
     [367] = (syscall_t) sys_getsockname,
@@ -234,24 +242,27 @@ syscall_t syscall_table[] = {
     [371] = (syscall_t) sys_recvfrom,
     [372] = (syscall_t) sys_recvmsg,
     [373] = (syscall_t) sys_shutdown,
-    [375] = (syscall_t) syscall_stub, // membarrier
+    [375] = (syscall_t) syscall_silent_stub, // membarrier
     [377] = (syscall_t) sys_copy_file_range,
-    [383] = (syscall_t) syscall_stub,
+    [383] = (syscall_t) syscall_silent_stub, // statx
     [384] = (syscall_t) sys_arch_prctl,
+    [439] = (syscall_t) syscall_silent_stub, // faccessat2
 };
 
 #define NUM_SYSCALLS (sizeof(syscall_table) / sizeof(syscall_table[0]))
+
+void dump_stack(int lines);
 
 void handle_interrupt(int interrupt) {
     struct cpu_state *cpu = &current->cpu;
     if (interrupt == INT_SYSCALL) {
         unsigned syscall_num = cpu->eax;
         if (syscall_num >= NUM_SYSCALLS || syscall_table[syscall_num] == NULL) {
-            printk("%d missing syscall %d\n", current->pid, syscall_num);
-            deliver_signal(current, SIGSYS_, SIGINFO_NIL);
+            printk("%d(%s) missing syscall %d\n", current->pid, current->comm, syscall_num);
+            cpu->eax = syscall_stub();
         } else {
             if (syscall_table[syscall_num] == (syscall_t) syscall_stub) {
-                printk("%d stub syscall %d\n", current->pid, syscall_num);
+                printk("%d(%s) stub syscall %d\n", current->pid, current->comm, syscall_num);
             }
             STRACE("%d call %-3d ", current->pid, syscall_num);
             int result = syscall_table[syscall_num](cpu->ebx, cpu->ecx, cpu->edx, cpu->esi, cpu->edi, cpu->ebp);
@@ -259,12 +270,19 @@ void handle_interrupt(int interrupt) {
             cpu->eax = result;
         }
     } else if (interrupt == INT_GPF) {
-        printk("%d page fault on 0x%x at 0x%x\n", current->pid, cpu->segfault_addr, cpu->eip);
-        struct siginfo_ info = {
-            .code = mem_segv_reason(current->mem, cpu->segfault_addr),
-            .fault.addr = cpu->segfault_addr,
-        };
-        deliver_signal(current, SIGSEGV_, info);
+        // some page faults, such as stack growing or CoW clones, are handled by mem_ptr
+        read_wrlock(&current->mem->lock);
+        void *ptr = mem_ptr(current->mem, cpu->segfault_addr, cpu->segfault_was_write ? MEM_WRITE : MEM_READ);
+        read_wrunlock(&current->mem->lock);
+        if (ptr == NULL) {
+            printk("%d page fault on 0x%x at 0x%x\n", current->pid, cpu->segfault_addr, cpu->eip);
+            struct siginfo_ info = {
+                .code = mem_segv_reason(current->mem, cpu->segfault_addr),
+                .fault.addr = cpu->segfault_addr,
+            };
+            dump_stack(8);
+            deliver_signal(current, SIGSEGV_, info);
+        }
     } else if (interrupt == INT_UNDEFINED) {
         printk("%d illegal instruction at 0x%x: ", current->pid, cpu->eip);
         for (int i = 0; i < 8; i++) {
@@ -274,6 +292,7 @@ void handle_interrupt(int interrupt) {
             printk("%02x ", b);
         }
         printk("\n");
+        dump_stack(8);
         struct siginfo_ info = {
             .code = SI_KERNEL_,
             .fault.addr = cpu->eip,
@@ -306,7 +325,7 @@ void handle_interrupt(int interrupt) {
     unlock(&group->lock);
 }
 
-void dump_maps() {
+void dump_maps(void) {
     extern void proc_maps_dump(struct task *task, struct proc_data *buf);
     struct proc_data buf = {};
     proc_maps_dump(current, &buf);
@@ -323,16 +342,24 @@ void dump_maps() {
     free(orig_data);
 }
 
-void dump_stack(int lines) {
-    printk("stack at %x, base at %x, ip at %x\n", current->cpu.esp, current->cpu.ebp, current->cpu.eip);
-    for (int i = 0; i < lines*8; i++) {
-        dword_t stackword;
-        if (user_get(current->cpu.esp + (i * 4), stackword))
+void dump_mem(addr_t start, uint_t len) {
+    const int width = 8;
+    for (addr_t addr = start; addr < start + len; addr += sizeof(dword_t)) {
+        unsigned from_left = (addr - start) / sizeof(dword_t) % width;
+        if (from_left == 0)
+            printk("%08x: ", addr);
+        dword_t word;
+        if (user_get(addr, word))
             break;
-        printk("%08x ", stackword);
-        if (i % 8 == 7)
+        printk("%08x ", word);
+        if (from_left == width - 1)
             printk("\n");
     }
+}
+
+void dump_stack(int lines) {
+    printk("stack at %x, base at %x, ip at %x\n", current->cpu.esp, current->cpu.ebp, current->cpu.eip);
+    dump_mem(current->cpu.esp, lines * sizeof(dword_t) * 8);
 }
 
 // TODO find a home for this
