@@ -1,1 +1,1 @@
-APKINDEX-v3.18-2023-12-23.tar.gz
+APKINDEX-v3.18-2023-12-24.tar.gz
