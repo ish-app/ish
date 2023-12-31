@@ -22,7 +22,6 @@ languages([
 dark_mode(true)
 
 override_status_bar(true)
-xcconfig("app/AppStore.xcconfig")
 xcargs("ARCHS=arm64")
 reinstall_app(true)
 clear_previous_screenshots(true)

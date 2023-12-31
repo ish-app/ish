@@ -44,7 +44,6 @@ jobs:
           path: |
             iSH.ipa
             iSH.app.dSYM.zip
-            iSH-appstore.app.dSYM.zip
 
       - uses: actions/upload-artifact@v2
         if: always()
