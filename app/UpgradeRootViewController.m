@@ -51,6 +51,7 @@
     va_list args;
     va_start(args, message);
     message = [[NSString alloc] initWithFormat:message arguments:args];
+    message = [message stringByReplacingOccurrencesOfString:@"\n" withString:@"\r\n"];
     [self.terminal sendOutput:message.UTF8String length:(int)[message lengthOfBytesUsingEncoding:NSUTF8StringEncoding]];
 }
 
@@ -71,15 +72,16 @@
     self.upgradePid = 0;
     [self setDismissable:YES];
     int code = [notif.userInfo[@"code"] intValue];
+    [self printToTerminal:@"\n"];
     if (code != 0) {
-        [self showAlertWithTitle:@"Upgrade failed" message:@"exit status %d", code];
+        [self printToTerminal:@"Upgrade failed with exit status %d.\nPlease send a bug report.\n", code];
     } else {
         lock(&pids_lock);
         current = pid_get_task(1); // pray
         unlock(&pids_lock);
         FsUpdateRepositories();
         current = NULL;
-        [self showAlertWithTitle:@"Upgrade succeeded" message:@""];
+        [self printToTerminal:@"Upgrade complete!\nIf anything that was working before stops working, please send a bug report.\n"];
     }
     [self.terminal destroy];
     self.terminal = nil;
@@ -113,7 +115,7 @@
 - (IBAction)upgrade:(id)sender {
     self.upgradeButton.enabled = NO;
     [self setDismissable:NO];
-    [self printToTerminal:@"\r\n"];
+    [self printToTerminal:@"\n"];
     int err = [self startUpgrade];
     if (err < 0) {
         [self showAlertWithTitle:@"Failed to start upgrade" message:@"error %d", err];

@@ -124,9 +124,9 @@
         if (!FsIsManaged()) {
             return @"The current filesystem is not managed by iSH.";
         } else if (!FsNeedsRepositoryUpdate()) {
-            return [NSString stringWithFormat:@"The current filesystem is using %s, which is the latest version.", NEWEST_APK_VERSION];
+            return [NSString stringWithFormat:@"The current filesystem is using %s, which is the latest version.", CURRENT_APK_VERSION_STRING];
         } else {
-            return [NSString stringWithFormat:@"An upgrade to %s is available.", NEWEST_APK_VERSION];
+            return [NSString stringWithFormat:@"An upgrade to %s is available.", CURRENT_APK_VERSION_STRING];
         }
     }
     return [super tableView:tableView titleForFooterInSection:section];

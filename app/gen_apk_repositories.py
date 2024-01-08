@@ -6,8 +6,8 @@ def trim(x, start, end):
     return x[len(start):-len(end)]
 
 APK_REPOSITORIES = [
-    ('v3.14', 'main'),
-    ('v3.14', 'community'),
+    ('v3.19', 'main'),
+    ('v3.19', 'community'),
 ]
 ARCH = 'x86' # TODO: support more archs
 
