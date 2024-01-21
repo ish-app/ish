@@ -804,14 +804,20 @@ restart:
         case 0x8d: TRACEI("lea\t\t"); READMODRM_MEM;
                    MOV(addr, modrm_reg,oz); break;
 
-        // only gs is supported, and it does nothing
-        // see comment in sys/tls.c
+        // we only support fs and gs, and that too not very well.
+        // gs does nothing: see comment in sys/tls.c
+        // for fs, we discard writes. if anyone tries to read we trap
         case 0x8c: TRACEI("mov seg, modrm\t"); READMODRM;
-            if (modrm.reg != reg_ebp) UNDEFINED;
+            if (modrm.reg != 5 /* gs */) UNDEFINED;
             MOV(gs, modrm_val,16); break;
         case 0x8e: TRACEI("mov modrm, seg\t"); READMODRM;
-            if (modrm.reg != reg_ebp) UNDEFINED;
-            MOV(modrm_val, gs,16); break;
+            if (modrm.reg == 5 /* gs */) {
+                MOV(modrm_val, gs,16); break;
+            } else if (modrm.reg == 4 /* fs */) {
+                break;
+            } else {
+                UNDEFINED;
+            }
 
         case 0x8f: TRACEI("pop modrm");
                    READMODRM; POP(modrm_val,oz); break;
