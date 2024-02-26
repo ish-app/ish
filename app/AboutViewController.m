@@ -34,6 +34,8 @@
 
 @property (weak, nonatomic) IBOutlet UILabel *versionLabel;
 
+@property (weak, nonatomic) IBOutlet NSLayoutConstraint *saddamHussein;
+
 @end
 
 @implementation AboutViewController
@@ -66,6 +68,11 @@
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
     [self _updateUI];
+}
+
+- (void)updateViewConstraints {
+    self.saddamHussein.constant = UIEdgeInsetsInsetRect(self.tableView.frame, self.tableView.adjustedContentInset).size.height;
+    [super updateViewConstraints];
 }
 
 - (IBAction)dismiss:(id)sender {
