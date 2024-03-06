@@ -1,3 +1,10 @@
+
+this project is going to be closed and needs to be deleted anything underneath those lines is not true. They are full of shit. They are hacking me when they said that they are assuming it's running under a single user well it is and it's me.
+i dint have write assess reporting this to github The meantime, do not use it it is very malicious and they will remote control your device. This is no joke. I've been dealing with them for over a year and I finally figured it all out.
+
+
+
+---------—------------------------------------------/-<this underneath is not true none of it is.warning all fake  they aren't running in a users ios device and even if they weren't and they were saying that they're leaving all those security holes open for what reason yeah it doesn't make sense why you would ever do that>  ///-/
 # iSH is not a security boundary!
 
 The goal of this project is to support a Linux shell on iOS. As such, its security model assumes that the app is running in another sandbox and is used by a single user. The project is focused on compatibility, and very little thought has been put into internal security. Permissions are only loosely checked. Memory corruption in edge cases is common. Please do not use iSH for any sort of secure containerization or production use case.
