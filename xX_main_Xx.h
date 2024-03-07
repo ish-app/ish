@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include <signal.h>
 #include <errno.h>
+#include <syslog.h>
 #include "kernel/init.h"
 #include "kernel/fs.h"
 #include "fs/devices.h"
@@ -66,6 +67,8 @@ static inline int xX_main_Xx(int argc, char *const argv[], const char *envp) {
 
         }
     }
+
+    openlog(argv[0], 0, LOG_USER);
 
     char root_realpath[MAX_PATH + 1] = "/";
     if (root != NULL && realpath(root, root_realpath) == NULL) {
