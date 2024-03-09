@@ -93,6 +93,7 @@ struct tty_driver {
 struct tty_driver_ops {
     int (*init)(struct tty *tty);
     int (*open)(struct tty *tty);
+    int (*close)(struct tty *tty);
     int (*write)(struct tty *tty, const void *buf, size_t len, bool blocking);
     int (*ioctl)(struct tty *tty, int cmd, void *arg);
     void (*cleanup)(struct tty *tty);
