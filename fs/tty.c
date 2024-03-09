@@ -672,7 +672,7 @@ static int tiocgpgrp(struct tty *tty, pid_t_ *fg_group) {
         lock(&slave->lock);
     }
 
-    if (tty == slave && !tty_is_current(slave) || slave->fg_group == 0) {
+    if (tty == slave && (!tty_is_current(slave) || slave->fg_group == 0)) {
         err = _ENOTTY;
         goto error_no_ctrl_tty;
     }
