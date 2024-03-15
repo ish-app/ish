@@ -380,7 +380,7 @@
 }
 
 - (void)traitCollectionDidChange:(UITraitCollection *)previousTraitCollection {
-    // Hack to resolve a layering mismatch between the the UI and preferences.
+    // Hack to resolve a layering mismatch between the UI and preferences.
     if (@available(iOS 12.0, *)) {
         if (previousTraitCollection.userInterfaceStyle != self.traitCollection.userInterfaceStyle) {
             // Ensure that the relevant things listening for this will update.

@@ -117,12 +117,12 @@ static int file_lock_acquire(struct inode_data *inode, struct file_lock *request
             } else if (lock->start < request->start) {
                 // lock sticks out on the start, so move the end down
                 assert(lock->end >= request->start);
-                // subtract can't overflow since the comparision above would fail if request->start is 0
+                // subtract can't overflow since the comparison above would fail if request->start is 0
                 lock->end = request->start - 1;
             } else if (lock->end > request->end) {
                 // lock sticks out on the end, so move the start up
                 assert(lock->start <= request->end);
-                // add can't overflow since the comparision above would fail if request->start is OFF_T_MAX
+                // add can't overflow since the comparison above would fail if request->start is OFF_T_MAX
                 lock->start = request->end + 1;
             }
         }

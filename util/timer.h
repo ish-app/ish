@@ -70,7 +70,7 @@ struct timer *timer_new(clockid_t clockid, timer_callback_t callback, void *data
 void timer_free(struct timer *timer);
 // value is how long to wait until the next fire
 // interval is how long after that to wait until the next fire (if non-zero)
-// bizzare interface is based off setitimer, because this is going to be used
+// bizarre interface is based off setitimer, because this is going to be used
 // to implement setitimer
 struct timer_spec {
     struct timespec value;
