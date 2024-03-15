@@ -295,7 +295,7 @@ out:
 // that yet because it's more work and the efficiency gain from that is dwarfed
 // by the inefficiency of the emulator.
 
-static struct iovec_ *read_iovec(addr_t iovec_addr, unsigned iovec_count) {
+struct iovec_ *read_iovec(addr_t iovec_addr, unsigned iovec_count) {
     dword_t iovec_size = sizeof(struct iovec_) * iovec_count;
     struct iovec_ *iovec = malloc(iovec_size);
     if (iovec == NULL)

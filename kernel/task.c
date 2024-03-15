@@ -6,6 +6,7 @@
 #include "kernel/task.h"
 #include "emu/memory.h"
 #include "emu/tlb.h"
+#include "fs/aio.h"
 
 __thread struct task *current;
 
@@ -92,6 +93,7 @@ struct task *task_create_(struct task *parent) {
 void task_destroy(struct task *task) {
     list_remove(&task->siblings);
     pid_get(task->pid)->task = NULL;
+    aioctx_table_delete(&task->aioctx);
     free(task);
 }
 
