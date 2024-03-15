@@ -154,6 +154,10 @@ static void log_line(const char *line) {
 static void log_line(const char *line) {
     os_log_fault(OS_LOG_DEFAULT, "%s", line);
 }
+#elif LOG_HANDLER_STDERR
+static void log_line(const char *line) {
+    fprintf(stderr, "%s\n", line);
+}
 #endif
 
 static void default_die_handler(const char *msg) {
