@@ -49,6 +49,8 @@ noreturn void do_exit(int status) {
             futex_wake(clear_tid, 1);
     }
 
+    // the actual freeing needs pids_lock
+    lock(&pids_lock);
     // release all our resources
     mm_release(current->mm);
     current->mm = NULL;
@@ -67,8 +69,6 @@ noreturn void do_exit(int status) {
     struct rusage_ group_rusage = current->group->rusage;
     unlock(&current->group->lock);
 
-    // the actual freeing needs pids_lock
-    lock(&pids_lock);
     current->exiting = true;
     // release the sighand
     sighand_release(current->sighand);
