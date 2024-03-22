@@ -43,8 +43,10 @@ struct fd *generic_openat(struct fd *at, const char *path_raw, int flags, int mo
         return ERR_PTR(err);
     struct mount *mount = find_mount_and_trim_path(path);
     
+    lock(&inodes_lock); // TODO: don't do this
     // get file stats before opening file to facilitate permission checking before the backend opens the file
     // opening a file with truncate and then closing it will cause the file contents to be cleared
+    // this might in theory cause a Time-of-Check to Time-of-Use privilage escalation by replacing the file with a symlink.
     struct statbuf stat;
     err = mount->fs->stat(mount, path, &stat);
     if (err < 0) {
@@ -59,7 +61,6 @@ struct fd *generic_openat(struct fd *at, const char *path_raw, int flags, int mo
     if (err < 0)
         goto pre_fd_error;
     
-    lock(&inodes_lock); // TODO: don't do this
     struct fd *fd = mount->fs->open(mount, path, flags, mode);
     if (IS_ERR(fd)) {
         unlock(&inodes_lock);
