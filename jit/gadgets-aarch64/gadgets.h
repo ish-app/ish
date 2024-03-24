@@ -31,6 +31,7 @@ _xaddr .req x3
 .endm
 .macro gret pop=0
     ldr x8, [_ip, \pop*8]!
+    dmb ishld
     add _ip, _ip, 8 /* TODO get rid of this */
     br x8
 .endm
