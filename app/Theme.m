@@ -337,7 +337,12 @@ char *(*get_documents_directory)(void);
 + (NSArray<Theme *> *)userThemes {
     NSMutableArray<Theme *> *themes = [NSMutableArray new];
     for (NSURL *file in [NSFileManager.defaultManager contentsOfDirectoryAtURL:self.themesDirectory includingPropertiesForKeys:nil options:0 error:nil]) {
-        Theme *theme = [[Theme alloc] initWithName:file.lastPathComponent.stringByDeletingPathExtension data:[NSData dataWithContentsOfURL:file]];
+        NSData *data = [NSData dataWithContentsOfURL:file];
+        if (!data) {
+            continue;
+        }
+        
+        Theme *theme = [[Theme alloc] initWithName:file.lastPathComponent.stringByDeletingPathExtension data:data];
         if (theme) {
             [themes addObject:theme];
         }
