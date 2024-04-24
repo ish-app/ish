@@ -5,8 +5,6 @@
 #include "util/list.h"
 #include "util/sync.h"
 
-#if ENGINE_JIT
-
 #define JIT_INITIAL_HASH_SIZE (1 << 10)
 #define JIT_CACHE_SIZE (1 << 10)
 #define JIT_PAGE_HASH_SIZE (1 << 10)
@@ -72,7 +70,5 @@ void jit_free(struct jit *jit);
 void jit_invalidate_range(struct jit *jit, page_t start, page_t end);
 void jit_invalidate_page(struct jit *jit, page_t page);
 void jit_invalidate_all(struct jit *jit);
-
-#endif
 
 #endif

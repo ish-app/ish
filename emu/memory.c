@@ -24,9 +24,7 @@ void mem_init(struct mem *mem) {
     mem->pgdir = calloc(MEM_PGDIR_SIZE, sizeof(struct pt_entry *));
     mem->pgdir_used = 0;
     mem->mmu.ops = &mem_mmu_ops;
-#if ENGINE_JIT
     mem->mmu.jit = jit_new(&mem->mmu);
-#endif
     mem->mmu.changes = 0;
     wrlock_init(&mem->lock);
 }
@@ -34,9 +32,7 @@ void mem_init(struct mem *mem) {
 void mem_destroy(struct mem *mem) {
     write_wrlock(&mem->lock);
     pt_unmap_always(mem, 0, MEM_PAGES);
-#if ENGINE_JIT
     jit_free(mem->mmu.jit);
-#endif
     for (int i = 0; i < MEM_PGDIR_SIZE; i++) {
         if (mem->pgdir[i] != NULL)
             free(mem->pgdir[i]);
@@ -151,9 +147,7 @@ int pt_unmap_always(struct mem *mem, page_t start, pages_t pages) {
         struct pt_entry *pt = mem_pt(mem, page);
         if (pt == NULL)
             continue;
-#if ENGINE_JIT
         jit_invalidate_page(mem->mmu.jit, page);
-#endif
         struct data *data = pt->data;
         mem_pt_del(mem, page);
         if (--data->refcount == 0) {
@@ -278,10 +272,8 @@ void *mem_ptr(struct mem *mem, addr_t addr, int type) {
             // TODO: Is P_WRITE really correct? The page shouldn't be writable without ptrace.
             entry->flags |= P_WRITE | P_COW;
         }
-#if ENGINE_JIT
         // get rid of any compiled blocks in this page
         jit_invalidate_page(mem->mmu.jit, page);
-#endif
         // if page is cow, ~~milk~~ copy it
         if (entry->flags & P_COW) {
             void *data = (char *) entry->data->data + entry->offset;
