@@ -48,8 +48,7 @@ jobs:
             submodules: true
       - name: Install dependencies
         run: |
-          brew install llvm ninja libarchive
-          pip3 install meson
+          brew install llvm ninja libarchive meson
       - name: Clone Linux
         if: matrix.kernel == 'linux'
         run: deps/clone-linux.sh
