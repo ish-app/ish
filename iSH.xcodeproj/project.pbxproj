@@ -1837,6 +1837,7 @@
 				"$(MESON_BUILD_DIR)/$(PRODUCT_NAME).a",
 			);
 			outputPaths = (
+				"$(CONFIGURATION_BUILD_DIR)/$(PRODUCT_NAME).a",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -1852,6 +1853,7 @@
 				"$(MESON_BUILD_DIR)/$(PRODUCT_NAME).a",
 			);
 			outputPaths = (
+				"$(CONFIGURATION_BUILD_DIR)/$(PRODUCT_NAME).a",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -1900,9 +1902,10 @@
 			files = (
 			);
 			inputPaths = (
-				"$(MESON_BUILD_DIR)/$(PRODUCT_NAME).a",
+				"$(MESON_BUILD_DIR)/deps/$(PRODUCT_NAME).a",
 			);
 			outputPaths = (
+				"$(CONFIGURATION_BUILD_DIR)/$(PRODUCT_NAME).a",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -1989,6 +1992,7 @@
 				"$(MESON_BUILD_DIR)/$(PRODUCT_NAME).a",
 			);
 			outputPaths = (
+				"$(CONFIGURATION_BUILD_DIR)/$(PRODUCT_NAME).a",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
