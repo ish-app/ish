@@ -1,0 +1,1 @@
+process handle -n 0 -p 1 -s 0 SIGUSR1 SIGTTIN SIGPIPE
