@@ -43,7 +43,7 @@ Xcode로 프로젝트를 열고, iSH.xcconfig 연 후에 `ROOT_BUNDLE_IDENTIFIER
 
 환경을 세팅하기 위해서는 프로젝트 디렉토리로 이동하고 `meson build`를 커맨드 라인에 입력하세요. 그 후 빌드 된 디렉토리로 cd 후 `ninja` 커맨드를 입력해 실행하세요.
 
-자체적으로 컨테이너 화 된 Alpine 리눅스 파일 시스템으로 실행하고 싶다면, [Alpine 웹사이트](https://alpinelinux.org/downloads/) 에서 i386을 위한 Alpine minirootfs(Mini Root Filesystem) tarball 을 다운로드 받고 `./tools/fakefsify`으로 실행하세요. 매개인자로 다운로드 받은 minirootfs tarball 파일을 입력하고 출력 받을 디렉토리의 이름을 두번째 인자로 입력하면 됩니다. 그 후에는 `./ish -f {출력받을 디렉토리 이름} /bin/login -f root` 명령어를 사용하여 Alpine 시스템 내에서 원하는 것을 실행할 수 있습니다. 만약 `tools/fakefsify` 가 빌드 디렉토리에 존재하지 않는다면, libarchive를 찾을 수 없어서 그런 것일 수 있습니다. 위를 참고하여 시스템에 설치하는 방법을 참고해주세요.
+자체적으로 컨테이너 화 된 Alpine 리눅스 파일 시스템으로 실행하고 싶다면, [Alpine 웹사이트](https://alpinelinux.org/downloads/) 에서 i386을 위한 Alpine minirootfs(Mini Root Filesystem) tarball 을 다운로드 받고 `./tools/fakefsify`으로 실행하세요. 매개인자로 다운로드 받은 minirootfs tarball 파일을 입력하고 출력 받을 디렉토리의 이름을 두번째 인자로 입력하면 됩니다. 그 후에는 `./ish -f {출력받을 디렉토리 이름} /bin/sh` 명령어를 사용하여 Alpine 시스템 내에서 원하는 것을 실행할 수 있습니다. 만약 `tools/fakefsify` 가 빌드 디렉토리에 존재하지 않는다면, libarchive를 찾을 수 없어서 그런 것일 수 있습니다. 위를 참고하여 시스템에 설치하는 방법을 참고해주세요.
 
 실제 프로세스로 프로그램을 실행하고 각 단계의 레지스터를 비교하기 위해서 `ish`를 `tools/ptraceomatic`로 바꿔 실행할 수 있습니다. 디버깅을 위해 저는 사용합니다. 64-bit Linux 4.11 이후 버전이 필요합니다.
 
