@@ -15,7 +15,7 @@
     str _ip, [x13, x12, lsl 3]
     // jump to target
     ldr _ip, [_ip, 32]
-    b jit_ret_chain
+    b fiber_ret_chain
     write_bullshit 32, call
 
 .gadget call_indir
@@ -33,7 +33,7 @@
     str _ip, [x13, x12, lsl 3]
     // jump to target
     mov eip, _tmp
-    b jit_ret
+    b fiber_ret
     write_bullshit 32, call_indir
 
 .gadget ret
@@ -55,11 +55,11 @@
     ldr x8, [_ip, 8]
     cmp _tmp, w9
     b.ne 1f
-    // good, now do return chaining, the logic is similar to `jit_ret_chain`
+    // good, now do return chaining, the logic is similar to `fiber_ret_chain`
     ldr _ip, [_ip, 24]
     cmp _ip, 0
     b.lt 1f
-    sub x8, _ip, JIT_BLOCK_code
+    sub x8, _ip, FIBER_BLOCK_code
     str x8, [_cpu, LOCAL_last_block]
     gret
 1:
@@ -67,22 +67,22 @@
     // fallthrough
 2:
     mov eip, _tmp
-    b jit_ret
+    b fiber_ret
     read_bullshit 32, ret
 
 .gadget jmp_indir
     mov eip, _tmp
-    b jit_ret
+    b fiber_ret
 .gadget jmp
     ldr _ip, [_ip]
-    b jit_ret_chain
+    b fiber_ret_chain
 .gadget jcxz
     cbnz ecx, 1f
     ldr _ip, [_ip]
-    b jit_ret_chain
+    b fiber_ret_chain
 1:
     ldr _ip, [_ip, 8]
-    b jit_ret_chain
+    b fiber_ret_chain
 
 #define COND_LIST o,c,z,cz,s,p,sxo,sxoz
 
@@ -161,9 +161,9 @@
     .gadget jmp_\cond
         do_jump \cond, 1f
         ldr _ip, [_ip, 8]
-        b jit_ret_chain
+        b fiber_ret_chain
     1:  ldr _ip, [_ip]
-        b jit_ret_chain
+        b fiber_ret_chain
 
     .gadget set_\cond
         do_jump \cond, 1f

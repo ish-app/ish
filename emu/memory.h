@@ -8,13 +8,13 @@
 #include "util/list.h"
 #include "util/sync.h"
 #include "misc.h"
-struct jit;
+struct asbestos;
 
 struct mem {
     struct pt_entry **pgdir;
     int pgdir_used;
 
-    struct jit *jit;
+    struct asbestos *asbestos;
     struct mmu mmu;
 
     wrlock_t lock;

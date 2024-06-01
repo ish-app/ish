@@ -15,7 +15,7 @@
     write_done 32, call // clobbers r14
     // jump to target
     movq 32(%_ip), %_ip
-    jmp jit_ret_chain
+    jmp fiber_ret_chain
 
 .gadget call_indir
     // save return address
@@ -32,7 +32,7 @@
     write_done 32, call_indir // clobbers r14
     // jump to target
     movl %_tmp, %_eip
-    jmp jit_ret
+    jmp fiber_ret
 
 .gadget ret
     movl %_esp, %_addr
@@ -54,11 +54,11 @@
     movq 8(%_ip), %r15
     cmpl %r14d, %tmpd
     jnz 1f
-    // good, now do return chaining, the logic is similar to `jit_ret_chain`
+    // good, now do return chaining, the logic is similar to `fiber_ret_chain`
     movq 24(%_ip), %_ip
     btq $63, %_ip
     jc 1f
-    leaq -JIT_BLOCK_code(%_ip), %r15
+    leaq -FIBER_BLOCK_code(%_ip), %r15
     movq %r15, LOCAL_last_block(%_cpu)
     gret
 1:
@@ -66,22 +66,22 @@
     // fallthrough
 2:
     movl %tmpd, %_eip
-    jmp jit_ret
+    jmp fiber_ret
 
 .gadget jmp_indir
     movl %_tmp, %_eip
-    jmp jit_ret
+    jmp fiber_ret
 .gadget jmp
     movq (%_ip), %_ip
-    jmp jit_ret_chain
+    jmp fiber_ret_chain
 .gadget jcxz
     cmpl $0, %ecx
     jne 1f
     movq (%_ip), %_ip
-    jmp jit_ret_chain
+    jmp fiber_ret_chain
 1:
     movq 8(%_ip), %_ip
-    jmp jit_ret_chain
+    jmp fiber_ret_chain
 
 #define COND_LIST o,c,z,cz,s,p,sxo,sxoz
 
@@ -140,10 +140,10 @@
     .gadget jmp_\cond
         do_jump \cond, 1f
         movq 8(%_ip), %_ip
-        jmp jit_ret_chain
+        jmp fiber_ret_chain
     1:
         movq (%_ip), %_ip
-        jmp jit_ret_chain
+        jmp fiber_ret_chain
 
     .gadget set_\cond
         do_jump \cond, 1f

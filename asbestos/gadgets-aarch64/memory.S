@@ -99,7 +99,7 @@ segfault_\type:
     tst x0, 1 << 62
     csel esp, esp, w8, eq
     mov x0, INT_GPF
-    b jit_exit
+    b fiber_exit
 
 .endr
 

@@ -22,7 +22,7 @@ _tlb .req x2
 _addr .req w3
 _xaddr .req x3
 
-.extern jit_exit
+.extern fiber_exit
 
 .macro .gadget name
     .global NAME(gadget_\()\name)

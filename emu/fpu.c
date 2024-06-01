@@ -1,4 +1,4 @@
-// I don't remember if the interpreter was supposed to use this in addition to the jit
+// I don't remember if the interpreter was supposed to use this in addition to asbestos
 #include <math.h>
 #include <string.h>
 #include "emu/cpu.h"
