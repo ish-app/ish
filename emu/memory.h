@@ -8,13 +8,13 @@
 #include "util/list.h"
 #include "util/sync.h"
 #include "misc.h"
-struct jit;
+struct weave;
 
 struct mem {
     struct pt_entry **pgdir;
     int pgdir_used;
 
-    struct jit *jit;
+    struct weave *weave;
     struct mmu mmu;
 
     wrlock_t lock;

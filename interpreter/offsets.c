@@ -1,5 +1,5 @@
-#include "jit/jit.h"
-#include "jit/frame.h"
+#include "interpreter/weave.h"
+#include "interpreter/frame.h"
 #include "emu/cpu.h"
 #include "emu/tlb.h"
 
@@ -44,19 +44,19 @@ void cpu() {
     MACRO(SF_FLAG);
     MACRO(DF_FLAG);
 
-    OFFSET(LOCAL, jit_frame, bp);
-    OFFSET(LOCAL, jit_frame, value);
-    OFFSET(LOCAL, jit_frame, value_addr);
-    OFFSET(LOCAL, jit_frame, last_block);
-    OFFSET(LOCAL, jit_frame, ret_cache);
+    OFFSET(LOCAL, threaded_frame, bp);
+    OFFSET(LOCAL, threaded_frame, value);
+    OFFSET(LOCAL, threaded_frame, value_addr);
+    OFFSET(LOCAL, threaded_frame, last_block);
+    OFFSET(LOCAL, threaded_frame, ret_cache);
     OFFSET(CPU, cpu_state, segfault_addr);
     OFFSET(CPU, cpu_state, segfault_was_write);
     OFFSET(CPU, cpu_state, poked_ptr);
     MACRO(MEM_READ);
     MACRO(MEM_WRITE);
 
-    OFFSET(JIT_BLOCK, jit_block, addr);
-    OFFSET(JIT_BLOCK, jit_block, code);
+    OFFSET(THREADED_BLOCK, threaded_block, addr);
+    OFFSET(THREADED_BLOCK, threaded_block, code);
 
     OFFSET(TLB, tlb, entries);
     OFFSET(TLB, tlb, dirty_page);
