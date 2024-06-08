@@ -567,7 +567,7 @@
                                     </tableViewCell>
                                 </cells>
                             </tableViewSection>
-                            <tableViewSection headerTitle="Extra keys" footerTitle="When extra keys are hidden, Settings can be opened with the ⌘, shortcut" id="Kaj-9x-pfF">
+                            <tableViewSection headerTitle="Extra keys" footerTitle="When extra keys are hidden, Settings can be opened with the ⌘+, shortcut" id="Kaj-9x-pfF">
                                 <cells>
                                     <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="none" indentationWidth="10" id="TM9-T2-EDa" userLabel="Backtick to Escape">
                                         <rect key="frame" x="0.0" y="480" width="320" height="43.5"/>
