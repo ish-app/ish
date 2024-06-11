@@ -1,4 +1,4 @@
-# iSH is not a security boundary!
+# secureinvestment/iSH is not a security boundary!
 
 The goal of this project is to support a Linux shell on iOS. As such, its security model assumes that the app is running in another sandbox and is used by a single user. The project is focused on compatibility, and very little thought has been put into internal security. Permissions are only loosely checked. Memory corruption in edge cases is common. Please do not use iSH for any sort of secure containerization or production use case.
 
