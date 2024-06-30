@@ -1,9 +1,9 @@
 #include "emu/interrupt.h"
 #include "gadgets.h"
 
-.global NAME(jit_enter)
-.type_compat NAME(jit_enter),function
-NAME(jit_enter):
+.global NAME(threaded_enter)
+.type_compat NAME(threaded_enter),function
+NAME(threaded_enter):
     push %rbp
     push %rbx
     push %r12
@@ -13,35 +13,35 @@ NAME(jit_enter):
     # make stack 16 byte aligned
     # this is preserved elsewhere by only doing even numbers of pushes
     sub $0x8, %rsp
-    leaq JIT_BLOCK_code(%rdi), %_ip
+    leaq THEADED_BLOCK_code(%rdi), %_ip
     movq %rsi, %_cpu
     movq %rsp, LOCAL_bp(%_cpu)
     leaq TLB_entries(%rdx), %_tlb
     load_regs
     gret
 
-.global jit_ret_chain
-jit_ret_chain:
+.global threaded_ret_chain
+threaded_ret_chain:
     btq $63, %_ip
-    jc jit_ret
+    jc threaded_ret
     mov CPU_poked_ptr(%_cpu), %r10
     cmpb $0, (%r10)
     jnz poke
-    leaq -JIT_BLOCK_code(%_ip), %r10
+    leaq -THEADED_BLOCK_code(%_ip), %r10
     mov %r10, LOCAL_last_block(%_cpu)
     gret
 
 poke:
-    mov -JIT_BLOCK_code+JIT_BLOCK_addr(%_ip), %_eip
+    mov -THEADED_BLOCK_code+THEADED_BLOCK_addr(%_ip), %_eip
     # fallthrough
 
-.global jit_ret
-jit_ret:
+.global threaded_ret
+threaded_ret:
     movl $-1, %_tmp
     # fallthrough
 
-.global jit_exit
-jit_exit:
+.global threaded_exit
+threaded_exit:
     save_regs
     movl %_eip, CPU_eip(%_cpu)
     movq LOCAL_bp(%_cpu), %rsp
@@ -61,8 +61,8 @@ jit_exit:
     movl %r14d, CPU_segfault_addr(%_cpu)
     movl 8(%_ip), %_eip
     movb $0, CPU_segfault_was_write(%_cpu)
-    jmp jit_exit
+    jmp threaded_exit
 
 .gadget exit
     movl (%_ip), %_eip
-    jmp jit_ret
+    jmp threaded_ret
