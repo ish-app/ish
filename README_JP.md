@@ -49,7 +49,7 @@ iSHは、ユーザーモードのx86エミュレーションとシステムコ�
 iSHには、ビルド時に有効にできるいくつかのロギングチャネルがあります。デフォルトでは、すべて無効になっています。有効にするには：
 
 - Xcodeで：iSH.xcconfigの`ISH_LOG`設定をスペースで区切られたログチャネルのリストに設定します。
-- Meson（テスト用のコマンドラインツール）で：`meson configure -Dlog="<space-separated list of log channels>"`を実行します。
+- Meson（テスト用のコマンドラインツール）で：`meson configure -Dlog="<ログチャネルのスペース区切りリスト>"`を実行します。
 
 利用可能なチャネル：
 
