@@ -1,16 +1,16 @@
-#ifndef JIT_H
-#define JIT_H
+#ifndef ASBESTOS_H
+#define ASBESTOS_H
 #include "misc.h"
 #include "emu/mmu.h"
 #include "util/list.h"
 #include "util/sync.h"
 
-#define JIT_INITIAL_HASH_SIZE (1 << 10)
-#define JIT_CACHE_SIZE (1 << 10)
-#define JIT_PAGE_HASH_SIZE (1 << 10)
+#define FIBER_INITIAL_HASH_SIZE (1 << 10)
+#define FIBER_CACHE_SIZE (1 << 10)
+#define FIBER_PAGE_HASH_SIZE (1 << 10)
 
-struct jit {
-    // there is one jit per address space
+struct asbestos {
+    // there is one asbestos per address space
     struct mmu *mmu;
     size_t mem_used;
     size_t num_blocks;
@@ -18,7 +18,7 @@ struct jit {
     struct list *hash;
     size_t hash_size;
 
-    // list of jit_blocks that should be freed soon (at the next RCU grace
+    // list of fiber_blocks that should be freed soon (at the next RCU grace
     // period, if we had such a thing)
     struct list jetsam;
 
@@ -33,9 +33,9 @@ struct jit {
 
 // this is roughly the average number of instructions in a basic block according to anonymous sources
 // times 4, roughly the average number of gadgets/parameters in an instruction, according to anonymous sources
-#define JIT_BLOCK_INITIAL_CAPACITY 16
+#define FIBER_BLOCK_INITIAL_CAPACITY 16
 
-struct jit_block {
+struct fiber_block {
     addr_t addr;
     addr_t end_addr;
     size_t used;
@@ -60,15 +60,15 @@ struct jit_block {
     unsigned long code[];
 };
 
-// Create a new jit
-struct jit *jit_new(struct mmu *mmu);
-void jit_free(struct jit *jit);
+// Create a new asbestos
+struct asbestos *asbestos_new(struct mmu *mmu);
+void asbestos_free(struct asbestos *asbestos);
 
-// Invalidate all jit blocks in pages start (inclusive) to end (exclusive).
-// Locks the jit. Should only be called by memory.c in conjunction with
+// Invalidate all fiber blocks in pages start (inclusive) to end (exclusive).
+// Locks the asbestos. Should only be called by memory.c in conjunction with
 // mem_changed.
-void jit_invalidate_range(struct jit *jit, page_t start, page_t end);
-void jit_invalidate_page(struct jit *jit, page_t page);
-void jit_invalidate_all(struct jit *jit);
+void asbestos_invalidate_range(struct asbestos *asbestos, page_t start, page_t end);
+void asbestos_invalidate_page(struct asbestos *asbestos, page_t page);
+void asbestos_invalidate_all(struct asbestos *asbestos);
 
 #endif

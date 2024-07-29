@@ -20,7 +20,7 @@ typedef dword_t pages_t;
 
 struct mmu {
     struct mmu_ops *ops;
-    struct jit *jit;
+    struct asbestos *asbestos;
     uint64_t changes;
 };
 

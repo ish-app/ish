@@ -29,7 +29,7 @@ jobs:
         run: deps/clone-linux.sh
       - name: Build
         run: |
-          meson build -Dengine=jit -Dkernel=${{matrix.kernel}}
+          meson build -Dengine=asbestos -Dkernel=${{matrix.kernel}}
           ninja -C build
         env:
           CC: ${{matrix.cc}}

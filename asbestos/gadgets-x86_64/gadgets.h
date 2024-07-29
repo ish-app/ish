@@ -15,7 +15,7 @@
 #define _addr r13d
 #define _addrq r13
 
-.extern jit_exit
+.extern fiber_exit
 
 .macro .gadget name
     .global.name gadget_\()\name

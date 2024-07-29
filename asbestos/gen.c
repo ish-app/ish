@@ -1,6 +1,6 @@
 #include <assert.h>
 #include <stdint.h>
-#include "jit/gen.h"
+#include "asbestos/gen.h"
 #include "emu/modrm.h"
 #include "emu/cpuid.h"
 #include "emu/fpu.h"
@@ -20,10 +20,10 @@ static void gen(struct gen_state *state, unsigned long thing) {
     assert(state->size <= state->capacity);
     if (state->size >= state->capacity) {
         state->capacity *= 2;
-        struct jit_block *bigger_block = realloc(state->block,
-                sizeof(struct jit_block) + state->capacity * sizeof(unsigned long));
+        struct fiber_block *bigger_block = realloc(state->block,
+                sizeof(struct fiber_block) + state->capacity * sizeof(unsigned long));
         if (bigger_block == NULL) {
-            die("out of memory while jitting");
+            die("out of memory while carcinizing");
         }
         state->block = bigger_block;
     }
@@ -32,7 +32,7 @@ static void gen(struct gen_state *state, unsigned long thing) {
 }
 
 void gen_start(addr_t addr, struct gen_state *state) {
-    state->capacity = JIT_BLOCK_INITIAL_CAPACITY;
+    state->capacity = FIBER_BLOCK_INITIAL_CAPACITY;
     state->size = 0;
     state->ip = addr;
     for (int i = 0; i <= 1; i++) {
@@ -40,13 +40,13 @@ void gen_start(addr_t addr, struct gen_state *state) {
     }
     state->block_patch_ip = 0;
 
-    struct jit_block *block = malloc(sizeof(struct jit_block) + state->capacity * sizeof(unsigned long));
+    struct fiber_block *block = malloc(sizeof(struct fiber_block) + state->capacity * sizeof(unsigned long));
     state->block = block;
     block->addr = addr;
 }
 
 void gen_end(struct gen_state *state) {
-    struct jit_block *block = state->block;
+    struct fiber_block *block = state->block;
     for (int i = 0; i <= 1; i++) {
         if (state->jump_ip[i] != 0) {
             block->jump_ip[i] = &block->code[state->jump_ip[i]];
