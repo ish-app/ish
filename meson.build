@@ -181,8 +181,8 @@ endif
 
 subdir('tools')
 
-gdb_scripts = ['ish-gdb.gdb']
-foreach script : gdb_scripts
+debugger_scripts = ['ish-gdb.gdb', 'ish-lldb.lldb']
+foreach script : debugger_scripts
     custom_target(script,
         output: script, input: script,
         command: ['ln', '-sf', '@INPUT@', '@OUTPUT@'],
