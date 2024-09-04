@@ -517,6 +517,7 @@ bool (*remove_user_default)(const char *name);
     return [*value isKindOfClass:NSNumber.class];
 }
 
+// MARK: colorScheme
 - (ColorScheme)colorScheme {
     return [_defaults integerForKey:kPreferenceColorSchemeKey];
 }
