@@ -286,7 +286,7 @@ void NetworkReachabilityCallback(SCNetworkReachabilityRef target, SCNetworkReach
     extern const char *uname_hostname_override;
     NSString *hostnameOverride = [NSUserDefaults.standardUserDefaults stringForKey:@"hostnameOverride"];
     if (hostnameOverride) {
-        uname_hostname_override = strdup(uname_hostname_override);
+        uname_hostname_override = strdup(hostnameOverride.UTF8String);
     }
 #endif
     
