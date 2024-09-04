@@ -26,6 +26,9 @@ static NSString *const kPreferenceCursorStyleKey = @"Cursor Style";
 static NSString *const kPreferenceBlinkCursorKey = @"Blink Cursor";
 NSString *const kPreferenceHideStatusBarKey = @"Status Bar";
 static NSString *const kPreferenceColorSchemeKey = @"Color Scheme";
+// This key has a different naming scheme because it's used in UI tests as a
+// CLI argument.
+NSString *const kHostnameOverrideKey = @"hostnameOverride";
 
 NSDictionary<NSString *, NSString *> *friendlyPreferenceMapping;
 NSDictionary<NSString *, NSString *> *friendlyPreferenceReverseMapping;
@@ -33,7 +36,9 @@ NSDictionary<NSString *, NSString *> *kvoProperties;
 
 static NSString *const kSystemMonospacedFontName = @"ui-monospace";
 
-@interface UserPreferences ()
+@interface UserPreferences () {
+    BOOL _hostnameIsOverridden;
+}
 - (void)updateTheme;
 @end
 
@@ -144,6 +149,7 @@ bool (*remove_user_default)(const char *name);
 
 - (instancetype)init {
     self = [super init];
+    self->_hostnameIsOverridden = !![NSUserDefaults.standardUserDefaults stringForKey:kHostnameOverrideKey];
     if (self) {
         _defaults = [NSUserDefaults standardUserDefaults];
         [_defaults registerDefaults:@{
@@ -161,6 +167,7 @@ bool (*remove_user_default)(const char *name);
             kPreferenceHideStatusBarKey: @(NO),
             kPreferenceColorSchemeKey: @(ColorSchemeMatchSystem),
             kPreferenceThemeKey: @"Default",
+            kHostnameOverrideKey: UIDevice.currentDevice.name,
         }];
         // https://webkit.org/blog/10247/new-webkit-features-in-safari-13-1/
         if (@available(iOS 13.4, *)) {
@@ -194,6 +201,7 @@ bool (*remove_user_default)(const char *name);
             @"hide_status_bar": kPreferenceHideStatusBarKey,
             @"color_scheme": kPreferenceColorSchemeKey,
             @"theme": kPreferenceThemeKey,
+            @"hostname_override": kHostnameOverrideKey,
         };
         NSMutableDictionary <NSString *, NSString *> *reverseMapping = [NSMutableDictionary new];
         for (NSString *key in friendlyPreferenceMapping) {
@@ -517,6 +525,7 @@ bool (*remove_user_default)(const char *name);
     return [*value isKindOfClass:NSNumber.class];
 }
 
+// MARK: colorScheme
 - (ColorScheme)colorScheme {
     return [_defaults integerForKey:kPreferenceColorSchemeKey];
 }
@@ -531,6 +540,23 @@ bool (*remove_user_default)(const char *name);
     }
     int _value = [(NSNumber *)(*value) intValue];
     return _value >= __ColorSchemeFirst && _value < __ColorSchemeLast;
+}
+
+// MARK: hostnameOverride
+- (NSString *)hostnameOverride {
+    return [_defaults stringForKey:kHostnameOverrideKey];
+}
+
+- (void)setHostnameOverride:(NSString *)hostnameOverride {
+    [_defaults setValue:hostnameOverride forKey:kHostnameOverrideKey];
+}
+
+- (BOOL)validateHostnameOverride:(id *)value error:(NSError **)error {
+    return [*value isKindOfClass:NSString.class];
+}
+
+- (NSString *)_hostnameOverride {
+    return _hostnameIsOverridden ? self.hostnameOverride : nil;
 }
 
 + (BOOL)systemThemeIsDark {

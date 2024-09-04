@@ -284,9 +284,12 @@ void NetworkReachabilityCallback(SCNetworkReachabilityRef target, SCNetworkReach
     proc_ish_version = strdup(ishVersion.UTF8String);
     // this defaults key is set when taking app store screenshots
     extern const char *uname_hostname_override;
-    NSString *hostnameOverride = [NSUserDefaults.standardUserDefaults stringForKey:@"hostnameOverride"];
+    NSString *hostnameOverride = UserPreferences.shared._hostnameOverride;
+    if (@available(iOS 16.0, *)) { // Hostname obfuscation is in effect
+        hostnameOverride = hostnameOverride ? hostnameOverride : UserPreferences.shared.hostnameOverride;
+    }
     if (hostnameOverride) {
-        uname_hostname_override = strdup(uname_hostname_override);
+        uname_hostname_override = strdup(hostnameOverride.UTF8String);
     }
 #endif
     
