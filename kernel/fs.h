@@ -44,6 +44,7 @@ struct attr {
 #define make_attr(_type, thing) \
     ((struct attr) {.type = attr_##_type, ._type = thing})
 
+#define AT_EMPTY_PATH_ 0x1000
 #define AT_SYMLINK_NOFOLLOW_ 0x100
 
 struct fd *generic_open(const char *path, int flags, int mode);
@@ -61,7 +62,7 @@ int generic_seek(struct fd *fd, off_t_ off, int whence, size_t size);
 #define AC_X 1
 #define AC_F 0
 int generic_accessat(struct fd *dirfd, const char *path, int mode);
-int generic_statat(struct fd *at, const char *path, struct statbuf *stat, bool follow_links);
+int generic_statat(struct fd *at, const char *path, struct statbuf *stat, int flags);
 int generic_setattrat(struct fd *at, const char *path, struct attr attr, bool follow_links);
 int generic_utime(struct fd *at, const char *path, struct timespec atime, struct timespec mtime, bool follow_links);
 ssize_t generic_readlinkat(struct fd *at, const char *path, char *buf, size_t bufsize);
