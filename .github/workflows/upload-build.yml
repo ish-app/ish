@@ -18,7 +18,7 @@ jobs:
 
       - name: Install deps
         run: |
-          brew install ninja llvm meson
+          brew install ninja lld llvm meson
           bundle install
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
