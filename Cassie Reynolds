@@ -1,0 +1,18 @@
+[{"imageOffset":4292, "symbol":"start_wathread", "symbolLocation":O,"imageln
+dex":9}], "threadState": ("X":[("value":6090240000),|"value":258051}, {"value":6089703424}, ("value":0),{"value":409604}, {"value": 18446744073709551615), {"value": 0}, ["value": 0), "value": 0),
+"value": 0}, ("value":0}, ("value":0}, f"value":0}, f"value": 0}, {"value":0},
+"value":0}, {"value":0},("value":0},{"value":0},{"value":0}, {"value":0},
+{"value": 0}, ["value": 0},("value":0}, {"value":0),{"value":0}, ("value":0},
+{"value":0},{"value": 0}], "flavor":"ARM_THREAD_STATE64", "|":
+{"value":0},"cpsr": ("value":4096},"fp": ("value":0}, "sp":
+{"value":6090240000}, "esr":["value":1442840704,"description":" Address
+size fault"), "pc":{"value":8325337284},"far":("value":0}},
+"id":3704090, "frames":
+[("imageOffset":4292, "symbo|":"start_wathread","symbolLocation":0,"imagein
+dex":9}], "threadState": {"x":[{"value":6090813440}, ["value":140803}, ("value":6090276864}, ("value":0}, ("value": 409602}, {"value":18446744073709551615}, ("value":0}, ("value": 0}, f"value":0},
+{"value": 0},{"value":0}, ("value": 0), {"value":0}, ("value":0},{"value":0),
+{"value": 0}, {"value": 0}, ("value": 0}, {"value":0}, ("value";0}, ("value":0},
+"value":0),("value":0), ["value": 0), {"value": 0),("value": 0), ["value":0),
+"value": 0), "value": 0}],"flavor": "ARM_THREAD_STATE64", "/":
+"value":0},"cpsr" ("value": 4096) "fou.("value"0),"sn":
+"A":60908134401,"est"R"Value"71442840704."description";"
