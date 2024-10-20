@@ -89,13 +89,18 @@ inode_t path_create(struct fakefs_db *fs, const char *path, struct ish_stat *sta
     return inode;
 }
 
-void inode_read_stat(struct fakefs_db *fs, inode_t inode, struct ish_stat *stat) {
+void inode_read_stat_or_die(struct fakefs_db *fs, inode_t inode, struct ish_stat *stat) {
+    if (!inode_read_stat_if_exist(fs, inode, stat))
+        die("inode_read_stat(%llu): missing inode", (unsigned long long) inode);
+}
+bool inode_read_stat_if_exist(struct fakefs_db *fs, inode_t inode, struct ish_stat *stat) {
     // select stat from stats where inode = ?
     sqlite3_bind_int64(fs->stmt.inode_read_stat, 1, inode);
-    if (!db_exec(fs, fs->stmt.inode_read_stat))
-        die("inode_read_stat(%llu): missing inode", (unsigned long long) inode);
-    *stat = *(struct ish_stat *) sqlite3_column_blob(fs->stmt.inode_read_stat, 0);
+    bool exist = db_exec(fs, fs->stmt.inode_read_stat);
+    if (exist)
+        *stat = *(struct ish_stat *) sqlite3_column_blob(fs->stmt.inode_read_stat, 0);
     db_reset(fs, fs->stmt.inode_read_stat);
+    return exist;
 }
 void inode_write_stat(struct fakefs_db *fs, inode_t inode, struct ish_stat *stat) {
     // update stats set stat = ? where inode = ?

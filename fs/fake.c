@@ -212,7 +212,10 @@ static int fakefs_fstat(struct fd *fd, struct statbuf *fake_stat) {
         return err;
     db_begin(fs);
     struct ish_stat ishstat;
-    inode_read_stat(fs, fd->fake_inode, &ishstat);
+    if (!inode_read_stat_if_exist(fs, fd->fake_inode, &ishstat)) {
+        db_rollback(fs);
+        return _ENOENT;
+    }
     db_commit(fs);
     fake_stat->inode = fd->fake_inode;
     fake_stat->mode = ishstat.mode;
@@ -233,6 +236,8 @@ static void fake_stat_setattr(struct ish_stat *ishstat, struct attr attr) {
         case attr_mode:
             ishstat->mode = (ishstat->mode & S_IFMT) | (attr.mode & ~S_IFMT);
             break;
+        case attr_size:
+            die("attr_size should be handled by realfs");
     }
 }
 
@@ -259,7 +264,7 @@ static int fakefs_fsetattr(struct fd *fd, struct attr attr) {
         return realfs.fsetattr(fd, attr);
     db_begin(fs);
     struct ish_stat ishstat;
-    inode_read_stat(fs, fd->fake_inode, &ishstat);
+    inode_read_stat_or_die(fs, fd->fake_inode, &ishstat);
     fake_stat_setattr(&ishstat, attr);
     inode_write_stat(fs, fd->fake_inode, &ishstat);
     db_commit(fs);

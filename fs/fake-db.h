@@ -50,7 +50,8 @@ inode_t path_get_inode(struct fakefs_db *fs, const char *path);
 bool path_read_stat(struct fakefs_db *fs, const char *path, struct ish_stat *stat, uint64_t *inode);
 inode_t path_create(struct fakefs_db *fs, const char *path, struct ish_stat *stat);
 
-void inode_read_stat(struct fakefs_db *fs, inode_t inode, struct ish_stat *stat);
+bool inode_read_stat_if_exist(struct fakefs_db *fs, inode_t inode, struct ish_stat *stat);
+void inode_read_stat_or_die(struct fakefs_db *fs, inode_t inode, struct ish_stat *stat);
 void inode_write_stat(struct fakefs_db *fs, inode_t inode, struct ish_stat *stat);
 
 void path_link(struct fakefs_db *fs, const char *src, const char *dst);
