@@ -12,6 +12,7 @@
 #include "fs/fake-db.h"
 #include "fs/sqlutil.h"
 #include "tools/fakefs.h"
+#include "util/fchdir.h"
 #include "misc.h"
 
 #ifndef MAX_PATH
@@ -162,28 +163,51 @@ bool fakefs_import(const char *archive_path, const char *fs, struct fakefsify_er
         free(entry_path_copy);
 
         int fd = -1;
-        if (archive_entry_filetype(entry) != AE_IFDIR) {
-            fd = openat(root_fd, fix_path(entry_path), O_WRONLY | O_CREAT | O_TRUNC, 0666);
-            if (fd < 0) {
-                if (errno == EISDIR) continue; // assuming it's case insensitivity
-                POSIX_ERR();
-            }
-        }
-
+        // first, create node
         switch (archive_entry_filetype(entry)) {
+            case AE_IFREG:
+            case AE_IFLNK:
+            case AE_IFBLK:
+            case AE_IFCHR:
+            case AE_IFSOCK:
+                fd = openat(root_fd, fix_path(entry_path), O_WRONLY | O_CREAT | O_TRUNC, 0666);
+                if (fd < 0) {
+                    if (errno == EISDIR) continue; // assuming it's case insensitivity
+                    POSIX_ERR();
+                }
+                break;
+
             case AE_IFDIR:
                 err = mkdirat(root_fd, fix_path(entry_path), 0777);
                 if (err < 0 && errno != EEXIST)
                     POSIX_ERR();
                 break;
+
+            case AE_IFIFO:
+                lock_fchdir(root_fd);
+                err = mkfifo(fix_path(entry_path), 0666);
+                unlock_fchdir();
+                break;
+        }
+        // second, fill in contents, if needed
+        switch (archive_entry_filetype(entry)) {
             case AE_IFREG:
                 if (archive_read_data_into_fd(archive, fd) != ARCHIVE_OK)
                     ARCHIVE_ERR(archive);
                 break;
+
             case AE_IFLNK:
                 err = (int) write(fd, archive_entry_symlink(entry), strlen(archive_entry_symlink(entry)));
                 if (err < 0)
                     POSIX_ERR();
+                break;
+
+            case AE_IFDIR:
+            case AE_IFBLK:
+            case AE_IFCHR:
+            case AE_IFSOCK:
+            case AE_IFIFO:
+                break;
         }
         if (fd != -1)
             close(fd);

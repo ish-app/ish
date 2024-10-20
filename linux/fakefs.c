@@ -291,7 +291,7 @@ static int fakefs_setattr(struct user_namespace *mnt_userns, struct dentry *dent
     if (attr->ia_valid & (ATTR_MODE | ATTR_UID | ATTR_GID)) {
         db_begin(&info->db);
         struct ish_stat stat;
-        inode_read_stat(&info->db, inode->i_ino, &stat);
+        inode_read_stat_or_die(&info->db, inode->i_ino, &stat);
         if (attr->ia_valid & ATTR_MODE)
             stat.mode = attr->ia_mode;
         if (attr->ia_valid & ATTR_UID)
@@ -563,7 +563,7 @@ static int restat_inode(struct inode *ino) {
 static int read_inode(struct inode *ino) {
     struct fakefs_super *info = ino->i_sb->s_fs_info;
     struct ish_stat ishstat;
-    inode_read_stat(&info->db, ino->i_ino, &ishstat);
+    inode_read_stat_or_die(&info->db, ino->i_ino, &ishstat);
     ino->i_mode = ishstat.mode;
     i_uid_write(ino, ishstat.uid);
     i_gid_write(ino, ishstat.gid);

@@ -91,7 +91,7 @@
     inode_t inode = _identifier.longLongValue;
     if ([_identifier isEqualToString:NSFileProviderRootContainerItemIdentifier])
         inode = path_get_inode(&_mount->db, "");
-    inode_read_stat(&_mount->db, inode, &stat);
+    inode_read_stat_or_die(&_mount->db, inode, &stat);
     db_commit(&_mount->db);
     return stat;
 }
