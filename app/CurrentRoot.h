@@ -18,9 +18,13 @@ bool FsNeedsRepositoryUpdate(void);
 void FsUpdateOnlyRepositoriesFile(void);
 void FsUpdateRepositories(void);
 
-/// The smallest value for /ish/apk-version for which updating /etc/apk/repositories does not require running /sbin/apk upgrade, given that every update to /etc/apk/repositories is followed by copying /ish/version to /ish/apk-version.
-#define COMPATIBLE_APK_VERSION 296
-#define NEWEST_APK_VERSION "Alpine v3.14"
+/// An integer representing the current major version of the apk repositories. An upgrade will be run if the number in /ish/apk-version is smaller. After a successful upgrade, the newer number is copied into /ish/apk-version.
+/// To upgrade:
+/// - update the default rootfs to the same version
+/// - update gen_apk_repositories.py to generate the new version of /etc/apk/repositories
+/// - set both of the following constants appropriately, making sure to use a larger number than the previous one
+#define CURRENT_APK_VERSION 31900
+#define CURRENT_APK_VERSION_STRING "Alpine v3.19"
 
 extern NSString *const FsUpdatedNotification;
 

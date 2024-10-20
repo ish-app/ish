@@ -66,7 +66,8 @@ void FsInitialize(void) {
             fs_ish_apk_version = version.intValue;
         }
 
-        if (fs_ish_apk_version >= COMPATIBLE_APK_VERSION)
+        // If no newer value for CURRENT_APK_VERSION, do silent update.
+        if (fs_ish_apk_version >= CURRENT_APK_VERSION)
             FsUpdateRepositories();
 
         if (currentVersion.intValue > fs_ish_version) {
@@ -81,7 +82,7 @@ bool FsIsManaged(void) {
 }
 
 bool FsNeedsRepositoryUpdate(void) {
-    return FsIsManaged() && fs_ish_apk_version < COMPATIBLE_APK_VERSION;
+    return FsIsManaged() && fs_ish_apk_version < CURRENT_APK_VERSION;
 }
 
 void FsUpdateOnlyRepositoriesFile(void) {
@@ -96,10 +97,9 @@ void FsUpdateOnlyRepositoriesFile(void) {
 }
 
 void FsUpdateRepositories(void) {
-    NSString *currentVersion = NSBundle.mainBundle.infoDictionary[(__bridge NSString *) kCFBundleVersionKey];
-    NSString *currentVersionFile = [NSString stringWithFormat:@"%@\n", currentVersion];
     FsUpdateOnlyRepositoriesFile();
-    fs_ish_apk_version = currentVersion.intValue;
+    fs_ish_apk_version = CURRENT_APK_VERSION;
+    NSString *currentVersionFile = [NSString stringWithFormat:@"%d\n", fs_ish_apk_version];
     write_file("/ish/apk-version", currentVersionFile.UTF8String, [currentVersionFile lengthOfBytesUsingEncoding:NSUTF8StringEncoding]);
     remove_directory("/ish/apk");
     dispatch_async(dispatch_get_main_queue(), ^{

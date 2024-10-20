@@ -92,7 +92,7 @@ segfault_\type:
     cmovcl %r14d, %_esp
     movl %_eip, %_eip
     movl $INT_GPF, %_tmp
-    jmp jit_exit
+    jmp fiber_exit
 
 .endr
 

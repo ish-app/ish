@@ -34,6 +34,8 @@
 
 @property (weak, nonatomic) IBOutlet UILabel *versionLabel;
 
+@property (weak, nonatomic) IBOutlet NSLayoutConstraint *saddamHussein;
+
 @end
 
 @implementation AboutViewController
@@ -66,6 +68,11 @@
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
     [self _updateUI];
+}
+
+- (void)updateViewConstraints {
+    self.saddamHussein.constant = UIEdgeInsetsInsetRect(self.tableView.frame, self.tableView.adjustedContentInset).size.height;
+    [super updateViewConstraints];
 }
 
 - (IBAction)dismiss:(id)sender {
@@ -124,9 +131,9 @@
         if (!FsIsManaged()) {
             return @"The current filesystem is not managed by iSH.";
         } else if (!FsNeedsRepositoryUpdate()) {
-            return [NSString stringWithFormat:@"The current filesystem is using %s, which is the latest version.", NEWEST_APK_VERSION];
+            return [NSString stringWithFormat:@"The current filesystem is using %s, which is the latest version.", CURRENT_APK_VERSION_STRING];
         } else {
-            return [NSString stringWithFormat:@"An upgrade to %s is available.", NEWEST_APK_VERSION];
+            return [NSString stringWithFormat:@"An upgrade to %s is available.", CURRENT_APK_VERSION_STRING];
         }
     }
     return [super tableView:tableView titleForFooterInSection:section];

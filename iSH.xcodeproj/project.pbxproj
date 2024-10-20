@@ -32,7 +32,6 @@
 		497F6CF5254E5EA500C82F46 /* float80-test.c in Sources */ = {isa = PBXBuildFile; fileRef = 497F6C5A254E5C7E00C82F46 /* float80-test.c */; };
 		497F6CF6254E5EA500C82F46 /* float80.c in Sources */ = {isa = PBXBuildFile; fileRef = 497F6C66254E5C7F00C82F46 /* float80.c */; };
 		497F6CF7254E5EA500C82F46 /* fpu.c in Sources */ = {isa = PBXBuildFile; fileRef = 497F6C5D254E5C7E00C82F46 /* fpu.c */; };
-		497F6CF8254E5EA500C82F46 /* interp.c in Sources */ = {isa = PBXBuildFile; fileRef = 497F6C67254E5C7F00C82F46 /* interp.c */; };
 		497F6CF9254E5EA500C82F46 /* memory.c in Sources */ = {isa = PBXBuildFile; fileRef = 497F6C60254E5C7F00C82F46 /* memory.c */; };
 		497F6CFA254E5EA500C82F46 /* tlb.c in Sources */ = {isa = PBXBuildFile; fileRef = 497F6C59254E5C7E00C82F46 /* tlb.c */; };
 		497F6CFB254E5EA500C82F46 /* vec.c in Sources */ = {isa = PBXBuildFile; fileRef = 497F6C64254E5C7F00C82F46 /* vec.c */; };
@@ -66,7 +65,7 @@
 		497F6D17254E5EA600C82F46 /* tty.c in Sources */ = {isa = PBXBuildFile; fileRef = 497F6BE2254E5C0D00C82F46 /* tty.c */; };
 		497F6D18254E5EA600C82F46 /* gen.c in Sources */ = {isa = PBXBuildFile; fileRef = 497F6C3D254E5C4F00C82F46 /* gen.c */; };
 		497F6D19254E5EA600C82F46 /* helpers.c in Sources */ = {isa = PBXBuildFile; fileRef = 497F6C3B254E5C4F00C82F46 /* helpers.c */; };
-		497F6D1A254E5EA600C82F46 /* jit.c in Sources */ = {isa = PBXBuildFile; fileRef = 497F6C40254E5C4F00C82F46 /* jit.c */; };
+		497F6D1A254E5EA600C82F46 /* asbestos.c in Sources */ = {isa = PBXBuildFile; fileRef = 497F6C40254E5C4F00C82F46 /* asbestos.c */; };
 		497F6D1B254E5EA600C82F46 /* offsets.c in Sources */ = {isa = PBXBuildFile; fileRef = 497F6C3C254E5C4F00C82F46 /* offsets.c */; };
 		497F6D1C254E5EA600C82F46 /* calls.c in Sources */ = {isa = PBXBuildFile; fileRef = 497F6C9F254E5C9800C82F46 /* calls.c */; };
 		497F6D1D254E5EA600C82F46 /* epoll.c in Sources */ = {isa = PBXBuildFile; fileRef = 497F6C7D254E5C9700C82F46 /* epoll.c */; };
@@ -501,8 +500,8 @@
 		497F6C3D254E5C4F00C82F46 /* gen.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = gen.c; sourceTree = "<group>"; };
 		497F6C3E254E5C4F00C82F46 /* gen.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = gen.h; sourceTree = "<group>"; };
 		497F6C3F254E5C4F00C82F46 /* frame.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = frame.h; sourceTree = "<group>"; };
-		497F6C40254E5C4F00C82F46 /* jit.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = jit.c; sourceTree = "<group>"; };
-		497F6C41254E5C4F00C82F46 /* jit.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = jit.h; sourceTree = "<group>"; };
+		497F6C40254E5C4F00C82F46 /* asbestos.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = asbestos.c; sourceTree = "<group>"; };
+		497F6C41254E5C4F00C82F46 /* asbestos.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = asbestos.h; sourceTree = "<group>"; };
 		497F6C58254E5C7E00C82F46 /* cpuid.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = cpuid.h; sourceTree = "<group>"; };
 		497F6C59254E5C7E00C82F46 /* tlb.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = tlb.c; sourceTree = "<group>"; };
 		497F6C5A254E5C7E00C82F46 /* float80-test.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = "float80-test.c"; sourceTree = "<group>"; };
@@ -518,8 +517,6 @@
 		497F6C64254E5C7F00C82F46 /* vec.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = vec.c; sourceTree = "<group>"; };
 		497F6C65254E5C7F00C82F46 /* regid.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = regid.h; sourceTree = "<group>"; };
 		497F6C66254E5C7F00C82F46 /* float80.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = float80.c; sourceTree = "<group>"; };
-		497F6C67254E5C7F00C82F46 /* interp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = interp.c; sourceTree = "<group>"; };
-		497F6C69254E5C7F00C82F46 /* fpu.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = fpu.h; sourceTree = "<group>"; };
 		497F6C6A254E5C7F00C82F46 /* modrm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = modrm.h; sourceTree = "<group>"; };
 		497F6C6B254E5C7F00C82F46 /* tlb.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = tlb.h; sourceTree = "<group>"; };
 		497F6C77254E5C9700C82F46 /* mm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mm.h; sourceTree = "<group>"; };
@@ -847,14 +844,6 @@
 			path = "gadgets-aarch64";
 			sourceTree = "<group>";
 		};
-		497F6C68254E5C7F00C82F46 /* interp */ = {
-			isa = PBXGroup;
-			children = (
-				497F6C69254E5C7F00C82F46 /* fpu.h */,
-			);
-			path = interp;
-			sourceTree = "<group>";
-		};
 		BB0B848D2586A4B100208600 /* Configs */ = {
 			isa = PBXGroup;
 			children = (
@@ -980,16 +969,16 @@
 		BB4A53931FAA393B00A72ACE /* most of the code */ = {
 			isa = PBXGroup;
 			children = (
+				BB7D93822087C2890008DA78 /* main.c */,
+				BB7D93812087C2890008DA78 /* debug.h */,
+				BB7D933B2087C2880008DA78 /* misc.h */,
+				BB7D93352087C2880008DA78 /* xX_main_Xx.h */,
+				BB88F4712152F75A00A341FD /* asbestos */,
 				BB8636F82167F4F200E7ADC0 /* emu */,
 				BB7D936A2087C2890008DA78 /* fs */,
-				BB88F4712152F75A00A341FD /* jit */,
 				BB7D933C2087C2880008DA78 /* kernel */,
 				BB2D71072354244700A10D1E /* platform */,
 				BB7D93362087C2880008DA78 /* util */,
-				BB7D93822087C2890008DA78 /* main.c */,
-				BB7D933B2087C2880008DA78 /* misc.h */,
-				BB7D93812087C2890008DA78 /* debug.h */,
-				BB7D93352087C2880008DA78 /* xX_main_Xx.h */,
 			);
 			name = "most of the code";
 			sourceTree = "<group>";
@@ -1219,8 +1208,6 @@
 				497F6C5B254E5C7E00C82F46 /* float80.h */,
 				497F6C5D254E5C7E00C82F46 /* fpu.c */,
 				497F6C63254E5C7F00C82F46 /* fpu.h */,
-				497F6C68254E5C7F00C82F46 /* interp */,
-				497F6C67254E5C7F00C82F46 /* interp.c */,
 				497F6C5C254E5C7E00C82F46 /* interrupt.h */,
 				497F6C60254E5C7F00C82F46 /* memory.c */,
 				497F6C61254E5C7F00C82F46 /* memory.h */,
@@ -1234,21 +1221,21 @@
 			path = emu;
 			sourceTree = "<group>";
 		};
-		BB88F4712152F75A00A341FD /* jit */ = {
+		BB88F4712152F75A00A341FD /* asbestos */ = {
 			isa = PBXGroup;
 			children = (
-				497F6C3F254E5C4F00C82F46 /* frame.h */,
-				497F6C31254E5C4F00C82F46 /* gadgets-aarch64 */,
-				497F6C30254E5C4F00C82F46 /* gadgets-generic.h */,
-				497F6C27254E5C4F00C82F46 /* gadgets-x86_64 */,
+				497F6C40254E5C4F00C82F46 /* asbestos.c */,
 				497F6C3D254E5C4F00C82F46 /* gen.c */,
-				497F6C3E254E5C4F00C82F46 /* gen.h */,
 				497F6C3B254E5C4F00C82F46 /* helpers.c */,
-				497F6C40254E5C4F00C82F46 /* jit.c */,
-				497F6C41254E5C4F00C82F46 /* jit.h */,
 				497F6C3C254E5C4F00C82F46 /* offsets.c */,
+				497F6C41254E5C4F00C82F46 /* asbestos.h */,
+				497F6C3F254E5C4F00C82F46 /* frame.h */,
+				497F6C30254E5C4F00C82F46 /* gadgets-generic.h */,
+				497F6C3E254E5C4F00C82F46 /* gen.h */,
+				497F6C31254E5C4F00C82F46 /* gadgets-aarch64 */,
+				497F6C27254E5C4F00C82F46 /* gadgets-x86_64 */,
 			);
-			path = jit;
+			path = asbestos;
 			sourceTree = "<group>";
 		};
 		BB88F4912154760800A341FD /* FileProvider */ = {
@@ -1837,6 +1824,7 @@
 				"$(MESON_BUILD_DIR)/$(PRODUCT_NAME).a",
 			);
 			outputPaths = (
+				"$(CONFIGURATION_BUILD_DIR)/$(PRODUCT_NAME).a",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -1852,6 +1840,7 @@
 				"$(MESON_BUILD_DIR)/$(PRODUCT_NAME).a",
 			);
 			outputPaths = (
+				"$(CONFIGURATION_BUILD_DIR)/$(PRODUCT_NAME).a",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -1900,9 +1889,10 @@
 			files = (
 			);
 			inputPaths = (
-				"$(MESON_BUILD_DIR)/$(PRODUCT_NAME).a",
+				"$(MESON_BUILD_DIR)/deps/$(PRODUCT_NAME).a",
 			);
 			outputPaths = (
+				"$(CONFIGURATION_BUILD_DIR)/$(PRODUCT_NAME).a",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -1989,6 +1979,7 @@
 				"$(MESON_BUILD_DIR)/$(PRODUCT_NAME).a",
 			);
 			outputPaths = (
+				"$(CONFIGURATION_BUILD_DIR)/$(PRODUCT_NAME).a",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -2004,7 +1995,6 @@
 				497F6CF5254E5EA500C82F46 /* float80-test.c in Sources */,
 				497F6CF6254E5EA500C82F46 /* float80.c in Sources */,
 				497F6CF7254E5EA500C82F46 /* fpu.c in Sources */,
-				497F6CF8254E5EA500C82F46 /* interp.c in Sources */,
 				497F6CF9254E5EA500C82F46 /* memory.c in Sources */,
 				497F6CFA254E5EA500C82F46 /* tlb.c in Sources */,
 				497F6CFB254E5EA500C82F46 /* vec.c in Sources */,
@@ -2038,7 +2028,7 @@
 				497F6D17254E5EA600C82F46 /* tty.c in Sources */,
 				497F6D18254E5EA600C82F46 /* gen.c in Sources */,
 				497F6D19254E5EA600C82F46 /* helpers.c in Sources */,
-				497F6D1A254E5EA600C82F46 /* jit.c in Sources */,
+				497F6D1A254E5EA600C82F46 /* asbestos.c in Sources */,
 				497F6D1B254E5EA600C82F46 /* offsets.c in Sources */,
 				497F6D1C254E5EA600C82F46 /* calls.c in Sources */,
 				497F6D1D254E5EA600C82F46 /* epoll.c in Sources */,
@@ -2443,7 +2433,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = BB0B85A42586F1CB00208600 /* ProjectDebug.xcconfig */;
 			buildSettings = {
-				CURRENT_PROJECT_VERSION = 525;
+				CURRENT_PROJECT_VERSION = 743;
 			};
 			name = "Debug-ApplePleaseFixFB19282108";
 		};
@@ -2451,7 +2441,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = BB0B85A52586F1E100208600 /* ProjectRelease.xcconfig */;
 			buildSettings = {
-				CURRENT_PROJECT_VERSION = 525;
+				CURRENT_PROJECT_VERSION = 743;
 			};
 			name = Release;
 		};
@@ -2473,7 +2463,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = BB28C7532689522C00BDC834 /* ProjectDebugLinux.xcconfig */;
 			buildSettings = {
-				CURRENT_PROJECT_VERSION = 525;
+				CURRENT_PROJECT_VERSION = 743;
 			};
 			name = DebugLinux;
 		};
@@ -2687,7 +2677,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = BB28C7522689522700BDC834 /* ProjectReleaseLinux.xcconfig */;
 			buildSettings = {
-				CURRENT_PROJECT_VERSION = 525;
+				CURRENT_PROJECT_VERSION = 743;
 			};
 			name = ReleaseLinux;
 		};

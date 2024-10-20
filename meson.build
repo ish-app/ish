@@ -40,7 +40,7 @@ dependencies = [librt, libm, libdl, threads, sqlite3]
 subdir('vdso') # ish depends on the vdso
 
 offsets = custom_target('offsets',
-    output: 'cpu-offsets.h', input: 'jit/offsets.c', depfile: 'cpu-offsets.h.d',
+    output: 'cpu-offsets.h', input: 'asbestos/offsets.c', depfile: 'cpu-offsets.h.d',
     command: [find_program('tools/staticdefine.sh'), '@OUTDIR@/compile_commands.json', '@INPUT@', '@OUTPUT@', '@DEPFILE@'])
 
 emu_src = [
@@ -51,12 +51,12 @@ emu_src = [
     'emu/float80.c',
 
 ]
-if get_option('engine') == 'jit'
-    gadgets = 'jit/gadgets-' + host_machine.cpu_family()
+if get_option('engine') == 'asbestos'
+    gadgets = 'asbestos/gadgets-' + host_machine.cpu_family()
     emu_src += [
-        'jit/jit.c',
-        'jit/gen.c',
-        'jit/helpers.c',
+        'asbestos/asbestos.c',
+        'asbestos/gen.c',
+        'asbestos/helpers.c',
         gadgets+'/entry.S',
         gadgets+'/memory.S',
         gadgets+'/control.S',
@@ -65,10 +65,6 @@ if get_option('engine') == 'jit'
         gadgets+'/string.S',
         gadgets+'/misc.S',
         offsets,
-    ]
-else
-    emu_src += [
-        'emu/interp.c',
     ]
 endif
 

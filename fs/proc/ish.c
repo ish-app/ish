@@ -55,6 +55,10 @@ static int proc_ish_show_colors(struct proc_entry *UNUSED(entry), struct proc_da
 }
 
 static int proc_ish_show_documents(struct proc_entry *UNUSED(entry), struct proc_data *buf) {
+    if (get_documents_directory == NULL) {
+        proc_printf(buf, "\n");
+        return 0;
+    }
     char *directory = get_documents_directory();
     proc_printf(buf, "%s\n", directory);
     free(directory);
@@ -75,7 +79,7 @@ static int proc_ish_defaults_readlink(struct proc_entry *entry, char *buf) {
 static int proc_ish_underlying_defaults_show(struct proc_entry *entry, struct proc_data *data) {
     size_t size;
     char *buffer;
-    if (!get_user_default(entry->name, &buffer, &size))
+    if (get_user_default == NULL || !get_user_default(entry->name, &buffer, &size))
         return _EIO;
     proc_buf_append(data, buffer, size);
     free(buffer);
@@ -83,13 +87,13 @@ static int proc_ish_underlying_defaults_show(struct proc_entry *entry, struct pr
 }
 
 static int proc_ish_underlying_defaults_update(struct proc_entry *entry, struct proc_data *data) {
-    if (!set_user_default(entry->name, data->data, data->size))
+    if (set_user_default == NULL || !set_user_default(entry->name, data->data, data->size))
         return _EIO;
     return 0;
 }
 
 static int proc_ish_underlying_defaults_unlink(struct proc_entry *entry) {
-    return remove_user_default(entry->name) ? 0 : _EIO;
+    return (remove_user_default != NULL && remove_user_default(entry->name)) ? 0 : _EIO;
 }
 
 static int proc_ish_defaults_unlink(struct proc_entry *entry) {
@@ -115,13 +119,17 @@ static void get_child_names(struct proc_entry *entry, unsigned long index) {
     if (index == 0 || entry->child_names == NULL) {
         if (entry->child_names != NULL)
             free_string_array(entry->child_names);
-        entry->child_names = get_all_defaults_keys();
+        if (get_all_defaults_keys == NULL) {
+            entry->child_names = NULL;
+        } else {
+            entry->child_names = get_all_defaults_keys();
+        }
     }
 }
 
 static bool proc_ish_underlying_defaults_readdir(struct proc_entry *entry, unsigned long *index, struct proc_entry *next_entry) {
     get_child_names(entry, *index);
-    if (entry->child_names[*index] == NULL)
+    if (entry->child_names == NULL || entry->child_names[*index] == NULL)
         return false;
     next_entry->meta = &proc_ish_underlying_defaults_fd;
     next_entry->name = strdup(entry->child_names[*index]);
@@ -133,7 +141,10 @@ static bool proc_ish_defaults_readdir(struct proc_entry *entry, unsigned long *i
     get_child_names(entry, *index);
     char *friendly_name;
     do {
-        const char *name = entry->child_names[*index];
+        const char *name = NULL;
+        if (entry->child_names != NULL) {
+            name = entry->child_names[*index];
+        }
         if (name == NULL)
             return false;
         friendly_name = get_friendly_name(name);

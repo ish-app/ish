@@ -25,6 +25,8 @@ jobs:
           deps/aports/sync-archive.sh v3.17 community/x86 deps/aports
           deps/aports/sync-archive.sh v3.18 main/x86 deps/aports
           deps/aports/sync-archive.sh v3.18 community/x86 deps/aports
+          deps/aports/sync-archive.sh v3.19 main/x86 deps/aports
+          deps/aports/sync-archive.sh v3.19 community/x86 deps/aports
       - name: Commit
         id: commit
         run: |

@@ -33,7 +33,8 @@ static int select_event_callback(void *context, int types, union poll_fd_info in
         return 0;
     return 1;
 }
-dword_t sys_select(fd_t nfds, addr_t readfds_addr, addr_t writefds_addr, addr_t exceptfds_addr, addr_t timeout_addr) {
+
+static dword_t select_common(fd_t nfds, addr_t readfds_addr, addr_t writefds_addr, addr_t exceptfds_addr, struct timespec *timeout_addr, const char *name) {
     size_t fdset_size = BITS_SIZE(nfds);
     char readfds[fdset_size];
     if (user_read_or_zero(readfds_addr, readfds, fdset_size))
@@ -45,20 +46,10 @@ dword_t sys_select(fd_t nfds, addr_t readfds_addr, addr_t writefds_addr, addr_t 
     if (user_read_or_zero(exceptfds_addr, exceptfds, fdset_size))
         return _EFAULT;
 
-    struct timespec timeout_ts = {};
-    if (timeout_addr != 0) {
-        struct timeval_ timeout_timeval;
-        if (user_get(timeout_addr, timeout_timeval))
-            return _EFAULT;
-        timeout_ts.tv_sec = timeout_timeval.sec;
-        timeout_ts.tv_nsec = timeout_timeval.usec * 1000;
-    }
-    // Emacs likes to pass invalid timeout values
-    timeout_ts = timespec_normalize(timeout_ts);
-
-    STRACE("select(%d, 0x%x, 0x%x, 0x%x, 0x%x {%lds %ldns}) ",
-            nfds, readfds_addr, writefds_addr, exceptfds_addr,
-            timeout_addr, timeout_ts.tv_sec, timeout_ts.tv_nsec);
+    STRACE("%s(%d, 0x%x, 0x%x, 0x%x, 0x%x {%lus %luns}) ",
+           name, nfds, readfds_addr, writefds_addr, exceptfds_addr,
+           timeout_addr, timeout_addr ? timeout_addr->tv_sec : 0,
+           timeout_addr ? timeout_addr->tv_nsec : 0);
 
     struct poll *poll = poll_create();
     if (IS_ERR(poll))
@@ -91,8 +82,8 @@ dword_t sys_select(fd_t nfds, addr_t readfds_addr, addr_t writefds_addr, addr_t 
     memset(writefds, 0, fdset_size);
     memset(exceptfds, 0, fdset_size);
     struct select_context context = {readfds, writefds, exceptfds};
-    int err = poll_wait(poll, select_event_callback, &context, timeout_addr == 0 ? NULL : &timeout_ts);
-    STRACE("%d end select ", current->pid);
+    int err = poll_wait(poll, select_event_callback, &context, timeout_addr);
+    STRACE("%d end %s ", current->pid, name);
     for (fd_t i = 0; i < nfds; i++) {
         if (bit_test(i, readfds) || bit_test(i, writefds) || bit_test(i, exceptfds)) {
             STRACE("%d{%s%s%s} ", i,
@@ -112,6 +103,20 @@ dword_t sys_select(fd_t nfds, addr_t readfds_addr, addr_t writefds_addr, addr_t 
     if (exceptfds_addr && user_write(exceptfds_addr, exceptfds, fdset_size))
         return _EFAULT;
     return err;
+}
+
+dword_t sys_select(fd_t nfds, addr_t readfds_addr, addr_t writefds_addr, addr_t exceptfds_addr, addr_t timeout_addr) {
+    struct timespec timeout_ts = {};
+    struct timespec *timeout_ts_addr = NULL;
+    if (timeout_addr != 0) {
+        struct timeval_ timeout_timeval;
+        if (user_get(timeout_addr, timeout_timeval))
+            return _EFAULT;
+        timeout_ts = convert_timeval(timeout_timeval);
+        timeout_ts_addr = &timeout_ts;
+    }
+    // XXX we do not implement the Linux behavior of writing the timeout with remaining time here.
+    return select_common(nfds, readfds_addr, writefds_addr, exceptfds_addr, timeout_ts_addr, "select");
 }
 
 struct poll_context {
@@ -208,6 +213,15 @@ dword_t sys_poll(addr_t fds, dword_t nfds, int_t timeout) {
 }
 
 dword_t sys_pselect(fd_t nfds, addr_t readfds_addr, addr_t writefds_addr, addr_t exceptfds_addr, addr_t timeout_addr, addr_t sigmask_addr) {
+    struct timespec_ timeout_timespec;
+    struct timespec timeout_ts;
+    struct timespec *timeout_ts_addr = NULL;
+    if (timeout_addr != 0) {
+        if (user_get(timeout_addr, timeout_timespec))
+            return _EFAULT;
+        timeout_ts = convert_timespec(timeout_timespec);
+        timeout_ts_addr = &timeout_ts;
+    }
     // a system call can only take 6 parameters, so the last two need to be passed as a pointer to a struct
     struct {
         addr_t mask_addr;
@@ -224,8 +238,7 @@ dword_t sys_pselect(fd_t nfds, addr_t readfds_addr, addr_t writefds_addr, addr_t
             return _EFAULT;
         sigmask_set_temp(mask);
     }
-
-    return sys_select(nfds, readfds_addr, writefds_addr, exceptfds_addr, timeout_addr);
+    return select_common(nfds, readfds_addr, writefds_addr, exceptfds_addr, timeout_ts_addr, "pselect");
 }
 
 dword_t sys_ppoll(addr_t fds, dword_t nfds, addr_t timeout_addr, addr_t sigmask_addr, dword_t sigsetsize) {

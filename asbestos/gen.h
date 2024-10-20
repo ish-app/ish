@@ -1,14 +1,14 @@
 #ifndef EMU_GEN_H
 #define EMU_GEN_H
 
-#include "jit/jit.h"
+#include "asbestos/asbestos.h"
 #include "emu/tlb.h"
 
 struct gen_state {
     addr_t ip;
     addr_t orig_ip;
     unsigned long orig_ip_extra;
-    struct jit_block *block;
+    struct fiber_block *block;
     unsigned size;
     unsigned capacity;
     unsigned jump_ip[2];

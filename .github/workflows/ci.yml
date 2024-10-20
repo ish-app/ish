@@ -29,7 +29,7 @@ jobs:
         run: deps/clone-linux.sh
       - name: Build
         run: |
-          meson build -Dengine=jit -Dkernel=${{matrix.kernel}}
+          meson build -Dengine=asbestos -Dkernel=${{matrix.kernel}}
           ninja -C build
         env:
           CC: ${{matrix.cc}}
@@ -38,7 +38,7 @@ jobs:
         run: ninja -C build test
 
   build-mac:
-    runs-on: macos-13
+    runs-on: macos-14
     strategy:
       matrix:
         kernel: [ish, linux]
@@ -48,9 +48,7 @@ jobs:
             submodules: true
       - name: Install dependencies
         run: |
-          sudo xcode-select -s /Applications/Xcode_14.3.app
-          brew install llvm ninja libarchive
-          pip3 install meson
+          brew install llvm lld ninja libarchive meson
       - name: Clone Linux
         if: matrix.kernel == 'linux'
         run: deps/clone-linux.sh

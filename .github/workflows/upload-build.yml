@@ -8,7 +8,7 @@ on:
 jobs:
   upload-build:
     if: github.repository == 'ish-app/ish'
-    runs-on: macos-13
+    runs-on: macos-14
     timeout-minutes: 720
     steps:
       - uses: actions/checkout@v2
@@ -18,9 +18,7 @@ jobs:
 
       - name: Install deps
         run: |
-          sudo xcode-select -s /Applications/Xcode_14.3.app
-          pip3 install meson
-          brew install ninja llvm
+          brew install ninja lld llvm meson
           bundle install
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
@@ -38,15 +36,14 @@ jobs:
           SLACK_URL: ${{ secrets.SLACK_URL }}
           FASTLANE_SKIP_UPDATE_CHECK: 1
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v4
         with:
           name: App
           path: |
             iSH.ipa
             iSH.app.dSYM.zip
-            iSH-appstore.app.dSYM.zip
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: Fastlane Logs

@@ -148,12 +148,28 @@ noreturn void do_exit_group(int status) {
 
 // always called from init process
 static void halt_system(void) {
-    // brutally murder everything
-    // which will leave everything in an inconsistent state. I will solve this problem later.
-    for (int i = 2; i < MAX_PID; i++) {
-        struct task *task = pid_get_task(i);
-        if (task != NULL)
-            pthread_kill(task->thread, SIGKILL);
+    for (int state = 0; state < 3; state++) {
+        int tasks_found = 0;
+        for (int i = 2; i < MAX_PID; i++) {
+            struct task *task = pid_get_task(i);
+            if (task != NULL) {
+                tasks_found++;
+                switch (state) {
+                case 0:
+                    deliver_signal(task, SIGTERM_, SIGINFO_NIL);
+                    break;
+                case 1:
+                    deliver_signal(task, SIGKILL_, SIGINFO_NIL);
+                    break;
+                case 2:
+                    pthread_kill(task->thread, SIGTERM);
+                }
+            }
+        }
+        if (tasks_found == 0)
+            break;
+        if (state != 2)
+            sleep(1);
     }
 
     // unmount all filesystems

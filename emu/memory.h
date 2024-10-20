@@ -8,17 +8,13 @@
 #include "util/list.h"
 #include "util/sync.h"
 #include "misc.h"
-#if ENGINE_JIT
-struct jit;
-#endif
+struct asbestos;
 
 struct mem {
     struct pt_entry **pgdir;
     int pgdir_used;
 
-#if ENGINE_JIT
-    struct jit *jit;
-#endif
+    struct asbestos *asbestos;
     struct mmu mmu;
 
     wrlock_t lock;
@@ -59,9 +55,7 @@ struct pt_entry {
     struct data *data;
     size_t offset;
     unsigned flags;
-#if ENGINE_JIT
     struct list blocks[2];
-#endif
 };
 // page flags
 // P_READ and P_EXEC are ignored for now
