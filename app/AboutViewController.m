@@ -109,7 +109,7 @@
     } else if (cell == self.openFediverse) {
         [UIApplication openURL:@"https://publ.ish.app/ish"];
     } else if (cell == self.openDiscord) {
-        [UIApplication openURL:@"https://discord.gg/ish"];
+        [UIApplication openURL:@"https://discord.gg/HFAXj44"];
     } else if (cell == self.exportContainerCell) {
         // copy the files to the app container so they can be extracted from iTunes file sharing
         NSURL *container = ContainerURL();
