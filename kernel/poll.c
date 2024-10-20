@@ -187,7 +187,7 @@ dword_t sys_poll(addr_t fds, dword_t nfds, int_t timeout) {
 
     for (unsigned i = 0; i < nfds; i++) {
         polls[i].revents = 0;
-        if (f_get(polls[i].fd) == NULL)
+        if (polls[i].fd >= 0 && files[i] == NULL)
             polls[i].revents = POLL_NVAL;
     }
     struct poll_context context = {polls, files, nfds};
@@ -203,6 +203,8 @@ dword_t sys_poll(addr_t fds, dword_t nfds, int_t timeout) {
             fd_close(files[i]);
     }
     STRACE("%d end poll", current->pid);
+    for (unsigned i = 0; i < nfds; i++)
+        STRACE(" {%d, %#x}", polls[i].fd, polls[i].revents);
 
     if (res < 0)
         return res;
