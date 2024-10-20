@@ -146,6 +146,7 @@ if get_option('kernel') == 'ish'
         'util/timer.c',
         'util/sync.c',
         'util/fifo.c',
+        'util/fchdir.c',
 
         'emu/memory.c',
 

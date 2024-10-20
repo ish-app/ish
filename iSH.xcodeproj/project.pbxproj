@@ -238,6 +238,7 @@
 		BBEF1994268066D1001225BD /* term.js in Resources */ = {isa = PBXBuildFile; fileRef = BB4A539C1FAA490C00A72ACE /* term.js */; };
 		BBEF1995268066D1001225BD /* sprite64.png in Resources */ = {isa = PBXBuildFile; fileRef = BB0B880E2589662200208600 /* sprite64.png */; };
 		BBEF1996268066D1001225BD /* icon.png in Resources */ = {isa = PBXBuildFile; fileRef = BB1B9A4223A5E96900414052 /* icon.png */; };
+		BBF06F6C2CC4C134009F5DB5 /* fchdir.c in Sources */ = {isa = PBXBuildFile; fileRef = BB0DF6F22CC4B01000EFECAE /* fchdir.c */; };
 		BBFB2C7E259026C200545EAB /* libish_emu.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BBFB2C5B2590257E00545EAB /* libish_emu.a */; };
 		BBFB2CEC2590296B00545EAB /* libish_emu.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BBFB2C5B2590257E00545EAB /* libish_emu.a */; };
 		BBFB55662158644C00DFE6DE /* libresolv.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = BBFB55652158644C00DFE6DE /* libresolv.tbd */; };
@@ -597,6 +598,8 @@
 		BB0B88172589662A00208600 /* reworked.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = reworked.png; sourceTree = "<group>"; };
 		BB0B88202589734A00208600 /* notsurewhatthisis.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = notsurewhatthisis.png; sourceTree = "<group>"; };
 		BB0C03002AEEC85500E5ECBB /* gen_apk_repositories.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; name = gen_apk_repositories.py; path = app/gen_apk_repositories.py; sourceTree = "<group>"; };
+		BB0DF6F22CC4B01000EFECAE /* fchdir.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = fchdir.c; sourceTree = "<group>"; };
+		BB0DF6F32CC4B01000EFECAE /* fchdir.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = fchdir.h; sourceTree = "<group>"; };
 		BB0F552D239F8A790032A2A1 /* Icons.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Icons.plist; sourceTree = "<group>"; };
 		BB0F552F239F8B360032A2A1 /* uninspired.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = uninspired.png; sourceTree = "<group>"; };
 		BB0F553123A0AB9B0032A2A1 /* pydann1.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = pydann1.png; sourceTree = "<group>"; };
@@ -1082,6 +1085,8 @@
 			isa = PBXGroup;
 			children = (
 				497F6CD3254E5CC800C82F46 /* bits.h */,
+				BB0DF6F22CC4B01000EFECAE /* fchdir.c */,
+				BB0DF6F32CC4B01000EFECAE /* fchdir.h */,
 				497F6CCF254E5CC800C82F46 /* fifo.c */,
 				497F6CCB254E5CC800C82F46 /* fifo.h */,
 				497F6CD0254E5CC800C82F46 /* list.h */,
@@ -2081,6 +2086,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BBF06F6C2CC4C134009F5DB5 /* fchdir.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

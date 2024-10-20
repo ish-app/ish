@@ -4,6 +4,7 @@
 #include <stdatomic.h>
 #include <pthread.h>
 #include <stdbool.h>
+#include <assert.h>
 #include <setjmp.h>
 #include "misc.h"
 #include "debug.h"

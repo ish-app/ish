@@ -18,6 +18,7 @@
 #include "fs/dev.h"
 #include "fs/real.h"
 #include "fs/tty.h"
+#include "util/fchdir.h"
 
 static int getpath(int fd, char *buf) {
 #if defined(__linux__)
@@ -30,17 +31,6 @@ static int getpath(int fd, char *buf) {
 #elif defined(__APPLE__)
     return fcntl(fd, F_GETPATH, buf);
 #endif
-}
-
-// temporarily change directory and block other threads from doing so
-// useful for simulating mknodat on ios, dealing with long unix socket paths, etc
-lock_t fchdir_lock;
-static void lock_fchdir(int dirfd) {
-    lock(&fchdir_lock);
-    fchdir(dirfd);
-}
-static void unlock_fchdir() {
-    unlock(&fchdir_lock);
 }
 
 static int open_flags_real_from_fake(int flags) {
