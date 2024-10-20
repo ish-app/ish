@@ -397,7 +397,8 @@ float80 f80_add(float80 a, float80 b) {
             sign = 1;
         }
 
-        // a bizarre special case https://web.archive.org/web/20200517222437/https://twitter.com/tblodt/status/1262145524620234752
+        // a bizarre special case. from https://twitter.com/tblodt/status/1262145524620234752:
+        // > why does 1 - 1 = -0 when the x86 rounding mode is set to "round down"? it's just 0 for any other rounding mode
         if (signif == 0 && a_signif != 0 && f80_rounding_mode == round_down)
             return (float80) {.sign = 1};
 

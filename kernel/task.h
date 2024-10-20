@@ -144,7 +144,15 @@ struct tgroup {
 
     struct rlimit_ limits[RLIMIT_NLIMITS_];
 
-    // https://twitter.com/tblodt/status/957706819236904960
+    // From https://twitter.com/tblodt/status/957706819236904960
+    // > there are two distinct ways for a p̶r̶o̶c̶e̶s̶s̶ thread group to exit:
+    // > 
+    // > - each thread calls exit
+    // > wait will return the exit code for the group leader
+    // > 
+    // > - any thread calls exit_group
+    // > the SIGNAL_GROUP_EXIT flag will be set and wait will return the status passed to exit_group
+    //
     // TODO locking
     bool doing_group_exit;
     dword_t group_exit_code;
