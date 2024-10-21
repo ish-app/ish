@@ -93,3 +93,55 @@ dword_t sys_fstat64(fd_t fd_no, addr_t statbuf_addr) {
         return _EFAULT;
     return 0;
 }
+
+dword_t sys_statx(fd_t at_f, addr_t path_addr, int_t flags, uint_t mask, addr_t statx_addr) {
+    int err;
+    char path[MAX_PATH];
+    if (user_read_string(path_addr, path, sizeof(path)))
+        return _EFAULT;
+    struct fd *at = at_fd(at_f);
+    if (at == NULL)
+        return _EBADF;
+
+    STRACE("statx(at=%d, path=\"%s\", flags=%d, mask=%d, statx=0x%x)", at_f, path, flags, mask, statx_addr);
+
+    struct statbuf stat = {};
+
+    if ((flags & AT_EMPTY_PATH_) && strcmp(path, "") == 0) {
+        struct fd *fd = at;
+        int err = fd->mount->fs->fstat(fd, &stat);
+        if (err < 0)
+            return err;
+    } else {
+        bool follow_links = !(flags & AT_SYMLINK_NOFOLLOW_);
+        int err = generic_statat(at, path, &stat, follow_links);
+        if (err < 0)
+            return err;
+    }
+
+    // for now, ignore the requested mask and just fill in the same fields as stat returns
+    struct statx_ statx = {};
+    statx.mask = STATX_BASIC_STATS_;
+    statx.blksize = stat.blksize;
+    statx.nlink = stat.nlink;
+    statx.uid = stat.uid;
+    statx.gid = stat.gid;
+    statx.mode = stat.mode;
+    statx.ino = stat.inode;
+    statx.size = stat.size;
+    statx.blocks = stat.blocks;
+    statx.atime.sec = stat.atime;
+    statx.atime.nsec = stat.atime_nsec;
+    statx.mtime.sec = stat.mtime;
+    statx.mtime.nsec = stat.mtime_nsec;
+    statx.ctime.sec = stat.ctime;
+    statx.ctime.nsec = stat.ctime_nsec;
+    statx.rdev_major = dev_major(stat.rdev);
+    statx.rdev_minor = dev_minor(stat.rdev);
+    statx.dev_major = dev_major(stat.dev);
+    statx.dev_minor = dev_minor(stat.dev);
+
+    if (user_put(statx_addr, statx))
+        return _EFAULT;
+    return 0;
+}
