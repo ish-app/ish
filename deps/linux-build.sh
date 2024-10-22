@@ -21,8 +21,7 @@ fi
 makeargs+=("LLVM_IAS=1")
 
 mkdir -p "$objtree"
-export ISH_MESON_VARS="$(realpath "$objtree/meson_vars.mk")"
-cat >"$ISH_MESON_VARS" <<END
+cat >"$(realpath "$objtree/meson_vars.mk")" <<END
 export ISH_CFLAGS = $ISH_CFLAGS
 export LIB_ISH_EMU = $LIB_ISH_EMU
 END
@@ -39,13 +38,13 @@ if [[ -n "$regen_config" ]]; then
     unset KCONFIG_CONFIG
 fi
 
-make -C "$srctree" O="$(realpath "$objtree")" "${makeargs[@]}" olddefconfig
-
 case "$(uname)" in
     Darwin) cpus=$(sysctl -n hw.ncpu) ;;
     Linux) cpus=$(nproc) ;;
     *) cpus=1 ;;
 esac
+
+make -C "$srctree" O="$(realpath "$objtree")" "${makeargs[@]}" olddefconfig
 
 make -C "$objtree" -j "$cpus" "${makeargs[@]}" all compile_commands.json --debug=v | "$srctree/../makefilter.py" "$depfile" "$output" "$objtree"
 cp "$objtree/vmlinux" "$output"
