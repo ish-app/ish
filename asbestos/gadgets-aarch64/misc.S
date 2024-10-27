@@ -90,29 +90,35 @@
 .extern segfault_write
 
 .gadget atomic_cmpxchg8b
-    #Test for alignment.
+    # Test for alignment.
     tst _addr, 0x7
-    b.ne 2f
+    b.ne 3f
 
-    #cmpxchg8b via aligned exclusive 8b load
+    # cmpxchg8b via aligned exclusive 8b load
     write_prep 64, atomic_cmpxchg8b
+
+    # load parameters: x9 = edx:eax (old value), x10 = ecx:ebx (new value)
     mov w9, eax
     bfi x9, xdx, 32, 32
     mov w10, ebx
     bfi x10, xcx, 32, 32
 
+    # run operation: load to x8, compare with x9, store x10. short circuit if comparison fails.
 1:
     ldaxr x8, [_xaddr]
     cmp x9, x8
-    csel x9, x8, x9, ne
-    csel x8, x10, x8, eq
-    cset w11, eq
-    stlxr w12, x8, [_xaddr]
+    b.ne 1f
+    stlxr w12, x10, [_xaddr]
     cbnz w12, 1b
-    write_done 64, atomic_cmpxchg8b
-    ubfx xax, x9, 0, 32
-    ubfx xdx, x9, 32, 32
+1:
+    cset w11, eq
 
+    # edx:eax should always get set to the value last seen in memory (x8)
+    write_done 64, atomic_cmpxchg8b
+    ubfx xax, x8, 0, 32
+    ubfx xdx, x8, 32, 32
+
+    # set flags (but only zf)
     ldr w8, [_cpu, CPU_flags_res]
     ldr w9, [_cpu, CPU_eflags]
     and w8, w8, ~ZF_RES
@@ -122,7 +128,7 @@
     gret 1
     write_bullshit 64, atomic_cmpxchg8b
 
-2:  #All unaligned paths
+3:  # All unaligned paths
     b segfault_write
 
 
@@ -291,4 +297,3 @@ do_helper 2
     ldrh w10, [_cpu, CPU_fsw]
     movs eax, w10, h
     gret
-
