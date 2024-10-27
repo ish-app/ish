@@ -74,6 +74,7 @@ if get_option('kernel') == 'linux'
 
     if host_machine.system() == 'darwin'
         liblinux_link_args = [
+            '-Wl,-ld_classic',
             '-sectalign', '__DATA', '__percpu_first', '1000',
             '-sectalign', '__DATA', '__tracepoints', '20',
         ]
