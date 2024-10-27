@@ -62,7 +62,7 @@
         if (strcmp(dirent->d_name, "..") == 0) {
             childIdent = _item.parentItemIdentifier;
         } else if (strcmp(dirent->d_name, ".") != 0) {
-            db_begin(&_item.mount->db);
+            db_begin_read(&_item.mount->db);
             inode_t inode = path_get_inode(&_item.mount->db, [path stringByAppendingFormat:@"/%@", [NSString stringWithUTF8String:dirent->d_name]].fileSystemRepresentation);
             db_commit(&_item.mount->db);
             if (inode == 0) {

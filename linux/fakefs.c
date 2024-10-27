@@ -55,7 +55,7 @@ static struct dentry *fakefs_lookup(struct inode *ino, struct dentry *dentry, un
     char *path = dentry_name(dentry);
     if (IS_ERR(path))
         return ERR_PTR(PTR_ERR(path));
-    db_begin(&info->db);
+    db_begin_read(&info->db);
     inode_t child_ino = path_get_inode(&info->db, path);
     __putname(path);
     if (child_ino == 0)
@@ -124,7 +124,7 @@ static int __finish_make_node(struct user_namespace *mnt_userns, struct inode *d
         goto fail;
     }
 
-    db_begin(&info->db);
+    db_begin_write(&info->db);
     struct ish_stat ishstat = {
         .mode = mode,
         .uid = i_uid_read(child),
@@ -175,7 +175,7 @@ static int fakefs_rename(struct user_namespace *mnt_userns, struct inode *from_d
         return PTR_ERR(to_path);
     }
 
-    db_begin(&info->db);
+    db_begin_write(&info->db);
     path_rename(&info->db, from_path, to_path);
     __putname(from_path);
     __putname(to_path);
@@ -204,7 +204,7 @@ static int fakefs_link(struct dentry *from, struct inode *ino, struct dentry *to
         return PTR_ERR(to_path);
     }
 
-    db_begin(&info->db);
+    db_begin_write(&info->db);
     path_link(&info->db, from_path, to_path);
     __putname(from_path);
     __putname(to_path);
@@ -229,7 +229,7 @@ static int unlink_common(struct inode *dir, struct dentry *dentry, int is_dir) {
     if (IS_ERR(path))
         return PTR_ERR(path);
 
-    db_begin(&info->db);
+    db_begin_write(&info->db);
     path_unlink(&info->db, path);
     __putname(path);
 
@@ -289,7 +289,7 @@ static int fakefs_setattr(struct user_namespace *mnt_userns, struct dentry *dent
     // attributes of ishstat
     struct fakefs_super *info = inode->i_sb->s_fs_info;
     if (attr->ia_valid & (ATTR_MODE | ATTR_UID | ATTR_GID)) {
-        db_begin(&info->db);
+        db_begin_write(&info->db);
         struct ish_stat stat;
         inode_read_stat_or_die(&info->db, inode->i_ino, &stat);
         if (attr->ia_valid & ATTR_MODE)
@@ -412,7 +412,7 @@ static int fakefs_iterate(struct file *file, struct dir_context *ctx) {
         } else if (strcmp(ent.name, "..") == 0) {
             ent.ino = d_inode(file->f_path.dentry->d_parent)->i_ino;
         } else {
-            db_begin(&info->db);
+            db_begin_read(&info->db);
             if (dir_path_len + 1 + strlen(ent.name) + 1 > PATH_MAX)
                 continue; // a
             dir_path[dir_path_len] = '/';
@@ -651,7 +651,7 @@ static int fakefs_fill_super(struct super_block *sb, struct fs_context *fc) {
     struct inode *root = new_inode(sb);
     if (root == NULL)
         return -ENOMEM;
-    db_begin(&info->db);
+    db_begin_read(&info->db);
     root->i_ino = path_get_inode(&info->db, "");
     if (root->i_ino == 0) {
         printk("fakefs: could not find root inode\n");

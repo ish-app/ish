@@ -43,7 +43,7 @@
     if (self.isRoot) {
         fd = open(_mount->source, O_DIRECTORY | O_RDONLY);
     } else {
-        db_begin(&_mount->db);
+        db_begin_read(&_mount->db);
         sqlite3_stmt *stmt = _mount->db.stmt.path_from_inode;
         sqlite3_bind_int64(_mount->db.stmt.path_from_inode, 1, _identifier.longLongValue);
         while (db_exec(&_mount->db, stmt)) {
@@ -87,7 +87,7 @@
 
 - (struct ish_stat)ishStat {
     struct ish_stat stat = {};
-    db_begin(&_mount->db);
+    db_begin_read(&_mount->db);
     inode_t inode = _identifier.longLongValue;
     if ([_identifier isEqualToString:NSFileProviderRootContainerItemIdentifier])
         inode = path_get_inode(&_mount->db, "");
@@ -115,7 +115,7 @@
     NSString *parentPath = self.path.stringByDeletingLastPathComponent;
     if ([parentPath isEqualToString:@"/"])
         return NSFileProviderRootContainerItemIdentifier;
-    db_begin(&_mount->db);
+    db_begin_read(&_mount->db);
     inode_t parentInode = path_get_inode(&_mount->db, parentPath.UTF8String);
     db_commit(&_mount->db);
     assert(parentInode != 0);
