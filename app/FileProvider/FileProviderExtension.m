@@ -173,7 +173,7 @@
 // It's ok to use _mount in these because in each case the caller has already invoked itemForIdentifier:error: at least once
 - (BOOL)doCreateDirectoryAt:(NSString *)path inode:(ino_t *)inode error:(NSError **)error {
     NSURL *url = [[NSURL fileURLWithPath:[NSString stringWithUTF8String:_mount.source]] URLByAppendingPathComponent:path];
-    db_begin(&_mount.db);
+    db_begin_write(&_mount.db);
     if (![NSFileManager.defaultManager createDirectoryAtURL:url
                                 withIntermediateDirectories:NO
                                                  attributes:@{NSFilePosixPermissions: @0777}
@@ -198,7 +198,7 @@
 
 - (BOOL)doCreateFileAt:(NSString *)path importFrom:(NSURL *)importURL inode:(ino_t *)inode error:(NSError **)error {
     NSURL *url = [[NSURL fileURLWithPath:[NSString stringWithUTF8String:_mount.source]] URLByAppendingPathComponent:path];
-    db_begin(&_mount.db);
+    db_begin_write(&_mount.db);
     if (![NSFileManager.defaultManager copyItemAtURL:importURL
                                                toURL:url
                                                error:error]) {
@@ -304,7 +304,7 @@
         if (![self doDelete:[self pathFromURL:suburl] itemIdentifier:identifier error:error])
             return NO;
     }
-    db_begin(&_mount.db);
+    db_begin_write(&_mount.db);
     path_unlink(&_mount.db, path.fileSystemRepresentation);
     int err = unlinkat(_mount.root_fd, fix_path(path.fileSystemRepresentation), 0);
     if (err < 0)
@@ -332,7 +332,7 @@
 }
 
 - (BOOL)doRename:(NSString *)src to:(NSString *)dst itemIdentifier:(NSFileProviderItemIdentifier)identifier error:(NSError **)error {
-    db_begin(&_mount.db);
+    db_begin_write(&_mount.db);
     path_rename(&_mount.db, src.fileSystemRepresentation, dst.fileSystemRepresentation);
     int err = renameat(_mount.root_fd, fix_path(src.fileSystemRepresentation), _mount.root_fd, fix_path(dst.fileSystemRepresentation));
     if (err < 0) {
@@ -415,7 +415,7 @@
             continue;
 
         // TODO: make this a function in fake-db.c
-        db_begin(&_mount.db);
+        db_begin_read(&_mount.db);
         sqlite3_bind_int64(_mount.db.stmt.inode_read_stat, 1, inode);
         BOOL exists = db_exec(&_mount.db, _mount.db.stmt.inode_read_stat);
         db_reset(&_mount.db, _mount.db.stmt.inode_read_stat);

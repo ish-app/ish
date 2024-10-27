@@ -8,7 +8,8 @@
 struct fakefs_db {
     sqlite3 *db;
     struct {
-        sqlite3_stmt *begin;
+        sqlite3_stmt *begin_deferred;
+        sqlite3_stmt *begin_immediate;
         sqlite3_stmt *commit;
         sqlite3_stmt *rollback;
         sqlite3_stmt *path_get_inode;
@@ -29,7 +30,8 @@ struct fakefs_db {
 int fake_db_init(struct fakefs_db *fs, const char *db_path, int root_fd);
 int fake_db_deinit(struct fakefs_db *fs);
 
-void db_begin(struct fakefs_db *fs);
+void db_begin_read(struct fakefs_db *fs);
+void db_begin_write(struct fakefs_db *fs);
 void db_commit(struct fakefs_db *fs);
 void db_rollback(struct fakefs_db *fs);
 
