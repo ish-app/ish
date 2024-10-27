@@ -170,6 +170,13 @@ dword_t sys_umount2(addr_t target_addr, dword_t flags);
 
 dword_t sys_xattr_stub(addr_t path_addr, addr_t name_addr, addr_t value_addr, dword_t size, dword_t flags);
 
+// async i/o
+dword_t sys_io_setup(dword_t nr_events, addr_t ctx_idp);
+dword_t sys_io_destroy(addr_t ctx_id);
+dword_t sys_io_getevents(addr_t ctx_id, dword_t min_nr, dword_t nr, addr_t events, addr_t timeout);
+dword_t sys_io_submit(addr_t ctx_id, dword_t nr, addr_t iocbpp);
+dword_t sys_io_cancel(addr_t ctx_id, addr_t iocb, addr_t result);
+
 // process information
 pid_t_ sys_getpid(void);
 pid_t_ sys_gettid(void);

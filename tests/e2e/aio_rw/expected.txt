@@ -1,0 +1,16 @@
+io_setup success
+open success
+io_submit success: 1
+io_getevents success: 1
+evt.data: 0xDEADBEEF
+evt.obj matches &req
+evt.res:  23
+evt.res2: 0
+io_getevents success: 1
+evt.data: 0xCAFEBABE
+evt.obj matches &req
+evt.res:  23
+evt.res2: 0
+rbuf: Welcome to ASYNC world!
+close success
+io_destroy success

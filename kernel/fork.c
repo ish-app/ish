@@ -1,6 +1,7 @@
 #include "debug.h"
 #include "kernel/task.h"
 #include "fs/fd.h"
+#include "fs/aio.h"
 #include "kernel/calls.h"
 #include "fs/tty.h"
 #include "kernel/mm.h"
@@ -121,6 +122,11 @@ static int copy_task(struct task *task, dword_t flags, addr_t stack, addr_t ptid
     if (flags & CLONE_CHILD_CLEARTID_)
         task->clear_tid = ctid_addr;
     task->exit_signal = flags & CSIGNAL_;
+
+    err = aioctx_table_new(&task->aioctx, 0);
+    if (err < 0) {
+        goto fail_free_sighand;
+    }
 
     // remember to do CLONE_SYSVSEM
     return 0;

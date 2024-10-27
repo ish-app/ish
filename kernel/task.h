@@ -5,6 +5,7 @@
 #include "emu/cpu.h"
 #include "kernel/mm.h"
 #include "kernel/fs.h"
+#include "kernel/aio.h"
 #include "kernel/signal.h"
 #include "kernel/resource.h"
 #include "fs/sockrestart.h"
@@ -35,6 +36,9 @@ struct task {
 
     struct fdtable *files;
     struct fs_info *fs;
+
+    // Currently active AIO contexts. Contains internal lock.
+    struct aioctx_table aioctx;
 
     // locked by sighand->lock
     struct sighand *sighand;

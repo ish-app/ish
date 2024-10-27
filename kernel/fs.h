@@ -1,5 +1,5 @@
-#ifndef FS_H
-#define FS_H
+#ifndef KERNEL_FS_H
+#define KERNEL_FS_H
 
 #include "misc.h"
 #include "util/list.h"
@@ -8,6 +8,7 @@
 #include "fs/fake-db.h"
 #include "fs/fix_path.h"
 #include "emu/memory.h"
+#include "kernel/calls.h"
 #include <dirent.h>
 #include <sqlite3.h>
 
@@ -175,5 +176,7 @@ extern const struct fs_ops fakefs;
 extern const struct fs_ops devptsfs;
 extern const struct fs_ops tmpfs;
 void fs_register(const struct fs_ops *fs);
+
+struct iovec_ *read_iovec(addr_t iovec_addr, unsigned iovec_count);
 
 #endif

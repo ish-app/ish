@@ -9,6 +9,10 @@
 #include "fs/proc.h"
 #include "fs/sockrestart.h"
 
+typedef sdword_t fd_t;
+
+#include "fs/aio.h"
+
 // FIXME almost everything that uses the structs in this file does so without any kind of sane locking
 
 struct fd {
@@ -108,7 +112,6 @@ struct fd {
     cond_t cond;
 };
 
-typedef sdword_t fd_t;
 #define AT_FDCWD_ -100
 
 struct fd *fd_create(const struct fd_ops *ops);
@@ -166,6 +169,22 @@ struct fd_ops {
     int (*getflags)(struct fd *fd);
     // handle F_SETFL, i.e. set O_NONBLOCK
     int (*setflags)(struct fd *fd, dword_t arg);
+
+    // Submit an AIO event to the FD.
+    // 
+    // The AIO context is provided to the FD in an unlocked, unretained state.
+    // Asynchronous usage of the AIO context must first retain it; though
+    // synchronous usage (i.e. before this function returns) is permitted to
+    // omit the retain/release step.
+    // 
+    // This may return a synchronous error code (e.g. _EINVAL) for operations
+    // that cannot be performed on this FD. If this operation returns an error
+    // code, then the event ID given will be cancelled, and the FD should not
+    // attempt to complete it.
+    // 
+    // Asynchronous error codes must be instead returned by completing the
+    // event with the error code as it's result.
+    int (*io_submit)(struct fd *fd, struct aioctx *ctx, unsigned int event_id);
 };
 
 struct fdtable {

@@ -5,6 +5,7 @@
 #include "fs/fd.h"
 #include "fs/real.h"
 #include "fs/tty.h"
+#include "fs/aio.h"
 #include "kernel/calls.h"
 #include "kernel/init.h"
 #include "kernel/personality.h"
@@ -71,6 +72,9 @@ static struct task *construct_task(struct task *parent) {
     task_set_mm(task, mm_new());
     task->sighand = sighand_new();
     task->files = fdtable_new(3); // why is there a 3 here
+    
+    signed int err = aioctx_table_new(&task->aioctx, 0);
+    if (err < 0) return ERR_PTR(err);
 
     task->fs = fs_info_new();
     task->fs->umask = 0022;

@@ -1,0 +1,17 @@
+io_setup success
+open success
+io_submit success: 1
+io_getevents success: 1
+evt.data: 0x31337
+evt.obj matches &req
+evt.res:  56
+evt.res2: 0
+io_getevents success: 1
+evt.data: 0xCAFEBABE
+evt.obj matches &req
+evt.res:  48
+evt.res2: 0
+rbuf[0]: Welcome to ASYNC world -
+rbuf[1]:  now you're writing with
+close success
+io_destroy success
