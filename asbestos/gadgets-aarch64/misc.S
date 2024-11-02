@@ -97,32 +97,32 @@
     # cmpxchg8b via aligned exclusive 8b load
     write_prep 64, atomic_cmpxchg8b
 
-    # load parameters: x9 = edx:eax (old value), x10 = ecx:ebx (new value)
-    mov w9, eax
-    bfi x9, xdx, 32, 32
-    mov w10, ebx
-    bfi x10, xcx, 32, 32
+    # load parameters: x10 = edx:eax (old value), x11 = ecx:ebx (new value)
+    mov w10, eax
+    bfi x10, xdx, 32, 32
+    mov w11, ebx
+    bfi x11, xcx, 32, 32
 
-    # run operation: load to x8, compare with x9, store x10. short circuit if comparison fails.
+    # run operation: load to x9, compare with x10, store x11. short circuit if comparison fails.
 1:
-    ldaxr x8, [_xaddr]
-    cmp x9, x8
+    ldaxr x9, [_xaddr]
+    cmp x10, x9
     b.ne 1f
-    stlxr w12, x10, [_xaddr]
+    stlxr w12, x11, [_xaddr]
     cbnz w12, 1b
 1:
-    cset w11, eq
+    cset w12, eq
 
-    # edx:eax should always get set to the value last seen in memory (x8)
+    # edx:eax should always get set to the value last seen in memory (x9)
     write_done 64, atomic_cmpxchg8b
-    ubfx xax, x8, 0, 32
-    ubfx xdx, x8, 32, 32
+    ubfx xax, x9, 0, 32
+    ubfx xdx, x9, 32, 32
 
     # set flags (but only zf)
     ldr w8, [_cpu, CPU_flags_res]
     ldr w9, [_cpu, CPU_eflags]
     and w8, w8, ~ZF_RES
-    bfi w9, w11, 6, 1
+    bfi w9, w12, 6, 1
     str w8, [_cpu, CPU_flags_res]
     str w9, [_cpu, CPU_eflags]
     gret 1
