@@ -13,8 +13,8 @@ if get_option('kernel') == 'linux'
             'HOSTCC='+ ' '.join(meson.get_compiler('c', native: true).cmd_array() + get_option('build.c_args')),
             'CC='+ ' '.join(meson.get_compiler('c', native: false).cmd_array() + get_option('c_args')),
             # hack to find the right directories because meson is bad
-            'ISH_CFLAGS='+ '-I'+meson.project_source_root(),
-            'LIB_ISH_EMU='+ meson.project_build_root() / 'libish_emu.a',
+            'ISH_SRC='+ meson.project_source_root(),
+            'ISH_BUILD='+ meson.project_build_root(),
             'KCONFIG_FRAGMENTS='+ ' '.join([
                 meson.project_source_root() / 'deps/linux.config',
                 meson.project_build_root() / 'deps/linux-meson.config',
@@ -46,7 +46,7 @@ if get_option('kernel') == 'linux'
         include_directories: [include_directories(
             'linux/arch/ish/include',
             'linux/arch/ish/include/generated',
-            'linux/arch/ish/include/ishemu',
+            'linux/arch/ish/emu/ishemu/include',
             'linux/include',
             'linux/arch/ish/include/uapi',
             'linux/arch/ish/include/generated/uapi',

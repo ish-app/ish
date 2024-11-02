@@ -4,7 +4,6 @@ output="$1"
 srctree="$2"
 objtree="$3"
 depfile="$4"
-export ARCH=ish
 
 # https://stackoverflow.com/a/3572105/1455016
 realpath() {
@@ -12,6 +11,7 @@ realpath() {
 }
 
 makeargs=()
+makeargs+=("ARCH=ish")
 if [[ -n "$HOSTCC" ]]; then
     makeargs+=("HOSTCC=$HOSTCC")
 fi
@@ -22,8 +22,8 @@ makeargs+=("LLVM_IAS=1")
 
 mkdir -p "$objtree"
 cat >"$(realpath "$objtree/meson_vars.mk")" <<END
-export ISH_CFLAGS = $ISH_CFLAGS
-export LIB_ISH_EMU = $LIB_ISH_EMU
+export ISH_SRC = $ISH_SRC
+export ISH_BUILD = $ISH_BUILD
 END
 
 defconfig="$srctree/arch/ish/configs/ish_defconfig"
@@ -46,5 +46,5 @@ esac
 
 make -C "$srctree" O="$(realpath "$objtree")" "${makeargs[@]}" olddefconfig
 
-make -C "$objtree" -j "$cpus" "${makeargs[@]}" all compile_commands.json --debug=v | "$srctree/../makefilter.py" "$depfile" "$output" "$objtree"
+(set -x; make -C "$objtree" -j "$cpus" "${makeargs[@]}" all compile_commands.json --debug=v) | "$srctree/../makefilter.py" "$depfile" "$output" "$objtree"
 cp "$objtree/vmlinux" "$output"
