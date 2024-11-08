@@ -51,22 +51,20 @@ emu_src = [
     'emu/float80.c',
 
 ]
-if get_option('engine') == 'asbestos'
-    gadgets = 'asbestos/gadgets-' + host_machine.cpu_family()
-    emu_src += [
-        'asbestos/asbestos.c',
-        'asbestos/gen.c',
-        'asbestos/helpers.c',
-        gadgets+'/entry.S',
-        gadgets+'/memory.S',
-        gadgets+'/control.S',
-        gadgets+'/math.S',
-        gadgets+'/bits.S',
-        gadgets+'/string.S',
-        gadgets+'/misc.S',
-        offsets,
-    ]
-endif
+gadgets = 'asbestos/gadgets-' + host_machine.cpu_family()
+emu_src += [
+    'asbestos/asbestos.c',
+    'asbestos/gen.c',
+    'asbestos/helpers.c',
+    gadgets+'/entry.S',
+    gadgets+'/memory.S',
+    gadgets+'/control.S',
+    gadgets+'/math.S',
+    gadgets+'/bits.S',
+    gadgets+'/string.S',
+    gadgets+'/misc.S',
+    offsets,
+]
 
 libish_emu = library('ish_emu', emu_src, include_directories: includes)
 
@@ -78,6 +76,10 @@ libfakefs = library('fakefs',
 subdir('deps')
 
 if get_option('kernel') == 'ish'
+    if get_option('engine') != 'asbestos'
+        error('Only asbestos is supported with ish kernel')
+    endif
+
     src = [
         'kernel/init.c',
         'kernel/errno.c',
@@ -168,6 +170,10 @@ elif get_option('kernel') == 'linux'
         'linux/main.c',
         'linux/fakefs.c',
     ], dependencies: [linux_headers, sqlite3])
+    emu_deps = []
+    if get_option('engine') == 'unicorn'
+        emu_deps += cc.find_library('unicorn', dirs: [meson.current_source_dir()+'/deps/unicorn/build'])
+    endif
     executable('ish', [build_linux],
         link_with: [libfakefs],
         dependencies: [
@@ -176,7 +182,7 @@ elif get_option('kernel') == 'linux'
             libdl,
             threads,
             declare_dependency(link_whole: modules),
-        ])
+        ] + emu_deps)
 endif
 
 subdir('tools')

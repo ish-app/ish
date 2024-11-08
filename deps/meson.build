@@ -1,9 +1,20 @@
 if get_option('kernel') == 'linux'
+    kconfig = []
+
+    if get_option('engine') == 'asbestos'
+        kconfig += 'CONFIG_ISH_EMULATOR_ISHEMU=y'
+    elif get_option('engine') == 'unicorn'
+        kconfig += 'CONFIG_ISH_EMULATOR_UNICORN=y'
+    else
+        error('Engine "' + get_option('engine') + '" not supported for linux kernel')
+    endif
+
+    kconfig += get_option('kconfig')
     meson_fragment = configure_file(
         command: [
             find_program('kconfig-fragment.sh'),
             '@OUTPUT@',
-        ] + get_option('kconfig'),
+        ] + kconfig,
         output: 'linux-meson.config',
     )
 
