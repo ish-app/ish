@@ -8,18 +8,15 @@
 #include "util/list.h"
 #include "util/sync.h"
 #include "misc.h"
-struct asbestos;
 
 struct mem {
     struct pt_entry **pgdir;
     int pgdir_used;
 
-    struct asbestos *asbestos;
     struct mmu mmu;
 
     wrlock_t lock;
 };
-#define MEM_PAGES (1 << 20) // at least on 32-bit
 #define MEM_PGDIR_SIZE (1 << 10)
 
 // Initialize the address space

@@ -2,7 +2,7 @@
 #include "debug.h"
 #include "kernel/calls.h"
 #include "emu/interrupt.h"
-#include "emu/memory.h"
+#include "kernel/memory.h"
 #include "kernel/signal.h"
 #include "kernel/task.h"
 

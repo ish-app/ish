@@ -16,6 +16,7 @@ typedef dword_t page_t;
 typedef dword_t pages_t;
 // bytes MUST be unsigned if you would like this to overflow to zero
 #define PAGE_ROUND_UP(bytes) (PAGE((bytes) + PAGE_SIZE - 1))
+#define MEM_PAGES (1 << 20) // at least on 32-bit
 #endif
 
 struct mmu {

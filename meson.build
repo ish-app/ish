@@ -83,6 +83,7 @@ if get_option('kernel') == 'ish'
         'kernel/errno.c',
 
         'kernel/calls.c',
+        'kernel/memory.c',
         'kernel/user.c',
         'kernel/vdso.c', vdso,
         'kernel/task.c',
@@ -147,8 +148,6 @@ if get_option('kernel') == 'ish'
         'util/sync.c',
         'util/fifo.c',
         'util/fchdir.c',
-
-        'emu/memory.c',
 
         'platform/' + host_machine.system() + '.c',
     ]

@@ -10,7 +10,7 @@
 #include "debug.h"
 #include "kernel/errno.h"
 #include "kernel/signal.h"
-#include "emu/memory.h"
+#include "kernel/memory.h"
 #include "asbestos/asbestos.h"
 #include "kernel/vdso.h"
 #include "kernel/task.h"

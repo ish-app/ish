@@ -4,7 +4,7 @@
 #include "kernel/errno.h"
 #include "kernel/task.h"
 #include "fs/fd.h"
-#include "emu/memory.h"
+#include "kernel/memory.h"
 #include "kernel/mm.h"
 
 struct mm *mm_new() {

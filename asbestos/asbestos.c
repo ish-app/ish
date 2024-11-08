@@ -4,7 +4,6 @@
 #include "asbestos/gen.h"
 #include "asbestos/frame.h"
 #include "emu/cpu.h"
-#include "emu/memory.h"
 #include "emu/interrupt.h"
 #include "util/list.h"
 

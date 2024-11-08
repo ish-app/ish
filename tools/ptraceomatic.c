@@ -11,7 +11,7 @@
 #include <sys/wait.h>
 #include <sys/ptrace.h>
 #include <sys/user.h>
-#undef PAGE_SIZE // defined in sys/user.h, but we want the version from emu/memory.h
+#undef PAGE_SIZE // defined in sys/user.h, but we want the version from kernel/memory.h
 #include <sys/personality.h>
 #include <sys/socket.h>
 

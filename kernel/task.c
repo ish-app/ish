@@ -4,7 +4,7 @@
 #include <string.h>
 #include "kernel/calls.h"
 #include "kernel/task.h"
-#include "emu/memory.h"
+#include "kernel/memory.h"
 #include "emu/tlb.h"
 
 __thread struct task *current;

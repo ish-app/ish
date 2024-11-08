@@ -1,6 +1,6 @@
 #include <string.h>
 #include <sys/stat.h>
-#include "emu/memory.h"
+#include "kernel/memory.h"
 #include "kernel/calls.h"
 #include "fs/proc.h"
 #include "fs/fd.h"

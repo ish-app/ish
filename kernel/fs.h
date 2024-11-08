@@ -7,7 +7,7 @@
 #include "fs/dev.h"
 #include "fs/fake-db.h"
 #include "fs/fix_path.h"
-#include "emu/memory.h"
+#include "kernel/memory.h"
 #include <dirent.h>
 #include <sqlite3.h>
 

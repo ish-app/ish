@@ -12,7 +12,7 @@
 #include <sys/prctl.h>
 #include <sys/syscall.h>
 #include <asm/prctl.h>
-#undef PAGE_SIZE // want definition from emu/memory.h
+#undef PAGE_SIZE // want definition from kernel/memory.h
 #include "../misc.h"
 
 long trycall(long res, const char *msg) {
