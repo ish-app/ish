@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <stdlib.h>
 #include <sys/personality.h>
 #include <sys/wait.h>
 #include <sys/ptrace.h>
