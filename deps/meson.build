@@ -81,13 +81,14 @@ if get_option('kernel') == 'linux'
 
     user_linux_headers = declare_dependency(
         include_directories: include_directories(
-            'linux/include',
             'linux/arch/ish/include',
+            'linux/include',
         ),
         compile_args: [
             '-include', 'user.h',
             '-include', 'linux/kconfig.h',
         ],
+        sources: [build_linux[1]],
     )
 
     if host_machine.system() == 'darwin'

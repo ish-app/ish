@@ -1,0 +1,4 @@
+#include "StaticLib.xcconfig"
+
+HEADER_SEARCH_PATHS = $(SRCROOT)/deps/linux/arch/ish/include $(SRCROOT)/deps/linux/include $(MESON_BUILD_DIR)/deps/linux/include $(SRCROOT)
+OTHER_CFLAGS = -include user.h -include linux/kconfig.h

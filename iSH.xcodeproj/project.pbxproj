@@ -189,6 +189,8 @@
 		BBAEE339249B58E80069EBB5 /* libbz2.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = BBAEE338249B58E80069EBB5 /* libbz2.tbd */; };
 		BBBCE7E321D2F02200CA00B3 /* About.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = BBBCE7E521D2F02200CA00B3 /* About.storyboard */; };
 		BBBD741426B7BE2E00321AC5 /* libfakefs.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BB21A16F2689041500BD19B4 /* libfakefs.a */; };
+		BBBDDF922CE0122F0071F1F3 /* emu_asbestos.c in Sources */ = {isa = PBXBuildFile; fileRef = BBBDDF912CE0122F0071F1F3 /* emu_asbestos.c */; };
+		BBBDDF932CE0132F0071F1F3 /* libiSHLinuxUser.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BBBDDF8F2CE00F6B0071F1F3 /* libiSHLinuxUser.a */; };
 		BBBF7B5C2415CDBB00EC4C14 /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = BBBF7B5B2415CDBB00EC4C14 /* Settings.bundle */; };
 		BBBF9CBD27C217B6002A30F7 /* PasteboardDeviceLinux.c in Sources */ = {isa = PBXBuildFile; fileRef = BBBF9CBB27C217A6002A30F7 /* PasteboardDeviceLinux.c */; };
 		BBBF9CBF27C44114002A30F7 /* iSHFileProvider.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = BB88F4902154760800A341FD /* iSHFileProvider.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -330,6 +332,13 @@
 			proxyType = 1;
 			remoteGlobalIDString = BB88F48F2154760800A341FD;
 			remoteInfo = iSHFiles;
+		};
+		BBBDDF822CE00F6A0071F1F3 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = BB792B461F96D8E000FFB7A4 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = BBECF3AF269136E100DEC937;
+			remoteInfo = liblinux;
 		};
 		BBECF3B1269136E100DEC937 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -701,6 +710,9 @@
 		BBAEE33A249BDADC0069EBB5 /* ProgressReportViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ProgressReportViewController.h; sourceTree = "<group>"; };
 		BBAEE33B249BDADC0069EBB5 /* ProgressReportViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ProgressReportViewController.m; sourceTree = "<group>"; };
 		BBBCE7E421D2F02200CA00B3 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/About.storyboard; sourceTree = "<group>"; };
+		BBBDDF8F2CE00F6B0071F1F3 /* libiSHLinuxUser.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libiSHLinuxUser.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		BBBDDF902CE00F8D0071F1F3 /* StaticLibLinuxUser.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = StaticLibLinuxUser.xcconfig; sourceTree = "<group>"; };
+		BBBDDF912CE0122F0071F1F3 /* emu_asbestos.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = emu_asbestos.c; path = linux/emu_asbestos.c; sourceTree = SOURCE_ROOT; };
 		BBBF7B5B2415CDBB00EC4C14 /* Settings.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = Settings.bundle; sourceTree = "<group>"; };
 		BBBF9CBB27C217A6002A30F7 /* PasteboardDeviceLinux.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = PasteboardDeviceLinux.c; sourceTree = "<group>"; };
 		BBBF9CC027C441C0002A30F7 /* fix_path.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = fix_path.h; sourceTree = "<group>"; };
@@ -789,6 +801,7 @@
 			files = (
 				BBECF3B9269136FB00DEC937 /* liblinux.a in Frameworks */,
 				BBECF3AE2691330F00DEC937 /* libiSHLinux.a in Frameworks */,
+				BBBDDF932CE0132F0071F1F3 /* libiSHLinuxUser.a in Frameworks */,
 				BBEF1970268066D1001225BD /* libiSHApp.a in Frameworks */,
 				BBBD741426B7BE2E00321AC5 /* libfakefs.a in Frameworks */,
 				BBEF1972268066D1001225BD /* libish_emu.a in Frameworks */,
@@ -863,6 +876,7 @@
 				BB28C7522689522700BDC834 /* ProjectReleaseLinux.xcconfig */,
 				BBFB2CDA259028DC00545EAB /* StaticLib.xcconfig */,
 				BBECF3BA2691379100DEC937 /* StaticLibLinux.xcconfig */,
+				BBBDDF902CE00F8D0071F1F3 /* StaticLibLinuxUser.xcconfig */,
 				BB0B859B2586F13200208600 /* XcodeDebug.xcconfig */,
 				BB0B848E2586A4CF00208600 /* XcodeDefault.xcconfig */,
 				BB0B859C2586F19000208600 /* XcodeRelease.xcconfig */,
@@ -1025,6 +1039,7 @@
 				BB21A16F2689041500BD19B4 /* libfakefs.a */,
 				BBECF3A22691314C00DEC937 /* libiSHLinux.a */,
 				BBECF3B8269136E100DEC937 /* liblinux.a */,
+				BBBDDF8F2CE00F6B0071F1F3 /* libiSHLinuxUser.a */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -1270,6 +1285,7 @@
 				BBEEA9E9277DAB400069495B /* LinuxPTY.c */,
 				BBEEA9E7277D25090069495B /* LinuxRoot.c */,
 				BB8C3AFD26B7B8AF00E38DDC /* fakefs.c */,
+				BBBDDF912CE0122F0071F1F3 /* emu_asbestos.c */,
 			);
 			name = LinuxInterop;
 			sourceTree = "<group>";
@@ -1501,6 +1517,22 @@
 			productReference = BB88F4902154760800A341FD /* iSHFileProvider.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
+		BBBDDF802CE00F6A0071F1F3 /* libiSHLinuxUser */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = BBBDDF8A2CE00F6A0071F1F3 /* Build configuration list for PBXNativeTarget "libiSHLinuxUser" */;
+			buildPhases = (
+				BBBDDF832CE00F6A0071F1F3 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				BBBDDF812CE00F6A0071F1F3 /* PBXTargetDependency */,
+			);
+			name = libiSHLinuxUser;
+			productName = iSHLinux;
+			productReference = BBBDDF8F2CE00F6B0071F1F3 /* libiSHLinuxUser.a */;
+			productType = "com.apple.product-type.library.static";
+		};
 		BBECF3A12691314C00DEC937 /* libiSHLinux */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = BBECF3A82691314C00DEC937 /* Build configuration list for PBXNativeTarget "libiSHLinux" */;
@@ -1676,6 +1708,7 @@
 				BBEF191D26806364001225BD /* libiSHApp */,
 				BBEF1964268066D1001225BD /* iSH+Linux */,
 				BBECF3A12691314C00DEC937 /* libiSHLinux */,
+				BBBDDF802CE00F6A0071F1F3 /* libiSHLinuxUser */,
 				BB88F48F2154760800A341FD /* iSHFileProvider */,
 				BB41591B255EF9E300E0950C /* iSHUITests */,
 				BB13F7CA200ACC31003D1C4D /* Meson */,
@@ -2123,6 +2156,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		BBBDDF832CE00F6A0071F1F3 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BBBDDF922CE0122F0071F1F3 /* emu_asbestos.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		BBECF39E2691314C00DEC937 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -2226,6 +2267,11 @@
 			isa = PBXTargetDependency;
 			target = BB88F48F2154760800A341FD /* iSHFileProvider */;
 			targetProxy = BB88F49D2154760800A341FD /* PBXContainerItemProxy */;
+		};
+		BBBDDF812CE00F6A0071F1F3 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = BBECF3AF269136E100DEC937 /* liblinux */;
+			targetProxy = BBBDDF822CE00F6A0071F1F3 /* PBXContainerItemProxy */;
 		};
 		BBECF3B0269136E100DEC937 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -2595,6 +2641,38 @@
 			};
 			name = Release;
 		};
+		BBBDDF8B2CE00F6A0071F1F3 /* Debug-ApplePleaseFixFB19282108 */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = BBBDDF902CE00F8D0071F1F3 /* StaticLibLinuxUser.xcconfig */;
+			buildSettings = {
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = "Debug-ApplePleaseFixFB19282108";
+		};
+		BBBDDF8C2CE00F6A0071F1F3 /* DebugLinux */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = BBBDDF902CE00F8D0071F1F3 /* StaticLibLinuxUser.xcconfig */;
+			buildSettings = {
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = DebugLinux;
+		};
+		BBBDDF8D2CE00F6A0071F1F3 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = BBBDDF902CE00F8D0071F1F3 /* StaticLibLinuxUser.xcconfig */;
+			buildSettings = {
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+		BBBDDF8E2CE00F6A0071F1F3 /* ReleaseLinux */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = BBBDDF902CE00F8D0071F1F3 /* StaticLibLinuxUser.xcconfig */;
+			buildSettings = {
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = ReleaseLinux;
+		};
 		BBECF3A92691314C00DEC937 /* Debug-ApplePleaseFixFB19282108 */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = BBECF3BA2691379100DEC937 /* StaticLibLinux.xcconfig */;
@@ -2918,6 +2996,17 @@
 				BB7F62092688EAB5003C0220 /* DebugLinux */,
 				BB88F4A12154760800A341FD /* Release */,
 				BBEF19AF26806D1F001225BD /* ReleaseLinux */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		BBBDDF8A2CE00F6A0071F1F3 /* Build configuration list for PBXNativeTarget "libiSHLinuxUser" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BBBDDF8B2CE00F6A0071F1F3 /* Debug-ApplePleaseFixFB19282108 */,
+				BBBDDF8C2CE00F6A0071F1F3 /* DebugLinux */,
+				BBBDDF8D2CE00F6A0071F1F3 /* Release */,
+				BBBDDF8E2CE00F6A0071F1F3 /* ReleaseLinux */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
