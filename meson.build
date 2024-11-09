@@ -166,22 +166,36 @@ if get_option('kernel') == 'ish'
     endif
 
 elif get_option('kernel') == 'linux'
-    modules = static_library('linux_modules', [
+    kernel_src = [
         'linux/main.c',
         'linux/fakefs.c',
-    ], dependencies: [linux_headers, sqlite3])
+    ]
+    user_src = []
     emu_deps = []
-    if get_option('engine') == 'unicorn'
-        emu_deps += cc.find_library('unicorn', dirs: [meson.current_source_dir()+'/deps/unicorn/build'])
+
+    if get_option('engine') == 'asbestos'
+        user_src += 'linux/emu_asbestos.c'
+        emu_deps += declare_dependency(link_with: libish_emu)
+    elif get_option('engine') == 'unicorn'
+        user_src += 'linux/emu_unicorn.c'
+        kernel_src += 'linux/emu_unicorn_kernel.c'
+        emu_deps += declare_dependency(
+            dependencies: [cc.find_library('unicorn', dirs: [meson.current_source_dir()+'/deps/unicorn/build'])],
+            include_directories: include_directories('deps/unicorn/include'),
+        )
     endif
-    executable('ish', [build_linux],
+
+    modules = static_library('linux_modules', kernel_src, dependencies: [linux_headers, sqlite3])
+    user_modules = static_library('linux_user', user_src, dependencies: [user_linux_headers] + emu_deps)
+    executable('ish',
+        build_linux,
         link_with: [libfakefs],
         dependencies: [
             liblinux,
             libm,
             libdl,
             threads,
-            declare_dependency(link_whole: modules),
+            declare_dependency(link_whole: [modules, user_modules]),
         ] + emu_deps)
 endif
 

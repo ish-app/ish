@@ -1,10 +1,8 @@
 if get_option('kernel') == 'linux'
     kconfig = []
 
-    if get_option('engine') == 'asbestos'
-        kconfig += 'CONFIG_ISH_EMULATOR_ISHEMU=y'
-    elif get_option('engine') == 'unicorn'
-        kconfig += 'CONFIG_ISH_EMULATOR_UNICORN=y'
+    if get_option('engine') in ['asbestos', 'unicorn']
+        kconfig += 'CONFIG_ISH_EMULATOR_NONE=y'
     else
         error('Engine "' + get_option('engine') + '" not supported for linux kernel')
     endif
@@ -41,7 +39,6 @@ if get_option('kernel') == 'linux'
             'linux.config',
             meson_fragment,
         ],
-        depends: [libish_emu],
         console: true,
         depfile: 'linux.d',
         output: ['liblinux.a', 'linux'])
@@ -82,6 +79,17 @@ if get_option('kernel') == 'linux'
         sources: [build_linux[1]],
     )
 
+    user_linux_headers = declare_dependency(
+        include_directories: include_directories(
+            'linux/include',
+            'linux/arch/ish/include',
+        ),
+        compile_args: [
+            '-include', 'user.h',
+            '-include', 'linux/kconfig.h',
+        ],
+    )
+
     if host_machine.system() == 'darwin'
         liblinux_link_args = [
             '-Wl,-ld_classic',
@@ -94,7 +102,6 @@ if get_option('kernel') == 'linux'
         ]
     endif
     liblinux = declare_dependency(
-        link_with: [libish_emu],
         link_whole: [build_linux[0]],
         sources: [build_linux[1]],
         link_args: liblinux_link_args,
