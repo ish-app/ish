@@ -21,10 +21,6 @@ fi
 makeargs+=("LLVM_IAS=1")
 
 mkdir -p "$objtree"
-cat >"$(realpath "$objtree/meson_vars.mk")" <<END
-export ISH_SRC = $ISH_SRC
-export ISH_BUILD = $ISH_BUILD
-END
 
 defconfig="$srctree/arch/ish/configs/ish_defconfig"
 for fragment in "$defconfig" $KCONFIG_FRAGMENTS; do
