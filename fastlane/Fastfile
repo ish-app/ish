@@ -59,9 +59,10 @@ lane :upload_build do
     add_git_tag(tag: tag)
 
     build
+    build(config: "AppStore", output: "iSH-appstore")
     puts testflight_changelog
     upload_to_testflight(
-        ipa: "iSH.ipa",
+        ipa: "iSH-appstore.ipa",
         changelog: testflight_changelog,
         wait_processing_interval: 300, # the processing is expected to take a total of 5 hours, so don't logspam too much
         distribute_external: true,
@@ -78,7 +79,7 @@ lane :upload_build do
         name: "Build #{build_number}",
         description: changelog,
         is_prerelease: true,
-        upload_assets: ["iSH.ipa", "iSH.app.dSYM.zip"],
+        upload_assets: ["iSH.ipa", "iSH.app.dSYM.zip", "iSH-appstore.app.dSYM.zip"],
         api_token: ENV["GH_TOKEN"],
     )
 end
