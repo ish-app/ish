@@ -6,3 +6,6 @@ python3 test_python3.py
 
 gcc test_c.c -o ./hello_c
 ./hello_c
+
+# node stdout is weird and scary
+node test_node.js | cat
