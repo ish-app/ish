@@ -43,11 +43,15 @@ static int proc_show_meminfo(struct proc_entry *UNUSED(entry), struct proc_data 
     struct mem_usage usage = get_mem_usage();
     show_kb(buf, "MemTotal:       ", usage.total);
     show_kb(buf, "MemFree:        ", usage.free);
+    show_kb(buf, "MemAvailable:   ", usage.available);
     show_kb(buf, "MemShared:      ", usage.free);
+    show_kb(buf, "Active:         ", usage.active);
+    show_kb(buf, "Inactive:       ", usage.inactive);
+    show_kb(buf, "SwapCached:     ", 0);
     // a bunch of crap busybox top needs to see or else it gets stack garbage
     show_kb(buf, "Shmem:          ", 0);
     show_kb(buf, "Buffers:        ", 0);
-    show_kb(buf, "Cached:         ", 0);
+    show_kb(buf, "Cached:         ", usage.cached);
     show_kb(buf, "SwapTotal:      ", 0);
     show_kb(buf, "SwapFree:       ", 0);
     show_kb(buf, "Dirty:          ", 0);
@@ -55,6 +59,10 @@ static int proc_show_meminfo(struct proc_entry *UNUSED(entry), struct proc_data 
     show_kb(buf, "AnonPages:      ", 0);
     show_kb(buf, "Mapped:         ", 0);
     show_kb(buf, "Slab:           ", 0);
+    // Stuff that doesn't map elsehwere
+    show_kb(buf, "Swapins:        ", usage.swapins);
+    show_kb(buf, "Swapouts:       ", usage.swapouts);
+    show_kb(buf, "WireCount:      ", usage.wirecount);
     return 0;
 }
 
