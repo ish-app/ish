@@ -38,7 +38,7 @@ jobs:
         run: ninja -C build test
 
   build-mac:
-    runs-on: macos-14
+    runs-on: macos-15
     strategy:
       matrix:
         kernel: [ish, linux]
