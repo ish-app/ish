@@ -155,7 +155,7 @@ dword_t sys_mount(addr_t source_addr, addr_t point_addr, addr_t type_addr, dword
         return _EINVAL;
 
     struct statbuf stat;
-    int err = generic_statat(AT_PWD, point_raw, &stat, true);
+    int err = generic_statat(AT_PWD, point_raw, &stat, 0);
     if (err < 0)
         return err;
     if (!S_ISDIR(stat.mode))
