@@ -446,6 +446,7 @@ static ssize_t tty_read(struct fd *fd, void *buf, size_t bufsize) {
     lock(&tty->lock);
     if (tty->hung_up || pty_is_half_closed_master(tty)) {
         unlock(&pids_lock);
+        err = -1;
         goto error;
     }
 
