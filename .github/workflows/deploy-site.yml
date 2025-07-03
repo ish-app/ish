@@ -2,9 +2,6 @@ name: Deploy Site
 on:
   release:
 
-permissions:
-  contents: read
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
