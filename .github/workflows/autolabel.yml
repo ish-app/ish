@@ -1,6 +1,4 @@
 name: Auto-Label
-permissions:
-  issues: write
 on:
   issues:
     types: [opened]
