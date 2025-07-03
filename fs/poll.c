@@ -254,6 +254,7 @@ int poll_wait(struct poll *poll_, poll_callback_t callback, void *context, struc
                         real_poll_update(&poll_->real, fd->real_fd, 0, NULL);
                     }
                     free(poll_fd);
+                    continue;
                 }
 
                 if (poll_fd->types & POLL_EDGETRIGGERED) {
