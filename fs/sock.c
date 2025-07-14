@@ -372,6 +372,7 @@ static void fill_cred(struct ucred_ *cred) {
 int_t sys_connect(fd_t sock_fd, addr_t sockaddr_addr, uint_t sockaddr_len) {
     STRACE("connect(%d, 0x%x, %d)", sock_fd, sockaddr_addr, sockaddr_len);
 
+#if NETWORK_ISOLATION
     {
         printf("connect(%d, 0x%x, %d)\r\n", sock_fd, sockaddr_addr, sockaddr_len);
         if (sockaddr_len < 2 || sockaddr_len > sizeof(struct sockaddr_max_)) {
@@ -394,6 +395,7 @@ int_t sys_connect(fd_t sock_fd, addr_t sockaddr_addr, uint_t sockaddr_len) {
             }
         }
     }
+#endif
 
     struct fd *sock = sock_getfd(sock_fd);
     if (sock == NULL)
