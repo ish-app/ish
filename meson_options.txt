@@ -9,3 +9,5 @@ option('kconfig', type: 'array', value: [])
 option('vdso_c_args', type: 'string', value: '')
 
 option('no_crlf', type: 'boolean', value: false)
+
+option('network_isolation', type: 'boolean', value: false)

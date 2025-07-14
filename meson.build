@@ -22,6 +22,13 @@ endforeach
 add_project_arguments('-DLOG_HANDLER_' + get_option('log_handler').to_upper() + '=1', language: 'c')
 add_project_arguments('-DENGINE_' + get_option('engine').to_upper() + '=1', language: 'c')
 
+feature_network_isolation = get_option('network_isolation')
+if feature_network_isolation
+    add_project_arguments('-DNETWORK_ISOLATION=1', language: 'c')
+else
+    add_project_arguments('-DNETWORK_ISOLATION=0', language: 'c')
+endif
+
 if get_option('no_crlf')
     add_project_arguments('-DNO_CRLF', language: 'c')
 endif

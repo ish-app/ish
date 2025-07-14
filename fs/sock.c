@@ -4,6 +4,7 @@
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/un.h>
+#include <arpa/inet.h>
 #include "kernel/calls.h"
 #include "fs/fd.h"
 #include "fs/inode.h"
@@ -46,6 +47,21 @@ int_t sys_socket(dword_t domain, dword_t type, dword_t protocol) {
     // this hack makes mtr work
     if (type == SOCK_RAW_ && protocol == IPPROTO_RAW)
         protocol = IPPROTO_ICMP;
+
+#if NETWORK_ISOLATION
+    switch (real_domain) {
+        case PF_INET6:
+           return _ENOSYS;
+        default:
+          break;
+    }
+    switch (protocol) {
+        case IPPROTO_IPV6:
+          return _ENOSYS;
+        default:
+          break;
+    }
+#endif
 
     int sock = socket(real_domain, real_type, protocol);
     if (sock < 0)
@@ -355,6 +371,30 @@ static void fill_cred(struct ucred_ *cred) {
 
 int_t sys_connect(fd_t sock_fd, addr_t sockaddr_addr, uint_t sockaddr_len) {
     STRACE("connect(%d, 0x%x, %d)", sock_fd, sockaddr_addr, sockaddr_len);
+
+    {
+        printf("connect(%d, 0x%x, %d)\r\n", sock_fd, sockaddr_addr, sockaddr_len);
+        if (sockaddr_len < 2 || sockaddr_len > sizeof(struct sockaddr_max_)) {
+            printf("connect: sockaddr_len %d is too large\r\n", sockaddr_len);
+            return _EINVAL;
+        }
+        struct sockaddr_max_ sockaddr;
+        if (user_read(sockaddr_addr, &sockaddr, sockaddr_len))
+            return _EFAULT;
+        struct sockaddr *real_addr = &sockaddr;
+        struct sockaddr_ *fake_addr = &sockaddr;
+        real_addr->sa_family = sock_family_to_real(fake_addr->family);
+        if (real_addr->sa_family == PF_INET) {
+            struct sockaddr_in *addr_in = (struct sockaddr_in *)real_addr;
+            char ip_str[INET_ADDRSTRLEN];
+            inet_ntop(PF_INET, &addr_in->sin_addr, ip_str, sizeof(ip_str));
+            printf("connect: IPv4 address %s, port %d\r\n", ip_str, ntohs(addr_in->sin_port));
+            if (strcmp(ip_str, "8.8.8.8") == 0) {
+                return _ECONNRESET;
+            }
+        }
+    }
+
     struct fd *sock = sock_getfd(sock_fd);
     if (sock == NULL)
         return _EBADF;
