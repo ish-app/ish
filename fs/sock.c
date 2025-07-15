@@ -49,21 +49,6 @@ int_t sys_socket(dword_t domain, dword_t type, dword_t protocol) {
     if (type == SOCK_RAW_ && protocol == IPPROTO_RAW)
         protocol = IPPROTO_ICMP;
 
-#if NETWORK_ISOLATION
-    switch (real_domain) {
-        case PF_INET6:
-           return _ENOSYS;
-        default:
-          break;
-    }
-    switch (protocol) {
-        case IPPROTO_IPV6:
-          return _ENOSYS;
-        default:
-          break;
-    }
-#endif
-
     int sock = socket(real_domain, real_type, protocol);
     if (sock < 0)
         return errno_map();
