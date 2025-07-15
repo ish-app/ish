@@ -5,11 +5,17 @@
 #include "misc.h"
 #include "debug.h"
 
-#define NETISO_STRACE_(msg, ...) do { \
+#define NETISO_DEBUG 0
+
+#if NETISO_DEBUG
+#define NETISO_STRACE(msg, ...) do { \
     printf(msg, ##__VA_ARGS__); \
     printf("\r\n"); \
 } while (0)
+#else
 #define NETISO_STRACE(msg, ...) STRACE(msg, ##__VA_ARGS__)
+#endif
+
 
 static bool netiso_supported_sock_family(uint16_t family) {
     switch (family) {
@@ -26,7 +32,7 @@ static int_t netiso_sockaddr_(addr_t sockaddr_addr, uint_t sockaddr_len) {
 
     if (sockaddr_len < 2 || sockaddr_len > sizeof(struct sockaddr_max_)) {
         NETISO_STRACE("netiso_sockaddr: invalid sockaddr_len %d", sockaddr_len);
-        return _EINVAL;
+        return 0; // sockaddr_len can be 0 for local sockets
     }
 
     struct sockaddr_max_ sockaddr;
