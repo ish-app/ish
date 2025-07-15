@@ -45,11 +45,10 @@ static int_t netiso_sockaddr_(addr_t sockaddr_addr, uint_t sockaddr_len) {
         struct sockaddr_in *in = (struct sockaddr_in *)&sockaddr;
         in_addr_t ip = ntohl(in->sin_addr.s_addr);
 
-        // Allow private IPv4 addresses
-        if (((ip & 0xff000000) == 0x0a000000) ||        // 10.0.0.0/8
-            ((ip & 0xfff00000) == 0xac100000) ||        // 172.16.0.0/12
-            ((ip & 0xffff0000) == 0xc0a80000) ||        // 192.168.0.0/16
-            ((ip & 0xff000000) == 0x7f000000)) {        // 127.0.0.0/8
+        if (((ip ^ 0x0a000000) & 0xff000000) == 0 ||        // 10.0.0.0/8
+            ((ip ^ 0xac100000) & 0xfff00000) == 0 ||        // 172.16.0.0/12
+            ((ip ^ 0xc0a80000) & 0xffff0000) == 0 ||        // 192.168.0.0/16
+            ((ip ^ 0x7f000000) & 0xff000000) == 0) {        // 127.0.0.0/8
             return 0;
         }
 
