@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
-#include "features.h"
+#include "netiso.h"
 #include "kernel/calls.h"
 #include "kernel/task.h"
 #include "xX_main_Xx.h"

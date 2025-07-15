@@ -158,6 +158,8 @@ if get_option('kernel') == 'ish'
         'util/fifo.c',
         'util/fchdir.c',
 
+        'netiso.c',
+
         'platform/' + host_machine.system() + '.c',
     ]
 
