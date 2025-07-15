@@ -851,6 +851,12 @@ int_t sys_sendmsg(fd_t sock_fd, addr_t msghdr_addr, int_t flags) {
     if (sock == NULL)
         return _EBADF;
 
+    {
+        int err = netiso_sockaddr(msghdr_addr, sizeof(struct msghdr_));
+        if (err < 0)
+            return err;
+    }
+
     struct msghdr msg;
     struct msghdr_ msg_fake;
     if (user_get(msghdr_addr, msg_fake))
