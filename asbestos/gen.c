@@ -19,13 +19,15 @@ int gen_step(struct gen_state *state, struct tlb *tlb) {
 static void gen(struct gen_state *state, unsigned long thing) {
     assert(state->size <= state->capacity);
     if (state->size >= state->capacity) {
-        state->capacity *= 2;
+        // Use a more aggressive growth strategy to reduce realloc calls
+        size_t new_capacity = state->capacity + (state->capacity >> 1); // 1.5x growth
         struct fiber_block *bigger_block = realloc(state->block,
-                sizeof(struct fiber_block) + state->capacity * sizeof(unsigned long));
+                sizeof(struct fiber_block) + new_capacity * sizeof(unsigned long));
         if (bigger_block == NULL) {
             die("out of memory while carcinizing");
         }
         state->block = bigger_block;
+        state->capacity = new_capacity;
     }
     assert(state->size < state->capacity);
     state->block->code[state->size++] = thing;

@@ -436,8 +436,6 @@ float80 f80_mul(float80 a, float80 b) {
     uint128_t f_signif = (uint128_t) a.signif * b.signif;
     // normalize and round the 128-bit result
     float80 f = u128_normalize_round(f_signif, f_exp, a.sign ^ b.sign);
-    // xor signs
-    f.sign = a.sign ^ b.sign;
     return f;
 }
 

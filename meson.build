@@ -1,9 +1,21 @@
 project('ish', 'c',
-    default_options: ['default_library=static', 'c_std=gnu11', 'warning_level=2'])
+    default_options: [
+        'default_library=static',
+        'c_std=gnu11',
+        'warning_level=2',
+        'optimization=2',
+        'b_lto=false',
+        'b_pie=false'
+    ])
 cc = meson.get_compiler('c')
 
+# 修复汇编兼容性问题 - 使用保守的编译选项
 if cc.get_id() == 'clang'
-    add_project_arguments('-Wimplicit-fallthrough', '-Wtautological-constant-in-range-compare', language: 'c')
+    add_project_arguments(
+        '-Wimplicit-fallthrough',
+        '-Wtautological-constant-in-range-compare',
+        language: 'c'
+    )
 endif
 
 if get_option('b_sanitize').split(',').contains('undefined')
@@ -28,7 +40,7 @@ endif
 
 add_project_arguments('-Wno-switch', language: 'c')
 
-includes = [include_directories('.')]
+includes = [include_directories('.'), include_directories('include')]
 
 threads = dependency('threads')
 librt = cc.find_library('rt', required: false)
@@ -150,12 +162,15 @@ if get_option('kernel') == 'ish'
         'util/sync.c',
         'util/fifo.c',
         'util/fchdir.c',
+        'util/perf_counters.c',
+        'util/debug_tools.c',
 
         'platform/' + host_machine.system() + '.c',
     ]
 
     libish = library('ish', src,
-        include_directories: includes)
+        include_directories: includes,
+        pic: true)
     ish = declare_dependency(
         link_with: [libish, libish_emu, libfakefs],
         dependencies: dependencies,
@@ -213,6 +228,11 @@ if not meson.is_cross_build()
     # test for floating point library
     float80_test = executable('float80_test', ['emu/float80.c', 'emu/float80-test.c'], dependencies: [libm])
     test('float80', float80_test)
+    
+    # performance test
+    performance_test = executable('performance_test', ['tests/performance_test.c'],
+        link_with: [libish_emu], include_directories: includes)
+    test('performance', performance_test)
 endif
 
 e2e_test = find_program('tests/e2e/e2e.bash')
