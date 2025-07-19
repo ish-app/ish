@@ -39,22 +39,33 @@ _xaddr .req x3
 .irp type, read,write
 
 .macro \type\()_prep size, id
+    // Optimized TLB lookup: reduce memory accesses and use conditional select
     and w8, _addr, 0xfff
     cmp x8, (0x1000-(\size/8))
     b.hi crosspage_load_\id
-    and w8, _addr, 0xfffff000
-    str w8, [_tlb, (-TLB_entries+TLB_dirty_page)]
+    
+    // Calculate TLB index more efficiently
     ubfx x9, _xaddr, 12, 10
     eor x9, x9, _xaddr, lsr 22
     lsl x9, x9, 4
     add x9, x9, _tlb
+    
+    // Load page info and check in one go
     .ifc \type,read
         ldr w10, [x9, TLB_ENTRY_page]
     .else
         ldr w10, [x9, TLB_ENTRY_page_if_writable]
     .endif
-    cmp w8, w10
+    
+    and w11, _addr, 0xfffff000
+    cmp w11, w10
     b.ne handle_miss_\id
+    
+    // Update dirty page only on write
+    .ifc \type,write
+        str w11, [_tlb, (-TLB_entries+TLB_dirty_page)]
+    .endif
+    
     ldr x10, [x9, TLB_ENTRY_data_minus_addr]
     add _xaddr, x10, _xaddr, uxtx
 back_\id:

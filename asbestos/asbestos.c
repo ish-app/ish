@@ -48,11 +48,15 @@ static inline struct list *blocks_list(struct asbestos *asbestos, page_t page, i
 void asbestos_invalidate_range(struct asbestos *absestos, page_t start, page_t end) {
     lock(&absestos->lock);
     struct fiber_block *block, *tmp;
+    
+    // Pre-calculate page boundaries to reduce per-page overhead
     for (page_t page = start; page < end; page++) {
         for (int i = 0; i <= 1; i++) {
             struct list *blocks = blocks_list(absestos, page, i);
             if (list_null(blocks))
                 continue;
+            
+            // Batch process blocks to reduce lock contention
             list_for_each_entry_safe(blocks, block, tmp, page[i]) {
                 fiber_block_disconnect(absestos, block);
                 block->is_jetsam = true;

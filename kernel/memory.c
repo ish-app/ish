@@ -15,6 +15,7 @@
 #include "kernel/vdso.h"
 #include "kernel/task.h"
 #include "fs/fd.h"
+#include "ish_common.h"
 
 // increment the change count
 static void mem_changed(struct mem *mem);
@@ -47,8 +48,10 @@ void mem_destroy(struct mem *mem) {
 
 static struct pt_entry *mem_pt_new(struct mem *mem, page_t page) {
     struct pt_entry *pgdir = mem->pgdir[PGDIR_TOP(page)];
-    if (pgdir == NULL) {
-        pgdir = mem->pgdir[PGDIR_TOP(page)] = calloc(MEM_PGDIR_SIZE, sizeof(struct pt_entry));
+    if (ISH_UNLIKELY(pgdir == NULL)) {
+        pgdir = mem->pgdir[PGDIR_TOP(page)] = ish_calloc(MEM_PGDIR_SIZE, sizeof(struct pt_entry));
+        if (ISH_UNLIKELY(pgdir == NULL))
+            return NULL;
         mem->pgdir_used++;
     }
     return &pgdir[PGDIR_BOTTOM(page)];
@@ -56,10 +59,10 @@ static struct pt_entry *mem_pt_new(struct mem *mem, page_t page) {
 
 struct pt_entry *mem_pt(struct mem *mem, page_t page) {
     struct pt_entry *pgdir = mem->pgdir[PGDIR_TOP(page)];
-    if (pgdir == NULL)
+    if (ISH_UNLIKELY(pgdir == NULL))
         return NULL;
     struct pt_entry *entry = &pgdir[PGDIR_BOTTOM(page)];
-    if (entry->data == NULL)
+    if (ISH_UNLIKELY(entry->data == NULL))
         return NULL;
     return entry;
 }
