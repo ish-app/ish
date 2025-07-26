@@ -90,7 +90,8 @@ term.scrollPort_.screen_.addEventListener('blur', (e) => {
 }, {capture: true});
 term.scrollPort_.screen_.addEventListener('mousedown', (e) => {
     // Taps while there is a selection should be left to the selection view
-    if (document.getSelection().rangeCount != 0) return;
+    if ((document.getSelection().rangeCount != 0) &&
+        (!document.getSelection().isCollapsed)) return;
     native.focus();
 });
 exports.setFocused = (focus) => {
