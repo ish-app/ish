@@ -1,2 +1,14 @@
+##Tracks Content Details
 
-exit
+# tasks/main.yml:
+This file contains the main list of tasks that the role executes when included in a playbook.
+handlers/main.yml:
+This file defines handlers that can be triggered by tasks within the role or other parts of the playbook.
+vars/main.yml:
+This file defines variables specific to the role, which can override variables defined elsewhere (e.g., in defaults, inventories, or playbooks).
+defaults/main.yml:
+This file defines default variables for the role, which can be overridden by variables defined in vars/main.yml or higher in the variable precedence hierarchy.
+meta/main.yml:
+This file contains metadata about the role, including dependencies on other roles and information for Ansible Galaxy.
+General Use:
+Beyond A
