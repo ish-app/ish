@@ -1,3 +1,5 @@
+permissions:
+  contents: read
 name: Upload Build
 
 on:
