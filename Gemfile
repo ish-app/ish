@@ -1,5 +1,5 @@
 source "https://rubygems.org"
-gem "fastlane"
+gem "fastlane", ">= 2.227.0"
 gem "dotenv"
 gem "pry"
 
