@@ -25,7 +25,7 @@ jobs:
     permissions:
       contents: read
       security-events: write
-      actions: read # only required for a private repository by github/codeql-action/upload-sarif to get the Action run status
+      actions: run # only required for a private repository by github/codeql-action/upload-sarif to get the Action run status
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
