@@ -172,6 +172,16 @@ out_free_task:
     return err;
 }
 
+static int proc_pid_mem_show(struct proc_entry *entry, struct proc_data *buf) {
+    // mem_show does not need to do any data set-up. The /proc/mem read/write 
+    // operations do not rely on this set-up as they call user_read/write 
+    // operations directly.
+
+    (void)entry;
+    (void)buf;
+    return 0;
+}
+
 void proc_maps_dump(struct task *task, struct proc_data *buf) {
     struct mem *mem = task->mem;
     if (mem == NULL)
@@ -334,7 +344,7 @@ struct proc_children proc_pid_children = PROC_CHILDREN({
     {"exe", S_IFLNK, .readlink = proc_pid_exe_readlink},
     {"fd", S_IFDIR, .readdir = proc_pid_fd_readdir},
     {"maps", .show = proc_pid_maps_show},
-    {"mem", .pread = proc_pid_mem_pread, .pwrite = proc_pid_mem_pwrite},
+    {"mem", .pread = proc_pid_mem_pread, .pwrite = proc_pid_mem_pwrite, .show = proc_pid_mem_show},
     {"stat", .show = proc_pid_stat_show},
     {"statm", .show = proc_pid_statm_show},
     {"task", S_IFDIR, .readdir = proc_pid_task_readdir},
