@@ -561,7 +561,7 @@ dword_t sys_getcwd(addr_t buf_addr, dword_t size) {
 
 static struct fd *open_dir(const char *path) {
     struct statbuf stat;
-    int err = generic_statat(AT_PWD, path, &stat, true);
+    int err = generic_statat(AT_PWD, path, &stat, 0);
     if (err < 0)
         return ERR_PTR(err);
     if (!(stat.mode & S_IFDIR))
