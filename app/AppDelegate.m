@@ -314,7 +314,8 @@ void NetworkReachabilityCallback(SCNetworkReachabilityRef target, SCNetworkReach
 
     if (self.window != nil) {
         // For iOS <13, where the app delegate owns the window instead of the scene
-        if ([NSUserDefaults.standardUserDefaults boolForKey:@"recovery"]) {
+        UIApplicationShortcutItem *recoveryAction = [launchOptions valueForKey:UIApplicationLaunchOptionsShortcutItemKey]; // Came from Quick Action?
+        if ([NSUserDefaults.standardUserDefaults boolForKey:@"recovery"] || [recoveryAction.type isEqualToString:@"recoveryQuickAction"]) {
             UINavigationController *vc = [[UIStoryboard storyboardWithName:@"About" bundle:nil] instantiateInitialViewController];
             AboutViewController *avc = (AboutViewController *) vc.topViewController;
             avc.recoveryMode = YES;
@@ -332,6 +333,15 @@ void NetworkReachabilityCallback(SCNetworkReachabilityRef target, SCNetworkReach
     for (UISceneSession *sceneSession in sceneSessions) {
         NSString *terminalUUID = sceneSession.stateRestorationActivity.userInfo[@"TerminalUUID"];
         [[Terminal terminalWithUUID:[[NSUUID alloc] initWithUUIDString:terminalUUID]] destroy];
+    }
+}
+
+- (void)application:(UIApplication *)application performActionForShortcutItem:(UIApplicationShortcutItem *)shortcutItem completionHandler:(void (^)(BOOL))completionHandler { // Quick Action while running for iOS <13; AppDelegate owns the window
+    if([shortcutItem.type isEqualToString:@"recoveryQuickAction"]) {
+        UINavigationController *vc = [[UIStoryboard storyboardWithName:@"About" bundle:nil] instantiateInitialViewController];
+        AboutViewController *avc = (AboutViewController *) vc.topViewController;
+        avc.recoveryMode = YES;
+        self.window.rootViewController = vc;
     }
 }
 
