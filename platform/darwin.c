@@ -15,6 +15,13 @@ struct cpu_usage get_cpu_usage() {
     return usage;
 }
 
+int get_cpu_count() {
+    int ncpu;
+    size_t size = sizeof(int);
+    sysctlbyname("hw.ncpu", &ncpu, &size, NULL, 0);
+    return ncpu;
+}
+
 struct mem_usage get_mem_usage() {
     host_basic_info_data_t basic = {};
     mach_msg_type_number_t fuck = HOST_BASIC_INFO_COUNT;
