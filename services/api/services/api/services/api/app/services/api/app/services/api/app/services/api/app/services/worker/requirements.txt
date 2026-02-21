@@ -1,0 +1,4 @@
+pandas==2.2.2
+numpy==2.0.1
+sqlalchemy==2.0.32
+psycopg[binary]==3.2.1
