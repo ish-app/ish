@@ -1,0 +1,31 @@
+# 1. Navigate to your projects folder
+cd ~/Projects
+
+# 2. Create a new project folder
+mkdir VelvetVendetta
+cd VelvetVendetta
+
+# 3. Initialize a git repository
+git init
+
+# 4. Create initial folder structure
+mkdir Assets Documentation
+mkdir Assets/Scripts Assets/Prefabs Assets/Models Assets/Scenes Assets/UI
+mkdir Documentation
+
+# 5. Create placeholder README.md and LICENSE
+echo "# Velvet Vendetta: Day of Order" >> README.md
+echo "MIT License" >> LICENSE
+
+# 6. Stage files for first commit
+git add .
+git commit -m "Initial commit: repository structure and README"
+
+# 7. Create repository on GitHub (replace <USERNAME> with your GitHub username)
+# You can also create via website, then link with:
+git remote add origin https://github.com/<USERNAME>/Velvet-Vendetta-Day-of-Order.git
+
+# 8. Push initial commit to GitHub
+git branch -M main
+git push -u origin main
+
