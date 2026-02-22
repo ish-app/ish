@@ -23,19 +23,20 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install libarchive-dev
-          pip3 install meson ninja
+          python3 -m pip install --user meson ninja
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
       - name: Clone Linux
         if: matrix.kernel == 'linux'
         run: deps/clone-linux.sh
       - name: Build
         run: |
-          meson build -Dengine=asbestos -Dkernel=${{matrix.kernel}}
+          meson setup --wipe build -Dengine=asbestos -Dkernel=${{matrix.kernel}}
           ninja -C build
         env:
           CC: ${{matrix.cc}}
       - name: Test
         if: matrix.kernel == 'ish'
-        run: ninja -C build test
+        run: meson test -C build --print-errorlogs
 
   build-mac:
     runs-on: macos-15
