@@ -13,11 +13,11 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+    - name: install meson and ninja
+      run: python3 -m pip install --user meson ninja
     - name: configure
-      run: ./configure
+      run: meson setup build
     - name: make
-      run: make
+      run: meson compile -C build
     - name: make check
-      run: make check
-    - name: make distcheck
-      run: make distcheck
+      run: meson test -C build --print-errorlogs
