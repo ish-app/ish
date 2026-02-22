@@ -1,0 +1,8 @@
+[project]
+name = "strategy-sdk"
+version = "0.1.0"
+requires-python = ">=3.10"
+dependencies = ["pandas>=2.2", "numpy>=2.0"]
+
+[tool.setuptools.packages.find]
+where = ["."]

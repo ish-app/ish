@@ -26,5 +26,5 @@ xcargs("ARCHS=arm64")
 reinstall_app(true)
 clear_previous_screenshots(true)
 stop_after_first_error(true)
-number_of_retries(2) # it's buggy
+number_of_retries(4) # fail after four attempts
 disable_slide_to_type(true)
