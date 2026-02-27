@@ -4,11 +4,11 @@
 <dict>
 	<key>com.apple.developer.user-fonts</key>
 	<array>
+		<string>font-enumeration</string>
+		<string>system-installation</string>
 		<string>app-usage</string>
 	</array>
 	<key>com.apple.security.application-groups</key>
-	<array>
-		<string>$(PRODUCT_APP_GROUP_IDENTIFIER)</string>
-	</array>
+	<array/>
 </dict>
 </plist>
