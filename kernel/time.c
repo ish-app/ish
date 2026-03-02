@@ -241,7 +241,7 @@ dword_t sys_settimeofday(addr_t UNUSED(tv), addr_t UNUSED(tz)) {
 }
 
 static void posix_timer_callback(struct posix_timer *timer) {
-    if (timer->task == NULL)
+    if (timer->tgroup == NULL)
         return;
     struct siginfo_ info = {
         .code = SI_TIMER_,
@@ -249,7 +249,12 @@ static void posix_timer_callback(struct posix_timer *timer) {
         .timer.overrun = 0,
         .timer.value = timer->sig_value,
     };
-    send_signal(timer->task, timer->signal, info);
+    lock(&pids_lock);
+    struct task *thread = pid_get_task(timer->thread_pid);
+    // TODO: solve pid reuse. currently we have two ways of referring to a task: pid_t_ and struct task *. pids get reused. task struct pointers get freed on exit or reap. need a third option for cases like this, like a refcount layer.
+    if (thread != NULL)
+        send_signal(thread, timer->signal, info);
+    unlock(&pids_lock);
 }
 
 #define SIGEV_SIGNAL_ 0
@@ -264,9 +269,15 @@ int_t sys_timer_create(dword_t clock, addr_t sigevent_addr, addr_t timer_addr) {
     struct sigevent_ sigev;
     if (user_get(sigevent_addr, sigev))
         return _EFAULT;
-    // SIGEV_THREAD_ID_ is not supported yet
-    if (sigev.method != SIGEV_SIGNAL_ && sigev.method != SIGEV_NONE_)
+    if (sigev.method != SIGEV_SIGNAL_ && sigev.method != SIGEV_NONE_ && sigev.method != SIGEV_THREAD_ID_)
         return _EINVAL;
+
+    if (sigev.method == SIGEV_THREAD_ID_) {
+        lock(&pids_lock);
+        if (pid_get_task(sigev.tid) == NULL)
+            return _EINVAL;
+        unlock(&pids_lock);
+    }
 
     struct tgroup *group = current->group;
     lock(&group->lock);
@@ -286,15 +297,16 @@ int_t sys_timer_create(dword_t clock, addr_t sigevent_addr, addr_t timer_addr) {
 
     struct posix_timer *timer = &group->posix_timers[timer_id];
     timer->timer_id = timer_id;
-
     timer->timer = timer_new(real_clockid, (timer_callback_t) posix_timer_callback, timer);
+    timer->signal = sigev.signo;
     timer->sig_value = sigev.value;
-    if (sigev.method == SIGEV_NONE_) {
-        timer->task = NULL;
-    } else if (sigev.method == SIGEV_SIGNAL_) {
-        timer->task = group->leader;
-        timer->signal = sigev.signo;
-        timer->sig_value = sigev.value;
+    timer->tgroup = NULL;
+    if (sigev.method == SIGEV_SIGNAL_) {
+        timer->tgroup = group;
+        timer->thread_pid = 0;
+    } else if (sigev.method == SIGEV_THREAD_ID_) {
+        timer->tgroup = group;
+        timer->thread_pid = group->leader->pid;
     }
     unlock(&group->lock);
     return 0;

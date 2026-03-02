@@ -178,8 +178,7 @@ int compare_cpus(struct cpu_state *cpu, struct tlb *tlb, uc_engine *uc, int unde
     if (tlb->dirty_page != TLB_PAGE_EMPTY) {
         char real_page[PAGE_SIZE];
         uc_trycall(uc_mem_read(uc, tlb->dirty_page, real_page, PAGE_SIZE), "compare read");
-        struct pt_entry entry = *mem_pt(cpu->mem, PAGE(tlb->dirty_page));
-        void *fake_page = entry.data->data + entry.offset;
+        void *fake_page = mmu_translate(cpu->mmu, tlb->dirty_page, MEM_READ);
 
         if (memcmp(real_page, fake_page, PAGE_SIZE) != 0) {
             printk("page %x doesn't match\n", tlb->dirty_page);
@@ -388,15 +387,15 @@ struct gdt_entry {
     uint16_t limit0;
     uint16_t base0;
     uint8_t base1;
-    bits type:4;
-    bits system:1;
-    bits dpl:2;
-    bits present:1;
+    bitfield type:4;
+    bitfield system:1;
+    bitfield dpl:2;
+    bitfield present:1;
     unsigned limit1:4;
-    bits avail:1;
-    bits is_64_code:1;
-    bits db:1;
-    bits granularity:1;
+    bitfield avail:1;
+    bitfield is_64_code:1;
+    bitfield db:1;
+    bitfield granularity:1;
     uint8_t base2;
 } __attribute__((packed));
 
@@ -489,7 +488,7 @@ int main(int argc, char *const argv[]) {
 
     struct cpu_state *cpu = &current->cpu;
     struct tlb tlb;
-    tlb_refresh(&tlb, cpu->mem);
+    tlb_refresh(&tlb, cpu->mmu);
     int undefined_flags = 0;
     struct cpu_state old_cpu = *cpu;
     while (true) {

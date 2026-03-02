@@ -34,12 +34,30 @@ static int pty_master_init(struct tty *tty) {
     return 0;
 }
 
+
+static void pty_hangup(struct tty *tty) {
+    if (tty == NULL)
+        return;
+    lock(&tty->lock);
+    tty_hangup(tty);
+    unlock(&tty->lock);
+}
+
+static struct tty *pty_hangup_other(struct tty *tty) {
+    struct tty *other = tty->pty.other;
+    if (other == NULL)
+        return NULL;
+    pty_hangup(other);
+    return other;
+}
+
+static void pty_slave_cleanup(struct tty *tty) {
+    pty_hangup_other(tty);
+}
+
 static void pty_master_cleanup(struct tty *tty) {
-    struct tty *slave = tty->pty.other;
+    struct tty *slave = pty_hangup_other(tty);
     slave->pty.other = NULL;
-    lock(&slave->lock);
-    tty_hangup(slave);
-    unlock(&slave->lock);
     tty_release(slave);
 }
 
@@ -48,6 +66,16 @@ static int pty_slave_open(struct tty *tty) {
         return _EIO;
     if (tty->pty.locked)
         return _EIO;
+    return 0;
+}
+
+static int pty_slave_close(struct tty *tty) {
+    // If userland's reference count on the pty slave will go to 0,
+    // hang up the pty master.  But the session leader may have a
+    // reference, and the pty master always has a reference.
+    if (tty->refcount - 1 == (tty->session ? 2 : 1)) {
+        pty_hangup_other(tty);
+    }
     return 0;
 }
 
@@ -94,7 +122,9 @@ DEFINE_TTY_DRIVER(pty_master, &pty_master_ops, TTY_PSEUDO_MASTER_MAJOR, MAX_PTYS
 const struct tty_driver_ops pty_slave_ops = {
     .init = pty_return_eio,
     .open = pty_slave_open,
+    .close = pty_slave_close,
     .write = pty_write,
+    .cleanup = pty_slave_cleanup,
 };
 DEFINE_TTY_DRIVER(pty_slave, &pty_slave_ops, TTY_PSEUDO_SLAVE_MAJOR, MAX_PTYS);
 

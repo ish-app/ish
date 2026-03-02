@@ -29,6 +29,20 @@ static inline clock_t_ clock_from_timeval(struct timeval_ timeval) {
     return timeval.sec * 100 + timeval.usec / 10000;
 }
 
+static inline struct timespec convert_timespec(struct timespec_ t) {
+    struct timespec ts;
+    ts.tv_sec = t.sec;
+    ts.tv_nsec = t.nsec;
+    return ts;
+}
+
+static inline struct timespec convert_timeval(struct timeval_ t) {
+    struct timespec ts;
+    ts.tv_sec = t.sec;
+    ts.tv_nsec = t.usec * 1000;
+    return ts;
+}
+
 #define ITIMER_REAL_ 0
 #define ITIMER_VIRTUAL_ 1
 #define ITIMER_PROF_ 2

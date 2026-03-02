@@ -18,6 +18,7 @@
 #include "fs/dev.h"
 #include "fs/real.h"
 #include "fs/tty.h"
+#include "util/fchdir.h"
 
 static int getpath(int fd, char *buf) {
 #if defined(__linux__)
@@ -32,31 +33,13 @@ static int getpath(int fd, char *buf) {
 #endif
 }
 
-const char *fix_path(const char *path) {
-    if (strcmp(path, "") == 0)
-        return ".";
-    if (path[0] == '/')
-        path++;
-    return path;
-}
-
-// temporarily change directory and block other threads from doing so
-// useful for simulating mknodat on ios, dealing with long unix socket paths, etc
-lock_t fchdir_lock;
-static void lock_fchdir(int dirfd) {
-    lock(&fchdir_lock);
-    fchdir(dirfd);
-}
-static void unlock_fchdir() {
-    unlock(&fchdir_lock);
-}
-
 static int open_flags_real_from_fake(int flags) {
     int real_flags = 0;
     if (flags & O_RDONLY_) real_flags |= O_RDONLY;
     if (flags & O_WRONLY_) real_flags |= O_WRONLY;
     if (flags & O_RDWR_) real_flags |= O_RDWR;
     if (flags & O_CREAT_) real_flags |= O_CREAT;
+    if (flags & O_EXCL_) real_flags |= O_EXCL;
     if (flags & O_TRUNC_) real_flags |= O_TRUNC;
     if (flags & O_APPEND_) real_flags |= O_APPEND;
     if (flags & O_NONBLOCK_) real_flags |= O_NONBLOCK;
@@ -69,6 +52,7 @@ static int open_flags_fake_from_real(int flags) {
     if (flags & O_WRONLY) fake_flags |= O_WRONLY_;
     if (flags & O_RDWR) fake_flags |= O_RDWR_;
     if (flags & O_CREAT) fake_flags |= O_CREAT_;
+    if (flags & O_EXCL) fake_flags |= O_EXCL_;
     if (flags & O_TRUNC) fake_flags |= O_TRUNC_;
     if (flags & O_APPEND) fake_flags |= O_APPEND_;
     if (flags & O_NONBLOCK) fake_flags |= O_NONBLOCK_;
@@ -444,6 +428,12 @@ int realfs_statfs(struct mount *mount, struct statfsbuf *stat) {
 }
 
 int realfs_mount(struct mount *mount) {
+    char *source_realpath = realpath(mount->source, NULL);
+    if (source_realpath == NULL)
+        return errno_map();
+    free((void *) mount->source);
+    mount->source = source_realpath;
+
     mount->root_fd = open(mount->source, O_DIRECTORY);
     if (mount->root_fd < 0)
         return errno_map();

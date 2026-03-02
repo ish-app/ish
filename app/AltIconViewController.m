@@ -47,8 +47,6 @@
     [self.collectionView selectItemAtIndexPath:indexPath
                                       animated:NO
                                 scrollPosition:UICollectionViewScrollPositionTop];
-//    UICollectionViewFlowLayout *layout = self.collectionView.collectionViewLayout;
-//    layout.sectionFootersPinToVisibleBounds = YES;
 }
 
 - (NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section {

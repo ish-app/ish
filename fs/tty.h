@@ -66,7 +66,7 @@ struct termios_ {
 #define TCSETSF_ 0x5404
 #define TCFLSH_ 0x540b
 #define TIOCSCTTY_ 0x540e
-#define TIOCGPRGP_ 0x540f
+#define TIOCGPGRP_ 0x540f
 #define TIOCSPGRP_ 0x5410
 #define TIOCGWINSZ_ 0x5413
 #define TIOCSWINSZ_ 0x5414
@@ -93,6 +93,7 @@ struct tty_driver {
 struct tty_driver_ops {
     int (*init)(struct tty *tty);
     int (*open)(struct tty *tty);
+    int (*close)(struct tty *tty);
     int (*write)(struct tty *tty, const void *buf, size_t len, bool blocking);
     int (*ioctl)(struct tty *tty, int cmd, void *arg);
     void (*cleanup)(struct tty *tty);

@@ -80,6 +80,14 @@ struct tty *tty_get(struct tty_driver *driver, int type, int num) {
     return tty;
 }
 
+static struct tty *get_slave_side_tty(struct tty *tty) {
+  if (tty->type == TTY_PSEUDO_MASTER_MAJOR) {
+      return tty->pty.other;
+  } else {
+      return tty;
+  }
+}
+
 static void tty_poll_wakeup(struct tty *tty, int events) {
     unlock(&tty->lock);
     struct fd *fd;
@@ -102,16 +110,7 @@ void tty_release(struct tty *tty) {
         cond_destroy(&tty->produced);
         free(tty);
     } else {
-        // bit of a hack
-        struct tty *master = NULL;
-        if (tty->driver == &pty_slave && tty->refcount == 1)
-            master = tty->pty.other;
         unlock(&tty->lock);
-        if (master != NULL) {
-            lock(&master->lock);
-            tty_poll_wakeup(master, POLL_READ | POLL_HUP);
-            unlock(&master->lock);
-        }
     }
 }
 
@@ -199,11 +198,14 @@ static int tty_device_open(int major, int minor, struct fd *fd) {
 
 static int tty_close(struct fd *fd) {
     if (fd->tty != NULL) {
-        lock(&fd->tty->fds_lock);
+        struct tty *tty = fd->tty;
+        lock(&tty->fds_lock);
         list_remove_safe(&fd->tty_other_fds);
-        unlock(&fd->tty->fds_lock);
+        unlock(&tty->fds_lock);
         lock(&ttys_lock);
-        tty_release(fd->tty);
+        if (tty->driver->ops->close)
+            tty->driver->ops->close(tty);
+        tty_release(tty);
         unlock(&ttys_lock);
     }
     return 0;
@@ -406,7 +408,7 @@ static bool pty_is_half_closed_master(struct tty *tty) {
     struct tty *slave = tty->pty.other;
     // only time one tty lock is nested in another
     lock(&slave->lock);
-    bool half_closed = slave->ever_opened && slave->refcount == 1;
+    bool half_closed = slave->ever_opened && (slave->refcount == 1 || slave->hung_up);
     unlock(&slave->lock);
     return half_closed;
 }
@@ -442,7 +444,7 @@ static ssize_t tty_read(struct fd *fd, void *buf, size_t bufsize) {
     struct tty *tty = fd->tty;
     lock(&pids_lock);
     lock(&tty->lock);
-    if (tty->hung_up) {
+    if (tty->hung_up || pty_is_half_closed_master(tty)) {
         unlock(&pids_lock);
         goto error;
     }
@@ -538,7 +540,7 @@ error:
 static ssize_t tty_write(struct fd *fd, const void *buf, size_t bufsize) {
     struct tty *tty = fd->tty;
     lock(&tty->lock);
-    if (tty->hung_up) {
+    if (tty->hung_up || pty_is_half_closed_master(tty)) {
         unlock(&tty->lock);
         return _EIO;
     }
@@ -605,7 +607,7 @@ static ssize_t tty_ioctl_size(int cmd) {
             return sizeof(struct termios_);
         case TIOCGWINSZ_: case TIOCSWINSZ_:
             return sizeof(struct winsize_);
-        case TIOCGPRGP_: case TIOCSPGRP_:
+        case TIOCGPGRP_: case TIOCSPGRP_:
         case TIOCSPTLCK_: case TIOCGPTN_:
         case TIOCPKT_: case TIOCGPKT_:
         case FIONREAD_:
@@ -654,6 +656,26 @@ static int tiocsctty(struct tty *tty, int force) {
     tty_set_controlling(current->group, tty);
 out:
     unlock(&pids_lock);
+    return err;
+}
+
+static int tiocgpgrp(struct tty *tty, pid_t_ *fg_group) {
+    int err = 0;
+    struct tty *slave = get_slave_side_tty(tty);
+    if (slave != tty) {
+        lock(&slave->lock);
+    }
+
+    if (tty == slave && (!tty_is_current(slave) || slave->fg_group == 0)) {
+        err = _ENOTTY;
+        goto error_no_ctrl_tty;
+    }
+    *fg_group = slave->fg_group;
+    STRACE("tty group = %d\n", slave->fg_group);
+
+error_no_ctrl_tty:
+    if (slave != tty)
+        unlock(&slave->lock);
     return err;
 }
 
@@ -730,13 +752,10 @@ static int tty_ioctl(struct fd *fd, int cmd, void *arg) {
             err = tiocsctty(tty, (uintptr_t) arg);
             break;
 
-        case TIOCGPRGP_:
-            if (!tty_is_current(tty) || tty->fg_group == 0) {
-                err = _ENOTTY;
-                break;
-            }
-            STRACE("tty group = %d\n", tty->fg_group);
-            *(dword_t *) arg = tty->fg_group; break;
+        case TIOCGPGRP_:
+            err = tiocgpgrp(tty, (pid_t_ *) arg);
+            break;
+
         case TIOCSPGRP_:
             // see "aaaaaaaa" comment above
             unlock(&tty->lock);
@@ -775,7 +794,7 @@ void tty_set_winsize(struct tty *tty, struct winsize_ winsize) {
 
 void tty_hangup(struct tty *tty) {
     tty->hung_up = true;
-    tty_poll_wakeup(tty, POLL_READ | POLL_WRITE | POLL_ERR | POLL_HUP);
+    tty_input_wakeup(tty);
 }
 
 struct dev_ops tty_dev = {

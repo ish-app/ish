@@ -38,9 +38,7 @@ struct inode_data *inode_get_unlocked(struct mount *mount, ino_t ino) {
         list_add(&inodes_hash[ino % INODES_HASH_SIZE], &inode->chain);
     }
 
-    lock(&inode->lock);
-    inode->refcount++;
-    unlock(&inode->lock);
+    inode_retain(inode);
     return inode;
 }
 

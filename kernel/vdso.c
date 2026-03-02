@@ -1,3 +1,5 @@
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "kernel/elf.h"
 #include "kernel/vdso.h"

@@ -3,8 +3,12 @@
 #include <stdarg.h>
 #include <string.h>
 #include <sys/uio.h>
+#include <syslog.h>
 #if LOG_HANDLER_NSLOG
 #include <CoreFoundation/CoreFoundation.h>
+#endif
+#if LOG_HANDLER_OS_LOG
+#include <os/log.h>
 #endif
 #include "kernel/calls.h"
 #include "util/sync.h"
@@ -103,7 +107,7 @@ static void output_line(const char *line) {
     log_buf_append("\n");
 }
 
-void vprintk(const char *msg, va_list args) {
+void ish_vprintk(const char *msg, va_list args) {
     // format the message
     // I'm trusting you to not pass an absurdly long message
     static __thread char buf[16384] = "";
@@ -124,10 +128,10 @@ void vprintk(const char *msg, va_list args) {
     unlock(&log_lock);
     memmove(buf, b, strlen(b) + 1);
 }
-void printk(const char *msg, ...) {
+void ish_printk(const char *msg, ...) {
     va_list args;
     va_start(args, msg);
-    vprintk(msg, args);
+    ish_vprintk(msg, args);
     va_end(args);
 }
 
@@ -141,6 +145,18 @@ static void log_line(const char *line) {
 static void log_line(const char *line) {
     extern void NSLog(CFStringRef msg, ...);
     NSLog(CFSTR("%s"), line);
+}
+#elif LOG_HANDLER_SYSLOG
+static void log_line(const char *line) {
+    syslog(LOG_DEBUG, "%s", line);
+}
+#elif LOG_HANDLER_OS_LOG
+static void log_line(const char *line) {
+    os_log_fault(OS_LOG_DEFAULT, "%s", line);
+}
+#elif LOG_HANDLER_STDERR
+static void log_line(const char *line) {
+    fprintf(stderr, "%s\n", line);
 }
 #endif
 

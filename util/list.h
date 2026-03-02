@@ -1,13 +1,14 @@
 #ifndef LIST_H
 #define LIST_H
 
-#include <unistd.h>
 #include <stdbool.h>
 #include <stddef.h>
 
 struct list {
     struct list *next, *prev;
 };
+
+#ifndef __KERNEL__
 
 static inline void list_init(struct list *list) {
     list->next = list;
@@ -64,7 +65,7 @@ static inline void list_remove_safe(struct list *item) {
 }
 
 #define list_entry(item, type, member) \
-    ((type *) ((char *) (item) - offsetof(type, member)))
+    container_of(item, type, member)
 #define list_first_entry(list, type, member) \
     list_entry((list)->next, type, member)
 #define list_next_entry(item, member) \
@@ -94,5 +95,7 @@ static inline unsigned long list_size(struct list *list) {
     }
     return count;
 }
+
+#endif
 
 #endif

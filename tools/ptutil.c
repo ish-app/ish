@@ -1,7 +1,9 @@
 #define _GNU_SOURCE
+#include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <stdlib.h>
 #include <sys/personality.h>
 #include <sys/wait.h>
 #include <sys/ptrace.h>
@@ -10,7 +12,7 @@
 #include <sys/prctl.h>
 #include <sys/syscall.h>
 #include <asm/prctl.h>
-#undef PAGE_SIZE // want definition from emu/memory.h
+#undef PAGE_SIZE // want definition from kernel/memory.h
 #include "../misc.h"
 
 long trycall(long res, const char *msg) {

@@ -732,20 +732,6 @@ dword_t sys_flock(fd_t f, dword_t operation) {
     return fd->mount->fs->flock(fd, operation);
 }
 
-static struct timespec convert_timespec(struct timespec_ t) {
-    struct timespec ts;
-    ts.tv_sec = t.sec;
-    ts.tv_nsec = t.nsec;
-    return ts;
-}
-
-static struct timespec convert_timeval(struct timeval_ t) {
-    struct timespec ts;
-    ts.tv_sec = t.sec;
-    ts.tv_nsec = t.usec * 1000;
-    return ts;
-}
-
 static dword_t sys_utime_common(fd_t at_f, addr_t path_addr, struct timespec atime, struct timespec mtime, dword_t flags) {
     char path[MAX_PATH];
     if (path_addr != 0)

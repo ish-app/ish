@@ -5,7 +5,9 @@
 #include "util/list.h"
 #include "fs/stat.h"
 #include "fs/dev.h"
-#include "emu/memory.h"
+#include "fs/fake-db.h"
+#include "fs/fix_path.h"
+#include "kernel/memory.h"
 #include <dirent.h>
 #include <sqlite3.h>
 
@@ -43,6 +45,7 @@ struct attr {
     ((struct attr) {.type = attr_##_type, ._type = thing})
 
 #define AT_SYMLINK_NOFOLLOW_ 0x100
+#define AT_EMPTY_PATH_ 0x1000
 
 struct fd *generic_open(const char *path, int flags, int mode);
 struct fd *generic_openat(struct fd *at, const char *path, int flags, int mode);
@@ -79,26 +82,7 @@ struct mount {
     int root_fd;
     union {
         void *data;
-        struct {
-            sqlite3 *db;
-            struct {
-                sqlite3_stmt *begin;
-                sqlite3_stmt *commit;
-                sqlite3_stmt *rollback;
-                sqlite3_stmt *path_get_inode;
-                sqlite3_stmt *path_read_stat;
-                sqlite3_stmt *path_create_stat;
-                sqlite3_stmt *path_create_path;
-                sqlite3_stmt *inode_read_stat;
-                sqlite3_stmt *inode_write_stat;
-                sqlite3_stmt *path_link;
-                sqlite3_stmt *path_unlink;
-                sqlite3_stmt *path_rename;
-                sqlite3_stmt *path_from_inode;
-                sqlite3_stmt *try_cleanup_inode;
-            } stmt;
-            lock_t lock;
-        };
+        struct fakefs_db fakefs;
     };
 };
 extern lock_t mounts_lock;
@@ -179,7 +163,6 @@ struct fs_ops {
 };
 
 struct mount *find_mount_and_trim_path(char *path);
-const char *fix_path(const char *path); // TODO reconsider
 
 // adhoc fs
 struct fd *adhoc_fd_create(const struct fd_ops *ops);

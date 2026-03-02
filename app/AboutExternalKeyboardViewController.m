@@ -26,7 +26,9 @@ const int kCapsLockMappingSection = 0;
     [super viewDidLoad];
     [UserPreferences.shared observe:@[@"capsLockMapping", @"optionMapping"]
                             options:0 owner:self usingBlock:^(typeof(self) self) {
-        [self.tableView reloadData];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self.tableView reloadData];
+        });
     }];
     [self _update];
 }

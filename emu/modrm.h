@@ -40,9 +40,9 @@ static const unsigned rm_disp32 = reg_ebp;
 // read modrm and maybe sib, output information into *modrm, return false for segfault
 static inline bool modrm_decode32(addr_t *ip, struct tlb *tlb, struct modrm *modrm) {
 #define READ(thing) \
-    if (!tlb_read(tlb, *ip, &(thing), sizeof(thing))) \
-        return false; \
-    *ip += sizeof(thing);
+    *ip += sizeof(thing); \
+    if (!tlb_read(tlb, *ip - sizeof(thing), &(thing), sizeof(thing))) \
+        return false
 
     byte_t modrm_byte;
     READ(modrm_byte);

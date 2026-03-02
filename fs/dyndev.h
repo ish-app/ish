@@ -9,7 +9,7 @@
 // dev_ops handing char device with DYN_DEV_MAJOR major number
 extern struct dev_ops dyn_dev_char;
 
-// Registeres new block/character device with provided major and
+// Registers new block/character device with provided major and
 // minor numbers, handled by provided ops
 //
 // ops should be valid for "kernel" lifetime (should not be freed, but

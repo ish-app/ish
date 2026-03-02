@@ -1,0 +1,30 @@
+{
+  "configurations" : [
+    {
+      "id" : "963A2374-D06F-45E9-AD7A-628EE51BB5BF",
+      "name" : "Configuration 1",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "codeCoverage" : false
+  },
+  "testTargets" : [
+    {
+      "skippedTests" : [
+        "Screenshots\/testEditorsInTmux",
+        "Screenshots\/testEmacs",
+        "Screenshots\/testLanguages",
+        "UITests"
+      ],
+      "target" : {
+        "containerPath" : "container:iSH.xcodeproj",
+        "identifier" : "BB41591B255EF9E300E0950C",
+        "name" : "iSHUITests"
+      }
+    }
+  ],
+  "version" : 1
+}

@@ -5,6 +5,7 @@
 //  Created by Theodore Dubois on 2/28/20.
 //
 
+#import "AppGroup.h"
 #import <Foundation/Foundation.h>
 #import <mach-o/ldsyms.h>
 #import <mach-o/loader.h>
@@ -32,7 +33,7 @@ struct cs_entitlements {
     char entitlements[];
 };
 
-static NSDictionary *AppEntitlements() {
+static NSDictionary *AppEntitlements(void) {
     static NSDictionary *entitlements;
     if (entitlements != nil)
         return entitlements;
@@ -96,11 +97,11 @@ static NSDictionary *AppEntitlements() {
                                                                       error:nil];
 }
 
-NSArray<NSString *> *CurrentAppGroups() {
+NSArray<NSString *> *CurrentAppGroups(void) {
     return AppEntitlements()[@"com.apple.security.application-groups"];
 }
 
-NSURL *ContainerURL() {
+NSURL *ContainerURL(void) {
     NSString *appGroup = CurrentAppGroups()[0];
     return [NSFileManager.defaultManager containerURLForSecurityApplicationGroupIdentifier:appGroup];
 }

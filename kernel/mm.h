@@ -1,7 +1,7 @@
 #ifndef KERNEL_MM_H
 #define KERNEL_MM_H
 
-#include "emu/memory.h"
+#include "kernel/memory.h"
 #include "misc.h"
 
 // uses mem.lock instead of having a lock of its own

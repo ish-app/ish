@@ -39,6 +39,15 @@ void fpu_stm32(struct cpu_state *cpu, float *f);
 void fpu_stm64(struct cpu_state *cpu, double *f);
 void fpu_stm80(struct cpu_state *cpu, float80 *f);
 
+void fpu_cmovb(struct cpu_state *cpu, int i);
+void fpu_cmove(struct cpu_state *cpu, int i);
+void fpu_cmovbe(struct cpu_state *cpu, int i);
+void fpu_cmovu(struct cpu_state *cpu, int i);
+void fpu_cmovnb(struct cpu_state *cpu, int i);
+void fpu_cmovne(struct cpu_state *cpu, int i);
+void fpu_cmovnbe(struct cpu_state *cpu, int i);
+void fpu_cmovnu(struct cpu_state *cpu, int i);
+
 void fpu_ld(struct cpu_state *cpu, int i);
 void fpu_ldc(struct cpu_state *cpu, enum fpu_const c);
 void fpu_ild16(struct cpu_state *cpu, int16_t *i);

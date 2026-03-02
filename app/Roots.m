@@ -11,7 +11,7 @@
 #import "NSObject+SaneKVO.h"
 #include "tools/fakefs.h"
 
-static NSURL *RootsDir() {
+static NSURL *RootsDir(void) {
     static NSURL *rootsDir;
     static dispatch_once_t token;
     dispatch_once(&token, ^{

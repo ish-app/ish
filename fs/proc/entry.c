@@ -2,6 +2,7 @@
 #include <string.h>
 #include "fs/stat.h"
 #include "fs/proc.h"
+#include "kernel/task.h"
 
 mode_t_ proc_entry_mode(struct proc_entry *entry) {
     mode_t_ mode = entry->meta->mode;
@@ -21,6 +22,17 @@ mode_t_ proc_entry_mode(struct proc_entry *entry) {
 int proc_entry_stat(struct proc_entry *entry, struct statbuf *stat) {
     memset(stat, 0, sizeof(*stat));
     stat->mode = proc_entry_mode(entry);
+
+    lock(&pids_lock);
+    struct task *task = pid_get_task(entry->pid);
+
+    if (task != NULL) {
+        stat->uid = task->uid;
+        stat->gid = task->gid;
+    } // else the memset above will have initialized memory to zero, which is the root uid/gid
+
+    unlock(&pids_lock);
+
     stat->inode = entry->meta->inode | entry->pid << 16 | (uint64_t) entry->fd << 48;
     return 0;
 }
@@ -39,9 +51,9 @@ bool proc_dir_read(struct proc_entry *entry, unsigned long *index, struct proc_e
         return entry->meta->readdir(entry, index, next_entry);
 
     if (entry->meta->children) {
-        if (*index >= entry->meta->children_sizeof/sizeof(entry->meta->children[0]))
+        if (*index >= entry->meta->children->count)
             return false;
-        next_entry->meta = &entry->meta->children[*index];
+        next_entry->meta = &entry->meta->children->entries[*index];
         next_entry->pid = entry->pid;
         (*index)++;
         return true;
@@ -49,3 +61,16 @@ bool proc_dir_read(struct proc_entry *entry, unsigned long *index, struct proc_e
     assert(!"read from invalid proc directory");
 }
 
+void free_string_array(char **array) {
+    for (int i = 0; array[i] != NULL; i++)
+        free(array[i]);
+    free(array);
+}
+
+void proc_entry_cleanup(struct proc_entry *entry) {
+    if (entry->name != NULL)
+        free(entry->name);
+    if (entry->child_names != NULL)
+        free_string_array(entry->child_names);
+    *entry = (struct proc_entry) {0};
+}

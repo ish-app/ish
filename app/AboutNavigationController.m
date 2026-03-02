@@ -17,16 +17,13 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    [UserPreferences.shared observe:@[@"theme"] options:NSKeyValueObservingOptionInitial
+    [UserPreferences.shared observe:@[@"colorScheme"] options:NSKeyValueObservingOptionInitial
                               owner:self usingBlock:^(typeof(self) self) {
-        if (@available(iOS 13, *)) {
-            UIKeyboardAppearance appearance = UserPreferences.shared.theme.keyboardAppearance;
-            if (appearance == UIKeyboardAppearanceDark) {
-                self.overrideUserInterfaceStyle = UIUserInterfaceStyleDark;
-            } else {
-                self.overrideUserInterfaceStyle = UIUserInterfaceStyleLight;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (@available(iOS 13, *)) {
+                self.overrideUserInterfaceStyle = UserPreferences.shared.userInterfaceStyle;
             }
-        }
+        });
     }];
 }
 

@@ -123,4 +123,39 @@ struct statfs64_ {
     uint_t pad[4];
 } __attribute__((packed));
 
+struct statx_timestamp_ {
+    int64_t sec;
+    uint32_t nsec;
+    uint32_t _pad;
+};
+
+struct statx_ {
+    uint32_t mask;
+    uint32_t blksize;
+    uint64_t attributes;
+    uint32_t nlink;
+    uint32_t uid;
+    uint32_t gid;
+    uint16_t mode;
+    uint16_t _pad1;
+    uint64_t ino;
+    uint64_t size;
+    uint64_t blocks;
+    uint64_t attributes_mask;
+    struct statx_timestamp_ atime;
+    struct statx_timestamp_ btime;
+    struct statx_timestamp_ ctime;
+    struct statx_timestamp_ mtime;
+    uint32_t rdev_major;
+    uint32_t rdev_minor;
+    uint32_t dev_major;
+    uint32_t dev_minor;
+    uint64_t mnt_id;
+    uint32_t dio_mem_align;
+    uint32_t dio_offset_align;
+    uint32_t _pad2[24];
+} __attribute__((packed));
+
+#define STATX_BASIC_STATS_ 0x7ff
+
 #endif

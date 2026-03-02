@@ -17,7 +17,7 @@
 @end
 
 @interface ScrollbarViewDelegate : NSObject <UIScrollViewDelegate>
-@property id<UIScrollViewDelegate> innerDelegate;
+@property (weak) id<UIScrollViewDelegate> innerDelegate;
 @end
 @implementation ScrollbarViewDelegate
 

@@ -1,6 +1,7 @@
 #include "kernel/fs.h"
 #include "debug.h"
 #include "kernel/errno.h"
+#include "fs/fake-db.h"
 #include "fs/sqlutil.h"
 
 // The value of the user_version pragma is used to decide what needs migrating.
@@ -8,7 +9,7 @@
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 static struct migration {
     const char *sql;
-    void (*migrate)(struct mount *mount);
+    void (*migrate)(struct fakefs_db *fs);
 } migrations[] = {
     // version 1: add another index
     {
@@ -33,8 +34,8 @@ static struct migration {
     },
 };
 
-int fakefs_migrate(struct mount *mount) {
-    sqlite3 *db = mount->db;
+int fakefs_migrate(struct fakefs_db *fs, int UNUSED(root_fd)) {
+    sqlite3 *db = fs->db;
     int err;
     sqlite3_stmt *user_version = PREPARE("pragma user_version");
     STEP(user_version);
@@ -48,7 +49,7 @@ int fakefs_migrate(struct mount *mount) {
         if (m.sql != NULL)
             EXEC(m.sql);
         if (m.migrate != NULL)
-            m.migrate(mount);
+            m.migrate(fs);
         version++;
     }
     // for some reason placeholders aren't allowed in pragmas

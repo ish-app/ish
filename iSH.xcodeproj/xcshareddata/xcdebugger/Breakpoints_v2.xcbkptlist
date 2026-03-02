@@ -12,7 +12,7 @@
             ignoreCount = "0"
             continueAfterRunningActions = "Yes"
             symbolName = "UIApplicationMain"
-            moduleName = "">
+            moduleName = "UIKitCore">
             <Actions>
                <BreakpointActionProxy
                   ActionExtensionID = "Xcode.BreakpointAction.DebuggerCommand">

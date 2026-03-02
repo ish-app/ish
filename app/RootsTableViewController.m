@@ -74,7 +74,7 @@
 
 - (void)documentPicker:(UIDocumentPickerViewController *)controller didPickDocumentsAtURLs:(NSArray<NSURL *> *)urls {
     NSAssert(urls.count == 1, @"somehow picked multiple documents");
-    NSURL *url = urls[0];
+    NSURL *url = urls.firstObject;
     NSString *fileName = url.lastPathComponent.stringByDeletingPathExtension;
     if ([fileName hasSuffix:@".tar"])
         fileName = fileName.stringByDeletingPathExtension;
@@ -90,7 +90,9 @@
 
     dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
         NSError *error;
-        BOOL success = [Roots.instance importRootFromArchive:urls[0] name:name error:&error progressReporter:progressVC];
+        [url startAccessingSecurityScopedResource];
+        BOOL success = [Roots.instance importRootFromArchive:url name:name error:&error progressReporter:progressVC];
+        [url stopAccessingSecurityScopedResource];
         dispatch_async(dispatch_get_main_queue(), ^{
             [progressVC dismissViewControllerAnimated:YES completion:^{
                 if (!success && error != nil)

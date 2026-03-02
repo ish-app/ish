@@ -27,7 +27,10 @@
 
 - (void)schedule {
     if (!self.timer.valid) {
-        self.timer = [NSTimer timerWithTimeInterval:1.0/60 target:self.target selector:self.action userInfo:nil repeats:NO];
+        self.timer = [NSTimer timerWithTimeInterval:1./60 repeats:NO block:^(NSTimer * _Nonnull timer) {
+            self.timer = nil;
+            ((void (*)(id, SEL)) [self.target methodForSelector:self.action])(self.target, self.action);
+        }];
         [NSRunLoop.mainRunLoop addTimer:self.timer forMode:NSDefaultRunLoopMode];
     }
 }

@@ -1,0 +1,13 @@
+#include "iOS.xcconfig"
+
+PRODUCT_NAME = iSH
+PRODUCT_BUNDLE_IDENTIFIER = $(PRODUCT_BUNDLE_IDENTIFIER)
+INFOPLIST_FILE = app/Info.plist
+INFOPLIST_PREPROCESS = YES
+INFOPLIST_PREFIX_HEADER = $(BUILT_PRODUCTS_DIR)/infoplisticons.h
+ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon
+CODE_SIGN_ENTITLEMENTS = app/iSH.entitlements
+
+HEADER_SEARCH_PATHS = $(inherited) $(SRCROOT) $(SRCROOT)/deps/libarchive/libarchive
+// AccessibilityFixes.m contains a static constructor that we don't want removed
+OTHER_LDFLAGS = -ObjC $(LINUX_APP_LDFLAGS) -u _accessibilityfixes_init
