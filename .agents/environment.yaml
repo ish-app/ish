@@ -1,0 +1,22 @@
+# Environment setup for ish repo
+setup:
+  - command: "sudo apt-get update -qq && sudo apt-get install -y -qq clang lld libsqlite3-dev libarchive-dev pkg-config ninja-build python3-pip"
+    description: "Install system build dependencies"
+  - command: "pip3 install meson"
+    description: "Install Meson build system"
+  - command: "git submodule update --init --recursive"
+    description: "Initialize git submodules"
+  - command: "meson setup build"
+    description: "Configure the Meson build"
+  - command: "ninja -C build"
+    description: "Build the project"
+
+maintenance:
+  - command: "sudo apt-get update -qq && sudo apt-get install -y -qq clang lld libsqlite3-dev libarchive-dev pkg-config ninja-build"
+    description: "Ensure system dependencies are up to date"
+  - command: "pip3 install --upgrade meson"
+    description: "Update Meson build system"
+  - command: "git submodule update --init --recursive"
+    description: "Update git submodules"
+  - command: "ninja -C build"
+    description: "Rebuild the project"
