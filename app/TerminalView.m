@@ -272,9 +272,11 @@ static NSString *const HANDLERS[] = {@"syncFocus", @"focus", @"newScrollHeight",
 
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView {
     CGFloat newY = scrollView.contentOffset.y;
+    [self.terminal.webView evaluateJavaScript:[NSString stringWithFormat:@"exports.newScrollTop(%f)", newY] completionHandler:nil];
     CGFloat delta = newY - _prevScrollY;
     _prevScrollY = newY;
-    [self.terminal.webView evaluateJavaScript:[NSString stringWithFormat:@"exports.handleScroll(%f, %f)", newY, delta] completionHandler:nil];
+    if (delta != 0)
+        [self.terminal.webView evaluateJavaScript:[NSString stringWithFormat:@"exports.handleScrollDelta(%f)", delta] completionHandler:nil];
 }
 
 - (void)setKeyboardAppearance:(UIKeyboardAppearance)keyboardAppearance {

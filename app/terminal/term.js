@@ -110,38 +110,12 @@ term.scrollPort_.onTouch = (e) => {
 };
 // Scroll to bottom wrapper
 exports.scrollToBottom = () => term.scrollEnd();
-// Set scroll position and optionally forward delta as WheelEvents into hterm's
-// onMouse_ pipeline for mouse reporting (VT) and alternate screen arrow keys.
-let scrollDeltaRemainder = 0;
-exports.handleScroll = (y, delta) => {
+// Set scroll position
+exports.newScrollTop = (y) => {
+    // two lines instead of one because the value you read out of scrollTop can be different from the value you write into it
     term.scrollPort_.screen_.scrollTop = y;
     lastScrollTop = term.scrollPort_.screen_.scrollTop;
-
-    if (delta === 0) return;
-    if (term.vt.mouseReport === term.vt.MOUSE_REPORT_DISABLED && term.isPrimaryScreen())
-        return;
-
-    const charH = term.scrollPort_.characterSize.height;
-    if (!charH) return;
-
-    scrollDeltaRemainder += delta;
-    const lines = Math.trunc(scrollDeltaRemainder / charH);
-    if (lines === 0) return;
-    scrollDeltaRemainder -= lines * charH;
-
-    const abs = Math.abs(lines);
-    const down = lines > 0;
-    for (let i = 0; i < abs; i++) {
-        term.scrollPort_.screen_.dispatchEvent(new WheelEvent('wheel', {
-            deltaY: down ? 1 : -1,
-            deltaMode: WheelEvent.DOM_DELTA_LINE,
-            bubbles: true,
-            cancelable: true,
-        }));
-    }
 };
-// Keep old name for compatibility
-exports.newScrollTop = (y) => exports.handleScroll(y, 0);
 
 // Send scroll height and position to native code
 let lastScrollHeight, lastScrollTop;
@@ -180,6 +154,29 @@ exports.getCharacterSize = () => {
 };
 
 exports.clearScrollback = () => term.clearScrollback();
+
+// Forward scroll delta as synthetic WheelEvents into hterm's onMouse_ pipeline.
+let scrollDeltaRemainder = 0;
+exports.handleScrollDelta = (delta) => {
+    if (term.vt.mouseReport === term.vt.MOUSE_REPORT_DISABLED && term.isPrimaryScreen())
+        return;
+    const charH = term.scrollPort_.characterSize.height;
+    if (!charH) return;
+    scrollDeltaRemainder += delta;
+    const lines = Math.trunc(scrollDeltaRemainder / charH);
+    if (lines === 0) return;
+    scrollDeltaRemainder -= lines * charH;
+    const abs = Math.abs(lines);
+    const down = lines > 0;
+    for (let i = 0; i < abs; i++) {
+        term.scrollPort_.screen_.dispatchEvent(new WheelEvent('wheel', {
+            deltaY: down ? 1 : -1,
+            deltaMode: WheelEvent.DOM_DELTA_LINE,
+            bubbles: true,
+            cancelable: true,
+        }));
+    }
+};
 
 exports.setUserGesture = () => term.accessibilityReader_.hasUserGesture = true;
 
