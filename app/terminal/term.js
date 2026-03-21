@@ -166,13 +166,10 @@ exports.handleScrollDelta = (delta) => {
     const lines = Math.trunc(scrollDeltaRemainder / charH);
     if (lines === 0) return;
     scrollDeltaRemainder -= lines * charH;
-    const abs = Math.abs(lines);
-    const down = lines > 0;
-    for (let i = 0; i < abs; i++) {
+    for (let i = 0; i < Math.abs(lines); i++) {
         term.scrollPort_.screen_.dispatchEvent(new WheelEvent('wheel', {
-            deltaY: down ? 1 : -1,
+            deltaY: lines > 0 ? 1 : -1,
             deltaMode: WheelEvent.DOM_DELTA_LINE,
-            bubbles: true,
             cancelable: true,
         }));
     }
