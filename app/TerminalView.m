@@ -31,7 +31,9 @@ struct rowcol {
 }
 @end
 
-@interface TerminalView ()
+@interface TerminalView () {
+    CGFloat _prevScrollY;
+}
 
 @property (nonatomic) NSMutableArray<UIKeyCommand *> *keyCommands;
 @property ScrollbarView *scrollbarView;
@@ -104,6 +106,7 @@ static NSString *const HANDLERS[] = {@"syncFocus", @"focus", @"newScrollHeight",
     }
 
     _terminal = terminal;
+    _prevScrollY = 0;
     [_terminal addObserver:self forKeyPath:@"loaded" options:NSKeyValueObservingOptionInitial context:nil];
     if (_terminal.loaded)
         [self installTerminalView];
@@ -268,7 +271,10 @@ static NSString *const HANDLERS[] = {@"syncFocus", @"focus", @"newScrollHeight",
 }
 
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView {
-    [self.terminal.webView evaluateJavaScript:[NSString stringWithFormat:@"exports.newScrollTop(%f)", scrollView.contentOffset.y] completionHandler:nil];
+    CGFloat newY = scrollView.contentOffset.y;
+    CGFloat delta = newY - _prevScrollY;
+    _prevScrollY = newY;
+    [self.terminal.webView evaluateJavaScript:[NSString stringWithFormat:@"exports.handleScroll(%f, %f)", newY, delta] completionHandler:nil];
 }
 
 - (void)setKeyboardAppearance:(UIKeyboardAppearance)keyboardAppearance {
