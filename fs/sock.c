@@ -236,6 +236,22 @@ static int sockaddr_read_bind(addr_t sockaddr_addr, void *sockaddr, uint_t *sock
     struct sockaddr_ *fake_addr = sockaddr;
     real_addr->sa_family = sock_family_to_real(fake_addr->family);
 
+    // BSD/macOS sockaddr has a sa_len field (first byte) that Linux does not.
+    // After translating the family, set sa_len to the correct structure size.
+#ifdef __APPLE__
+    switch (real_addr->sa_family) {
+        case PF_INET:
+            real_addr->sa_len = sizeof(struct sockaddr_in);
+            break;
+        case PF_INET6:
+            real_addr->sa_len = sizeof(struct sockaddr_in6);
+            break;
+        case PF_LOCAL:
+            real_addr->sa_len = *sockaddr_len;
+            break;
+    }
+#endif
+
     switch (real_addr->sa_family) {
         case PF_INET:
             if (*sockaddr_len < sizeof(struct sockaddr_in))
