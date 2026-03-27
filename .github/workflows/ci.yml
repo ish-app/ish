@@ -60,7 +60,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: iSH.app
-          path: build/DerivedData/Build/Products/Release-iphoneos/iSH.app
+          path: build/DerivedData/Build/Products/*/iSH.app
       - name: Build
         if: matrix.kernel == 'linux'
         run: xcodebuild -project iSH.xcodeproj -scheme iSH+Linux -arch x86_64 -sdk iphonesimulator CODE_SIGNING_ALLOWED=NO
