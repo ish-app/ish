@@ -3,9 +3,11 @@
 #include <sys/stat.h>
 #include "fs/devices.h"
 #include "fs/fd.h"
+#include "fs/path.h"
 #include "fs/real.h"
 #include "fs/tty.h"
 #include "kernel/calls.h"
+#include "kernel/fs.h"
 #include "kernel/init.h"
 #include "kernel/personality.h"
 
@@ -123,6 +125,30 @@ extern int console_minor;
 void set_console_device(int major, int minor) {
     console_major = major;
     console_minor = minor;
+}
+
+static void create_device_node(const char *path, int major, int minor) {
+    generic_mknodat(AT_PWD, path, S_IFCHR|0666, dev_make(major, minor));
+}
+
+void create_standard_devices(void) {
+    for (int tty = 1; tty <= 7; tty++) {
+        char path[] = "/dev/tty0";
+        path[8] = '0' + tty;
+        create_device_node(path, TTY_CONSOLE_MAJOR, tty);
+    }
+
+    create_device_node("/dev/tty", TTY_ALTERNATE_MAJOR, DEV_TTY_MINOR);
+    create_device_node("/dev/console", TTY_ALTERNATE_MAJOR, DEV_CONSOLE_MINOR);
+    create_device_node("/dev/ptmx", TTY_ALTERNATE_MAJOR, DEV_PTMX_MINOR);
+
+    create_device_node("/dev/null", MEM_MAJOR, DEV_NULL_MINOR);
+    create_device_node("/dev/zero", MEM_MAJOR, DEV_ZERO_MINOR);
+    create_device_node("/dev/full", MEM_MAJOR, DEV_FULL_MINOR);
+    create_device_node("/dev/random", MEM_MAJOR, DEV_RANDOM_MINOR);
+    create_device_node("/dev/urandom", MEM_MAJOR, DEV_URANDOM_MINOR);
+
+    generic_mkdirat(AT_PWD, "/dev/pts", 0755);
 }
 
 int create_stdio(const char *file, int major, int minor) {
