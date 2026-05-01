@@ -89,7 +89,7 @@ static NSString *const kSkipStartupMessage = @"Skip Startup Message";
 
     FsInitialize();
 
-    create_standard_devices();
+    create_some_device_nodes();
     
     // Permissions on / have been broken for a while, let's fix them
     generic_setattrat(AT_PWD, "/", (struct attr) {.type = attr_mode, .mode = 0755}, false);
