@@ -7,7 +7,7 @@
 #include "kernel/memory.h"
 #include "kernel/mm.h"
 
-struct mm *mm_new() {
+struct mm *mm_new(void) {
     struct mm *mm = malloc(sizeof(struct mm));
     if (mm == NULL)
         return NULL;
@@ -59,8 +59,7 @@ static addr_t do_mmap(addr_t addr, dword_t len, dword_t prot, dword_t flags, fd_
         if (!(flags & MMAP_FIXED) && !pt_is_hole(current->mem, page, pages)) {
             addr = 0;
         }
-    }
-    if (addr == 0) {
+    } else {
         page = pt_find_hole(current->mem, pages);
         if (page == BAD_PAGE)
             return _ENOMEM;

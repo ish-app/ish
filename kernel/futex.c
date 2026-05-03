@@ -25,7 +25,7 @@ struct futex_wait {
 static lock_t futex_lock = LOCK_INITIALIZER;
 static struct list futex_hash[FUTEX_HASH_SIZE];
 
-static void __attribute__((constructor)) init_futex_hash() {
+static void __attribute__((constructor)) init_futex_hash(void) {
     for (int i = 0; i < FUTEX_HASH_SIZE; i++)
         list_init(&futex_hash[i]);
 }

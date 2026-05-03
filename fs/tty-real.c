@@ -125,7 +125,7 @@ static int real_tty_write(struct tty *tty, const void *buf, size_t len, bool UNU
     return write(STDOUT_FILENO, buf, len);
 }
 
-void real_tty_reset_term() {
+void real_tty_reset_term(void) {
     if (!real_tty_is_open) return;
     if (tcsetattr(STDIN_FILENO, TCSANOW, &old_termios) < 0 && errno != ENOTTY) {
         printk("failed to reset terminal: %s\n", strerror(errno));

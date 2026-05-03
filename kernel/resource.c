@@ -136,7 +136,7 @@ dword_t sys_prlimit64(pid_t_ pid, dword_t resource, addr_t new_limit_addr, addr_
     return 0;
 }
 
-struct rusage_ rusage_get_current() {
+struct rusage_ rusage_get_current(void) {
     // only the time fields are currently implemented
     struct rusage_ rusage;
 #if __linux__

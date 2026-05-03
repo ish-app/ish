@@ -98,7 +98,7 @@ int err_map(int err) {
     return -(err | 0x1000);
 }
 
-int errno_map() {
+int errno_map(void) {
     if (errno == EPIPE)
         send_signal(current, SIGPIPE_, SIGINFO_NIL);
     return err_map(errno);

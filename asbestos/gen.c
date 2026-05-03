@@ -462,7 +462,7 @@ static inline uint16_t cpu_reg_offset(enum arg arg, int index) {
     return 0;
 }
 
-static inline bool gen_vec(enum arg src, enum arg dst, void (*helper)(), gadget_t read_mem_gadget, gadget_t write_mem_gadget, struct gen_state *state, struct modrm *modrm, uint8_t imm, bool seg_gs, bool has_imm) {
+static inline bool gen_vec(enum arg src, enum arg dst, void (*helper)(void), gadget_t read_mem_gadget, gadget_t write_mem_gadget, struct gen_state *state, struct modrm *modrm, uint8_t imm, bool seg_gs, bool has_imm) {
     bool rm_is_src = !could_be_memory(dst);
     enum arg rm = rm_is_src ? src : dst;
     enum arg reg = rm_is_src ? dst : src;
@@ -523,7 +523,7 @@ static inline bool gen_vec(enum arg src, enum arg dst, void (*helper)(), gadget_
 #define _v(src, dst, helper, _imm, z) do { \
     extern void gadget_vec_helper_read##z##_imm(void); \
     extern void gadget_vec_helper_write##z##_imm(void); \
-    if (!gen_vec(src, dst, (void (*)()) helper, gadget_vec_helper_read##z##_imm, gadget_vec_helper_write##z##_imm, state, &modrm, imm, seg_gs, has_imm_##_imm)) return false; \
+    if (!gen_vec(src, dst, (void (*)(void)) helper, gadget_vec_helper_read##z##_imm, gadget_vec_helper_write##z##_imm, state, &modrm, imm, seg_gs, has_imm_##_imm)) return false; \
 } while (0)
 #define v_(op, src, dst, _imm,z) _v(arg_##src, arg_##dst, vec_##op##z, _imm,z)
 #define v(op, src, dst,z) v_(op, src, dst,,z)

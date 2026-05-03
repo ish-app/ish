@@ -33,6 +33,8 @@ static int getpath(int fd, char *buf) {
 #endif
 }
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunreachable-code"
 static int open_flags_real_from_fake(int flags) {
     int real_flags = 0;
     if (flags & O_RDONLY_) real_flags |= O_RDONLY;
@@ -58,6 +60,7 @@ static int open_flags_fake_from_real(int flags) {
     if (flags & O_NONBLOCK) fake_flags |= O_NONBLOCK_;
     return fake_flags;
 }
+#pragma clang diagnostic pop
 
 struct fd *realfs_open(struct mount *mount, const char *path, int flags, int mode) {
     int real_flags = open_flags_real_from_fake(flags);

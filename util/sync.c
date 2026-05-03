@@ -95,7 +95,7 @@ void notify_once(cond_t *cond) {
 __thread sigjmp_buf unwind_buf;
 __thread bool should_unwind = false;
 
-void sigusr1_handler() {
+void sigusr1_handler(void) {
     if (should_unwind) {
         should_unwind = false;
         siglongjmp(unwind_buf, 1);

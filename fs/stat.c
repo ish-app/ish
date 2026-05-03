@@ -95,7 +95,6 @@ dword_t sys_fstat64(fd_t fd_no, addr_t statbuf_addr) {
 }
 
 dword_t sys_statx(fd_t at_f, addr_t path_addr, int_t flags, uint_t mask, addr_t statx_addr) {
-    int err;
     char path[MAX_PATH];
     if (user_read_string(path_addr, path, sizeof(path)))
         return _EFAULT;

@@ -297,6 +297,7 @@ static bool cmpd(double a, double b, int type) {
         case 1: res = a < b; break;
         case 2: res = a <= b; break;
         case 3: res = isnan(a) || isnan(b); break;
+        default: __builtin_unreachable();
     }
     if (type >= 4) res = !res;
     return res;
@@ -308,6 +309,7 @@ static bool cmps(float a, float b, int type) {
         case 1: res = a < b; break;
         case 2: res = a <= b; break;
         case 3: res = isnan(a) || isnan(b); break;
+        default: __builtin_unreachable();
     }
     if (type >= 4) res = !res;
     return res;

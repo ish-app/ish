@@ -196,11 +196,11 @@ dword_t sys_clone(dword_t flags, addr_t stack, addr_t ptid, addr_t tls, addr_t c
     return pid;
 }
 
-dword_t sys_fork() {
+dword_t sys_fork(void) {
     return sys_clone(SIGCHLD_, 0, 0, 0, 0);
 }
 
-dword_t sys_vfork() {
+dword_t sys_vfork(void) {
     return sys_clone(CLONE_VFORK_ | CLONE_VM_ | SIGCHLD_, 0, 0, 0, 0);
 }
 

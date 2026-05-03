@@ -22,6 +22,7 @@
 
 // compiler check
 #define is_gcc(version) (__GNUC__ >= version)
+#define is_clang(version) (__clang_major__ >= version)
 
 #if !defined(__has_attribute)
 #define has_attribute(x) 0

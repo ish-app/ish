@@ -17,7 +17,7 @@ fd_t sys_epoll_create(int_t flags) {
     fd->epollfd.poll = poll;
     return f_install(fd, flags);
 }
-fd_t sys_epoll_create0() {
+fd_t sys_epoll_create0(void) {
     return sys_epoll_create(0);
 }
 
