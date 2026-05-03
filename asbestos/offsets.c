@@ -3,7 +3,7 @@
 #include "emu/cpu.h"
 #include "emu/tlb.h"
 
-void cpu() {
+void cpu(void) {
     OFFSET(CPU, cpu_state, eax);
     OFFSET(CPU, cpu_state, ebx);
     OFFSET(CPU, cpu_state, ecx);

@@ -78,7 +78,7 @@ static struct fd *sock_getfd(fd_t sock_fd) {
     return sock;
 }
 
-static uint32_t unix_socket_next_id() {
+static uint32_t unix_socket_next_id(void) {
     static uint32_t next_id = 0;
     static lock_t next_id_lock = LOCK_INITIALIZER;
     lock(&next_id_lock);
@@ -1186,7 +1186,7 @@ const struct fd_ops socket_fdops = {
     .ioctl = realfs_ioctl,
 };
 
-#if defined(__GNUC__) && __GNUC__ >= 8
+#if is_gcc(8) || is_clang(21)
 #pragma GCC diagnostic ignored "-Wcast-function-type"
 #endif
 #if defined(__clang__)

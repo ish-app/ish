@@ -324,7 +324,7 @@ void signal_delivery_stop(int sig, struct siginfo_ *info) {
     lock(&current->sighand->lock);
 }
 
-void receive_signals() {
+void receive_signals(void) {
     lock(&current->group->lock);
     bool was_stopped = current->group->stopped;
     unlock(&current->group->lock);
@@ -397,7 +397,7 @@ static void restore_sigcontext(struct sigcontext_ *context, struct cpu_state *cp
     cpu->eflags = (context->flags & USE_FLAGS) | (cpu->eflags & ~USE_FLAGS);
 }
 
-dword_t sys_rt_sigreturn() {
+dword_t sys_rt_sigreturn(void) {
     struct cpu_state *cpu = &current->cpu;
     struct rt_sigframe_ frame;
     // esp points past the first field of the frame
@@ -419,7 +419,7 @@ dword_t sys_rt_sigreturn() {
     return cpu->eax;
 }
 
-dword_t sys_sigreturn() {
+dword_t sys_sigreturn(void) {
     struct cpu_state *cpu = &current->cpu;
     struct sigframe_ frame;
     // esp points past the first two fields of the frame
@@ -436,7 +436,7 @@ dword_t sys_sigreturn() {
     return cpu->eax;
 }
 
-struct sighand *sighand_new() {
+struct sighand *sighand_new(void) {
     struct sighand *sighand = malloc(sizeof(struct sighand));
     if (sighand == NULL)
         return NULL;
@@ -535,7 +535,7 @@ dword_t sys_rt_sigprocmask(dword_t how, addr_t set_addr, addr_t oldset_addr, dwo
     if (size != sizeof(sigset_t_))
         return _EINVAL;
 
-    sigset_t_ set;
+    sigset_t_ set = 0;
     if (set_addr != 0)
         if (user_get(set_addr, set))
             return _EFAULT;
@@ -634,7 +634,7 @@ int_t sys_rt_sigsuspend(addr_t mask_addr, uint_t size) {
     return _EINTR;
 }
 
-int_t sys_pause() {
+int_t sys_pause(void) {
     lock(&current->sighand->lock);
     while (wait_for(&current->pause, &current->sighand->lock, NULL) != _EINTR)
         continue;

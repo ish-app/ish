@@ -3,7 +3,7 @@
 #include <sys/time.h>
 #include "platform/platform.h"
 
-struct cpu_usage get_cpu_usage() {
+struct cpu_usage get_cpu_usage(void) {
     host_cpu_load_info_data_t load;
     mach_msg_type_number_t fuck = HOST_CPU_LOAD_INFO_COUNT;
     host_statistics(mach_host_self(), HOST_CPU_LOAD_INFO, (host_info_t) &load, &fuck);
@@ -15,7 +15,7 @@ struct cpu_usage get_cpu_usage() {
     return usage;
 }
 
-struct mem_usage get_mem_usage() {
+struct mem_usage get_mem_usage(void) {
     host_basic_info_data_t basic = {};
     mach_msg_type_number_t fuck = HOST_BASIC_INFO_COUNT;
     kern_return_t status = host_info(mach_host_self(), HOST_BASIC_INFO, (host_info_t) &basic, &fuck);
@@ -33,7 +33,7 @@ struct mem_usage get_mem_usage() {
     return usage;
 }
 
-struct uptime_info get_uptime() {
+struct uptime_info get_uptime(void) {
     uint64_t kern_boottime[2];
     size_t size = sizeof(kern_boottime);
     sysctlbyname("kern.boottime", &kern_boottime, &size, NULL, 0);

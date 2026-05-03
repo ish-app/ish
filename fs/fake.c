@@ -354,7 +354,7 @@ retry:
 }
 
 static struct fd_ops fakefs_fdops;
-static void __attribute__((constructor)) init_fake_fdops() {
+static void __attribute__((constructor)) init_fake_fdops(void) {
     fakefs_fdops = realfs_fdops;
     fakefs_fdops.readdir = fakefs_readdir;
 }

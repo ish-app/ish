@@ -128,7 +128,7 @@ const struct tty_driver_ops pty_slave_ops = {
 };
 DEFINE_TTY_DRIVER(pty_slave, &pty_slave_ops, TTY_PSEUDO_SLAVE_MAJOR, MAX_PTYS);
 
-static int pty_reserve_next() {
+static int pty_reserve_next(void) {
     int pty_num;
     lock(&ttys_lock);
     for (pty_num = 0; pty_num < MAX_PTYS; pty_num++) {

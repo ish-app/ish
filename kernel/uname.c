@@ -41,7 +41,7 @@ dword_t sys_sethostname(addr_t UNUSED(hostname_addr), dword_t UNUSED(hostname_le
 }
 
 #if __APPLE__
-static uint64_t get_total_ram() {
+static uint64_t get_total_ram(void) {
     uint64_t total_ram;
     sysctl((int []) {CTL_DEBUG, HW_PHYSMEM}, 2, &total_ram, NULL, NULL, 0);
     return total_ram;

@@ -176,7 +176,7 @@ void die(const char *msg, ...) {
 }
 
 // fun little utility function
-int current_pid() {
+int current_pid(void) {
     if (current)
         return current->pid;
     return -1;

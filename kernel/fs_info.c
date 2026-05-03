@@ -1,7 +1,7 @@
 #include "kernel/fs.h"
 #include "fs/fd.h"
 
-struct fs_info *fs_info_new() {
+struct fs_info *fs_info_new(void) {
     struct fs_info *fs = malloc(sizeof(struct fs_info));
     if (fs == NULL)
         return NULL;

@@ -69,7 +69,7 @@ void assertf(int cond, const char *msg, ...) {
     puts(buf);
 }
 
-void test_int_convert() {
+void test_int_convert(void) {
     suite_start();
     union f80 u;
     int64_t i;
@@ -96,7 +96,7 @@ void test_int_convert() {
     suite_end();
 }
 
-void test_double_convert() {
+void test_double_convert(void) {
     suite_start();
     union f80 u;
     double d;
@@ -118,7 +118,7 @@ void test_double_convert() {
     suite_end();
 }
 
-void test_round() {
+void test_round(void) {
     suite_start();
     union f80 u, ur;
     long double r;
@@ -145,7 +145,7 @@ void test_round() {
     suite_end();
 }
 
-void test_math() {
+void test_math(void) {
     suite_start();
     union f80 ua, ub, u;
     long double expected;
@@ -217,7 +217,7 @@ void test_math() {
     suite_end();
 }
 
-void test_compare() {
+void test_compare(void) {
     suite_start();
     union f80 ua, ub;
     bool expected, actual;
@@ -258,7 +258,7 @@ uint64_t fnmulh(uint64_t a, uint64_t b) {
     return ((unsigned __int128) a * b) >> 64;
 }
 
-int main() {
+int main(void) {
     for (int rounding_mode = 0; rounding_mode < 4; rounding_mode++) {
         f80_rounding_mode = rounding_mode;
         switch (rounding_mode) {
