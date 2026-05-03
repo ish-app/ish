@@ -7,16 +7,16 @@ on:
 
 jobs:
   build-linux:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         cc: [clang, gcc]
         kernel: [ish, linux]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v6
         with:
             submodules: true
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v6
         with:
             python-version: '3.x'
       - name: Install dependencies
@@ -38,7 +38,7 @@ jobs:
         run: ninja -C build test
 
   build-mac:
-    runs-on: macos-15
+    runs-on: macos-26
     strategy:
       matrix:
         kernel: [ish, linux]
