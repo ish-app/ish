@@ -163,8 +163,8 @@ void *find_symbol(void *base, char *symbol) {
     // proc_regionfilename doesn't seem to produce results unless the shared
     // region has been modified in some way. This "no-op" forces the mapping
     // to be backed by a vnode whose path we can query.
-    vm_protect(mach_task_self(), (vm_address_t)base, 1, false, VM_PROT_READ | VM_PROT_COPY);
-    vm_protect(mach_task_self(), (vm_address_t)base, 1, false, VM_PROT_READ | VM_PROT_EXECUTE);
+    vm_protect(mach_task_self(), (vm_address_t)all_image_infos->sharedCacheBaseAddress, 1, false, VM_PROT_READ | VM_PROT_COPY);
+    vm_protect(mach_task_self(), (vm_address_t)all_image_infos->sharedCacheBaseAddress, 1, false, VM_PROT_READ);
 
     char path[MAXPATHLEN];
     int size = proc_regionfilename(getpid(), all_image_infos->sharedCacheBaseAddress, path, sizeof(path));
