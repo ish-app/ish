@@ -26,13 +26,20 @@ struct fd *fd_create(const struct fd_ops *ops) {
 }
 
 struct fd *fd_retain(struct fd *fd) {
+    lock(&fd->lock);
+    assert(fd->refcount > 0);
     fd->refcount++;
+    unlock(&fd->lock);
     return fd;
 }
 
 int fd_close(struct fd *fd) {
     int err = 0;
-    if (--fd->refcount == 0) {
+    lock(&fd->lock);
+    assert(fd->refcount > 0);
+    bool destroy = --fd->refcount == 0;
+    unlock(&fd->lock);
+    if (destroy) {
         poll_cleanup_fd(fd);
         if (fd->ops->close)
             err = fd->ops->close(fd);
@@ -127,7 +134,7 @@ struct fdtable *fdtable_copy(struct fdtable *table) {
     memcpy(new_table->files, table->files, sizeof(struct fd *) * size);
     for (fd_t f = 0; f < size; f++)
         if (new_table->files[f])
-            new_table->files[f]->refcount++;
+            fd_retain(new_table->files[f]);
     memcpy(new_table->cloexec, table->cloexec, BITS_SIZE(size));
     unlock(&table->lock);
     return new_table;
@@ -153,6 +160,19 @@ struct fd *f_get(fd_t f) {
     struct fd *fd = fdtable_get(current->files, f);
     unlock(&current->files->lock);
     return fd;
+}
+
+struct fd *f_get_retain(fd_t f) {
+    lock(&current->files->lock);
+    struct fd *fd = fdtable_get(current->files, f);
+    if (fd != NULL)
+        fd_retain(fd);
+    unlock(&current->files->lock);
+    return fd;
+}
+
+void f_put(struct fd *fd) {
+    fd_close(fd);
 }
 
 static fd_t f_install_start(struct fd *fd, fd_t start) {
@@ -243,27 +263,41 @@ void fdtable_do_cloexec(struct fdtable *table) {
 
 dword_t sys_dup(fd_t f) {
     STRACE("dup(%d)", f);
-    struct fd *fd = f_get(f);
-    if (fd == NULL)
+    struct fdtable *table = current->files;
+    lock(&table->lock);
+    struct fd *fd = fdtable_get(table, f);
+    if (fd == NULL) {
+        unlock(&table->lock);
         return _EBADF;
-    fd->refcount++;
-    return f_install(fd, 0);
+    }
+    fd_retain(fd);
+    fd_t new_f = f_install_start(fd, 0);
+    unlock(&table->lock);
+    return new_f;
 }
 
 dword_t sys_dup3(fd_t f, fd_t new_f, int_t flags) {
     STRACE("dup3(%d, %d, %d)", f, new_f, flags);
     struct fdtable *table = current->files;
-    struct fd *fd = f_get(f);
-    if (fd == NULL)
+    lock(&table->lock);
+    struct fd *fd = fdtable_get(table, f);
+    if (fd == NULL) {
+        unlock(&table->lock);
         return _EBADF;
+    }
     int err = fdtable_expand(table, new_f);
-    if (err < 0)
+    if (err < 0) {
+        unlock(&table->lock);
         return err;
+    }
     fd_retain(fd);
-    f_close(new_f);
+    fdtable_close(table, new_f);
     table->files[new_f] = fd;
     if (flags & O_CLOEXEC_)
         bit_set(new_f, table->cloexec);
+    else
+        bit_clear(new_f, table->cloexec);
+    unlock(&table->lock);
     return new_f;
 }
 
@@ -287,9 +321,7 @@ int fd_setflags(struct fd *fd, int flags) {
 
 dword_t sys_fcntl(fd_t f, dword_t cmd, dword_t arg) {
     struct fdtable *table = current->files;
-    struct fd *fd = f_get(f);
-    if (fd == NULL)
-        return _EBADF;
+    struct fd *fd;
     struct flock32_ flock32;
     struct flock_ flock;
     fd_t new_f;
@@ -297,38 +329,79 @@ dword_t sys_fcntl(fd_t f, dword_t cmd, dword_t arg) {
     switch (cmd) {
         case F_DUPFD_:
             STRACE("fcntl(%d, F_DUPFD, %d)", f, arg);
-            fd->refcount++;
-            return f_install_start(fd, arg);
+            lock(&table->lock);
+            fd = fdtable_get(table, f);
+            if (fd == NULL) {
+                unlock(&table->lock);
+                return _EBADF;
+            }
+            fd_retain(fd);
+            new_f = f_install_start(fd, arg);
+            unlock(&table->lock);
+            return new_f;
 
         case F_DUPFD_CLOEXEC_:
             STRACE("fcntl(%d, F_DUPFD_CLOEXEC, %d)", f, arg);
-            fd->refcount++;
+            lock(&table->lock);
+            fd = fdtable_get(table, f);
+            if (fd == NULL) {
+                unlock(&table->lock);
+                return _EBADF;
+            }
+            fd_retain(fd);
             new_f = f_install_start(fd, arg);
-            bit_set(new_f, table->cloexec);
+            if (new_f >= 0)
+                bit_set(new_f, table->cloexec);
+            unlock(&table->lock);
             return new_f;
 
         case F_GETFD_:
             STRACE("fcntl(%d, F_GETFD)", f);
-            return bit_test(f, table->cloexec);
+            lock(&table->lock);
+            if (fdtable_get(table, f) == NULL) {
+                unlock(&table->lock);
+                return _EBADF;
+            }
+            err = bit_test(f, table->cloexec);
+            unlock(&table->lock);
+            return err;
         case F_SETFD_:
             STRACE("fcntl(%d, F_SETFD, 0x%x)", f, arg);
+            lock(&table->lock);
+            if (fdtable_get(table, f) == NULL) {
+                unlock(&table->lock);
+                return _EBADF;
+            }
             if (arg & 1)
                 bit_set(f, table->cloexec);
             else
                 bit_clear(f, table->cloexec);
+            unlock(&table->lock);
             return 0;
+
+    }
+
+    fd = f_get_retain(f);
+    if (fd == NULL)
+        return _EBADF;
+
+    switch (cmd) {
 
         case F_GETFL_:
             STRACE("fcntl(%d, F_GETFL)", f);
-            return fd_getflags(fd);
+            err = fd_getflags(fd);
+            break;
         case F_SETFL_:
             STRACE("fcntl(%d, F_SETFL, %#x)", f, arg);
-            return fd_setflags(fd, arg);
+            err = fd_setflags(fd, arg);
+            break;
 
         case F_GETLK_:
             STRACE("fcntl(%d, F_GETLK, %#x)", f, arg);
-            if (user_read(arg, &flock32, sizeof(flock32)))
-                return _EFAULT;
+            if (user_read(arg, &flock32, sizeof(flock32))) {
+                err = _EFAULT;
+                break;
+            }
             flock.type = flock32.type;
             flock.whence = flock32.whence;
             flock.start = flock32.start;
@@ -342,43 +415,55 @@ dword_t sys_fcntl(fd_t f, dword_t cmd, dword_t arg) {
                 flock32.len = flock.len;
                 flock32.pid = flock.pid;
                 if (user_write(arg, &flock32, sizeof(flock32)))
-                    return _EFAULT;
+                    err = _EFAULT;
             }
-            return err;
+            break;
 
         case F_GETLK64_:
             STRACE("fcntl(%d, F_GETLK64, %#x)", f, arg);
-            if (user_read(arg, &flock, sizeof(flock)))
-                return _EFAULT;
+            if (user_read(arg, &flock, sizeof(flock))) {
+                err = _EFAULT;
+                break;
+            }
             err = fcntl_getlk(fd, &flock);
             if (err >= 0)
                 if (user_write(arg, &flock, sizeof(flock)))
-                    return _EFAULT;
-            return err;
+                    err = _EFAULT;
+            break;
 
         case F_SETLK_:
         case F_SETLKW_:
             STRACE("fcntl(%d, F_SETLK%*s, %#x)", f, cmd == F_SETLKW_, "W", arg);
-            if (user_read(arg, &flock32, sizeof(flock32)))
-                return _EFAULT;
+            if (user_read(arg, &flock32, sizeof(flock32))) {
+                err = _EFAULT;
+                break;
+            }
             flock.type = flock32.type;
             flock.whence = flock32.whence;
             flock.start = flock32.start;
             flock.len = flock32.len;
             flock.pid = flock32.pid;
-            return fcntl_setlk(fd, &flock, cmd == F_SETLKW64_);
+            err = fcntl_setlk(fd, &flock, cmd == F_SETLKW64_);
+            break;
 
         case F_SETLK64_:
         case F_SETLKW64_:
             STRACE("fcntl(%d, F_SETLK%*s64, %#x)", f, cmd == F_SETLKW_, "W", arg);
-            if (user_read(arg, &flock, sizeof(flock)))
-                return _EFAULT;
-            return fcntl_setlk(fd, &flock, cmd == F_SETLKW_);
+            if (user_read(arg, &flock, sizeof(flock))) {
+                err = _EFAULT;
+                break;
+            }
+            err = fcntl_setlk(fd, &flock, cmd == F_SETLKW_);
+            break;
 
         default:
             STRACE("fcntl(%d, %d)", f, cmd);
-            return _EINVAL;
+            err = _EINVAL;
+            break;
     }
+
+    f_put(fd);
+    return err;
 }
 
 dword_t sys_fcntl32(fd_t fd, dword_t cmd, dword_t arg) {
