@@ -138,8 +138,7 @@ int create_stdio(const char *file, int major, int minor) {
             return err;
     }
 
-    fd->refcount = 0;
-    current->files->files[0] = fd_retain(fd);
+    current->files->files[0] = fd;
     current->files->files[1] = fd_retain(fd);
     current->files->files[2] = fd_retain(fd);
     return 0;
