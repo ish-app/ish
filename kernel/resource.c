@@ -202,7 +202,10 @@ int_t sys_sched_getaffinity(pid_t_ pid, dword_t cpusetsize, addr_t cpuset_addr) 
             return _ESRCH;
     }
 
-    unsigned cpus = sysconf(_SC_NPROCESSORS_ONLN);
+    // Report 1 CPU. iSH is a single-core emulator; returning the host CPU
+    // count misleads runtimes like Go into spawning N OS threads that all
+    // serialize inside iSH's emulation loop, wasting CPU and causing heat.
+    unsigned cpus = 1;
     char cpuset[cpus / 8 + 1];
     if (cpusetsize < sizeof(cpuset))
         return _EINVAL;
