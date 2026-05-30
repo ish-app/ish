@@ -8,7 +8,7 @@
 int main(int argc, char *const argv[]) {
     char envp[100] = {0};
     if (getenv("TERM"))
-        strcpy(envp, getenv("TERM") - strlen("TERM") - 1);
+        snprintf(envp, sizeof(envp), "TERM=%s", getenv("TERM"));
     int err = xX_main_Xx(argc, argv, envp);
     if (err < 0) {
         fprintf(stderr, "xX_main_Xx: %s\n", strerror(-err));
