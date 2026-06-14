@@ -58,6 +58,13 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    /*
+    if (@available(iOS 11.0, *)) {
+        self.edgesForExtendedLayout = UIRectEdgeAll;
+        self.extendedLayoutIncludesOpaqueBars = YES;
+        self.view.layoutMargins = UIEdgeInsetsZero;
+    }
+    */
 
 #if !ISH_LINUX
     int bootError = [AppDelegate bootError];
@@ -90,7 +97,7 @@
 
 
     [self _updateStyleFromPreferences:NO];
-    
+
     if (UIDevice.currentDevice.userInterfaceIdiom == UIUserInterfaceIdiomPad) {
         [self.bar removeArrangedSubview:self.hideKeyboardButton];
         [self.hideKeyboardButton removeFromSuperview];
@@ -100,13 +107,13 @@
     } else {
         self.barHeight.constant = 43;
     }
-    
+
     // SF Symbols is cool
     if (@available(iOS 13, *)) {
         [self.infoButton setImage:[UIImage systemImageNamed:@"gear"] forState:UIControlStateNormal];
         [self.pasteButton setImage:[UIImage systemImageNamed:@"doc.on.clipboard"] forState:UIControlStateNormal];
         [self.hideKeyboardButton setImage:[UIImage systemImageNamed:@"keyboard.chevron.compact.down"] forState:UIControlStateNormal];
-        
+
         [self.tabKey setTitle:nil forState:UIControlStateNormal];
         [self.tabKey setImage:[UIImage systemImageNamed:@"arrow.right.to.line.alt"] forState:UIControlStateNormal];
         [self.controlKey setTitle:nil forState:UIControlStateNormal];
@@ -114,7 +121,7 @@
         [self.escapeKey setTitle:nil forState:UIControlStateNormal];
         [self.escapeKey setImage:[UIImage systemImageNamed:@"escape"] forState:UIControlStateNormal];
     }
-    
+
     [UserPreferences.shared observe:@[@"hideStatusBar"] options:0 owner:self usingBlock:^(typeof(self) self) {
         dispatch_async(dispatch_get_main_queue(), ^{
             [self setNeedsStatusBarAppearanceUpdate];
@@ -348,7 +355,7 @@
         pad = MAX(self.view.safeAreaInsets.bottom, self.termView.inputAccessoryView.frame.size.height);
     }
     // NSLog(@"pad %f", pad);
-    self.bottomConstraint.constant = pad;
+    //self.bottomConstraint.constant = pad;
 
     BOOL initialLayout = self.termView.needsUpdateConstraints;
     [self.view setNeedsUpdateConstraints];
@@ -444,7 +451,7 @@
 - (IBAction)pressControl:(id)sender {
     self.controlKey.selected = !self.controlKey.selected;
 }
-    
+
 - (IBAction)pressArrow:(ArrowBarButton *)sender {
     switch (sender.direction) {
         case ArrowUp: [self pressKey:[self.terminal arrow:'A']]; break;

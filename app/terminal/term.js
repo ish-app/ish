@@ -13,7 +13,7 @@ window.onload = async function() {
     term.getPrefs().set('copy-on-select', false);
     term.getPrefs().set('enable-clipboard-notice', false);
     term.getPrefs().set('user-css-text', termCss);
-    term.getPrefs().set('screen-padding-size', 4);
+    term.getPrefs().set('screen-padding-size', 0)
     // Creating and preloading the <audio> element for this sometimes hangs WebKit on iOS 16 for some reason. Can be most easily reproduced by resetting a simulator and starting the app. System logs show Fig hanging while trying to do work.
     term.getPrefs().set('audible-bell-sound', '');
 
