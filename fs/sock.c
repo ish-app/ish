@@ -450,8 +450,9 @@ int_t sys_accept(fd_t sock_fd, addr_t sockaddr_addr, addr_t sockaddr_len_addr) {
     return client_f;
 }
 
-int_t sys_accept4(fd_t sock_fd, addr_t sockaddr_addr,
-                  addr_t sockaddr_len_addr, int_t flags) {
+int_t sys_accept4(fd_t sock_fd, addr_t sockaddr_addr, addr_t sockaddr_len_addr, int_t flags) {
+    if (flags & ~(SOCK_NONBLOCK_ | SOCK_CLOEXEC_))
+        return _EINVAL;
     fd_t client = sys_accept(sock_fd, sockaddr_addr, sockaddr_len_addr);
     if (client < 0)
         return client;
