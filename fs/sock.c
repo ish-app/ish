@@ -456,13 +456,14 @@ int_t sys_accept4(fd_t sock_fd, addr_t sockaddr_addr, addr_t sockaddr_len_addr, 
     fd_t client = sys_accept(sock_fd, sockaddr_addr, sockaddr_len_addr);
     if (client < 0)
         return client;
-    if (flags & SOCK_NONBLOCK_)
-        sys_fcntl(client, F_SETFL_, O_NONBLOCK_);
+    if (flags & SOCK_NONBLOCK_) {
+        int_t old = sys_fcntl(client, F_GETFL_, 0);
+        sys_fcntl(client, F_SETFL_, old | O_NONBLOCK_);
+    }
     if (flags & SOCK_CLOEXEC_)
         sys_fcntl(client, F_SETFD_, 1);
     return client;
 }
-
 
 static void copy_unix_name(char *sockaddr, dword_t *sockaddr_len, struct fd *sock) {
     struct sockaddr_ *fake_addr = (void *) sockaddr;
