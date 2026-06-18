@@ -107,23 +107,6 @@ static NSMapTable<NSUUID *, Terminal *> *terminalsByUUID;
         CGRect webviewSize = CGRectMake(0, 0, 10000, 10000);
         _webView = [[CustomWebView alloc] initWithFrame:webviewSize configuration:config];
 
-        /*
-		_webView.scrollView.contentInset = UIEdgeInsetsZero;
-		_webView.scrollView.scrollIndicatorInsets = UIEdgeInsetsZero;
-		if (@available(iOS 13.0, *)) {
-            //_webView.scrollView.adjustedContentInset = UIEdgeInsetsZero;
-		}
-		if (@available(iOS 16.4, *)) {
-			//_webView.contentMode = WKContentModeFullscreen;
-            //_webView.preferredContentMode = WKWebViewPreferredContentModeFullscreen;
-		}
-        if (@available(iOS 11.0, *)) {
-            //UIEdgeInsets insets = UIEdgeInsetsMake(-44, 0, 0, 0);
-            //_webView.scrollView.contentInset = insets;
-            //_webView.scrollView.scrollIndicatorInsets = insets;
-        }
-        */
-
         if (@available(macOS 13.3, iOS 16.4, tvOS 16.4, *))
             _webView.inspectable = YES;
         _webView.scrollView.scrollEnabled = NO;

@@ -34,9 +34,9 @@
                         <gestureRecognizers/>
                         <constraints>
                             <constraint firstAttribute="bottom" secondItem="FQi-r8-odu" secondAttribute="bottom" id="TjH-PI-NBO"/>
-                            <constraint firstItem="FQi-r8-odu" firstAttribute="top" secondItem="8bC-Xf-vdC" secondAttribute="top" id="WI3-Ir-VlB"/>
-                            <constraint firstItem="FQi-r8-odu" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leading" id="qb1-5r-6hA"/>
-                            <constraint firstItem="FQi-r8-odu" firstAttribute="trailing" secondItem="8bC-Xf-vdC" secondAttribute="trailing" id="rki-R2-KeY"/>
+                            <constraint firstItem="FQi-r8-odu" firstAttribute="top" secondItem="IVs-Oh-AhK" secondAttribute="top" id="WI3-Ir-VlB"/>
+                            <constraint firstItem="FQi-r8-odu" firstAttribute="leading" secondItem="IVs-Oh-AhK" secondAttribute="leading" id="qb1-5r-6hA"/>
+                            <constraint firstItem="FQi-r8-odu" firstAttribute="trailing" secondItem="IVs-Oh-AhK" secondAttribute="trailing" id="rki-R2-KeY"/>
                         </constraints>
                     </view>
                     <connections>
