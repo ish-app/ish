@@ -346,7 +346,7 @@ void dump_maps(void) {
 }
 
 void dump_mem(addr_t start, uint_t len) {
-    const int width = 8;
+    const unsigned width = 8;
     for (addr_t addr = start; addr < start + len; addr += sizeof(dword_t)) {
         unsigned from_left = (addr - start) / sizeof(dword_t) % width;
         if (from_left == 0)
