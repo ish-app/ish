@@ -354,8 +354,12 @@
     if (pad != keyboardFrame.size.height && keyboardFrame.size.width != UIScreen.mainScreen.bounds.size.width) {
         pad = MAX(self.view.safeAreaInsets.bottom, self.termView.inputAccessoryView.frame.size.height);
     }
-    // NSLog(@"pad %f", pad);
-    //self.bottomConstraint.constant = pad;
+
+    // If we've got an external keyboard and we want to ignore the bevels and iOs island.
+    if (!(UserPreferences.shared.maximizeScreenSpace && UserPreferences.shared.hideExtraKeysWithExternalKeyboard && self.hasExternalKeyboard)) {
+        self.bottomConstraint.constant = pad;
+    }
+
 
     BOOL initialLayout = self.termView.needsUpdateConstraints;
     [self.view setNeedsUpdateConstraints];
@@ -376,6 +380,9 @@
 - (void)setHasExternalKeyboard:(BOOL)hasExternalKeyboard {
     _hasExternalKeyboard = hasExternalKeyboard;
     [self _updateStyleFromPreferences:YES];
+    CGFloat padding = hasExternalKeyboard ? 0 : 4;
+    NSString *script = [NSString stringWithFormat:@"exports.setScreenPaddingSize(%f)", padding];
+    [self.termView.terminal.webView evaluateJavaScript:script completionHandler:nil];
 }
 
 - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
