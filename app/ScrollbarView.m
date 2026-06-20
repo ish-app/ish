@@ -43,7 +43,6 @@
     if (self = [super initWithFrame:frame]) {
         self.outerDelegate = [ScrollbarViewDelegate new];
         super.delegate = self.outerDelegate;
-        self.clipsToBounds = NO;
     }
     return self;
 }

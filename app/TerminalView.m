@@ -128,8 +128,8 @@ static NSString *const HANDLERS[] = {@"syncFocus", @"focus", @"newScrollHeight",
         [webView.configuration.userContentController addScriptMessageHandler:handler name:HANDLERS[i]];
     }
     if (UserPreferences.shared.hideExtraKeysWithExternalKeyboard) {
-        CGFloat extraWidth = 17;
-        CGFloat extraHeight = 6;
+        CGFloat extraWidth = 18;
+        CGFloat extraHeight = 9;
         webView.frame = CGRectMake(self.bounds.origin.x, self.bounds.origin.y,
                 self.bounds.size.width + extraWidth, self.bounds.size.height + extraHeight);
     } else {
