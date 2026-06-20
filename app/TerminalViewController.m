@@ -58,13 +58,6 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    /*
-    if (@available(iOS 11.0, *)) {
-        self.edgesForExtendedLayout = UIRectEdgeAll;
-        self.extendedLayoutIncludesOpaqueBars = YES;
-        self.view.layoutMargins = UIEdgeInsetsZero;
-    }
-    */
 
 #if !ISH_LINUX
     int bootError = [AppDelegate bootError];
@@ -380,6 +373,9 @@
 - (void)setHasExternalKeyboard:(BOOL)hasExternalKeyboard {
     _hasExternalKeyboard = hasExternalKeyboard;
     [self _updateStyleFromPreferences:YES];
+
+    // With an external keyboard, `screen-padding-size` in
+    // `app/terminal/term.js` should be 0 to give more space to the terminal.
     CGFloat padding = hasExternalKeyboard ? 0 : 4;
     NSString *script = [NSString stringWithFormat:@"exports.setScreenPaddingSize(%f)", padding];
     [self.termView.terminal.webView evaluateJavaScript:script completionHandler:nil];
