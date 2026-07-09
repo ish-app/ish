@@ -37,7 +37,11 @@ jobs:
           meson setup build
 
       - name: Compile (Meson)
-        run: |
+        run: |- name: Run Emulator Tests
+        run: meson test -C build --verbose
+
+      - name: Build iOS App (Xcode)
+        run: xcodebuild -project iSH.xcodeproj -scheme iSH -arch arm64 -sdk iphoneos CODE_SIGNING_ALLOWED=NO
           meson compile -C build
 
 
