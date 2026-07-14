@@ -82,6 +82,21 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>UIApplicationShortcutItems</key>
+	<array>
+		<dict>
+			<key>UIApplicationShortcutItemIconFile</key>
+			<string>Recover</string>
+			<key>UIApplicationShortcutItemType</key>
+			<string>recoveryQuickAction</string>
+			<key>UIApplicationShortcutItemTitle</key>
+			<string>Recovery Mode</string>
+			<key>UIApplicationShortcutItemSubtitle</key>
+			<string>Restart the app directly to settings</string>
+			<key>UIApplicationShortcutItemIconSymbolName</key>
+			<string>gearshape</string>
+		</dict>
+	</array>
 	<key>fuc</key>
 	<string>ICON_STUFF</string>
 </dict>
