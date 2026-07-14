@@ -30,11 +30,31 @@ struct newstat64 stat_convert_newstat64(struct statbuf stat) {
     return newstat;
 }
 
-int generic_statat(struct fd *at, const char *path_raw, struct statbuf *stat, bool follow_links) {
+int generic_statat(struct fd *at, const char *path_raw, struct statbuf *stat, int flags) {
+    int err;
+
+    bool empty_path = flags & AT_EMPTY_PATH_;
+    bool follow_links = !(flags & AT_SYMLINK_NOFOLLOW_);
+
     char path[MAX_PATH];
-    int err = path_normalize(at, path_raw, path, follow_links ? N_SYMLINK_FOLLOW : N_SYMLINK_NOFOLLOW);
-    if (err < 0)
-        return err;
+    if (empty_path && (strcmp(path_raw, "") == 0)) {
+        if (at == AT_PWD) {
+            at = current->fs->pwd;
+        }
+
+        err = generic_getpath(at, path);
+        if (err < 0)
+            return err;
+
+        if (!path_is_normalized(path)) {
+            return _ENOENT;
+        }
+    } else {
+        err = path_normalize(at, path_raw, path, follow_links ? N_SYMLINK_FOLLOW : N_SYMLINK_NOFOLLOW);
+        if (err < 0)
+            return err;
+    }
+
     struct mount *mount = find_mount_and_trim_path(path);
     memset(stat, 0, sizeof(*stat));
     err = mount->fs->stat(mount, path, stat);
@@ -49,17 +69,18 @@ static struct fd *at_fd(fd_t f) {
     return f_get(f);
 }
 
-static dword_t sys_stat_path(fd_t at_f, addr_t path_addr, addr_t statbuf_addr, bool follow_links) {
+// The `flags` parameter accepts AT_ flags
+static dword_t sys_stat_path(fd_t at_f, addr_t path_addr, addr_t statbuf_addr, int flags) {
     int err;
     char path[MAX_PATH];
     if (user_read_string(path_addr, path, sizeof(path)))
         return _EFAULT;
-    STRACE("stat(at=%d, path=\"%s\", statbuf=0x%x, follow_links=%d)", at_f, path, statbuf_addr, follow_links);
+    STRACE("stat(at=%d, path=\"%s\", statbuf=0x%x, flags=0x%x)", at_f, path, statbuf_addr, flags);
     struct fd *at = at_fd(at_f);
     if (at == NULL)
         return _EBADF;
     struct statbuf stat = {};
-    if ((err = generic_statat(at, path, &stat, follow_links)) < 0)
+    if ((err = generic_statat(at, path, &stat, flags)) < 0)
         return err;
     struct newstat64 newstat = stat_convert_newstat64(stat);
     if (user_put(statbuf_addr, newstat))
@@ -68,15 +89,15 @@ static dword_t sys_stat_path(fd_t at_f, addr_t path_addr, addr_t statbuf_addr, b
 }
 
 dword_t sys_stat64(addr_t path_addr, addr_t statbuf_addr) {
-    return sys_stat_path(AT_FDCWD_, path_addr, statbuf_addr, true);
+    return sys_stat_path(AT_FDCWD_, path_addr, statbuf_addr, 0);
 }
 
 dword_t sys_lstat64(addr_t path_addr, addr_t statbuf_addr) {
-    return sys_stat_path(AT_FDCWD_, path_addr, statbuf_addr, false);
+    return sys_stat_path(AT_FDCWD_, path_addr, statbuf_addr, AT_SYMLINK_NOFOLLOW_);
 }
 
 dword_t sys_fstatat64(fd_t at, addr_t path_addr, addr_t statbuf_addr, dword_t flags) {
-    return sys_stat_path(at, path_addr, statbuf_addr, !(flags & AT_SYMLINK_NOFOLLOW_));
+    return sys_stat_path(at, path_addr, statbuf_addr, flags);
 }
 
 dword_t sys_fstat64(fd_t fd_no, addr_t statbuf_addr) {
