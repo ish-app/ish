@@ -8,7 +8,7 @@ on:
 jobs:
   upload-build:
     if: github.repository == 'ish-app/ish'
-    runs-on: macos-15
+    runs-on: macos-26
     timeout-minutes: 720
     steps:
       - uses: actions/checkout@v2
