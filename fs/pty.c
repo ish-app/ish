@@ -66,6 +66,12 @@ static int pty_slave_open(struct tty *tty) {
         return _EIO;
     if (tty->pty.locked)
         return _EIO;
+    // If userland's reference count on the pty slave is now 1, clear
+    // hang_up on the pty master.  But the session leader may have a
+    // reference, and the pty master always has a reference.
+    if (tty->refcount - 1 == (tty->session ? 2 : 1)) {
+        tty->pty.other->hung_up = false;
+    }
     return 0;
 }
 
