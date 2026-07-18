@@ -17,6 +17,7 @@ const int kCapsLockMappingSection = 0;
 @property (weak, nonatomic) IBOutlet UISwitch *backtickEscapeSwitch;
 @property (weak, nonatomic) IBOutlet UISwitch *overrideControlSpaceSwitch;
 @property (weak, nonatomic) IBOutlet UISwitch *hideExtraKeysWithExternalKeyboardSwitch;
+@property (weak, nonatomic) IBOutlet UISwitch *maximizeScreenSpaceSwitch;
 
 @end
 
@@ -38,6 +39,7 @@ const int kCapsLockMappingSection = 0;
     self.backtickEscapeSwitch.on = UserPreferences.shared.backtickMapEscape;
     self.overrideControlSpaceSwitch.on = UserPreferences.shared.overrideControlSpace;
     self.hideExtraKeysWithExternalKeyboardSwitch.on = UserPreferences.shared.hideExtraKeysWithExternalKeyboard;
+    self.maximizeScreenSpaceSwitch.on = UserPreferences.shared.maximizeScreenSpace;
 }
 
 - (IBAction)optionMetaToggle:(UISwitch *)sender {
@@ -51,6 +53,9 @@ const int kCapsLockMappingSection = 0;
 }
 - (IBAction)hideExtraKeysToggle:(UISwitch *)sender {
     UserPreferences.shared.hideExtraKeysWithExternalKeyboard = sender.on;
+}
+- (IBAction)maximizeScreenSpaceToggle:(UISwitch *)sender {
+    UserPreferences.shared.maximizeScreenSpace = sender.on;
 }
 
 - (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath {
