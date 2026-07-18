@@ -46,14 +46,13 @@ struct ios_pty {
 static void ios_pty_output_work(struct work_struct *output_work) {
     struct ios_pty *pty = container_of(output_work, struct ios_pty, output_work);
     char *buf = kvmalloc(PAGE_SIZE, GFP_KERNEL);
-    ssize_t size;
     for (;;) {
         size_t room = Terminal_roomForOutput(pty->terminal);
         if (room == 0) {
             printk(KERN_WARNING "ios: no room for pty output\n");
             break;
         }
-        size = kernel_read(pty->ptm, buf, room, NULL);
+        ssize_t size = kernel_read(pty->ptm, buf, room, NULL);
         if (size < 0) {
             if (size != -EAGAIN)
                 printk(KERN_WARNING "ios: pty read failed: %s\n", errname(size));
