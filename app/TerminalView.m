@@ -134,6 +134,7 @@ static NSString *const HANDLERS[] = {@"syncFocus", @"focus", @"newScrollHeight",
 
     self.scrollbarView.contentView = webView;
     [self.scrollbarView addSubview:webView];
+    [self syncTerminalFocus];
 }
 
 - (void)uninstallTerminalView {
@@ -202,7 +203,13 @@ static NSString *const HANDLERS[] = {@"syncFocus", @"focus", @"newScrollHeight",
 
 - (void)setTerminalFocused:(BOOL)terminalFocused {
     _terminalFocused = terminalFocused;
-    NSString *script = terminalFocused ? @"exports.setFocused(true)" : @"exports.setFocused(false)";
+    [self syncTerminalFocus];
+}
+
+- (void)syncTerminalFocus {
+    if (!self.terminal.loaded)
+        return;
+    NSString *script = _terminalFocused ? @"exports.setFocused(true)" : @"exports.setFocused(false)";
     [self.terminal.webView evaluateJavaScript:script completionHandler:nil];
 }
 
