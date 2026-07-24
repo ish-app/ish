@@ -1,60 +1,47 @@
-name: CI
+
+	
+
+
+
+
+					
+name: Build and Test
 
 on:
   push:
+    branches: [ "main", "master" ]
   pull_request:
-      branches: [master]
+    branches: [ "main", "master" ]
 
 jobs:
-  build-linux:
-    runs-on: ubuntu-24.04
-    strategy:
-      matrix:
-        cc: [clang, gcc]
-        kernel: [ish, linux]
+  build-ios:
+    runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v6
+      - name: Checkout code
+        uses: actions/checkout@v4
         with:
-            submodules: true
-      - uses: actions/setup-python@v6
-        with:
-            python-version: '3.x'
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install libarchive-dev
-          pip3 install meson ninja
-      - name: Clone Linux
-        if: matrix.kernel == 'linux'
-        run: deps/clone-linux.sh
-      - name: Build
-        run: |
-          meson build -Dengine=asbestos -Dkernel=${{matrix.kernel}}
-          ninja -C build
-        env:
-          CC: ${{matrix.cc}}
-      - name: Test
-        if: matrix.kernel == 'ish'
-        run: ninja -C build test
+          submodules: recursive
 
-  build-mac:
-    runs-on: macos-26
-    strategy:
-      matrix:
-        kernel: [ish, linux]
-    steps:
-      - uses: actions/checkout@v2
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
         with:
-            submodules: true
-      - name: Install dependencies
+          ruby-version: '3.2'
+          bundler-cache: true
+
+      - name: Install Build Tools
         run: |
-          brew install llvm lld ninja libarchive meson
-      - name: Clone Linux
-        if: matrix.kernel == 'linux'
-        run: deps/clone-linux.sh
-      - name: Build
-        if: matrix.kernel == 'ish'
+          brew install meson ninja
+
+      - name: Setup Meson Build
+        run: |
+          meson setup build
+
+      - name: Compile (Meson)
+        run: |- name: Run Emulator Tests
+        run: meson test -C build --verbose
+
+      - name: Build iOS App (Xcode)
         run: xcodebuild -project iSH.xcodeproj -scheme iSH -arch arm64 -sdk iphoneos CODE_SIGNING_ALLOWED=NO
-      - name: Build
-        if: matrix.kernel == 'linux'
-        run: xcodebuild -project iSH.xcodeproj -scheme iSH+Linux -arch x86_64 -sdk iphonesimulator CODE_SIGNING_ALLOWED=NO
+          meson compile -C build
+
+
