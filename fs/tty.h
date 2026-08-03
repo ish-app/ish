@@ -60,6 +60,19 @@ struct termios_ {
 #define ONOCR_ (1 << 4)
 #define ONLRET_ (1 << 5)
 
+#define B38400_ 0xf
+#define CS5_ 0x0
+#define CS6_ 0x10
+#define CS7_ 0x20
+#define CS8_ 0x30
+#define CSTOPB_ 0x40
+#define CREAD_ 0x80
+#define PARENB_ 0x100
+#define PARODD_ 0x200
+#define HUPCL_ 0x400
+#define CLOCAL_ 0x800
+#define CBAUDEX_ 0x1000
+
 #define TCGETS_ 0x5401
 #define TCSETS_ 0x5402
 #define TCSETSW_ 0x5403

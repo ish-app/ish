@@ -36,6 +36,22 @@ static void *real_tty_read_thread(void *_tty) {
     return NULL;
 }
 
+// Indexed by Linux baud code. Codes above B38400 have CBAUDEX set: B57600 is
+// CBAUDEX | 1.
+static const speed_t real_speeds[] = {
+    B0, B50, B75, B110, B134, B150, B200, B300, B600, B1200, B1800,
+    B2400, B4800, B9600, B19200, B38400, B57600, B115200, B230400,
+};
+
+static dword_t speed_from_real(speed_t speed) {
+    for (dword_t i = 1; i < array_size(real_speeds); i++) {
+        if (real_speeds[i] == speed)
+            return i <= B38400_ ? i : CBAUDEX_ | (i - B38400_);
+    }
+    // No Linux code for this speed, or B0, which would mean hang up
+    return B38400_;
+}
+
 static struct termios_ termios_from_real(struct termios real) {
     struct termios_ fake = {};
 #define FLAG(t, x) \
@@ -56,7 +72,20 @@ static struct termios_ termios_from_real(struct termios real) {
     FLAG(l, ECHOK);
     FLAG(l, NOFLSH);
     FLAG(l, ECHOCTL);
+    FLAG(c, CSTOPB);
+    FLAG(c, CREAD);
+    FLAG(c, PARENB);
+    FLAG(c, PARODD);
+    FLAG(c, HUPCL);
+    FLAG(c, CLOCAL);
 #undef FLAG
+    switch (real.c_cflag & CSIZE) {
+        case CS5: fake.cflags |= CS5_; break;
+        case CS6: fake.cflags |= CS6_; break;
+        case CS7: fake.cflags |= CS7_; break;
+        case CS8: fake.cflags |= CS8_; break;
+    }
+    fake.cflags |= speed_from_real(cfgetospeed(&real));
 
 #define CC(x) \
     fake.cc[V##x##_] = real.c_cc[V##x]
