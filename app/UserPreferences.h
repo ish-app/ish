@@ -50,6 +50,7 @@ extern NSString *const kThemeBackgroundColor;
 @property OptionMapping optionMapping;
 @property BOOL backtickMapEscape;
 @property BOOL hideExtraKeysWithExternalKeyboard;
+@property BOOL maximizeScreenSpace;
 @property BOOL overrideControlSpace;
 @property BOOL hideStatusBar;
 @property (nonatomic) Theme *theme;

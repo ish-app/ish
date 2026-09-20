@@ -15,6 +15,7 @@ static NSString *const kPreferenceCapsLockMappingKey = @"Caps Lock Mapping";
 static NSString *const kPreferenceOptionMappingKey = @"Option Mapping";
 static NSString *const kPreferenceBacktickEscapeKey = @"Backtick Mapping Escape";
 static NSString *const kPreferenceHideExtraKeysWithExternalKeyboardKey = @"Hide Extra Keys With External Keyboard";
+static NSString *const kPreferenceMaximizeScreenSpace = @"Maximize the space on the screen (rounded corners and the dynamic island may oclude text)";
 static NSString *const kPreferenceOverrideControlSpaceKey = @"Override Control Space";
 static NSString *const kPreferenceFontFamilyKey = @"Font Family";
 static NSString *const kPreferenceFontSizeKey = @"Font Size";
@@ -116,7 +117,7 @@ bool remove_user_default_impl(const char *name) {
     if (property) {
         [UserPreferences.shared didChangeValueForKey:property];
     }
-    
+
     // This particular property needs special handling to stay up-to-date
     if ([property isEqualToString:@"userTheme"]) {
         [UserPreferences.shared updateTheme];
@@ -158,6 +159,7 @@ bool (*remove_user_default)(const char *name);
             kPreferenceOptionMappingKey: @(OptionMapNone),
             kPreferenceBacktickEscapeKey: @(NO),
             kPreferenceHideExtraKeysWithExternalKeyboardKey: @(NO),
+            kPreferenceMaximizeScreenSpace: @(NO),
             kPreferenceOverrideControlSpaceKey: @(NO),
             kPreferenceDisableDimmingKey: @(NO),
             kPreferenceLaunchCommandKey: @[@"/bin/login", @"-f", @"root"],
@@ -190,6 +192,7 @@ bool (*remove_user_default)(const char *name);
             @"option_mapping": kPreferenceOptionMappingKey,
             @"backtick_mapping_escape": kPreferenceBacktickEscapeKey,
             @"hide_extra_keys_with_external_keyboard": kPreferenceHideExtraKeysWithExternalKeyboardKey,
+            @"maximize_screen_space": kPreferenceMaximizeScreenSpace,
             @"override_control_space": kPreferenceOverrideControlSpaceKey,
             @"font_family": kPreferenceFontFamilyKey,
             @"font_size": kPreferenceFontSizeKey,
@@ -215,6 +218,7 @@ bool (*remove_user_default)(const char *name);
             kPreferenceOptionMappingKey: property(optionMapping),
             kPreferenceBacktickEscapeKey: property(backtickMapEscape),
             kPreferenceHideExtraKeysWithExternalKeyboardKey: property(hideExtraKeysWithExternalKeyboard),
+            kPreferenceMaximizeScreenSpace: property(maximizeScreenSpace),
             kPreferenceOverrideControlSpaceKey: property(overrideControlSpace),
             kPreferenceFontFamilyKey: property(fontFamily),
             kPreferenceFontSizeKey: property(fontSize),
@@ -230,9 +234,9 @@ bool (*remove_user_default)(const char *name);
             kPreferenceThemeKey: @"userTheme",
         };
 #undef property
-        
+
         [self updateTheme];
-        
+
         [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(updateTheme:) name:ThemesUpdatedNotification object:nil];
         [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(updateTheme:) name:ThemeUpdatedNotification object:nil];
     }
@@ -295,6 +299,13 @@ bool (*remove_user_default)(const char *name);
 
 - (void)setHideExtraKeysWithExternalKeyboard:(BOOL)hideExtraKeysWithExternalKeyboard {
     [_defaults setBool:hideExtraKeysWithExternalKeyboard forKey:kPreferenceHideExtraKeysWithExternalKeyboardKey];
+}
+
+- (BOOL)maximizeScreenSpace {
+    return [_defaults boolForKey:kPreferenceMaximizeScreenSpace];
+}
+- (void)setMaximizeScreenSpace:(BOOL)maximizeScreenSpace {
+    [_defaults setBool:maximizeScreenSpace forKey:kPreferenceMaximizeScreenSpace];
 }
 
 - (BOOL)validateHideExtraKeysWithExternalKeyboard:(id *)value error:(NSError **)error {
