@@ -92,8 +92,15 @@ int_t sys_getdents_common(fd_t f, addr_t dirents, dword_t count,
             printed++;
         }
 
-        if (reclen > count)
+        if (reclen > count) {
+            if (count == orig_count) {
+                // If the buffer isn't large enough to read even a single dirent,
+                // reset the fd and return _EINVAL.
+                fd_seekdir(fd, ptr);
+                return _EINVAL;
+            }
             break;
+        }
         if (user_write(dirents, dirent_data, reclen))
             return _EFAULT;
         dirents += reclen;
