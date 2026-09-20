@@ -450,6 +450,21 @@ int_t sys_accept(fd_t sock_fd, addr_t sockaddr_addr, addr_t sockaddr_len_addr) {
     return client_f;
 }
 
+int_t sys_accept4(fd_t sock_fd, addr_t sockaddr_addr, addr_t sockaddr_len_addr, int_t flags) {
+    if (flags & ~(SOCK_NONBLOCK_ | SOCK_CLOEXEC_))
+        return _EINVAL;
+    fd_t client = sys_accept(sock_fd, sockaddr_addr, sockaddr_len_addr);
+    if (client < 0)
+        return client;
+    if (flags & SOCK_NONBLOCK_) {
+        int_t old = sys_fcntl(client, F_GETFL_, 0);
+        sys_fcntl(client, F_SETFL_, old | O_NONBLOCK_);
+    }
+    if (flags & SOCK_CLOEXEC_)
+        sys_fcntl(client, F_SETFD_, 1);
+    return client;
+}
+
 static void copy_unix_name(char *sockaddr, dword_t *sockaddr_len, struct fd *sock) {
     struct sockaddr_ *fake_addr = (void *) sockaddr;
     fake_addr->family = PF_LOCAL_;
@@ -1214,7 +1229,7 @@ static struct socket_call {
     {(syscall_t) sys_getsockopt, 5},
     {(syscall_t) sys_sendmsg, 3},
     {(syscall_t) sys_recvmsg, 3},
-    {NULL}, // accept4
+    {(syscall_t) sys_accept4, 4},
     {NULL}, // recvmmsg
     {(syscall_t) sys_sendmmsg, 4},
 };
