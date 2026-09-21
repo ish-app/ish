@@ -13,6 +13,42 @@
     strh _tmp, [_cpu, #CPU_gs]
     gret
 
+.macro mov32_reg_reg dst_name, dst, src_name, src
+    .gadget mov32_\dst_name\()_\src_name
+        mov \dst, \src
+        gret
+.endm
+
+.macro mov32_reg_reg_row dst_name, dst
+    mov32_reg_reg \dst_name, \dst, reg_a, eax
+    mov32_reg_reg \dst_name, \dst, reg_c, ecx
+    mov32_reg_reg \dst_name, \dst, reg_d, edx
+    mov32_reg_reg \dst_name, \dst, reg_b, ebx
+    mov32_reg_reg \dst_name, \dst, reg_sp, esp
+    mov32_reg_reg \dst_name, \dst, reg_bp, ebp
+    mov32_reg_reg \dst_name, \dst, reg_si, esi
+    mov32_reg_reg \dst_name, \dst, reg_di, edi
+.endm
+
+mov32_reg_reg_row reg_a, eax
+mov32_reg_reg_row reg_c, ecx
+mov32_reg_reg_row reg_d, edx
+mov32_reg_reg_row reg_b, ebx
+mov32_reg_reg_row reg_sp, esp
+mov32_reg_reg_row reg_bp, ebp
+mov32_reg_reg_row reg_si, esi
+mov32_reg_reg_row reg_di, edi
+
+.pushsection_rodata
+.global NAME(mov32_reg_reg_gadgets)
+NAME(mov32_reg_reg_gadgets):
+.irp dst, REG_LIST
+    .irp src, REG_LIST
+        .quad NAME(gadget_mov32_\dst\()_\src)
+    .endr
+.endr
+.popsection
+
 # this would have been just a few nice compact nested loops, but gas said "nuh uh"
 
 .macro _do_op op, arg, size, s
