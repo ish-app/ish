@@ -20,6 +20,7 @@ static NSString *const kPreferenceFontFamilyKey = @"Font Family";
 static NSString *const kPreferenceFontSizeKey = @"Font Size";
 static NSString *const kPreferenceThemeKey = @"ModernTheme";
 static NSString *const kPreferenceDisableDimmingKey = @"Disable Dimming";
+static NSString *const kPreferenceKeepKeyboardHiddenInMouseModeKey = @"Keep Keyboard Hidden in Mouse Mode";
 NSString *const kPreferenceLaunchCommandKey = @"Init Command";
 NSString *const kPreferenceBootCommandKey = @"Boot Command";
 static NSString *const kPreferenceCursorStyleKey = @"Cursor Style";
@@ -160,6 +161,7 @@ bool (*remove_user_default)(const char *name);
             kPreferenceHideExtraKeysWithExternalKeyboardKey: @(NO),
             kPreferenceOverrideControlSpaceKey: @(NO),
             kPreferenceDisableDimmingKey: @(NO),
+            kPreferenceKeepKeyboardHiddenInMouseModeKey: @(NO),
             kPreferenceLaunchCommandKey: @[@"/bin/login", @"-f", @"root"],
             kPreferenceBootCommandKey: @[@"/sbin/init"],
             kPreferenceBlinkCursorKey: @(NO),
@@ -194,6 +196,7 @@ bool (*remove_user_default)(const char *name);
             @"font_family": kPreferenceFontFamilyKey,
             @"font_size": kPreferenceFontSizeKey,
             @"disable_dimming": kPreferenceDisableDimmingKey,
+            @"keep_keyboard_hidden_in_mouse_mode": kPreferenceKeepKeyboardHiddenInMouseModeKey,
             @"launch_command": kPreferenceLaunchCommandKey,
             @"boot_command": kPreferenceBootCommandKey,
             @"cursor_style": kPreferenceCursorStyleKey,
@@ -219,6 +222,7 @@ bool (*remove_user_default)(const char *name);
             kPreferenceFontFamilyKey: property(fontFamily),
             kPreferenceFontSizeKey: property(fontSize),
             kPreferenceDisableDimmingKey: property(shouldDisableDimming),
+            kPreferenceKeepKeyboardHiddenInMouseModeKey: property(keepKeyboardHiddenInMouseMode),
             kPreferenceLaunchCommandKey: property(launchCommand),
             kPreferenceBootCommandKey: property(bootCommand),
             kPreferenceCursorStyleKey: property(cursorStyle),
@@ -416,6 +420,19 @@ bool (*remove_user_default)(const char *name);
 }
 
 - (BOOL)validateShouldDisableDimming:(id *)value error:(NSError **)error {
+    return [*value isKindOfClass:NSNumber.class];
+}
+
+// MARK: keepKeyboardHiddenInMouseMode
+- (BOOL)keepKeyboardHiddenInMouseMode {
+    return [_defaults boolForKey:kPreferenceKeepKeyboardHiddenInMouseModeKey];
+}
+
+- (void)setKeepKeyboardHiddenInMouseMode:(BOOL)keepKeyboardHiddenInMouseMode {
+    [_defaults setBool:keepKeyboardHiddenInMouseMode forKey:kPreferenceKeepKeyboardHiddenInMouseModeKey];
+}
+
+- (BOOL)validateKeepKeyboardHiddenInMouseMode:(id *)value error:(NSError **)error {
     return [*value isKindOfClass:NSNumber.class];
 }
 

@@ -88,11 +88,20 @@ term.scrollPort_.screen_.addEventListener('blur', (e) => {
         e.stopPropagation();
     }
 }, {capture: true});
+const terminalMouseReporting = () =>
+    term.vt.mouseReport != term.vt.MOUSE_REPORT_DISABLED;
+term.scrollPort_.screen_.addEventListener('touchstart', (e) => {
+    if (terminalMouseReporting() && e.touches.length == 2) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        native.focus({force: true});
+    }
+}, {capture: true, passive: false});
 term.scrollPort_.screen_.addEventListener('mousedown', (e) => {
     // Taps while there is a selection should be left to the selection view
     if ((document.getSelection().rangeCount != 0) &&
         (!document.getSelection().isCollapsed)) return;
-    native.focus();
+    native.focus({mouseReporting: terminalMouseReporting()});
 });
 exports.setFocused = (focus) => {
     if (focus)
