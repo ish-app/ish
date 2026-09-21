@@ -450,21 +450,65 @@ static NSString *const HANDLERS[] = {@"syncFocus", @"focus", @"newScrollHeight",
 
 #pragma mark Hardware Keyboard
 
+// Escape sequence for a navigation or function key, following xterm conventions:
+// unmodified keys use the terminal's cursor-key mode (CSI vs SS3); with modifiers
+// the xterm modifier parameter is appended (2=Shift, 3=Alt, 5=Ctrl, 6=Ctrl+Shift, ...).
+// Returns nil if the key is not a navigation/function key.
+- (NSString *)specialKeySequence:(NSString *)key modifiers:(UIKeyModifierFlags)mods {
+    char csiFinal = 0; // keys of the form CSI [1;m] X
+    int tildeCode = 0; // keys of the form CSI n [;m] ~
+    if ([key isEqualToString:UIKeyInputUpArrow])         csiFinal = 'A';
+    else if ([key isEqualToString:UIKeyInputDownArrow])  csiFinal = 'B';
+    else if ([key isEqualToString:UIKeyInputRightArrow]) csiFinal = 'C';
+    else if ([key isEqualToString:UIKeyInputLeftArrow])  csiFinal = 'D';
+    else if ([key isEqualToString:UIKeyInputHome])       csiFinal = 'H';
+    else if ([key isEqualToString:UIKeyInputEnd])        csiFinal = 'F';
+    else if ([key isEqualToString:UIKeyInputF1])         csiFinal = 'P';
+    else if ([key isEqualToString:UIKeyInputF2])         csiFinal = 'Q';
+    else if ([key isEqualToString:UIKeyInputF3])         csiFinal = 'R';
+    else if ([key isEqualToString:UIKeyInputF4])         csiFinal = 'S';
+    else if ([key isEqualToString:UIKeyInputPageUp])     tildeCode = 5;
+    else if ([key isEqualToString:UIKeyInputPageDown])   tildeCode = 6;
+    else if ([key isEqualToString:UIKeyInputF5])         tildeCode = 15;
+    else if ([key isEqualToString:UIKeyInputF6])         tildeCode = 17;
+    else if ([key isEqualToString:UIKeyInputF7])         tildeCode = 18;
+    else if ([key isEqualToString:UIKeyInputF8])         tildeCode = 19;
+    else if ([key isEqualToString:UIKeyInputF9])         tildeCode = 20;
+    else if ([key isEqualToString:UIKeyInputF10])        tildeCode = 21;
+    else if ([key isEqualToString:UIKeyInputF11])        tildeCode = 23;
+    else if ([key isEqualToString:UIKeyInputF12])        tildeCode = 24;
+    else return nil;
+
+    int m = 1;
+    if (mods & UIKeyModifierShift)     m += 1;
+    if (mods & UIKeyModifierAlternate) m += 2;
+    if (mods & UIKeyModifierControl)   m += 4;
+
+    if (tildeCode != 0) {
+        if (m == 1)
+            return [NSString stringWithFormat:@"\x1b[%d~", tildeCode];
+        return [NSString stringWithFormat:@"\x1b[%d;%d~", tildeCode, m];
+    }
+    if (m == 1) {
+        if (csiFinal >= 'P' && csiFinal <= 'S') // F1-F4 are always SS3 when unmodified
+            return [NSString stringWithFormat:@"\x1bO%c", csiFinal];
+        return [self.terminal arrow:csiFinal]; // honours DECCKM (application cursor mode)
+    }
+    return [NSString stringWithFormat:@"\x1b[1;%d%c", m, csiFinal];
+}
+
 - (void)handleKeyCommand:(UIKeyCommand *)command {
     NSString *key = command.input;
+    NSString *special = [self specialKeySequence:key modifiers:command.modifierFlags];
+    if (special != nil) {
+        [self insertText:special];
+        return;
+    }
     if (command.modifierFlags == 0) {
         if ([key isEqualToString:@"`"] && UserPreferences.shared.backtickMapEscape)
             key = UIKeyInputEscape;
         if ([key isEqualToString:UIKeyInputEscape])
             key = @"\x1b";
-        else if ([key isEqualToString:UIKeyInputUpArrow])
-            key = [self.terminal arrow:'A'];
-        else if ([key isEqualToString:UIKeyInputDownArrow])
-            key = [self.terminal arrow:'B'];
-        else if ([key isEqualToString:UIKeyInputLeftArrow])
-            key = [self.terminal arrow:'D'];
-        else if ([key isEqualToString:UIKeyInputRightArrow])
-            key = [self.terminal arrow:'C'];
         [self insertText:key];
     } else if (command.modifierFlags & UIKeyModifierShift) {
         [self insertText:[key uppercaseString]];
@@ -494,9 +538,30 @@ static const char *metaKeys = "abcdefghijklmnopqrstuvwxyz0123456789-=[]\\;',./";
         return _keyCommands;
     _keyCommands = [NSMutableArray new];
     [self addKeys:controlKeys withModifiers:UIKeyModifierControl];
-    for (NSString *specialKey in @[UIKeyInputEscape, UIKeyInputUpArrow, UIKeyInputDownArrow,
-                                   UIKeyInputLeftArrow, UIKeyInputRightArrow, @"\t"]) {
+    for (NSString *specialKey in @[UIKeyInputEscape, @"\t"]) {
         [self addKey:specialKey withModifiers:0];
+    }
+    // Navigation and function keys, with every Shift/Alt/Ctrl combination, so that
+    // (UIKeyInputDelete is deliberately absent: it matches Backspace, which must keep going through deleteBackward.)
+    // e.g. Ctrl+Arrow reaches the terminal as \e[1;5C instead of being eaten by iPadOS.
+    NSArray<NSString *> *navKeys = @[UIKeyInputUpArrow, UIKeyInputDownArrow, UIKeyInputLeftArrow, UIKeyInputRightArrow,
+                                     UIKeyInputHome, UIKeyInputEnd, UIKeyInputPageUp, UIKeyInputPageDown,
+                                     UIKeyInputF1, UIKeyInputF2, UIKeyInputF3, UIKeyInputF4, UIKeyInputF5, UIKeyInputF6,
+                                     UIKeyInputF7, UIKeyInputF8, UIKeyInputF9, UIKeyInputF10, UIKeyInputF11, UIKeyInputF12];
+    UIKeyModifierFlags modifierCombos[] = {
+        0,
+        UIKeyModifierShift,
+        UIKeyModifierAlternate,
+        UIKeyModifierControl,
+        UIKeyModifierShift | UIKeyModifierAlternate,
+        UIKeyModifierShift | UIKeyModifierControl,
+        UIKeyModifierAlternate | UIKeyModifierControl,
+        UIKeyModifierShift | UIKeyModifierAlternate | UIKeyModifierControl,
+    };
+    for (NSString *navKey in navKeys) {
+        for (size_t i = 0; i < sizeof(modifierCombos) / sizeof(modifierCombos[0]); i++) {
+            [self addKey:navKey withModifiers:modifierCombos[i]];
+        }
     }
     if (UserPreferences.shared.capsLockMapping != CapsLockMapNone) {
         if (@available(iOS 13, *)); else {
