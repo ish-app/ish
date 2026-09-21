@@ -269,7 +269,15 @@ static struct proc_dir_entry proc_pid_fd;
 static bool proc_pid_fd_readdir(struct proc_entry *entry, unsigned long *index, struct proc_entry *next_entry) {
     struct task *task = proc_get_task(entry);
     if (task == NULL)
-        return _ESRCH;
+        // This returns "is there another entry", not an error code. _ESRCH is
+        // nonzero, so it reads as true and proc_readdir goes on to use a
+        // next_entry that was never filled in.
+        return false;
+    if (task->files == NULL) {
+        // Exited, not yet reaped: do_exit dropped the fd table already.
+        proc_put_task(task);
+        return false;
+    }
     lock(&task->files->lock);
     while (*index < task->files->size && task->files->files[*index] == NULL)
         (*index)++;
@@ -289,9 +297,15 @@ static int proc_pid_fd_readlink(struct proc_entry *entry, char *buf) {
     struct task *task = proc_get_task(entry);
     if (task == NULL)
         return _ESRCH;
+    if (task->files == NULL) {
+        proc_put_task(task);
+        return _ESRCH;
+    }
     lock(&task->files->lock);
     struct fd *fd = fdtable_get(task->files, entry->fd);
-    int err = generic_getpath(fd, buf);
+    int err = _ENOENT;
+    if (fd != NULL)
+        err = generic_getpath(fd, buf);
     unlock(&task->files->lock);
     proc_put_task(task);
     return err;
@@ -302,7 +316,9 @@ static int proc_pid_exe_readlink(struct proc_entry *entry, char *buf) {
     if (task == NULL)
         return _ESRCH;
     lock(&task->general_lock);
-    int err = generic_getpath(task->mm->exefile, buf);
+    int err = _ESRCH;
+    if (task->mm != NULL)
+        err = generic_getpath(task->mm->exefile, buf);
     unlock(&task->general_lock);
     proc_put_task(task);
     return err;
@@ -329,6 +345,10 @@ static int proc_pid_cwd_readlink(struct proc_entry *entry, char *buf) {
     struct task *task = proc_get_task(entry);
     if (task == NULL)
         return _ESRCH;
+    if (task->fs == NULL) {
+        proc_put_task(task);
+        return _ESRCH;
+    }
     lock(&task->fs->lock);
     int err = generic_getpath(task->fs->pwd, buf);
     unlock(&task->fs->lock);
