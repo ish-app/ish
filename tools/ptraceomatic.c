@@ -254,17 +254,21 @@ static void pt_copy_to_real(int pid, addr_t start, size_t size) {
 
 static void step_tracing(struct cpu_state *cpu, struct tlb *tlb, int pid, int sender, int receiver) {
     // step fake cpu
-    cpu->tf = 1;
-    int interrupt = cpu_run_to_interrupt(cpu, tlb);
-    // hack to clean up before the exit syscall
-    if (interrupt == INT_SYSCALL && cpu->eax == 1) {
-        if (kill(pid, SIGKILL) < 0) {
-            perror("kill tracee during exit");
-            exit(1);
+    // loop until ip changes, to match ptrace step. also because page faults that get handled in the kernel do escape cpu_run_to_interrupt but aren't visible from ptrace_step.
+    dword_t ip = cpu->eip;
+    while (cpu->eip == ip) {
+        cpu->tf = 1;
+        int interrupt = cpu_run_to_interrupt(cpu, tlb);
+        // hack to clean up before the exit syscall
+        if (interrupt == INT_SYSCALL && cpu->eax == 1) {
+            if (kill(pid, SIGKILL) < 0) {
+                perror("kill tracee during exit");
+                exit(1);
+            }
         }
+        if (interrupt != INT_DEBUG)
+            handle_interrupt(interrupt);
     }
-    if (interrupt != INT_DEBUG)
-        handle_interrupt(interrupt);
 
     // step real cpu
     // intercept cpuid, rdtsc, and int $0x80, though
