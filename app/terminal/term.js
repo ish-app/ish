@@ -154,6 +154,27 @@ exports.getCharacterSize = () => {
 };
 
 exports.clearScrollback = () => term.clearScrollback();
+
+// Forward scroll delta as synthetic WheelEvents into hterm's onMouse_ pipeline.
+let scrollDeltaRemainder = 0;
+exports.handleScrollDelta = (delta) => {
+    if (term.vt.mouseReport === term.vt.MOUSE_REPORT_DISABLED && term.isPrimaryScreen())
+        return;
+    const charH = term.scrollPort_.characterSize.height;
+    if (!charH) return;
+    scrollDeltaRemainder += delta;
+    const lines = Math.trunc(scrollDeltaRemainder / charH);
+    if (lines === 0) return;
+    scrollDeltaRemainder -= lines * charH;
+    for (let i = 0; i < Math.abs(lines); i++) {
+        term.scrollPort_.screen_.dispatchEvent(new WheelEvent('wheel', {
+            deltaY: lines > 0 ? 1 : -1,
+            deltaMode: WheelEvent.DOM_DELTA_LINE,
+            cancelable: true,
+        }));
+    }
+};
+
 exports.setUserGesture = () => term.accessibilityReader_.hasUserGesture = true;
 
 hterm.openUrl = (url) => native.openLink(url);
