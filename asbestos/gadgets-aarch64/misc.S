@@ -128,7 +128,23 @@
     gret 1
     write_bullshit 64, atomic_cmpxchg8b
 
-3:  # All unaligned paths
+3:  # Unaligned. The exclusive load above needs 8-byte alignment, so do it in C.
+    str eax, [_cpu, CPU_eax]
+    str ebx, [_cpu, CPU_ebx]
+    str ecx, [_cpu, CPU_ecx]
+    str edx, [_cpu, CPU_edx]
+    save_c
+    mov x0, _cpu
+    sub x1, _tlb, TLB_entries
+    mov w2, _addr
+    bl NAME(helper_cmpxchg8b_unaligned)
+    mov x19, x0
+    restore_c
+    cbnz x19, 4f
+    ldr eax, [_cpu, CPU_eax]
+    ldr edx, [_cpu, CPU_edx]
+    gret 1
+4:
     b segfault_write
 
 
