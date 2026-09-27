@@ -301,6 +301,13 @@ void handle_interrupt(int interrupt) {
             .fault.addr = cpu->eip,
         };
         deliver_signal(current, SIGILL_, info);
+    } else if (interrupt == INT_ALIGN) {
+        printk("%d unaligned lock cmpxchg8b on 0x%x at 0x%x\n", current->pid, cpu->segfault_addr, cpu->eip);
+        struct siginfo_ info = {
+            .code = BUS_ADRALN_,
+            .fault.addr = cpu->segfault_addr,
+        };
+        deliver_signal(current, SIGBUS_, info);
     } else if (interrupt == INT_BREAKPOINT) {
         lock(&pids_lock);
         send_signal(current, SIGTRAP_, (struct siginfo_) {
