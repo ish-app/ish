@@ -11,7 +11,6 @@
 #include "LinuxInterop.h"
 #include "fs/devices.h"
 #include "fs/tty.h"
-#include "fs/devices.h"
 
 extern struct tty_driver ios_pty_driver;
 
