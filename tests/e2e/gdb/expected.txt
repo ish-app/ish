@@ -1,0 +1,6 @@
+Breakpoint 1, square (x=0) at test_gdb.c:4
+$1 = 0
+Breakpoint 1, square (x=1) at test_gdb.c:4
+$2 = 1
+total=30
+[Inferior 1 exited normally]
