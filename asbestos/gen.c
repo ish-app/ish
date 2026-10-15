@@ -412,6 +412,7 @@ void helper_rdtsc(struct cpu_state *cpu);
 #define FLDENV(val,z) h_write(fpu_ldenv, z)
 #define FSAVE(val,z) h_write(fpu_save, z)
 #define FRESTORE(val,z) h_write(fpu_restore, z)
+#define FINIT() h(fpu_init)
 #define FCLEX() h(fpu_clex)
 #define FPOP h(fpu_pop)
 #define FINCSTP() h(fpu_incstp)
