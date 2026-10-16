@@ -226,21 +226,6 @@ void fdtable_do_cloexec(struct fdtable *table) {
     unlock(&table->lock);
 }
 
-#define F_DUPFD_ 0
-#define F_GETFD_ 1
-#define F_SETFD_ 2
-#define F_GETFL_ 3
-#define F_SETFL_ 4
-
-#define F_GETLK_ 5
-#define F_SETLK_ 6
-#define F_SETLKW_ 7
-#define F_GETLK64_ 12
-#define F_SETLK64_ 13
-#define F_SETLKW64_ 14
-
-#define F_DUPFD_CLOEXEC_ 1030
-
 dword_t sys_dup(fd_t f) {
     STRACE("dup(%d)", f);
     struct fd *fd = f_get(f);
