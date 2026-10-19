@@ -16,6 +16,8 @@ window.onload = async function() {
     term.getPrefs().set('screen-padding-size', 4);
     // Creating and preloading the <audio> element for this sometimes hangs WebKit on iOS 16 for some reason. Can be most easily reproduced by resetting a simulator and starting the app. System logs show Fig hanging while trying to do work.
     term.getPrefs().set('audible-bell-sound', '');
+    // Scrolling on the alternate screen sends arrow keys, like xterm's alternate scroll mode
+    term.getPrefs().set('scroll-wheel-may-send-arrow-keys', true);
 
     term.onTerminalReady = onTerminalReady;
     term.decorate(document.getElementById('terminal'));
@@ -61,11 +63,13 @@ let oldProps = {};
 function syncProp(name, value) {
     if (oldProps[name] !== value)
         native.propUpdate(name, value);
+    oldProps[name] = value;
 }
 let decoder = new TextDecoder();
 exports.write = (data) => {
     term.io.writeUTF16(decoder.decode(lib.codec.stringToCodeUnitArray(data)));
     syncProp('applicationCursor', term.keyboard.applicationCursor);
+    syncProp('applicationScroll', wantsScrollEvents());
 };
 term.io.sendString = term.io.onVTKeyStroke = (data) => {
     native.sendInput(data);
@@ -115,6 +119,34 @@ exports.newScrollTop = (y) => {
     // two lines instead of one because the value you read out of scrollTop can be different from the value you write into it
     term.scrollPort_.screen_.scrollTop = y;
     lastScrollTop = term.scrollPort_.screen_.scrollTop;
+};
+
+// Scrolling in programs that handle it themselves
+// When a program turns on mouse reporting, or is on the alternate screen (which has no scrollback), native code sends scroll gestures here instead of scrolling the scrollback. They become wheel events and go through hterm's own wheel handling, which sends wheel reports to the program, or arrow keys as in xterm's alternate scroll mode.
+// Mirrors the conditions under which hterm's onMouse_ consumes a wheel event
+function wantsScrollEvents() {
+    if (term.vt.mouseReport != term.vt.MOUSE_REPORT_DISABLED)
+        return true;
+    return !!term.scrollWheelArrowKeys_ && term.keyboard.applicationCursor && !term.isPrimaryScreen();
+}
+let applicationScrollRemainder = 0;
+exports.applicationScroll = (deltaY, x, y) => {
+    // A wheel report or arrow key per line scrolled, carrying the partial line over to the next call
+    if (deltaY * applicationScrollRemainder < 0)
+        applicationScrollRemainder = 0;
+    applicationScrollRemainder += deltaY;
+    const lineHeight = term.scrollPort_.characterSize.height;
+    const lines = Math.trunc(applicationScrollRemainder / lineHeight);
+    applicationScrollRemainder -= lines * lineHeight;
+    for (let i = 0; i < Math.abs(lines); i++) {
+        term.scrollPort_.screen_.dispatchEvent(new WheelEvent('wheel', {
+            deltaY: Math.sign(lines),
+            deltaMode: WheelEvent.DOM_DELTA_LINE,
+            clientX: x,
+            clientY: y,
+            cancelable: true,
+        }));
+    }
 };
 
 // Send scroll height and position to native code

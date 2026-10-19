@@ -35,6 +35,7 @@ struct rowcol {
 
 @property (nonatomic) NSMutableArray<UIKeyCommand *> *keyCommands;
 @property ScrollbarView *scrollbarView;
+@property UIPanGestureRecognizer *applicationScrollRecognizer;
 @property (nonatomic) BOOL terminalFocused;
 
 @property (nullable) NSString *markedText;
@@ -64,6 +65,14 @@ struct rowcol {
     scrollbarView.bounces = NO;
     [self addSubview:scrollbarView];
 
+    // Takes over from the scroll view's pan when the program handles scrolling itself
+    UIPanGestureRecognizer *applicationScrollRecognizer = self.applicationScrollRecognizer = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(handleApplicationScroll:)];
+    if (@available(iOS 13.4, *)) {
+        applicationScrollRecognizer.allowedScrollTypesMask = UIScrollTypeMaskAll;
+    }
+    applicationScrollRecognizer.enabled = NO;
+    [scrollbarView addGestureRecognizer:applicationScrollRecognizer];
+
     UserPreferences *prefs = UserPreferences.shared;
     [prefs observe:@[@"capsLockMapping", @"optionMapping", @"backtickMapEscape", @"overrideControlSpace"]
            options:0 owner:self usingBlock:^(typeof(self) self) {
@@ -87,7 +96,9 @@ struct rowcol {
 }
 
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context {
-    if (object == _terminal) {
+    if (object == _terminal && [keyPath isEqualToString:@"applicationScroll"]) {
+        [self updateApplicationScroll];
+    } else if (object == _terminal) {
         if (_terminal.loaded) {
             [self installTerminalView];
             [self _updateStyle];
@@ -100,11 +111,13 @@ static NSString *const HANDLERS[] = {@"syncFocus", @"focus", @"newScrollHeight",
 - (void)setTerminal:(Terminal *)terminal {
     if (_terminal) {
         [_terminal removeObserver:self forKeyPath:@"loaded"];
+        [_terminal removeObserver:self forKeyPath:@"applicationScroll"];
         [self uninstallTerminalView];
     }
 
     _terminal = terminal;
     [_terminal addObserver:self forKeyPath:@"loaded" options:NSKeyValueObservingOptionInitial context:nil];
+    [_terminal addObserver:self forKeyPath:@"applicationScroll" options:NSKeyValueObservingOptionInitial context:nil];
     if (_terminal.loaded)
         [self installTerminalView];
 }
@@ -269,6 +282,23 @@ static NSString *const HANDLERS[] = {@"syncFocus", @"focus", @"newScrollHeight",
 
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView {
     [self.terminal.webView evaluateJavaScript:[NSString stringWithFormat:@"exports.newScrollTop(%f)", scrollView.contentOffset.y] completionHandler:nil];
+}
+
+- (void)updateApplicationScroll {
+    BOOL applicationScroll = self.terminal.applicationScroll;
+    self.scrollbarView.scrollEnabled = !applicationScroll;
+    self.applicationScrollRecognizer.enabled = applicationScroll;
+}
+
+- (void)handleApplicationScroll:(UIPanGestureRecognizer *)recognizer {
+    if (recognizer.state != UIGestureRecognizerStateChanged)
+        return;
+    WKWebView *webView = self.terminal.webView;
+    CGPoint translation = [recognizer translationInView:webView];
+    [recognizer setTranslation:CGPointZero inView:webView];
+    CGPoint location = [recognizer locationInView:webView];
+    // Dragging content up scrolls down, same as the scroll view
+    [webView evaluateJavaScript:[NSString stringWithFormat:@"exports.applicationScroll(%f, %f, %f)", -translation.y, location.x, location.y] completionHandler:nil];
 }
 
 - (void)setKeyboardAppearance:(UIKeyboardAppearance)keyboardAppearance {
