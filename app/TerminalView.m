@@ -127,7 +127,15 @@ static NSString *const HANDLERS[] = {@"syncFocus", @"focus", @"newScrollHeight",
     for (int i = 0; i < sizeof(HANDLERS)/sizeof(HANDLERS[0]); i++) {
         [webView.configuration.userContentController addScriptMessageHandler:handler name:HANDLERS[i]];
     }
-    webView.frame = self.bounds;
+    if (UserPreferences.shared.hideExtraKeysWithExternalKeyboard) {
+        CGFloat extraWidth = 18;
+        CGFloat extraHeight = 9;
+        webView.frame = CGRectMake(self.bounds.origin.x, self.bounds.origin.y,
+                self.bounds.size.width + extraWidth, self.bounds.size.height + extraHeight);
+    } else {
+        webView.frame = self.bounds;
+    }
+
     self.opaque = webView.opaque = NO;
     webView.backgroundColor = UIColor.clearColor;
     webView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
