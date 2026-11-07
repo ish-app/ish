@@ -1,5 +1,6 @@
 #include "gadgets.h"
 #include "math.h"
+#include "emu/interrupt.h"
 
 .gadget cpuid
     # regrettable
@@ -128,8 +129,13 @@
     gret 1
     write_bullshit 64, atomic_cmpxchg8b
 
-3:  # All unaligned paths
-    b segfault_write
+3:  # Unaligned. The exclusive load needs 8-byte alignment, so raise SIGBUS at the
+    # operand. (segfault_write would report a stale tlb->segfault_addr.)
+    str _addr, [_cpu, CPU_segfault_addr]
+    ldr x0, [_ip]
+    mov eip, w0
+    mov x0, INT_ALIGN
+    b fiber_exit
 
 
 .gadget cmpxchg8b
