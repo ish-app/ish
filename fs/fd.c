@@ -143,7 +143,10 @@ static int fdtable_expand(struct fdtable *table, fd_t max) {
 }
 
 struct fd *fdtable_get(struct fdtable *table, fd_t f) {
-    if (f < 0 || (unsigned) f >= current->files->size)
+    // Bounds-check the table being indexed, not the calling task's. They are
+    // not always the same one: /proc/<pid>/fd reads another task's table, and
+    // fdtable_release walks a table the caller has already let go of.
+    if (f < 0 || (unsigned) f >= table->size)
         return NULL;
     return table->files[f];
 }

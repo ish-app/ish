@@ -50,12 +50,21 @@ noreturn void do_exit(int status) {
     }
 
     // release all our resources
-    mm_release(current->mm);
+    // These are read by other threads through /proc/<pid>, which holds
+    // pids_lock for the whole access, so detach them under pids_lock -- a
+    // reader then sees either a pointer that is still ours to hand out, or
+    // NULL. The actual releasing has to happen outside the lock.
+    lock(&pids_lock);
+    struct mm *mm = current->mm;
+    struct fdtable *files = current->files;
+    struct fs_info *fs = current->fs;
     current->mm = NULL;
-    fdtable_release(current->files);
     current->files = NULL;
-    fs_info_release(current->fs);
     current->fs = NULL;
+    unlock(&pids_lock);
+    mm_release(mm);
+    fdtable_release(files);
+    fs_info_release(fs);
     // sighand must be released below so it can be protected by pids_lock
     // since it can be accessed by other threads
 
