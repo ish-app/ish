@@ -100,6 +100,7 @@ void gen_exit(struct gen_state *state) {
 // This should stay in sync with the definition of .gadget_array in gadgets.h
 enum arg {
     arg_reg_a, arg_reg_c, arg_reg_d, arg_reg_b, arg_reg_sp, arg_reg_bp, arg_reg_si, arg_reg_di,
+    arg_reg_ah = arg_reg_sp, arg_reg_ch = arg_reg_bp, arg_reg_dh = arg_reg_si, arg_reg_bh = arg_reg_di,
     arg_imm, arg_mem, arg_addr, arg_gs,
     arg_count, arg_invalid,
     // the following should not be synced with the list mentioned above (no gadgets implement them)
@@ -212,6 +213,45 @@ static inline bool gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
         GEN(state->orig_ip | state->orig_ip_extra);
     return true;
 }
+
+static inline enum arg gen_resolve_arg(enum arg arg, struct modrm *modrm, uint64_t *imm, dword_t addr_offset) {
+    switch (arg) {
+        case arg_modrm_reg:
+            return modrm->reg + arg_reg_a;
+        case arg_modrm_val:
+            return modrm->type == modrm_reg ? modrm->base + arg_reg_a : arg_mem;
+        case arg_mem_addr:
+            modrm->type = modrm_mem;
+            modrm->base = reg_none;
+            modrm->offset = addr_offset;
+            return arg_mem;
+        case arg_1:
+            *imm = 1;
+            return arg_imm;
+        default:
+            return arg;
+    }
+}
+
+static inline bool gen_mov(struct gen_state *state, enum arg src, enum arg dst, struct modrm *modrm, uint64_t *imm, int size, bool seg_gs, dword_t addr_offset) {
+    src = gen_resolve_arg(src, modrm, imm, addr_offset);
+    dst = gen_resolve_arg(dst, modrm, imm, addr_offset);
+
+#if defined(__aarch64__)
+    if (size == 32 && src >= arg_reg_a && src <= arg_reg_di && dst >= arg_reg_a && dst <= arg_reg_di) {
+        if (src != dst) {
+            extern gadget_t mov32_reg_reg_gadgets[];
+            GEN(mov32_reg_reg_gadgets[(dst - arg_reg_a) * 8 + (src - arg_reg_a)]);
+        }
+        return true;
+    }
+#endif
+
+    extern gadget_t load_gadgets[];
+    extern gadget_t store_gadgets[];
+    return gen_op(state, load_gadgets, src, modrm, imm, size, seg_gs, addr_offset) &&
+           gen_op(state, store_gadgets, dst, modrm, imm, size, seg_gs, addr_offset);
+}
 #define op(type, thing, z) do { \
     extern gadget_t type##_gadgets[]; \
     if (!gen_op(state, type##_gadgets, arg_##thing, &modrm, &imm, z, seg_gs, addr_offset)) return false; \
@@ -223,7 +263,7 @@ static inline bool gen_op(struct gen_state *state, gadget_t *gadgets, enum arg a
 #define los(o, src, dst, z) load(dst, z); op(o, src, z); store(dst, z)
 #define lo(o, src, dst, z) load(dst, z); op(o, src, z)
 
-#define MOV(src, dst,z) load(src, z); store(dst, z)
+#define MOV(src, dst,z) do { if (!gen_mov(state, arg_##src, arg_##dst, &modrm, &imm, z, seg_gs, addr_offset)) return false; } while (0)
 #define MOVZX(src, dst,zs,zd) load(src, zs); gz(zero_extend, zs); store(dst, zd)
 #define MOVSX(src, dst,zs,zd) load(src, zs); gz(sign_extend, zs); store(dst, zd)
 // xchg must generate in this order to be atomic
