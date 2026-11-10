@@ -74,7 +74,7 @@ skip:
             }
             break;
         }
-        case 0x66: goto skip;
+        case 0x66: case 0xf2: case 0xf3: goto skip;
     }
     return 0;
 }
