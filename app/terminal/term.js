@@ -85,7 +85,7 @@ exports.copy = () => term.copySelectionToClipboard();
 // This listener blocks blur events that come in because the webview has lost first responder
 term.scrollPort_.screen_.addEventListener('blur', (e) => {
     if (e.target.ownerDocument.activeElement == e.target) {
-        e.stopPropagation();
+        e.stopImmediatePropagation();
     }
 }, {capture: true});
 term.scrollPort_.screen_.addEventListener('mousedown', (e) => {
