@@ -437,8 +437,11 @@ dword_t sys_fcntl(fd_t f, dword_t cmd, uword_t arg) {
             err = cmd == F_SETPIPE_SZ_ ? fcntl(fd->real_fd, F_SETPIPE_SZ, (int) arg) : fcntl(fd->real_fd, F_GETPIPE_SZ);
             return err < 0 ? errno_map() : err;
 #else
-            // hosts without the call: report Linux's default size, refuse to change it
-            return cmd == F_GETPIPE_SZ_ ? 65536 : _EPERM;
+            // hosts without the call: the size is only remembered (in the
+            // otherwise unused size field of this end of the pipe)
+            if (cmd == F_SETPIPE_SZ_)
+                fd->stat.size = arg < 4096 ? 4096 : arg;
+            return fd->stat.size != 0 ? fd->stat.size : 65536;
 #endif
 
         default:
