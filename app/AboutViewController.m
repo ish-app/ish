@@ -18,6 +18,7 @@
 @property (weak, nonatomic) IBOutlet UITableViewCell *capsLockMappingCell;
 @property (weak, nonatomic) IBOutlet UITableViewCell *themeCell;
 @property (weak, nonatomic) IBOutlet UISwitch *disableDimmingSwitch;
+@property (weak, nonatomic) IBOutlet UISwitch *keepKeyboardHiddenInMouseModeSwitch;
 @property (weak, nonatomic) IBOutlet UITextField *launchCommandField;
 @property (weak, nonatomic) IBOutlet UITextField *bootCommandField;
 
@@ -56,7 +57,7 @@
                           [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"],
                           [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"]];
 
-    [UserPreferences.shared observe:@[@"capsLockMapping", @"fontSize", @"launchCommand", @"bootCommand"]
+    [UserPreferences.shared observe:@[@"capsLockMapping", @"fontSize", @"keepKeyboardHiddenInMouseMode", @"launchCommand", @"bootCommand"]
                             options:0 owner:self usingBlock:^(typeof(self) self) {
         dispatch_async(dispatch_get_main_queue(), ^{
             [self _updateUI];
@@ -91,6 +92,7 @@
 - (void)_updateUI {
     NSAssert(NSThread.isMainThread, @"This method needs to be called on the main thread");
     self.disableDimmingSwitch.on = UserPreferences.shared.shouldDisableDimming;
+    self.keepKeyboardHiddenInMouseModeSwitch.on = UserPreferences.shared.keepKeyboardHiddenInMouseMode;
     self.launchCommandField.text = [UserPreferences.shared.launchCommand componentsJoinedByString:@" "];
     self.bootCommandField.text = [UserPreferences.shared.bootCommand componentsJoinedByString:@" "];
 
@@ -148,6 +150,10 @@
 
 - (IBAction)disableDimmingChanged:(id)sender {
     UserPreferences.shared.shouldDisableDimming = self.disableDimmingSwitch.on;
+}
+
+- (IBAction)keepKeyboardHiddenInMouseModeChanged:(id)sender {
+    UserPreferences.shared.keepKeyboardHiddenInMouseMode = self.keepKeyboardHiddenInMouseModeSwitch.on;
 }
 
 - (IBAction)textBoxSubmit:(id)sender {

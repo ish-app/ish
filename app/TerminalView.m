@@ -252,6 +252,12 @@ static NSString *const HANDLERS[] = {@"syncFocus", @"focus", @"newScrollHeight",
     if ([message.name isEqualToString:@"syncFocus"]) {
         self.terminalFocused = self.terminalFocused;
     } else if ([message.name isEqualToString:@"focus"]) {
+        NSDictionary *focusInfo = [message.body isKindOfClass:NSDictionary.class] ? message.body : @{};
+        BOOL force = [focusInfo[@"force"] boolValue];
+        BOOL mouseReporting = [focusInfo[@"mouseReporting"] boolValue];
+        if (!force && mouseReporting && UserPreferences.shared.keepKeyboardHiddenInMouseMode) {
+            return;
+        }
         if (!self.isFirstResponder) {
             [self becomeFirstResponder];
         }
