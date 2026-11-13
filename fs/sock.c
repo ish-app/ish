@@ -693,12 +693,14 @@ int_t sys_recvfrom(fd_t sock_fd, addr_t buffer_addr, dword_t len, dword_t flags,
         return errno_map();
     }
 
-    if (user_write(buffer_addr, buffer, len)) {
+    // only what was received (the rest of the caller's buffer is not ours to touch)
+    if (user_write(buffer_addr, buffer, (size_t) res < len ? (size_t) res : len)) {
         free(buffer);
         return _EFAULT;
     }
     free(buffer);
-    if (sockaddr_addr != 0) {
+    // (a connected socket returns no address: length 0, nothing to convert)
+    if (sockaddr_addr != 0 && sockaddr_len != 0) {
         int err = sockaddr_write(sockaddr_addr, sockaddr, sizeof(sockaddr), &sockaddr_len);
         if (err < 0)
             return err;
