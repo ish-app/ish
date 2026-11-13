@@ -1112,6 +1112,8 @@ int_t sys_recvmsg(fd_t sock_fd, addr_t msghdr_addr, int_t flags) {
     }
 
     // msg_control (changed)
+    uword_t control_room = msg_fake.msg_controllen;
+    bool control_truncated = false;
     msg_fake.msg_controllen = 0;
     struct cmsghdr *cmsg = CMSG_FIRSTHDR(&msg);
     if (sock->socket.domain == AF_LOCAL_ && cmsg != NULL &&
@@ -1130,19 +1132,38 @@ int_t sys_recvmsg(fd_t sock_fd, addr_t msghdr_addr, int_t flags) {
             return err;
         }
 
+        // Only as many descriptors as the caller's buffer has room for are
+        // handed over; the rest are closed and MSG_CTRUNC is set. (All of
+        // them used to be written, past the end of a smaller buffer.)
+        unsigned fit = 0;
+        if (control_room >= sizeof(struct cmsghdr_))
+            fit = (control_room - sizeof(struct cmsghdr_)) / sizeof(fd_t);
+        if (fit > scm->num_fds)
+            fit = scm->num_fds;
+        control_truncated = fit < scm->num_fds;
         uint8_t msg_control[sizeof(struct cmsghdr_) + scm->num_fds * sizeof(fd_t)];
+        memset(msg_control, 0, sizeof(msg_control));
         struct cmsghdr_ *cmsg = (void *) msg_control;
-        cmsg->len = sizeof(msg_control);
+        cmsg->len = sizeof(struct cmsghdr_) + fit * sizeof(fd_t);
         cmsg->level = SOL_SOCKET_;
         cmsg->type = SCM_RIGHTS_;
         fd_t *fds = (void *) cmsg->data;
         for (unsigned i = 0; i < scm->num_fds; i++) {
-            fds[i] = f_install(scm->fds[i], 0);
-            STRACE(" receiving fd %d", fds[i]);
+            if (i < fit) {
+                fds[i] = f_install(scm->fds[i], 0);
+                STRACE(" receiving fd %d", fds[i]);
+            } else {
+                fd_close(scm->fds[i]);
+            }
         }
-        if (user_write(msg_fake.msg_control, cmsg, cmsg->len))
-            return _EFAULT;
-        msg_fake.msg_controllen = msg.msg_controllen;
+        free(scm);
+        if (fit > 0) {
+            if (user_write(msg_fake.msg_control, cmsg, cmsg->len))
+                return _EFAULT;
+            // the length reported includes the padding, if there was room for it
+            uword_t padded = CMSG_LEN_(cmsg);
+            msg_fake.msg_controllen = padded <= control_room ? padded : cmsg->len;
+        }
     }
 
     // by now the iovecs and scm have been freed so we can return
@@ -1150,7 +1171,8 @@ int_t sys_recvmsg(fd_t sock_fd, addr_t msghdr_addr, int_t flags) {
         return err;
 
     // msg_name (changed)
-    if (msg.msg_name != 0) {
+    // (a connected socket returns no address: length 0, nothing to convert)
+    if (msg.msg_name != 0 && msg.msg_namelen != 0) {
         int err = sockaddr_write(msg_fake.msg_name, msg.msg_name, sizeof(msg_name), &msg.msg_namelen);
         if (err < 0)
             return err;
@@ -1159,6 +1181,8 @@ int_t sys_recvmsg(fd_t sock_fd, addr_t msghdr_addr, int_t flags) {
 
     // msg_flags (changed)
     msg_fake.msg_flags = sock_flags_from_real(msg.msg_flags);
+    if (control_truncated)
+        msg_fake.msg_flags |= MSG_CTRUNC_;
 
     if (user_put(msghdr_addr, msg_fake))
         return _EFAULT;

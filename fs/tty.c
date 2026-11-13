@@ -477,7 +477,8 @@ static ssize_t tty_read(struct fd *fd, void *buf, size_t bufsize) {
         size_t canon_size;
         while ((canon_size = tty_canon_size(tty)) == (size_t) -1) {
             err = _EIO;
-            if (pty_is_half_closed_master(tty))
+            // (hung_up: the other end went away while this read was waiting)
+            if (tty->hung_up || pty_is_half_closed_master(tty))
                 goto error;
             err = _EAGAIN;
             if (fd->flags & O_NONBLOCK_)
@@ -506,7 +507,8 @@ static ssize_t tty_read(struct fd *fd, void *buf, size_t bufsize) {
 
         while (tty->bufsize < min) {
             err = _EIO;
-            if (pty_is_half_closed_master(tty))
+            // (hung_up: the other end went away while this read was waiting)
+            if (tty->hung_up || pty_is_half_closed_master(tty))
                 goto error;
             err = _EAGAIN;
             if (fd->flags & O_NONBLOCK_)

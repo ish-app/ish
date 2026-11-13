@@ -42,6 +42,15 @@ struct fd *generic_openat(struct fd *at, const char *path_raw, int flags, int mo
     if (err < 0)
         return ERR_PTR(err);
     struct mount *mount = find_mount_and_trim_path(path);
+    if (flags & O_DIRECTORY_) {
+        // Find out before opening: opening a FIFO that turns out not to be a
+        // directory would wait for its other end.
+        struct statbuf pre_stat;
+        if (mount->fs->stat(mount, path, &pre_stat) == 0 && !S_ISDIR(pre_stat.mode)) {
+            mount_release(mount);
+            return ERR_PTR(_ENOTDIR);
+        }
+    }
     struct fd *fd = mount->fs->open(mount, path, flags, mode);
     if (IS_ERR(fd)) {
         // if an error happens after this point, fd_close will release the

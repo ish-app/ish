@@ -832,30 +832,36 @@ int_t sys_rt_sigtimedwait(addr_t set_addr, addr_t info_addr, addr_t timeout_addr
 
     lock(&current->sighand->lock);
     assert(current->waiting == 0);
-    current->waiting = set;
-    int err;
-    do {
-        err = wait_for(&current->pause, &current->sighand->lock, timeout_addr == 0 ? NULL : &timeout);
-    } while (err == 0);
-    current->waiting = 0;
-    if (err == _ETIMEDOUT) {
-        unlock(&current->sighand->lock);
-        STRACE("sigtimedwait timed out\n");
-        return _EAGAIN;
-    }
-
-    struct sigqueue *sigqueue;
-    bool found = false;
-    list_for_each_entry(&current->queue, sigqueue, queue) {
-        if (sigset_has(set, sigqueue->info.sig)) {
-            found = true;
-            list_remove(&sigqueue->queue);
-            break;
+    // Take a signal from the set if one is queued, already or after waiting.
+    // (This used to wait without looking first, and a wakeup for a blocked
+    // signal, which is the normal case for sigwait, sent it back to waiting.)
+    struct sigqueue *sigqueue = NULL;
+    int err = 0;
+    while (true) {
+        struct sigqueue *candidate;
+        list_for_each_entry(&current->queue, candidate, queue) {
+            if (sigset_has(set, candidate->info.sig)) {
+                sigqueue = candidate;
+                break;
+            }
         }
+        if (sigqueue != NULL || err < 0)
+            break;
+        current->waiting = set;
+        err = wait_for(&current->pause, &current->sighand->lock, timeout_addr == 0 ? NULL : &timeout);
+        current->waiting = 0;
     }
-    unlock(&current->sighand->lock);
-    if (!found)
+    if (sigqueue == NULL) {
+        unlock(&current->sighand->lock);
+        if (err == _ETIMEDOUT) {
+            STRACE("sigtimedwait timed out\n");
+            return _EAGAIN;
+        }
         return _EINTR;
+    }
+    list_remove(&sigqueue->queue);
+    sigset_del(&current->pending, sigqueue->info.sig);
+    unlock(&current->sighand->lock);
     struct siginfo_ info = sigqueue->info;
     free(sigqueue);
     if (info_addr != 0)

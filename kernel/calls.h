@@ -78,6 +78,7 @@ dword_t sys_pwritev(fd_t f, addr_t iovec_addr, dword_t iovec_count, uword_t pos_
 int_t sys_close_range(dword_t first, dword_t last, dword_t flags);
 dword_t sys_faccessat2(fd_t at_f, addr_t path_addr, mode_t_ mode, dword_t flags);
 int_t sys_getcpu(addr_t cpu_addr, addr_t node_addr);
+int_t sys_memfd_create(addr_t name_addr, uint_t flags);
 dword_t sys__llseek(fd_t f, dword_t off_high, dword_t off_low, addr_t res_addr, dword_t whence);
 dword_t sys_lseek(fd_t f, dword_t off, dword_t whence);
 dword_t sys_pread(fd_t f, addr_t buf_addr, dword_t buf_size, off_t_ off);
@@ -163,7 +164,7 @@ dword_t sys_copy_file_range(fd_t in_fd, addr_t in_off, fd_t out_fd, addr_t out_o
 dword_t sys_statfs(addr_t path_addr, addr_t buf_addr);
 dword_t sys_statfs64(addr_t path_addr, dword_t buf_size, addr_t buf_addr);
 dword_t sys_fstatfs(fd_t f, addr_t buf_addr);
-dword_t sys_fstatfs64(fd_t f, addr_t buf_addr);
+dword_t sys_fstatfs64(fd_t f, dword_t buf_size, addr_t buf_addr);
 dword_t sys_statx(fd_t at_f, addr_t path_addr, int_t flags, uint_t mask, addr_t statx_addr);
 
 #define MS_READONLY_ (1 << 0)

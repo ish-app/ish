@@ -4,6 +4,8 @@
 #include "kernel/fs.h"
 #include "fs/fd.h"
 #include "kernel/errno.h"
+#include "fs/real.h"
+#include <unistd.h>
 
 static struct mount adhoc_mount;
 
@@ -19,6 +21,14 @@ struct fd *adhoc_fd_create(const struct fd_ops *ops) {
 
 static int adhoc_fstat(struct fd *fd, struct statbuf *stat) {
     *stat = fd->stat;
+    if (fd->ops == &realfs_fdops && S_ISREG(fd->stat.mode)) {
+        // an anonymous regular file (memfd): its size lives in the host file
+        struct stat real_stat;
+        if (fstat(fd->real_fd, &real_stat) == 0) {
+            stat->size = real_stat.st_size;
+            stat->blocks = real_stat.st_blocks;
+        }
+    }
     return 0;
 }
 
@@ -34,6 +44,11 @@ static int adhoc_fsetattr(struct fd *fd, struct attr attr) {
             fd->stat.mode = (fd->stat.mode & S_IFMT) | (attr.mode & ~S_IFMT);
             break;
         case attr_size:
+            if (fd->ops == &realfs_fdops && S_ISREG(fd->stat.mode)) {
+                if (ftruncate(fd->real_fd, attr.size) < 0)
+                    return errno_map();
+                break;
+            }
             return _EINVAL;
     }
     return 0;

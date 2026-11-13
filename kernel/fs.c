@@ -6,6 +6,7 @@
 #include "kernel/task.h"
 #include "kernel/fs.h"
 #include "fs/fd.h"
+#include "fs/real.h"
 #include "fs/path.h"
 #include "fs/dev.h"
 
@@ -72,6 +73,10 @@ fd_t sys_openat(fd_t at_f, addr_t path_addr, dword_t flags, mode_t_ mode) {
 
     if (flags & O_CREAT_)
         apply_umask(&mode);
+    // "name/" can only be a directory, and open does not create directories
+    size_t path_len = strlen(path);
+    if ((flags & O_CREAT_) && path_len > 1 && path[path_len - 1] == '/')
+        return _EISDIR;
 
     struct fd *at = at_fd(at_f);
     if (at == NULL)
@@ -296,6 +301,8 @@ out:
 // by the inefficiency of the emulator.
 
 static struct iovec_ *read_iovec(addr_t iovec_addr, unsigned iovec_count) {
+    if (iovec_count > 1024) // IOV_MAX
+        return ERR_PTR(_EINVAL);
     dword_t iovec_size = sizeof(struct iovec_) * iovec_count;
     struct iovec_ *iovec = malloc(iovec_size);
     if (iovec == NULL)
@@ -303,6 +310,15 @@ static struct iovec_ *read_iovec(addr_t iovec_addr, unsigned iovec_count) {
     if (user_read(iovec_addr, iovec, iovec_size)) {
         free(iovec);
         return ERR_PTR(_EFAULT);
+    }
+    // the total has to fit in the guest's ssize_t
+    uword_t total = 0;
+    for (unsigned i = 0; i < iovec_count; i++) {
+        if (iovec[i].len > ((uword_t) -1 >> 1) - total) {
+            free(iovec);
+            return ERR_PTR(_EINVAL);
+        }
+        total += iovec[i].len;
     }
     return iovec;
 }
@@ -714,11 +730,20 @@ dword_t sys_statfs64(addr_t path_addr, dword_t buf_size, addr_t buf_addr) {
 }
 
 dword_t sys_fstatfs(fd_t f, addr_t buf_addr) {
-    return statfs_mount(f_get(f)->mount, buf_addr);
+    struct fd *fd = f_get(f);
+    if (fd == NULL)
+        return _EBADF; // (a bad descriptor used to crash iSH here)
+    return statfs_mount(fd->mount, buf_addr);
 }
 
-dword_t sys_fstatfs64(fd_t f, addr_t buf_addr) {
-    return statfs64_mount(f_get(f)->mount, buf_addr);
+// like statfs64, the size of the buffer comes before the buffer
+dword_t sys_fstatfs64(fd_t f, dword_t buf_size, addr_t buf_addr) {
+    struct fd *fd = f_get(f);
+    if (fd == NULL)
+        return _EBADF;
+    if (buf_size != sizeof(struct statfs64_))
+        return _EINVAL;
+    return statfs64_mount(fd->mount, buf_addr);
 }
 
 dword_t sys_flock(fd_t f, dword_t operation) {
@@ -857,6 +882,11 @@ dword_t sys_fchownat(fd_t at_f, addr_t path_addr, dword_t owner, dword_t group, 
         return _EBADF;
     int err;
     bool follow_links = flags & AT_SYMLINK_NOFOLLOW_ ? false : true;
+    if (owner == (uid_t) -1 && group == (uid_t) -1) {
+        // nothing to change, but the file still has to exist
+        struct statbuf stat;
+        return generic_statat(at, path, &stat, follow_links);
+    }
     if (owner != (uid_t) -1) {
         err = generic_setattrat(at, path, make_attr(uid, owner), follow_links);
         if (err < 0)
@@ -945,19 +975,150 @@ dword_t sys_fsync(fd_t f) {
     return err;
 }
 
-// a few stubs
-dword_t sys_sendfile(fd_t UNUSED(out_fd), fd_t UNUSED(in_fd), addr_t UNUSED(offset_addr), dword_t UNUSED(count)) {
-    return _EINVAL;
+// sendfile, splice and copy_file_range: copy between two open files through a
+// buffer. An offset pointer, when given, says where to read (write); the
+// offset is advanced and the file position left alone. off_size is the size
+// of the offsets in guest memory (4 for the old 32-bit sendfile).
+static ssize_t transfer_read(struct fd *fd, char *buf, size_t size, bool at_offset, off_t_ off) {
+    ssize_t res;
+    lock(&fd->lock);
+    if (!at_offset) {
+        if (fd->ops->read)
+            res = fd->ops->read(fd, buf, size);
+        else if (fd->ops->pread && fd->ops->lseek) {
+            res = fd->ops->pread(fd, buf, size, fd->offset);
+            if (res > 0)
+                fd->ops->lseek(fd, res, LSEEK_CUR);
+        } else
+            res = _EBADF;
+    } else if (fd->ops->pread) {
+        res = fd->ops->pread(fd, buf, size, off);
+    } else if (fd->ops->lseek && fd->ops->read) {
+        off_t_ saved = fd->ops->lseek(fd, 0, LSEEK_CUR);
+        if (saved < 0 || (res = fd->ops->lseek(fd, off, LSEEK_SET)) < 0) {
+            res = _ESPIPE;
+        } else {
+            res = fd->ops->read(fd, buf, size);
+            fd->ops->lseek(fd, saved, LSEEK_SET);
+        }
+    } else {
+        res = _ESPIPE;
+    }
+    unlock(&fd->lock);
+    return res;
 }
-dword_t sys_sendfile64(fd_t UNUSED(out_fd), fd_t UNUSED(in_fd), addr_t UNUSED(offset_addr), dword_t UNUSED(count)) {
-    return _EINVAL;
+static ssize_t transfer_write(struct fd *fd, const char *buf, size_t size, bool at_offset, off_t_ off) {
+    ssize_t res;
+    lock(&fd->lock);
+    if (!at_offset) {
+        if (fd->ops->write)
+            res = fd->ops->write(fd, buf, size);
+        else if (fd->ops->pwrite && fd->ops->lseek) {
+            res = fd->ops->pwrite(fd, buf, size, fd->offset);
+            if (res > 0)
+                fd->ops->lseek(fd, res, LSEEK_CUR);
+        } else
+            res = _EBADF;
+    } else if (fd->ops->pwrite) {
+        res = fd->ops->pwrite(fd, buf, size, off);
+    } else if (fd->ops->lseek && fd->ops->write) {
+        off_t_ saved = fd->ops->lseek(fd, 0, LSEEK_CUR);
+        if (saved < 0 || (res = fd->ops->lseek(fd, off, LSEEK_SET)) < 0) {
+            res = _ESPIPE;
+        } else {
+            res = fd->ops->write(fd, buf, size);
+            fd->ops->lseek(fd, saved, LSEEK_SET);
+        }
+    } else {
+        res = _ESPIPE;
+    }
+    unlock(&fd->lock);
+    return res;
 }
-dword_t sys_splice(fd_t UNUSED(in_fd), addr_t UNUSED(in_off_addr), fd_t UNUSED(out_fd), addr_t UNUSED(out_off_addr), dword_t UNUSED(count), dword_t UNUSED(flags)) {
-    return _EINVAL;
+
+static sqword_t transfer_fds(fd_t in_f, addr_t in_off_addr, fd_t out_f, addr_t out_off_addr, uword_t count, int off_size) {
+    struct fd *in = f_get(in_f), *out = f_get(out_f);
+    if (in == NULL || out == NULL)
+        return _EBADF;
+    if (S_ISDIR(in->type) || S_ISDIR(out->type))
+        return _EINVAL;
+    off_t_ in_off = 0, out_off = 0;
+    if (in_off_addr != 0 && user_read(in_off_addr, &in_off, off_size))
+        return _EFAULT;
+    if (out_off_addr != 0 && user_read(out_off_addr, &out_off, off_size))
+        return _EFAULT;
+    if (in_off < 0 || out_off < 0)
+        return _EINVAL;
+
+    size_t buf_size = 1 << 16;
+    char *buf = malloc(buf_size);
+    if (buf == NULL)
+        return _ENOMEM;
+    // the files must not go away under us
+    fd_retain(in);
+    fd_retain(out);
+    sqword_t total = 0;
+    ssize_t err = 0;
+    while ((uword_t) total < count) {
+        size_t chunk = count - total < buf_size ? count - total : buf_size;
+        ssize_t got = transfer_read(in, buf, chunk, in_off_addr != 0, in_off);
+        if (got <= 0) {
+            err = got;
+            break;
+        }
+        ssize_t put = transfer_write(out, buf, got, out_off_addr != 0, out_off);
+        if (put < 0) {
+            err = put;
+            break;
+        }
+        in_off += put;
+        out_off += put;
+        total += put;
+        if (put < got) {
+            // the rest of what was read is lost unless the reader can be moved back
+            if (in_off_addr == 0 && in->ops->lseek)
+                in->ops->lseek(in, (off_t_) put - got, LSEEK_CUR);
+            break;
+        }
+    }
+    free(buf);
+    fd_close(in);
+    fd_close(out);
+    if (total == 0 && err < 0)
+        return err;
+    if (in_off_addr != 0 && user_write(in_off_addr, &in_off, off_size))
+        return _EFAULT;
+    if (out_off_addr != 0 && user_write(out_off_addr, &out_off, off_size))
+        return _EFAULT;
+    return total;
 }
-dword_t sys_copy_file_range(fd_t UNUSED(in_fd), addr_t UNUSED(in_off), fd_t UNUSED(out_fd),
-        addr_t UNUSED(out_off), dword_t UNUSED(len), uint_t UNUSED(flags)) {
-    return _EPERM; // good enough for ruby
+
+dword_t sys_sendfile(fd_t out_fd, fd_t in_fd, addr_t offset_addr, dword_t count) {
+    STRACE("sendfile(%d, %d, %#x, %d)", out_fd, in_fd, offset_addr, count);
+    // the offset is a long: 4 bytes for a 32-bit guest
+    return transfer_fds(in_fd, offset_addr, out_fd, 0, count, sizeof(uword_t));
+}
+dword_t sys_sendfile64(fd_t out_fd, fd_t in_fd, addr_t offset_addr, dword_t count) {
+    STRACE("sendfile64(%d, %d, %#x, %d)", out_fd, in_fd, offset_addr, count);
+    return transfer_fds(in_fd, offset_addr, out_fd, 0, count, sizeof(off_t_));
+}
+dword_t sys_splice(fd_t in_fd, addr_t in_off_addr, fd_t out_fd, addr_t out_off_addr, dword_t count, dword_t flags) {
+    STRACE("splice(%d, %#x, %d, %#x, %d, %#x)", in_fd, in_off_addr, out_fd, out_off_addr, count, flags);
+    struct fd *in = f_get(in_fd), *out = f_get(out_fd);
+    if (in == NULL || out == NULL)
+        return _EBADF;
+    // one end has to be a pipe, and a pipe has no offset
+    if (!S_ISFIFO(in->stat.mode) && !S_ISFIFO(out->stat.mode))
+        return _EINVAL;
+    if ((S_ISFIFO(in->stat.mode) && in_off_addr != 0) || (S_ISFIFO(out->stat.mode) && out_off_addr != 0))
+        return _ESPIPE;
+    return transfer_fds(in_fd, in_off_addr, out_fd, out_off_addr, count, sizeof(off_t_));
+}
+dword_t sys_copy_file_range(fd_t in_fd, addr_t in_off, fd_t out_fd, addr_t out_off, dword_t len, uint_t flags) {
+    STRACE("copy_file_range(%d, %#x, %d, %#x, %d, %#x)", in_fd, in_off, out_fd, out_off, len, flags);
+    if (flags != 0)
+        return _EINVAL;
+    return transfer_fds(in_fd, in_off, out_fd, out_off, len, sizeof(off_t_));
 }
 
 dword_t sys_xattr_stub(addr_t UNUSED(path_addr), addr_t UNUSED(name_addr),
@@ -1020,4 +1181,38 @@ int_t sys_close_range(dword_t first, dword_t last, dword_t flags) {
 
 dword_t sys_faccessat2(fd_t at_f, addr_t path_addr, mode_t_ mode, dword_t flags) {
     return sys_faccessat(at_f, path_addr, mode, flags);
+}
+
+// memfd_create: an anonymous file. Backed by a host temporary file that is
+// unlinked right away, so it works on hosts without the Linux call.
+int_t sys_memfd_create(addr_t name_addr, uint_t flags) {
+    char name[256];
+    if (user_read_string(name_addr, name, sizeof(name)))
+        return _EFAULT;
+    STRACE("memfd_create(\"%s\", %#x)", name, flags);
+    if (flags & ~3u) // MFD_CLOEXEC, MFD_ALLOW_SEALING
+        return _EINVAL;
+    const char *tmpdir = getenv("TMPDIR");
+    if (tmpdir == NULL || tmpdir[0] == '\0')
+        tmpdir = "/tmp";
+    char path[4096];
+    snprintf(path, sizeof(path), "%s/ish-memfd-XXXXXX", tmpdir);
+    int real_fd = mkstemp(path);
+    if (real_fd < 0)
+        return errno_map();
+    unlink(path);
+    struct fd *fd = adhoc_fd_create(&realfs_fdops);
+    if (fd == NULL) {
+        close(real_fd);
+        return _ENOMEM;
+    }
+    fd->real_fd = real_fd;
+    fd->dir = NULL;
+    fd->type = S_IFREG;
+    fd->stat.mode = S_IFREG | 0777;
+    fd->stat.uid = current->euid;
+    fd->stat.gid = current->egid;
+    fd->stat.nlink = 0;
+    fd->stat.blksize = 4096;
+    return f_install(fd, (flags & 1) ? O_CLOEXEC_ : 0);
 }

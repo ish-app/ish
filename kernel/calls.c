@@ -118,6 +118,8 @@ syscall_t syscall_table[] = {
     [157] = (syscall_t) sys_sched_getscheduler,
     [158] = (syscall_t) sys_sched_yield,
     [159] = (syscall_t) sys_sched_get_priority_max,
+    [160] = (syscall_t) sys_sched_get_priority_min,
+    [161] = (syscall_t) sys_sched_rr_get_interval,
     [162] = (syscall_t) sys_nanosleep,
     [163] = (syscall_t) sys_mremap,
     [168] = (syscall_t) sys_poll,
@@ -259,6 +261,7 @@ syscall_t syscall_table[] = {
     [318] = (syscall_t) sys_getcpu,
     [326] = (syscall_t) sys_timerfd_gettime,
     [333] = (syscall_t) sys_preadv,
+    [356] = (syscall_t) sys_memfd_create,
     [334] = (syscall_t) sys_pwritev,
 };
 

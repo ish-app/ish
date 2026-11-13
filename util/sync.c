@@ -22,7 +22,7 @@ static bool is_signal_pending(lock_t *lock) {
         return false;
     if (lock != &current->sighand->lock)
         lock(&current->sighand->lock);
-    bool pending = !!(current->pending & ~current->blocked);
+    bool pending = !!(current->pending & (~current->blocked | current->waiting)); // sigtimedwait waits for blocked signals
     if (lock != &current->sighand->lock)
         unlock(&current->sighand->lock);
     return pending;
@@ -118,7 +118,7 @@ void sigusr1_handler(void) {
         sigprocmask(SIG_BLOCK, &sigusr1, NULL);
         if (lock != &current->sighand->lock)
             lock(&current->sighand->lock);
-        bool pending = !!(current->pending & ~current->blocked);
+        bool pending = !!(current->pending & (~current->blocked | current->waiting)); // sigtimedwait waits for blocked signals
         if (lock != &current->sighand->lock)
             unlock(&current->sighand->lock);
         sigprocmask(SIG_UNBLOCK, &sigusr1, NULL);

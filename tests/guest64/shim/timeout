@@ -1,0 +1,11 @@
+#!/usr/bin/perl
+# minimal timeout(1) for hosts without coreutils: timeout [-s SIG] SECONDS command...
+my $sig = 'TERM';
+if ($ARGV[0] eq '-s') { shift; $sig = shift; }
+my $secs = shift;
+my $pid = fork();
+if ($pid == 0) { exec @ARGV or exit 127; }
+$SIG{ALRM} = sub { kill $sig, $pid; };
+alarm $secs;
+waitpid($pid, 0);
+exit(($? & 127) ? 128 + ($? & 127) : $? >> 8);

@@ -20,6 +20,9 @@ static bool exit_tgroup(struct task *task) {
         // - locking pids_lock first, which do_exit did
         if (group->itimer)
             timer_free(group->itimer);
+        for (int i = 0; i < 2; i++)
+            if (group->itimer_cpu[i])
+                timer_free(group->itimer_cpu[i]);
 
         // The group will be removed from its group and session by reap_if_zombie,
         // because fish tries to set the pgid to that of an exited but not reaped

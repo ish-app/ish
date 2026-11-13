@@ -220,7 +220,9 @@ int_t sys_mlock(addr_t UNUSED(addr), dword_t UNUSED(len)) {
     return 0;
 }
 
-int_t sys_msync(addr_t UNUSED(addr), dword_t UNUSED(len), int_t UNUSED(flags)) {
+int_t sys_msync(addr_t addr, dword_t UNUSED(len), int_t UNUSED(flags)) {
+    if (PGOFFSET(addr) != 0)
+        return _EINVAL;
     return 0;
 }
 

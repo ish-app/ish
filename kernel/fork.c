@@ -45,6 +45,7 @@ static struct tgroup *tgroup_copy(struct tgroup *old_group) {
         unlock(&group->tty->lock);
     }
     group->itimer = NULL;
+    group->itimer_cpu[0] = group->itimer_cpu[1] = NULL;
     // POSIX timers are not inherited across fork
     for (int i = 0; i < TIMERS_MAX; i++) {
         group->posix_timers[i] = (struct posix_timer) {};

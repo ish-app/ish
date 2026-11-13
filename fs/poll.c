@@ -50,6 +50,8 @@ struct poll *poll_create(void) {
     poll->notify_pipe[1] = -1;
     list_init(&poll->poll_fds);
     list_init(&poll->pollfd_freelist);
+    poll->report_gen = 0;
+    poll->has_edge_triggered = false;
     lock_init(&poll->lock);
     return poll;
 }
@@ -101,6 +103,9 @@ int poll_add_fd(struct poll *poll, struct fd *fd, int types, union poll_fd_info 
     poll_fd->types = types;
     poll_fd->info = info;
     poll_fd->triggered_types = 0;
+    poll_fd->reported_gen = 0;
+    if (types & POLL_EDGETRIGGERED)
+        poll->has_edge_triggered = true;
 
     if (poll_fd_is_real(poll_fd)) {
         err = real_poll_update(&poll->real, fd->real_fd, types, poll_fd);
@@ -173,7 +178,10 @@ int poll_mod_fd(struct poll *poll, struct fd *fd, int types, union poll_fd_info 
 
     poll_fd->types = types;
     poll_fd->info = info;
-    poll_fd->triggered_types &= types;
+    // (as on Linux, changing an entry re-arms it)
+    poll_fd->triggered_types = 0;
+    if (types & POLL_EDGETRIGGERED)
+        poll->has_edge_triggered = true;
 
     err = 0;
 out:
@@ -206,7 +214,7 @@ void poll_wakeup(struct fd *fd, int events) {
         struct poll *poll = poll_fd->poll;
         lock(&poll->lock);
         if (poll_fd->types & POLL_EDGETRIGGERED)
-            poll_fd->triggered_types &= ~events;
+            poll_fd->triggered_types = 0;
         if (poll->notify_pipe[1] != -1)
             write(poll->notify_pipe[1], "", 1);
         unlock(&poll->lock);
@@ -230,8 +238,23 @@ int poll_wait(struct poll *poll_, poll_callback_t callback, void *context, struc
         real_poll_update(&poll_->real, poll_->notify_pipe[0], POLL_READ, NULL);
     }
 
+    // Edges that arrived since the last call re-arm their entries. This has
+    // to happen before readiness is looked at, or an entry that became
+    // readable would be reported without the other things it is ready for.
+    if (poll_->has_edge_triggered) {
+        struct real_poll_event fresh[8];
+        struct timespec no_wait = {0, 0};
+        int n = real_poll_wait(&poll_->real, fresh, sizeof(fresh)/sizeof(fresh[0]), &no_wait);
+        for (int i = 0; i < n; i++) {
+            struct poll_fd *fresh_fd = rpe_data(&fresh[i]);
+            if (fresh_fd != NULL && fresh_fd->poll == poll_ && fresh_fd->types & POLL_EDGETRIGGERED)
+                fresh_fd->triggered_types = 0;
+        }
+    }
+
     // TODO this is pretty broken with regards to timeouts
     int res = 0;
+    bool edge_reported = false;
     while (true) {
         // check if any fds are ready
         struct poll_fd *poll_fd, *tmp;
@@ -265,8 +288,29 @@ int poll_wait(struct poll *poll_, poll_callback_t callback, void *context, struc
 
                 if (poll_fd->types & POLL_EDGETRIGGERED) {
                     poll_fd->triggered_types |= poll_types;
+                    if (!edge_reported) {
+                        edge_reported = true;
+                        poll_->report_gen++;
+                    }
+                    poll_fd->reported_gen = poll_->report_gen;
                 }
             }
+        }
+        if (edge_reported) {
+            // The host's own notifications for the edges just returned are
+            // still queued. Take them now; left for the next call they would
+            // look like new edges and the same events would be returned twice.
+            // Notifications for other entries re-arm those as usual.
+            struct real_poll_event stale[8];
+            struct timespec no_wait = {0, 0};
+            int n = real_poll_wait(&poll_->real, stale, sizeof(stale)/sizeof(stale[0]), &no_wait);
+            for (int i = 0; i < n; i++) {
+                struct poll_fd *stale_fd = rpe_data(&stale[i]);
+                if (stale_fd != NULL && stale_fd->poll == poll_ && stale_fd->reported_gen != poll_->report_gen &&
+                        stale_fd->types & POLL_EDGETRIGGERED)
+                    stale_fd->triggered_types = 0;
+            }
+            edge_reported = false;
         }
         if (res > 0)
             break;
@@ -308,7 +352,8 @@ int poll_wait(struct poll *poll_, poll_callback_t callback, void *context, struc
             struct poll_fd *triggered_poll_fd = rpe_data(&e[i]);
             if (triggered_poll_fd != NULL && triggered_poll_fd->poll != NULL &&
                     triggered_poll_fd->types & POLL_EDGETRIGGERED) {
-                triggered_poll_fd->triggered_types &= ~rpe_events(&e[i]);
+                // any new edge makes the next call report everything that is ready
+                triggered_poll_fd->triggered_types = 0;
             }
         }
 

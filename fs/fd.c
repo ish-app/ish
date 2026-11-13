@@ -1,3 +1,6 @@
+#define _GNU_SOURCE
+#include <fcntl.h>
+#include <sys/stat.h>
 #include <stdlib.h>
 #include <string.h>
 #include "debug.h"
@@ -230,6 +233,8 @@ void fdtable_do_cloexec(struct fdtable *table) {
 #define F_GETFD_ 1
 #define F_SETFD_ 2
 #define F_GETFL_ 3
+#define F_SETPIPE_SZ_ 1031
+#define F_GETPIPE_SZ_ 1032
 #define F_SETFL_ 4
 
 #define F_GETLK_ 5
@@ -253,17 +258,28 @@ dword_t sys_dup(fd_t f) {
 dword_t sys_dup3(fd_t f, fd_t new_f, int_t flags) {
     STRACE("dup3(%d, %d, %d)", f, new_f, flags);
     struct fdtable *table = current->files;
+    // (a negative target used to be written in front of the table)
+    if (new_f < 0)
+        return _EBADF;
+    if (flags & ~O_CLOEXEC_)
+        return _EINVAL;
     struct fd *fd = f_get(f);
     if (fd == NULL)
         return _EBADF;
+    if (new_f == f)
+        return new_f;
     int err = fdtable_expand(table, new_f);
     if (err < 0)
-        return err;
+        return err == _EMFILE ? _EBADF : err;
     fd_retain(fd);
     f_close(new_f);
+    lock(&table->lock);
     table->files[new_f] = fd;
     if (flags & O_CLOEXEC_)
         bit_set(new_f, table->cloexec);
+    else
+        bit_clear(new_f, table->cloexec);
+    unlock(&table->lock);
     return new_f;
 }
 
@@ -410,6 +426,20 @@ dword_t sys_fcntl(fd_t f, dword_t cmd, uword_t arg) {
             if (user_read(arg, &flock, sizeof(flock)))
                 return _EFAULT;
             return fcntl_setlk(fd, &flock, cmd == F_SETLKW64_);
+
+        case F_SETPIPE_SZ_:
+        case F_GETPIPE_SZ_:
+            STRACE("fcntl(%d, %s, %d)", f, cmd == F_SETPIPE_SZ_ ? "F_SETPIPE_SZ" : "F_GETPIPE_SZ", arg);
+            if (!S_ISFIFO(fd->stat.mode))
+                return _EBADF;
+#if defined(F_GETPIPE_SZ)
+            // a guest pipe is a host pipe
+            err = cmd == F_SETPIPE_SZ_ ? fcntl(fd->real_fd, F_SETPIPE_SZ, (int) arg) : fcntl(fd->real_fd, F_GETPIPE_SZ);
+            return err < 0 ? errno_map() : err;
+#else
+            // hosts without the call: report Linux's default size, refuse to change it
+            return cmd == F_GETPIPE_SZ_ ? 65536 : _EPERM;
+#endif
 
         default:
             STRACE("fcntl(%d, %d)", f, cmd);

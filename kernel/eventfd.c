@@ -4,16 +4,20 @@
 
 static struct fd_ops eventfd_ops;
 
+// a read takes 1 from the counter instead of all of it
+#define EFD_SEMAPHORE_ 1
+
 int_t sys_eventfd2(uint_t initval, int_t flags) {
     STRACE("eventfd(%d, %#x)", initval, flags);
-    if (flags & ~(O_CLOEXEC_|O_NONBLOCK_))
+    if (flags & ~(O_CLOEXEC_|O_NONBLOCK_|EFD_SEMAPHORE_))
         return _EINVAL;
 
     struct fd *fd = adhoc_fd_create(&eventfd_ops);
     if (fd == NULL)
         return _ENOMEM;
     fd->eventfd.val = initval;
-    return f_install(fd, flags);
+    fd->eventfd.semaphore = flags & EFD_SEMAPHORE_;
+    return f_install(fd, flags & ~EFD_SEMAPHORE_);
 }
 int_t sys_eventfd(uint_t initval) {
     return sys_eventfd2(initval, 0);
@@ -35,8 +39,13 @@ static ssize_t eventfd_read(struct fd *fd, void *buf, size_t bufsize) {
         }
     }
 
-    *(uint64_t *) buf = fd->eventfd.val;
-    fd->eventfd.val = 0;
+    if (fd->eventfd.semaphore) {
+        *(uint64_t *) buf = 1;
+        fd->eventfd.val--;
+    } else {
+        *(uint64_t *) buf = fd->eventfd.val;
+        fd->eventfd.val = 0;
+    }
     notify(&fd->cond);
     unlock(&fd->lock);
     poll_wakeup(fd, POLL_WRITE);

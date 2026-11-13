@@ -131,20 +131,49 @@ static void itimer_notify(struct task *task) {
     send_signal(task, SIGALRM_, info);
 }
 
-static int itimer_set(struct tgroup *group, int which, struct timer_spec spec, struct timer_spec *old_spec) {
-    if (which != ITIMER_REAL_) {
-        FIXME("unimplemented setitimer %d", which);
-        return _EINVAL;
-    }
+static void itimer_notify_virtual(struct task *task) {
+    struct siginfo_ info = {
+        .code = SI_TIMER_,
+    };
+    send_signal(task, SIGVTALRM_, info);
+}
+static void itimer_notify_prof(struct task *task) {
+    struct siginfo_ info = {
+        .code = SI_TIMER_,
+    };
+    send_signal(task, SIGPROF_, info);
+}
 
-    if (!group->itimer) {
-        struct timer *timer = timer_new(CLOCK_REALTIME, (timer_callback_t) itimer_notify, current);
+// The timer behind setitimer(which), created on first use. ITIMER_VIRTUAL
+// and ITIMER_PROF should count the process's CPU time; here they count
+// elapsed time, which is the same for a process that is busy and too fast
+// for one that sleeps.
+static struct timer **itimer_slot(struct tgroup *group, int which) {
+    switch (which) {
+        case ITIMER_REAL_: return &group->itimer;
+        case 1: return &group->itimer_cpu[0];
+        case 2: return &group->itimer_cpu[1];
+    }
+    return NULL;
+}
+
+static int itimer_set(struct tgroup *group, int which, struct timer_spec spec, struct timer_spec *old_spec) {
+    struct timer **slot = itimer_slot(group, which);
+    if (slot == NULL)
+        return _EINVAL;
+
+    if (!*slot) {
+        struct timer *timer;
+        if (which == ITIMER_REAL_)
+            timer = timer_new(CLOCK_REALTIME, (timer_callback_t) itimer_notify, current);
+        else
+            timer = timer_new(CLOCK_MONOTONIC, (timer_callback_t) (which == 1 ? itimer_notify_virtual : itimer_notify_prof), current);
         if (IS_ERR(timer))
             return PTR_ERR(timer);
-        group->itimer = timer;
+        *slot = timer;
     }
 
-    return timer_set(group->itimer, spec, old_spec);
+    return timer_set(*slot, spec, old_spec);
 }
 
 int_t sys_setitimer(int_t which, addr_t new_val_addr, addr_t old_val_addr) {
@@ -487,13 +516,14 @@ static struct fd_ops timerfd_ops = {
 
 int_t sys_getitimer(int_t which, addr_t val_addr) {
     STRACE("getitimer(%d, %#x)", which, val_addr);
-    if (which != ITIMER_REAL_)
-        return _EINVAL;
     struct timer_spec spec = {0};
     struct tgroup *group = current->group;
+    struct timer **slot = itimer_slot(group, which);
+    if (slot == NULL)
+        return _EINVAL;
     lock(&group->lock);
-    if (group->itimer)
-        timer_get(group->itimer, &spec);
+    if (*slot)
+        timer_get(*slot, &spec);
     unlock(&group->lock);
     struct itimerval_ val;
     val.interval.sec = spec.interval.tv_sec;

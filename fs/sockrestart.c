@@ -15,6 +15,9 @@ void sockrestart_begin_listen(struct fd *sock) {
     if (sock->ops != &socket_fdops)
         return;
     lock(&sockrestart_lock);
+    // listen() may be called again on a socket that is already listening;
+    // adding it twice corrupted the list
+    list_remove_safe(&sock->sockrestart.listen);
     list_add(&listen_fds, &sock->sockrestart.listen);
     unlock(&sockrestart_lock);
 }
