@@ -9,6 +9,7 @@ IPHONEOS_DEPLOYMENT_TARGET = 11.0
 VERSIONING_SYSTEM = apple-generic
 
 MESON_BUILD_DIR = $(CONFIGURATION_BUILD_DIR)/meson
+GCC_PREPROCESSOR_DEFINITIONS = $(inherited) $(ISH_GUEST_DEFS_$(ISH_GUEST))
 NINJA_TARGETS = libish.a libish_emu.a libfakefs.a
 
 SUPPORTED_PLATFORMS = iphonesimulator iphoneos macosx
