@@ -89,6 +89,13 @@ static int copy_task(struct task *task, dword_t flags, addr_t stack, addr_t ptid
             goto fail_free_files;
     }
 
+    // a new thread starts without an alternate signal stack (a fork or vfork
+    // child keeps the parent's)
+    if ((flags & CLONE_VM_) && !(flags & CLONE_VFORK_)) {
+        task->altstack = 0;
+        task->altstack_size = 0;
+    }
+
     if (flags & CLONE_SIGHAND_) {
         task->sighand->refcount++;
     } else {

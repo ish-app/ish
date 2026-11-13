@@ -143,38 +143,53 @@ int_t sys_mremap(addr_t addr, dword_t old_len, dword_t new_len, dword_t flags) {
         FIXME("missing MREMAP_FIXED");
         return _EINVAL;
     }
-    pages_t old_pages = PAGE(old_len);
-    pages_t new_pages = PAGE(new_len);
+    // lengths round up to whole pages (they used to round down, so shrinking a
+    // mapping to less than a page unmapped all of it)
+    pages_t old_pages = PAGE_ROUND_UP(old_len);
+    pages_t new_pages = PAGE_ROUND_UP(new_len);
+    if (new_pages == 0)
+        return _EINVAL;
+    struct mem *mem = current->mem;
+    int_t res = addr;
+    write_wrlock(&mem->lock);
 
     // shrinking always works
     if (new_pages <= old_pages) {
-        int err = pt_unmap(current->mem, PAGE(addr) + new_pages, old_pages - new_pages);
-        if (err < 0)
-            return _EFAULT;
-        return addr;
+        if (pt_unmap(mem, PAGE(addr) + new_pages, old_pages - new_pages) < 0)
+            res = _EFAULT;
+        goto out;
     }
 
-    struct pt_entry *entry = mem_pt(current->mem, PAGE(addr));
-    if (entry == NULL)
-        return _EFAULT;
+    struct pt_entry *entry = mem_pt(mem, PAGE(addr));
+    if (entry == NULL) {
+        res = _EFAULT;
+        goto out;
+    }
     dword_t pt_flags = entry->flags;
     for (page_t page = PAGE(addr); page < PAGE(addr) + old_pages; page++) {
-        entry = mem_pt(current->mem, page);
-        if (entry == NULL && entry->flags != pt_flags)
-            return _EFAULT;
+        entry = mem_pt(mem, page);
+        if (entry == NULL || entry->flags != pt_flags) {
+            res = _EFAULT;
+            goto out;
+        }
     }
     if (!(pt_flags & P_ANONYMOUS)) {
         FIXME("mremap grow on file mappings");
-        return _EFAULT;
+        res = _EFAULT;
+        goto out;
     }
     page_t extra_start = PAGE(addr) + old_pages;
     pages_t extra_pages = new_pages - old_pages;
-    if (!pt_is_hole(current->mem, extra_start, extra_pages))
-        return _ENOMEM;
-    int err = pt_map_nothing(current->mem, extra_start, extra_pages, pt_flags);
+    if (!pt_is_hole(mem, extra_start, extra_pages)) {
+        res = _ENOMEM;
+        goto out;
+    }
+    int err = pt_map_nothing(mem, extra_start, extra_pages, pt_flags);
     if (err < 0)
-        return err;
-    return addr;
+        res = err;
+out:
+    write_wrunlock(&mem->lock);
+    return res;
 }
 
 int_t sys_mprotect(addr_t addr, uint_t len, int_t prot) {

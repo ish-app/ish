@@ -3,6 +3,7 @@
 #include <poll.h>
 #include <fcntl.h>
 #include <limits.h>
+#include <sched.h>
 #include "misc.h"
 #include "util/list.h"
 #include "kernel/errno.h"
@@ -103,7 +104,10 @@ int poll_add_fd(struct poll *poll, struct fd *fd, int types, union poll_fd_info 
 
     if (poll_fd_is_real(poll_fd)) {
         err = real_poll_update(&poll->real, fd->real_fd, types, poll_fd);
-        if (err < 0) {
+        // Linux epoll refuses regular files and directories with EPERM. They
+        // are always ready, which poll_wait finds out by asking the fd, so
+        // they only need to be in the list.
+        if (err < 0 && errno != EPERM) {
             free(poll_fd);
             err = errno_map();
             goto out;
@@ -182,13 +186,15 @@ void poll_cleanup_fd(struct fd *fd) {
     lock(&fd->poll_lock);
     struct poll_fd *poll_fd, *tmp;
     list_for_each_entry_safe(&fd->poll_fds, poll_fd, tmp, polls) {
-        lock(&poll_fd->poll->lock);
+        struct poll *poll = poll_fd->poll;
+        lock(&poll->lock);
         if (poll_fd_is_real(poll_fd))
-            real_poll_update(&poll_fd->poll->real, fd->real_fd, 0, poll_fd);
+            real_poll_update(&poll->real, fd->real_fd, 0, poll_fd);
         list_remove(&poll_fd->polls);
         list_remove(&poll_fd->fds);
-        unlock(&poll_fd->poll->lock);
+        // the free list belongs to the poll: still under its lock
         poll_fd_free(poll_fd);
+        unlock(&poll->lock);
     }
     unlock(&fd->poll_lock);
 }
@@ -254,6 +260,7 @@ int poll_wait(struct poll *poll_, poll_callback_t callback, void *context, struc
                         real_poll_update(&poll_->real, fd->real_fd, 0, NULL);
                     }
                     free(poll_fd);
+                    continue;
                 }
 
                 if (poll_fd->types & POLL_EDGETRIGGERED) {
@@ -327,13 +334,25 @@ int poll_wait(struct poll *poll_, poll_callback_t callback, void *context, struc
 void poll_destroy(struct poll *poll) {
     struct poll_fd *poll_fd;
     struct poll_fd *tmp;
-    list_for_each_entry_safe(&poll->poll_fds, poll_fd, tmp, fds) {
-        lock(&poll_fd->fd->poll_lock);
+    // Another thread may be closing one of the watched files right now
+    // (poll_cleanup_fd), which takes the file's lock and then ours. Take them
+    // in the opposite order only by trying, and start over if that fails.
+    lock(&poll->lock);
+    while (!list_empty(&poll->poll_fds)) {
+        poll_fd = list_first_entry(&poll->poll_fds, struct poll_fd, fds);
+        struct fd *fd = poll_fd->fd;
+        if (trylock(&fd->poll_lock) != 0) {
+            unlock(&poll->lock);
+            sched_yield();
+            lock(&poll->lock);
+            continue;
+        }
         list_remove(&poll_fd->polls);
         list_remove(&poll_fd->fds);
-        unlock(&poll_fd->fd->poll_lock);
+        unlock(&fd->poll_lock);
         free(poll_fd);
     }
+    unlock(&poll->lock);
 
     list_for_each_entry_safe(&poll->pollfd_freelist, poll_fd, tmp, fds) {
         list_remove(&poll_fd->fds);

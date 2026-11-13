@@ -3,8 +3,12 @@
 #define FUTEX_WAIT_ 0
 #define FUTEX_WAKE_ 1
 #define FUTEX_REQUEUE_ 3
+#define FUTEX_CMP_REQUEUE_ 4
+#define FUTEX_WAIT_BITSET_ 9
+#define FUTEX_WAKE_BITSET_ 10
 #define FUTEX_PRIVATE_FLAG_ 128
-#define FUTEX_CMD_MASK_ ~(FUTEX_PRIVATE_FLAG_)
+#define FUTEX_CLOCK_REALTIME_ 256
+#define FUTEX_CMD_MASK_ ~(FUTEX_PRIVATE_FLAG_ | FUTEX_CLOCK_REALTIME_)
 
 struct futex {
     atomic_uint refcount;
@@ -100,12 +104,16 @@ static int futex_wait(addr_t uaddr, dword_t val, struct timespec *timeout) {
         err = _EAGAIN;
     else {
         struct futex_wait wait;
-        wait.cond = COND_INITIALIZER;
+        // cond_init, not COND_INITIALIZER: on Linux hosts timed waits are
+        // measured on the monotonic clock, which only cond_init selects.
+        // With the static initializer every timed wait expired at once.
+        cond_init(&wait.cond);
         wait.futex = futex;
         list_add_tail(&futex->queue, &wait.queue);
         err = wait_for(&wait.cond, &futex_lock, timeout);
         futex = wait.futex;
         list_remove_safe(&wait.queue);
+        cond_destroy(&wait.cond);
     }
     futex_put(futex);
     STRACE("%d end futex(FUTEX_WAIT)", current->pid);
@@ -157,23 +165,51 @@ dword_t sys_futex(addr_t uaddr, dword_t op, dword_t val, addr_t timeout_or_val2,
         STRACE("!FUTEX_PRIVATE ");
     }
     struct timespec timeout = {0};
-    if ((op & FUTEX_CMD_MASK_) == FUTEX_WAIT_ && timeout_or_val2) {
+    int cmd = op & FUTEX_CMD_MASK_;
+    if ((cmd == FUTEX_WAIT_ || cmd == FUTEX_WAIT_BITSET_) && timeout_or_val2) {
         struct timespec_ timeout_;
         if (user_get(timeout_or_val2, timeout_))
             return _EFAULT;
         timeout.tv_sec = timeout_.sec;
         timeout.tv_nsec = timeout_.nsec;
     }
-    switch (op & FUTEX_CMD_MASK_) {
+    switch (cmd) {
+        case FUTEX_WAIT_BITSET_: {
+            // like FUTEX_WAIT, but the timeout is a point in time. The bit
+            // mask (val3) is not implemented: every wake wakes every waiter.
+            STRACE("futex(FUTEX_WAIT_BITSET, %#x, %d, 0x%x) = ...\n", uaddr, val, timeout_or_val2);
+            if (val3 == 0)
+                return _EINVAL;
+            if (timeout_or_val2) {
+                struct timespec now;
+                clock_gettime((op & FUTEX_CLOCK_REALTIME_) ? CLOCK_REALTIME : CLOCK_MONOTONIC, &now);
+                timeout = timespec_subtract(timeout, now);
+                if (!timespec_positive(timeout))
+                    return _ETIMEDOUT;
+            }
+            return futex_wait(uaddr, val, timeout_or_val2 ? &timeout : NULL);
+        }
+        case FUTEX_WAKE_BITSET_:
+            STRACE("futex(FUTEX_WAKE_BITSET, %#x, %d)", uaddr, val);
+            return futex_wakelike(FUTEX_WAKE_, uaddr, val, 0, 0);
+        case FUTEX_CMP_REQUEUE_: {
+            STRACE("futex(FUTEX_CMP_REQUEUE, %#x, %d, %#x, %d)", uaddr, val, uaddr2, val3);
+            dword_t now;
+            if (user_get(uaddr, now))
+                return _EFAULT;
+            if (now != val3)
+                return _EAGAIN;
+            return futex_wakelike(FUTEX_REQUEUE_, uaddr, val, timeout_or_val2, uaddr2);
+        }
         case FUTEX_WAIT_:
             STRACE("futex(FUTEX_WAIT, %#x, %d, 0x%x {%ds %dns}) = ...\n", uaddr, val, timeout_or_val2, timeout.tv_sec, timeout.tv_nsec);
             return futex_wait(uaddr, val, timeout_or_val2 ? &timeout : NULL);
         case FUTEX_WAKE_:
             STRACE("futex(FUTEX_WAKE, %#x, %d)", uaddr, val);
-            return futex_wakelike(op & FUTEX_CMD_MASK_, uaddr, val, 0, 0);
+            return futex_wakelike(FUTEX_WAKE_, uaddr, val, 0, 0);
         case FUTEX_REQUEUE_:
             STRACE("futex(FUTEX_REQUEUE, %#x, %d, %#x)", uaddr, val, uaddr2);
-            return futex_wakelike(op & FUTEX_CMD_MASK_, uaddr, val, timeout_or_val2, uaddr2);
+            return futex_wakelike(FUTEX_REQUEUE_, uaddr, val, timeout_or_val2, uaddr2);
     }
     STRACE("futex(%#x, %d, %d, timeout=%#x, %#x, %d) ", uaddr, op, val, timeout_or_val2, uaddr2, val3);
     FIXME("unsupported futex operation %d", op);

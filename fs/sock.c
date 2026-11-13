@@ -66,6 +66,53 @@ int_t sys_socket(dword_t domain, dword_t type, dword_t protocol) {
     return f;
 }
 
+// Unix sockets that have connected but whose connection has not been accepted
+// yet. All of this is protected by peer_lock.
+struct unix_pending {
+    struct unix_pending *next;
+    uint64_t token;
+    struct fd *fd;
+};
+static struct unix_pending *unix_pending_list;
+static uint64_t unix_next_token;
+
+// remove the entry with this token and return its socket (NULL if gone)
+static struct fd *unix_pending_take(uint64_t token) {
+    for (struct unix_pending **p = &unix_pending_list; *p != NULL; p = &(*p)->next) {
+        if ((*p)->token == token) {
+            struct unix_pending *pending = *p;
+            struct fd *fd = pending->fd;
+            *p = pending->next;
+            free(pending);
+            return fd;
+        }
+    }
+    return NULL;
+}
+static bool unix_is_pending(struct fd *fd) {
+    for (struct unix_pending *p = unix_pending_list; p != NULL; p = p->next)
+        if (p->fd == fd)
+            return true;
+    return false;
+}
+static void unix_pending_forget(struct fd *fd) {
+    for (struct unix_pending **p = &unix_pending_list; *p != NULL;) {
+        if ((*p)->fd == fd) {
+            struct unix_pending *pending = *p;
+            *p = pending->next;
+            free(pending);
+        } else {
+            p = &(*p)->next;
+        }
+    }
+}
+// For operations that need the peer: wait until the connection is accepted.
+// Call with peer_lock held.
+static void unix_wait_peer(struct fd *sock) {
+    while (sock->socket.domain == AF_LOCAL_ && sock->socket.unix_peer == NULL && unix_is_pending(sock))
+        wait_for_ignore_signals(&sock->socket.unix_got_peer, &peer_lock, NULL);
+}
+
 static void inode_release_if_exist(struct inode_data *inode) {
     if (inode != NULL)
         inode_release(inode);
@@ -370,14 +417,25 @@ int_t sys_connect(fd_t sock_fd, addr_t sockaddr_addr, uint_t sockaddr_len) {
     if (sock->socket.domain == AF_LOCAL_) {
         fill_cred(&sock->socket.unix_cred);
         assert(sock->socket.unix_peer == NULL);
-        // Send a pointer to ourselves to the other end so they can set up the peer pointers.
-        ssize_t res = write(sock->real_fd, &sock, sizeof(struct fd *));
-        if (res == sizeof(struct fd *)) {
-            // Wait for acknowledgement that it happened.
+        // Send a token to the other end so accept can set up the peer
+        // pointers. Like on Linux, connect does not wait for the accept: the
+        // connection is complete once it is queued. (It used to wait, which
+        // deadlocked a thread that connects and then accepts by itself.)
+        struct unix_pending *pending = malloc(sizeof(*pending));
+        if (pending != NULL) {
             lock(&peer_lock);
-            while (sock->socket.unix_peer == NULL)
-                wait_for_ignore_signals(&sock->socket.unix_got_peer, &peer_lock, NULL);
+            pending->token = ++unix_next_token;
+            pending->fd = sock;
+            pending->next = unix_pending_list;
+            unix_pending_list = pending;
+            uint64_t token = pending->token;
             unlock(&peer_lock);
+            ssize_t res = write(sock->real_fd, &token, sizeof(token));
+            if (res != sizeof(token)) {
+                lock(&peer_lock);
+                unix_pending_take(token);
+                unlock(&peer_lock);
+            }
         }
     }
 
@@ -437,9 +495,11 @@ int_t sys_accept(fd_t sock_fd, addr_t sockaddr_addr, addr_t sockaddr_len_addr) {
         lock(&peer_lock);
         struct fd *client_fd = f_get(client_f);
         fill_cred(&client_fd->socket.unix_cred);
-        struct fd *peer;
-        ssize_t res = read(client, &peer, sizeof(peer));
-        if (res == sizeof(peer)) {
+        uint64_t token;
+        ssize_t res = read(client, &token, sizeof(token));
+        // the connecting end may be closed already; then there is no peer
+        struct fd *peer = res == sizeof(token) ? unix_pending_take(token) : NULL;
+        if (peer != NULL) {
             client_fd->socket.unix_peer = peer;
             peer->socket.unix_peer = client_fd;
             notify(&peer->socket.unix_got_peer);
@@ -730,6 +790,7 @@ int_t sys_getsockopt(fd_t sock_fd, dword_t level, dword_t option, addr_t value_a
         if (value_len != sizeof(*cred))
             return _EINVAL;
         lock(&peer_lock);
+        unix_wait_peer(sock);
         if (sock->socket.domain != AF_LOCAL_ || sock->socket.unix_peer == NULL) {
             cred->pid = 0;
             cred->uid = cred->gid = -1;
@@ -925,6 +986,7 @@ int_t sys_sendmsg(fd_t sock_fd, addr_t msghdr_addr, int_t flags) {
                 }
             }
             lock(&peer_lock);
+            unix_wait_peer(sock);
             struct fd *peer = sock->socket.unix_peer;
             if (peer == NULL) {
                 unlock(&peer_lock);
@@ -1162,6 +1224,7 @@ static int sock_close(struct fd *fd) {
     struct fd *peer = fd->socket.unix_peer;
     if (peer != NULL)
         peer->socket.unix_peer = NULL;
+    unix_pending_forget(fd);
     unlock(&peer_lock);
     if (fd->socket.domain == AF_LOCAL_) {
         lock(&fd->lock);

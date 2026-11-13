@@ -13,6 +13,7 @@ typedef qword_t sigset_t_;
 #define SIG_IGN_ 1
 
 #define SA_SIGINFO_ 4
+#define SA_ONSTACK_ 0x08000000
 #define SA_NODEFER_ 0x40000000
 #define SA_RESETHAND_ 0x80000000
 
@@ -139,8 +140,6 @@ void sigmask_set_temp(sigset_t_ mask);
 struct sighand {
     atomic_uint refcount;
     struct sigaction_ action[NUM_SIGS];
-    addr_t altstack;
-    dword_t altstack_size;
     lock_t lock;
 };
 struct sighand *sighand_new(void);

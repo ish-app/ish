@@ -257,7 +257,9 @@ void *mem_ptr(struct mem *mem, addr_t addr, int type) {
         // next time you touch this function.
         read_wrunlock(&mem->lock);
         write_wrlock(&mem->lock);
-        pt_map_nothing(mem, page, 1, P_WRITE | P_GROWSDOWN);
+        // (unless another thread grew the stack here in the meantime)
+        if (mem_pt(mem, page) == NULL)
+            pt_map_nothing(mem, page, 1, P_WRITE | P_GROWSDOWN);
         write_wrunlock(&mem->lock);
         read_wrlock(&mem->lock);
 
@@ -276,15 +278,24 @@ void *mem_ptr(struct mem *mem, addr_t addr, int type) {
         asbestos_invalidate_page(mem->mmu.asbestos, page);
         // if page is cow, ~~milk~~ copy it
         if (entry->flags & P_COW) {
-            void *data = (char *) entry->data->data + entry->offset;
             void *copy = mmap(NULL, PAGE_SIZE, PROT_READ | PROT_WRITE,
                     MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
+            if (copy == MAP_FAILED)
+                return NULL;
 
             // copy/paste from above
             read_wrunlock(&mem->lock);
             write_wrlock(&mem->lock);
-            memcpy(copy, data, PAGE_SIZE);
-            pt_map(mem, page, 1, copy, 0, entry->flags &~ P_COW);
+            // Another thread of this address space may have copied the page
+            // (and released the original) while no lock was held: look again.
+            entry = mem_pt(mem, page);
+            if (entry != NULL && (entry->flags & P_COW)) {
+                void *data = (char *) entry->data->data + entry->offset;
+                memcpy(copy, data, PAGE_SIZE);
+                pt_map(mem, page, 1, copy, 0, entry->flags &~ P_COW);
+            } else {
+                munmap(copy, PAGE_SIZE);
+            }
             write_wrunlock(&mem->lock);
             read_wrlock(&mem->lock);
         }

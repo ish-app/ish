@@ -100,8 +100,10 @@ dword_t sys_ptrace(dword_t request, dword_t pid, addr_t addr, dword_t data) {
             struct user_ user_ = {};
             get_user_regs(&child->cpu, &user_.user_regs);
 
-            if (addr & (sizeof(peek) - 1) || addr >= sizeof(struct user_))
+            if (addr & (sizeof(peek) - 1) || addr >= sizeof(struct user_)) {
+                unlock(&child->ptrace.lock);
                 return _EIO;
+            }
 
             memcpy(&peek, (char *)&user_ + addr, sizeof(peek));
             if (user_put(data, peek)) {
@@ -189,10 +191,10 @@ dword_t sys_ptrace(dword_t request, dword_t pid, addr_t addr, dword_t data) {
 
             struct user_regs_struct_ user_regs_;
             if (user_get(data, user_regs_)) {
+                unlock(&child->ptrace.lock);
                 return _EFAULT;
-            } else {
-                set_user_regs(&child->cpu, &user_regs_);
             }
+            set_user_regs(&child->cpu, &user_regs_);
             unlock(&child->ptrace.lock);
 
             return 0;
@@ -222,10 +224,10 @@ dword_t sys_ptrace(dword_t request, dword_t pid, addr_t addr, dword_t data) {
 
             struct user_fpregs_struct_ user_fpregs_;
             if (user_get(data, user_fpregs_)) {
+                unlock(&child->ptrace.lock);
                 return _EFAULT;
-            } else {
-                // TODO set floating point registers
             }
+            // TODO set floating point registers
             unlock(&child->ptrace.lock);
 
             return 0;
@@ -241,6 +243,7 @@ dword_t sys_ptrace(dword_t request, dword_t pid, addr_t addr, dword_t data) {
             if (!child) return _EPERM;
 
             if (data && user_put(data, child->ptrace.info)) {
+                unlock(&child->ptrace.lock);
                 return _EFAULT;
             }
             unlock(&child->ptrace.lock);

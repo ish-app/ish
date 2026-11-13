@@ -136,6 +136,9 @@ noreturn void do_exit_group(int status) {
     // kill everyone else in the group
     struct task *task;
     list_for_each_entry(&group->threads, task, group_links) {
+        // a thread that is already exiting has given up its sighand
+        if (task->sighand == NULL)
+            continue;
         deliver_signal(task, SIGKILL_, SIGINFO_NIL);
         task->group->stopped = false;
         notify(&task->group->stopped_cond);
@@ -152,8 +155,13 @@ static void halt_system(void) {
         int tasks_found = 0;
         for (int i = 2; i < MAX_PID; i++) {
             struct task *task = pid_get_task(i);
-            if (task != NULL) {
+            // (the last thread of a multithreaded init is not pid 1: skip ourselves)
+            if (task != NULL && task != current) {
                 tasks_found++;
+                // (pids_lock is held: sighand cannot go away under us, but a
+                // task that is already exiting has none)
+                if (state < 2 && task->sighand == NULL)
+                    continue;
                 switch (state) {
                 case 0:
                     deliver_signal(task, SIGTERM_, SIGINFO_NIL);
@@ -168,8 +176,22 @@ static void halt_system(void) {
         }
         if (tasks_found == 0)
             break;
-        if (state != 2)
-            sleep(1);
+        if (state != 2) {
+            // Give them up to a second to go away. They need pids_lock to
+            // exit (threads of init's own group included), so let go of it
+            // while waiting.
+            for (int wait = 0; wait < 100 && tasks_found != 0; wait++) {
+                unlock(&pids_lock);
+                usleep(10000);
+                lock(&pids_lock);
+                tasks_found = 0;
+                for (int i = 2; i < MAX_PID; i++)
+                    if (pid_get_task(i) != NULL && pid_get_task(i) != current)
+                        tasks_found++;
+            }
+            if (tasks_found == 0)
+                break;
+        }
     }
 
     // unmount all filesystems
@@ -351,6 +373,20 @@ dword_t sys_waitid(int_t idtype, pid_t_ id, addr_t info_addr, int_t options) {
     int_t res = do_wait(idtype, id, &info, NULL, options);
     if (res < 0 || (res == 0 && info.child.pid == 0))
         return res;
+    // do_wait leaves a wait4-style status word; siginfo wants it taken apart
+    dword_t status = info.child.status;
+    info.sig = SIGCHLD_;
+    info.sig_errno = 0;
+    if ((status & 0x7f) == 0) {
+        info.code = 1; // CLD_EXITED
+        info.child.status = (status >> 8) & 0xff;
+    } else if ((status & 0xff) == 0x7f) {
+        info.code = 5; // CLD_STOPPED
+        info.child.status = (status >> 8) & 0xff;
+    } else {
+        info.code = (status & 0x80) ? 3 : 2; // CLD_DUMPED : CLD_KILLED
+        info.child.status = status & 0x7f;
+    }
     if (info_addr != 0 && user_put(info_addr, info))
         return _EFAULT;
     return 0;
