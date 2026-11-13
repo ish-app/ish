@@ -13,6 +13,11 @@ struct user_desc {
 };
 
 int task_set_thread_area(struct task *task, addr_t u_info) {
+#if ISH_GUEST_64
+    // clone(CLONE_SETTLS) on x86_64 passes the new FS base itself
+    task->cpu.fs_base = u_info;
+    return 0;
+#endif
     struct user_desc info;
     if (user_get_task(task, u_info, info))
         return _EFAULT;

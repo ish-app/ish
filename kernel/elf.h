@@ -12,7 +12,36 @@
 #define ELF_EXECUTABLE 2
 #define ELF_DYNAMIC 3
 #define ELF_X86 3
+#define ELF_X86_64 62
 
+#if ISH_GUEST_64
+#define ELF_GUEST_BITNESS ELF_64BIT
+#define ELF_GUEST_MACHINE ELF_X86_64
+struct elf_header {
+    uint32_t magic;
+    byte_t bitness;
+    byte_t endian;
+    byte_t elfversion1;
+    byte_t abi;
+    byte_t abi_version;
+    byte_t padding[7];
+    uint16_t type;
+    uint16_t machine;
+    uint32_t elfversion2;
+    qword_t entry_point;
+    qword_t prghead_off;
+    qword_t secthead_off;
+    uint32_t flags;
+    uint16_t header_size;
+    uint16_t phent_size;
+    uint16_t phent_count;
+    uint16_t shent_size;
+    uint16_t shent_count;
+    uint16_t sectname_index;
+};
+#else
+#define ELF_GUEST_BITNESS ELF_32BIT
+#define ELF_GUEST_MACHINE ELF_X86
 struct elf_header {
     uint32_t magic;
     byte_t bitness;
@@ -36,6 +65,8 @@ struct elf_header {
     uint16_t sectname_index;
 };
 
+#endif
+
 #define PT_NULL 0
 #define PT_LOAD 1
 #define PT_DYNAMIC 2
@@ -46,6 +77,18 @@ struct elf_header {
 #define PT_TLS 7
 #define PT_NUM 8
 
+#if ISH_GUEST_64
+struct prg_header {
+    uint32_t type;
+    uint32_t flags;
+    qword_t offset;
+    qword_t vaddr;
+    qword_t paddr;
+    qword_t filesize;
+    qword_t memsize;
+    qword_t alignment;
+};
+#else
 struct prg_header {
     uint32_t type;
     dword_t offset;
@@ -57,13 +100,15 @@ struct prg_header {
     dword_t alignment; // must be power of 2
 };
 
+#endif
+
 #define PH_R (1 << 2)
 #define PH_W (1 << 1)
 #define PH_X (1 << 0)
 
 struct aux_ent {
-    uint32_t type;
-    uint32_t value;
+    uword_t type;
+    uword_t value;
 };
 
 #define AX_PHDR 3

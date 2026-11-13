@@ -24,7 +24,7 @@ bool __tlb_read_cross_page(struct tlb *tlb, addr_t addr, char *value, unsigned s
     char *ptr1 = __tlb_read_ptr(tlb, addr);
     if (ptr1 == NULL)
         return false;
-    char *ptr2 = __tlb_read_ptr(tlb, (PAGE(addr) + 1) << PAGE_BITS);
+    char *ptr2 = __tlb_read_ptr(tlb, TLB_PAGE(addr) + PAGE_SIZE);
     if (ptr2 == NULL)
         return false;
     size_t part1 = PAGE_SIZE - PGOFFSET(addr);
@@ -38,7 +38,7 @@ bool __tlb_write_cross_page(struct tlb *tlb, addr_t addr, const char *value, uns
     char *ptr1 = __tlb_write_ptr(tlb, addr);
     if (ptr1 == NULL)
         return false;
-    char *ptr2 = __tlb_write_ptr(tlb, (PAGE(addr) + 1) << PAGE_BITS);
+    char *ptr2 = __tlb_write_ptr(tlb, TLB_PAGE(addr) + PAGE_SIZE);
     if (ptr2 == NULL)
         return false;
     size_t part1 = PAGE_SIZE - PGOFFSET(addr);

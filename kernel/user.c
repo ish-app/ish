@@ -5,7 +5,7 @@ static int __user_read_task(struct task *task, addr_t addr, void *buf, size_t co
     char *cbuf = (char *) buf;
     addr_t p = addr;
     while (p < addr + count) {
-        addr_t chunk_end = (PAGE(p) + 1) << PAGE_BITS;
+        addr_t chunk_end = (p | (PAGE_SIZE - 1)) + 1;
         if (chunk_end > addr + count)
             chunk_end = addr + count;
         const char *ptr = mem_ptr(task->mem, p, MEM_READ);
@@ -21,7 +21,7 @@ static int __user_write_task(struct task *task, addr_t addr, const void *buf, si
     const char *cbuf = (const char *) buf;
     addr_t p = addr;
     while (p < addr + count) {
-        addr_t chunk_end = (PAGE(p) + 1) << PAGE_BITS;
+        addr_t chunk_end = (p | (PAGE_SIZE - 1)) + 1;
         if (chunk_end > addr + count)
             chunk_end = addr + count;
         char *ptr = mem_ptr(task->mem, p, ptrace ? MEM_WRITE_PTRACE : MEM_WRITE);

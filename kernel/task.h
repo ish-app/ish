@@ -66,7 +66,7 @@ struct task {
 
     // alternate signal stack (sigaltstack); per thread
     addr_t altstack;
-    dword_t altstack_size;
+    uword_t altstack_size;
     addr_t clear_tid;
     addr_t robust_list;
 

@@ -15,7 +15,7 @@ int xsave_extra = 0;
 int fxsave_extra = 0;
 static void sigmask_set(sigset_t_ set);
 static void altstack_to_user(struct sighand *sighand, struct stack_t_ *user_stack);
-static bool is_on_altstack(dword_t sp, struct sighand *sighand);
+static bool is_on_altstack(addr_t sp, struct sighand *sighand);
 
 static int signal_is_blockable(int sig) {
     return sig != SIGKILL_ && sig != SIGSTOP_;
@@ -215,6 +215,164 @@ static void setup_rt_sigframe(struct siginfo_ *info, struct rt_sigframe_ *frame)
     memcpy(frame->retcode, &rt_retcode, sizeof(rt_retcode));
 }
 
+#if ISH_GUEST_64
+// x86_64 signal frames. There is only the "rt" kind, the handler returns
+// through the restorer libc supplied (SA_RESTORER), and the floating point
+// state sits in an FXSAVE-format block just above the frame.
+struct sigcontext64_ {
+    qword_t r8, r9, r10, r11, r12, r13, r14, r15;
+    qword_t di, si, bp, bx, dx, ax, cx, sp, ip, flags;
+    word_t cs, gs, fs, ss;
+    qword_t err, trapno, oldmask, cr2;
+    qword_t fpstate;
+    qword_t reserved[8];
+};
+struct ucontext64_ {
+    qword_t flags;
+    qword_t link;
+    struct stack_t_ stack;
+    struct sigcontext64_ mcontext;
+    sigset_t_ sigmask;
+};
+struct rt_sigframe64_ {
+    qword_t pretcode;
+    struct ucontext64_ uc;
+    union {
+        struct siginfo_ info;
+        char __pad[128];
+    };
+};
+struct fxsave64_ {
+    word_t fcw, fsw;
+    byte_t ftw, _r0;
+    word_t fop;
+    qword_t rip, rdp;
+    dword_t mxcsr, mxcsr_mask;
+    byte_t st[8][16];
+    union xmm_reg xmm[16];
+    byte_t _rest[96];
+};
+static_assert(sizeof(struct sigcontext64_) == 256, "sigcontext64 size");
+static_assert(sizeof(struct fxsave64_) == 512, "fxsave64 size");
+static_assert(offsetof(struct ucontext64_, mcontext) == 40, "ucontext64 layout");
+
+#define SA_RESTORER_ 0x04000000
+
+static void receive_signal64(struct sighand *sighand, struct siginfo_ *info, struct sigaction_ *action) {
+    struct cpu_state *cpu = &current->cpu;
+
+    addr_t sp = cpu->rsp;
+    if ((action->flags & SA_ONSTACK_) && current->altstack && !is_on_altstack(sp, sighand))
+        sp = current->altstack + current->altstack_size;
+    else
+        sp -= 128; // the red zone belongs to the interrupted code
+
+    // TODO: x87 stack registers are not saved; the spike engine does not expose them
+    struct fxsave64_ fx = {};
+    fx.fcw = cpu->fcw;
+    fx.fsw = cpu->fsw;
+    fx.ftw = 0xff;
+    for (int i = 0; i < 8; i++)
+        memcpy(fx.st[i], &cpu->fp[(cpu->top + i) & 7], 10);
+    fx.mxcsr = cpu->mxcsr;
+    fx.mxcsr_mask = 0xffff;
+    memcpy(fx.xmm, cpu->xmm, sizeof(fx.xmm));
+    sp -= sizeof(fx);
+    sp &= ~0x3f;
+    addr_t fx_addr = sp;
+
+    struct rt_sigframe64_ frame = {};
+    sp -= sizeof(frame);
+    sp = (sp & ~0xf) - 8;
+
+    frame.pretcode = action->restorer;
+    frame.info = *info;
+    altstack_to_user(sighand, &frame.uc.stack);
+    struct sigcontext64_ *sc = &frame.uc.mcontext;
+    sc->r8 = cpu->r8; sc->r9 = cpu->r9; sc->r10 = cpu->r10; sc->r11 = cpu->r11;
+    sc->r12 = cpu->r12; sc->r13 = cpu->r13; sc->r14 = cpu->r14; sc->r15 = cpu->r15;
+    sc->di = cpu->rdi; sc->si = cpu->rsi; sc->bp = cpu->rbp; sc->bx = cpu->rbx;
+    sc->dx = cpu->rdx; sc->ax = cpu->rax; sc->cx = cpu->rcx; sc->sp = cpu->rsp;
+    sc->ip = cpu->rip;
+    sc->flags = cpu->eflags;
+    sc->cs = 0x33;
+    sc->ss = 0x2b;
+    sc->trapno = cpu->trapno;
+    if (cpu->trapno == INT_GPF)
+        sc->cr2 = cpu->segfault_addr64 ? cpu->segfault_addr64 : cpu->segfault_addr;
+    sc->oldmask = current->blocked;
+    sc->fpstate = fx_addr;
+    frame.uc.sigmask = current->blocked;
+
+    if (!(action->flags & SA_RESTORER_))
+        printk("%d signal %d handler without SA_RESTORER\n", current->pid, info->sig);
+
+    cpu->rdi = info->sig;
+    cpu->rsi = sp + offsetof(struct rt_sigframe64_, info);
+    cpu->rdx = sp + offsetof(struct rt_sigframe64_, uc);
+    cpu->rax = 0;
+    cpu->rip = action->handler;
+    cpu->rsp = sp;
+    cpu->df = 0;
+    cpu->tf = 0;
+
+    if (!(action->flags & SA_NODEFER_))
+        sigset_add(&current->blocked, info->sig);
+    current->blocked |= action->mask;
+
+    if (user_write(fx_addr, &fx, sizeof(fx)) || user_write(sp, &frame, sizeof(frame))) {
+        printk("failed to install frame for %d at %#x\n", info->sig, sp);
+        deliver_signal(current, SIGSEGV_, SIGINFO_NIL);
+    }
+
+    if (action->flags & SA_RESETHAND_)
+        *action = (struct sigaction_) {.handler = SIG_DFL_};
+}
+
+sqword_t sys64_rt_sigreturn(void) {
+    struct cpu_state *cpu = &current->cpu;
+    struct rt_sigframe64_ frame;
+    // the handler's ret already popped pretcode
+    if (user_get((addr_t) cpu->rsp - 8, frame)) {
+        deliver_signal(current, SIGSEGV_, SIGINFO_NIL);
+        return _EFAULT;
+    }
+    struct sigcontext64_ *sc = &frame.uc.mcontext;
+    cpu->r8 = sc->r8; cpu->r9 = sc->r9; cpu->r10 = sc->r10; cpu->r11 = sc->r11;
+    cpu->r12 = sc->r12; cpu->r13 = sc->r13; cpu->r14 = sc->r14; cpu->r15 = sc->r15;
+    cpu->rdi = sc->di; cpu->rsi = sc->si; cpu->rbp = sc->bp; cpu->rbx = sc->bx;
+    cpu->rdx = sc->dx; cpu->rax = sc->ax; cpu->rcx = sc->cx; cpu->rsp = sc->sp;
+    cpu->rip = sc->ip;
+    // AC, RF, OF, DF, TF, SF, ZF, AF, PF, CF
+    const dword_t use_flags = 0b1010000110111010101;
+    cpu->eflags = (sc->flags & use_flags) | (cpu->eflags & ~use_flags);
+    cpu->cf = cpu->cf_bit;
+    cpu->of = cpu->of_bit;
+
+    if (sc->fpstate != 0) {
+        struct fxsave64_ fx;
+        if (user_get((addr_t) sc->fpstate, fx) == 0) {
+            cpu->fcw = fx.fcw;
+            cpu->fsw = fx.fsw;
+            for (int i = 0; i < 8; i++)
+                memcpy(&cpu->fp[(cpu->top + i) & 7], fx.st[i], 10);
+            cpu->mxcsr = fx.mxcsr;
+            memcpy(cpu->xmm, fx.xmm, sizeof(fx.xmm));
+        }
+    }
+
+    lock(&current->sighand->lock);
+    if (!is_on_altstack(cpu->rsp, current->sighand) &&
+            frame.uc.stack.size >= MINSIGSTKSZ_) {
+        current->altstack = frame.uc.stack.stack;
+        current->altstack_size = frame.uc.stack.size;
+    }
+    sigmask_set(frame.uc.sigmask);
+    unlock(&current->sighand->lock);
+    return cpu->rax;
+}
+#endif
+
 static void receive_signal(struct sighand *sighand, struct siginfo_ *info) {
     int sig = info->sig;
     STRACE("%d receiving signal %d\n", current->pid, sig);
@@ -236,6 +394,10 @@ static void receive_signal(struct sighand *sighand, struct siginfo_ *info) {
     }
 
     struct sigaction_ *action = &sighand->action[info->sig];
+#if ISH_GUEST_64
+    receive_signal64(sighand, info, action);
+    return;
+#endif
     bool need_siginfo = action->flags & SA_SIGINFO_;
 
     // setup the frame
@@ -257,7 +419,6 @@ static void receive_signal(struct sighand *sighand, struct siginfo_ *info) {
     current->cpu.eip = sighand->action[info->sig].handler;
 
     dword_t sp = current->cpu.esp;
-    // only handlers installed with SA_ONSTACK run on the alternate stack
     if ((sighand->action[info->sig].flags & SA_ONSTACK_) && current->altstack && !is_on_altstack(sp, sighand)) {
         sp = current->altstack + current->altstack_size;
     }
@@ -571,10 +732,15 @@ int_t sys_rt_sigpending(addr_t set_addr) {
 
 // The alternate signal stack belongs to the thread (current), as on Linux.
 // The sighand parameter is only there for the callers' locking.
-static bool is_on_altstack(dword_t sp, struct sighand *sighand) {
+static bool is_on_altstack(addr_t sp, struct sighand *sighand) {
     (void) sighand;
     return sp > current->altstack && sp <= current->altstack + current->altstack_size;
 }
+#if ISH_GUEST_64
+#define CURRENT_SP (current->cpu.rsp)
+#else
+#define CURRENT_SP (current->cpu.esp)
+#endif
 
 static void altstack_to_user(struct sighand *sighand, struct stack_t_ *user_stack) {
     user_stack->stack = current->altstack;
@@ -582,7 +748,7 @@ static void altstack_to_user(struct sighand *sighand, struct stack_t_ *user_stac
     user_stack->flags = 0;
     if (current->altstack == 0)
         user_stack->flags |= SS_DISABLE_;
-    if (is_on_altstack(current->cpu.esp, sighand))
+    if (is_on_altstack(CURRENT_SP, sighand))
         user_stack->flags |= SS_ONSTACK_;
 }
 
@@ -599,7 +765,7 @@ dword_t sys_sigaltstack(addr_t ss_addr, addr_t old_ss_addr) {
         }
     }
     if (ss_addr != 0) {
-        if (is_on_altstack(current->cpu.esp, sighand)) {
+        if (is_on_altstack(CURRENT_SP, sighand)) {
             unlock(&sighand->lock);
             return _EPERM;
         }

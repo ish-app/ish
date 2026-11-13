@@ -482,7 +482,7 @@ dword_t sys_pwrite(fd_t f, addr_t buf_addr, dword_t size, off_t_ off) {
     return res;
 }
 
-static int fd_ioctl(struct fd *fd, dword_t cmd, dword_t arg) {
+static int fd_ioctl(struct fd *fd, dword_t cmd, uword_t arg) {
     ssize_t size = -1;
     if (fd->ops->ioctl_size)
         size = fd->ops->ioctl_size(cmd);
@@ -515,7 +515,7 @@ static int set_nonblock(struct fd *fd, addr_t nb_addr) {
     return fd_setflags(fd, flags);
 }
 
-dword_t sys_ioctl(fd_t f, dword_t cmd, dword_t arg) {
+dword_t sys_ioctl(fd_t f, dword_t cmd, uword_t arg) {
     STRACE("ioctl(%d, 0x%x, 0x%x)", f, cmd, arg);
     struct fd *fd = f_get(f);
     if (fd == NULL)
@@ -963,4 +963,61 @@ dword_t sys_copy_file_range(fd_t UNUSED(in_fd), addr_t UNUSED(in_off), fd_t UNUS
 dword_t sys_xattr_stub(addr_t UNUSED(path_addr), addr_t UNUSED(name_addr),
         addr_t UNUSED(value_addr), dword_t UNUSED(size), dword_t UNUSED(flags)) {
     return _ENOTSUP;
+}
+
+// preadv/pwritev: one pread/pwrite per iovec entry. The position comes in two
+// longs; a 64-bit guest puts all of it in the first.
+static sqword_t do_preadv(fd_t f, addr_t iovec_addr, dword_t iovec_count, off_t_ off, bool write) {
+    if (off < 0)
+        return _EINVAL;
+    struct iovec_ *iovec = read_iovec(iovec_addr, iovec_count);
+    if (IS_ERR(iovec))
+        return PTR_ERR(iovec);
+    sqword_t total = 0;
+    for (unsigned i = 0; i < iovec_count; i++) {
+        if (iovec[i].len == 0)
+            continue;
+        sdword_t res = write ? sys_pwrite(f, iovec[i].base, iovec[i].len, off + total)
+            : sys_pread(f, iovec[i].base, iovec[i].len, off + total);
+        if (res < 0) {
+            if (total == 0)
+                total = res;
+            break;
+        }
+        total += res;
+        if ((dword_t) res < iovec[i].len)
+            break;
+    }
+    free(iovec);
+    return total;
+}
+#if ISH_GUEST_64
+#define PV_OFFSET(lo, hi) ((off_t_) (lo))
+#else
+#define PV_OFFSET(lo, hi) ((off_t_) (((qword_t) (hi) << 32) | (lo)))
+#endif
+dword_t sys_preadv(fd_t f, addr_t iovec_addr, dword_t iovec_count, uword_t pos_l, uword_t pos_h) {
+    STRACE("preadv(%d, %#x, %d, %lld)", f, iovec_addr, iovec_count, (long long) PV_OFFSET(pos_l, pos_h));
+    (void) pos_h;
+    return do_preadv(f, iovec_addr, iovec_count, PV_OFFSET(pos_l, pos_h), false);
+}
+dword_t sys_pwritev(fd_t f, addr_t iovec_addr, dword_t iovec_count, uword_t pos_l, uword_t pos_h) {
+    STRACE("pwritev(%d, %#x, %d, %lld)", f, iovec_addr, iovec_count, (long long) PV_OFFSET(pos_l, pos_h));
+    (void) pos_h;
+    return do_preadv(f, iovec_addr, iovec_count, PV_OFFSET(pos_l, pos_h), true);
+}
+
+// close_range(first, last, flags): flags (unshare, cloexec) are not supported
+int_t sys_close_range(dword_t first, dword_t last, dword_t flags) {
+    STRACE("close_range(%u, %u, %#x)", first, last, flags);
+    if (flags != 0 || first > last)
+        return _EINVAL;
+    unsigned size = current->files->size;
+    for (dword_t f = first; f <= last && f < size; f++)
+        f_close(f);
+    return 0;
+}
+
+dword_t sys_faccessat2(fd_t at_f, addr_t path_addr, mode_t_ mode, dword_t flags) {
+    return sys_faccessat(at_f, path_addr, mode, flags);
 }

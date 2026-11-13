@@ -258,7 +258,7 @@ int realfs_mmap(struct fd *fd, struct mem *mem, page_t start, pages_t pages, off
 
     off_t real_offset = (offset / real_page_size) * real_page_size;
     off_t correction = offset - real_offset;
-    char *memory = mmap(NULL, (pages * PAGE_SIZE) + correction,
+    char *memory = mmap(NULL, ((size_t) pages * PAGE_SIZE) + correction,
             mmap_prot, mmap_flags, fd->real_fd, real_offset);
     return pt_map(mem, start, pages, memory, correction, prot);
 }

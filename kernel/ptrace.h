@@ -21,6 +21,28 @@
 
 #define PTRACE_EVENT_FORK_ 1
 
+#if ISH_GUEST_64
+struct user_regs_struct_ {
+    qword_t r15, r14, r13, r12, rbp, rbx, r11, r10, r9, r8;
+    qword_t rax, rcx, rdx, rsi, rdi, orig_rax, rip, cs, eflags, rsp, ss;
+    qword_t fs_base, gs_base, ds, es, fs, gs;
+};
+
+// the FXSAVE image
+struct user_fpregs_struct_ {
+    word_t cwd, swd, ftw, fop;
+    qword_t rip, rdp;
+    dword_t mxcsr, mxcr_mask;
+    byte_t st_space[8][16];
+    byte_t xmm_space[16][16];
+    dword_t padding[24];
+};
+
+struct user_ {
+    struct user_regs_struct_ user_regs;
+    char padding[912 - sizeof(struct user_regs_struct_)];
+};
+#else
 struct user_regs_struct_ {
     dword_t ebx;
     dword_t ecx;
@@ -56,7 +78,8 @@ struct user_ {
     struct user_regs_struct_ user_regs;
     char padding[286 - sizeof(struct user_regs_struct_)];
 };
+#endif
 
-dword_t sys_ptrace(dword_t request, dword_t pid, addr_t addr, dword_t data);
+dword_t sys_ptrace(dword_t request, dword_t pid, addr_t addr, uword_t data);
 
 #endif /* KERNEL_PTRACE_H */

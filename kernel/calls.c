@@ -234,7 +234,7 @@ syscall_t syscall_table[] = {
     [361] = (syscall_t) sys_bind,
     [362] = (syscall_t) sys_connect,
     [363] = (syscall_t) sys_listen,
-    [364] = (syscall_t) syscall_stub, // accept4
+    [364] = (syscall_t) sys_accept4,
     [365] = (syscall_t) sys_getsockopt,
     [366] = (syscall_t) sys_setsockopt,
     [367] = (syscall_t) sys_getsockname,
@@ -249,7 +249,17 @@ syscall_t syscall_table[] = {
     [383] = (syscall_t) sys_statx,
     [384] = (syscall_t) sys_arch_prctl,
     [422] = (syscall_t) syscall_silent_stub, // futex_time64
-    [439] = (syscall_t) syscall_silent_stub, // faccessat2
+    [436] = (syscall_t) sys_close_range,
+    [439] = (syscall_t) sys_faccessat2,
+    // added together with the 64-bit guest work
+    [105] = (syscall_t) sys_getitimer,
+    [261] = (syscall_t) sys_timer_gettime,
+    [262] = (syscall_t) sys_timer_getoverrun,
+    [267] = (syscall_t) sys_clock_nanosleep,
+    [318] = (syscall_t) sys_getcpu,
+    [326] = (syscall_t) sys_timerfd_gettime,
+    [333] = (syscall_t) sys_preadv,
+    [334] = (syscall_t) sys_pwritev,
 };
 
 #define NUM_SYSCALLS (sizeof(syscall_table) / sizeof(syscall_table[0]))
@@ -258,6 +268,30 @@ void dump_stack(int lines);
 
 void handle_interrupt(int interrupt) {
     struct cpu_state *cpu = &current->cpu;
+#if ISH_GUEST_64
+    if (interrupt == INT_SYSCALL) {
+        qword_t syscall_num = cpu->rax;
+        if (syscall_num >= num_syscalls64 || syscall_table64[syscall_num].fn == NULL) {
+            printk("%d(%s) missing syscall64 %d\n", current->pid, current->comm, (int) syscall_num);
+            cpu->rax = (qword_t) (sqword_t) _ENOSYS;
+        } else {
+            const struct syscall64 *call = &syscall_table64[syscall_num];
+            STRACE("%d call64 %-3d ", current->pid, (int) syscall_num);
+            int64_t result = call->fn(cpu->rdi, cpu->rsi, cpu->rdx, cpu->r10, cpu->r8, cpu->r9);
+            if (!call->wide) {
+                // the function returned 32 bits: errors sign-extend, anything
+                // else (addresses included) zero-extends
+                int32_t narrow = (int32_t) result;
+                if (narrow < 0 && narrow >= -4095)
+                    result = narrow;
+                else
+                    result = (uint32_t) narrow;
+            }
+            STRACE(" = 0x%llx\n", (unsigned long long) result);
+            cpu->rax = result;
+        }
+    } else
+#endif
     if (interrupt == INT_SYSCALL) {
         unsigned syscall_num = cpu->eax;
         if (syscall_num >= NUM_SYSCALLS || syscall_table[syscall_num] == NULL) {
@@ -279,6 +313,11 @@ void handle_interrupt(int interrupt) {
         read_wrunlock(&current->mem->lock);
         if (ptr == NULL) {
             printk("%d page fault on 0x%x at 0x%x\n", current->pid, cpu->segfault_addr, cpu->eip);
+#if ISH_GUEST_64
+            printk("  fs_base %llx rax %llx rdi %llx rsp %llx write %d bytes:", (unsigned long long) cpu->fs_base, (unsigned long long) cpu->rax, (unsigned long long) cpu->rdi, (unsigned long long) cpu->rsp, cpu->segfault_was_write);
+            for (int i = 0; i < 12; i++) { uint8_t b; if (user_get(cpu->eip + i, b)) break; printk(" %02x", b); }
+            printk("\n");
+#endif
             struct siginfo_ info = {
                 .code = mem_segv_reason(current->mem, cpu->segfault_addr),
                 .fault.addr = cpu->segfault_addr,

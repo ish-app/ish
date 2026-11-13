@@ -10,14 +10,29 @@
 #include "misc.h"
 
 struct mem {
+#if ISH_GUEST_64
+    // three levels: 2048 x 1024 x 1024 pages
+    struct pt_entry ***pgdir;
+#else
     struct pt_entry **pgdir;
+#endif
     int pgdir_used;
 
     struct mmu mmu;
 
     wrlock_t lock;
+#if ISH_GUEST_64
+    // Where this address space's anonymous memory is placed in host memory:
+    // guest address A is requested at host_base + A. See mem_anon_alloc.
+    uintptr_t host_base;
+#endif
 };
 #define MEM_PGDIR_SIZE (1 << 10)
+#if ISH_GUEST_64
+#define MEM_TOP_SIZE (MEM_PAGES >> 20)
+#else
+#define MEM_TOP_SIZE MEM_PGDIR_SIZE
+#endif
 
 // Initialize the address space
 void mem_init(struct mem *mem);
@@ -29,8 +44,8 @@ struct pt_entry *mem_pt(struct mem *mem, page_t page);
 // used as the incremenent in a for loop to traverse mappings.
 void mem_next_page(struct mem *mem, page_t *page);
 
-#define BYTES_ROUND_DOWN(bytes) (PAGE(bytes) << PAGE_BITS)
-#define BYTES_ROUND_UP(bytes) (PAGE_ROUND_UP(bytes) << PAGE_BITS)
+#define BYTES_ROUND_DOWN(bytes) PAGE_ADDR(PAGE(bytes))
+#define BYTES_ROUND_UP(bytes) PAGE_ADDR(PAGE_ROUND_UP(bytes))
 
 #define LEAK_DEBUG 0
 
@@ -93,5 +108,7 @@ void *mem_ptr(struct mem *mem, addr_t addr, int type);
 int mem_segv_reason(struct mem *mem, addr_t addr);
 
 extern size_t real_page_size;
+// set by the unicorn reference engine, see mem_anon_alloc
+extern bool mem_anon_hint;
 
 #endif

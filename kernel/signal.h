@@ -18,9 +18,9 @@ typedef qword_t sigset_t_;
 #define SA_RESETHAND_ 0x80000000
 
 struct sigaction_ {
-    addr_t handler;
-    dword_t flags;
-    addr_t restorer;
+    uword_t handler;
+    uword_t flags;
+    uword_t restorer;
     sigset_t_ mask;
 } __attribute__((packed));
 
@@ -89,10 +89,10 @@ struct siginfo_ {
             clock_t_ stime;
         } child;
         struct {
-            addr_t addr;
+            uword_t addr;
         } fault;
         struct {
-            addr_t addr;
+            uword_t addr;
             int_t syscall;
         } sigsys;
         struct {
@@ -174,9 +174,9 @@ static inline void sigset_del(sigset_t_ *set, int sig) {
 }
 
 struct stack_t_ {
-    addr_t stack;
+    uword_t stack;
     dword_t flags;
-    dword_t size;
+    uword_t size;
 };
 #define SS_ONSTACK_ 1
 #define SS_DISABLE_ 2

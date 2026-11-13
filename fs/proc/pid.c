@@ -210,7 +210,8 @@ void proc_maps_dump(struct task *task, struct proc_data *buf) {
             // region continues if data is the same or both are anonymous
             if (!(pt->data == data || (pt->flags & P_ANONYMOUS && start_pt->flags & P_ANONYMOUS)))
                 break;
-            mem_next_page(mem, &page);
+            // one at a time: mem_next_page would jump over an unmapped gap
+            page++;
         }
         page_t end = page;
 
@@ -223,8 +224,8 @@ void proc_maps_dump(struct task *task, struct proc_data *buf) {
         } else if (data->fd != NULL) {
             generic_getpath(start_pt->data->fd, path);
         }
-        proc_printf(buf, "%08x-%08x %c%c%c%c %08lx 00:00 %-10d %s\n",
-                start << PAGE_BITS, end << PAGE_BITS,
+        proc_printf(buf, "%08llx-%08llx %c%c%c%c %08lx 00:00 %-10d %s\n",
+                (unsigned long long) PAGE_ADDR(start), (unsigned long long) PAGE_ADDR(end),
                 start_pt->flags & P_READ ? 'r' : '-',
                 start_pt->flags & P_WRITE ? 'w' : '-',
                 start_pt->flags & P_EXEC ? 'x' : '-',

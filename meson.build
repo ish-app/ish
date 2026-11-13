@@ -28,6 +28,16 @@ endif
 
 add_project_arguments('-Wno-switch', language: 'c')
 
+guest64 = get_option('guest') == 'x86_64'
+if guest64
+    # guest addresses are 64-bit here but most log messages still print them with %x
+    add_project_arguments('-Wno-format', language: 'c')
+    add_project_arguments('-DISH_GUEST_64=1', language: 'c')
+    # The interpreter computes guest floating point with C arithmetic. A compiler
+    # that fuses a*b+c into one rounding (the default on arm64) changes results.
+    add_project_arguments('-ffp-contract=off', language: 'c')
+endif
+
 includes = [include_directories('.')]
 
 threads = dependency('threads')
@@ -52,6 +62,20 @@ emu_src = [
 
 ]
 gadgets = 'asbestos/gadgets-' + host_machine.cpu_family()
+emu_deps64 = []
+if guest64
+    # 64-bit guest: the CPU is the C interpreter in emu/interp64.c; none of the
+    # asbestos code is built. With -Dunicorn_ref=true unicorn (a JIT, cannot
+    # ship on iOS) is linked in too as a reference: ISH_ENGINE=unicorn runs on
+    # it, ISH_ENGINE=check runs both in lockstep and reports differences.
+    emu_src = ['emu/tlb.c', 'emu/interp64.c', 'emu/fpu.c', 'emu/float80.c']
+    if get_option('unicorn_ref')
+        emu_src += ['emu/unicorn64.c']
+        emu_deps64 = [cc.find_library('unicorn')]
+        dependencies += emu_deps64
+        add_project_arguments('-DISH_UNICORN_REF=1', language: 'c')
+    endif
+else
 emu_src += [
     'asbestos/asbestos.c',
     'asbestos/gen.c',
@@ -65,8 +89,9 @@ emu_src += [
     gadgets+'/misc.S',
     offsets,
 ]
+endif
 
-libish_emu = library('ish_emu', emu_src, include_directories: includes)
+libish_emu = library('ish_emu', emu_src, include_directories: includes, dependencies: emu_deps64)
 
 libfakefs = library('fakefs',
     ['fs/fake-db.c', 'fs/fake-migrate.c', 'fs/fake-rebuild.c'],
@@ -85,6 +110,7 @@ if get_option('kernel') == 'ish'
         'kernel/errno.c',
 
         'kernel/calls.c',
+        'kernel/calls64.c',
         'kernel/memory.c',
         'kernel/user.c',
         'kernel/vdso.c', vdso,
@@ -161,7 +187,7 @@ if get_option('kernel') == 'ish'
         dependencies: dependencies,
         include_directories: includes)
 
-    if not meson.is_cross_build()
+    if not meson.is_cross_build() or meson.can_run_host_binaries()
         executable('ish', ['main.c'], dependencies: ish)
     endif
 

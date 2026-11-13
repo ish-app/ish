@@ -225,11 +225,12 @@ dword_t sys_pselect(fd_t nfds, addr_t readfds_addr, addr_t writefds_addr, addr_t
         timeout_ts_addr = &timeout_ts;
     }
     // a system call can only take 6 parameters, so the last two need to be passed as a pointer to a struct
+    // (two guest longs: 16 bytes for a 64-bit guest)
     struct {
-        addr_t mask_addr;
-        dword_t mask_size;
-    } sigmask;
-    if (user_get(sigmask_addr, sigmask))
+        uword_t mask_addr;
+        uword_t mask_size;
+    } sigmask = {0, 0};
+    if (sigmask_addr != 0 && user_get(sigmask_addr, sigmask))
         return _EFAULT;
     sigset_t_ mask;
 

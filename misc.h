@@ -110,7 +110,19 @@ typedef int32_t sdword_t;
 typedef uint16_t word_t;
 typedef uint8_t byte_t;
 
-typedef dword_t addr_t;
+// The guest's native "long". Structures shared with guest programs use these
+// so one definition serves both the 32-bit and the 64-bit guest.
+#if ISH_GUEST_64
+typedef qword_t uword_t;
+typedef sqword_t sword_t;
+#else
+typedef dword_t uword_t;
+typedef sdword_t sword_t;
+#endif
+
+// A guest address. 64 bits wide for the 64-bit guest, where the address space
+// is MEM_PAGES pages (8 TB, see emu/mmu.h).
+typedef uword_t addr_t;
 typedef dword_t uint_t;
 typedef sdword_t int_t;
 
@@ -118,8 +130,8 @@ typedef sdword_t pid_t_;
 typedef dword_t uid_t_;
 typedef word_t mode_t_;
 typedef sqword_t off_t_;
-typedef dword_t time_t_;
-typedef dword_t clock_t_;
+typedef uword_t time_t_;
+typedef uword_t clock_t_;
 
 #define uint(size) glue3(uint,size,_t)
 #define sint(size) glue3(int,size,_t)

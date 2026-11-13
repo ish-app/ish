@@ -285,12 +285,13 @@ int fd_setflags(struct fd *fd, int flags) {
     return 0;
 }
 
-dword_t sys_fcntl(fd_t f, dword_t cmd, dword_t arg) {
+dword_t sys_fcntl(fd_t f, dword_t cmd, uword_t arg) {
     struct fdtable *table = current->files;
     struct fd *fd = f_get(f);
     if (fd == NULL)
         return _EBADF;
     struct flock32_ flock32;
+    (void) flock32;
     struct flock_ flock;
     fd_t new_f;
     int err;
@@ -325,6 +326,40 @@ dword_t sys_fcntl(fd_t f, dword_t cmd, dword_t arg) {
             STRACE("fcntl(%d, F_SETFL, %#x)", f, arg);
             return fd_setflags(fd, arg);
 
+#if ISH_GUEST_64
+        // a 64-bit guest has one struct flock, with 64-bit offsets and
+        // natural alignment
+        case F_GETLK_: case F_SETLK_: case F_SETLKW_: {
+            STRACE("fcntl(%d, %s, %#x)", f, cmd == F_GETLK_ ? "F_GETLK" : cmd == F_SETLK_ ? "F_SETLK" : "F_SETLKW", arg);
+            struct {
+                word_t type;
+                word_t whence;
+                sqword_t start;
+                sqword_t len;
+                pid_t_ pid;
+            } native;
+            if (user_read(arg, &native, sizeof(native)))
+                return _EFAULT;
+            flock.type = native.type;
+            flock.whence = native.whence;
+            flock.start = native.start;
+            flock.len = native.len;
+            flock.pid = native.pid;
+            if (cmd != F_GETLK_)
+                return fcntl_setlk(fd, &flock, cmd == F_SETLKW_);
+            err = fcntl_getlk(fd, &flock);
+            if (err >= 0) {
+                native.type = flock.type;
+                native.whence = flock.whence;
+                native.start = flock.start;
+                native.len = flock.len;
+                native.pid = flock.pid;
+                if (user_write(arg, &native, sizeof(native)))
+                    return _EFAULT;
+            }
+            return err;
+        }
+#else
         case F_GETLK_:
             STRACE("fcntl(%d, F_GETLK, %#x)", f, arg);
             if (user_read(arg, &flock32, sizeof(flock32)))
@@ -367,6 +402,7 @@ dword_t sys_fcntl(fd_t f, dword_t cmd, dword_t arg) {
             flock.len = flock32.len;
             flock.pid = flock32.pid;
             return fcntl_setlk(fd, &flock, cmd == F_SETLKW_);
+#endif
 
         case F_SETLK64_:
         case F_SETLKW64_:

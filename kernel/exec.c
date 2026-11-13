@@ -27,11 +27,11 @@ struct exec_args {
     const char *args;
 };
 
-static inline dword_t align_stack(dword_t sp);
-static inline ssize_t user_strlen(dword_t p);
+static inline dword_t align_stack(addr_t sp);
+static inline ssize_t user_strlen(addr_t p);
 static inline int user_memset(addr_t start, byte_t val, dword_t len);
-static inline dword_t copy_string(dword_t sp, const char *string);
-static inline dword_t args_copy(dword_t sp, struct exec_args args);
+static inline dword_t copy_string(addr_t sp, const char *string);
+static inline dword_t args_copy(addr_t sp, struct exec_args args);
 static size_t args_size(struct exec_args args);
 
 static int read_header(struct fd *fd, struct elf_header *header) {
@@ -45,10 +45,10 @@ static int read_header(struct fd *fd, struct elf_header *header) {
     }
     if (memcmp(&header->magic, ELF_MAGIC, sizeof(header->magic)) != 0
             || (header->type != ELF_EXECUTABLE && header->type != ELF_DYNAMIC)
-            || header->bitness != ELF_32BIT
+            || header->bitness != ELF_GUEST_BITNESS
             || header->endian != ELF_LITTLEENDIAN
             || header->elfversion1 != 1
-            || header->machine != ELF_X86)
+            || header->machine != ELF_GUEST_MACHINE)
         return _ENOEXEC;
     return 0;
 }
@@ -139,7 +139,7 @@ static addr_t find_hole_for_elf(struct elf_header *header, struct prg_header *ph
         pages_t b = PAGE(first->vaddr);
         size = a - b;
     }
-    return pt_find_hole(current->mem, size) << PAGE_BITS;
+    return PAGE_ADDR(pt_find_hole(current->mem, size));
 }
 
 static int elf_exec(struct fd *fd, const char *file, struct exec_args argv, struct exec_args envp) {
@@ -258,6 +258,11 @@ static int elf_exec(struct fd *fd, const char *file, struct exec_args argv, stru
         entry = interp_base + interp_header.entry_point;
     }
 
+#if ISH_GUEST_64
+    // no vdso for the 64-bit guest yet: libc falls back to real system calls
+    current->mm->vdso = 0;
+    addr_t vdso_entry = 0;
+#else
     // map vdso
     err = _ENOMEM;
     pages_t vdso_pages = sizeof(vdso_data) >> PAGE_BITS;
@@ -271,7 +276,7 @@ static int elf_exec(struct fd *fd, const char *file, struct exec_args argv, stru
     if ((err = pt_map(current->mem, vdso_page, vdso_pages, (void *) vdso_data, 0, 0)) < 0)
         goto beyond_hope;
     mem_pt(current->mem, vdso_page)->data->name = "[vdso]";
-    current->mm->vdso = vdso_page << PAGE_BITS;
+    current->mm->vdso = PAGE_ADDR(vdso_page);
     addr_t vdso_entry = current->mm->vdso + ((struct elf_header *) vdso_data)->entry_point;
 
     // map 3 empty "vvar" pages to satisfy ptraceomatic
@@ -281,6 +286,8 @@ static int elf_exec(struct fd *fd, const char *file, struct exec_args argv, stru
     if ((err = pt_map_nothing(current->mem, vvar_page, VVAR_PAGES, 0)) < 0)
         goto beyond_hope;
     mem_pt(current->mem, vvar_page)->data->name = "[vvar]";
+
+#endif
 
     // STACK TIME!
 
@@ -310,7 +317,11 @@ static int elf_exec(struct fd *fd, const char *file, struct exec_args argv, stru
     current->mm->argv_start = sp;
     sp = align_stack(sp);
 
+    #if ISH_GUEST_64
+    addr_t platform_addr = sp = copy_string(sp, "x86_64");
+#else
     addr_t platform_addr = sp = copy_string(sp, "i686");
+#endif
     if (sp == 0)
         goto beyond_hope;
     // 16 random bytes so no system call is needed to seed a userspace RNG
@@ -326,8 +337,10 @@ static int elf_exec(struct fd *fd, const char *file, struct exec_args argv, stru
 
     // declare elf aux now so we can know how big it is
     struct aux_ent aux[] = {
+#if !ISH_GUEST_64
         {AX_SYSINFO, vdso_entry},
         {AX_SYSINFO_EHDR, current->mm->vdso},
+#endif
         {AX_HWCAP, 0x00000000}, // suck that
         {AX_PAGESZ, PAGE_SIZE},
         {AX_CLKTCK, 0x64},
@@ -348,7 +361,7 @@ static int elf_exec(struct fd *fd, const char *file, struct exec_args argv, stru
         {AX_PLATFORM, platform_addr},
         {0, 0}
     };
-    sp -= ((argv.count + 1) + (envp.count + 1) + 1) * sizeof(dword_t);
+    sp -= ((argv.count + 1) + (envp.count + 1) + 1) * sizeof(uword_t);
     sp -= sizeof(aux);
     sp &=~ 0xf;
 
@@ -356,29 +369,32 @@ static int elf_exec(struct fd *fd, const char *file, struct exec_args argv, stru
     addr_t p = sp;
 
     // argc
-    if (user_put(p, argv.count))
+    uword_t argc_word = argv.count;
+    if (user_put(p, argc_word))
         return _EFAULT;
-    p += sizeof(dword_t);
+    p += sizeof(uword_t);
 
     // argv
     size_t argc = argv.count;
     while (argc-- > 0) {
-        if (user_put(p, argv_addr))
+        uword_t argv_word = argv_addr;
+        if (user_put(p, argv_word))
             return _EFAULT;
         argv_addr += user_strlen(argv_addr) + 1;
-        p += sizeof(dword_t); // null terminator
+        p += sizeof(uword_t); // null terminator
     }
-    p += sizeof(dword_t); // null terminator
+    p += sizeof(uword_t); // null terminator
 
     // envp
     size_t envc = envp.count;
     while (envc-- > 0) {
-        if (user_put(p, envp_addr))
+        uword_t envp_word = envp_addr;
+        if (user_put(p, envp_word))
             return _EFAULT;
         envp_addr += user_strlen(envp_addr) + 1;
-        p += sizeof(dword_t);
+        p += sizeof(uword_t);
     }
-    p += sizeof(dword_t); // null terminator
+    p += sizeof(uword_t); // null terminator
 
     // copy auxv
     current->mm->auxv_start = p;
@@ -388,6 +404,19 @@ static int elf_exec(struct fd *fd, const char *file, struct exec_args argv, stru
     current->mm->auxv_end = p;
 
     current->mm->stack_start = sp;
+#if ISH_GUEST_64
+    (void) vdso_entry;
+    memset(current->cpu.regs, 0, sizeof(current->cpu.regs));
+    memset(current->cpu.xmm, 0, sizeof(current->cpu.xmm));
+    current->cpu.rsp = sp;
+    current->cpu.rip = entry;
+    current->cpu.fcw = 0x37f;
+    current->cpu.mxcsr = 0x1f80;
+    current->cpu.fs_base = current->cpu.gs_base = 0;
+    current->cpu.eflags = 0;
+    current->cpu.flags_res = 0;
+    current->cpu.cf = current->cpu.of = 0;
+#else
     current->cpu.esp = sp;
     current->cpu.eip = entry;
     current->cpu.fcw = 0x37f;
@@ -405,6 +434,8 @@ static int elf_exec(struct fd *fd, const char *file, struct exec_args argv, stru
     current->cpu.ebp = 0;
     collapse_flags(&current->cpu);
     current->cpu.eflags = 0;
+
+#endif
 
     err = 0;
 out_free_interp:
@@ -651,8 +682,8 @@ static ssize_t user_read_string_array(addr_t addr, char *buf, size_t max) {
     size_t i = 0;
     size_t p = 0;
     for (;;) {
-        addr_t str_addr;
-        if (user_get(addr + i * sizeof(addr_t), str_addr))
+        uword_t str_addr;
+        if (user_get(addr + i * sizeof(uword_t), str_addr))
             return _EFAULT;
         if (str_addr == 0)
             break;

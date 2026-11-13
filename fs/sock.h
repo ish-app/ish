@@ -22,8 +22,9 @@ int_t sys_socketpair(dword_t domain, dword_t type, dword_t protocol, addr_t sock
 int_t sys_sendto(fd_t sock_fd, addr_t buffer_addr, dword_t len, dword_t flags, addr_t sockaddr_addr, dword_t sockaddr_len);
 int_t sys_recvfrom(fd_t sock_fd, addr_t buffer_addr, dword_t len, dword_t flags, addr_t sockaddr_addr, addr_t sockaddr_len_addr);
 int_t sys_shutdown(fd_t sock_fd, dword_t how);
+int_t sys_accept4(fd_t sock_fd, addr_t sockaddr_addr, addr_t sockaddr_len_addr, int_t flags);
 int_t sys_setsockopt(fd_t sock_fd, dword_t level, dword_t option, addr_t value_addr, dword_t value_len);
-int_t sys_getsockopt(fd_t sock_fd, dword_t level, dword_t option, addr_t value_addr, dword_t len_addr);
+int_t sys_getsockopt(fd_t sock_fd, dword_t level, dword_t option, addr_t value_addr, addr_t len_addr);
 int_t sys_sendmsg(fd_t sock_fd, addr_t msghdr_addr, int_t flags);
 int_t sys_recvmsg(fd_t sock_fd, addr_t msghdr_addr, int_t flags);
 int_t sys_sendmmsg(fd_t sock_fd, addr_t msgvec_addr, uint_t msgvec_len, int_t flags);
@@ -44,24 +45,24 @@ size_t sockaddr_size(void *p);
 struct sockaddr *sockaddr_to_real(void *p);
 
 struct msghdr_ {
-    addr_t msg_name;
+    uword_t msg_name;
     uint_t msg_namelen;
-    addr_t msg_iov;
-    uint_t msg_iovlen;
-    addr_t msg_control;
-    uint_t msg_controllen;
+    uword_t msg_iov;
+    uword_t msg_iovlen;
+    uword_t msg_control;
+    uword_t msg_controllen;
     int_t msg_flags;
 };
 
 struct cmsghdr_ {
-    dword_t len;
+    uword_t len;
     int_t level;
     int_t type;
     uint8_t data[];
 };
 #define SCM_RIGHTS_ 1
 // copied and ported from musl
-#define CMSG_LEN_(cmsg) (((cmsg)->len + sizeof(dword_t) - 1) & ~(dword_t)(sizeof(dword_t) - 1))
+#define CMSG_LEN_(cmsg) (((cmsg)->len + sizeof(uword_t) - 1) & ~(uword_t)(sizeof(uword_t) - 1))
 #define CMSG_NEXT_(cmsg) ((uint8_t *)(cmsg) + CMSG_LEN_(cmsg))
 #define CMSG_NXTHDR_(cmsg, mhdr_end) ((cmsg)->len < sizeof (struct cmsghdr_) || \
         CMSG_LEN_(cmsg) + sizeof(struct cmsghdr_) >= (size_t) (mhdr_end - (uint8_t *)(cmsg)) \

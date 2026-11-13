@@ -3,8 +3,13 @@
 
 #define PRCTL_SET_KEEPCAPS_ 8
 #define PRCTL_SET_NAME_ 15
+#define PRCTL_GET_NAME_ 16
+#define PRCTL_SET_PDEATHSIG_ 1
+#define PRCTL_GET_DUMPABLE_ 3
+#define PRCTL_SET_DUMPABLE_ 4
+#define PRCTL_SET_NO_NEW_PRIVS_ 38
 
-int_t sys_prctl(dword_t option, uint_t arg2, uint_t UNUSED(arg3), uint_t UNUSED(arg4), uint_t UNUSED(arg5)) {
+int_t sys_prctl(dword_t option, uword_t arg2, uword_t UNUSED(arg3), uword_t UNUSED(arg4), uword_t UNUSED(arg5)) {
     switch (option) {
         case PRCTL_SET_KEEPCAPS_:
             // stub
@@ -18,6 +23,21 @@ int_t sys_prctl(dword_t option, uint_t arg2, uint_t UNUSED(arg3), uint_t UNUSED(
             strcpy(current->comm, name);
             return 0;
         }
+        case PRCTL_GET_NAME_: {
+            char name[16] = {0};
+            strncpy(name, current->comm, sizeof(name) - 1);
+            STRACE("prctl(PRCTL_GET_NAME)");
+            if (user_write(arg2, name, sizeof(name)))
+                return _EFAULT;
+            return 0;
+        }
+        case PRCTL_SET_PDEATHSIG_:
+        case PRCTL_SET_DUMPABLE_:
+        case PRCTL_SET_NO_NEW_PRIVS_:
+            STRACE("prctl(%d, %#x) (ignored)", option, arg2);
+            return 0;
+        case PRCTL_GET_DUMPABLE_:
+            return 1;
         default:
             STRACE("prctl(%#x)", option);
             return _EINVAL;
@@ -26,6 +46,24 @@ int_t sys_prctl(dword_t option, uint_t arg2, uint_t UNUSED(arg3), uint_t UNUSED(
 
 int_t sys_arch_prctl(int_t code, addr_t addr) {
     STRACE("arch_prctl(%#x, %#x)", code, addr);
+#if ISH_GUEST_64
+    switch (code) {
+        case 0x1002: // ARCH_SET_FS
+            current->cpu.fs_base = addr;
+            return 0;
+        case 0x1001: // ARCH_SET_GS
+            current->cpu.gs_base = addr;
+            return 0;
+        case 0x1003: // ARCH_GET_FS
+            if (user_put(addr, current->cpu.fs_base))
+                return _EFAULT;
+            return 0;
+        case 0x1004: // ARCH_GET_GS
+            if (user_put(addr, current->cpu.gs_base))
+                return _EFAULT;
+            return 0;
+    }
+#endif
     return _EINVAL;
 }
 
@@ -56,4 +94,13 @@ int_t sys_reboot(int_t magic, int_t magic2, int_t cmd) {
         default:
             return _EPERM;
     }
+}
+
+int_t sys_getcpu(addr_t cpu_addr, addr_t node_addr) {
+    dword_t zero = 0;
+    if (cpu_addr != 0 && user_put(cpu_addr, zero))
+        return _EFAULT;
+    if (node_addr != 0 && user_put(node_addr, zero))
+        return _EFAULT;
+    return 0;
 }

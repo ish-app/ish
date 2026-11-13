@@ -111,8 +111,32 @@ int_t sys_getdents_common(fd_t f, addr_t dirents, dword_t count,
     return orig_count - count;
 }
 
+#if ISH_GUEST_64
+// struct linux_dirent of a 64-bit guest: two longs, then as the 32-bit one
+struct linux_dirent_long_ {
+    qword_t inode;
+    qword_t offset;
+    word_t reclen;
+    char name[];
+} __attribute__((packed));
+static size_t fill_dirent_long(void *dirent_data, ino_t inode, off_t_ offset, const char *name, int type) {
+    struct linux_dirent_long_ *dirent = dirent_data;
+    dirent->inode = inode;
+    dirent->offset = offset;
+    dirent->reclen = offsetof(struct linux_dirent_long_, name) +
+        strlen(name) + 2; // name, null terminator, type
+    strcpy(dirent->name, name);
+    *((char *) dirent + dirent->reclen - 1) = type;
+    return dirent->reclen;
+}
+#endif
+
 int_t sys_getdents(fd_t f, addr_t dirents, uint_t count) {
+#if ISH_GUEST_64
+    return sys_getdents_common(f, dirents, count, fill_dirent_long);
+#else
     return sys_getdents_common(f, dirents, count, fill_dirent_32);
+#endif
 }
 
 int_t sys_getdents64(fd_t f, addr_t dirents, uint_t count) {

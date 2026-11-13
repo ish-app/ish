@@ -455,7 +455,13 @@ int_t sys_listen(fd_t sock_fd, int_t backlog) {
 }
 
 int_t sys_accept(fd_t sock_fd, addr_t sockaddr_addr, addr_t sockaddr_len_addr) {
-    STRACE("accept(%d, 0x%x, 0x%x)", sock_fd, sockaddr_addr, sockaddr_len_addr);
+    return sys_accept4(sock_fd, sockaddr_addr, sockaddr_len_addr, 0);
+}
+
+int_t sys_accept4(fd_t sock_fd, addr_t sockaddr_addr, addr_t sockaddr_len_addr, int_t flags) {
+    STRACE("accept4(%d, 0x%x, 0x%x, %#x)", sock_fd, sockaddr_addr, sockaddr_len_addr, flags);
+    if (flags & ~(SOCK_NONBLOCK_ | SOCK_CLOEXEC_))
+        return _EINVAL;
     struct fd *sock = sock_getfd(sock_fd);
     if (sock == NULL)
         return _EBADF;
@@ -486,10 +492,13 @@ int_t sys_accept(fd_t sock_fd, addr_t sockaddr_addr, addr_t sockaddr_len_addr) {
             return _EFAULT;
     }
 
+    // (the type argument carries the O_NONBLOCK/O_CLOEXEC bits for the new fd)
     fd_t client_f = sock_fd_create(client,
-            sock->socket.domain, sock->socket.type, sock->socket.protocol);
-    if (client_f < 0)
+            sock->socket.domain, sock->socket.type | flags, sock->socket.protocol);
+    if (client_f < 0) {
         close(client);
+        return client_f;
+    }
 
     if (sock->socket.domain == AF_LOCAL_) {
         lock(&peer_lock);
@@ -763,7 +772,7 @@ int_t sys_setsockopt(fd_t sock_fd, dword_t level, dword_t option, addr_t value_a
     return 0;
 }
 
-int_t sys_getsockopt(fd_t sock_fd, dword_t level, dword_t option, addr_t value_addr, dword_t len_addr) {
+int_t sys_getsockopt(fd_t sock_fd, dword_t level, dword_t option, addr_t value_addr, addr_t len_addr) {
     STRACE("getsockopt(%d, %d, %d, %#x, %#x)", sock_fd, level, option, value_addr, len_addr);
     struct fd *sock = sock_getfd(sock_fd);
     if (sock == NULL)
@@ -1277,7 +1286,7 @@ static struct socket_call {
     {(syscall_t) sys_getsockopt, 5},
     {(syscall_t) sys_sendmsg, 3},
     {(syscall_t) sys_recvmsg, 3},
-    {NULL}, // accept4
+    {(syscall_t) sys_accept4, 4},
     {NULL}, // recvmmsg
     {(syscall_t) sys_sendmmsg, 4},
 };
