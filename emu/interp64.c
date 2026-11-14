@@ -312,11 +312,13 @@ static forceinline uint64_t aload(void *p, int sz) {
     }
 }
 static forceinline bool acas(void *p, int sz, uint64_t old, uint64_t new) {
+#if !defined(__x86_64__)
     if (unlikely((uintptr_t) p & (sz - 1))) {
         // misaligned: not atomic (arm64 cannot do it)
         st(p, sz, new);
         return true;
     }
+#endif
     switch (sz) {
         case 1: { uint8_t o = (uint8_t) old; return __atomic_compare_exchange_n((uint8_t *) p, &o, (uint8_t) new, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST); }
         case 2: { uint16_t o = (uint16_t) old; return __atomic_compare_exchange_n((uint16_t *) p, &o, (uint16_t) new, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST); }
@@ -1409,9 +1411,39 @@ static int exec(struct ictx *c, const struct insn *in) {
             addr = ea(c, in);
             int half = sz == 8 ? 8 : 4;
             wprobe(c, addr, half * 2);
+            uint64_t m = szmask(half);
+            void *p = wptr(c, addr, half * 2);
+            if (p != NULL && ((uintptr_t) p & (half * 2 - 1)) == 0) {
+                // a real atomic compare-and-swap: lock-free code (allocators,
+                // garbage collectors) mixes this with plain loads and stores
+                if (half == 8) {
+                    unsigned __int128 want = ((unsigned __int128) cpu->rdx << 64) | cpu->rax;
+                    unsigned __int128 repl = ((unsigned __int128) cpu->rcx << 64) | cpu->rbx;
+                    unsigned __int128 was = __sync_val_compare_and_swap((unsigned __int128 *) p, want, repl);
+                    if (was == want) {
+                        c->zr = 0;
+                    } else {
+                        cpu->rax = (uint64_t) was;
+                        cpu->rdx = (uint64_t) (was >> 64);
+                        c->zr = 1;
+                    }
+                } else {
+                    uint64_t want = ((cpu->rdx & m) << 32) | (cpu->rax & m);
+                    uint64_t repl = ((cpu->rcx & m) << 32) | (cpu->rbx & m);
+                    uint64_t was = __sync_val_compare_and_swap((uint64_t *) p, want, repl);
+                    if (was == want) {
+                        c->zr = 0;
+                    } else {
+                        rset(cpu, in, 0, 4, was & m);
+                        rset(cpu, in, 2, 4, was >> 32);
+                        c->zr = 1;
+                    }
+                }
+                break;
+            }
+            // misaligned or across pages: atomic only against other such operations
             pthread_mutex_lock(&cx16_lock);
             uint64_t lo = mrd(c, addr, half), hi = mrd(c, addr + half, half);
-            uint64_t m = szmask(half);
             if (lo == (cpu->rax & m) && hi == (cpu->rdx & m)) {
                 mwr(c, addr, half, cpu->rbx);
                 mwr(c, addr + half, half, cpu->rcx);

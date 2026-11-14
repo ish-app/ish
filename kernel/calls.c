@@ -357,7 +357,24 @@ void handle_interrupt(int interrupt) {
             .code = TRAP_TRACE_,
         });
         unlock(&pids_lock);
-    } else if (interrupt != INT_TIMER) {
+    } else if (interrupt == INT_TIMER) {
+#if ISH_GUEST_64
+        // ISH_SAMPLE=1: log where each thread is executing, about 20 times a second
+        static int sample = -1;
+        if (sample < 0)
+            sample = getenv("ISH_SAMPLE") != NULL;
+        if (sample) {
+            static __thread struct timespec last;
+            struct timespec now;
+            clock_gettime(CLOCK_MONOTONIC, &now);
+            if ((now.tv_sec - last.tv_sec) * 1000 + (now.tv_nsec - last.tv_nsec) / 1000000 >= 50) {
+                last = now;
+                printk("%d sample rip %llx rsp %llx rax %llx rcx %llx rdx %llx\n", current->pid, (unsigned long long) cpu->rip,
+                        (unsigned long long) cpu->rsp, (unsigned long long) cpu->rax, (unsigned long long) cpu->rcx, (unsigned long long) cpu->rdx);
+            }
+        }
+#endif
+    } else {
         printk("%d unhandled interrupt %d\n", current->pid, interrupt);
         sys_exit(interrupt);
     }

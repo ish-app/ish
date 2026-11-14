@@ -36,6 +36,10 @@ if guest64
     # The interpreter computes guest floating point with C arithmetic. A compiler
     # that fuses a*b+c into one rounding (the default on arm64) changes results.
     add_project_arguments('-ffp-contract=off', language: 'c')
+    # cmpxchg16b in the guest is done with a real 16-byte compare-and-swap
+    if host_machine.cpu_family() == 'x86_64'
+        add_project_arguments('-mcx16', language: 'c')
+    endif
 endif
 
 includes = [include_directories('.')]
