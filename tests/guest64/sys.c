@@ -18,6 +18,7 @@
 #include <sys/timerfd.h>
 #include <sys/uio.h>
 #include <sys/wait.h>
+#include <sys/mman.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <sys/stat.h>
@@ -188,6 +189,52 @@ int main(void) {
     CHECK("close_range", cr == 0 && fcntl(d1, F_GETFD) == -1 && fcntl(d3, F_GETFD) == -1 && fcntl(fd, F_GETFD) != -1);
     CHECK("sync/fsync/fdatasync", (sync(), 1) && fsync(fd) == 0 && fdatasync(fd) == 0);
     CHECK("posix_fadvise", posix_fadvise(fd, 0, 0, POSIX_FADV_SEQUENTIAL) == 0);
+    {
+        // MADV_DONTNEED: private anonymous pages read as zeros afterwards, neighbors are kept
+        size_t psz = 4096, n = 64;
+        unsigned char *m = mmap(NULL, n * psz, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+        memset(m, 0xa5, n * psz);
+        int r = madvise(m + 3 * psz, 37 * psz, MADV_DONTNEED);
+        int good = r == 0;
+        for (size_t i = 0; i < n * psz; i++) {
+            unsigned char want = (i >= 3 * psz && i < 40 * psz) ? 0 : 0xa5;
+            if (m[i] != want) { good = 0; break; }
+        }
+        m[5 * psz] = 7;
+        CHECK("madvise DONTNEED zeroes", good && m[5 * psz] == 7 && m[5 * psz + 1] == 0);
+
+        // after a fork: the child discards, the parent keeps its contents
+        memset(m, 0x5a, n * psz);
+        pid_t kid = fork();
+        if (kid == 0) {
+            madvise(m, n * psz, MADV_DONTNEED);
+            _exit(m[0] == 0 && m[n * psz - 1] == 0 ? 0 : 1);
+        }
+        int st = -1;
+        waitpid(kid, &st, 0);
+        CHECK("madvise DONTNEED after fork", st == 0 && m[0] == 0x5a && m[n * psz - 1] == 0x5a);
+
+        // mprotect in the child must not undo copy-on-write
+        kid = fork();
+        if (kid == 0) {
+            mprotect(m, psz, PROT_READ);
+            mprotect(m, psz, PROT_READ | PROT_WRITE);
+            m[0] = 1;
+            _exit(0);
+        }
+        waitpid(kid, &st, 0);
+        CHECK("mprotect keeps copy-on-write", st == 0 && m[0] == 0x5a);
+
+        // mprotect must not turn a shared mapping private
+        unsigned char *sh = mmap(NULL, psz, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+        mprotect(sh, psz, PROT_READ);
+        mprotect(sh, psz, PROT_READ | PROT_WRITE);
+        kid = fork();
+        if (kid == 0) { sh[0] = 9; _exit(0); }
+        waitpid(kid, &st, 0);
+        CHECK("mprotect keeps a shared mapping", st == 0 && sh[0] == 9);
+        munmap(m, n * psz); munmap(sh, psz);
+    }
     unlink(path); unlink(sun.sun_path);
     return 0;
 }

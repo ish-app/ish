@@ -283,6 +283,68 @@ int pt_map_nothing(struct mem *mem, page_t start, pages_t pages, unsigned flags)
     return pt_map(mem, start, pages, memory, 0, flags | P_ANONYMOUS);
 }
 
+// Make host memory read as zeros again and, where whole host pages are
+// covered, give it back to the host.
+static void host_zero(char *p, size_t size) {
+    uintptr_t a = (uintptr_t) p, end = a + size;
+    uintptr_t first = (a + real_page_size - 1) & ~((uintptr_t) real_page_size - 1);
+    uintptr_t last = end & ~((uintptr_t) real_page_size - 1);
+    if (first >= last) {
+        memset(p, 0, size);
+        return;
+    }
+#if defined(__linux__)
+    bool ok = madvise((void *) first, last - first, MADV_DONTNEED) == 0;
+#else
+    // other hosts do not promise zeros after MADV_DONTNEED; mapping fresh
+    // pages over the range does
+    int mflags = MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED;
+#if ISH_GUEST_64 && defined(MAP_NORESERVE)
+    mflags |= MAP_NORESERVE;
+#endif
+    bool ok = mmap((void *) first, last - first, PROT_READ | PROT_WRITE, mflags, -1, 0) == (void *) first;
+#endif
+    if (!ok)
+        memset((void *) first, 0, last - first);
+    memset((void *) a, 0, first - a);
+    memset((void *) last, 0, end - last);
+}
+
+// madvise(MADV_DONTNEED): private anonymous pages in the range read as zeros
+// afterwards. Linux promises this and allocators depend on it.
+int pt_discard(struct mem *mem, page_t start, pages_t pages) {
+    if (!pt_range_ok(start, pages))
+        return _ENOMEM;
+    char *run = NULL;
+    size_t run_size = 0;
+    for (page_t page = start; page < start + pages; mem_next_page(mem, &page)) {
+        struct pt_entry *pt = mem_pt(mem, page);
+        if (pt == NULL || !(pt->flags & P_ANONYMOUS) || (pt->flags & P_SHARED))
+            continue;
+        if (pt->flags & P_COW) {
+            // the memory is still shared with another process after a fork:
+            // this process gets fresh pages, the other keeps the contents
+            int err = pt_map_nothing(mem, page, 1, pt->flags & ~P_COW);
+            if (err < 0)
+                return err;
+            continue;
+        }
+        asbestos_invalidate_page(mem->mmu.asbestos, page);
+        char *host = (char *) pt->data->data + pt->offset;
+        if (run != NULL && host == run + run_size) {
+            run_size += PAGE_SIZE;
+            continue;
+        }
+        if (run != NULL)
+            host_zero(run, run_size);
+        run = host;
+        run_size = PAGE_SIZE;
+    }
+    if (run != NULL)
+        host_zero(run, run_size);
+    return 0;
+}
+
 int pt_set_flags(struct mem *mem, page_t start, pages_t pages, int flags) {
     if (!pt_range_ok(start, pages))
         return _ENOMEM;
@@ -292,7 +354,10 @@ int pt_set_flags(struct mem *mem, page_t start, pages_t pages, int flags) {
     for (page_t page = start; page < start + pages; page++) {
         struct pt_entry *entry = mem_pt(mem, page);
         int old_flags = entry->flags;
-        entry->flags = flags;
+        // only the protection changes: the page stays copy-on-write, shared,
+        // anonymous or a growing stack, whatever it was
+        entry->flags = (old_flags & ~P_RWX) | (flags & P_RWX);
+        flags = entry->flags;
         // check if protection is increasing
         if ((flags & ~old_flags) & (P_READ|P_WRITE)) {
             void *data = (char *) entry->data->data + entry->offset;

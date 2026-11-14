@@ -99,6 +99,8 @@ int pt_unmap(struct mem *mem, page_t start, pages_t pages);
 // like pt_unmap but doesn't care if part of the range isn't mapped
 int pt_unmap_always(struct mem *mem, page_t start, pages_t pages);
 // Set the flags on memory
+// Discard the contents of private anonymous pages (they read as zeros afterwards).
+int pt_discard(struct mem *mem, page_t start, pages_t pages);
 int pt_set_flags(struct mem *mem, page_t start, pages_t pages, int flags);
 // Copy pages from src memory to dst memory using copy-on-write
 int pt_copy_on_write(struct mem *src, struct mem *dst, page_t start, page_t pages);

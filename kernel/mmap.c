@@ -206,9 +206,19 @@ int_t sys_mprotect(addr_t addr, uword_t len, int_t prot) {
     return err;
 }
 
-dword_t sys_madvise(addr_t UNUSED(addr), uword_t UNUSED(len), dword_t UNUSED(advice)) {
-    // portable applications should not rely on linux's destructive semantics for MADV_DONTNEED.
-    return 0;
+#define MADV_DONTNEED_ 4
+dword_t sys_madvise(addr_t addr, uword_t len, dword_t advice) {
+    STRACE("madvise(0x%llx, 0x%llx, %d)", (unsigned long long) addr, (unsigned long long) len, advice);
+    if (PGOFFSET(addr) != 0)
+        return _EINVAL;
+    // The other kinds of advice are hints and can be ignored. MADV_DONTNEED is
+    // not a hint: the pages must read as zeros afterwards.
+    if (advice != MADV_DONTNEED_)
+        return 0;
+    write_wrlock(&current->mem->lock);
+    int err = pt_discard(current->mem, PAGE(addr), PAGE_ROUND_UP(len));
+    write_wrunlock(&current->mem->lock);
+    return err;
 }
 
 dword_t sys_mbind(addr_t UNUSED(addr), dword_t UNUSED(len), int_t UNUSED(mode),
