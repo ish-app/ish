@@ -64,3 +64,8 @@ Linux, macOS and emulated arm64 hosts up to the "Not logged in" answer; first st
 Claude Code's shell tool needs bash: `apk add bash` and `export SHELL=/bin/bash` before `claude`.
 ssh works as on any Alpine system: `apk add openssh-client` (and `openssh-server` to log in to the
 phone).
+
+## Adding your own files to the first-launch file system
+Anything under `app/rootfs-overlay/` (ignored by git) is added to the root archive at build
+time, owned by root: `app/rootfs-overlay/root/NOTES.md` appears as `/root/NOTES.md` on first
+launch. Do not put keys or tokens there: an app bundle is not a safe place for them.
