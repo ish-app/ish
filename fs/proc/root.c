@@ -36,13 +36,14 @@ static int proc_show_cpuinfo(struct proc_entry *UNUSED(entry), struct proc_data 
 }
 
 static void show_kb(struct proc_data *buf, const char *name, uint64_t value) {
-    proc_printf(buf, "%s%8"PRIu64" kB\n", name, value / 1000);
+    proc_printf(buf, "%s%8"PRIu64" kB\n", name, value / 1024);
 }
 
 static int proc_show_meminfo(struct proc_entry *UNUSED(entry), struct proc_data *buf) {
     struct mem_usage usage = get_mem_usage();
     show_kb(buf, "MemTotal:       ", usage.total);
     show_kb(buf, "MemFree:        ", usage.free);
+    show_kb(buf, "MemAvailable:   ", usage.free + usage.inactive);
     show_kb(buf, "MemShared:      ", usage.free);
     // a bunch of crap busybox top needs to see or else it gets stack garbage
     show_kb(buf, "Shmem:          ", 0);

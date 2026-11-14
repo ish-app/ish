@@ -45,14 +45,18 @@ dword_t sys_sethostname(addr_t UNUSED(hostname_addr), dword_t UNUSED(hostname_le
 }
 
 #if __APPLE__
-static uint64_t get_total_ram(void) {
-    uint64_t total_ram;
-    sysctl((int []) {CTL_DEBUG, HW_PHYSMEM}, 2, &total_ram, NULL, NULL, 0);
-    return total_ram;
-}
 static void sysinfo_specific(struct sys_info *info) {
-    info->totalram = get_total_ram();
-    // TODO: everything else
+    // The total used to come from a sysctl that does not exist, so it read as
+    // zero, and mem_unit was zero too. Programs that size their heap from the
+    // amount of memory (JavaScript engines, for one) then collect garbage
+    // without end.
+    struct mem_usage usage = get_mem_usage();
+    // a 32-bit guest cannot hold byte counts over 4 GB: count in pages there
+    uint64_t unit = sizeof(info->totalram) < 8 ? 4096 : 1;
+    info->mem_unit = (dword_t) unit;
+    info->totalram = (uword_t) (usage.total / unit);
+    info->freeram = (uword_t) ((usage.free + usage.inactive) / unit);
+    info->procs = 1;
 }
 #elif __linux__
 static void sysinfo_specific(struct sys_info *info) {
