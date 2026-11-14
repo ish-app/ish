@@ -65,8 +65,13 @@ static int proc_pid_stat_show(struct proc_entry *entry, struct proc_data *buf) {
     proc_printf(buf, "%ld ", 0l); // itimer value (deprecated, always 0)
     proc_printf(buf, "%lld ", 0ll); // jiffies on process start
 
-    proc_printf(buf, "%lu ", 0l); // vsize
-    proc_printf(buf, "%ld ", 0l); // rss
+    {
+        // vsize is in bytes, rss in pages. general_lock is held here.
+        long mapped = task->mem ? (long) task->mem->pages_mapped : 0;
+        long touched = task->mem ? (long) task->mem->pages_touched : 0;
+        proc_printf(buf, "%llu ", (unsigned long long) (mapped > 0 ? mapped : 0) << PAGE_BITS); // vsize
+        proc_printf(buf, "%ld ", touched > 0 ? touched : 0); // rss
+    }
     proc_printf(buf, "%lu ", 0l); // rss limit
 
     // bunch of shit that can only be accessed by a debugger
@@ -109,13 +114,23 @@ static int proc_pid_statm_show(struct proc_entry *entry, struct proc_data *buf) 
     if (task == NULL)
         return _ESRCH;
 
-    proc_printf(buf, "%lu ", 0); // total vm size
-    proc_printf(buf, "%lu ", 0); // vm resident size
-    proc_printf(buf, "%lu ", 0); // resident shared
-    proc_printf(buf, "%lu ", 0); // text
-    proc_printf(buf, "%lu ", 0); // lib (always 0 since linux 2.6)
-    proc_printf(buf, "%lu ", 0); // data + stack
-    proc_printf(buf, "%lu ", 0); // dirty (always 0 since linux 2.6)
+    // In pages. Resident counts the pages the process has touched since they
+    // were mapped or last discarded; host memory is not asked.
+    unsigned long size = 0, resident = 0;
+    lock(&task->general_lock);
+    if (task->mem != NULL) {
+        long mapped = task->mem->pages_mapped, touched = task->mem->pages_touched;
+        size = mapped > 0 ? (unsigned long) mapped : 0;
+        resident = touched > 0 ? (unsigned long) touched : 0;
+    }
+    unlock(&task->general_lock);
+    proc_printf(buf, "%lu ", size); // total vm size
+    proc_printf(buf, "%lu ", resident); // vm resident size
+    proc_printf(buf, "%lu ", 0ul); // resident shared
+    proc_printf(buf, "%lu ", 0ul); // text
+    proc_printf(buf, "%lu ", 0ul); // lib (always 0 since linux 2.6)
+    proc_printf(buf, "%lu ", size); // data + stack
+    proc_printf(buf, "%lu ", 0ul); // dirty (always 0 since linux 2.6)
     proc_printf(buf, "\n");
 
     proc_put_task(task);

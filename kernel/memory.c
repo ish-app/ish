@@ -64,6 +64,8 @@ void mem_init(struct mem *mem) {
 #endif
     mem->pgdir = calloc(MEM_TOP_SIZE, sizeof(*mem->pgdir));
     mem->pgdir_used = 0;
+    mem->pages_mapped = 0;
+    mem->pages_touched = 0;
     mem->mmu.ops = &mem_mmu_ops;
     mem->mmu.asbestos = asbestos_new(&mem->mmu);
     mem->mmu.changes = 0;
@@ -231,7 +233,8 @@ int pt_map(struct mem *mem, page_t start, pages_t pages, void *memory, size_t of
         struct pt_entry *pt = mem_pt_new(mem, page);
         pt->data = data;
         pt->offset = ((size_t) (page - start) << PAGE_BITS) + offset;
-        pt->flags = flags;
+        pt->flags = flags & ~P_TOUCHED;
+        mem->pages_mapped++;
     }
     return 0;
 }
@@ -257,6 +260,9 @@ int pt_unmap_always(struct mem *mem, page_t start, pages_t pages) {
             continue;
         asbestos_invalidate_page(mem->mmu.asbestos, page);
         struct data *data = pt->data;
+        mem->pages_mapped--;
+        if (pt->flags & P_TOUCHED)
+            mem->pages_touched--;
         mem_pt_del(mem, page);
         if (--data->refcount == 0) {
             // vdso wasn't allocated with mmap, it's just in our data segment
@@ -330,6 +336,8 @@ int pt_discard(struct mem *mem, page_t start, pages_t pages) {
             continue;
         }
         asbestos_invalidate_page(mem->mmu.asbestos, page);
+        if (__atomic_fetch_and(&pt->flags, ~P_TOUCHED, __ATOMIC_RELAXED) & P_TOUCHED)
+            mem->pages_touched--;
         char *host = (char *) pt->data->data + pt->offset;
         if (run != NULL && host == run + run_size) {
             run_size += PAGE_SIZE;
@@ -342,6 +350,8 @@ int pt_discard(struct mem *mem, page_t start, pages_t pages) {
     }
     if (run != NULL)
         host_zero(run, run_size);
+    // cached translations skip the bookkeeping of touched pages
+    mem_changed(mem);
     return 0;
 }
 
@@ -387,6 +397,9 @@ int pt_copy_on_write(struct mem *src, struct mem *dst, page_t start, page_t page
         dst_entry->data = entry->data;
         dst_entry->offset = entry->offset;
         dst_entry->flags = entry->flags;
+        dst->pages_mapped++;
+        if (entry->flags & P_TOUCHED)
+            dst->pages_touched++;
     }
     mem_changed(src);
     mem_changed(dst);
@@ -405,6 +418,9 @@ static void *mem_ptr_nofault(struct mem *mem, addr_t addr, int type) {
         return NULL;
     if (type == MEM_WRITE && !P_WRITABLE(entry->flags))
         return NULL;
+    // (several threads get here with only the read lock)
+    if (!(entry->flags & P_TOUCHED) && !(__atomic_fetch_or(&entry->flags, P_TOUCHED, __ATOMIC_RELAXED) & P_TOUCHED))
+        mem->pages_touched++;
     return entry->data->data + entry->offset + PGOFFSET(addr);
 }
 

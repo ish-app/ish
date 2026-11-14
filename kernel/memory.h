@@ -17,6 +17,10 @@ struct mem {
     struct pt_entry **pgdir;
 #endif
     int pgdir_used;
+    // for /proc/pid/statm: pages mapped, and pages that have been accessed
+    // since they were mapped or last discarded
+    atomic_long pages_mapped;
+    atomic_long pages_touched;
 
     struct mmu mmu;
 
@@ -84,6 +88,8 @@ struct pt_entry {
 #define P_ANONYMOUS (1 << 6)
 // mapping was created with MAP_SHARED, should not CoW
 #define P_SHARED (1 << 7)
+// the page has been accessed (counted in pages_touched)
+#define P_TOUCHED (1 << 8)
 
 bool pt_is_hole(struct mem *mem, page_t start, pages_t pages);
 page_t pt_find_hole(struct mem *mem, pages_t size);
