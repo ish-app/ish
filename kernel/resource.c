@@ -143,7 +143,7 @@ dword_t sys_prlimit64(pid_t_ pid, dword_t resource, addr_t new_limit_addr, addr_
 
 struct rusage_ rusage_get_current(void) {
     // only the time fields are currently implemented
-    struct rusage_ rusage;
+    struct rusage_ rusage = {0};
 #if __linux__
     struct rusage usage;
     int err = getrusage(RUSAGE_THREAD, &usage);
@@ -153,13 +153,31 @@ struct rusage_ rusage_get_current(void) {
     rusage.stime.sec = usage.ru_stime.tv_sec;
     rusage.stime.usec = usage.ru_stime.tv_usec;
 #elif __APPLE__
-    thread_basic_info_data_t info;
+    // pthread_mach_thread_np does not hand out a new port right on every call
+    // the way mach_thread_self does (those were never released).
+    thread_basic_info_data_t info = {0};
     mach_msg_type_number_t count = THREAD_BASIC_INFO_COUNT;
-    thread_info(mach_thread_self(), THREAD_BASIC_INFO, (thread_info_t) &info, &count);
-    rusage.utime.sec = info.user_time.seconds;
-    rusage.utime.usec = info.user_time.microseconds;
-    rusage.stime.sec = info.system_time.seconds;
-    rusage.stime.usec = info.system_time.microseconds;
+    kern_return_t kr = thread_info(pthread_mach_thread_np(pthread_self()), THREAD_BASIC_INFO, (thread_info_t) &info, &count);
+    if (kr == KERN_SUCCESS) {
+        rusage.utime.sec = info.user_time.seconds;
+        rusage.utime.usec = info.user_time.microseconds;
+        rusage.stime.sec = info.system_time.seconds;
+        rusage.stime.usec = info.system_time.microseconds;
+    } else {
+        // The result used to be read without looking at kr, which gave
+        // whatever was on the stack. Fall back to the thread's CPU clock.
+        static bool reported;
+        if (!reported) {
+            reported = true;
+            printk("thread_info failed (%d): CPU times come from the thread clock\n", kr);
+        }
+        struct timespec ts = {0};
+        clock_gettime(CLOCK_THREAD_CPUTIME_ID, &ts);
+        rusage.utime.sec = ts.tv_sec;
+        rusage.utime.usec = ts.tv_nsec / 1000;
+        rusage.stime.sec = 0;
+        rusage.stime.usec = 0;
+    }
 #endif
     return rusage;
 }

@@ -59,6 +59,17 @@ static int proc_show_meminfo(struct proc_entry *UNUSED(entry), struct proc_data 
     return 0;
 }
 
+static int proc_show_loadavg(struct proc_entry *UNUSED(entry), struct proc_data *buf) {
+    struct uptime_info uptime = get_uptime();
+    // the loads are fixed point with 16 fraction bits
+    unsigned long loads[3] = {uptime.load_1m, uptime.load_5m, uptime.load_15m};
+    for (int i = 0; i < 3; i++)
+        proc_printf(buf, "%lu.%02lu ", loads[i] >> 16, ((loads[i] & 0xffff) * 100) >> 16);
+    // running/total tasks and the newest pid are not tracked
+    proc_printf(buf, "1/1 1\n");
+    return 0;
+}
+
 static int proc_show_uptime(struct proc_entry *UNUSED(entry), struct proc_data *buf) {
     struct uptime_info uptime_info = get_uptime();
     unsigned long uptime = uptime_info.uptime_ticks;
@@ -118,6 +129,7 @@ static int proc_show_mounts(struct proc_entry *UNUSED(entry), struct proc_data *
 struct proc_dir_entry proc_root_entries[] = {
     {"cpuinfo", .show = proc_show_cpuinfo},
     {"ish", S_IFDIR, .children = &proc_ish_children},
+    {"loadavg", .show = proc_show_loadavg},
     {"meminfo", .show = proc_show_meminfo},
     {"mounts", .show = proc_show_mounts},
     {"self", S_IFLNK, .readlink = proc_readlink_self},
