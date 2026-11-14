@@ -36,6 +36,7 @@ dword_t sys_execve(addr_t file, addr_t argv, addr_t envp);
 int do_execve(const char *file, size_t argc, const char *argv, const char *envp);
 dword_t sys_exit(dword_t status);
 noreturn void do_exit(int status);
+void kill_other_threads(void);
 noreturn void do_exit_group(int status);
 dword_t sys_exit_group(dword_t status);
 dword_t sys_wait4(pid_t_ pid, addr_t status_addr, dword_t options, addr_t rusage_addr);

@@ -100,7 +100,12 @@ int_t sys_epoll_wait(fd_t epoll_f, addr_t events_addr, int_t max_events, int_t t
 
     struct epoll_context context = {.events = events, .n = 0, .max_events = max_events};
     STRACE("...\n");
+    // Another thread may close the epoll descriptor while this one waits.
+    // Without a reference of its own the wait would go on using the freed
+    // poll set (seen as a crash in poll_wait when Bun shut an event loop down).
+    fd_retain(epoll);
     int res = poll_wait(epoll->epollfd.poll, epoll_callback, &context, timeout < 0 ? NULL : &timeout_ts);
+    fd_close(epoll);
     STRACE("%d end epoll_wait", current->pid);
     if (res >= 0) {
         for (int i = 0; i < res; i++) {

@@ -487,6 +487,8 @@ void signal_delivery_stop(int sig, struct siginfo_ *info) {
 }
 
 void receive_signals(void) {
+    if (current->exec_killed)
+        do_exit(0);
     lock(&current->group->lock);
     bool was_stopped = current->group->stopped;
     unlock(&current->group->lock);
@@ -507,6 +509,12 @@ void receive_signals(void) {
 
     struct sigqueue *sigqueue, *tmp;
     list_for_each_entry_safe(&current->queue, sigqueue, tmp, queue) {
+        // (the flag can be set while this loop is already running, and the
+        // signal that came with it must not be acted on as a real SIGKILL)
+        if (current->exec_killed) {
+            unlock(&sighand->lock);
+            do_exit(0);
+        }
         int sig = sigqueue->info.sig;
         if (sigset_has(blocked, sig))
             continue;

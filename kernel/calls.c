@@ -329,7 +329,7 @@ void handle_interrupt(int interrupt) {
                 read_wrlock(&current->mem->lock);
                 struct pt_entry *pt = mem_pt(current->mem, PAGE(cpu->segfault_addr));
                 if (pt == NULL)
-                    printk("  nothing is mapped there (%ld pages mapped, %ld touched)\n", (long) current->mem->pages_mapped, (long) current->mem->pages_touched);
+                    printk("  nothing is mapped at %#llx (%ld pages mapped, %ld touched)\n", (unsigned long long) cpu->segfault_addr, (long) current->mem->pages_mapped, (long) current->mem->pages_touched);
                 else
                     printk("  page flags %#x%s\n", pt->flags, (pt->flags & P_RESERVED) ? " (no host memory yet)" : "");
                 read_wrunlock(&current->mem->lock);

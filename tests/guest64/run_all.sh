@@ -24,6 +24,7 @@ for t in sys as64 ptrace smc; do
     n=$(grep -c "OK$" tests/$t.$which.out); f=$(grep -Evc "OK$|refused \(ish limit" tests/$t.$which.out)
     [ $f = 0 ] && [ $n -gt 5 ] && ok "$t ($n checks)" || bad "$t ($f not OK of $((n+f)))"
 done
+r=$(timeout -s KILL 300 $ISHBIN -f $D /root/execthr 2>&1 | tail -1); [ "$r" = "exec with 9 other threads: 20 of 20 ok" ] && ok "execve from a threaded process" || bad "execthr: $r"
 r=$(timeout -s KILL 120 $ISHBIN -f $D /root/sig 2>&1); [ "$r" = "signals delivered: yes, long double equal: 1, double equal: 1" ] && ok "signal handler keeps FP state" || bad "sig: $r"
 # 4. Python
 P=$PWD/regress-py-$$; cp -a alpine64-python $P

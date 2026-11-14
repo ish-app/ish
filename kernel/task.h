@@ -75,6 +75,8 @@ struct task {
     // locked by pids_lock
     dword_t exit_code;
     bool zombie;
+    // another thread of the process is running execve: this one has to go
+    bool exec_killed;
     bool exiting;
 
     // this structure is allocated on the stack of the parent's clone() call

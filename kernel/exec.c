@@ -203,6 +203,7 @@ static int elf_exec(struct fd *fd, const char *file, struct exec_args argv, stru
     // general_lock protects current->mm. otherwise procfs might read the
     // pointer before it's released and then try to lock it after it's
     // released.
+    kill_other_threads();
     lock(&current->general_lock);
     mm_release(current->mm);
     task_set_mm(current, mm_new());

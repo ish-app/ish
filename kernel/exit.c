@@ -129,6 +129,45 @@ noreturn void do_exit(int status) {
     pthread_exit(NULL);
 }
 
+// execve replaces the whole process: every other thread has to be gone before
+// the address space is. They used to be left running on the memory that exec
+// then tore down, and their faults killed the new program.
+void kill_other_threads(void) {
+    struct tgroup *group = current->group;
+    // (a thread that is not the group's leader taking over the process is not
+    // handled: the leader's pid would have to move to it)
+    if (group->leader != current)
+        return;
+    for (;;) {
+        int others = 0;
+        lock(&pids_lock);
+        lock(&group->lock);
+        struct task *task;
+        list_for_each_entry(&group->threads, task, group_links) {
+            if (task == current)
+                continue;
+            others++;
+            // a thread that is already exiting has given up its sighand
+            if (task->sighand == NULL)
+                continue;
+            if (!task->exec_killed) {
+                task->exec_killed = true;
+                // the signal only gets it out of whatever it is waiting in;
+                // receive_signals sees the flag first and ends the thread
+                deliver_signal(task, SIGKILL_, SIGINFO_NIL);
+            }
+            group->stopped = false;
+            notify(&group->stopped_cond);
+        }
+        unlock(&group->lock);
+        unlock(&pids_lock);
+        if (others == 0)
+            return;
+        struct timespec nap = {0, 1000000};
+        nanosleep(&nap, NULL);
+    }
+}
+
 noreturn void do_exit_group(int status) {
     struct tgroup *group = current->group;
     lock(&pids_lock);
