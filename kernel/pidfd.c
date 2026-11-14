@@ -5,6 +5,9 @@
 #include "kernel/fs.h"
 #include "fs/fd.h"
 #include "fs/poll.h"
+#include "fs/proc.h"
+
+extern const struct fd_ops procfs_fdops;
 
 static struct fd_ops pidfd_ops;
 static lock_t pidfds_lock = LOCK_INITIALIZER;
@@ -57,7 +60,18 @@ void pidfd_notify_exit(pid_t_ pid) {
 // The process a pidfd stands for, or an error. *dead says whether it has exited.
 pid_t_ pidfd_pid(fd_t f, bool *dead) {
     struct fd *fd = f_get(f);
-    if (fd == NULL || fd->ops != &pidfd_ops)
+    if (fd == NULL)
+        return _EBADF;
+    if (fd->ops == &procfs_fdops && fd->proc.entry.meta == &proc_pid) {
+        // an open /proc/<pid> directory is the older kind of pidfd
+        lock(&pids_lock);
+        bool alive = pid_get_task(fd->proc.entry.pid) != NULL;
+        unlock(&pids_lock);
+        if (dead != NULL)
+            *dead = !alive;
+        return fd->proc.entry.pid;
+    }
+    if (fd->ops != &pidfd_ops)
         return _EBADF;
     if (dead != NULL)
         *dead = fd->pidfd.dead;

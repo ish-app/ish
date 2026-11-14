@@ -61,3 +61,6 @@ app-group entitlement and exits at launch.)
 `/login`: it prints a link to open in a browser and takes the code pasted back. Checked on
 Linux, macOS and emulated arm64 hosts up to the "Not logged in" answer; first start takes
 10-20 s on a desktop CPU and has not been timed on a phone.
+Claude Code's shell tool needs bash: `apk add bash` and `export SHELL=/bin/bash` before `claude`.
+ssh works as on any Alpine system: `apk add openssh-client` (and `openssh-server` to log in to the
+phone).
