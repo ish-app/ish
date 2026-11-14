@@ -101,6 +101,7 @@ int poll_add_fd(struct poll *poll, struct fd *fd, int types, union poll_fd_info 
     poll_fd->fd = fd;
     poll_fd->poll = poll;
     poll_fd->types = types;
+    poll_fd->disarmed = false;
     poll_fd->info = info;
     poll_fd->triggered_types = 0;
     poll_fd->reported_gen = 0;
@@ -139,7 +140,8 @@ int poll_del_fd(struct poll *poll, struct fd *fd) {
         goto out;
     }
 
-    if (poll_fd_is_real(poll_fd)) {
+    // (a disarmed one-shot entry has left the host's set already)
+    if (poll_fd_is_real(poll_fd) && !poll_fd->disarmed) {
         err = real_poll_update(&poll->real, fd->real_fd, 0, poll_fd);
         if (err < 0) {
             err = errno_map();
@@ -180,6 +182,7 @@ int poll_mod_fd(struct poll *poll, struct fd *fd, int types, union poll_fd_info 
     poll_fd->info = info;
     // (as on Linux, changing an entry re-arms it)
     poll_fd->triggered_types = 0;
+    poll_fd->disarmed = false;
     if (types & POLL_EDGETRIGGERED)
         poll->has_edge_triggered = true;
 
@@ -260,6 +263,8 @@ int poll_wait(struct poll *poll_, poll_callback_t callback, void *context, struc
         struct poll_fd *poll_fd, *tmp;
         list_for_each_entry_safe(&poll_->poll_fds, poll_fd, tmp, fds) {
             struct fd *fd = poll_fd->fd;
+            if (poll_fd->disarmed)
+                continue;
             int poll_types = 0;
             if (fd->ops->poll)
                 poll_types = fd->ops->poll(fd);
@@ -277,12 +282,11 @@ int poll_wait(struct poll *poll_, poll_callback_t callback, void *context, struc
                 // thundering herd problem at all, but at least the semantics
                 // are right. I'll just leave that as a TODO.
                 if (poll_fd->types & POLL_ONESHOT) {
-                    list_remove(&poll_fd->polls);
-                    list_remove(&poll_fd->fds);
+                    // disarmed, not removed: EPOLL_CTL_MOD arms it again
+                    poll_fd->disarmed = true;
                     if (poll_fd_is_real(poll_fd)) {
                         real_poll_update(&poll_->real, fd->real_fd, 0, NULL);
                     }
-                    free(poll_fd);
                     continue;
                 }
 

@@ -48,6 +48,9 @@ struct poll_fd {
     // returned its bits are set here, and those bits are ignored on the next
     // call to poll_wait. The bits are cleared by poll_wakeup.
     int triggered_types;
+    // A one-shot entry that has reported its event. It stays in the set and
+    // reports nothing more until poll_mod_fd arms it again.
+    bool disarmed;
     // which poll_wait call last returned an edge-triggered event for this
     // entry (struct poll's report_gen at that time)
     unsigned reported_gen;
