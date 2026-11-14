@@ -111,6 +111,14 @@ int_t sys_epoll_pwait(fd_t epoll_f, addr_t events_addr, int_t max_events, int_t 
 
 int_t sys_eventfd2(uint_t initval, int_t flags);
 int_t sys_eventfd(uint_t initval);
+int_t sys_pidfd_open(pid_t_ pid, uint_t flags);
+int_t sys_pidfd_send_signal(fd_t f, int_t sig, addr_t info_addr, uint_t flags);
+void pidfd_notify_exit(pid_t_ pid);
+pid_t_ pidfd_pid(fd_t f, bool *dead);
+int_t sys_inotify_init1(int_t flags);
+int_t sys_inotify_init(void);
+int_t sys_inotify_add_watch(fd_t f, addr_t path_addr, uint_t mask);
+int_t sys_inotify_rm_watch(fd_t f, int_t wd);
 
 // file management
 fd_t sys_open(addr_t path_addr, dword_t flags, mode_t_ mode);

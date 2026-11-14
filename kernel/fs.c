@@ -9,6 +9,7 @@
 #include "fs/real.h"
 #include "fs/path.h"
 #include "fs/dev.h"
+#include "fs/inotify.h"
 
 static struct fd *at_fd(fd_t f) {
     if (f == AT_FDCWD_)
@@ -271,6 +272,8 @@ static ssize_t sys_write_buf(fd_t fd_no, void *buf, size_t size) {
     } else {
         return _EBADF;
     }
+    if (res > 0 && inotify_active())
+        inotify_notify_fd(fd, IN_MODIFY_);
     return res;
 }
 
@@ -495,6 +498,8 @@ dword_t sys_pwrite(fd_t f, addr_t buf_addr, dword_t size, off_t_ off) {
     }
     unlock(&fd->lock);
     free(buf);
+    if (res > 0 && inotify_active())
+        inotify_notify_fd(fd, IN_MODIFY_);
     return res;
 }
 
@@ -825,7 +830,10 @@ dword_t sys_utime(addr_t path_addr, addr_t times_addr) {
 static int generic_fsetattr(struct fd *fd, struct attr attr) {
     if (fd->mount->fs->fsetattr == NULL)
         return _EPERM;
-    return fd->mount->fs->fsetattr(fd, attr);
+    int err = fd->mount->fs->fsetattr(fd, attr);
+    if (err == 0 && inotify_active())
+        inotify_notify_fd(fd, attr.type == attr_size ? IN_MODIFY_ : IN_ATTRIB_);
+    return err;
 }
 
 dword_t sys_fchmod(fd_t f, dword_t mode) {
@@ -1033,6 +1041,8 @@ static ssize_t transfer_write(struct fd *fd, const char *buf, size_t size, bool 
         res = _ESPIPE;
     }
     unlock(&fd->lock);
+    if (res > 0 && inotify_active())
+        inotify_notify_fd(fd, IN_MODIFY_);
     return res;
 }
 
@@ -1169,10 +1179,23 @@ dword_t sys_pwritev(fd_t f, addr_t iovec_addr, dword_t iovec_count, uword_t pos_
 }
 
 // close_range(first, last, flags): flags (unshare, cloexec) are not supported
+#define CLOSE_RANGE_UNSHARE_ 2
+#define CLOSE_RANGE_CLOEXEC_ 4
 int_t sys_close_range(dword_t first, dword_t last, dword_t flags) {
     STRACE("close_range(%u, %u, %#x)", first, last, flags);
-    if (flags != 0 || first > last)
+    // (unsharing the table first is not supported)
+    if ((flags & ~CLOSE_RANGE_CLOEXEC_) || first > last)
         return _EINVAL;
+    if (flags & CLOSE_RANGE_CLOEXEC_) {
+        // mark them close-on-exec instead of closing them
+        struct fdtable *table = current->files;
+        lock(&table->lock);
+        for (dword_t f = first; f <= last && f < table->size; f++)
+            if (table->files[f] != NULL)
+                bit_set(f, table->cloexec);
+        unlock(&table->lock);
+        return 0;
+    }
     unsigned size = current->files->size;
     for (dword_t f = first; f <= last && f < size; f++)
         f_close(f);

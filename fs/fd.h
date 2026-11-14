@@ -41,6 +41,14 @@ struct fd {
             uint64_t expirations;
         } timerfd;
         struct {
+            pid_t_ pid;
+            bool dead; // the process has terminated
+            struct list others; // all pidfds, locked by pidfds_lock
+        } pidfd;
+        struct {
+            struct inotify *ino;
+        } inotifyfd;
+        struct {
             int domain;
             int type;
             int protocol;

@@ -8,6 +8,7 @@
 #include "kernel/resource.h"
 #include "kernel/fs.h"
 #include "fs/poll.h"
+#include "fs/inotify.h"
 #include "fs/fd.h"
 #include "fs/inode.h"
 
@@ -36,6 +37,8 @@ struct fd *fd_retain(struct fd *fd) {
 int fd_close(struct fd *fd) {
     int err = 0;
     if (--fd->refcount == 0) {
+        if (inotify_active())
+            inotify_notify_fd(fd, (fd->flags & (O_WRONLY_ | O_RDWR_)) ? IN_CLOSE_WRITE_ : IN_CLOSE_NOWRITE_);
         poll_cleanup_fd(fd);
         if (fd->ops->close)
             err = fd->ops->close(fd);

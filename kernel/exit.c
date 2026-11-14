@@ -92,7 +92,9 @@ noreturn void do_exit(int status) {
         list_add(&new_parent->children, &child->siblings);
     }
 
+    pid_t_ exited_process = 0;
     if (exit_tgroup(current)) {
+        exited_process = leader->pid;
         // notify parent that we died
         struct task *parent = leader->parent;
         if (parent == NULL) {
@@ -121,6 +123,8 @@ noreturn void do_exit(int status) {
     if (current != leader)
         task_destroy(current);
     unlock(&pids_lock);
+    if (exited_process != 0)
+        pidfd_notify_exit(exited_process);
 
     pthread_exit(NULL);
 }
@@ -373,6 +377,13 @@ error:
 dword_t sys_waitid(int_t idtype, pid_t_ id, addr_t info_addr, int_t options) {
     STRACE("waitid(%d, %d, %#x, %#x)", idtype, id, info_addr, options);
     struct siginfo_ info = {};
+    if (idtype == 3) { // P_PIDFD
+        pid_t_ pid = pidfd_pid(id, NULL);
+        if (pid < 0)
+            return pid;
+        idtype = P_PID_;
+        id = pid;
+    }
     int_t res = do_wait(idtype, id, &info, NULL, options);
     if (res < 0 || (res == 0 && info.child.pid == 0))
         return res;

@@ -12,7 +12,7 @@ bad() { echo "FAIL  $1"; fails=$((fails+1)); }
 W=$PWD/regress-clean-$$; cp -a alpine64-clean $W
 r=$(ISH="$ISHBIN" ROOT=$W ./run_checks.sh | tail -1); [ "$r" = "64-bit checks: 15 passed, 0 failed" ] && ok "shell checks ($r)" || bad "shell checks ($r)"
 # 2. programs whose output must equal the native run of the same binary
-for t in torture_O0 torture_O2 simd nan; do
+for t in torture_O0 torture_O2 simd nan notify; do
     n=tests/$t.native; [ -f $n ] || n=tests/native_${t#torture_}.txt
     b=${t}; [ -f tests/$t.bin ] || b=$t
     timeout -s KILL 900 $ISHBIN -f $D /root/$b > tests/$t.$which.out 2>&1
