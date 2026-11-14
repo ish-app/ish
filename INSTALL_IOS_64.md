@@ -52,3 +52,12 @@ app-group entitlement and exits at launch.)
   runs on x86_64 Linux, on macOS, and on arm64 Linux under emulation).
 - Speed: `time sh -c 'i=0; while [ $i -lt 200000 ]; do i=$((i+1)); done'`
   (22 s on a Ryzen 9 3900X; an A-series phone chip has never been measured).
+
+## Claude Code inside the 64-bit build
+    apk add nodejs npm libstdc++ libgcc
+    npm install -g @anthropic-ai/claude-code
+    claude
+(npm warns that it wants Node 22; ignore it, the package brings its own runtime.) Sign in with
+`/login`: it prints a link to open in a browser and takes the code pasted back. Checked on
+Linux, macOS and emulated arm64 hosts up to the "Not logged in" answer; first start takes
+10-20 s on a desktop CPU and has not been timed on a phone.
