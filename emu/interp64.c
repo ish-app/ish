@@ -1738,8 +1738,16 @@ static struct bcache *bcache_get(struct space *sp) {
     if (unlikely(bc == NULL)) {
         pthread_once(&bcache_once, bcache_key_init);
         bc = calloc(1, sizeof(*bc));
-        bc->hash = malloc(sizeof(struct bent) << BC_HASH_BITS);
-        bc->arena = malloc(sizeof(struct insn) * BC_ARENA);
+        if (bc != NULL) {
+            bc->hash = malloc(sizeof(struct bent) << BC_HASH_BITS);
+            bc->arena = malloc(sizeof(struct insn) * BC_ARENA);
+        }
+        if (bc == NULL || bc->hash == NULL || bc->arena == NULL) {
+            // (an iPad got here with its address space used up, and the
+            // NULL was written through)
+            fprintf(stderr, "ish: no memory for a thread's code cache\n");
+            abort();
+        }
         bc->space_id = sp->id;
         bcache_flush(bc);
         pthread_setspecific(bcache_key, bc);

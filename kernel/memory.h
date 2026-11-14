@@ -90,6 +90,13 @@ struct pt_entry {
 #define P_SHARED (1 << 7)
 // the page has been accessed (counted in pages_touched)
 #define P_TOUCHED (1 << 8)
+// The page has no host memory yet. Large private anonymous mappings start out
+// this way and get memory a chunk at a time when they are first touched
+// (mem_ptr). Programs map gigabytes they barely use; giving all of it host
+// address space up front used up the roughly 10 GB an iOS app is allowed.
+#define P_RESERVED (1 << 9)
+// pages given memory together on a first touch
+#define MEM_CHUNK_PAGES 256
 
 bool pt_is_hole(struct mem *mem, page_t start, pages_t pages);
 page_t pt_find_hole(struct mem *mem, pages_t size);
