@@ -232,6 +232,16 @@ static void *mem_ptr_nofault(struct mem *mem, addr_t addr, int type) {
     return entry->data->data + entry->offset + PGOFFSET(addr);
 }
 
+static void mem_upgrade_to_write(struct mem *mem) {
+    read_wrunlock(&mem->lock);
+    write_wrlock(&mem->lock);
+}
+
+static void mem_downgrade_to_read(struct mem *mem) {
+    write_wrunlock(&mem->lock);
+    read_wrlock(&mem->lock);
+}
+
 void *mem_ptr(struct mem *mem, addr_t addr, int type) {
     void *old_ptr = mem_ptr_nofault(mem, addr, type); // just for an assert
 
@@ -251,15 +261,9 @@ void *mem_ptr(struct mem *mem, addr_t addr, int type) {
 
         // Changing memory maps must be done with the write lock. But this is
         // called with the read lock.
-        // This locking stuff is copy/pasted for all the code in this function
-        // which changes memory maps.
-        // TODO: factor the lock/unlock code here into a new function. Do this
-        // next time you touch this function.
-        read_wrunlock(&mem->lock);
-        write_wrlock(&mem->lock);
+        mem_upgrade_to_write(mem);
         pt_map_nothing(mem, page, 1, P_WRITE | P_GROWSDOWN);
-        write_wrunlock(&mem->lock);
-        read_wrlock(&mem->lock);
+        mem_downgrade_to_read(mem);
 
         entry = mem_pt(mem, page);
     }
@@ -280,13 +284,10 @@ void *mem_ptr(struct mem *mem, addr_t addr, int type) {
             void *copy = mmap(NULL, PAGE_SIZE, PROT_READ | PROT_WRITE,
                     MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
 
-            // copy/paste from above
-            read_wrunlock(&mem->lock);
-            write_wrlock(&mem->lock);
+            mem_upgrade_to_write(mem);
             memcpy(copy, data, PAGE_SIZE);
             pt_map(mem, page, 1, copy, 0, entry->flags &~ P_COW);
-            write_wrunlock(&mem->lock);
-            read_wrlock(&mem->lock);
+            mem_downgrade_to_read(mem);
         }
     }
 
