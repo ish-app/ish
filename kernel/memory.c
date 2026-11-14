@@ -64,6 +64,13 @@ struct pt_entry *mem_pt(struct mem *mem, page_t page) {
     return entry;
 }
 
+void mem_set_backing_file(struct mem *mem, page_t page, struct fd *fd, size_t offset) {
+    struct pt_entry *entry = mem_pt(mem, page);
+    assert(entry != NULL);
+    entry->data->fd = fd_retain(fd);
+    entry->data->file_offset = offset;
+}
+
 static void mem_pt_del(struct mem *mem, page_t page) {
     struct pt_entry *entry = mem_pt(mem, page);
     if (entry != NULL)

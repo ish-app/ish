@@ -80,8 +80,7 @@ static addr_t do_mmap(addr_t addr, dword_t len, dword_t prot, dword_t flags, fd_
             return _ENODEV;
         if ((err = fd->ops->mmap(fd, current->mem, page, pages, offset, prot, flags)) < 0)
             return err;
-        mem_pt(current->mem, page)->data->fd = fd_retain(fd);
-        mem_pt(current->mem, page)->data->file_offset = offset;
+        mem_set_backing_file(current->mem, page, fd, offset);
     }
     return page << PAGE_BITS;
 }

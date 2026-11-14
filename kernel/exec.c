@@ -89,9 +89,7 @@ static int load_entry(struct prg_header ph, addr_t bias, struct fd *fd) {
                     PAGE_ROUND_UP(filesize + PGOFFSET(addr)),
                     offset - PGOFFSET(addr), flags, MMAP_PRIVATE)) < 0)
         return err;
-    // TODO find a better place for these to avoid code duplication
-    mem_pt(current->mem, PAGE(addr))->data->fd = fd_retain(fd);
-    mem_pt(current->mem, PAGE(addr))->data->file_offset = offset - PGOFFSET(addr);
+    mem_set_backing_file(current->mem, PAGE(addr), fd, offset - PGOFFSET(addr));
 
     if (memsize > filesize) {
         // put zeroes between addr + filesize and addr + memsize, call that bss

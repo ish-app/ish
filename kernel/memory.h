@@ -9,6 +9,8 @@
 #include "util/sync.h"
 #include "misc.h"
 
+struct fd;
+
 struct mem {
     struct pt_entry **pgdir;
     int pgdir_used;
@@ -25,6 +27,8 @@ void mem_init(struct mem *mem);
 void mem_destroy(struct mem *mem);
 // Return the pagetable entry for the given page
 struct pt_entry *mem_pt(struct mem *mem, page_t page);
+// Associate a mapped page's data with its backing file.
+void mem_set_backing_file(struct mem *mem, page_t page, struct fd *fd, size_t offset);
 // Increment *page, skipping over unallocated page directories. Intended to be
 // used as the incremenent in a for loop to traverse mappings.
 void mem_next_page(struct mem *mem, page_t *page);
