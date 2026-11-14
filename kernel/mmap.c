@@ -166,10 +166,12 @@ addr_t sys_mremap(addr_t addr, uword_t old_len, uword_t new_len, dword_t flags) 
         res = _EFAULT;
         goto out;
     }
-    dword_t pt_flags = entry->flags;
+    // (bookkeeping bits differ from page to page inside one mapping)
+#define MREMAP_SAME (~(dword_t) (P_TOUCHED | P_RESERVED | P_COW))
+    dword_t pt_flags = entry->flags & MREMAP_SAME;
     for (page_t page = PAGE(addr); page < PAGE(addr) + old_pages; page++) {
         entry = mem_pt(mem, page);
-        if (entry == NULL || entry->flags != pt_flags) {
+        if (entry == NULL || (entry->flags & MREMAP_SAME) != pt_flags) {
             res = _EFAULT;
             goto out;
         }
@@ -182,8 +184,23 @@ addr_t sys_mremap(addr_t addr, uword_t old_len, uword_t new_len, dword_t flags) 
     page_t extra_start = PAGE(addr) + old_pages;
     pages_t extra_pages = new_pages - old_pages;
     if (!pt_is_hole(mem, extra_start, extra_pages)) {
-        res = _ENOMEM;
-        goto out;
+        // no room to grow where it is: move it, if the caller allows that
+        if (!(flags & MREMAP_MAYMOVE_)) {
+            res = _ENOMEM;
+            goto out;
+        }
+        page_t moved = pt_find_hole(mem, new_pages);
+        if (moved == BAD_PAGE) {
+            res = _ENOMEM;
+            goto out;
+        }
+        int move_err = pt_move(mem, PAGE(addr), moved, old_pages);
+        if (move_err < 0) {
+            res = move_err;
+            goto out;
+        }
+        res = PAGE_ADDR(moved);
+        extra_start = moved + old_pages;
     }
     int err = pt_map_nothing(mem, extra_start, extra_pages, pt_flags);
     if (err < 0)

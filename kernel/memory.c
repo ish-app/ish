@@ -282,6 +282,31 @@ int pt_unmap_always(struct mem *mem, page_t start, pages_t pages) {
     return 0;
 }
 
+// Move the mappings of pages [from, from + pages) to [to, ...), which must be
+// free and must not overlap. The memory behind them stays where it is.
+int pt_move(struct mem *mem, page_t from, page_t to, pages_t pages) {
+    if (!pt_range_ok(from, pages) || !pt_range_ok(to, pages))
+        return _ENOMEM;
+    for (pages_t i = 0; i < pages; i++) {
+        struct pt_entry *src = mem_pt(mem, from + i);
+        if (src == NULL)
+            continue;
+        struct data *data = src->data;
+        size_t offset = src->offset;
+        unsigned flags = src->flags;
+        // (making the new entry can allocate a table: src is not used after it)
+        struct pt_entry *dst = mem_pt_new(mem, to + i);
+        dst->data = data;
+        dst->offset = offset;
+        dst->flags = flags;
+        data->refcount++;
+        mem->pages_mapped++;
+        if (flags & P_TOUCHED)
+            mem->pages_touched++;
+    }
+    return pt_unmap_always(mem, from, pages);
+}
+
 int pt_map_nothing(struct mem *mem, page_t start, pages_t pages, unsigned flags) {
     if (pages == 0) return 0;
     if (!pt_range_ok(start, pages))
@@ -456,6 +481,8 @@ static int pt_back(struct mem *mem, page_t page) {
         end++;
     }
     void *memory = mem_anon_alloc(mem, start, end - start);
+    if (memory == MAP_FAILED)
+        printk("no host memory for %u guest pages at %#llx: %s\n", (unsigned) (end - start), (unsigned long long) PAGE_ADDR(start), strerror(errno));
     // fresh memory is this address space's alone, whatever a fork shared before
     return pt_map(mem, start, end - start, memory, 0, flags & ~(P_RESERVED | P_COW));
 }

@@ -112,6 +112,8 @@ int pt_unmap(struct mem *mem, page_t start, pages_t pages);
 // like pt_unmap but doesn't care if part of the range isn't mapped
 int pt_unmap_always(struct mem *mem, page_t start, pages_t pages);
 // Set the flags on memory
+// Move mappings to a free range of the same size (for mremap).
+int pt_move(struct mem *mem, page_t from, page_t to, pages_t pages);
 // Discard the contents of private anonymous pages (they read as zeros afterwards).
 int pt_discard(struct mem *mem, page_t start, pages_t pages);
 int pt_set_flags(struct mem *mem, page_t start, pages_t pages, int flags);

@@ -324,6 +324,16 @@ void handle_interrupt(int interrupt) {
             printk("  fs_base %llx rax %llx rdi %llx rsp %llx write %d bytes:", (unsigned long long) cpu->fs_base, (unsigned long long) cpu->rax, (unsigned long long) cpu->rdi, (unsigned long long) cpu->rsp, cpu->segfault_was_write);
             for (int i = 0; i < 12; i++) { uint8_t b; if (user_get(cpu->eip + i, b)) break; printk(" %02x", b); }
             printk("\n");
+            {
+                // what the page table says about the address
+                read_wrlock(&current->mem->lock);
+                struct pt_entry *pt = mem_pt(current->mem, PAGE(cpu->segfault_addr));
+                if (pt == NULL)
+                    printk("  nothing is mapped there (%ld pages mapped, %ld touched)\n", (long) current->mem->pages_mapped, (long) current->mem->pages_touched);
+                else
+                    printk("  page flags %#x%s\n", pt->flags, (pt->flags & P_RESERVED) ? " (no host memory yet)" : "");
+                read_wrunlock(&current->mem->lock);
+            }
 #endif
             struct siginfo_ info = {
                 .code = mem_segv_reason(current->mem, cpu->segfault_addr),
