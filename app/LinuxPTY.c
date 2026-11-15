@@ -18,6 +18,7 @@
 #include <linux/fcntl.h>
 #include <linux/vmalloc.h>
 #include <linux/fdtable.h>
+#include <linux/kref.h>
 #include <uapi/linux/mount.h>
 #include "LinuxInterop.h"
 
@@ -30,6 +31,7 @@ struct ios_pty_wq {
 };
 
 struct ios_pty {
+    struct kref refcount;
     dev_t pts_rdev;
     struct file *ptm;
     nsobj_t terminal;
@@ -42,6 +44,28 @@ struct ios_pty {
     struct work_struct poll_cb_work;
     struct work_struct output_work;
 };
+
+static struct ios_pty *ios_pty_get(struct ios_pty *pty) {
+    if (pty)
+        kref_get(&pty->refcount);
+    return pty;
+}
+
+static void ios_pty_release(struct kref *ref) {
+    struct ios_pty *pty = container_of(ref, struct ios_pty, refcount);
+    for (int i = 0; i < pty->n_wqs; i++)
+        remove_wait_queue(pty->wqs[i].head, &pty->wqs[i].wq);
+    fput(pty->ptm);
+    nsobj_t terminal = pty->terminal;
+    Terminal_setLinuxTTY(terminal, NULL);
+    objc_put(terminal);
+    kfree(pty);
+}
+
+static void ios_pty_put(struct ios_pty *pty) {
+    if (pty)
+        kref_put(&pty->refcount, ios_pty_release);
+}
 
 static void ios_pty_output_work(struct work_struct *output_work) {
     struct ios_pty *pty = container_of(output_work, struct ios_pty, output_work);
@@ -69,13 +93,7 @@ static void ios_pty_output_work(struct work_struct *output_work) {
 }
 
 static void ios_pty_cleanup(struct ios_pty *pty) {
-    for (int i = 0; i < pty->n_wqs; i++)
-        remove_wait_queue(pty->wqs[i].head, &pty->wqs[i].wq);
-    fput(pty->ptm);
-    nsobj_t terminal = pty->terminal;
-    Terminal_setLinuxTTY(terminal, NULL);
-    objc_put(terminal);
-    kfree(pty);
+    ios_pty_put(pty);
 }
 
 static void ios_pty_cb_can_output(struct linux_tty *linux_tty) {
@@ -164,6 +182,7 @@ struct file *ios_pty_open(nsobj_t *terminal_out) {
         fput(ptm_file);
         return ERR_PTR(-ENOMEM);
     }
+    kref_init(&pty->refcount);
     pty->ptm = ptm_file;
 
     INIT_WORK(&pty->poll_cb_work, ios_pty_poll_cb_work);
