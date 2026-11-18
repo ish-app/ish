@@ -25,6 +25,11 @@
 @property UITapGestureRecognizer *tapRecognizer;
 @property (weak, nonatomic) IBOutlet TerminalView *termView;
 @property (weak, nonatomic) IBOutlet NSLayoutConstraint *bottomConstraint;
+// The last keyboard frame heard of, in its screen's coordinates, so the space
+// kept free for it can be worked out again whenever this view changes size.
+@property CGRect lastKeyboardScreenFrame;
+@property (weak) UIScreen *lastKeyboardScreen;
+@property BOOL haveKeyboardFrame;
 
 @property (weak, nonatomic) IBOutlet UIButton *tabKey;
 @property (weak, nonatomic) IBOutlet UIButton *controlKey;
@@ -323,6 +328,56 @@
     return UserPreferences.shared.hideStatusBar;
 }
 
+// How much room to leave at the bottom for the keyboard, from the last keyboard
+// frame and this view's bounds as they are now.
+- (BOOL)bottomPadForKeyboard:(CGFloat *)padOut {
+    if (!self.haveKeyboardFrame)
+        return NO;
+    UIScreen *screen = self.lastKeyboardScreen ?: UIScreen.mainScreen;
+    CGRect keyboardFrame = [self.view convertRect:self.lastKeyboardScreenFrame fromCoordinateSpace:screen.coordinateSpace];
+    CGRect intersection = CGRectIntersection(keyboardFrame, self.view.bounds);
+    CGFloat pad;
+    if (CGRectIsNull(intersection) || CGRectIsEmpty(intersection)) {
+        // The keyboard is nowhere on this view (or the frame is from before a
+        // rotation and no longer means anything): -1 makes the test below
+        // choose the safe area or the bar above the keyboard.
+        keyboardFrame = CGRectZero;
+        pad = -1;
+    } else {
+        keyboardFrame = intersection;
+        pad = CGRectGetMaxY(self.view.bounds) - CGRectGetMinY(keyboardFrame);
+    }
+    BOOL external = keyboardFrame.size.height < 100;
+    if (external != self.hasExternalKeyboard)
+        self.hasExternalKeyboard = external;
+    // The keyboard appears to be undocked. This means it can either be split or
+    // truly floating. In the former case we want to keep the pad, but in the
+    // latter we should fall back to the input accessory view instead of the
+    // keyboard.
+    if (pad != keyboardFrame.size.height && keyboardFrame.size.width != UIScreen.mainScreen.bounds.size.width) {
+        pad = MAX(self.view.safeAreaInsets.bottom, self.termView.inputAccessoryView.frame.size.height);
+    }
+    if (pad < 0)
+        pad = 0;
+    *padOut = pad;
+    return YES;
+}
+
+// A keyboard notification that arrives in the middle of a rotation is measured
+// against this view's old bounds, and nothing measured it again afterwards:
+// the terminal kept the wrong height (too few rows) until the next keyboard
+// event. So measure again whenever the view has been laid out.
+- (void)viewDidLayoutSubviews {
+    [super viewDidLayoutSubviews];
+    if (self.ignoreKeyboardMotion)
+        return;
+    CGFloat pad;
+    if ([self bottomPadForKeyboard:&pad] && fabs(self.bottomConstraint.constant - pad) > 0.5) {
+        self.bottomConstraint.constant = pad;
+        [self.view setNeedsUpdateConstraints];
+    }
+}
+
 - (void)keyboardDidSomething:(NSNotification *)notification {
     if (self.ignoreKeyboardMotion)
         return;
@@ -332,22 +387,15 @@
     // notification.object is nil before iOS 16.1 and the correct UIScreen after iOS 16.1
     if (notification.object != nil)
         screen = notification.object;
-    CGRect keyboardFrame = [self.view convertRect:screenKeyboardFrame fromCoordinateSpace:screen.coordinateSpace];
-    if (CGRectEqualToRect(keyboardFrame, CGRectZero))
+    if (CGRectEqualToRect(screenKeyboardFrame, CGRectZero))
         return;
-    CGRect intersection = CGRectIntersection(keyboardFrame, self.view.bounds);
-    keyboardFrame = intersection;
-    NSLog(@"%@ %@", notification.name, @(keyboardFrame));
-    self.hasExternalKeyboard = keyboardFrame.size.height < 100;
-    CGFloat pad = CGRectGetMaxY(self.view.bounds) - CGRectGetMinY(keyboardFrame);
-    // The keyboard appears to be undocked. This means it can either be split or
-    // truly floating. In the former case we want to keep the pad, but in the
-    // latter we should fall back to the input accessory view instead of the
-    // keyboard.
-    if (pad != keyboardFrame.size.height && keyboardFrame.size.width != UIScreen.mainScreen.bounds.size.width) {
-        pad = MAX(self.view.safeAreaInsets.bottom, self.termView.inputAccessoryView.frame.size.height);
-    }
-    // NSLog(@"pad %f", pad);
+    self.lastKeyboardScreenFrame = screenKeyboardFrame;
+    self.lastKeyboardScreen = screen;
+    self.haveKeyboardFrame = YES;
+    NSLog(@"%@ %@", notification.name, @(screenKeyboardFrame));
+    CGFloat pad;
+    if (![self bottomPadForKeyboard:&pad])
+        return;
     self.bottomConstraint.constant = pad;
 
     BOOL initialLayout = self.termView.needsUpdateConstraints;

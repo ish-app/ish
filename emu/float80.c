@@ -6,6 +6,7 @@
 #include "float80.h"
 #include "misc.h"
 
+#define F80_QUIET_BIT 0x4000000000000000
 typedef unsigned __int128 uint128_t;
 
 // If you don't understand why something is the way it is, change it and run
@@ -152,6 +153,9 @@ static int u128_clz(uint128_t x) {
 }
 
 static float80 u128_normalize_round(uint128_t signif, int exp, int sign) {
+    if (signif == 0)
+        // an exact zero (0 * x, 0 / x): there is nothing to normalize
+        return (float80) {.signif = 0, .exp = 0, .sign = (unsigned) sign};
     int shift = u128_clz(signif);
     // now shift left
     if (exp - shift < unbias(EXP_MIN)) {
@@ -252,39 +256,86 @@ float80 f80_from_double(double d) {
     if (db.exp != EXP64_DENORMAL)
         f.signif |= CURSED_BIT;
     f.sign = db.sign;
+    if (db.exp == EXP64_SPECIAL && db.signif != 0) {
+        // loading a NaN makes it quiet and keeps its payload
+        f.signif |= F80_QUIET_BIT;
+        return f;
+    }
     return f80_normalize(f);
 }
 
+// Convert to an IEEE format with the given number of fraction bits (52 for
+// double, 23 for float), rounding once, in the current rounding mode.
+static uint64_t f80_to_ieee(float80 f, int frac_bits, int exp_bits) {
+    const unsigned exp_special = (1u << exp_bits) - 1;
+    const int exp_bias = (int) (exp_special >> 1);
+    uint64_t sign = (uint64_t) f.sign << (frac_bits + exp_bits);
+    if (!f80_is_supported(f) || f80_isnan(f)) {
+        // quiet, with the top of the payload
+        uint64_t payload = f80_is_supported(f) ? (f.signif << 1) >> (64 - frac_bits) : 0;
+        return sign | ((uint64_t) exp_special << frac_bits) | ((uint64_t) 1 << (frac_bits - 1)) | payload;
+    }
+    if (f80_isinf(f))
+        return sign | ((uint64_t) exp_special << frac_bits);
+    if (f.signif == 0)
+        return sign;
+    // normalize: value = sig * 2^(e - 63) with the top bit of sig set
+    uint64_t sig = f.signif;
+    int e = unbias_denormal(f.exp);
+    int lz = __builtin_clzl(sig);
+    sig <<= lz;
+    e -= lz;
+    int target_exp = e + exp_bias; // biased exponent in the target format
+    // the result keeps frac_bits + 1 bits of sig; a denormal keeps fewer
+    int shift = 63 - frac_bits;
+    if (target_exp <= 0)
+        shift += 1 - target_exp;
+    uint64_t mant, rest_guard, rest_sticky;
+    if (shift >= 65) {
+        mant = 0; rest_guard = 0; rest_sticky = 1;
+    } else if (shift == 64) {
+        mant = 0; rest_guard = sig >> 63; rest_sticky = (sig << 1) != 0;
+    } else {
+        mant = sig >> shift;
+        rest_guard = (sig >> (shift - 1)) & 1;
+        rest_sticky = (sig & (((uint64_t) 1 << (shift - 1)) - 1)) != 0;
+    }
+    bool inexact = rest_guard || rest_sticky;
+    bool up = false;
+    switch (f80_rounding_mode) {
+        case round_to_nearest: up = rest_guard && (rest_sticky || (mant & 1)); break;
+        case round_down: up = f.sign && inexact; break;
+        case round_up: up = !f.sign && inexact; break;
+        case round_chop: break;
+    }
+    if (up)
+        mant++;
+    // mant includes the integer bit for normal numbers; adding it to the
+    // exponent field makes a carry out of the fraction bump the exponent
+    uint64_t bits;
+    if (target_exp <= 0)
+        bits = mant;
+    else
+        bits = ((uint64_t) (target_exp - 1) << frac_bits) + mant;
+    if (target_exp >= (int) exp_special || bits >= ((uint64_t) exp_special << frac_bits)) {
+        // overflow: infinity, or the largest finite number when rounding toward zero
+        bool to_inf = f80_rounding_mode == round_to_nearest || (f80_rounding_mode == round_up && !f.sign) || (f80_rounding_mode == round_down && f.sign);
+        bits = ((uint64_t) exp_special << frac_bits) - (to_inf ? 0 : 1);
+    }
+    return sign | bits;
+}
+
 double f80_to_double(float80 f) {
-    if (!f80_is_supported(f))
-        return NAN;
-    struct double_bits db;
-    db.sign = f.sign;
-    int new_exp = unbias(f.exp) + 0x3ff;
-    if (f.exp == EXP_SPECIAL)
-        new_exp = EXP64_SPECIAL;
-    else if (new_exp > EXP64_MAX)
-        // out of range
-        return !f.sign ? INFINITY : -INFINITY;
-    if (new_exp <= 0) {
-        // number can only be represented in double precision as a denormal
-        // shift it enough to make the exponent into EXP64_MIN
-        // does it work on numbers that are not denormal but are too small to represent as double?
-        f.signif >>= 1;
-        f = f80_shift_right(f, -new_exp);
-        new_exp = unbias(f.exp) + 0x3ff;
-    }
-    db.exp = new_exp;
-    uint64_t db_signif = u128_shift_right_round(f.signif, 11, f.sign);
-    // handle the case when f.signif becomes 0x1fffffffffffff after shifting
-    // and then is rounded up
-    if (db_signif & (1ul << 53)) {
-        db_signif >>= 1;
-        db.exp++;
-    }
-    db.signif = db_signif;
+    uint64_t bits = f80_to_ieee(f, 52, 11);
     double d;
-    memcpy(&d, &db, sizeof(db));
+    memcpy(&d, &bits, sizeof(d));
+    return d;
+}
+
+float f80_to_float(float80 f) {
+    uint32_t bits = (uint32_t) f80_to_ieee(f, 23, 8);
+    float d;
+    memcpy(&d, &bits, sizeof(d));
     return d;
 }
 
@@ -315,178 +366,251 @@ float80 f80_abs(float80 f) {
     return f;
 }
 
+// The x87 rule for NaN operands: the result is the NaN operand, made quiet;
+// of two NaNs, the one with the larger significand (the positive one if they
+// are equal).
+static float80 f80_nan_operand(float80 a, float80 b) {
+    float80 res;
+    if (f80_isnan(a) && f80_isnan(b)) {
+        uint64_t sa = a.signif | F80_QUIET_BIT, sb = b.signif | F80_QUIET_BIT;
+        res = sa > sb ? a : sb > sa ? b : a.sign ? b : a;
+    } else {
+        res = f80_isnan(a) ? a : b;
+    }
+    res.signif |= F80_QUIET_BIT;
+    return res;
+}
 #define handle_nans(a, b) do { \
     if (!f80_is_supported(a) || !f80_is_supported(b)) \
         return F80_NAN; \
-    /* this case is bizarre but hey I don't make the chips. though the amd spec
-     * says it's undefined which nan is returned if both have the same
-     * significant and different sign, so why am I doing this */\
-    if (f80_isnan(a) && f80_isnan(b) && a.sign && !b.sign) \
-        return b; \
-    if (f80_isnan(a)) \
-        return a; \
-    if (f80_isnan(b)) \
-        return b; \
+    if (f80_isnan(a) || f80_isnan(b)) \
+        return f80_nan_operand(a, b); \
 } while(0)
 
-float80 f80_add(float80 a, float80 b) {
+// ---- arithmetic: unpack, compute exactly, round once ----
+
+// A finite nonzero number as sig * 2^(exp - BIAS80 - 63), top bit of sig set.
+// exp may be zero or negative for denormals.
+struct f80_unpacked {
+    uint64_t sig;
+    int exp;
+};
+static struct f80_unpacked f80_unpack(float80 f) {
+    struct f80_unpacked u;
+    u.exp = f.exp == EXP_DENORMAL ? EXP_MIN : (int) f.exp;
+    int lz = __builtin_clzl(f.signif);
+    u.sig = f.signif << lz;
+    u.exp -= lz;
+    return u;
+}
+
+// Round and pack the value hi:lo * 2^(exp - BIAS80 - 127), where hi has its
+// top bit set and bit 0 of lo may stand for any number of lower nonzero bits.
+static float80 f80_round_pack(int sign, int exp, uint64_t hi, uint64_t lo) {
+    if (exp < EXP_MIN) {
+        // too small for a normal number: line it up with the smallest exponent
+        int shift = EXP_MIN - exp;
+        if (shift >= 128) {
+            lo = 1;
+            hi = 0;
+        } else if (shift > 64) {
+            lo = (hi >> (shift - 64)) | (((hi << (128 - shift)) | lo) != 0);
+            hi = 0;
+        } else if (shift == 64) {
+            lo = hi | (lo != 0);
+            hi = 0;
+        } else {
+            uint64_t out = lo << (64 - shift);
+            lo = (hi << (64 - shift)) | (lo >> shift) | (out != 0);
+            hi >>= shift;
+        }
+        exp = EXP_DENORMAL;
+    }
+    bool guard = lo >> 63, sticky = (lo << 1) != 0, inexact = lo != 0;
+    bool up = false;
+    switch (f80_rounding_mode) {
+        case round_to_nearest: up = guard && (sticky || (hi & 1)); break;
+        case round_down: up = sign && inexact; break;
+        case round_up: up = !sign && inexact; break;
+        case round_chop: break;
+    }
+    if (up && ++hi == 0) {
+        hi = CURSED_BIT;
+        exp++;
+    }
+    // a denormal that rounded up to the smallest normal number
+    if (exp == EXP_DENORMAL && (hi >> 63))
+        exp = EXP_MIN;
+    if (exp > EXP_MAX) {
+        bool to_inf = f80_rounding_mode == round_to_nearest || (f80_rounding_mode == round_up && !sign) || (f80_rounding_mode == round_down && sign);
+        float80 f = to_inf ? F80_INF : (float80) {.exp = EXP_MAX, .signif = -1ul};
+        f.sign = sign;
+        return f;
+    }
+    return (float80) {.signif = hi, .exp = (unsigned) exp, .sign = (unsigned) sign};
+}
+
+static float80 f80_zero(int sign) {
+    return (float80) {.signif = 0, .exp = 0, .sign = (unsigned) sign};
+}
+
+// a + b, or a - b
+static float80 f80_addsub(float80 a, float80 b, bool subtract) {
     handle_nans(a, b);
-
-    // a has larger exponent, b has smaller exponent
-    if (a.exp < b.exp) {
-        float80 tmp = a;
-        a = b;
-        b = tmp;
+    if (subtract)
+        b.sign = !b.sign;
+    if (f80_isinf(a) || f80_isinf(b)) {
+        // infinity - infinity is invalid
+        if (f80_isinf(a) && f80_isinf(b) && a.sign != b.sign)
+            return F80_NAN;
+        return f80_isinf(a) ? a : b;
     }
-
-    // reduce the number of cases to deal with
-    bool flipped = false;
-    if (a.sign) {
-        a.sign = ~a.sign;
-        b.sign = ~b.sign;
-        flipped = true;
+    if (b.signif == 0) {
+        if (a.signif != 0)
+            return a;
+        // zero + zero: the common sign, else +0 (-0 when rounding down)
+        return f80_zero(a.sign == b.sign ? a.sign : f80_rounding_mode == round_down);
     }
-    // now either both are positive (addition) or a is positive and b is
-    // negative (subtraction)
+    if (a.signif == 0)
+        return b;
 
-    // do the addition in insane precision to fix that bug with adding 2^64 and 1.5
-    uint128_t a_signif = (uint128_t) a.signif << 64;
-    uint128_t b_signif = (uint128_t) b.signif << 64;
-    // shift b (smaller exponent) right until the exponents are equal
-    b_signif = u128_shift_right_round(b_signif, a.exp - b.exp, b.sign ^ flipped);
-
-    int sign = a.sign;
-    int exp = unbias_denormal(a.exp);
-    uint128_t signif = a_signif;
-    if (!b.sign) {
-        // b is positive, so add
-        if (!f80_isinf(a)) {
-            if (__builtin_add_overflow(a_signif, b_signif, &signif)) {
-                // in case of overflow, lose 1 bit of precision
-                signif = u128_shift_right_round(signif, 1, sign);
-                signif |= (uint128_t) 1 << 127; // recover the bit lost by the overflow
-                exp++;
-            }
+    struct f80_unpacked ua = f80_unpack(a), ub = f80_unpack(b);
+    int sign = a.sign, sign_b = b.sign;
+    if (ua.exp < ub.exp || (ua.exp == ub.exp && ua.sig < ub.sig)) {
+        struct f80_unpacked tmp = ua; ua = ub; ub = tmp;
+        sign = b.sign; sign_b = a.sign;
+    }
+    // line b up with a as a 128-bit value, low bit sticky
+    int d = ua.exp - ub.exp;
+    uint64_t bhi, blo;
+    if (d == 0) {
+        bhi = ub.sig; blo = 0;
+    } else if (d < 64) {
+        bhi = ub.sig >> d; blo = ub.sig << (64 - d);
+    } else if (d == 64) {
+        bhi = 0; blo = ub.sig;
+    } else if (d < 128) {
+        bhi = 0; blo = (ub.sig >> (d - 64)) | ((ub.sig << (128 - d)) != 0);
+    } else {
+        bhi = 0; blo = 1;
+    }
+    uint128_t x = (uint128_t) ua.sig << 64, y = ((uint128_t) bhi << 64) | blo, r;
+    int exp = ua.exp;
+    if (sign == sign_b) {
+        if (__builtin_add_overflow(x, y, &r)) {
+            // carry out: one bit to the right, keeping what falls off as sticky
+            r = (r >> 1) | (r & 1) | ((uint128_t) 1 << 127);
+            exp++;
         }
     } else {
-        // b is negative, so subtract
-        // but first, special case time!
-
-        // infinity - infinity is indefinite, not zero
-        if (f80_isinf(a) && f80_isinf(b))
-            return F80_NAN;
-
-        // When subtracting a (relatively) very small number in chop mode, all
-        // the bits will get shifted out and nothing will happen, but this
-        // should give a smaller result.
-        if (f80_rounding_mode == round_chop && b_signif == 0 && b.signif != 0)
-            b_signif = 1;
-
-        // Depending on the rounding mode, it's possible that shifting out all
-        // the bits produced 1 instead of 0. Subtracting 1 from infinity would
-        // give 2^16384-1 which is wrong.
-        if (f80_isinf(a))
-            b_signif = 0;
-
-        if (a_signif >= b_signif) {
-            // we can subtract without underflow
-            signif = a_signif - b_signif;
-        } else {
-            // the answer will be negative
-            signif = b_signif - a_signif;
-            sign = 1;
-        }
-
-        // a bizarre special case. from https://twitter.com/tblodt/status/1262145524620234752:
-        // > why does 1 - 1 = -0 when the x86 rounding mode is set to "round down"? it's just 0 for any other rounding mode
-        if (signif == 0 && a_signif != 0 && f80_rounding_mode == round_down)
-            return (float80) {.sign = 1};
-
-        // a - a = 0
-        if (signif == 0)
-            return (float80) {0};
+        r = x - y; // x >= y by the ordering above
+        if (r == 0)
+            return f80_zero(f80_rounding_mode == round_down);
+        int lz = u128_clz(r);
+        r <<= lz;
+        exp -= lz;
     }
-
-    if (flipped)
-        sign = !sign;
-    float80 f = u128_normalize_round(signif, exp, sign);
-    assert(f80_is_supported(f));
-    return f;
+    return f80_round_pack(sign, exp, (uint64_t) (r >> 64), (uint64_t) r);
 }
+
+float80 f80_add(float80 a, float80 b) {
+    return f80_addsub(a, b, false);
+}
+
 float80 f80_sub(float80 a, float80 b) {
-    return f80_add(a, f80_neg(b));
+    return f80_addsub(a, b, true);
 }
 
 float80 f80_mul(float80 a, float80 b) {
     handle_nans(a, b);
-
+    int sign = a.sign ^ b.sign;
     if (f80_isinf(a) || f80_isinf(b)) {
-        // infinity times zero is undefined
-        if (f80_iszero(a) || f80_iszero(b))
+        // infinity times zero is invalid
+        if (a.signif == 0 || b.signif == 0)
             return F80_NAN;
-        // infinity times anything else is infinity
         float80 f = F80_INF;
-        f.sign = a.sign ^ b.sign;
+        f.sign = sign;
         return f;
     }
+    if (a.signif == 0 || b.signif == 0)
+        return f80_zero(sign);
 
-    // add exponents (the +1 is necessary to be correct in 128-bit precision)
-    int f_exp = unbias_denormal(a.exp) + unbias_denormal(b.exp) + 1;
-    // multiply significands
-    uint128_t f_signif = (uint128_t) a.signif * b.signif;
-    // normalize and round the 128-bit result
-    float80 f = u128_normalize_round(f_signif, f_exp, a.sign ^ b.sign);
-    // xor signs
-    f.sign = a.sign ^ b.sign;
-    return f;
+    struct f80_unpacked ua = f80_unpack(a), ub = f80_unpack(b);
+    uint128_t p = (uint128_t) ua.sig * ub.sig; // top bit is bit 127 or 126
+    int exp = ua.exp + ub.exp - BIAS80 + 1;
+    if (!(p >> 127)) {
+        p <<= 1;
+        exp--;
+    }
+    return f80_round_pack(sign, exp, (uint64_t) (p >> 64), (uint64_t) p);
 }
 
 float80 f80_div(float80 a, float80 b) {
     handle_nans(a, b);
-
-    float80 f;
+    int sign = a.sign ^ b.sign;
     if (f80_isinf(a)) {
-        // dividing into infinity gives infinity
-        f = F80_INF;
-        // except infinity / infinity is nan
+        // infinity / infinity is invalid
         if (f80_isinf(b))
             return F80_NAN;
-    } else if (f80_isinf(b)) {
-        // dividing by infinity gives zero
-        f = (float80) {0};
-    } else if (f80_iszero(b)) {
-        // division by zero gives infinity
-        f = F80_INF;
-        // except 0 / 0 is nan
-        if (f80_iszero(a))
-            f = F80_NAN;
-    } else {
-        int b_trailing = __builtin_ctzl(b.signif);
-        b.signif >>= b_trailing;
-        uint128_t signif = ((uint128_t) a.signif << 64) / b.signif;
-        uint128_t remainder = ((uint128_t) a.signif << 64) % b.signif;
-        // extend this to 128 bit precision because hell yeah
-        int extra_bits = 0;
-        if (signif != 0) {
-            extra_bits = u128_clz(signif);
-            signif <<= extra_bits;
-            signif |= (remainder << extra_bits) / b.signif;
-        }
-        int exp = unbias_denormal(a.exp) - unbias_denormal(b.exp) + 63 - b_trailing - extra_bits;
-        f = u128_normalize_round(signif, exp, a.sign ^ b.sign);
+        float80 f = F80_INF;
+        f.sign = sign;
+        return f;
     }
+    if (f80_isinf(b))
+        return f80_zero(sign);
+    if (b.signif == 0) {
+        // 0 / 0 is invalid, anything else / 0 is infinity
+        if (a.signif == 0)
+            return F80_NAN;
+        float80 f = F80_INF;
+        f.sign = sign;
+        return f;
+    }
+    if (a.signif == 0)
+        return f80_zero(sign);
 
-    f.sign = a.sign ^ b.sign;
-    return f;
+    struct f80_unpacked ua = f80_unpack(a), ub = f80_unpack(b);
+    // choose the numerator so the quotient has exactly 64 bits
+    uint128_t n;
+    int exp = ua.exp - ub.exp + BIAS80;
+    if (ua.sig < ub.sig) {
+        n = (uint128_t) ua.sig << 64;
+        exp--;
+    } else {
+        n = (uint128_t) ua.sig << 63;
+    }
+    uint64_t q = (uint64_t) (n / ub.sig);
+    uint64_t rem = (uint64_t) (n % ub.sig);
+    // 64 more bits of the quotient, and whether anything is left after them
+    uint128_t n2 = (uint128_t) rem << 64;
+    uint64_t lo = (uint64_t) (n2 / ub.sig);
+    if (n2 % ub.sig != 0)
+        lo |= 1;
+    return f80_round_pack(sign, exp, q, lo);
 }
 
+// x - trunc(x/y)*y, exactly (what fprem computes once it has finished).
+// Done on the significands as integers: no intermediate rounding.
 float80 f80_mod(float80 x, float80 y) {
-    float80 quotient = f80_div(x, y);
-    enum f80_rounding_mode old_mode = f80_rounding_mode;
-    f80_rounding_mode = round_chop;
-    quotient = f80_round(quotient);
-    f80_rounding_mode = old_mode;
-    return f80_sub(x, f80_mul(quotient, y));
+    handle_nans(x, y);
+    if (f80_isinf(x) || y.signif == 0)
+        return F80_NAN;
+    if (f80_isinf(y) || x.signif == 0)
+        return x;
+    struct f80_unpacked ux = f80_unpack(x), uy = f80_unpack(y);
+    if (ux.exp < uy.exp)
+        return x;
+    uint64_t r = ux.sig % uy.sig;
+    for (int d = ux.exp - uy.exp; d > 0 && r != 0;) {
+        int k = d > 62 ? 62 : d;
+        r = (uint64_t) (((uint128_t) r << k) % uy.sig);
+        d -= k;
+    }
+    if (r == 0)
+        return f80_zero(x.sign);
+    int lz = __builtin_clzl(r);
+    // exact, so nothing is rounded: this only packs (denormals included)
+    return f80_round_pack(x.sign, uy.exp - lz, r << lz, 0);
 }
 
 bool f80_uncomparable(float80 a, float80 b) {
@@ -558,23 +682,54 @@ float80 f80_log2(float80 x) {
     return res;
 }
 
+// Correctly rounded square root: integer square root of the significand.
 float80 f80_sqrt(float80 x) {
     if (f80_iszero(x))
         return x;
-    if (f80_isnan(x) || x.sign)
+    if (!f80_is_supported(x))
         return F80_NAN;
-    // for a rough guess, just cut the exponent by 2
-    float80 guess = x;
-    guess.exp = bias(unbias(guess.exp) / 2);
-    // now converge on the answer, using newton's method
-    float80 old_guess;
-    float80 two = f80_from_int(2);
-    int i = 0;
-    do {
-        old_guess = guess;
-        guess = f80_div(f80_add(guess, f80_div(x, guess)), two);
-    } while (!f80_eq(guess, old_guess) && i++ < 100);
-    return guess;
+    if (f80_isnan(x))
+        return f80_nan_operand(x, x);
+    if (x.sign)
+        return F80_NAN;
+    if (f80_isinf(x))
+        return x;
+    // x = m * 2^e with m a 64-bit integer whose top bit is set
+    uint64_t m = x.signif;
+    int e = (x.exp ? (int) x.exp : 1) - 16383 - 63;
+    while (!(m >> 63)) { m <<= 1; e--; }
+    // a = m * 2^shift with shift chosen so that (e - shift) is even and the
+    // root has exactly 64 bits
+    int shift = (e & 1) ? 63 : 64;
+    uint128_t a = (uint128_t) m << shift;
+    // floor(sqrt(a)): a double-precision estimate, one Newton step in integers
+    // (which leaves it within 1), then an exact correction
+    double estimate = __builtin_sqrt((double) (uint64_t) (a >> 64)) * 4294967296.0;
+    uint64_t r0 = estimate >= 18446744073709549568.0 ? ~(uint64_t) 0 : (uint64_t) estimate;
+    if (r0 < ((uint64_t) 1 << 63))
+        r0 = (uint64_t) 1 << 63;
+    uint128_t root = ((uint128_t) r0 + a / r0) >> 1;
+    if (root >> 64)
+        root = ~(uint64_t) 0;
+    while (root * root > a)
+        root--;
+    while (root != ~(uint64_t) 0 && (root + 1) * (root + 1) <= a)
+        root++;
+    uint128_t rem = a - root * root;
+    // root = floor(sqrt(a)), rem = a - root^2. sqrt(a) is never exactly
+    // halfway between two integers, so rounding to nearest is "rem > root".
+    bool up = false;
+    if (f80_rounding_mode == round_to_nearest)
+        up = rem > root;
+    else if (f80_rounding_mode == round_up)
+        up = rem != 0;
+    int exp = (e - shift) / 2 + 63;
+    uint64_t r = (uint64_t) root;
+    if (up && ++r == 0) {
+        r = (uint64_t) 1 << 63;
+        exp++;
+    }
+    return (float80) {.signif = r, .exp = (unsigned) (exp + 16383), .sign = 0};
 }
 
 float80 f80_scale(float80 x, int scale) {

@@ -9,9 +9,11 @@
 #include "fs/path.h"
 
 struct newstat64 stat_convert_newstat64(struct statbuf stat) {
-    struct newstat64 newstat;
+    struct newstat64 newstat = {};
     newstat.dev = stat.dev;
+#if !ISH_GUEST_64
     newstat.fucked_ino = stat.inode;
+#endif
     newstat.ino = stat.inode;
     newstat.mode = stat.mode;
     newstat.nlink = stat.nlink;

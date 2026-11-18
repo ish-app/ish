@@ -56,6 +56,29 @@ struct newstat {
     char pad[8];
 };
 
+#if ISH_GUEST_64
+// x86_64 has a single stat layout; the "64" calls map onto it
+struct newstat64 {
+    qword_t dev;
+    qword_t ino;
+    qword_t nlink;
+    dword_t mode;
+    dword_t uid;
+    dword_t gid;
+    dword_t _pad0;
+    qword_t rdev;
+    sqword_t size;
+    sqword_t blksize;
+    sqword_t blocks;
+    qword_t atime;
+    qword_t atime_nsec;
+    qword_t mtime;
+    qword_t mtime_nsec;
+    qword_t ctime;
+    qword_t ctime_nsec;
+    sqword_t _unused[3];
+};
+#else
 struct newstat64 {
     qword_t dev;
     dword_t _pad1;
@@ -77,6 +100,7 @@ struct newstat64 {
     dword_t ctime_nsec;
     qword_t ino;
 } __attribute__((packed));
+#endif
 
 struct statfsbuf {
     long type;
@@ -93,6 +117,22 @@ struct statfsbuf {
     long spare[4];
 };
 
+#if ISH_GUEST_64
+struct statfs_ {
+    uword_t type;
+    uword_t bsize;
+    uint64_t blocks;
+    uint64_t bfree;
+    uint64_t bavail;
+    uint64_t files;
+    uint64_t ffree;
+    uint64_t fsid;
+    uword_t namelen;
+    uword_t frsize;
+    uword_t flags;
+    uword_t spare[4];
+};
+#else
 struct statfs_ {
     uint_t type;
     uint_t bsize;
@@ -107,6 +147,8 @@ struct statfs_ {
     uint_t flags;
     uint_t spare[4];
 } __attribute__((packed));
+
+#endif
 
 struct statfs64_ {
     uint_t type;

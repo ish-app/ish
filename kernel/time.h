@@ -13,12 +13,12 @@ dword_t sys_clock_settime(dword_t clock, addr_t tp);
 dword_t sys_clock_getres(dword_t clock, addr_t res_addr);
 
 struct timeval_ {
-    dword_t sec;
-    dword_t usec;
+    uword_t sec;
+    uword_t usec;
 };
 struct timespec_ {
-    dword_t sec;
-    dword_t nsec;
+    uword_t sec;
+    uword_t nsec;
 };
 struct timezone_ {
     dword_t minuteswest;
@@ -68,6 +68,11 @@ uint_t sys_alarm(uint_t seconds);
 int_t sys_timer_create(dword_t clock, addr_t sigevent_addr, addr_t timer_addr);
 int_t sys_timer_settime(dword_t timer, int_t flags, addr_t new_value_addr, addr_t old_value_addr);
 int_t sys_timer_delete(dword_t timer_id);
+int_t sys_getitimer(int_t which, addr_t val_addr);
+int_t sys_timer_gettime(dword_t timer_id, addr_t value_addr);
+int_t sys_timer_getoverrun(dword_t timer_id);
+int_t sys_timerfd_gettime(fd_t f, addr_t value_addr);
+dword_t sys_clock_nanosleep(dword_t clock, int_t flags, addr_t req_addr, addr_t rem_addr);
 fd_t sys_timerfd_create(int_t clockid, int_t flags);
 int_t sys_timerfd_settime(fd_t f, int_t flags, addr_t new_value_addr, addr_t old_value_addr);
 

@@ -64,12 +64,19 @@ struct task {
     struct list children;
     struct list siblings;
 
+    // CPU mask from sched_setaffinity, 0 if never set (see kernel/resource.c)
+    qword_t affinity;
+    // alternate signal stack (sigaltstack); per thread
+    addr_t altstack;
+    uword_t altstack_size;
     addr_t clear_tid;
     addr_t robust_list;
 
     // locked by pids_lock
     dword_t exit_code;
     bool zombie;
+    // another thread of the process is running execve: this one has to go
+    bool exec_killed;
     bool exiting;
 
     // this structure is allocated on the stack of the parent's clone() call
@@ -138,7 +145,10 @@ struct tgroup {
     cond_t stopped_cond;
 
     struct tty *tty;
+    int nice; // from setpriority; reported back, otherwise unused
     struct timer *itimer;
+    // ITIMER_VIRTUAL and ITIMER_PROF, both run on elapsed time (see kernel/time.c)
+    struct timer *itimer_cpu[2];
 #define TIMERS_MAX 16
     struct posix_timer posix_timers[TIMERS_MAX];
 

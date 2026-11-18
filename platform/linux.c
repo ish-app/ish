@@ -25,7 +25,7 @@ struct cpu_usage get_cpu_usage() {
 }
 
 struct mem_usage get_mem_usage() {
-    struct mem_usage usage;
+    struct mem_usage usage = {0};
     char buf[1234];
 
     read_proc_line("/proc/meminfo", "MemTotal:", buf);
@@ -37,6 +37,11 @@ struct mem_usage get_mem_usage() {
     read_proc_line("/proc/meminfo", "Inactive:", buf);
     sscanf(buf, "Inactive: %"PRIu64" kB\n", &usage.inactive);
 
+    // /proc/meminfo is in kB; callers get bytes, as on darwin
+    usage.total *= 1024;
+    usage.free *= 1024;
+    usage.active *= 1024;
+    usage.inactive *= 1024;
     return usage;
 }
 

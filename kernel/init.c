@@ -178,6 +178,19 @@ static struct fd *open_fd_from_actual_fd(int fd_no) {
     }
     fd->real_fd = fd_no;
     fd->dir = NULL;
+    // Tell the guest what kind of file this is; programs (node, for one) look
+    // before they decide how to write to it. A host socket is not a socket
+    // the guest can use socket calls on, so it is presented as a pipe.
+    struct stat real_stat;
+    if (fstat(fd_no, &real_stat) == 0) {
+        mode_t type = real_stat.st_mode & S_IFMT;
+        if (type == S_IFSOCK)
+            type = S_IFIFO;
+        fd->stat.mode = type | (real_stat.st_mode & 0777);
+        fd->stat.size = real_stat.st_size;
+        fd->stat.blksize = 4096;
+        fd->stat.nlink = 1;
+    }
     return fd;
 }
 

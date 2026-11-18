@@ -81,7 +81,8 @@ void fpu_ist64(struct cpu_state *cpu, int64_t *i) {
 }
 
 void fpu_stm32(struct cpu_state *cpu, float32 *f) {
-    *f = f80_to_double(ST(0));
+    // straight to single precision: going through double would round twice
+    *f = f80_to_float(ST(0));
 }
 void fpu_stm64(struct cpu_state *cpu, float64 *f) {
     *f = f80_to_double(ST(0));

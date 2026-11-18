@@ -36,13 +36,14 @@ static int proc_show_cpuinfo(struct proc_entry *UNUSED(entry), struct proc_data 
 }
 
 static void show_kb(struct proc_data *buf, const char *name, uint64_t value) {
-    proc_printf(buf, "%s%8"PRIu64" kB\n", name, value / 1000);
+    proc_printf(buf, "%s%8"PRIu64" kB\n", name, value / 1024);
 }
 
 static int proc_show_meminfo(struct proc_entry *UNUSED(entry), struct proc_data *buf) {
     struct mem_usage usage = get_mem_usage();
     show_kb(buf, "MemTotal:       ", usage.total);
     show_kb(buf, "MemFree:        ", usage.free);
+    show_kb(buf, "MemAvailable:   ", usage.free + usage.inactive);
     show_kb(buf, "MemShared:      ", usage.free);
     // a bunch of crap busybox top needs to see or else it gets stack garbage
     show_kb(buf, "Shmem:          ", 0);
@@ -55,6 +56,17 @@ static int proc_show_meminfo(struct proc_entry *UNUSED(entry), struct proc_data 
     show_kb(buf, "AnonPages:      ", 0);
     show_kb(buf, "Mapped:         ", 0);
     show_kb(buf, "Slab:           ", 0);
+    return 0;
+}
+
+static int proc_show_loadavg(struct proc_entry *UNUSED(entry), struct proc_data *buf) {
+    struct uptime_info uptime = get_uptime();
+    // the loads are fixed point with 16 fraction bits
+    unsigned long loads[3] = {uptime.load_1m, uptime.load_5m, uptime.load_15m};
+    for (int i = 0; i < 3; i++)
+        proc_printf(buf, "%lu.%02lu ", loads[i] >> 16, ((loads[i] & 0xffff) * 100) >> 16);
+    // running/total tasks and the newest pid are not tracked
+    proc_printf(buf, "1/1 1\n");
     return 0;
 }
 
@@ -117,6 +129,7 @@ static int proc_show_mounts(struct proc_entry *UNUSED(entry), struct proc_data *
 struct proc_dir_entry proc_root_entries[] = {
     {"cpuinfo", .show = proc_show_cpuinfo},
     {"ish", S_IFDIR, .children = &proc_ish_children},
+    {"loadavg", .show = proc_show_loadavg},
     {"meminfo", .show = proc_show_meminfo},
     {"mounts", .show = proc_show_mounts},
     {"self", S_IFLNK, .readlink = proc_readlink_self},

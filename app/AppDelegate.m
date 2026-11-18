@@ -203,6 +203,11 @@ void SyncHostname(void) {
 }
 
 + (void)maybePresentStartupMessageOnViewController:(UIViewController *)vc {
+#if ISH_GUEST_64
+    // The built-in APK repository this message offers holds 32-bit packages.
+    // A 64-bit root uses Alpine's own repositories over the network.
+    return;
+#endif
     if ([NSUserDefaults.standardUserDefaults integerForKey:kSkipStartupMessage] >= 1)
         return;
     if (!FsIsManaged()) {

@@ -7,6 +7,7 @@
 #include "fs/inode.h"
 #include "fs/path.h"
 #include "fs/dev.h"
+#include "fs/inotify.h"
 #include "kernel/task.h"
 #include "kernel/errno.h"
 
@@ -42,6 +43,21 @@ struct fd *generic_openat(struct fd *at, const char *path_raw, int flags, int mo
     if (err < 0)
         return ERR_PTR(err);
     struct mount *mount = find_mount_and_trim_path(path);
+    // for inotify: was the file there before?
+    bool watched = inotify_active(), existed = true;
+    if (watched && (flags & O_CREAT_)) {
+        struct statbuf pre_stat;
+        existed = mount->fs->stat(mount, path, &pre_stat) == 0;
+    }
+    if (flags & O_DIRECTORY_) {
+        // Find out before opening: opening a FIFO that turns out not to be a
+        // directory would wait for its other end.
+        struct statbuf pre_stat;
+        if (mount->fs->stat(mount, path, &pre_stat) == 0 && !S_ISDIR(pre_stat.mode)) {
+            mount_release(mount);
+            return ERR_PTR(_ENOTDIR);
+        }
+    }
     struct fd *fd = mount->fs->open(mount, path, flags, mode);
     if (IS_ERR(fd)) {
         // if an error happens after this point, fd_close will release the
@@ -91,6 +107,15 @@ struct fd *generic_openat(struct fd *at, const char *path_raw, int flags, int mo
     err = _ENOTDIR;
     if (!S_ISDIR(fd->type) && flags & O_DIRECTORY_)
         goto error;
+    if (watched) {
+        struct inotify_subject subject;
+        inotify_subject(mount, path, &subject);
+        if (!existed)
+            inotify_event(&subject, 0, IN_CREATE_, 0);
+        inotify_event(&subject, IN_OPEN_, IN_OPEN_, 0);
+        if (existed && (flags & O_TRUNC_) && S_ISREG(fd->type))
+            inotify_event(&subject, IN_MODIFY_, IN_MODIFY_, 0);
+    }
     return fd;
 
 error:
@@ -147,6 +172,12 @@ int generic_linkat(struct fd *src_at, const char *src_raw, struct fd *dst_at, co
         err = _EPERM;
     else
         err = mount->fs->link(mount, src, dst);
+    if (err == 0 && inotify_active()) {
+        struct inotify_subject subject;
+        inotify_subject(dst_mount, dst, &subject);
+        inotify_event(&subject, IN_ATTRIB_, 0, 0); // its link count changed
+        inotify_event(&subject, 0, IN_CREATE_, 0);
+    }
     mount_release(mount);
     mount_release(dst_mount);
     return err;
@@ -159,8 +190,18 @@ int generic_unlinkat(struct fd *at, const char *path_raw) {
         return err;
     struct mount *mount = find_mount_and_trim_path(path);
     err = _EPERM;
+    struct inotify_subject subject;
+    bool watched = inotify_active();
+    if (watched)
+        inotify_subject(mount, path, &subject);
     if (mount->fs->unlink)
         err = mount->fs->unlink(mount, path);
+    if (watched && err == 0) {
+        inotify_event(&subject, IN_ATTRIB_, 0, 0); // its link count changed
+        if (subject.nlink <= 1)
+            inotify_event(&subject, IN_DELETE_SELF_, 0, 0);
+        inotify_event(&subject, 0, IN_DELETE_, 0);
+    }
     mount_release(mount);
     return err;
 }
@@ -178,12 +219,24 @@ int generic_renameat(struct fd *src_at, const char *src_raw, struct fd *dst_at, 
         return _EBUSY;
     struct mount *mount = find_mount_and_trim_path(src);
     struct mount *dst_mount = find_mount_and_trim_path(dst);
+    struct inotify_subject subject;
+    bool watched = inotify_active();
+    if (watched)
+        inotify_subject(mount, src, &subject);
     if (mount != dst_mount)
         err = _EXDEV;
     else if (mount->fs->rename == NULL)
         err = _EPERM;
     else
         err = mount->fs->rename(mount, src, dst);
+    if (watched && err == 0) {
+        struct inotify_subject moved;
+        inotify_subject(mount, dst, &moved);
+        uint32_t cookie = inotify_new_cookie();
+        inotify_event(&subject, 0, IN_MOVED_FROM_, cookie);
+        inotify_event(&moved, 0, IN_MOVED_TO_, cookie);
+        inotify_event(&moved, IN_MOVE_SELF_, 0, 0);
+    }
     mount_release(mount);
     mount_release(dst_mount);
     return err;
@@ -198,6 +251,11 @@ int generic_symlinkat(const char *target, struct fd *at, const char *link_raw) {
     err = _EPERM;
     if (mount->fs->symlink)
         err = mount->fs->symlink(mount, target, link);
+    if (err == 0 && inotify_active()) {
+        struct inotify_subject subject;
+        inotify_subject(mount, link, &subject);
+        inotify_event(&subject, 0, IN_CREATE_, 0);
+    }
     mount_release(mount);
     return err;
 }
@@ -216,6 +274,11 @@ int generic_mknodat(struct fd *at, const char *path_raw, mode_t_ mode, dev_t_ de
     err = _EPERM;
     if (mount->fs->mknod)
         err = mount->fs->mknod(mount, path, mode, dev);
+    if (err == 0 && inotify_active()) {
+        struct inotify_subject subject;
+        inotify_subject(mount, path, &subject);
+        inotify_event(&subject, 0, IN_CREATE_, 0);
+    }
     mount_release(mount);
     return err;
 }
@@ -229,6 +292,13 @@ int generic_setattrat(struct fd *at, const char *path_raw, struct attr attr, boo
     err = _EPERM;
     if (mount->fs->setattr)
         err = mount->fs->setattr(mount, path, attr);
+    if (err == 0 && inotify_active()) {
+        struct inotify_subject subject;
+        inotify_subject(mount, path, &subject);
+        // a change of size is a change of contents
+        uint32_t what = attr.type == attr_size ? IN_MODIFY_ : IN_ATTRIB_;
+        inotify_event(&subject, what, what, 0);
+    }
     mount_release(mount);
     return err;
 }
@@ -242,6 +312,11 @@ int generic_utime(struct fd *at, const char *path_raw, struct timespec atime, st
     err = _EPERM;
     if (mount->fs->utime)
         err = mount->fs->utime(mount, path, atime, mtime);
+    if (err == 0 && inotify_active()) {
+        struct inotify_subject subject;
+        inotify_subject(mount, path, &subject);
+        inotify_event(&subject, IN_ATTRIB_, IN_ATTRIB_, 0);
+    }
     mount_release(mount);
     return err;
 }
@@ -268,6 +343,11 @@ int generic_mkdirat(struct fd *at, const char *path_raw, mode_t_ mode) {
     err = _EPERM;
     if (mount->fs->mkdir)
         err = mount->fs->mkdir(mount, path, mode);
+    if (err == 0 && inotify_active()) {
+        struct inotify_subject subject;
+        inotify_subject(mount, path, &subject);
+        inotify_event(&subject, 0, IN_CREATE_, 0);
+    }
     mount_release(mount);
     return err;
 }
@@ -281,8 +361,16 @@ int generic_rmdirat(struct fd *at, const char *path_raw) {
         return _EBUSY;
     struct mount *mount = find_mount_and_trim_path(path);
     err = _EPERM;
+    struct inotify_subject subject;
+    bool watched = inotify_active();
+    if (watched)
+        inotify_subject(mount, path, &subject);
     if (mount->fs->rmdir)
         err = mount->fs->rmdir(mount, path);
+    if (watched && err == 0) {
+        inotify_event(&subject, IN_DELETE_SELF_, 0, 0);
+        inotify_event(&subject, 0, IN_DELETE_, 0);
+    }
     mount_release(mount);
     return err;
 }

@@ -118,6 +118,8 @@ syscall_t syscall_table[] = {
     [157] = (syscall_t) sys_sched_getscheduler,
     [158] = (syscall_t) sys_sched_yield,
     [159] = (syscall_t) sys_sched_get_priority_max,
+    [160] = (syscall_t) sys_sched_get_priority_min,
+    [161] = (syscall_t) sys_sched_rr_get_interval,
     [162] = (syscall_t) sys_nanosleep,
     [163] = (syscall_t) sys_mremap,
     [168] = (syscall_t) sys_poll,
@@ -195,7 +197,9 @@ syscall_t syscall_table[] = {
     [284] = (syscall_t) sys_waitid,
     [289] = (syscall_t) sys_ioprio_set,
     [290] = (syscall_t) sys_ioprio_get,
-    [291] = (syscall_t) syscall_stub, // inotify_init
+    [291] = (syscall_t) sys_inotify_init,
+    [292] = (syscall_t) sys_inotify_add_watch,
+    [293] = (syscall_t) sys_inotify_rm_watch,
     [295] = (syscall_t) sys_openat,
     [296] = (syscall_t) sys_mkdirat,
     [297] = (syscall_t) sys_mknodat,
@@ -223,7 +227,7 @@ syscall_t syscall_table[] = {
     [329] = (syscall_t) sys_epoll_create,
     [330] = (syscall_t) sys_dup3,
     [331] = (syscall_t) sys_pipe2,
-    [332] = (syscall_t) syscall_stub, // inotify_init1
+    [332] = (syscall_t) sys_inotify_init1,
     [340] = (syscall_t) sys_prlimit64,
     [345] = (syscall_t) sys_sendmmsg,
     [352] = (syscall_t) syscall_stub, // sched_getattr
@@ -234,7 +238,7 @@ syscall_t syscall_table[] = {
     [361] = (syscall_t) sys_bind,
     [362] = (syscall_t) sys_connect,
     [363] = (syscall_t) sys_listen,
-    [364] = (syscall_t) syscall_stub, // accept4
+    [364] = (syscall_t) sys_accept4,
     [365] = (syscall_t) sys_getsockopt,
     [366] = (syscall_t) sys_setsockopt,
     [367] = (syscall_t) sys_getsockname,
@@ -249,7 +253,20 @@ syscall_t syscall_table[] = {
     [383] = (syscall_t) sys_statx,
     [384] = (syscall_t) sys_arch_prctl,
     [422] = (syscall_t) syscall_silent_stub, // futex_time64
-    [439] = (syscall_t) syscall_silent_stub, // faccessat2
+    [424] = (syscall_t) sys_pidfd_send_signal,
+    [434] = (syscall_t) sys_pidfd_open,
+    [436] = (syscall_t) sys_close_range,
+    [439] = (syscall_t) sys_faccessat2,
+    // added together with the 64-bit guest work
+    [105] = (syscall_t) sys_getitimer,
+    [261] = (syscall_t) sys_timer_gettime,
+    [262] = (syscall_t) sys_timer_getoverrun,
+    [267] = (syscall_t) sys_clock_nanosleep,
+    [318] = (syscall_t) sys_getcpu,
+    [326] = (syscall_t) sys_timerfd_gettime,
+    [333] = (syscall_t) sys_preadv,
+    [356] = (syscall_t) sys_memfd_create,
+    [334] = (syscall_t) sys_pwritev,
 };
 
 #define NUM_SYSCALLS (sizeof(syscall_table) / sizeof(syscall_table[0]))
@@ -258,6 +275,30 @@ void dump_stack(int lines);
 
 void handle_interrupt(int interrupt) {
     struct cpu_state *cpu = &current->cpu;
+#if ISH_GUEST_64
+    if (interrupt == INT_SYSCALL) {
+        qword_t syscall_num = cpu->rax;
+        if (syscall_num >= num_syscalls64 || syscall_table64[syscall_num].fn == NULL) {
+            printk("%d(%s) missing syscall64 %d\n", current->pid, current->comm, (int) syscall_num);
+            cpu->rax = (qword_t) (sqword_t) _ENOSYS;
+        } else {
+            const struct syscall64 *call = &syscall_table64[syscall_num];
+            STRACE("%d call64 %-3d ", current->pid, (int) syscall_num);
+            int64_t result = call->fn(cpu->rdi, cpu->rsi, cpu->rdx, cpu->r10, cpu->r8, cpu->r9);
+            if (!call->wide) {
+                // the function returned 32 bits: errors sign-extend, anything
+                // else (addresses included) zero-extends
+                int32_t narrow = (int32_t) result;
+                if (narrow < 0 && narrow >= -4095)
+                    result = narrow;
+                else
+                    result = (uint32_t) narrow;
+            }
+            STRACE(" = 0x%llx\n", (unsigned long long) result);
+            cpu->rax = result;
+        }
+    } else
+#endif
     if (interrupt == INT_SYSCALL) {
         unsigned syscall_num = cpu->eax;
         if (syscall_num >= NUM_SYSCALLS || syscall_table[syscall_num] == NULL) {
@@ -279,6 +320,21 @@ void handle_interrupt(int interrupt) {
         read_wrunlock(&current->mem->lock);
         if (ptr == NULL) {
             printk("%d page fault on 0x%x at 0x%x\n", current->pid, cpu->segfault_addr, cpu->eip);
+#if ISH_GUEST_64
+            printk("  fs_base %llx rax %llx rdi %llx rsp %llx write %d bytes:", (unsigned long long) cpu->fs_base, (unsigned long long) cpu->rax, (unsigned long long) cpu->rdi, (unsigned long long) cpu->rsp, cpu->segfault_was_write);
+            for (int i = 0; i < 12; i++) { uint8_t b; if (user_get(cpu->eip + i, b)) break; printk(" %02x", b); }
+            printk("\n");
+            {
+                // what the page table says about the address
+                read_wrlock(&current->mem->lock);
+                struct pt_entry *pt = mem_pt(current->mem, PAGE(cpu->segfault_addr));
+                if (pt == NULL)
+                    printk("  nothing is mapped at %#llx (%ld pages mapped, %ld touched)\n", (unsigned long long) cpu->segfault_addr, (long) current->mem->pages_mapped, (long) current->mem->pages_touched);
+                else
+                    printk("  page flags %#x%s\n", pt->flags, (pt->flags & P_RESERVED) ? " (no host memory yet)" : "");
+                read_wrunlock(&current->mem->lock);
+            }
+#endif
             struct siginfo_ info = {
                 .code = mem_segv_reason(current->mem, cpu->segfault_addr),
                 .fault.addr = cpu->segfault_addr,
@@ -315,7 +371,24 @@ void handle_interrupt(int interrupt) {
             .code = TRAP_TRACE_,
         });
         unlock(&pids_lock);
-    } else if (interrupt != INT_TIMER) {
+    } else if (interrupt == INT_TIMER) {
+#if ISH_GUEST_64
+        // ISH_SAMPLE=1: log where each thread is executing, about 20 times a second
+        static int sample = -1;
+        if (sample < 0)
+            sample = getenv("ISH_SAMPLE") != NULL;
+        if (sample) {
+            static __thread struct timespec last;
+            struct timespec now;
+            clock_gettime(CLOCK_MONOTONIC, &now);
+            if ((now.tv_sec - last.tv_sec) * 1000 + (now.tv_nsec - last.tv_nsec) / 1000000 >= 50) {
+                last = now;
+                printk("%d sample rip %llx rsp %llx rax %llx rcx %llx rdx %llx\n", current->pid, (unsigned long long) cpu->rip,
+                        (unsigned long long) cpu->rsp, (unsigned long long) cpu->rax, (unsigned long long) cpu->rcx, (unsigned long long) cpu->rdx);
+            }
+        }
+#endif
+    } else {
         printk("%d unhandled interrupt %d\n", current->pid, interrupt);
         sys_exit(interrupt);
     }

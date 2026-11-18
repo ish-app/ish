@@ -45,6 +45,7 @@ static struct tgroup *tgroup_copy(struct tgroup *old_group) {
         unlock(&group->tty->lock);
     }
     group->itimer = NULL;
+    group->itimer_cpu[0] = group->itimer_cpu[1] = NULL;
     // POSIX timers are not inherited across fork
     for (int i = 0; i < TIMERS_MAX; i++) {
         group->posix_timers[i] = (struct posix_timer) {};
@@ -60,7 +61,11 @@ static struct tgroup *tgroup_copy(struct tgroup *old_group) {
 static int copy_task(struct task *task, dword_t flags, addr_t stack, addr_t ptid_addr, addr_t tls_addr, addr_t ctid_addr) {
     task->vfork = NULL;
     if (stack != 0)
+#if ISH_GUEST_64
+        task->cpu.rsp = stack;
+#else
         task->cpu.esp = stack;
+#endif
 
     int err;
     struct mm *mm = task->mm;
@@ -87,6 +92,13 @@ static int copy_task(struct task *task, dword_t flags, addr_t stack, addr_t ptid
         task->fs = fs_info_copy(task->fs);
         if (task->fs == NULL)
             goto fail_free_files;
+    }
+
+    // a new thread starts without an alternate signal stack (a fork or vfork
+    // child keeps the parent's)
+    if ((flags & CLONE_VM_) && !(flags & CLONE_VFORK_)) {
+        task->altstack = 0;
+        task->altstack_size = 0;
     }
 
     if (flags & CLONE_SIGHAND_) {
@@ -165,7 +177,11 @@ dword_t sys_clone(dword_t flags, addr_t stack, addr_t ptid, addr_t tls, addr_t c
         unlock(&pids_lock);
         return err;
     }
+#if ISH_GUEST_64
+    task->cpu.rax = 0;
+#else
     task->cpu.eax = 0;
+#endif
 
     struct vfork_info vfork;
     if (flags & CLONE_VFORK_) {

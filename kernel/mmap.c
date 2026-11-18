@@ -47,7 +47,7 @@ void mm_release(struct mm *mm) {
     }
 }
 
-static addr_t do_mmap(addr_t addr, dword_t len, dword_t prot, dword_t flags, fd_t fd_no, dword_t offset) {
+static addr_t do_mmap(addr_t addr, uword_t len, dword_t prot, dword_t flags, fd_t fd_no, off_t_ offset) {
     int err;
     pages_t pages = PAGE_ROUND_UP(len);
     if (!pages) return _EINVAL;
@@ -59,7 +59,8 @@ static addr_t do_mmap(addr_t addr, dword_t len, dword_t prot, dword_t flags, fd_
         if (!(flags & MMAP_FIXED) && !pt_is_hole(current->mem, page, pages)) {
             addr = 0;
         }
-    } else {
+    }
+    if (addr == 0) {
         page = pt_find_hole(current->mem, pages);
         if (page == BAD_PAGE)
             return _ENOMEM;
@@ -83,11 +84,11 @@ static addr_t do_mmap(addr_t addr, dword_t len, dword_t prot, dword_t flags, fd_
         mem_pt(current->mem, page)->data->fd = fd_retain(fd);
         mem_pt(current->mem, page)->data->file_offset = offset;
     }
-    return page << PAGE_BITS;
+    return PAGE_ADDR(page);
 }
 
-static addr_t mmap_common(addr_t addr, dword_t len, dword_t prot, dword_t flags, fd_t fd_no, dword_t offset) {
-    STRACE("mmap(0x%x, 0x%x, 0x%x, 0x%x, %d, %d)", addr, len, prot, flags, fd_no, offset);
+addr_t mmap_common(addr_t addr, uword_t len, dword_t prot, dword_t flags, fd_t fd_no, off_t_ offset) {
+    STRACE("mmap(0x%llx, 0x%llx, 0x%x, 0x%x, %d, %lld)", (unsigned long long) addr, (unsigned long long) len, prot, flags, fd_no, (long long) offset);
     if (len == 0)
         return _EINVAL;
     if (prot & ~P_RWX)
@@ -102,7 +103,7 @@ static addr_t mmap_common(addr_t addr, dword_t len, dword_t prot, dword_t flags,
 }
 
 addr_t sys_mmap2(addr_t addr, dword_t len, dword_t prot, dword_t flags, fd_t fd_no, dword_t offset) {
-    return mmap_common(addr, len, prot, flags, fd_no, offset << PAGE_BITS);
+    return mmap_common(addr, len, prot, flags, fd_no, (off_t_) offset << PAGE_BITS);
 }
 
 struct mmap_arg_struct {
@@ -116,8 +117,8 @@ addr_t sys_mmap(addr_t args_addr) {
     return mmap_common(args.addr, args.len, args.prot, args.flags, args.fd, args.offset);
 }
 
-int_t sys_munmap(addr_t addr, uint_t len) {
-    STRACE("munmap(0x%x, 0x%x)", addr, len);
+int_t sys_munmap(addr_t addr, uword_t len) {
+    STRACE("munmap(0x%llx, 0x%llx)", (unsigned long long) addr, (unsigned long long) len);
     if (PGOFFSET(addr) != 0)
         return _EINVAL;
     if (len == 0)
@@ -133,8 +134,8 @@ int_t sys_munmap(addr_t addr, uint_t len) {
 #define MREMAP_MAYMOVE_ 1
 #define MREMAP_FIXED_ 2
 
-int_t sys_mremap(addr_t addr, dword_t old_len, dword_t new_len, dword_t flags) {
-    STRACE("mremap(%#x, %#x, %#x, %d)", addr, old_len, new_len, flags);
+addr_t sys_mremap(addr_t addr, uword_t old_len, uword_t new_len, dword_t flags) {
+    STRACE("mremap(%#llx, %#llx, %#llx, %d)", (unsigned long long) addr, (unsigned long long) old_len, (unsigned long long) new_len, flags);
     if (PGOFFSET(addr) != 0)
         return _EINVAL;
     if (flags & ~(MREMAP_MAYMOVE_ | MREMAP_FIXED_))
@@ -143,42 +144,74 @@ int_t sys_mremap(addr_t addr, dword_t old_len, dword_t new_len, dword_t flags) {
         FIXME("missing MREMAP_FIXED");
         return _EINVAL;
     }
-    pages_t old_pages = PAGE(old_len);
-    pages_t new_pages = PAGE(new_len);
+    // lengths round up to whole pages (they used to round down, so shrinking a
+    // mapping to less than a page unmapped all of it)
+    pages_t old_pages = PAGE_ROUND_UP(old_len);
+    pages_t new_pages = PAGE_ROUND_UP(new_len);
+    if (new_pages == 0)
+        return _EINVAL;
+    struct mem *mem = current->mem;
+    addr_t res = addr;
+    write_wrlock(&mem->lock);
 
     // shrinking always works
     if (new_pages <= old_pages) {
-        int err = pt_unmap(current->mem, PAGE(addr) + new_pages, old_pages - new_pages);
-        if (err < 0)
-            return _EFAULT;
-        return addr;
+        if (pt_unmap(mem, PAGE(addr) + new_pages, old_pages - new_pages) < 0)
+            res = _EFAULT;
+        goto out;
     }
 
-    struct pt_entry *entry = mem_pt(current->mem, PAGE(addr));
-    if (entry == NULL)
-        return _EFAULT;
-    dword_t pt_flags = entry->flags;
+    struct pt_entry *entry = mem_pt(mem, PAGE(addr));
+    if (entry == NULL) {
+        res = _EFAULT;
+        goto out;
+    }
+    // (bookkeeping bits differ from page to page inside one mapping)
+#define MREMAP_SAME (~(dword_t) (P_TOUCHED | P_RESERVED | P_COW))
+    dword_t pt_flags = entry->flags & MREMAP_SAME;
     for (page_t page = PAGE(addr); page < PAGE(addr) + old_pages; page++) {
-        entry = mem_pt(current->mem, page);
-        if (entry == NULL && entry->flags != pt_flags)
-            return _EFAULT;
+        entry = mem_pt(mem, page);
+        if (entry == NULL || (entry->flags & MREMAP_SAME) != pt_flags) {
+            res = _EFAULT;
+            goto out;
+        }
     }
     if (!(pt_flags & P_ANONYMOUS)) {
         FIXME("mremap grow on file mappings");
-        return _EFAULT;
+        res = _EFAULT;
+        goto out;
     }
     page_t extra_start = PAGE(addr) + old_pages;
     pages_t extra_pages = new_pages - old_pages;
-    if (!pt_is_hole(current->mem, extra_start, extra_pages))
-        return _ENOMEM;
-    int err = pt_map_nothing(current->mem, extra_start, extra_pages, pt_flags);
+    if (!pt_is_hole(mem, extra_start, extra_pages)) {
+        // no room to grow where it is: move it, if the caller allows that
+        if (!(flags & MREMAP_MAYMOVE_)) {
+            res = _ENOMEM;
+            goto out;
+        }
+        page_t moved = pt_find_hole(mem, new_pages);
+        if (moved == BAD_PAGE) {
+            res = _ENOMEM;
+            goto out;
+        }
+        int move_err = pt_move(mem, PAGE(addr), moved, old_pages);
+        if (move_err < 0) {
+            res = move_err;
+            goto out;
+        }
+        res = PAGE_ADDR(moved);
+        extra_start = moved + old_pages;
+    }
+    int err = pt_map_nothing(mem, extra_start, extra_pages, pt_flags);
     if (err < 0)
-        return err;
-    return addr;
+        res = err;
+out:
+    write_wrunlock(&mem->lock);
+    return res;
 }
 
-int_t sys_mprotect(addr_t addr, uint_t len, int_t prot) {
-    STRACE("mprotect(0x%x, 0x%x, 0x%x)", addr, len, prot);
+int_t sys_mprotect(addr_t addr, uword_t len, int_t prot) {
+    STRACE("mprotect(0x%llx, 0x%llx, 0x%x)", (unsigned long long) addr, (unsigned long long) len, prot);
     if (PGOFFSET(addr) != 0)
         return _EINVAL;
     if (prot & ~P_RWX)
@@ -190,9 +223,19 @@ int_t sys_mprotect(addr_t addr, uint_t len, int_t prot) {
     return err;
 }
 
-dword_t sys_madvise(addr_t UNUSED(addr), dword_t UNUSED(len), dword_t UNUSED(advice)) {
-    // portable applications should not rely on linux's destructive semantics for MADV_DONTNEED.
-    return 0;
+#define MADV_DONTNEED_ 4
+dword_t sys_madvise(addr_t addr, uword_t len, dword_t advice) {
+    STRACE("madvise(0x%llx, 0x%llx, %d)", (unsigned long long) addr, (unsigned long long) len, advice);
+    if (PGOFFSET(addr) != 0)
+        return _EINVAL;
+    // The other kinds of advice are hints and can be ignored. MADV_DONTNEED is
+    // not a hint: the pages must read as zeros afterwards.
+    if (advice != MADV_DONTNEED_)
+        return 0;
+    write_wrlock(&current->mem->lock);
+    int err = pt_discard(current->mem, PAGE(addr), PAGE_ROUND_UP(len));
+    write_wrunlock(&current->mem->lock);
+    return err;
 }
 
 dword_t sys_mbind(addr_t UNUSED(addr), dword_t UNUSED(len), int_t UNUSED(mode),
@@ -204,12 +247,14 @@ int_t sys_mlock(addr_t UNUSED(addr), dword_t UNUSED(len)) {
     return 0;
 }
 
-int_t sys_msync(addr_t UNUSED(addr), dword_t UNUSED(len), int_t UNUSED(flags)) {
+int_t sys_msync(addr_t addr, dword_t UNUSED(len), int_t UNUSED(flags)) {
+    if (PGOFFSET(addr) != 0)
+        return _EINVAL;
     return 0;
 }
 
 addr_t sys_brk(addr_t new_brk) {
-    STRACE("brk(0x%x)", new_brk);
+    STRACE("brk(0x%llx)", (unsigned long long) new_brk);
     struct mm *mm = current->mm;
 
     write_wrlock(&mm->mem.lock);

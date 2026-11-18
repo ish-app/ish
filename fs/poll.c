@@ -3,6 +3,7 @@
 #include <poll.h>
 #include <fcntl.h>
 #include <limits.h>
+#include <sched.h>
 #include "misc.h"
 #include "util/list.h"
 #include "kernel/errno.h"
@@ -49,6 +50,8 @@ struct poll *poll_create(void) {
     poll->notify_pipe[1] = -1;
     list_init(&poll->poll_fds);
     list_init(&poll->pollfd_freelist);
+    poll->report_gen = 0;
+    poll->has_edge_triggered = false;
     lock_init(&poll->lock);
     return poll;
 }
@@ -98,12 +101,19 @@ int poll_add_fd(struct poll *poll, struct fd *fd, int types, union poll_fd_info 
     poll_fd->fd = fd;
     poll_fd->poll = poll;
     poll_fd->types = types;
+    poll_fd->disarmed = false;
     poll_fd->info = info;
     poll_fd->triggered_types = 0;
+    poll_fd->reported_gen = 0;
+    if (types & POLL_EDGETRIGGERED)
+        poll->has_edge_triggered = true;
 
     if (poll_fd_is_real(poll_fd)) {
         err = real_poll_update(&poll->real, fd->real_fd, types, poll_fd);
-        if (err < 0) {
+        // Linux epoll refuses regular files and directories with EPERM. They
+        // are always ready, which poll_wait finds out by asking the fd, so
+        // they only need to be in the list.
+        if (err < 0 && errno != EPERM) {
             free(poll_fd);
             err = errno_map();
             goto out;
@@ -130,7 +140,8 @@ int poll_del_fd(struct poll *poll, struct fd *fd) {
         goto out;
     }
 
-    if (poll_fd_is_real(poll_fd)) {
+    // (a disarmed one-shot entry has left the host's set already)
+    if (poll_fd_is_real(poll_fd) && !poll_fd->disarmed) {
         err = real_poll_update(&poll->real, fd->real_fd, 0, poll_fd);
         if (err < 0) {
             err = errno_map();
@@ -169,7 +180,11 @@ int poll_mod_fd(struct poll *poll, struct fd *fd, int types, union poll_fd_info 
 
     poll_fd->types = types;
     poll_fd->info = info;
-    poll_fd->triggered_types &= types;
+    // (as on Linux, changing an entry re-arms it)
+    poll_fd->triggered_types = 0;
+    poll_fd->disarmed = false;
+    if (types & POLL_EDGETRIGGERED)
+        poll->has_edge_triggered = true;
 
     err = 0;
 out:
@@ -182,13 +197,15 @@ void poll_cleanup_fd(struct fd *fd) {
     lock(&fd->poll_lock);
     struct poll_fd *poll_fd, *tmp;
     list_for_each_entry_safe(&fd->poll_fds, poll_fd, tmp, polls) {
-        lock(&poll_fd->poll->lock);
+        struct poll *poll = poll_fd->poll;
+        lock(&poll->lock);
         if (poll_fd_is_real(poll_fd))
-            real_poll_update(&poll_fd->poll->real, fd->real_fd, 0, poll_fd);
+            real_poll_update(&poll->real, fd->real_fd, 0, poll_fd);
         list_remove(&poll_fd->polls);
         list_remove(&poll_fd->fds);
-        unlock(&poll_fd->poll->lock);
+        // the free list belongs to the poll: still under its lock
         poll_fd_free(poll_fd);
+        unlock(&poll->lock);
     }
     unlock(&fd->poll_lock);
 }
@@ -200,7 +217,7 @@ void poll_wakeup(struct fd *fd, int events) {
         struct poll *poll = poll_fd->poll;
         lock(&poll->lock);
         if (poll_fd->types & POLL_EDGETRIGGERED)
-            poll_fd->triggered_types &= ~events;
+            poll_fd->triggered_types = 0;
         if (poll->notify_pipe[1] != -1)
             write(poll->notify_pipe[1], "", 1);
         unlock(&poll->lock);
@@ -224,13 +241,30 @@ int poll_wait(struct poll *poll_, poll_callback_t callback, void *context, struc
         real_poll_update(&poll_->real, poll_->notify_pipe[0], POLL_READ, NULL);
     }
 
+    // Edges that arrived since the last call re-arm their entries. This has
+    // to happen before readiness is looked at, or an entry that became
+    // readable would be reported without the other things it is ready for.
+    if (poll_->has_edge_triggered) {
+        struct real_poll_event fresh[8];
+        struct timespec no_wait = {0, 0};
+        int n = real_poll_wait(&poll_->real, fresh, sizeof(fresh)/sizeof(fresh[0]), &no_wait);
+        for (int i = 0; i < n; i++) {
+            struct poll_fd *fresh_fd = rpe_data(&fresh[i]);
+            if (fresh_fd != NULL && fresh_fd->poll == poll_ && fresh_fd->types & POLL_EDGETRIGGERED)
+                fresh_fd->triggered_types = 0;
+        }
+    }
+
     // TODO this is pretty broken with regards to timeouts
     int res = 0;
+    bool edge_reported = false;
     while (true) {
         // check if any fds are ready
         struct poll_fd *poll_fd, *tmp;
         list_for_each_entry_safe(&poll_->poll_fds, poll_fd, tmp, fds) {
             struct fd *fd = poll_fd->fd;
+            if (poll_fd->disarmed)
+                continue;
             int poll_types = 0;
             if (fd->ops->poll)
                 poll_types = fd->ops->poll(fd);
@@ -248,18 +282,39 @@ int poll_wait(struct poll *poll_, poll_callback_t callback, void *context, struc
                 // thundering herd problem at all, but at least the semantics
                 // are right. I'll just leave that as a TODO.
                 if (poll_fd->types & POLL_ONESHOT) {
-                    list_remove(&poll_fd->polls);
-                    list_remove(&poll_fd->fds);
+                    // disarmed, not removed: EPOLL_CTL_MOD arms it again
+                    poll_fd->disarmed = true;
                     if (poll_fd_is_real(poll_fd)) {
                         real_poll_update(&poll_->real, fd->real_fd, 0, NULL);
                     }
-                    free(poll_fd);
+                    continue;
                 }
 
                 if (poll_fd->types & POLL_EDGETRIGGERED) {
                     poll_fd->triggered_types |= poll_types;
+                    if (!edge_reported) {
+                        edge_reported = true;
+                        poll_->report_gen++;
+                    }
+                    poll_fd->reported_gen = poll_->report_gen;
                 }
             }
+        }
+        if (edge_reported) {
+            // The host's own notifications for the edges just returned are
+            // still queued. Take them now; left for the next call they would
+            // look like new edges and the same events would be returned twice.
+            // Notifications for other entries re-arm those as usual.
+            struct real_poll_event stale[8];
+            struct timespec no_wait = {0, 0};
+            int n = real_poll_wait(&poll_->real, stale, sizeof(stale)/sizeof(stale[0]), &no_wait);
+            for (int i = 0; i < n; i++) {
+                struct poll_fd *stale_fd = rpe_data(&stale[i]);
+                if (stale_fd != NULL && stale_fd->poll == poll_ && stale_fd->reported_gen != poll_->report_gen &&
+                        stale_fd->types & POLL_EDGETRIGGERED)
+                    stale_fd->triggered_types = 0;
+            }
+            edge_reported = false;
         }
         if (res > 0)
             break;
@@ -301,7 +356,8 @@ int poll_wait(struct poll *poll_, poll_callback_t callback, void *context, struc
             struct poll_fd *triggered_poll_fd = rpe_data(&e[i]);
             if (triggered_poll_fd != NULL && triggered_poll_fd->poll != NULL &&
                     triggered_poll_fd->types & POLL_EDGETRIGGERED) {
-                triggered_poll_fd->triggered_types &= ~rpe_events(&e[i]);
+                // any new edge makes the next call report everything that is ready
+                triggered_poll_fd->triggered_types = 0;
             }
         }
 
@@ -327,13 +383,25 @@ int poll_wait(struct poll *poll_, poll_callback_t callback, void *context, struc
 void poll_destroy(struct poll *poll) {
     struct poll_fd *poll_fd;
     struct poll_fd *tmp;
-    list_for_each_entry_safe(&poll->poll_fds, poll_fd, tmp, fds) {
-        lock(&poll_fd->fd->poll_lock);
+    // Another thread may be closing one of the watched files right now
+    // (poll_cleanup_fd), which takes the file's lock and then ours. Take them
+    // in the opposite order only by trying, and start over if that fails.
+    lock(&poll->lock);
+    while (!list_empty(&poll->poll_fds)) {
+        poll_fd = list_first_entry(&poll->poll_fds, struct poll_fd, fds);
+        struct fd *fd = poll_fd->fd;
+        if (trylock(&fd->poll_lock) != 0) {
+            unlock(&poll->lock);
+            sched_yield();
+            lock(&poll->lock);
+            continue;
+        }
         list_remove(&poll_fd->polls);
         list_remove(&poll_fd->fds);
-        unlock(&poll_fd->fd->poll_lock);
+        unlock(&fd->poll_lock);
         free(poll_fd);
     }
+    unlock(&poll->lock);
 
     list_for_each_entry_safe(&poll->pollfd_freelist, poll_fd, tmp, fds) {
         list_remove(&poll_fd->fds);

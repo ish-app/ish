@@ -36,6 +36,7 @@ dword_t sys_execve(addr_t file, addr_t argv, addr_t envp);
 int do_execve(const char *file, size_t argc, const char *argv, const char *envp);
 dword_t sys_exit(dword_t status);
 noreturn void do_exit(int status);
+void kill_other_threads(void);
 noreturn void do_exit_group(int status);
 dword_t sys_exit_group(dword_t status);
 dword_t sys_wait4(pid_t_ pid, addr_t status_addr, dword_t options, addr_t rusage_addr);
@@ -51,10 +52,11 @@ addr_t sys_brk(addr_t new_brk);
 #define MMAP_ANONYMOUS 0x20
 addr_t sys_mmap(addr_t args_addr);
 addr_t sys_mmap2(addr_t addr, dword_t len, dword_t prot, dword_t flags, fd_t fd_no, dword_t offset);
-int_t sys_munmap(addr_t addr, uint_t len);
-int_t sys_mprotect(addr_t addr, uint_t len, int_t prot);
-int_t sys_mremap(addr_t addr, dword_t old_len, dword_t new_len, dword_t flags);
-dword_t sys_madvise(addr_t addr, dword_t len, dword_t advice);
+int_t sys_munmap(addr_t addr, uword_t len);
+addr_t mmap_common(addr_t addr, uword_t len, dword_t prot, dword_t flags, fd_t fd_no, off_t_ offset);
+int_t sys_mprotect(addr_t addr, uword_t len, int_t prot);
+addr_t sys_mremap(addr_t addr, uword_t old_len, uword_t new_len, dword_t flags);
+dword_t sys_madvise(addr_t addr, uword_t len, dword_t advice);
 dword_t sys_mbind(addr_t addr, dword_t len, int_t mode, addr_t nodemask, dword_t maxnode, uint_t flags);
 int_t sys_mlock(addr_t addr, dword_t len);
 int_t sys_msync(addr_t addr, dword_t len, int_t flags);
@@ -65,19 +67,25 @@ int_t sys_msync(addr_t addr, dword_t len, int_t flags);
 #define LOCK_NB_ 4
 #define LOCK_UN_ 8
 struct iovec_ {
-    addr_t base;
-    uint_t len;
+    uword_t base;
+    uword_t len;
 };
 dword_t sys_read(fd_t fd_no, addr_t buf_addr, dword_t size);
 dword_t sys_readv(fd_t fd_no, addr_t iovec_addr, dword_t iovec_count);
 dword_t sys_write(fd_t fd_no, addr_t buf_addr, dword_t size);
 dword_t sys_writev(fd_t fd_no, addr_t iovec_addr, dword_t iovec_count);
+dword_t sys_preadv(fd_t f, addr_t iovec_addr, dword_t iovec_count, uword_t pos_l, uword_t pos_h);
+dword_t sys_pwritev(fd_t f, addr_t iovec_addr, dword_t iovec_count, uword_t pos_l, uword_t pos_h);
+int_t sys_close_range(dword_t first, dword_t last, dword_t flags);
+dword_t sys_faccessat2(fd_t at_f, addr_t path_addr, mode_t_ mode, dword_t flags);
+int_t sys_getcpu(addr_t cpu_addr, addr_t node_addr);
+int_t sys_memfd_create(addr_t name_addr, uint_t flags);
 dword_t sys__llseek(fd_t f, dword_t off_high, dword_t off_low, addr_t res_addr, dword_t whence);
 dword_t sys_lseek(fd_t f, dword_t off, dword_t whence);
 dword_t sys_pread(fd_t f, addr_t buf_addr, dword_t buf_size, off_t_ off);
 dword_t sys_pwrite(fd_t f, addr_t buf_addr, dword_t size, off_t_ off);
-dword_t sys_ioctl(fd_t f, dword_t cmd, dword_t arg);
-dword_t sys_fcntl(fd_t f, dword_t cmd, dword_t arg);
+dword_t sys_ioctl(fd_t f, dword_t cmd, uword_t arg);
+dword_t sys_fcntl(fd_t f, dword_t cmd, uword_t arg);
 dword_t sys_fcntl32(fd_t fd, dword_t cmd, dword_t arg);
 dword_t sys_dup(fd_t fd);
 dword_t sys_dup2(fd_t fd, fd_t new_fd);
@@ -104,6 +112,14 @@ int_t sys_epoll_pwait(fd_t epoll_f, addr_t events_addr, int_t max_events, int_t 
 
 int_t sys_eventfd2(uint_t initval, int_t flags);
 int_t sys_eventfd(uint_t initval);
+int_t sys_pidfd_open(pid_t_ pid, uint_t flags);
+int_t sys_pidfd_send_signal(fd_t f, int_t sig, addr_t info_addr, uint_t flags);
+void pidfd_notify_exit(pid_t_ pid);
+pid_t_ pidfd_pid(fd_t f, bool *dead);
+int_t sys_inotify_init1(int_t flags);
+int_t sys_inotify_init(void);
+int_t sys_inotify_add_watch(fd_t f, addr_t path_addr, uint_t mask);
+int_t sys_inotify_rm_watch(fd_t f, int_t wd);
 
 // file management
 fd_t sys_open(addr_t path_addr, dword_t flags, mode_t_ mode);
@@ -157,7 +173,7 @@ dword_t sys_copy_file_range(fd_t in_fd, addr_t in_off, fd_t out_fd, addr_t out_o
 dword_t sys_statfs(addr_t path_addr, addr_t buf_addr);
 dword_t sys_statfs64(addr_t path_addr, dword_t buf_size, addr_t buf_addr);
 dword_t sys_fstatfs(fd_t f, addr_t buf_addr);
-dword_t sys_fstatfs64(fd_t f, addr_t buf_addr);
+dword_t sys_fstatfs64(fd_t f, dword_t buf_size, addr_t buf_addr);
 dword_t sys_statx(fd_t at_f, addr_t path_addr, int_t flags, uint_t mask, addr_t statx_addr);
 
 #define MS_READONLY_ (1 << 0)
@@ -210,7 +226,7 @@ dword_t sys_setsid(void);
 dword_t sys_getsid(void);
 
 int_t sys_sched_yield(void);
-int_t sys_prctl(dword_t option, uint_t arg2, uint_t arg3, uint_t arg4, uint_t arg5);
+int_t sys_prctl(dword_t option, uword_t arg2, uword_t arg3, uword_t arg4, uword_t arg5);
 int_t sys_arch_prctl(int_t code, addr_t addr);
 int_t sys_reboot(int_t magic, int_t magic2, int_t cmd);
 
@@ -229,17 +245,17 @@ dword_t sys_uname(addr_t uts_addr);
 dword_t sys_sethostname(addr_t hostname_addr, dword_t hostname_len);
 
 struct sys_info {
-    dword_t uptime;
-    dword_t loads[3];
-    dword_t totalram;
-    dword_t freeram;
-    dword_t sharedram;
-    dword_t bufferram;
-    dword_t totalswap;
-    dword_t freeswap;
+    uword_t uptime;
+    uword_t loads[3];
+    uword_t totalram;
+    uword_t freeram;
+    uword_t sharedram;
+    uword_t bufferram;
+    uword_t totalswap;
+    uword_t freeswap;
     word_t procs;
-    dword_t totalhigh;
-    dword_t freehigh;
+    uword_t totalhigh;
+    uword_t freehigh;
     dword_t mem_unit;
     char pad;
 };
@@ -256,5 +272,18 @@ int_t sys_syslog(int_t type, addr_t buf_addr, int_t len);
 int_t sys_ipc(uint_t call, int_t first, int_t second, int_t third, addr_t ptr, int_t fifth);
 
 typedef int (*syscall_t)(dword_t, dword_t, dword_t, dword_t, dword_t, dword_t);
+
+#if ISH_GUEST_64
+// x86_64 guest: arguments arrive as full 64-bit registers.
+typedef int64_t (*syscall64_t)(qword_t, qword_t, qword_t, qword_t, qword_t, qword_t);
+struct syscall64 {
+    syscall64_t fn;
+    // false: fn returns a 32-bit value (most existing sys_ functions)
+    // true: fn really returns 64 bits
+    bool wide;
+};
+extern const struct syscall64 syscall_table64[];
+extern const unsigned num_syscalls64;
+#endif
 
 #endif

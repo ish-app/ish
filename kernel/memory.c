@@ -20,9 +20,52 @@
 static void mem_changed(struct mem *mem);
 static struct mmu_ops mem_mmu_ops;
 
+// Allocate host memory for anonymous guest pages.
+//
+// When the unicorn reference engine is in use (mem_anon_hint), the memory is
+// requested at host_base + guest address, so pages that are neighbors in the
+// guest are normally neighbors in the host too. Unicorn can then take long
+// runs of pages as a single region (it is slow and limited when it has many
+// regions). The address is only a preference: if the spot is taken the kernel
+// is left to choose.
+bool mem_anon_hint = false;
+
+static void *mem_anon_alloc(struct mem *mem, page_t start, pages_t pages) {
+    size_t size = (size_t) pages * PAGE_SIZE;
+#if ISH_GUEST_64
+    // guest memory is only committed when touched, however much is mapped
+    int flags = MAP_PRIVATE | MAP_ANONYMOUS | MAP_NORESERVE;
+#if defined(MAP_FIXED_NOREPLACE)
+    // Only for the reference CPU. Left to itself the host kernel puts new
+    // mappings next to each other and merges them, which keeps the number of
+    // host mappings low; fixed spots defeat that.
+    if (mem_anon_hint && (qword_t) start + pages <= 0x100000) {
+        void *want = (void *) (mem->host_base + ((uintptr_t) start << PAGE_BITS));
+        void *got = mmap(want, size, PROT_READ | PROT_WRITE, flags | MAP_FIXED_NOREPLACE, -1, 0);
+        if (got == want)
+            return got;
+        if (got != MAP_FAILED)
+            munmap(got, size); // an old kernel ignored the flag
+    }
+#endif
+    return mmap(NULL, size, PROT_READ | PROT_WRITE, flags, -1, 0);
+#else
+    (void) mem; (void) start;
+    return mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+#endif
+}
+
 void mem_init(struct mem *mem) {
-    mem->pgdir = calloc(MEM_PGDIR_SIZE, sizeof(struct pt_entry *));
+#if ISH_GUEST_64
+    // a 4 GB window per address space, spread over a part of the host address
+    // space nothing else uses
+    static atomic_uint next_window;
+    mem->host_base = 0x100000000000ul + (uintptr_t) (atomic_fetch_add(&next_window, 1) % 4096) * 0x100000000ul;
+#endif
+    mem->pgdir = calloc(MEM_TOP_SIZE, sizeof(*mem->pgdir));
     mem->pgdir_used = 0;
+    mem->pages_mapped = 0;
+    mem->pages_touched = 0;
     mem->mmu.ops = &mem_mmu_ops;
     mem->mmu.asbestos = asbestos_new(&mem->mmu);
     mem->mmu.changes = 0;
@@ -33,29 +76,50 @@ void mem_destroy(struct mem *mem) {
     write_wrlock(&mem->lock);
     pt_unmap_always(mem, 0, MEM_PAGES);
     asbestos_free(mem->mmu.asbestos);
-    for (int i = 0; i < MEM_PGDIR_SIZE; i++) {
-        if (mem->pgdir[i] != NULL)
-            free(mem->pgdir[i]);
+    for (unsigned i = 0; i < MEM_TOP_SIZE; i++) {
+        if (mem->pgdir[i] == NULL)
+            continue;
+#if ISH_GUEST_64
+        for (unsigned j = 0; j < MEM_PGDIR_SIZE; j++)
+            free(mem->pgdir[i][j]);
+#endif
+        free(mem->pgdir[i]);
     }
     free(mem->pgdir);
     write_wrunlock(&mem->lock);
     wrlock_destroy(&mem->lock);
 }
 
-#define PGDIR_TOP(page) ((page) >> 10)
 #define PGDIR_BOTTOM(page) ((page) & (MEM_PGDIR_SIZE - 1))
 
-static struct pt_entry *mem_pt_new(struct mem *mem, page_t page) {
-    struct pt_entry *pgdir = mem->pgdir[PGDIR_TOP(page)];
-    if (pgdir == NULL) {
-        pgdir = mem->pgdir[PGDIR_TOP(page)] = calloc(MEM_PGDIR_SIZE, sizeof(struct pt_entry));
+// The table of MEM_PGDIR_SIZE entries that holds this page's entry, or NULL.
+static inline struct pt_entry *mem_leaf(struct mem *mem, page_t page, bool create) {
+#if ISH_GUEST_64
+    if (page >= MEM_PAGES)
+        return NULL;
+    struct pt_entry **mid = mem->pgdir[page >> 20];
+    if (mid == NULL) {
+        if (!create)
+            return NULL;
+        mid = mem->pgdir[page >> 20] = calloc(MEM_PGDIR_SIZE, sizeof(struct pt_entry *));
+    }
+    struct pt_entry **slot = &mid[(page >> 10) & (MEM_PGDIR_SIZE - 1)];
+#else
+    struct pt_entry **slot = &mem->pgdir[page >> 10];
+#endif
+    if (*slot == NULL && create) {
+        *slot = calloc(MEM_PGDIR_SIZE, sizeof(struct pt_entry));
         mem->pgdir_used++;
     }
-    return &pgdir[PGDIR_BOTTOM(page)];
+    return *slot;
+}
+
+static struct pt_entry *mem_pt_new(struct mem *mem, page_t page) {
+    return &mem_leaf(mem, page, true)[PGDIR_BOTTOM(page)];
 }
 
 struct pt_entry *mem_pt(struct mem *mem, page_t page) {
-    struct pt_entry *pgdir = mem->pgdir[PGDIR_TOP(page)];
+    struct pt_entry *pgdir = mem_leaf(mem, page, false);
     if (pgdir == NULL)
         return NULL;
     struct pt_entry *entry = &pgdir[PGDIR_BOTTOM(page)];
@@ -72,10 +136,22 @@ static void mem_pt_del(struct mem *mem, page_t page) {
 
 void mem_next_page(struct mem *mem, page_t *page) {
     (*page)++;
-    if (*page >= MEM_PAGES)
-        return;
-    while (*page < MEM_PAGES && mem->pgdir[PGDIR_TOP(*page)] == NULL)
+    while (*page < MEM_PAGES) {
+#if ISH_GUEST_64
+        if (mem->pgdir[*page >> 20] == NULL) {
+            *page = ((*page >> 20) + 1) << 20;
+            continue;
+        }
+#endif
+        if (mem_leaf(mem, *page, false) != NULL)
+            break;
         *page = (*page - PGDIR_BOTTOM(*page)) + MEM_PGDIR_SIZE;
+    }
+}
+
+// Is [start, start + pages) inside the address space?
+static inline bool pt_range_ok(page_t start, pages_t pages) {
+    return start < MEM_PAGES && pages <= MEM_PAGES - start;
 }
 
 page_t pt_find_hole(struct mem *mem, pages_t size) {
@@ -92,11 +168,33 @@ page_t pt_find_hole(struct mem *mem, pages_t size) {
         else if (hole_end - page == size)
             return page;
     }
+#if ISH_GUEST_64
+    // Nothing that large is free below 4 GB: take the lowest hole above it.
+    page_t start = 0x100000;
+    while (pt_range_ok(start, size)) {
+        // find the first mapped page in [start, start + size)
+        page_t page = start;
+        if (mem_pt(mem, page) == NULL) {
+            // mem_next_page stops at pages whose table exists, mapped or not
+            do {
+                mem_next_page(mem, &page);
+            } while (page < MEM_PAGES && page - start < size && mem_pt(mem, page) == NULL);
+            if (page >= MEM_PAGES || page - start >= size)
+                return start;
+        }
+        // skip the mapping that is in the way
+        while (page < MEM_PAGES && mem_pt(mem, page) != NULL)
+            page++;
+        start = page;
+    }
+#endif
     return BAD_PAGE;
 }
 
 bool pt_is_hole(struct mem *mem, page_t start, pages_t pages) {
-    for (page_t page = start; page < start + pages; page++) {
+    if (!pt_range_ok(start, pages))
+        return false;
+    for (page_t page = start; page < start + pages; mem_next_page(mem, &page)) {
         if (mem_pt(mem, page) != NULL)
             return false;
     }
@@ -106,6 +204,11 @@ bool pt_is_hole(struct mem *mem, page_t start, pages_t pages) {
 int pt_map(struct mem *mem, page_t start, pages_t pages, void *memory, size_t offset, unsigned flags) {
     if (memory == MAP_FAILED)
         return errno_map();
+    if (!pt_range_ok(start, pages)) {
+        if (memory != vdso_data && memory != NULL)
+            munmap(memory, (size_t) pages * PAGE_SIZE + offset);
+        return _ENOMEM;
+    }
 
     // If this fails, the munmap in pt_unmap would probably fail.
     assert((uintptr_t) memory % real_page_size == 0 || memory == vdso_data);
@@ -115,11 +218,12 @@ int pt_map(struct mem *mem, page_t start, pages_t pages, void *memory, size_t of
         return _ENOMEM;
     *data = (struct data) {
         .data = memory,
-        .size = pages * PAGE_SIZE + offset,
+        // (memory is NULL for a reservation, see P_RESERVED)
+        .size = memory == NULL ? 0 : (size_t) pages * PAGE_SIZE + offset,
 
 #if LEAK_DEBUG
         .pid = current ? current->pid : 0,
-        .dest = start << PAGE_BITS,
+        .dest = PAGE_ADDR(start),
 #endif
     };
 
@@ -129,13 +233,16 @@ int pt_map(struct mem *mem, page_t start, pages_t pages, void *memory, size_t of
         data->refcount++;
         struct pt_entry *pt = mem_pt_new(mem, page);
         pt->data = data;
-        pt->offset = ((page - start) << PAGE_BITS) + offset;
-        pt->flags = flags;
+        pt->offset = ((size_t) (page - start) << PAGE_BITS) + offset;
+        pt->flags = flags & ~P_TOUCHED;
+        mem->pages_mapped++;
     }
     return 0;
 }
 
 int pt_unmap(struct mem *mem, page_t start, pages_t pages) {
+    if (!pt_range_ok(start, pages))
+        return -1;
     for (page_t page = start; page < start + pages; page++)
         if (mem_pt(mem, page) == NULL)
             return -1;
@@ -143,16 +250,24 @@ int pt_unmap(struct mem *mem, page_t start, pages_t pages) {
 }
 
 int pt_unmap_always(struct mem *mem, page_t start, pages_t pages) {
+    if (start >= MEM_PAGES)
+        return 0;
+    if (pages > MEM_PAGES - start)
+        pages = MEM_PAGES - start;
+    // (start may be in a table that does not exist: mem_pt copes)
     for (page_t page = start; page < start + pages; mem_next_page(mem, &page)) {
         struct pt_entry *pt = mem_pt(mem, page);
         if (pt == NULL)
             continue;
         asbestos_invalidate_page(mem->mmu.asbestos, page);
         struct data *data = pt->data;
+        mem->pages_mapped--;
+        if (pt->flags & P_TOUCHED)
+            mem->pages_touched--;
         mem_pt_del(mem, page);
         if (--data->refcount == 0) {
             // vdso wasn't allocated with mmap, it's just in our data segment
-            if (data->data != vdso_data) {
+            if (data->data != vdso_data && data->data != NULL) {
                 int err = munmap(data->data, data->size);
                 if (err != 0)
                     die("munmap(%p, %lu) failed: %s", data->data, data->size, strerror(errno));
@@ -167,23 +282,127 @@ int pt_unmap_always(struct mem *mem, page_t start, pages_t pages) {
     return 0;
 }
 
+// Move the mappings of pages [from, from + pages) to [to, ...), which must be
+// free and must not overlap. The memory behind them stays where it is.
+int pt_move(struct mem *mem, page_t from, page_t to, pages_t pages) {
+    if (!pt_range_ok(from, pages) || !pt_range_ok(to, pages))
+        return _ENOMEM;
+    for (pages_t i = 0; i < pages; i++) {
+        struct pt_entry *src = mem_pt(mem, from + i);
+        if (src == NULL)
+            continue;
+        struct data *data = src->data;
+        size_t offset = src->offset;
+        unsigned flags = src->flags;
+        // (making the new entry can allocate a table: src is not used after it)
+        struct pt_entry *dst = mem_pt_new(mem, to + i);
+        dst->data = data;
+        dst->offset = offset;
+        dst->flags = flags;
+        data->refcount++;
+        mem->pages_mapped++;
+        if (flags & P_TOUCHED)
+            mem->pages_touched++;
+    }
+    return pt_unmap_always(mem, from, pages);
+}
+
 int pt_map_nothing(struct mem *mem, page_t start, pages_t pages, unsigned flags) {
     if (pages == 0) return 0;
-    void *memory = mmap(NULL, pages * PAGE_SIZE,
-            PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
+    if (!pt_range_ok(start, pages))
+        return _ENOMEM;
+    flags &= ~(P_RESERVED | P_TOUCHED);
+    // Big private mappings, and ones nothing may touch (PROT_NONE), get their
+    // memory when it is first used. Not with the reference CPU, which maps
+    // host memory itself.
+    bool lazy = pages >= MEM_CHUNK_PAGES || !(flags & P_RWX);
+    if (lazy && !(flags & (P_SHARED | P_GROWSDOWN)) && !mem_anon_hint)
+        return pt_map(mem, start, pages, NULL, 0, flags | P_ANONYMOUS | P_RESERVED);
+    void *memory = mem_anon_alloc(mem, start, pages);
     return pt_map(mem, start, pages, memory, 0, flags | P_ANONYMOUS);
 }
 
+// Make host memory read as zeros again and, where whole host pages are
+// covered, give it back to the host.
+static void host_zero(char *p, size_t size) {
+    uintptr_t a = (uintptr_t) p, end = a + size;
+    uintptr_t first = (a + real_page_size - 1) & ~((uintptr_t) real_page_size - 1);
+    uintptr_t last = end & ~((uintptr_t) real_page_size - 1);
+    if (first >= last) {
+        memset(p, 0, size);
+        return;
+    }
+#if defined(__linux__)
+    bool ok = madvise((void *) first, last - first, MADV_DONTNEED) == 0;
+#else
+    // other hosts do not promise zeros after MADV_DONTNEED; mapping fresh
+    // pages over the range does
+    int mflags = MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED;
+#if ISH_GUEST_64 && defined(MAP_NORESERVE)
+    mflags |= MAP_NORESERVE;
+#endif
+    bool ok = mmap((void *) first, last - first, PROT_READ | PROT_WRITE, mflags, -1, 0) == (void *) first;
+#endif
+    if (!ok)
+        memset((void *) first, 0, last - first);
+    memset((void *) a, 0, first - a);
+    memset((void *) last, 0, end - last);
+}
+
+// madvise(MADV_DONTNEED): private anonymous pages in the range read as zeros
+// afterwards. Linux promises this and allocators depend on it.
+int pt_discard(struct mem *mem, page_t start, pages_t pages) {
+    if (!pt_range_ok(start, pages))
+        return _ENOMEM;
+    char *run = NULL;
+    size_t run_size = 0;
+    for (page_t page = start; page < start + pages; mem_next_page(mem, &page)) {
+        struct pt_entry *pt = mem_pt(mem, page);
+        if (pt == NULL || !(pt->flags & P_ANONYMOUS) || (pt->flags & (P_SHARED | P_RESERVED)))
+            continue;
+        if (pt->flags & P_COW) {
+            // the memory is still shared with another process after a fork:
+            // this process gets fresh pages, the other keeps the contents
+            int err = pt_map_nothing(mem, page, 1, pt->flags & ~P_COW);
+            if (err < 0)
+                return err;
+            continue;
+        }
+        asbestos_invalidate_page(mem->mmu.asbestos, page);
+        if (__atomic_fetch_and(&pt->flags, ~P_TOUCHED, __ATOMIC_RELAXED) & P_TOUCHED)
+            mem->pages_touched--;
+        char *host = (char *) pt->data->data + pt->offset;
+        if (run != NULL && host == run + run_size) {
+            run_size += PAGE_SIZE;
+            continue;
+        }
+        if (run != NULL)
+            host_zero(run, run_size);
+        run = host;
+        run_size = PAGE_SIZE;
+    }
+    if (run != NULL)
+        host_zero(run, run_size);
+    // cached translations skip the bookkeeping of touched pages
+    mem_changed(mem);
+    return 0;
+}
+
 int pt_set_flags(struct mem *mem, page_t start, pages_t pages, int flags) {
+    if (!pt_range_ok(start, pages))
+        return _ENOMEM;
     for (page_t page = start; page < start + pages; page++)
         if (mem_pt(mem, page) == NULL)
             return _ENOMEM;
     for (page_t page = start; page < start + pages; page++) {
         struct pt_entry *entry = mem_pt(mem, page);
         int old_flags = entry->flags;
-        entry->flags = flags;
+        // only the protection changes: the page stays copy-on-write, shared,
+        // anonymous or a growing stack, whatever it was
+        entry->flags = (old_flags & ~P_RWX) | (flags & P_RWX);
+        flags = entry->flags;
         // check if protection is increasing
-        if ((flags & ~old_flags) & (P_READ|P_WRITE)) {
+        if (((flags & ~old_flags) & (P_READ|P_WRITE)) && !(flags & P_RESERVED)) {
             void *data = (char *) entry->data->data + entry->offset;
             // force to be page aligned
             data = (void *) ((uintptr_t) data & ~(real_page_size - 1));
@@ -211,6 +430,9 @@ int pt_copy_on_write(struct mem *src, struct mem *dst, page_t start, page_t page
         dst_entry->data = entry->data;
         dst_entry->offset = entry->offset;
         dst_entry->flags = entry->flags;
+        dst->pages_mapped++;
+        if (entry->flags & P_TOUCHED)
+            dst->pages_touched++;
     }
     mem_changed(src);
     mem_changed(dst);
@@ -227,9 +449,42 @@ static void *mem_ptr_nofault(struct mem *mem, addr_t addr, int type) {
     struct pt_entry *entry = mem_pt(mem, PAGE(addr));
     if (entry == NULL)
         return NULL;
+    if (entry->flags & P_RESERVED)
+        return NULL;
     if (type == MEM_WRITE && !P_WRITABLE(entry->flags))
         return NULL;
+    // (several threads get here with only the read lock)
+    if (!(entry->flags & P_TOUCHED) && !(__atomic_fetch_or(&entry->flags, P_TOUCHED, __ATOMIC_RELAXED) & P_TOUCHED))
+        mem->pages_touched++;
     return entry->data->data + entry->offset + PGOFFSET(addr);
+}
+
+// Give host memory to the chunk of not-yet-backed pages around page. Needs the
+// write lock.
+static int pt_back(struct mem *mem, page_t page) {
+    struct pt_entry *entry = mem_pt(mem, page);
+    if (entry == NULL || !(entry->flags & P_RESERVED))
+        return 0;
+    unsigned flags = entry->flags;
+    page_t first = page - page % MEM_CHUNK_PAGES, last = first + MEM_CHUNK_PAGES;
+    page_t start = page, end = page + 1;
+    while (start > first) {
+        struct pt_entry *e = mem_pt(mem, start - 1);
+        if (e == NULL || e->flags != flags)
+            break;
+        start--;
+    }
+    while (end < last && end < MEM_PAGES) {
+        struct pt_entry *e = mem_pt(mem, end);
+        if (e == NULL || e->flags != flags)
+            break;
+        end++;
+    }
+    void *memory = mem_anon_alloc(mem, start, end - start);
+    if (memory == MAP_FAILED)
+        printk("no host memory for %u guest pages at %#llx: %s\n", (unsigned) (end - start), (unsigned long long) PAGE_ADDR(start), strerror(errno));
+    // fresh memory is this address space's alone, whatever a fork shared before
+    return pt_map(mem, start, end - start, memory, 0, flags & ~(P_RESERVED | P_COW));
 }
 
 void *mem_ptr(struct mem *mem, addr_t addr, int type) {
@@ -257,10 +512,28 @@ void *mem_ptr(struct mem *mem, addr_t addr, int type) {
         // next time you touch this function.
         read_wrunlock(&mem->lock);
         write_wrlock(&mem->lock);
-        pt_map_nothing(mem, page, 1, P_WRITE | P_GROWSDOWN);
+        // (unless another thread grew the stack here in the meantime)
+        if (mem_pt(mem, page) == NULL)
+            pt_map_nothing(mem, page, 1, P_WRITE | P_GROWSDOWN);
         write_wrunlock(&mem->lock);
         read_wrlock(&mem->lock);
 
+        entry = mem_pt(mem, page);
+    }
+
+    if (entry != NULL && (entry->flags & P_RESERVED)) {
+        // first touch of a page that has no memory yet
+        if (!(entry->flags & P_RWX))
+            return NULL; // PROT_NONE
+        if (type == MEM_WRITE && !(entry->flags & P_WRITE))
+            return NULL;
+        read_wrunlock(&mem->lock);
+        write_wrlock(&mem->lock);
+        int err = pt_back(mem, page);
+        write_wrunlock(&mem->lock);
+        read_wrlock(&mem->lock);
+        if (err < 0)
+            return NULL;
         entry = mem_pt(mem, page);
     }
 
@@ -276,15 +549,23 @@ void *mem_ptr(struct mem *mem, addr_t addr, int type) {
         asbestos_invalidate_page(mem->mmu.asbestos, page);
         // if page is cow, ~~milk~~ copy it
         if (entry->flags & P_COW) {
-            void *data = (char *) entry->data->data + entry->offset;
-            void *copy = mmap(NULL, PAGE_SIZE, PROT_READ | PROT_WRITE,
-                    MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
+            void *copy = mem_anon_alloc(mem, page, 1);
+            if (copy == MAP_FAILED)
+                return NULL;
 
             // copy/paste from above
             read_wrunlock(&mem->lock);
             write_wrlock(&mem->lock);
-            memcpy(copy, data, PAGE_SIZE);
-            pt_map(mem, page, 1, copy, 0, entry->flags &~ P_COW);
+            // Another thread of this address space may have copied the page
+            // (and released the original) while no lock was held: look again.
+            entry = mem_pt(mem, page);
+            if (entry != NULL && (entry->flags & P_COW)) {
+                void *data = (char *) entry->data->data + entry->offset;
+                memcpy(copy, data, PAGE_SIZE);
+                pt_map(mem, page, 1, copy, 0, entry->flags &~ P_COW);
+            } else {
+                munmap(copy, PAGE_SIZE);
+            }
             write_wrunlock(&mem->lock);
             read_wrlock(&mem->lock);
         }
@@ -321,18 +602,13 @@ void mem_coredump(struct mem *mem, const char *file) {
         perror("open");
         return;
     }
-    if (ftruncate(fd, 0xffffffff) < 0) {
-        perror("ftruncate");
-        return;
-    }
-
     int pages = 0;
-    for (page_t page = 0; page < MEM_PAGES; page++) {
+    for (page_t page = 0; page < MEM_PAGES; mem_next_page(mem, &page)) {
         struct pt_entry *entry = mem_pt(mem, page);
         if (entry == NULL)
             continue;
         pages++;
-        if (lseek(fd, page << PAGE_BITS, SEEK_SET) < 0) {
+        if (lseek(fd, (off_t) page << PAGE_BITS, SEEK_SET) < 0) {
             perror("lseek");
             return;
         }

@@ -10,4 +10,12 @@ ISH_LOGGER_iphoneos = nslog
 ISH_LOGGER_iphonesimulator = nslog
 ISH_LOGGER_macosx = dprintf
 
-ROOTFS_URL = github.com/ish-app/roots/releases/download/g00712ff0a54b2839c5aa1a8ed758003ca65357dc/appstore-apk.tar.gz
+// Guest CPU the app emulates: x86 (32-bit) or x86_64. The root filesystem
+// bundled with the app has to match, and so does every C file that includes
+// the emulator's headers (ISH_GUEST_64).
+ISH_GUEST = x86
+ISH_GUEST_DEFS_x86 =
+ISH_GUEST_DEFS_x86_64 = ISH_GUEST_64=1
+ROOTFS_URL_x86 = github.com/ish-app/roots/releases/download/g00712ff0a54b2839c5aa1a8ed758003ca65357dc/appstore-apk.tar.gz
+ROOTFS_URL_x86_64 = dl-cdn.alpinelinux.org/alpine/v3.19/releases/x86_64/alpine-minirootfs-3.19.4-x86_64.tar.gz
+ROOTFS_URL = $(ROOTFS_URL_$(ISH_GUEST))

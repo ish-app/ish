@@ -1,3 +1,4 @@
+#include <sys/stat.h>
 #include "kernel/calls.h"
 #include "fs/poll.h"
 
@@ -32,6 +33,8 @@ struct epoll_event_ {
 #define EPOLLET_ (1 << 31)
 #define EPOLLONESHOT_ (1 << 30)
 
+#define EPOLL_REJECTS(fd) (S_ISREG((fd)->type) || S_ISDIR((fd)->type))
+
 int_t sys_epoll_ctl(fd_t epoll_f, int_t op, fd_t f, addr_t event_addr) {
     STRACE("epoll_ctl(%d, %d, %d, %#x)", epoll_f, op, f, event_addr);
     struct fd *epoll = f_get(epoll_f);
@@ -42,6 +45,10 @@ int_t sys_epoll_ctl(fd_t epoll_f, int_t op, fd_t f, addr_t event_addr) {
     struct fd *fd = f_get(f);
     if (fd == NULL)
         return _EBADF;
+
+    // epoll, unlike poll and select, does not take regular files or directories
+    if (EPOLL_REJECTS(fd))
+        return _EPERM;
 
     if (op == EPOLL_CTL_DEL_)
         return poll_del_fd(epoll->epollfd.poll, fd);
@@ -93,7 +100,12 @@ int_t sys_epoll_wait(fd_t epoll_f, addr_t events_addr, int_t max_events, int_t t
 
     struct epoll_context context = {.events = events, .n = 0, .max_events = max_events};
     STRACE("...\n");
+    // Another thread may close the epoll descriptor while this one waits.
+    // Without a reference of its own the wait would go on using the freed
+    // poll set (seen as a crash in poll_wait when Bun shut an event loop down).
+    fd_retain(epoll);
     int res = poll_wait(epoll->epollfd.poll, epoll_callback, &context, timeout < 0 ? NULL : &timeout_ts);
+    fd_close(epoll);
     STRACE("%d end epoll_wait", current->pid);
     if (res >= 0) {
         for (int i = 0; i < res; i++) {

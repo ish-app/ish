@@ -23,6 +23,9 @@ static int pty_master_init(struct tty *tty) {
     tty->termios.iflags = 0;
     tty->termios.oflags = 0;
     tty->termios.lflags = 0;
+    // (the tty comes from malloc: packet mode was on or off by chance, and
+    // when on every read from the master began with an extra zero byte)
+    tty->pty.packet_mode = false;
 
     struct tty *slave = tty_alloc(&pty_slave, TTY_PSEUDO_SLAVE_MAJOR, tty->num);
     slave->refcount = 1;

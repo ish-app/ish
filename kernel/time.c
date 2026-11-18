@@ -17,10 +17,29 @@ static int clockid_to_real(uint_t clock, clockid_t *real) {
         case CLOCK_REALTIME_:
         case CLOCK_REALTIME_COARSE_:
             *real = CLOCK_REALTIME; break;
-        case CLOCK_MONOTONIC_: *real = CLOCK_MONOTONIC; break;
+        case CLOCK_MONOTONIC_:
+        case 4: // CLOCK_MONOTONIC_RAW
+        case 6: // CLOCK_MONOTONIC_COARSE
+        case 7: // CLOCK_BOOTTIME
+            *real = CLOCK_MONOTONIC; break;
         default: return _EINVAL;
     }
     return 0;
+}
+
+// CLOCK_PROCESS_CPUTIME_ID, CLOCK_THREAD_CPUTIME_ID, and the ids that
+// clock_getcpuclockid/pthread_getcpuclockid build for the calling process or
+// thread: ~id << 3 | 2, with bit 2 set for a thread.
+#define CLOCK_THREAD_CPUTIME_ID_ 3
+static bool clock_is_cpu_time(dword_t clock) {
+    if (clock == CLOCK_PROCESS_CPUTIME_ID_ || clock == CLOCK_THREAD_CPUTIME_ID_)
+        return true;
+    if ((sdword_t) clock >= 0 || (clock & 3) != 2)
+        return false;
+    pid_t_ id = ~((sdword_t) clock >> 3);
+    if (clock & 4)
+        return id == 0 || id == current->pid;
+    return id == 0 || id == current->tgid;
 }
 
 static struct timer_spec timer_spec_to_real(struct itimerspec_ itspec) {
@@ -44,7 +63,7 @@ static struct itimerspec_ timer_spec_from_real(struct timer_spec spec) {
 };
 
 dword_t sys_time(addr_t time_out) {
-    dword_t now = time(NULL);
+    time_t_ now = time(NULL); // the guest's time_t: 8 bytes for a 64-bit guest
     if (time_out != 0)
         if (user_put(time_out, now))
             return _EFAULT;
@@ -59,11 +78,10 @@ dword_t sys_clock_gettime(dword_t clock, addr_t tp) {
     STRACE("clock_gettime(%d, 0x%x)", clock, tp);
 
     struct timespec ts;
-    if (clock == CLOCK_PROCESS_CPUTIME_ID_) {
-        // FIXME this is thread usage, not process usage
-        struct rusage_ rusage = rusage_get_current();
-        ts.tv_sec = rusage.utime.sec;
-        ts.tv_nsec = rusage.utime.usec * 1000;
+    if (clock_is_cpu_time(clock)) {
+        // CPU time of this thread. FIXME for the process clock this should be
+        // the sum over the process's threads.
+        clock_gettime(CLOCK_THREAD_CPUTIME_ID, &ts);
     } else {
         clockid_t clock_id;
         if (clockid_to_real(clock, &clock_id)) return _EINVAL;
@@ -83,12 +101,17 @@ dword_t sys_clock_gettime(dword_t clock, addr_t tp) {
 dword_t sys_clock_getres(dword_t clock, addr_t res_addr) {
     STRACE("clock_getres(%d, %#x)", clock, res_addr);
     clockid_t clock_id;
-    if (clockid_to_real(clock, &clock_id)) return _EINVAL;
+    if (clock_is_cpu_time(clock))
+        clock_id = CLOCK_THREAD_CPUTIME_ID;
+    else if (clockid_to_real(clock, &clock_id))
+        return _EINVAL;
 
     struct timespec res;
     int err = clock_getres(clock_id, &res);
     if (err < 0)
         return errno_map();
+    if (res_addr == 0)
+        return 0;
     struct timespec_ t;
     t.sec = res.tv_sec;
     t.nsec = res.tv_nsec;
@@ -108,20 +131,49 @@ static void itimer_notify(struct task *task) {
     send_signal(task, SIGALRM_, info);
 }
 
-static int itimer_set(struct tgroup *group, int which, struct timer_spec spec, struct timer_spec *old_spec) {
-    if (which != ITIMER_REAL_) {
-        FIXME("unimplemented setitimer %d", which);
-        return _EINVAL;
-    }
+static void itimer_notify_virtual(struct task *task) {
+    struct siginfo_ info = {
+        .code = SI_TIMER_,
+    };
+    send_signal(task, SIGVTALRM_, info);
+}
+static void itimer_notify_prof(struct task *task) {
+    struct siginfo_ info = {
+        .code = SI_TIMER_,
+    };
+    send_signal(task, SIGPROF_, info);
+}
 
-    if (!group->itimer) {
-        struct timer *timer = timer_new(CLOCK_REALTIME, (timer_callback_t) itimer_notify, current);
+// The timer behind setitimer(which), created on first use. ITIMER_VIRTUAL
+// and ITIMER_PROF should count the process's CPU time; here they count
+// elapsed time, which is the same for a process that is busy and too fast
+// for one that sleeps.
+static struct timer **itimer_slot(struct tgroup *group, int which) {
+    switch (which) {
+        case ITIMER_REAL_: return &group->itimer;
+        case 1: return &group->itimer_cpu[0];
+        case 2: return &group->itimer_cpu[1];
+    }
+    return NULL;
+}
+
+static int itimer_set(struct tgroup *group, int which, struct timer_spec spec, struct timer_spec *old_spec) {
+    struct timer **slot = itimer_slot(group, which);
+    if (slot == NULL)
+        return _EINVAL;
+
+    if (!*slot) {
+        struct timer *timer;
+        if (which == ITIMER_REAL_)
+            timer = timer_new(CLOCK_REALTIME, (timer_callback_t) itimer_notify, current);
+        else
+            timer = timer_new(CLOCK_MONOTONIC, (timer_callback_t) (which == 1 ? itimer_notify_virtual : itimer_notify_prof), current);
         if (IS_ERR(timer))
             return PTR_ERR(timer);
-        group->itimer = timer;
+        *slot = timer;
     }
 
-    return timer_set(group->itimer, spec, old_spec);
+    return timer_set(*slot, spec, old_spec);
 }
 
 int_t sys_setitimer(int_t which, addr_t new_val_addr, addr_t old_val_addr) {
@@ -266,17 +318,19 @@ int_t sys_timer_create(dword_t clock, addr_t sigevent_addr, addr_t timer_addr) {
     clockid_t real_clockid;
     if (clockid_to_real(clock, &real_clockid))
         return _EINVAL;
-    struct sigevent_ sigev;
-    if (user_get(sigevent_addr, sigev))
+    // no sigevent means "send SIGALRM to the process"
+    struct sigevent_ sigev = {.method = SIGEV_SIGNAL_, .signo = SIGALRM_};
+    if (sigevent_addr != 0 && user_get(sigevent_addr, sigev))
         return _EFAULT;
     if (sigev.method != SIGEV_SIGNAL_ && sigev.method != SIGEV_NONE_ && sigev.method != SIGEV_THREAD_ID_)
         return _EINVAL;
 
     if (sigev.method == SIGEV_THREAD_ID_) {
         lock(&pids_lock);
-        if (pid_get_task(sigev.tid) == NULL)
-            return _EINVAL;
+        bool exists = pid_get_task(sigev.tid) != NULL;
         unlock(&pids_lock);
+        if (!exists)
+            return _EINVAL;
     }
 
     struct tgroup *group = current->group;
@@ -303,10 +357,10 @@ int_t sys_timer_create(dword_t clock, addr_t sigevent_addr, addr_t timer_addr) {
     timer->tgroup = NULL;
     if (sigev.method == SIGEV_SIGNAL_) {
         timer->tgroup = group;
-        timer->thread_pid = 0;
+        timer->thread_pid = group->leader->pid;
     } else if (sigev.method == SIGEV_THREAD_ID_) {
         timer->tgroup = group;
-        timer->thread_pid = group->leader->pid;
+        timer->thread_pid = sigev.tid;
     }
     unlock(&group->lock);
     return 0;
@@ -319,11 +373,15 @@ int_t sys_timer_settime(dword_t timer_id, int_t flags, addr_t new_value_addr, ad
     struct itimerspec_ value;
     if (user_get(new_value_addr, value))
         return _EFAULT;
-    if (timer_id > TIMERS_MAX)
+    if (timer_id >= TIMERS_MAX)
         return _EINVAL;
 
     lock(&current->group->lock);
     struct posix_timer *timer = &current->group->posix_timers[timer_id];
+    if (timer->timer == NULL) {
+        unlock(&current->group->lock);
+        return _EINVAL;
+    }
     struct timer_spec spec = timer_spec_to_real(value);
     struct timer_spec old_spec;
     if (flags & TIMER_ABSTIME_) {
@@ -345,6 +403,8 @@ int_t sys_timer_settime(dword_t timer_id, int_t flags, addr_t new_value_addr, ad
 
 int_t sys_timer_delete(dword_t timer_id) {
     STRACE("timer_delete(%d)\n", timer_id);
+    if (timer_id >= TIMERS_MAX)
+        return _EINVAL;
     lock(&current->group->lock);
     struct posix_timer *timer = &current->group->posix_timers[timer_id];
     if (timer->timer == NULL) {
@@ -453,3 +513,97 @@ static struct fd_ops timerfd_ops = {
     .poll = timerfd_poll,
     .close = timerfd_close,
 };
+
+int_t sys_getitimer(int_t which, addr_t val_addr) {
+    STRACE("getitimer(%d, %#x)", which, val_addr);
+    struct timer_spec spec = {0};
+    struct tgroup *group = current->group;
+    struct timer **slot = itimer_slot(group, which);
+    if (slot == NULL)
+        return _EINVAL;
+    lock(&group->lock);
+    if (*slot)
+        timer_get(*slot, &spec);
+    unlock(&group->lock);
+    struct itimerval_ val;
+    val.interval.sec = spec.interval.tv_sec;
+    val.interval.usec = spec.interval.tv_nsec / 1000;
+    val.value.sec = spec.value.tv_sec;
+    val.value.usec = spec.value.tv_nsec / 1000;
+    if (user_put(val_addr, val))
+        return _EFAULT;
+    return 0;
+}
+
+int_t sys_timer_gettime(dword_t timer_id, addr_t value_addr) {
+    STRACE("timer_gettime(%d, %#x)", timer_id, value_addr);
+    if (timer_id >= TIMERS_MAX)
+        return _EINVAL;
+    lock(&current->group->lock);
+    struct posix_timer *timer = &current->group->posix_timers[timer_id];
+    if (timer->timer == NULL) {
+        unlock(&current->group->lock);
+        return _EINVAL;
+    }
+    struct timer_spec spec;
+    timer_get(timer->timer, &spec);
+    unlock(&current->group->lock);
+    struct itimerspec_ value = timer_spec_from_real(spec);
+    if (user_put(value_addr, value))
+        return _EFAULT;
+    return 0;
+}
+
+int_t sys_timer_getoverrun(dword_t timer_id) {
+    if (timer_id >= TIMERS_MAX || current->group->posix_timers[timer_id].timer == NULL)
+        return _EINVAL;
+    return 0;
+}
+
+int_t sys_timerfd_gettime(fd_t f, addr_t value_addr) {
+    STRACE("timerfd_gettime(%d, %#x)", f, value_addr);
+    struct fd *fd = f_get(f);
+    if (fd == NULL)
+        return _EBADF;
+    if (fd->ops != &timerfd_ops)
+        return _EINVAL;
+    struct timer_spec spec;
+    timer_get(fd->timerfd.timer, &spec);
+    struct itimerspec_ value = timer_spec_from_real(spec);
+    if (user_put(value_addr, value))
+        return _EFAULT;
+    return 0;
+}
+
+// clock_nanosleep: relative sleeps and TIMER_ABSTIME on the realtime and
+// monotonic clocks. Returns the error number itself (positive is wrong for a
+// raw syscall, so negative like every other call here).
+dword_t sys_clock_nanosleep(dword_t clock, int_t flags, addr_t req_addr, addr_t rem_addr) {
+    STRACE("clock_nanosleep(%d, %d, %#x, %#x)", clock, flags, req_addr, rem_addr);
+    clockid_t clock_id;
+    if (clock == CLOCK_PROCESS_CPUTIME_ID_ || clockid_to_real(clock, &clock_id))
+        return _EINVAL;
+    struct timespec_ req_ts;
+    if (user_get(req_addr, req_ts))
+        return _EFAULT;
+    if (req_ts.nsec >= 1000000000)
+        return _EINVAL;
+    struct timespec req = {.tv_sec = req_ts.sec, .tv_nsec = req_ts.nsec};
+    if (flags & TIMER_ABSTIME_) {
+        struct timespec now;
+        clock_gettime(clock_id, &now);
+        req = timespec_subtract(req, now);
+        if (!timespec_positive(req))
+            return 0;
+    }
+    struct timespec rem = {0};
+    if (nanosleep(&req, &rem) < 0) {
+        if (!(flags & TIMER_ABSTIME_) && rem_addr != 0) {
+            struct timespec_ rem_ts = {.sec = rem.tv_sec, .nsec = rem.tv_nsec};
+            if (user_put(rem_addr, rem_ts))
+                return _EFAULT;
+        }
+        return errno_map();
+    }
+    return 0;
+}

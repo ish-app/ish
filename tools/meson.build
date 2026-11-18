@@ -1,4 +1,4 @@
-if get_option('kernel') == 'ish'
+if get_option('kernel') == 'ish' and get_option('guest') == 'x86'
     # these tools are specific to x86_64 linux
     if host_machine.system() == 'linux' and host_machine.cpu() == 'x86_64'
         transplant_src = [

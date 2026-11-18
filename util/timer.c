@@ -62,7 +62,10 @@ int timer_set(struct timer *timer, struct timer_spec spec, struct timer_spec *ol
     lock(&timer->lock);
     struct timespec now = timespec_now(timer->clockid);
     if (oldspec != NULL) {
-        oldspec->value = timespec_subtract(timer->end, now);
+        // a timer that is not running has nothing left
+        oldspec->value = (struct timespec) {0};
+        if (timer->active && timespec_positive(timespec_subtract(timer->end, now)))
+            oldspec->value = timespec_subtract(timer->end, now);
         oldspec->interval = timer->interval;
     }
 
@@ -79,4 +82,14 @@ int timer_set(struct timer *timer, struct timer_spec spec, struct timer_spec *ol
     }
     unlock(&timer->lock);
     return 0;
+}
+
+void timer_get(struct timer *timer, struct timer_spec *spec) {
+    lock(&timer->lock);
+    struct timespec now = timespec_now(timer->clockid);
+    spec->value = (struct timespec) {0};
+    if (timer->active && timespec_positive(timespec_subtract(timer->end, now)))
+        spec->value = timespec_subtract(timer->end, now);
+    spec->interval = timer->interval;
+    unlock(&timer->lock);
 }

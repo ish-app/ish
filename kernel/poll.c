@@ -185,10 +185,13 @@ dword_t sys_poll(addr_t fds, dword_t nfds, int_t timeout) {
         poll_add_fd(poll, files[i], events | POLL_ALWAYS_LISTENING, (union poll_fd_info) (void *) files[i]);
     }
 
+    int invalid = 0;
     for (unsigned i = 0; i < nfds; i++) {
         polls[i].revents = 0;
-        if (polls[i].fd >= 0 && files[i] == NULL)
+        if (polls[i].fd >= 0 && files[i] == NULL) {
             polls[i].revents = POLL_NVAL;
+            invalid++;
+        }
     }
     struct poll_context context = {polls, files, nfds};
     struct timespec timeout_ts;
@@ -196,7 +199,15 @@ dword_t sys_poll(addr_t fds, dword_t nfds, int_t timeout) {
         timeout_ts.tv_sec = timeout / 1000;
         timeout_ts.tv_nsec = (timeout % 1000) * 1000000;
     }
+    // A descriptor that is not open is reported at once (POLLNVAL), so the
+    // call must not wait. It used to wait forever if nothing else was ready.
+    if (invalid > 0) {
+        timeout = 0;
+        timeout_ts = (struct timespec) {0};
+    }
     int res = poll_wait(poll, poll_event_callback, &context, timeout < 0 ? NULL : &timeout_ts);
+    if (res >= 0)
+        res += invalid;
     poll_destroy(poll);
     for (unsigned i = 0; i < nfds; i++) {
         if (files[i] != NULL)
@@ -225,11 +236,12 @@ dword_t sys_pselect(fd_t nfds, addr_t readfds_addr, addr_t writefds_addr, addr_t
         timeout_ts_addr = &timeout_ts;
     }
     // a system call can only take 6 parameters, so the last two need to be passed as a pointer to a struct
+    // (two guest longs: 16 bytes for a 64-bit guest)
     struct {
-        addr_t mask_addr;
-        dword_t mask_size;
-    } sigmask;
-    if (user_get(sigmask_addr, sigmask))
+        uword_t mask_addr;
+        uword_t mask_size;
+    } sigmask = {0, 0};
+    if (sigmask_addr != 0 && user_get(sigmask_addr, sigmask))
         return _EFAULT;
     sigset_t_ mask;
 

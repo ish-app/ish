@@ -1,3 +1,6 @@
+#define _GNU_SOURCE
+#include <fcntl.h>
+#include <sys/stat.h>
 #include <stdlib.h>
 #include <string.h>
 #include "debug.h"
@@ -5,6 +8,7 @@
 #include "kernel/resource.h"
 #include "kernel/fs.h"
 #include "fs/poll.h"
+#include "fs/inotify.h"
 #include "fs/fd.h"
 #include "fs/inode.h"
 
@@ -33,6 +37,8 @@ struct fd *fd_retain(struct fd *fd) {
 int fd_close(struct fd *fd) {
     int err = 0;
     if (--fd->refcount == 0) {
+        if (inotify_active())
+            inotify_notify_fd(fd, (fd->flags & (O_WRONLY_ | O_RDWR_)) ? IN_CLOSE_WRITE_ : IN_CLOSE_NOWRITE_);
         poll_cleanup_fd(fd);
         if (fd->ops->close)
             err = fd->ops->close(fd);
@@ -230,6 +236,8 @@ void fdtable_do_cloexec(struct fdtable *table) {
 #define F_GETFD_ 1
 #define F_SETFD_ 2
 #define F_GETFL_ 3
+#define F_SETPIPE_SZ_ 1031
+#define F_GETPIPE_SZ_ 1032
 #define F_SETFL_ 4
 
 #define F_GETLK_ 5
@@ -253,17 +261,28 @@ dword_t sys_dup(fd_t f) {
 dword_t sys_dup3(fd_t f, fd_t new_f, int_t flags) {
     STRACE("dup3(%d, %d, %d)", f, new_f, flags);
     struct fdtable *table = current->files;
+    // (a negative target used to be written in front of the table)
+    if (new_f < 0)
+        return _EBADF;
+    if (flags & ~O_CLOEXEC_)
+        return _EINVAL;
     struct fd *fd = f_get(f);
     if (fd == NULL)
         return _EBADF;
+    if (new_f == f)
+        return new_f;
     int err = fdtable_expand(table, new_f);
     if (err < 0)
-        return err;
+        return err == _EMFILE ? _EBADF : err;
     fd_retain(fd);
     f_close(new_f);
+    lock(&table->lock);
     table->files[new_f] = fd;
     if (flags & O_CLOEXEC_)
         bit_set(new_f, table->cloexec);
+    else
+        bit_clear(new_f, table->cloexec);
+    unlock(&table->lock);
     return new_f;
 }
 
@@ -285,12 +304,13 @@ int fd_setflags(struct fd *fd, int flags) {
     return 0;
 }
 
-dword_t sys_fcntl(fd_t f, dword_t cmd, dword_t arg) {
+dword_t sys_fcntl(fd_t f, dword_t cmd, uword_t arg) {
     struct fdtable *table = current->files;
     struct fd *fd = f_get(f);
     if (fd == NULL)
         return _EBADF;
     struct flock32_ flock32;
+    (void) flock32;
     struct flock_ flock;
     fd_t new_f;
     int err;
@@ -325,6 +345,40 @@ dword_t sys_fcntl(fd_t f, dword_t cmd, dword_t arg) {
             STRACE("fcntl(%d, F_SETFL, %#x)", f, arg);
             return fd_setflags(fd, arg);
 
+#if ISH_GUEST_64
+        // a 64-bit guest has one struct flock, with 64-bit offsets and
+        // natural alignment
+        case F_GETLK_: case F_SETLK_: case F_SETLKW_: {
+            STRACE("fcntl(%d, %s, %#x)", f, cmd == F_GETLK_ ? "F_GETLK" : cmd == F_SETLK_ ? "F_SETLK" : "F_SETLKW", arg);
+            struct {
+                word_t type;
+                word_t whence;
+                sqword_t start;
+                sqword_t len;
+                pid_t_ pid;
+            } native;
+            if (user_read(arg, &native, sizeof(native)))
+                return _EFAULT;
+            flock.type = native.type;
+            flock.whence = native.whence;
+            flock.start = native.start;
+            flock.len = native.len;
+            flock.pid = native.pid;
+            if (cmd != F_GETLK_)
+                return fcntl_setlk(fd, &flock, cmd == F_SETLKW_);
+            err = fcntl_getlk(fd, &flock);
+            if (err >= 0) {
+                native.type = flock.type;
+                native.whence = flock.whence;
+                native.start = flock.start;
+                native.len = flock.len;
+                native.pid = flock.pid;
+                if (user_write(arg, &native, sizeof(native)))
+                    return _EFAULT;
+            }
+            return err;
+        }
+#else
         case F_GETLK_:
             STRACE("fcntl(%d, F_GETLK, %#x)", f, arg);
             if (user_read(arg, &flock32, sizeof(flock32)))
@@ -366,14 +420,32 @@ dword_t sys_fcntl(fd_t f, dword_t cmd, dword_t arg) {
             flock.start = flock32.start;
             flock.len = flock32.len;
             flock.pid = flock32.pid;
-            return fcntl_setlk(fd, &flock, cmd == F_SETLKW64_);
+            return fcntl_setlk(fd, &flock, cmd == F_SETLKW_);
+#endif
 
         case F_SETLK64_:
         case F_SETLKW64_:
             STRACE("fcntl(%d, F_SETLK%*s64, %#x)", f, cmd == F_SETLKW_, "W", arg);
             if (user_read(arg, &flock, sizeof(flock)))
                 return _EFAULT;
-            return fcntl_setlk(fd, &flock, cmd == F_SETLKW_);
+            return fcntl_setlk(fd, &flock, cmd == F_SETLKW64_);
+
+        case F_SETPIPE_SZ_:
+        case F_GETPIPE_SZ_:
+            STRACE("fcntl(%d, %s, %d)", f, cmd == F_SETPIPE_SZ_ ? "F_SETPIPE_SZ" : "F_GETPIPE_SZ", arg);
+            if (!S_ISFIFO(fd->stat.mode))
+                return _EBADF;
+#if defined(F_GETPIPE_SZ)
+            // a guest pipe is a host pipe
+            err = cmd == F_SETPIPE_SZ_ ? fcntl(fd->real_fd, F_SETPIPE_SZ, (int) arg) : fcntl(fd->real_fd, F_GETPIPE_SZ);
+            return err < 0 ? errno_map() : err;
+#else
+            // hosts without the call: the size is only remembered (in the
+            // otherwise unused size field of this end of the pipe)
+            if (cmd == F_SETPIPE_SZ_)
+                fd->stat.size = arg < 4096 ? 4096 : arg;
+            return fd->stat.size != 0 ? fd->stat.size : 65536;
+#endif
 
         default:
             STRACE("fcntl(%d, %d)", f, cmd);

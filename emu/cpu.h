@@ -38,6 +38,54 @@ struct cpu_state {
 
     // general registers
     // assumes little endian (as does literally everything)
+#if ISH_GUEST_64
+#define _REG(n) \
+    union { \
+        qword_t r##n; \
+        dword_t e##n; \
+        word_t n; \
+    }
+#define _REGX(n) \
+    union { \
+        qword_t r##n##x; \
+        dword_t e##n##x; \
+        word_t n##x; \
+        struct { \
+            byte_t n##l; \
+            byte_t n##h; \
+        }; \
+    }
+
+    union {
+        struct {
+            _REGX(a);
+            _REGX(c);
+            _REGX(d);
+            _REGX(b);
+            _REG(sp);
+            _REG(bp);
+            _REG(si);
+            _REG(di);
+            qword_t r8, r9, r10, r11, r12, r13, r14, r15;
+        };
+        qword_t regs[16];
+    };
+#undef REGX
+#undef REG
+
+    union {
+        qword_t rip;
+        dword_t eip;
+    };
+    qword_t fs_base;
+    qword_t gs_base;
+    // always 0. With rip, fs_base and gs_base it sits right behind regs[], so
+    // the interpreter can index "no register" and segment bases like registers.
+    qword_t zero_reg;
+    dword_t mxcsr;
+    // set when a fault address did not fit in the (still 32-bit) address space
+    qword_t segfault_addr64;
+#else
 #define _REG(n) \
     union { \
         dword_t e##n; \
@@ -70,6 +118,8 @@ struct cpu_state {
 #undef REG
 
     dword_t eip;
+
+#endif
 
     // flags
     union {
@@ -120,7 +170,11 @@ struct cpu_state {
     };
 
     union mm_reg mm[8];
+#if ISH_GUEST_64
+    union xmm_reg xmm[16];
+#else
     union xmm_reg xmm[8];
+#endif
 
     // fpu
     float80 fp[8];
@@ -183,6 +237,12 @@ static_assert(CPU_OFFSET(esp) == CPU_OFFSET(regs[4]), "register order");
 static_assert(CPU_OFFSET(ebp) == CPU_OFFSET(regs[5]), "register order");
 static_assert(CPU_OFFSET(esi) == CPU_OFFSET(regs[6]), "register order");
 static_assert(CPU_OFFSET(edi) == CPU_OFFSET(regs[7]), "register order");
+#if ISH_GUEST_64
+static_assert(CPU_OFFSET(rip) == CPU_OFFSET(regs) + 16 * 8, "rip follows regs");
+static_assert(CPU_OFFSET(fs_base) == CPU_OFFSET(regs) + 17 * 8, "fs_base follows rip");
+static_assert(CPU_OFFSET(gs_base) == CPU_OFFSET(regs) + 18 * 8, "gs_base follows fs_base");
+static_assert(CPU_OFFSET(zero_reg) == CPU_OFFSET(regs) + 19 * 8, "zero_reg follows gs_base");
+#endif
 static_assert(sizeof(struct cpu_state) < 0xffff, "cpu struct is too big for vector gadgets");
 
 // flags

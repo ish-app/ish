@@ -34,11 +34,20 @@ struct fd {
         } epollfd;
         struct {
             uint64_t val;
+            bool semaphore;
         } eventfd;
         struct {
             struct timer *timer;
             uint64_t expirations;
         } timerfd;
+        struct {
+            pid_t_ pid;
+            bool dead; // the process has terminated
+            struct list others; // all pidfds, locked by pidfds_lock
+        } pidfd;
+        struct {
+            struct inotify *ino;
+        } inotifyfd;
         struct {
             int domain;
             int type;

@@ -25,6 +25,10 @@ struct poll {
     // https://lkml.org/lkml/2012/10/16/302, and anyway wouldn't have solved
     // the problem on Darwin. My solution is to just not free poll_fds, and
     // instead move them to a freelist where they can be reused.
+    // counts poll_wait calls that returned edge-triggered events
+    unsigned report_gen;
+    // set once an edge-triggered entry has been added
+    bool has_edge_triggered;
     struct list pollfd_freelist;
 
     lock_t lock;
@@ -44,6 +48,12 @@ struct poll_fd {
     // returned its bits are set here, and those bits are ignored on the next
     // call to poll_wait. The bits are cleared by poll_wakeup.
     int triggered_types;
+    // A one-shot entry that has reported its event. It stays in the set and
+    // reports nothing more until poll_mod_fd arms it again.
+    bool disarmed;
+    // which poll_wait call last returned an edge-triggered event for this
+    // entry (struct poll's report_gen at that time)
+    unsigned reported_gen;
 
     // locked by containing struct fd
     struct poll *poll;

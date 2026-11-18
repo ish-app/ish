@@ -77,5 +77,7 @@ struct timer_spec {
     struct timespec interval;
 };
 int timer_set(struct timer *timer, struct timer_spec spec, struct timer_spec *oldspec);
+// time left until the next expiration (zero if not running) and the interval
+void timer_get(struct timer *timer, struct timer_spec *spec);
 
 #endif
