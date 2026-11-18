@@ -191,6 +191,7 @@ static inline int sock_flags_from_real(int real) {
 #define IP_HDRINCL_ 3
 #define IP_RETOPTS_ 7
 #define IP_MTU_DISCOVER_ 10
+#define IP_RECVERR_ 11
 #define IP_RECVTTL_ 12
 #define IP_RECVTOS_ 13
 #define TCP_NODELAY_ 1
@@ -198,6 +199,7 @@ static inline int sock_flags_from_real(int real) {
 #define TCP_INFO_ 11
 #define TCP_CONGESTION_ 13
 #define IPV6_UNICAST_HOPS_ 16
+#define IPV6_RECVERR_ 25
 #define IPV6_V6ONLY_ 26
 #define IPV6_TCLASS_ 67
 #define ICMP6_FILTER_ 1
@@ -232,11 +234,13 @@ static inline int sock_opt_to_real(int fake, int level) {
             case IP_RETOPTS_: return IP_RETOPTS;
             case IP_RECVTTL_: return IP_RECVTTL;
             case IP_RECVTOS_: return IP_RECVTOS;
+            case IP_RECVERR_: return 0; // no error queue; glibc's resolver sets it and fails the lookup on an error
         } break;
         case IPPROTO_IPV6: switch (fake) {
             case IPV6_UNICAST_HOPS_: return IPV6_UNICAST_HOPS;
             case IPV6_TCLASS_: return IPV6_TCLASS;
             case IPV6_V6ONLY_: return IPV6_V6ONLY;
+            case IPV6_RECVERR_: return 0; // as IP_RECVERR
         } break;
     }
     return -1;

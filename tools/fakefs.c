@@ -243,7 +243,7 @@ bool fakefs_import(const char *archive_path, const char *fs, struct fakefsify_er
 
     // Add a path entry for the root if it's missing
     if (!archive_has_root) {
-        struct ish_stat stat = {.mode = 0755};
+        struct ish_stat stat = {.mode = S_IFDIR | 0755};
         sqlite3_bind_blob64(insert_stat, 1, &stat, sizeof(stat), SQLITE_TRANSIENT);
         STEP_RESET(insert_stat);
         sqlite3_bind_blob64(insert_path, 1, "", 0, SQLITE_TRANSIENT);
