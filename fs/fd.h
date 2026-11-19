@@ -122,6 +122,7 @@ int fd_setflags(struct fd *fd, int flags);
 struct dir_entry {
     qword_t inode;
     char name[NAME_MAX + 1];
+    mode_t_ type; // just the S_IFMT part, or 0 if unknown
 };
 
 #define LSEEK_SET 0

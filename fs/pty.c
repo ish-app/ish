@@ -309,6 +309,7 @@ static int devpts_readdir(struct fd *fd, struct dir_entry *entry) {
     fd->offset = pty_num + 1;
     sprintf(entry->name, "%d", pty_num);
     entry->inode = pty_num + 3;
+    entry->type = S_IFCHR;
     return 1;
 }
 
