@@ -464,6 +464,7 @@ static int tmpfs_readdir(struct fd *fd, struct dir_entry *entry) {
 
     entry->inode = dirent->inode->stat.inode;
     strcpy(entry->name, dirent->name);
+    entry->type = dirent->inode->stat.mode & S_IFMT;
     res = 1;
 
 out:

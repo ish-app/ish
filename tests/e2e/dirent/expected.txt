@@ -1,0 +1,16 @@
+. getdents64=dir
+. getdents=dir
+.. getdents64=dir
+.. getdents=dir
+fifo getdents64=fifo
+fifo getdents=fifo
+file getdents64=reg
+file getdents=reg
+link getdents64=lnk
+link getdents=lnk
+sub getdents64=dir
+sub getdents=dir
+cpuinfo getdents64=reg
+cpuinfo getdents=reg
+self getdents64=lnk
+self getdents=lnk
