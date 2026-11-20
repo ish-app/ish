@@ -38,7 +38,7 @@ static int signal_action(struct sighand *sighand, int sig) {
     }
 
     switch (sig) {
-        case SIGURG_: case SIGCONT_: case SIGCHLD_:
+        case SIGCONT_: case SIGCHLD_:
         case SIGIO_: case SIGWINCH_:
             return SIGNAL_IGNORE;
 
