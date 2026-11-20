@@ -274,8 +274,10 @@ int_t sys_timer_create(dword_t clock, addr_t sigevent_addr, addr_t timer_addr) {
 
     if (sigev.method == SIGEV_THREAD_ID_) {
         lock(&pids_lock);
-        if (pid_get_task(sigev.tid) == NULL)
+        if (pid_get_task(sigev.tid) == NULL) {
+            unlock(&pids_lock);
             return _EINVAL;
+        }
         unlock(&pids_lock);
     }
 
