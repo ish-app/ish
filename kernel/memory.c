@@ -25,7 +25,7 @@ void mem_init(struct mem *mem) {
     mem->pgdir_used = 0;
     mem->mmu.ops = &mem_mmu_ops;
     mem->mmu.asbestos = asbestos_new(&mem->mmu);
-    mem->mmu.changes = 0;
+    mem_changed(mem);
     wrlock_init(&mem->lock);
 }
 
@@ -217,8 +217,12 @@ int pt_copy_on_write(struct mem *src, struct mem *dst, page_t start, page_t page
     return 0;
 }
 
+// Change counts are unique across all mems. A TLB recognizes its mmu by
+// address, and exec can free the old mm and allocate the new one at the same
+// address, so per-mem counts could make a stale TLB look up to date.
+static uint64_t mem_changes_counter;
 static void mem_changed(struct mem *mem) {
-    mem->mmu.changes++;
+    mem->mmu.changes = __atomic_add_fetch(&mem_changes_counter, 1, __ATOMIC_RELAXED);
 }
 
 // This version will return NULL instead of making necessary pagetable changes.
