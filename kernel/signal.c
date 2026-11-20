@@ -607,8 +607,10 @@ dword_t sys_sigaltstack(addr_t ss_addr, addr_t old_ss_addr) {
         if (ss.flags & SS_DISABLE_) {
             sighand->altstack = 0;
         } else {
-            if (ss.size < MINSIGSTKSZ_)
+            if (ss.size < MINSIGSTKSZ_) {
+                unlock(&sighand->lock);
                 return _ENOMEM;
+            }
             sighand->altstack = ss.stack;
             sighand->altstack_size = ss.size;
         }
