@@ -90,7 +90,7 @@
 
 
     [self _updateStyleFromPreferences:NO];
-    
+
     if (UIDevice.currentDevice.userInterfaceIdiom == UIUserInterfaceIdiomPad) {
         [self.bar removeArrangedSubview:self.hideKeyboardButton];
         [self.hideKeyboardButton removeFromSuperview];
@@ -100,13 +100,13 @@
     } else {
         self.barHeight.constant = 43;
     }
-    
+
     // SF Symbols is cool
     if (@available(iOS 13, *)) {
         [self.infoButton setImage:[UIImage systemImageNamed:@"gear"] forState:UIControlStateNormal];
         [self.pasteButton setImage:[UIImage systemImageNamed:@"doc.on.clipboard"] forState:UIControlStateNormal];
         [self.hideKeyboardButton setImage:[UIImage systemImageNamed:@"keyboard.chevron.compact.down"] forState:UIControlStateNormal];
-        
+
         [self.tabKey setTitle:nil forState:UIControlStateNormal];
         [self.tabKey setImage:[UIImage systemImageNamed:@"arrow.right.to.line.alt"] forState:UIControlStateNormal];
         [self.controlKey setTitle:nil forState:UIControlStateNormal];
@@ -114,7 +114,7 @@
         [self.escapeKey setTitle:nil forState:UIControlStateNormal];
         [self.escapeKey setImage:[UIImage systemImageNamed:@"escape"] forState:UIControlStateNormal];
     }
-    
+
     [UserPreferences.shared observe:@[@"hideStatusBar"] options:0 owner:self usingBlock:^(typeof(self) self) {
         dispatch_async(dispatch_get_main_queue(), ^{
             [self setNeedsStatusBarAppearanceUpdate];
@@ -347,8 +347,12 @@
     if (pad != keyboardFrame.size.height && keyboardFrame.size.width != UIScreen.mainScreen.bounds.size.width) {
         pad = MAX(self.view.safeAreaInsets.bottom, self.termView.inputAccessoryView.frame.size.height);
     }
-    // NSLog(@"pad %f", pad);
-    self.bottomConstraint.constant = pad;
+
+    // If we've got an external keyboard and we want to ignore the bevels and iOs island.
+    if (!(UserPreferences.shared.maximizeScreenSpace && UserPreferences.shared.hideExtraKeysWithExternalKeyboard && self.hasExternalKeyboard)) {
+        self.bottomConstraint.constant = pad;
+    }
+
 
     BOOL initialLayout = self.termView.needsUpdateConstraints;
     [self.view setNeedsUpdateConstraints];
@@ -369,6 +373,12 @@
 - (void)setHasExternalKeyboard:(BOOL)hasExternalKeyboard {
     _hasExternalKeyboard = hasExternalKeyboard;
     [self _updateStyleFromPreferences:YES];
+
+    // With an external keyboard, `screen-padding-size` in
+    // `app/terminal/term.js` should be 0 to give more space to the terminal.
+    CGFloat padding = hasExternalKeyboard ? 0 : 4;
+    NSString *script = [NSString stringWithFormat:@"exports.setScreenPaddingSize(%f)", padding];
+    [self.termView.terminal.webView evaluateJavaScript:script completionHandler:nil];
 }
 
 - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
@@ -444,7 +454,7 @@
 - (IBAction)pressControl:(id)sender {
     self.controlKey.selected = !self.controlKey.selected;
 }
-    
+
 - (IBAction)pressArrow:(ArrowBarButton *)sender {
     switch (sender.direction) {
         case ArrowUp: [self pressKey:[self.terminal arrow:'A']]; break;

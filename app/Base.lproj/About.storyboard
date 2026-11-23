@@ -474,23 +474,54 @@
                             </tableViewSection>
                             <tableViewSection id="zbj-zP-Xeq">
                                 <cells>
+                                    <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="none" indentationWidth="10" id="GeC-hk-5ng" userLabel="Maximize Screen Space">
+                                        <rect key="frame" x="0.0" y="244.33333015441895" width="390" height="51"/>
+                                        <autoresizingMask key="autoresizingMask"/>
+                                        <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" preservesSuperviewLayoutMargins="YES" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="GeC-hk-5ng" id="ogA-PM-mEY">
+                                            <rect key="frame" x="0.0" y="0.0" width="390" height="51"/>
+                                            <autoresizingMask key="autoresizingMask"/>
+                                            <subviews>
+                                                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Maximize Screen Space" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="x1K-qp-MgP">
+                                                    <rect key="frame" x="16" y="15" width="182" height="21"/>
+                                                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                                    <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                                    <nil key="textColor"/>
+                                                    <nil key="highlightedColor"/>
+                                                </label>
+                                                <switch opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" on="NO" translatesAutoresizingMaskIntoConstraints="NO" id="ykx-3H-8LR">
+                                                    <rect key="frame" x="245" y="12" width="61" height="28"/>
+                                                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                                    <connections>
+                                                        <action selector="maximizeScreenSpaceToggle:" eventType="valueChanged" destination="Zzy-IN-laJ" id="HgW-4j-jIU"/>
+                                                    </connections>
+                                                </switch>
+                                            </subviews>
+                                            <constraints>
+                                                <constraint firstAttribute="trailingMargin" secondItem="ykx-3H-8LR" secondAttribute="trailing" id="ykx-3H-5LR"/>
+                                                <constraint firstItem="ykx-3H-8LR" firstAttribute="centerY" secondItem="ogA-PM-mEY" secondAttribute="centerY" id="ykx-3H-7LR"/>
+                                                <constraint firstItem="x1K-qp-MgP" firstAttribute="centerY" secondItem="ogA-PM-mEY" secondAttribute="centerY" id="ykx-3H-6LR"/>
+                                                <constraint firstItem="ykx-3H-8LR" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="x1K-qp-MgP" secondAttribute="trailing" constant="8" symbolic="YES" id="ykx-3H-9LR"/>
+                                                <constraint firstItem="x1K-qp-MgP" firstAttribute="leading" secondItem="ogA-PM-mEY" secondAttribute="leadingMargin" id="ykx-3H-4LR"/>
+                                            </constraints>
+                                        </tableViewCellContentView>
+                                    </tableViewCell>
                                     <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="none" indentationWidth="10" id="cA4-62-G0Z" userLabel="Option to Meta">
                                         <rect key="frame" x="0.0" y="222" width="320" height="43.5"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" preservesSuperviewLayoutMargins="YES" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="cA4-62-G0Z" id="ZYe-JS-rbD">
-                                            <rect key="frame" x="0.0" y="0.0" width="320" height="43.5"/>
+                                            <rect key="frame" x="0.0" y="0.0" width="390" height="51"/>
                                             <autoresizingMask key="autoresizingMask"/>
                                             <subviews>
                                                 <label opaque="NO" multipleTouchEnabled="YES" contentMode="left" insetsLayoutMarginsFromSafeArea="NO" text="Option → Meta" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="qax-I0-tqo">
-                                                    <rect key="frame" x="16" y="11.5" width="114" height="21"/>
+                                                    <rect key="frame" x="16" y="15" width="114" height="21"/>
                                                     <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                                     <nil key="textColor"/>
                                                     <nil key="highlightedColor"/>
                                                 </label>
                                                 <switch opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" on="YES" translatesAutoresizingMaskIntoConstraints="NO" id="OEG-YY-LTw">
-                                                    <rect key="frame" x="255" y="6.5" width="51" height="31"/>
+                                                    <rect key="frame" x="313" y="11.666666666666664" width="63" height="28"/>
                                                     <connections>
-                                                        <action selector="optionMetaToggle:" destination="Zzy-IN-laJ" eventType="valueChanged" id="HgW-4j-jIU"/>
+                                                        <action selector="optionMetaToggle:" destination="Zzy-IN-laJ" eventType="valueChanged" id="AgH-4j-jIU"/>
                                                     </connections>
                                                 </switch>
                                             </subviews>
@@ -612,6 +643,7 @@
                         <outlet property="hideExtraKeysWithExternalKeyboardSwitch" destination="IcN-9M-x1K" id="Lw3-4l-9R6"/>
                         <outlet property="optionMetaSwitch" destination="OEG-YY-LTw" id="b2K-Ug-Jij"/>
                         <outlet property="overrideControlSpaceSwitch" destination="554-OF-h41" id="js8-8D-1Ua"/>
+                        <outlet property="maximizeScreenSpaceSwitch" destination="ykx-3H-8LR" id="mK6-ba-K2i"/>
                     </connections>
                 </tableViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="XlH-jX-0dL" userLabel="First Responder" sceneMemberID="firstResponder"/>
