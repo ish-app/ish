@@ -297,11 +297,19 @@ dword_t sys_fcntl(fd_t f, dword_t cmd, dword_t arg) {
     switch (cmd) {
         case F_DUPFD_:
             STRACE("fcntl(%d, F_DUPFD, %d)", f, arg);
+            // Linux rejects a starting fd outside the allowed range. arg is
+            // unsigned here, so a negative value from the guest arrives as a
+            // huge one; check both, since letting it through as a negative
+            // fd_t trips the assert in f_install_start.
+            if ((fd_t) arg < 0 || arg >= rlimit(RLIMIT_NOFILE_))
+                return _EINVAL;
             fd->refcount++;
             return f_install_start(fd, arg);
 
         case F_DUPFD_CLOEXEC_:
             STRACE("fcntl(%d, F_DUPFD_CLOEXEC, %d)", f, arg);
+            if ((fd_t) arg < 0 || arg >= rlimit(RLIMIT_NOFILE_))
+                return _EINVAL;
             fd->refcount++;
             new_f = f_install_start(fd, arg);
             bit_set(new_f, table->cloexec);
