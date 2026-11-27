@@ -234,9 +234,6 @@ restart:
                            READMODRM; XADD(modrm_reg, modrm_val,8); break;
                 case 0xc1: TRACEI("xadd reg, modrm");
                            READMODRM; XADD(modrm_reg, modrm_val,oz); break;
-                case 0xc2: TRACEI("cmppd xmm:modrm, xmm, imm8");
-                           READMODRM; READIMM8; V_OP_IMM(fcmp_p, xmm_modrm_val, xmm_modrm_reg,64); break;
-
                 case 0xc7: READMODRM_MEM; switch (modrm.opcode) {
                                case 1: TRACEI("cmpxchg8b modrm");
                                        CMPXCHG8B(modrm_val,64); break;
@@ -302,6 +299,14 @@ restart:
                            READMODRM; V_OP(mul_p, xmm_modrm_val, xmm_modrm_reg,64); break;
                 case 0x5c: TRACEI("subpd xmm:modrm, xmm");
                            READMODRM; V_OP(sub_p, xmm_modrm_val, xmm_modrm_reg,64); break;
+                case 0x5d: TRACEI("minpd xmm:modrm, xmm");
+                           READMODRM; V_OP(min_p, xmm_modrm_val, xmm_modrm_reg,64); break;
+                case 0x5e: TRACEI("divpd xmm:modrm, xmm");
+                           READMODRM; V_OP(div_p, xmm_modrm_val, xmm_modrm_reg,64); break;
+                case 0x5f: TRACEI("maxpd xmm:modrm, xmm");
+                           READMODRM; V_OP(max_p, xmm_modrm_val, xmm_modrm_reg,64); break;
+                case 0xc2: TRACEI("cmppd xmm:modrm, xmm, imm8");
+                           READMODRM; READIMM8; V_OP_IMM(fcmp_p, xmm_modrm_val, xmm_modrm_reg,64); break;
                 case 0x60: TRACEI("punpcklbw xmm:modrm, xmm");
                            READMODRM; V_OP(unpackl_bw, xmm_modrm_val, xmm_modrm_reg,128); break;
                 case 0x61: TRACEI("punpcklwd xmm:modrm, xmm");
@@ -485,16 +490,30 @@ restart:
                            READMODRM; VMOV(xmm_modrm_val, xmm_modrm_reg,128); break;
                 case 0x11: TRACEI("movups xmm, xmm:modrm");
                            READMODRM; VMOV(xmm_modrm_reg, xmm_modrm_val,128); break;
-                case 0x12: TRACEI("movlps xmm, modrm");
-                           READMODRM; V_OP(movl_p, modrm_val, xmm_modrm_reg,64); break;
+                case 0x12: READMODRM;
+                           if (modrm.type == modrm_reg) {
+                               TRACEI("movhlps xmm:modrm, xmm");
+                               V_OP(movhl_ps, xmm_modrm_val, xmm_modrm_reg,128);
+                           } else {
+                               TRACEI("movlps xmm, modrm");
+                               V_OP(movl_p, modrm_val, xmm_modrm_reg,64);
+                           }
+                           break;
                 case 0x13: TRACEI("movlps modrm, xmm");
                            READMODRM; V_OP(movl_pm, xmm_modrm_reg, modrm_val,64); break;
                 case 0x14: TRACEI("unpcklps xmm, xmm:modrm");
                            READMODRM; V_OP(unpackl_ps, xmm_modrm_val, xmm_modrm_reg,128); break;
                 case 0x15: TRACEI("unpckhps xmm, xmm:modrm");
                            READMODRM; V_OP(unpackh_ps, xmm_modrm_val, xmm_modrm_reg,128); break;
-                case 0x16: TRACEI("movhps xmm, modrm");
-                           READMODRM; V_OP(movh_p, modrm_val, xmm_modrm_reg,64); break;
+                case 0x16: READMODRM;
+                           if (modrm.type == modrm_reg) {
+                               TRACEI("movlhps xmm:modrm, xmm");
+                               V_OP(movlh_ps, xmm_modrm_val, xmm_modrm_reg,128);
+                           } else {
+                               TRACEI("movhps xmm, modrm");
+                               V_OP(movh_p, modrm_val, xmm_modrm_reg,64);
+                           }
+                           break;
                 case 0x17: TRACEI("movhps modrm, xmm");
                            READMODRM; V_OP(movh_pm, xmm_modrm_reg, modrm_val,64); break;
                 case 0x2e: TRACEI("ucomiss xmm, xmm:modrm");
@@ -517,6 +536,21 @@ restart:
                            READMODRM; V_OP(mul_p, xmm_modrm_val, xmm_modrm_reg,32); break;
                 case 0x5c: TRACEI("subps xmm:modrm, xmm");
                            READMODRM; V_OP(sub_p, xmm_modrm_val, xmm_modrm_reg,32); break;
+                case 0x5d: TRACEI("minps xmm:modrm, xmm");
+                           READMODRM; V_OP(min_p, xmm_modrm_val, xmm_modrm_reg,32); break;
+                case 0x5e: TRACEI("divps xmm:modrm, xmm");
+                           READMODRM; V_OP(div_p, xmm_modrm_val, xmm_modrm_reg,32); break;
+                case 0x5f: TRACEI("maxps xmm:modrm, xmm");
+                           READMODRM; V_OP(max_p, xmm_modrm_val, xmm_modrm_reg,32); break;
+
+                case 0x50: TRACEI("movmskps xmm:modrm, reg");
+                           READMODRM_NOMEM; V_OP(fmovmask_s, xmm_modrm_val, modrm_reg,128); break;
+                case 0x5a: TRACEI("cvtps2pd xmm:modrm, xmm");
+                           READMODRM; V_OP(cvtps2pd, xmm_modrm_val, xmm_modrm_reg,64); break;
+                case 0x5b: TRACEI("cvtdq2ps xmm:modrm, xmm");
+                           READMODRM; V_OP(cvtdq2ps, xmm_modrm_val, xmm_modrm_reg,128); break;
+                case 0xc2: TRACEI("cmpps xmm:modrm, xmm, imm8");
+                           READMODRM; READIMM8; V_OP_IMM(fcmp_p, xmm_modrm_val, xmm_modrm_reg,32); break;
 
                 case 0x62: TRACEI("punpckldq mm:modrm, mm");
                            READMODRM; V_OP(unpackl_dq, mm_modrm_val, mm_modrm_reg,64); break;
@@ -1290,6 +1324,8 @@ restart:
                                    READMODRM; V_OP(cvtss2sd, xmm_modrm_val, xmm_modrm_reg,32); break;
                         case 0x5b: TRACEI("cvttps2dq xmm:modrm, xmm");
                                    READMODRM; V_OP(cvttps2dq, xmm_modrm_val, xmm_modrm_reg,32); break;
+                        case 0xe6: TRACEI("cvtdq2pd xmm:modrm, xmm");
+                                   READMODRM; V_OP(cvtdq2pd, xmm_modrm_val, xmm_modrm_reg,64); break;
 
                         case 0x58: TRACEI("addss xmm:modrm, xmm");
                                    READMODRM; V_OP(single_fadd, xmm_modrm_val, xmm_modrm_reg,32); break;

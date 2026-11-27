@@ -388,6 +388,39 @@ void vec_fcmp_p64(NO_CPU, const union xmm_reg *src, union xmm_reg *dst, uint8_t 
         dst->qw[i] = cmpd(dst->f64[i], src->f64[i], type) ? -1 : 0;
     }
 }
+void vec_fcmp_p32(NO_CPU, const union xmm_reg *src, union xmm_reg *dst, uint8_t type) {
+    for (size_t i = 0; i < sizeof(dst->f32) / sizeof(*dst->f32); ++i) {
+        dst->u32[i] = cmps(dst->f32[i], src->f32[i], type) ? -1 : 0;
+    }
+}
+
+// Packed min, max and divide, element by element. As on the processor, min and max give the
+// source operand unless the destination is strictly smaller (larger): so a NaN in either, or
+// two equal values such as +0 and -0, give the source.
+void vec_min_p64(NO_CPU, const union xmm_reg *src, union xmm_reg *dst) {
+    for (unsigned i = 0; i < array_size(dst->f64); i++)
+        dst->f64[i] = dst->f64[i] < src->f64[i] ? dst->f64[i] : src->f64[i];
+}
+void vec_min_p32(NO_CPU, const union xmm_reg *src, union xmm_reg *dst) {
+    for (unsigned i = 0; i < array_size(dst->f32); i++)
+        dst->f32[i] = dst->f32[i] < src->f32[i] ? dst->f32[i] : src->f32[i];
+}
+void vec_max_p64(NO_CPU, const union xmm_reg *src, union xmm_reg *dst) {
+    for (unsigned i = 0; i < array_size(dst->f64); i++)
+        dst->f64[i] = dst->f64[i] > src->f64[i] ? dst->f64[i] : src->f64[i];
+}
+void vec_max_p32(NO_CPU, const union xmm_reg *src, union xmm_reg *dst) {
+    for (unsigned i = 0; i < array_size(dst->f32); i++)
+        dst->f32[i] = dst->f32[i] > src->f32[i] ? dst->f32[i] : src->f32[i];
+}
+void vec_div_p64(NO_CPU, const union xmm_reg *src, union xmm_reg *dst) {
+    for (unsigned i = 0; i < array_size(dst->f64); i++)
+        dst->f64[i] /= src->f64[i];
+}
+void vec_div_p32(NO_CPU, const union xmm_reg *src, union xmm_reg *dst) {
+    for (unsigned i = 0; i < array_size(dst->f32); i++)
+        dst->f32[i] /= src->f32[i];
+}
 
 // come to the dark side of macros
 #define _ISNAN_int32_t(x) false
@@ -425,6 +458,21 @@ VEC_CVT(ss2sd32, float, double)
 
 PACKED_VEC_CVT(tpd2dq64, f64, u32, double, int32_t, 2)
 PACKED_VEC_CVT(tps2dq32, f32, u32, float, int32_t, 4)
+PACKED_VEC_CVT(dq2ps128, u32, f32, int32_t, float, 4)
+
+// Two 32-bit ints, or two floats, widened to two doubles. Not PACKED_VEC_CVT: a NaN float
+// must stay a NaN, not become INT32_MIN, and the source is read whole before dst is written
+// because the two may be the same register.
+void vec_cvtdq2pd64(NO_CPU, const union xmm_reg *src, union xmm_reg *dst) {
+    int32_t a = (int32_t) src->u32[0], b = (int32_t) src->u32[1];
+    dst->f64[0] = a;
+    dst->f64[1] = b;
+}
+void vec_cvtps2pd64(NO_CPU, const union xmm_reg *src, union xmm_reg *dst) {
+    float a = src->f32[0], b = src->f32[1];
+    dst->f64[0] = a;
+    dst->f64[1] = b;
+}
 
 void vec_unpackl_bw128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst) {
     for (int i = 7; i >= 0; i--) {
@@ -549,6 +597,19 @@ void vec_movmask_b128(NO_CPU, const union xmm_reg *src, uint32_t *dst) {
         if (src->u8[i] & (1 << 7))
             *dst |= 1 << i;
     }
+}
+void vec_fmovmask_s128(NO_CPU, const union xmm_reg *src, uint32_t *dst) {
+    *dst = 0;
+    for (unsigned i = 0; i < array_size(src->f32); i++) {
+        if (signbit(src->f32[i]))
+            *dst |= 1 << i;
+    }
+}
+void vec_movlh_ps128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst) {
+    dst->qw[1] = src->qw[0];
+}
+void vec_movhl_ps128(NO_CPU, const union xmm_reg *src, union xmm_reg *dst) {
+    dst->qw[0] = src->qw[1];
 }
 void vec_fmovmask_d128(NO_CPU, const union xmm_reg *src, uint32_t *dst) {
     *dst = 0;
