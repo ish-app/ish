@@ -29,3 +29,37 @@ paddq
 01234 05678
 11111 11111
 12345 16789
+minmaxdiv
+01.50 -3.00 -0.00 02.00
+1
+02.50 -2.00 -0.00 08.00
+00.60 00.67 04.00
+02.50 -3.00 -0.00 01.00
+02.00 -1.50
+07.00 04.00
+03.50 -0.38
+cmpps
+cmpps 0: ffffffff 00000000 00000000 00000000
+cmpps 1: 00000000 ffffffff 00000000 00000000
+cmpps 2: ffffffff ffffffff 00000000 00000000
+cmpps 3: 00000000 00000000 00000000 ffffffff
+cmpps 4: 00000000 ffffffff ffffffff ffffffff
+cmpps 5: ffffffff 00000000 ffffffff ffffffff
+cmpps 6: 00000000 00000000 ffffffff ffffffff
+cmpps 7: ffffffff ffffffff ffffffff 00000000
+cmppd 1: ffffffff ffffffff 00000000 00000000
+cvt
+1.0 -2.0 16777216.0 -2147483648.0
+1.0 -2.0
+1.25 -3.50
+1.0 -2.0
+movmskps
+0
+5
+b
+f
+movhlps
+77.77 88.88 33.33 44.44
+11.11 22.22 55.55 66.66
+55.55 66.66 33.33 44.44
+11.11 22.22 55.55 66.66
