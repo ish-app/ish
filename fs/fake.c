@@ -344,12 +344,17 @@ retry:
 
     struct fakefs_db *fs = &fd->mount->fakefs;
     db_begin_read(fs);
-    entry->inode = path_get_inode(fs, entry_path);
+    struct ish_stat ishstat;
+    inode_t inode;
+    bool exists = path_read_stat(fs, entry_path, &ishstat, &inode);
     db_commit(fs);
     // it's quite possible that due to some mishap there's no metadata for this file
     // so just skip this entry, instead of crashing the program, so there's hope for recovery
-    if (entry->inode == 0)
+    if (!exists || inode == 0)
         goto retry;
+    entry->inode = inode;
+    // the type on the host is wrong for symlinks and special files, which are regular files there
+    entry->type = ishstat.mode & S_IFMT;
     return res;
 }
 
