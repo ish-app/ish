@@ -194,6 +194,7 @@ static int proc_readdir(struct fd *fd, struct dir_entry *entry) {
         return 0;
     proc_entry_getname(&proc_entry, entry->name);
     entry->inode = proc_entry.meta->inode;
+    entry->type = proc_entry_mode(&proc_entry) & S_IFMT;
     proc_entry_cleanup(&proc_entry);
     return 1;
 }

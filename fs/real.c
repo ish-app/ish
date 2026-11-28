@@ -172,6 +172,7 @@ int realfs_readdir(struct fd *fd, struct dir_entry *entry) {
     }
     entry->inode = dirent->d_ino;
     strcpy(entry->name, dirent->d_name);
+    entry->type = DTTOIF(dirent->d_type);
     return 1;
 }
 
